@@ -5,6 +5,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
@@ -199,29 +200,36 @@ outer:
 
     PsiExpression[] args = myArgumentsList.getExpressions();
 
-    /*
     //check again, now that applicability check has been performed
     if (params1.length == args.length && params2.length != args.length) return Specifics.TRUE;
     if (params2.length == args.length && params1.length != args.length) return Specifics.FALSE;
-    */
 
-    for(int i = 0; i < Math.max(params1.length, params2.length); i++){
-      final PsiParameter param1 = i >= params1.length ? params1[params1.length - 1] : params1[i];
-      final PsiParameter param2 = i >= params2.length ? params2[params2.length - 1] : params2[i];
-      final PsiType type1 = TypeConversionUtil.erasure(param1.getType());
-      final PsiType type2 = TypeConversionUtil.erasure(param2.getType());
+    for(int i = 0; i < args.length; i++){
+      if (i >= params1.length || i >= params2.length) break;
+      final PsiType argType = args[i].getType();
+      boolean varArgs1 = params1[i].isVarArgs();
+      boolean varArgs2 = params2[i].isVarArgs();
+      final PsiType type1 = TypeConversionUtil.erasure(params1[i].getType());
+      final PsiType type2 = TypeConversionUtil.erasure(params2[i].getType());
       assert type1 != null && type2 != null; //because erasure returns null for nulls only
 
-      if (i < args.length) {
-        final PsiType argType = args[i].getType();
-        if (argType != null) {
-          Boolean lessBoxing = isLessBoxing(argType, type1, type2);
-          if (lessBoxing != null) {
-            if (isMoreSpecific != null && !lessBoxing.equals(isMoreSpecific)) return Specifics.CONFLICT;
-            isMoreSpecific = lessBoxing;
-            continue;
-          }
-        }
+      Boolean lessBoxing = isLessBoxing(argType, type1, type2);
+      if (lessBoxing != null) {
+        if (isMoreSpecific != null && !lessBoxing.equals(isMoreSpecific)) return Specifics.CONFLICT;
+        isMoreSpecific = lessBoxing;
+        continue;
+      }
+
+      if (varArgs1 && !varArgs2) {
+        if (argType == null || PsiType.NULL.equals(argType)) return Specifics.CONFLICT;
+        boolean isFirstMoreSpecific = argType.getArrayDimensions() < type1.getArrayDimensions();
+        if (isMoreSpecific != null && isMoreSpecific.booleanValue() != isFirstMoreSpecific) return Specifics.CONFLICT;
+        return isFirstMoreSpecific ? Specifics.TRUE : Specifics.FALSE;
+      } else if (varArgs2 && !varArgs1) {
+        if (argType == null || PsiType.NULL.equals(argType)) return Specifics.CONFLICT;
+        boolean isFirstMoreSpecific = argType.getArrayDimensions() < type2.getArrayDimensions();
+        if (isMoreSpecific != null && isMoreSpecific.booleanValue() != isFirstMoreSpecific) return Specifics.CONFLICT;
+        return isFirstMoreSpecific ? Specifics.TRUE : Specifics.FALSE;
       }
 
       final boolean assignable2From1 = type2.isAssignableFrom(type1);
@@ -237,6 +245,11 @@ outer:
       } else {
         return Specifics.CONFLICT;
       }
+    }
+
+    if (isMoreSpecific == null) {
+      if (method1.isVarArgs() && !method2.isVarArgs()) return Specifics.FALSE;
+      if (method2.isVarArgs() && !method1.isVarArgs()) return Specifics.TRUE;
     }
 
     if (isMoreSpecific == null){
@@ -259,6 +272,7 @@ outer:
   }
 
   private Boolean isLessBoxing(PsiType argType, PsiType type1, PsiType type2) {
+    if (argType == null) return null;
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(myArgumentsList);
     if (type1 instanceof PsiClassType) {
       type1 = ((PsiClassType)type1).setLanguageLevel(languageLevel);
