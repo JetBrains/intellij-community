@@ -45,18 +45,20 @@ public final class IconLoader {
    * To get disabled icon with paint it into the imag. Some icons require
    * not null component to paint.
    */
-  private static final JComponent ourFakeComponent=new JLabel();
-  private static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)){
-    @NonNls public String toString() {
+  private static final JComponent ourFakeComponent = new JLabel();
+  private static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
+    @NonNls
+    public String toString() {
       return "Empty icon " + super.toString();
     }
   };
 
   private static boolean ourIsActivated = false;
 
-  private IconLoader() {}
+  private IconLoader() {
+  }
 
-    @Deprecated
+  @Deprecated
   public static Icon getIcon(final Image image) {
     LOG.assertTrue(image != null);
     return new MyImageIcon(image);
@@ -90,7 +92,7 @@ public final class IconLoader {
   public static Icon getIcon(final String path, final Class aClass) {
     final Icon icon = findIcon(path, aClass);
     if (icon == null) {
-      LOG.error("Icon cannot be found in '"+path+"', aClass='"+(aClass == null ? null : aClass.getName())+"'");
+      LOG.error("Icon cannot be found in '" + path + "', aClass='" + (aClass == null ? null : aClass.getName()) + "'");
     }
     return icon;
   }
@@ -104,34 +106,30 @@ public final class IconLoader {
   }
 
   public static Icon findIcon(final String path, final Class aClass) {
-    if (isLoaderDisabled()) return EMPTY_ICON;
-
     URL url = aClass.getResource(path);
-      return findIcon(url);
+    return findIcon(url);
   }
 
-    private static Icon findIcon(URL url) {
-        if (url == null) return null;
+  private static Icon findIcon(URL url) {
+    if (url == null) return null;
 
-        Icon icon = ourIconsCache.get(url);
-        if (icon == null) {
-            icon = new CachedImageIcon(url);
-            ourIconsCache.put(url, icon);
-        }
-        return icon;
+    Icon icon = ourIconsCache.get(url);
+    if (icon == null) {
+      icon = new CachedImageIcon(url);
+      ourIconsCache.put(url, icon);
     }
+    return icon;
+  }
 
-    public static Icon findIcon(final String path, final ClassLoader aClassLoader) {
-    if (isLoaderDisabled()) return EMPTY_ICON;
-
+  public static Icon findIcon(final String path, final ClassLoader aClassLoader) {
     if (!path.startsWith("/")) return null;
 
     final URL url = aClassLoader.getResource(path.substring(1));
-        return findIcon(url);
+    return findIcon(url);
   }
 
-  private static Icon checkIcon(final Image image, final String path) {
-    if(image == null || image.getHeight(ourFakeComponent) < 1){ // image wasn't loaded or broken
+  private static Icon checkIcon(final Image image, final URL path) {
+    if (image == null || image.getHeight(ourFakeComponent) < 1) { // image wasn't loaded or broken
       return null;
     }
 
@@ -145,6 +143,7 @@ public final class IconLoader {
 
   /**
    * Gets (creates if necessary) disabled icon based on the passed one.
+   *
    * @return <code>ImageIcon</code> constructed from disabled image of passed icon.
    */
   public static Icon getDisabledIcon(final Icon icon) {
@@ -196,48 +195,44 @@ public final class IconLoader {
     };
   }
 
-    private static final class CachedImageIcon implements Icon {
-        private boolean myIsBroken = false;
-        private URL myURL;
-        private Reference<Icon> myRealIcon;
+  private static final class CachedImageIcon implements Icon {
+    private URL myURL;
+    private Reference<Icon> myRealIcon;
 
-        public CachedImageIcon(URL myURL) {
-            this.myURL = myURL;
-        }
-
-        private synchronized Icon getRealIcon() {
-            if (myIsBroken) return EMPTY_ICON;
-
-            Icon icon;
-            if (myRealIcon != null) {
-                icon = myRealIcon.get();
-                if (icon != null) return icon;
-            }
-
-            Image image = ImageLoader.loadFromURL(myURL);
-            if (image == null) {
-                myIsBroken = true;
-                return EMPTY_ICON;
-            }
-
-            icon = new ImageIcon(image);
-            myRealIcon = new SoftReference<Icon>(icon);
-            return icon;
-        }
-
-
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-            getRealIcon().paintIcon(c, g, x, y);
-        }
-
-        public int getIconWidth() {
-            return getRealIcon().getIconWidth();
-        }
-
-        public int getIconHeight() {
-            return getRealIcon().getIconHeight();
-        }
+    public CachedImageIcon(URL myURL) {
+      this.myURL = myURL;
     }
+
+    private synchronized Icon getRealIcon() {
+      if (isLoaderDisabled()) return EMPTY_ICON;
+
+      Icon icon;
+      if (myRealIcon != null) {
+        icon = myRealIcon.get();
+        if (icon != null) return icon;
+      }
+
+      Image image = ImageLoader.loadFromURL(myURL);
+      icon = checkIcon(image, myURL);
+      if (icon != null) {
+        myRealIcon = new SoftReference<Icon>(icon);
+      }
+      return icon;
+    }
+
+
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      getRealIcon().paintIcon(c, g, x, y);
+    }
+
+    public int getIconWidth() {
+      return getRealIcon().getIconWidth();
+    }
+
+    public int getIconHeight() {
+      return getRealIcon().getIconHeight();
+    }
+  }
 
   private static final class MyImageIcon extends ImageIcon {
     public MyImageIcon(final Image image) {
