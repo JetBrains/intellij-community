@@ -85,21 +85,21 @@ public final class CreateFieldFix extends QuickFix{
       return;
     }
 
-    ApplicationManager.getApplication().runWriteAction(
+    CommandProcessor.getInstance().executeCommand(
+      project,
       new Runnable() {
         public void run() {
-          CommandProcessor.getInstance().executeCommand(
-            project,
+          ApplicationManager.getApplication().runWriteAction(
             new Runnable() {
               public void run() {
                 createField(project, fieldClass, fieldName, boundClass, showErrors, rootContainer);
               }
-            },
-            UIDesignerBundle.message("command.create.field"),
-            undoGroupId
+            }
           );
         }
-      }
+      },
+      UIDesignerBundle.message("command.create.field"),
+      undoGroupId
     );
   }
 
