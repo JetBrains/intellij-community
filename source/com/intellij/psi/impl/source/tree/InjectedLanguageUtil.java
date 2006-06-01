@@ -27,9 +27,9 @@ import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -129,7 +129,7 @@ public class InjectedLanguageUtil {
     if (editor == null) return null;
     if (file == null) return editor;
 
-    PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+    PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
     int offset = editor.getCaretModel().getOffset();
     PsiLanguageInjectionHost injectionHost = findInjectionHost(file.findElementAt(offset));
     if (injectionHost == null && offset != 0) {
