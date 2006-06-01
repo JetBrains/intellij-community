@@ -11,10 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.DomReflectionUtil;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.ui.UserActivityWatcher;
 
@@ -60,7 +57,7 @@ public abstract class DomUIFactory implements ApplicationComponent {
     return getDomUIFactory().createTextControl(new DomCollectionWrapper<String>(parent, parent.getGenericInfo().getCollectionChildDescription("description")), commitOnEveryChange);
   }
 
-  private static BaseControl createGenericValueControl(final Type type, final GenericDomValue element, boolean commitOnEveryChange) {
+  private static BaseControl createGenericValueControl(final Type type, final GenericDomValue<?> element, boolean commitOnEveryChange) {
     final DomStringWrapper stringWrapper = new DomStringWrapper(element);
     final Class rawType = DomReflectionUtil.getRawType(type);
     if (PsiClass.class.isAssignableFrom(rawType)) {
@@ -73,7 +70,12 @@ public abstract class DomUIFactory implements ApplicationComponent {
       return new ComboControl(stringWrapper, rawType);
     }
     if (DomElement.class.isAssignableFrom(rawType)) {
-      return new ComboControl(element);
+      final ComboControl control = new ComboControl(element);
+      final Required annotation = element.getAnnotation(Required.class);
+      if (annotation == null || !annotation.nonEmpty()) {
+        control.setNullable(true);
+      }
+      return control;
     }
 
     final DomFixedWrapper wrapper = new DomFixedWrapper(element);

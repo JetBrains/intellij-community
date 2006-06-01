@@ -109,6 +109,7 @@ public class ComboControl extends BaseControl<JComboBox, String> {
 
   static JComboBox initComboBox(final JComboBox comboBox, final Condition<String> validity) {
     comboBox.setEditable(false);
+    comboBox.setPrototypeDisplayValue(Pair.create("A", null));
     comboBox.setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
