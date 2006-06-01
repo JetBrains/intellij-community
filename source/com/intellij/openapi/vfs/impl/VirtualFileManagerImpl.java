@@ -217,13 +217,15 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
           new Runnable() {
             public void run() {
               //noinspection ForLoopReplaceableByForEach
-              for (int i = 0; i < myRefreshEventsToFire.size(); i++) {
-                Runnable runnable = myRefreshEventsToFire.get(i);
-                try {
-                  runnable.run();
-                }
-                catch (Exception e) {
-                  LOG.error(e);
+              if (myRefreshEventsToFire != null) { //todo: quick fix,  rework this
+                for (int i = 0; i < myRefreshEventsToFire.size(); i++) {
+                  Runnable runnable = myRefreshEventsToFire.get(i);
+                  try {
+                    runnable.run();
+                  }
+                  catch (Exception e) {
+                    LOG.error(e);
+                  }
                 }
               }
 
