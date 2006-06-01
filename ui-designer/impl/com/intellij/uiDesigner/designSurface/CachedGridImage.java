@@ -85,15 +85,25 @@ public class CachedGridImage {
 
       g2d.setStroke(new BasicStroke(1.0f, 0, 0, 1.0f, ourDashes, 0.0f));
 
-      for (int i = 1; i < myHorzGridLines.length - 1; i++) {
-        final int y = myHorzGridLines [i];
-        g2d.drawLine(0, y, width, y);
+      if (myHorzGridLines.length > 0) {
+        int lastLine = (container.getDelegee().getHeight() - myHorzGridLines [myHorzGridLines.length-1] > 4)
+                       ? myHorzGridLines.length
+                       : myHorzGridLines.length-1;
+        for (int i = 1; i < lastLine; i++) {
+          final int y = myHorzGridLines [i];
+          g2d.drawLine(0, y, width, y);
+        }
       }
 
-      // Vertical lines
-      for (int i = 1; i < myVertGridLines.length - 1; i++) {
-        final int x = myVertGridLines [i];
-        g2d.drawLine(x, 0, x, height);
+      if (myVertGridLines.length > 0) {
+        // Vertical lines
+        int lastLine = (container.getDelegee().getWidth() - myVertGridLines [myVertGridLines.length-1] > 4)
+                       ? myVertGridLines.length
+                       : myVertGridLines.length-1;
+        for (int i = 1; i < lastLine; i++) {
+          final int x = myVertGridLines [i];
+          g2d.drawLine(x, 0, x, height);
+        }
       }
 
       g2d.setComposite(AlphaComposite.Clear);
@@ -147,6 +157,7 @@ public class CachedGridImage {
 
   public static Image getGridImage(final RadContainer container) {
     CachedGridImage gridImage = null;
+    //noinspection unchecked
     SoftReference<CachedGridImage> imageRef = (SoftReference<CachedGridImage>) container.getDelegee().getClientProperty(CACHED_GRID_IMAGE_KEY);
     if (imageRef != null) {
       gridImage = imageRef.get();
