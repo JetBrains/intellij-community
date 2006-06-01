@@ -6,13 +6,12 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -20,11 +19,6 @@ import java.util.*;
  * @author ven
  */
 public class AnnotationsHighlightUtil {
-  private static final String DUPLICATE_ANNOTATION = JavaErrorMessages.message("annotation.duplicate.annotation");
-  private static final String NONCONSTANT_EXPRESSION = JavaErrorMessages.message("annotation.nonconstant.attribute.value");
-  private static final String INVALID_ANNOTATION_MEMBER_TYPE = JavaErrorMessages.message("annotation.invalid.annotation.member.type");
-  private static final String CYCLIC_ANNOTATION_MEMER_TYPE = JavaErrorMessages.message("annotation.cyclic.element.type");
-
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil");
   private static final @NonNls String ANNOTATION_TARGET_MESSAGE_KEY_PREFIX = "annotation.target.";
   @NonNls private static final String PACKAGE_INFO_JAVA = "package-info.java";
@@ -133,7 +127,7 @@ public class AnnotationsHighlightUtil {
       PsiClass aClass = (PsiClass)nameRef.resolve();
       if (aClass != null) {
         if (refInterfaces.contains(aClass)) {
-          result.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, nameRef, DUPLICATE_ANNOTATION));
+          result.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, nameRef, JavaErrorMessages.message("annotation.duplicate.annotation")));
         }
 
         refInterfaces.add(aClass);
@@ -192,7 +186,7 @@ public class AnnotationsHighlightUtil {
   public static HighlightInfo checkConstantExpression(PsiExpression expression) {
     if (expression.getParent() instanceof PsiAnnotationMethod || expression.getParent() instanceof PsiNameValuePair) {
       if (expression.getType() == PsiType.NULL || !PsiUtil.isConstantExpression(expression)) {
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, NONCONSTANT_EXPRESSION);
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, JavaErrorMessages.message("annotation.nonconstant.attribute.value"));
       }
     }
 
@@ -201,79 +195,51 @@ public class AnnotationsHighlightUtil {
 
   public static HighlightInfo checkValidAnnotationType(final PsiTypeElement typeElement) {
     PsiType type = typeElement.getType();
-    if (!type.accept(new PsiTypeVisitor<Boolean>() {
-      public Boolean visitType(PsiType type) {
-        return Boolean.FALSE;
-      }
-
-      public Boolean visitPrimitiveType(PsiPrimitiveType primitiveType) {
-        return Boolean.TRUE;
-      }
-
-      public Boolean visitArrayType(PsiArrayType arrayType) {
-        return arrayType.getComponentType().accept(this);
-      }
-
-      public Boolean visitClassType(PsiClassType classType) {
-        if (classType.getParameters().length > 0) {
-          PsiType javaLangClass = PsiType.getJavaLangClass(typeElement.getManager(), typeElement.getResolveScope());
-          if (javaLangClass != null && javaLangClass.equals(classType.rawType())) {
-            return Boolean.TRUE;
-          }
-          return Boolean.FALSE;
-        }
-        PsiClass aClass = classType.resolve();
-        if (aClass != null && (aClass.isAnnotationType() || aClass.isEnum())) return Boolean.TRUE;
-
-        PsiManager manager = typeElement.getManager();
-        GlobalSearchScope resolveScope = typeElement.getResolveScope();
-        return classType.equals(PsiType.getJavaLangClass(manager, resolveScope)) ||
-               classType.equals(PsiType.getJavaLangString(manager, resolveScope)) ? Boolean.TRUE : Boolean.FALSE;
-      }
-    }).booleanValue()) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, INVALID_ANNOTATION_MEMBER_TYPE);
+    if (type.accept(AnnotationReturnTypeVisitor.INSTANCE).booleanValue()) {
+      return null;
     }
-
-    return null;
+    return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, JavaErrorMessages.message("annotation.invalid.annotation.member.type"));
   }
 
   public static HighlightInfo checkApplicability(PsiAnnotation annotation) {
     if (!(annotation.getParent() instanceof PsiModifierList)) return null;
     PsiElement owner = annotation.getParent().getParent();
     PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
-    if (nameRef != null) {
-      PsiElement resolved = nameRef.resolve();
-      if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
-        PsiClass annotationType = (PsiClass)resolved;
-        PsiAnnotation metaAnnotation = annotationType.getModifierList().findAnnotation(TARGET_ANNOTATION_FQ_NAME);
-        if (metaAnnotation != null) {
-          PsiNameValuePair[] attributes = metaAnnotation.getParameterList().getAttributes();
-          if (attributes.length >= 1) {
-            PsiField[] elementTypeFields = getElementTypeFields(owner);
-            if (elementTypeFields == null) return null;
-            LOG.assertTrue(elementTypeFields.length > 0);
-            for (PsiField field : elementTypeFields) {
-              PsiAnnotationMemberValue value = attributes[0].getValue();
-              if (value instanceof PsiArrayInitializerMemberValue) {
-                PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
-                for (PsiAnnotationMemberValue initializer : initializers) {
-                  if (initializer instanceof PsiReferenceExpression) {
-                    PsiReferenceExpression refExpr = (PsiReferenceExpression)initializer;
-                    if (refExpr.isReferenceTo(field)) return null;
-                  }
-                }
-              }
-              else if (value instanceof PsiReferenceExpression) {
-                if (((PsiReferenceExpression)value).isReferenceTo(field)) return null;
-              }
-            }
-            return formatNotApplicableError(elementTypeFields[0], nameRef);
+    if (nameRef == null) {
+      return null;
+    }
+    PsiElement resolved = nameRef.resolve();
+    if (!(resolved instanceof PsiClass) || !((PsiClass)resolved).isAnnotationType()) {
+      return null;
+    }
+    PsiClass annotationType = (PsiClass)resolved;
+    PsiAnnotation metaAnnotation = annotationType.getModifierList().findAnnotation(TARGET_ANNOTATION_FQ_NAME);
+    if (metaAnnotation == null) {
+      return null;
+    }
+    PsiNameValuePair[] attributes = metaAnnotation.getParameterList().getAttributes();
+    if (attributes.length == 0) {
+      return null;
+    }
+    PsiField[] elementTypeFields = getElementTypeFields(owner);
+    if (elementTypeFields == null) return null;
+    LOG.assertTrue(elementTypeFields.length > 0);
+    for (PsiField field : elementTypeFields) {
+      PsiAnnotationMemberValue value = attributes[0].getValue();
+      if (value instanceof PsiArrayInitializerMemberValue) {
+        PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
+        for (PsiAnnotationMemberValue initializer : initializers) {
+          if (initializer instanceof PsiReferenceExpression) {
+            PsiReferenceExpression refExpr = (PsiReferenceExpression)initializer;
+            if (refExpr.isReferenceTo(field)) return null;
           }
         }
       }
+      else if (value instanceof PsiReferenceExpression) {
+        if (((PsiReferenceExpression)value).isReferenceTo(field)) return null;
+      }
     }
-
-    return null;
+    return formatNotApplicableError(elementTypeFields[0], nameRef);
   }
 
   private static HighlightInfo formatNotApplicableError(PsiField elementType, PsiJavaCodeReferenceElement nameRef) {
@@ -297,7 +263,7 @@ public class AnnotationsHighlightUtil {
         return getFields(elementTypeClass, "TYPE");
       }
     }
-    else if (owner instanceof PsiMethod) {
+    if (owner instanceof PsiMethod) {
       if (((PsiMethod)owner).isConstructor()) {
         return getFields(elementTypeClass, "CONSTRUCTOR");
       }
@@ -305,16 +271,16 @@ public class AnnotationsHighlightUtil {
         return getFields(elementTypeClass, "METHOD");
       }
     }
-    else if (owner instanceof PsiField) {
+    if (owner instanceof PsiField) {
       return getFields(elementTypeClass, "FIELD");
     }
-    else if (owner instanceof PsiParameter) {
+    if (owner instanceof PsiParameter) {
       return getFields(elementTypeClass, "PARAMETER");
     }
-    else if (owner instanceof PsiLocalVariable) {
+    if (owner instanceof PsiLocalVariable) {
       return getFields(elementTypeClass, "LOCAL_VARIABLE");
     }
-    else if (owner instanceof PsiPackageStatement) {
+    if (owner instanceof PsiPackageStatement) {
       return getFields(elementTypeClass, "PACKAGE");
     }
 
@@ -347,7 +313,7 @@ public class AnnotationsHighlightUtil {
     LOG.assertTrue(aClass.isAnnotationType());
     PsiType type = typeElement.getType();
     if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == aClass) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, CYCLIC_ANNOTATION_MEMER_TYPE);
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, JavaErrorMessages.message("annotation.cyclic.element.type"));
     }
     return null;
   }
@@ -409,5 +375,36 @@ public class AnnotationsHighlightUtil {
       }
     }
     return null;
+  }
+
+  private static class AnnotationReturnTypeVisitor extends PsiTypeVisitor<Boolean> {
+    private static final AnnotationReturnTypeVisitor INSTANCE = new AnnotationReturnTypeVisitor();
+    public Boolean visitType(PsiType type) {
+      return Boolean.FALSE;
+    }
+
+    public Boolean visitPrimitiveType(PsiPrimitiveType primitiveType) {
+      return primitiveType == PsiType.VOID || primitiveType == PsiType.NULL ? Boolean.FALSE : Boolean.TRUE;
+    }
+
+    public Boolean visitArrayType(PsiArrayType arrayType) {
+      if (arrayType.getArrayDimensions() != 1) return Boolean.FALSE;
+      PsiType componentType = arrayType.getComponentType();
+      return componentType.accept(this);
+    }
+
+    public Boolean visitClassType(PsiClassType classType) {
+      if (classType.getParameters().length > 0) {
+        PsiClassType rawType = classType.rawType();
+        if (rawType.equalsToText("java.lang.Class")) {
+          return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+      }
+      PsiClass aClass = classType.resolve();
+      if (aClass != null && (aClass.isAnnotationType() || aClass.isEnum())) return Boolean.TRUE;
+
+      return classType.equalsToText("java.lang.Class") || classType.equalsToText("java.lang.String") ? Boolean.TRUE : Boolean.FALSE;
+    }
   }
 }
