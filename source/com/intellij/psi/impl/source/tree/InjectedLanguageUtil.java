@@ -129,6 +129,7 @@ public class InjectedLanguageUtil {
     if (editor == null) return null;
     if (file == null) return editor;
 
+    PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
     int offset = editor.getCaretModel().getOffset();
     PsiLanguageInjectionHost injectionHost = findInjectionHost(file.findElementAt(offset));
     if (injectionHost == null && offset != 0) {
