@@ -1,6 +1,11 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.macro.MacroFactory;
+import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -36,7 +41,9 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -153,7 +160,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
 
     if (myResult == null) {
-      checkUnboundNamespacePrefix(tag);
+      checkUnboundNamespacePrefix(tag, tag, tag.getNamespacePrefix());
     }
 
     if (myResult == null) {
@@ -181,14 +188,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
-  private void checkUnboundNamespacePrefix(final XmlTag tag) {
-    @NonNls final String namespacePrefix = tag.getNamespacePrefix();
-
+  private void checkUnboundNamespacePrefix(final XmlElement element, final XmlTag context, String namespacePrefix) {
     if (namespacePrefix.length() > 0) {
-      final String namespaceByPrefix = tag.getNamespaceByPrefix(namespacePrefix);
+      final String namespaceByPrefix = context.getNamespaceByPrefix(namespacePrefix);
 
       if (namespaceByPrefix.length() == 0) {
-        final PsiFile containingFile = tag.getContainingFile();
+        final PsiFile containingFile = context.getContainingFile();
         if (!HighlightUtil.shouldInspect(containingFile)) return;
 
         if (!"xml".equals(namespacePrefix) ) {
@@ -205,7 +210,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             }
           } else {
             @NonNls String nsDeclarationAttrName = null;
-            for(XmlTag t = tag; t != null; t = t.getParentTag()) {
+            for(XmlTag t = context; t != null; t = t.getParentTag()) {
               progressManager.checkCanceled();
               if (t.hasNamespaceDeclarations()) {
                 if (nsDeclarationAttrName == null) nsDeclarationAttrName = "xmlns:"+namespacePrefix;
@@ -220,14 +225,25 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           final int messageLength = namespacePrefix.length();
           final HighlightInfoType infoType = error ? HighlightInfoType.ERROR:HighlightInfoType.WARNING;
 
-          bindMessageToTag(
-            tag,
-            infoType,
-            0,
-            messageLength,
-            localizedMessage,
-            new CreateNSDeclarationIntentionAction(tag, namespacePrefix,taglibDeclaration)
-          );
+          if (element instanceof XmlTag) {
+            bindMessageToTag(
+              (XmlTag)element,
+              infoType,
+              0,
+              messageLength,
+              localizedMessage,
+              new CreateNSDeclarationIntentionAction(context, namespacePrefix,taglibDeclaration)
+            );
+          } else {
+            bindMessageToAstNode(
+              element.getNode(),
+              infoType,
+              0,
+              messageLength,
+              localizedMessage,
+              new CreateNSDeclarationIntentionAction(element, namespacePrefix,false)
+            );
+          }
         }
       }
     }
@@ -640,7 +656,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     if (elementDescriptor == null || ourDoJaxpTesting) return;
     XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
 
-    String name = attribute.getName();
+    final String name = attribute.getName();
+
+    checkUnboundNamespacePrefix(attribute, tag, XmlUtil.findPrefixByQualifiedName(name));
 
     if (attributeDescriptor == null) {
       final String localizedMessage = XmlErrorMessages.message("attribute.is.not.allowed.here", name);
@@ -1121,13 +1139,13 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
   private static class CreateNSDeclarationIntentionAction implements IntentionAction {
     boolean myTaglibDeclaration;
-    private final XmlTag myTag;
+    private final XmlElement myElement;
     private final String myNamespacePrefix;
     @NonNls private static final String MY_DEFAULT_XML_NS = "someuri";
     @NonNls private static final String URI_ATTR_NAME = "uri";
 
-    public CreateNSDeclarationIntentionAction(final XmlTag tag, final String namespacePrefix, boolean taglibDeclaration) {
-      myTag = tag;
+    public CreateNSDeclarationIntentionAction(final XmlElement element, final String namespacePrefix, boolean taglibDeclaration) {
+      myElement = element;
       myNamespacePrefix = namespacePrefix;
       myTaglibDeclaration = taglibDeclaration;
     }
@@ -1177,6 +1195,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
                             final PsiFile file,
                             final List<String> possibleUris,
                             final boolean acceptXmlNs) {
+      if (!(myElement instanceof XmlTag)) return;
+      final XmlTag tag = (XmlTag)myElement;
       final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
 
       if (acceptTaglib) {
@@ -1200,7 +1220,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           final PsiMetaData metaData = tldFileByUri.getDocument().getMetaData();
 
           if (metaData instanceof TldDescriptor) {
-            if ( ((TldDescriptor)metaData).getElementDescriptor(myTag) != null) {
+            if ( ((TldDescriptor)metaData).getElementDescriptor(tag) != null) {
               possibleUris.add(uri);
             }
           }
@@ -1225,7 +1245,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             final PsiMetaData metaData = xmlFile.getDocument().getMetaData();
 
             if (metaData instanceof XmlNSDescriptorImpl) {
-              XmlElementDescriptor elementDescriptor = ((XmlNSDescriptorImpl)metaData).getElementDescriptor(myTag.getLocalName(),url);
+              XmlElementDescriptor elementDescriptor = ((XmlNSDescriptorImpl)metaData).getElementDescriptor(tag.getLocalName(),url);
 
               if (elementDescriptor != null && !(elementDescriptor instanceof AnyXmlElementDescriptor)) {
                 possibleUris.add(url);
@@ -1236,7 +1256,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       }
     }
 
-    public void invoke(final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
+    public void invoke(final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
       final boolean taglib = myTaglibDeclaration || file instanceof JspFile;
       final String[] namespaces = guessNamespace(
         file,
@@ -1291,8 +1311,18 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         if (namespaces.length == 0) {
           final PsiElement valueToken = xmlAttribute.getValueElement().getChildren()[1];
           final TextRange textRange = valueToken.getTextRange();
-          editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
-          editor.getCaretModel().moveToOffset(textRange.getStartOffset());
+
+          CommandProcessor.getInstance().executeCommand(
+            project,
+            new Runnable() {
+              public void run() {
+                editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
+                editor.getCaretModel().moveToOffset(textRange.getStartOffset());
+              }
+            },
+            getText(),
+            getFamilyName()
+          );
         }
       }
     }
