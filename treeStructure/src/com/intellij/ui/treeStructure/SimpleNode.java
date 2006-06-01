@@ -81,7 +81,7 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
         if (getElement() != newElement) {
           changed = true;
         }
-        if (getElement() == null) return changed;
+        if (newElement == null) return changed;
 
         Color oldColor = myColor;
         String oldName = myName;
