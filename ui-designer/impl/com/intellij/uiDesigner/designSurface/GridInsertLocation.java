@@ -8,6 +8,7 @@ import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadAbstractGridLayoutManager;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
@@ -131,8 +132,9 @@ public class GridInsertLocation extends GridDropLocation {
     Rectangle cellRect = getGridFeedbackCellRect(dragObject);
     assert cellRect != null;
 
-    int[] vGridLines = getContainer().getGridLayoutManager().getVerticalGridLines(getContainer());
-    int[] hGridLines = getContainer().getGridLayoutManager().getHorizontalGridLines(getContainer());
+    final RadAbstractGridLayoutManager layoutManager = getContainer().getGridLayoutManager();
+    int[] vGridLines = layoutManager.getVerticalGridLines(getContainer());
+    int[] hGridLines = layoutManager.getHorizontalGridLines(getContainer());
 
     FeedbackPainter painter = (myMode == GridInsertMode.ColumnBefore ||
                                myMode == GridInsertMode.ColumnAfter)
@@ -142,11 +144,11 @@ public class GridInsertLocation extends GridDropLocation {
 
     Rectangle rcFeedback = null;
     if (dragObject.getComponentCount() == 1 && myMode != GridInsertMode.InCell) {
-      RadComponent component = getContainer().getGridLayoutManager().getComponentAtGrid(getContainer(), insertRow, insertCol);
+      int cellWidth = vGridLines [insertCol+1] - vGridLines [insertCol];
+      int cellHeight = hGridLines [insertRow+1] - hGridLines [insertRow];
+      RadComponent component = layoutManager.getComponentAtGrid(getContainer(), insertRow, insertCol);
       if (component != null) {
         Rectangle bounds = component.getBounds();
-        int cellWidth = vGridLines [insertCol+1] - vGridLines [insertCol];
-        int cellHeight = hGridLines [insertRow+1] - hGridLines [insertRow];
         bounds.translate(-vGridLines [insertCol], -hGridLines [insertRow]);
 
         int spaceToRight = vGridLines [insertCol+1] - vGridLines [insertCol] - (bounds.x + bounds.width);
@@ -166,10 +168,36 @@ public class GridInsertLocation extends GridDropLocation {
 
         if (rcFeedback != null) {
           rcFeedback.translate(vGridLines [insertCol], hGridLines [insertRow]);
-          feedbackLayer.putFeedback(getContainer().getDelegee(), rcFeedback);
-          return;
         }
       }
+
+      if (rcFeedback == null) {
+        if (insertCol == layoutManager.getGridColumnCount(getContainer())-1 && myMode == GridInsertMode.ColumnAfter) {
+          final Dimension initialSize = dragObject.getInitialSize(getContainer().getDelegee());
+          int remainingSize = getContainer().getDelegee().getWidth() - vGridLines [vGridLines.length-1];
+          if (dragObject.getHSizePolicy() == 0 && remainingSize > initialSize.width) {
+            rcFeedback = new Rectangle(vGridLines [vGridLines.length-1], hGridLines [insertRow], initialSize.width, cellHeight);
+          }
+          else if (remainingSize >= 4) {
+            rcFeedback = new Rectangle(vGridLines [vGridLines.length-1], hGridLines [insertRow], remainingSize, cellHeight);
+          }
+        }
+        else if (insertRow == layoutManager.getGridRowCount(getContainer())-1 && myMode == GridInsertMode.RowAfter) {
+          final Dimension initialSize = dragObject.getInitialSize(getContainer().getDelegee());
+          int remainingSize = getContainer().getDelegee().getHeight() - hGridLines [hGridLines.length-1];
+          if (dragObject.getVSizePolicy() == 0 && remainingSize > initialSize.height) {
+            rcFeedback = new Rectangle(vGridLines [insertCol], hGridLines [hGridLines.length-1], cellWidth, initialSize.height);
+          }
+          else if (remainingSize >= 4) {
+            rcFeedback = new Rectangle(vGridLines [insertCol], hGridLines [hGridLines.length-1], cellWidth, remainingSize);
+          }
+        }
+      }
+    }
+
+    if (rcFeedback != null) {
+      feedbackLayer.putFeedback(getContainer().getDelegee(), rcFeedback);
+      return;
     }
 
     rc = getInsertFeedbackPosition(myMode, getContainer(), cellRect, feedbackRect);
@@ -217,7 +245,7 @@ public class GridInsertLocation extends GridDropLocation {
     int row = getRow();
     int col = getColumn();
     boolean canHGrow = (dragObject.getHSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0;
-    boolean canVGrow = (dragObject.getHSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0;
+    boolean canVGrow = (dragObject.getVSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0;
     int insertedCells;
     RadContainer container = getContainer();
     //noinspection EnumSwitchStatementWhichMissesCases
