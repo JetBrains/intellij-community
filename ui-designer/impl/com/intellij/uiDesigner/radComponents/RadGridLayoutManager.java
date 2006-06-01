@@ -330,23 +330,36 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
   public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int i, final Graphics2D g,
                                      final Rectangle rc) {
     GridLayoutManager layout = (GridLayoutManager) container.getLayout();
-    int sizePolicy = layout.getCellSizePolicy(isRow, i);
-    if ((sizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) != 0) {
-      Stroke oldStroke = g.getStroke();
-      g.setStroke(new BasicStroke(2.0f));
-      g.setColor(Color.BLUE);
-      if (isRow) {
-        int midPoint = (int) rc.getCenterX();
-        g.drawLine(midPoint+1, rc.y+1, midPoint+1, rc.y+rc.height-1);
-      }
-      else {
-        int midPoint = (int) rc.getCenterY();
-        g.drawLine(rc.x+1, midPoint+1, rc.x+rc.width-1, midPoint+1);
-      }
-      g.setStroke(oldStroke);
+    if (layout.willGrow(isRow, i)) {
+      drawGrowMarker(isRow, g, rc);
     }
   }
 
+  protected static void drawGrowMarker(final boolean isRow, final Graphics2D g2d, final Rectangle rc) {
+    g2d.setColor(Color.BLACK);
+    if (!isRow) {
+      int maxX = (int) rc.getMaxX();
+      int midY = (int) rc.getCenterY()+3;
+      final int xStart = Math.max(maxX - 10, rc.x + 2);
+      final int xEnd = maxX - 2;
+      g2d.drawLine(xStart, midY, xEnd, midY);
+      g2d.drawLine(xStart, midY, xStart+2, midY-2);
+      g2d.drawLine(xStart, midY, xStart+2, midY+2);
+      g2d.drawLine(xEnd, midY, xEnd-2, midY-2);
+      g2d.drawLine(xEnd, midY, xEnd-2, midY+2);
+    }
+    else {
+      int maxY = (int) rc.getMaxY();
+      int midX = (int) rc.getCenterX()+3;
+      final int yStart = Math.max(maxY - 10, rc.y + 2);
+      final int yEnd = maxY - 2;
+      g2d.drawLine(midX, yStart, midX, yEnd);
+      g2d.drawLine(midX, yStart, midX-2, yStart+2);
+      g2d.drawLine(midX, yStart, midX+2, yStart+2);
+      g2d.drawLine(midX, yEnd, midX-2, yEnd-2);
+      g2d.drawLine(midX, yEnd, midX+2, yEnd-2);
+    }
+  }
   @Override
   public int insertGridCells(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore, final boolean grow) {
     GridChangeUtil.insertRowOrColumn(grid, cellIndex, isRow, isBefore);

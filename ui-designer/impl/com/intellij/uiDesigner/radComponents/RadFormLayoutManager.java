@@ -70,24 +70,14 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
       RowSpec[] rowSpecs = new RowSpec [grid.getRowCount() * 2 - 1];
       ColumnSpec[] colSpecs = new ColumnSpec [grid.getColumnCount() * 2 - 1];
 
-      int maxSizePolicy = 0;
       for(int i=0; i<grid.getRowCount(); i++) {
-        maxSizePolicy = Math.max(maxSizePolicy, grid.getCellSizePolicy(true, i));
-      }
-      for(int i=0; i<grid.getRowCount(); i++) {
-        int sizePolicy = grid.getCellSizePolicy(true, i);
-        rowSpecs [i*2] = (sizePolicy < maxSizePolicy) ? FormFactory.DEFAULT_ROWSPEC : new RowSpec(ENCODED_FORMSPEC_GROW);
+        rowSpecs [i*2] = grid.willGrow(true, i) ? new RowSpec(ENCODED_FORMSPEC_GROW) : FormFactory.DEFAULT_ROWSPEC;
         if (i*2+1 < rowSpecs.length) {
           rowSpecs [i*2+1] = FormFactory.RELATED_GAP_ROWSPEC;
         }
       }
-      maxSizePolicy = 0;
       for(int i=0; i<grid.getColumnCount(); i++) {
-        maxSizePolicy = Math.max(maxSizePolicy, grid.getCellSizePolicy(false, i));
-      }
-      for(int i=0; i<grid.getColumnCount(); i++) {
-        int sizePolicy = grid.getCellSizePolicy(true, i);
-        colSpecs [i*2] = (sizePolicy < maxSizePolicy) ? FormFactory.DEFAULT_COLSPEC : new ColumnSpec(ENCODED_FORMSPEC_GROW);
+        colSpecs [i*2] = grid.willGrow(false, i) ? new ColumnSpec(ENCODED_FORMSPEC_GROW) : FormFactory.DEFAULT_COLSPEC;
         if (i*2+1 < colSpecs.length) {
           colSpecs [i*2+1] = FormFactory.RELATED_GAP_COLSPEC;
         }
@@ -349,32 +339,6 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     g2d.setColor(Color.BLUE);
     drawGroupLine(rc, isRow, g2d, true, haveTopLeft, haveTopRight, haveTopLine);
     drawGroupLine(rc, isRow, g2d, false, haveBottomLeft, haveBottomRight, haveBottomLine);
-  }
-
-  private static void drawGrowMarker(final boolean isRow, final Graphics2D g2d, final Rectangle rc) {
-    g2d.setColor(Color.BLACK);
-    if (!isRow) {
-      int maxX = (int) rc.getMaxX();
-      int midY = (int) rc.getCenterY()+3;
-      final int xStart = Math.max(maxX - 10, rc.x + 2);
-      final int xEnd = maxX - 2;
-      g2d.drawLine(xStart, midY, xEnd, midY);
-      g2d.drawLine(xStart, midY, xStart+2, midY-2);
-      g2d.drawLine(xStart, midY, xStart+2, midY+2);
-      g2d.drawLine(xEnd, midY, xEnd-2, midY-2);
-      g2d.drawLine(xEnd, midY, xEnd-2, midY+2);
-    }
-    else {
-      int maxY = (int) rc.getMaxY();
-      int midX = (int) rc.getCenterX()+3;
-      final int yStart = Math.max(maxY - 10, rc.y + 2);
-      final int yEnd = maxY - 2;
-      g2d.drawLine(midX, yStart, midX, yEnd);
-      g2d.drawLine(midX, yStart, midX-2, yStart+2);
-      g2d.drawLine(midX, yStart, midX+2, yStart+2);
-      g2d.drawLine(midX, yEnd, midX-2, yEnd-2);
-      g2d.drawLine(midX, yEnd, midX+2, yEnd-2);
-    }
   }
 
   private static void drawGroupLine(final Rectangle rc, final boolean isRow, final Graphics2D g2d, boolean isTop,

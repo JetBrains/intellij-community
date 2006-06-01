@@ -1001,4 +1001,12 @@ public final class GridLayoutManager extends AbstractLayout {
     }
     return info.getCellSizePolicy(cellIndex);
   }
+
+  public boolean willGrow(boolean isRow, int cellIndex) {
+    int maxSizePolicy = 0;
+    for(int i=0; i<getCellCount(isRow); i++) {
+      maxSizePolicy = Math.max(maxSizePolicy, getCellSizePolicy(isRow, i));
+    }
+    return getCellSizePolicy(isRow, cellIndex) == maxSizePolicy;
+  }
 }
