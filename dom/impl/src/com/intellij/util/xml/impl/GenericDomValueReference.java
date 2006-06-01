@@ -96,7 +96,12 @@ public class GenericDomValueReference<T> extends GenericReference {
         }
       }
     }
-    return o != null ? getValueElement() : null;
+    if (o != null) {
+      return getValueElement();
+    }
+    else {
+      return null;
+    }
   }
 
   public final PsiElement resolveInner() {
