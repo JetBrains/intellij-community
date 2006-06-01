@@ -14,10 +14,8 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -25,7 +23,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * author: lesya
+ * @author peter
  */
 public class GenericDomValueReference<T> extends GenericReference {
   private final GenericDomValue<T> myGenericValue;
