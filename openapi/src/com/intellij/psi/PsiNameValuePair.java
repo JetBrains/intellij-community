@@ -15,7 +15,7 @@
  */
 package com.intellij.psi;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Represents a single element-value pair of an annotation parameter list.
@@ -42,6 +42,7 @@ public interface PsiNameValuePair extends PsiElement {
    *
    * @return the name, or null if the annotation declaration is incomplete.
    */
+  @NonNls
   String getName();
 
   /**
