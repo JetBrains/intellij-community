@@ -360,11 +360,30 @@ public class FetchExtResourceAction extends BaseIntentionAction {
             }
           } else if (element instanceof XmlTag) {
             final XmlTag tag = (XmlTag)element;
-            final String schemaLocation = tag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
+            String schemaLocation = tag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
             
             if (schemaLocation != null) {
               final PsiReference[] references = tag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT, null).getValueElement().getReferences();
               if (references.length > 0) result.add(schemaLocation);
+            }
+
+            final String prefix = tag.getPrefixByNamespace(XmlUtil.XML_SCHEMA_INSTANCE_URI);
+            if (prefix != null) {
+              schemaLocation = tag.getAttributeValue("schemaLocation",XmlUtil.XML_SCHEMA_INSTANCE_URI);
+
+              if (schemaLocation != null) {
+                final StringTokenizer tokenizer = new StringTokenizer(schemaLocation);
+
+                while(tokenizer.hasMoreTokens()) {
+                  tokenizer.nextToken();
+                  if (!tokenizer.hasMoreTokens()) break;
+                  String location = tokenizer.nextToken();
+
+                  if (!result.contains(location)) {
+                    result.add(location);
+                  }
+                }
+              }
             }
           }
 
