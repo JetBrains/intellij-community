@@ -30,12 +30,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
   public EclipseEmbeddedCompiler(Project project) {
     myProject = project;
     myEclipseExternalCompiler = new EclipseCompiler(project);
-    try {
-      createCompileDriver();
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+    createCompileDriver();
   }
 
   public boolean isInitialized() {
@@ -138,7 +133,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
     return process;
   }
 
-  private void createCompileDriver() throws Exception {
+  private void createCompileDriver() {
     try {
       myEclipseCompilerDriver = new EclipseCompilerDriver();
     }
