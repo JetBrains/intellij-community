@@ -65,22 +65,14 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     return QuickFixBundle.message("fetch.external.resource");
   }
 
-  public static String findUri(PsiFile file, int offset) {
-    PsiElement currentElement = file.findElementAt(offset);
-    PsiElement element = PsiTreeUtil.getParentOfType(currentElement, XmlDoctype.class);
-    if (element != null) {
-      return ((XmlDoctype)element).getDtdUri();
-    }
+  public static String findUrl(PsiFile file, int offset, String uri) {
+    final PsiElement currentElement = file.findElementAt(offset);
+    final XmlAttribute attribute = PsiTreeUtil.getParentOfType(currentElement, XmlAttribute.class);
 
-    XmlAttribute attribute = PsiTreeUtil.getParentOfType(currentElement, XmlAttribute.class);
-    if(attribute == null) return null;
+    if (attribute != null) {
+      final XmlTag tag = PsiTreeUtil.getParentOfType(currentElement, XmlTag.class);
 
-    if (attribute.isNamespaceDeclaration()) {
-      String uri = attribute.getValue();
-      PsiElement parent = attribute.getParent();
-
-      if (uri != null && parent instanceof XmlTag && ((XmlTag)parent).getNSDescriptor(uri, true) == null) {
-        XmlTag tag = (XmlTag)parent;
+      if (tag != null) {
         final String prefix = tag.getPrefixByNamespace(XmlUtil.XML_SCHEMA_INSTANCE_URI);
         if (prefix != null) {
           final String attrValue = tag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT, XmlUtil.XML_SCHEMA_INSTANCE_URI);
@@ -99,6 +91,26 @@ public class FetchExtResourceAction extends BaseIntentionAction {
             }
           }
         }
+      }
+    }
+    return uri;
+  }
+
+  public static String findUri(PsiFile file, int offset) {
+    PsiElement currentElement = file.findElementAt(offset);
+    PsiElement element = PsiTreeUtil.getParentOfType(currentElement, XmlDoctype.class);
+    if (element != null) {
+      return ((XmlDoctype)element).getDtdUri();
+    }
+
+    XmlAttribute attribute = PsiTreeUtil.getParentOfType(currentElement, XmlAttribute.class);
+    if(attribute == null) return null;
+
+    if (attribute.isNamespaceDeclaration()) {
+      String uri = attribute.getValue();
+      PsiElement parent = attribute.getParent();
+
+      if (uri != null && parent instanceof XmlTag && ((XmlTag)parent).getNSDescriptor(uri, true) == null) {
         return uri;
       }
     } else if (attribute.getNamespace().equals(XmlUtil.XML_SCHEMA_INSTANCE_URI)) {
@@ -142,6 +154,8 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     final String uri = findUri(file, offset);
     if (uri == null) return;
 
+    final String url = findUrl(file, offset, uri);
+
     final ProgressWindow progressWindow = new ProgressWindow(true, project);
     progressWindow.setTitle(QuickFixBundle.message("fetching.resource.title"));
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -151,22 +165,22 @@ public class FetchExtResourceAction extends BaseIntentionAction {
             public void run() {
               do {
                 try {
-                  HttpConfigurable.getInstance().prepareURL(uri);
-                  fetchDtd(project, uri);
+                  HttpConfigurable.getInstance().prepareURL(url);
+                  fetchDtd(project, uri, url);
                   break;
                 }
                 catch (IOException ex) {
-                  String uriWithProblems = uri;
+                  String urlWithProblems = url;
                   String message = QuickFixBundle.message("error.fetching.title");
                   IOException cause = ex;
 
                   if (ex instanceof FetchingResourceIOException) {
-                    uriWithProblems = ((FetchingResourceIOException)ex).url;
+                    urlWithProblems = ((FetchingResourceIOException)ex).url;
                     cause = (IOException)ex.getCause();
-                    if (!uri.equals(uriWithProblems)) message = QuickFixBundle.message("error.fetching.dependent.resource.title");
+                    if (!url.equals(urlWithProblems)) message = QuickFixBundle.message("error.fetching.dependent.resource.title");
                   }
 
-                  if (!IOExceptionDialog.showErrorDialog(cause, message, QuickFixBundle.message("error.fetching.resource", uriWithProblems))) {
+                  if (!IOExceptionDialog.showErrorDialog(cause, message, QuickFixBundle.message("error.fetching.resource", urlWithProblems))) {
                     break;
                   }
                   else {
@@ -182,7 +196,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     }
   }
 
-  private void fetchDtd(final Project project, final String dtdUrl) throws IOException {
+  private void fetchDtd(final Project project, final String dtdUrl, final String url) throws IOException {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
     String sep = File.separator;
@@ -212,7 +226,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     final IOException[] nestedException = new IOException[1];
 
     try {
-      final String resPath = fetchOneFile(indicator, dtdUrl, project, extResourcesPath, null);
+      final String resPath = fetchOneFile(indicator, url, project, extResourcesPath, null);
       if (resPath == null) return;
       resourceUrls.add(dtdUrl);
       downloadedResources.add(resPath);
@@ -239,7 +253,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
                     // do not support absolute references
                     continue;
                   }
-                  String resourceUrl = dtdUrl.substring(0, dtdUrl.lastIndexOf('/') + 1) + s;
+                  String resourceUrl = url.substring(0, url.lastIndexOf('/') + 1) + s;
                   String resourcePath;
 
                   try {
