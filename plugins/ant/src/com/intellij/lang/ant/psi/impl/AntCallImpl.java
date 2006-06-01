@@ -52,7 +52,7 @@ public class AntCallImpl extends AntTaskImpl implements AntCall {
   @NotNull
   public AntProperty[] getParams() {
     if (myParams == null) {
-      List<AntProperty> properties = new ArrayList<AntProperty>();
+      final List<AntProperty> properties = new ArrayList<AntProperty>();
       for (AntElement element : getChildren()) {
         if (element instanceof AntProperty) {
           properties.add((AntProperty)element);
@@ -71,7 +71,7 @@ public class AntCallImpl extends AntTaskImpl implements AntCall {
   @NotNull
   private AntTarget[] getDependsTargets() {
     if (myDependsTargets == null) {
-      List<AntTarget> targets = new ArrayList<AntTarget>();
+      final List<AntTarget> targets = new ArrayList<AntTarget>();
       for (AntElement element : getChildren()) {
         if (element instanceof AntTarget) {
           targets.add((AntTarget)element);

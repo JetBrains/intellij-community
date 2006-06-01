@@ -1,9 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
-import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.AntProperty;
-import com.intellij.lang.ant.psi.AntTarget;
+import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,9 +26,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   @NonNls private List<String> myEnvPrefixes;
   @NonNls private static final String myDefaultEnvPrefix = "env.";
 
-  public AntProjectImpl(final AntFileImpl parent,
-                        final XmlTag tag,
-                        final AntTypeDefinition projectDefinition) {
+  public AntProjectImpl(final AntFileImpl parent, final XmlTag tag, final AntTypeDefinition projectDefinition) {
     super(parent, tag);
     myDefinition = projectDefinition;
   }
@@ -235,6 +230,27 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     if (myEnvPrefixes == null) {
       myEnvPrefixes = new ArrayList<String>();
       myEnvPrefixes.add(myDefaultEnvPrefix);
+    }
+  }
+
+  protected AntElement[] getChildrenInner() {
+    final AntElement[] children = super.getChildrenInner();
+    fixUndefinedElements(this, children);
+    return children;
+  }
+
+  private static void fixUndefinedElements(final AntElement parent, final AntElement[] elements) {
+    for (int i = 0; i < elements.length; i++) {
+      AntElement element = elements[i];
+      if (element instanceof AntStructuredElement && ((AntStructuredElement)element).getTypeDefinition() == null) {
+        element = AntElementFactory.createAntElement(parent, element.getSourceElement());
+        if (element != null) {
+          elements[i] = element;
+        }
+      }
+      if (element != null) {
+        fixUndefinedElements(element, (AntElement[])element.getChildren());
+      }
     }
   }
 }

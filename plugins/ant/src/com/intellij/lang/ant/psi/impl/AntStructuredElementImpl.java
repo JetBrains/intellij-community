@@ -39,9 +39,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   private int myLastFoundElementOffset = -1;
   private AntElement myLastFoundElement;
 
-  public AntStructuredElementImpl(final AntElement parent,
-                                  final XmlElement sourceElement,
-                                  @NonNls final String nameElementAttribute) {
+  public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement, @NonNls final String nameElementAttribute) {
     super(parent, sourceElement);
     myNameElementAttribute = nameElementAttribute;
     getIdElement();
@@ -66,9 +64,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     }
   }
 
-  public AntStructuredElementImpl(final AntElement parent,
-                                  final XmlElement sourceElement,
-                                  final AntTypeDefinition definition) {
+  public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     this(parent, sourceElement, definition, "name");
   }
 
@@ -163,8 +159,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     if (!file.isAbsolute()) {
       file = new File(vFile.getPath(), fileName);
     }
-    vFile =
-      LocalFileSystem.getInstance().findFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));
+    vFile = LocalFileSystem.getInstance().findFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));
     if (vFile == null) return null;
     return antFile.getViewProvider().getManager().findFile(vFile);
   }
@@ -286,7 +281,8 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
         }
       }
     }
-    return children.toArray(new AntElement[children.size()]);
+    final int count = children.size();
+    return (count > 0) ? children.toArray(new AntElement[count]) : AntElement.EMPTY_ARRAY;
   }
 
   @NotNull

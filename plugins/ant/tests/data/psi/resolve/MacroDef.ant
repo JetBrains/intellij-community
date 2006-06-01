@@ -2,7 +2,7 @@
   <target name="t">
     <
     <ref>
-    mytask />
+    mytask/>
   </target>
   <macrodef name="mytask"/>
 </project>

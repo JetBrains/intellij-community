@@ -33,7 +33,7 @@ public class AntMacroDefParameterReferenceProvider extends GenericReferenceProvi
     if (macrodef == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    List<PsiReference> refs = new ArrayList<PsiReference>();
+    final List<PsiReference> refs = new ArrayList<PsiReference>();
     for (XmlAttribute attr : antElement.getSourceElement().getAttributes()) {
       getXmlElementReferences(attr.getValueElement(), refs, antElement);
     }
@@ -41,12 +41,9 @@ public class AntMacroDefParameterReferenceProvider extends GenericReferenceProvi
     return (refs.size() > 0) ? refs.toArray(new PsiReference[refs.size()]) : PsiReference.EMPTY_ARRAY;
   }
 
-  private void getXmlElementReferences(final XmlElement element,
-                                       final List<PsiReference> refs,
-                                       final AntStructuredElement antElement) {
+  private void getXmlElementReferences(final XmlElement element, final List<PsiReference> refs, final AntStructuredElement antElement) {
     final String text = element.getText();
-    final int offsetInPosition =
-      element.getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset();
+    final int offsetInPosition = element.getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset();
     int startIndex;
     int endIndex = -1;
     while ((startIndex = text.indexOf("@{", endIndex + 1)) > endIndex) {
@@ -55,8 +52,8 @@ public class AntMacroDefParameterReferenceProvider extends GenericReferenceProvi
       if (endIndex < 0) break;
       if (endIndex > startIndex) {
         final String name = text.substring(startIndex, endIndex);
-        refs.add(new AntMacroDefParameterReference(this, antElement, name, new TextRange(
-          offsetInPosition + startIndex, offsetInPosition + endIndex), element));
+        refs.add(new AntMacroDefParameterReference(this, antElement, name,
+                                                   new TextRange(offsetInPosition + startIndex, offsetInPosition + endIndex), element));
       }
     }
   }
@@ -67,10 +64,7 @@ public class AntMacroDefParameterReferenceProvider extends GenericReferenceProvi
   }
 
   @NotNull
-  public PsiReference[] getReferencesByString(String str,
-                                              PsiElement position,
-                                              ReferenceType type,
-                                              int offsetInPosition) {
+  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
     return getReferencesByElement(position);
   }
 }

@@ -30,8 +30,7 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
   private AntTypeId[] myNestedElementsArray;
 
   public AntTypeDefinitionImpl(final AntTypeDefinitionImpl base) {
-    this(base.getTypeId(), base.getClassName(), base.isTask(),
-         new HashMap<String, AntAttributeType>(base.myAttributes),
+    this(base.getTypeId(), base.getClassName(), base.isTask(), new HashMap<String, AntAttributeType>(base.myAttributes),
          new HashMap<AntTypeId, String>(base.myNestedClassNames));
   }
 
@@ -90,12 +89,20 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
     return myAttributes.get(attr);
   }
 
+  public Map<String, AntAttributeType> getAttributesMap() {
+    return myAttributes;
+  }
+
   @SuppressWarnings({"unchecked"})
   public AntTypeId[] getNestedElements() {
     if (myNestedElementsArray == null || myNestedElementsArray.length != myNestedClassNames.size()) {
       myNestedElementsArray = myNestedClassNames.keySet().toArray(new AntTypeId[myNestedClassNames.size()]);
     }
     return myNestedElementsArray;
+  }
+
+  public Map<AntTypeId, String> getNestedElementsMap() {
+    return myNestedClassNames;
   }
 
   @Nullable

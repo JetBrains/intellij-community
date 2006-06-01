@@ -13,16 +13,15 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
 
   @NonNls public static final String ANT_MACRODEF_NAME = "AntMacroDef";
 
-  private AntTypeDefinition myMacroDefinition;
+  private AntTypeDefinitionImpl myMacroDefinition;
 
-  public AntMacroDefImpl(final AntStructuredElement parent,
-                         final XmlElement sourceElement,
-                         final AntTypeDefinition definition) {
+  public AntMacroDefImpl(final AntStructuredElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
     invalidateMacroDefinition();
   }
@@ -35,8 +34,11 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
     }
     final AntFile file = getAntFile();
     final String thisClassName = toString();
-    final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();
-    final HashMap<AntTypeId, String> nestedElements = new HashMap<AntTypeId, String>();
+    myMacroDefinition = (AntTypeDefinitionImpl)file.getBaseTypeDefinition(thisClassName);
+    final Map<String, AntAttributeType> attributes =
+      (myMacroDefinition == null) ? new HashMap<String, AntAttributeType>() : myMacroDefinition.getAttributesMap();
+    final Map<AntTypeId, String> nestedElements =
+      (myMacroDefinition == null) ? new HashMap<AntTypeId, String>() : myMacroDefinition.getNestedElementsMap();
     for (AntElement child : getChildren()) {
       if (child instanceof AntStructuredElement) {
         AntStructuredElement se = (AntStructuredElement)child;
@@ -47,12 +49,15 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
             attributes.put(name, AntAttributeType.STRING);
           }
           else if (tagName.equals("element")) {
-            final AntTypeDefinitionImpl nestedDef =
-              new AntTypeDefinitionImpl((AntTypeDefinitionImpl)file.getTargetDefinition());
+            final String elementClassName = thisClassName + '$' + name;
+            AntTypeDefinitionImpl nestedDef = (AntTypeDefinitionImpl)file.getBaseTypeDefinition(elementClassName);
+            if (nestedDef == null) {
+              nestedDef = new AntTypeDefinitionImpl((AntTypeDefinitionImpl)file.getTargetDefinition());
+            }
             final AntTypeId typeId = new AntTypeId(name);
             nestedDef.setTypeId(typeId);
+            nestedDef.setClassName(elementClassName);
             nestedDef.setIsTask(false);
-            nestedDef.setClassName(thisClassName + '.' + name);
             nestedDef.setDefiningElement(child);
             file.registerCustomType(nestedDef);
             nestedElements.put(typeId, nestedDef.getClassName());
@@ -60,8 +65,16 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
         }
       }
     }
-    myMacroDefinition = new AntTypeDefinitionImpl(new AntTypeId(getName()), thisClassName, true, attributes,
-                                                  nestedElements, this);
+    final AntTypeId definedTypeId = new AntTypeId(getName());
+    if (myMacroDefinition == null) {
+      myMacroDefinition = new AntTypeDefinitionImpl(definedTypeId, thisClassName, true, attributes, nestedElements, this);
+    }
+    else {
+      myMacroDefinition.setTypeId(definedTypeId);
+      myMacroDefinition.setClassName(thisClassName);
+      myMacroDefinition.setIsTask(true);
+      myMacroDefinition.setDefiningElement(this);
+    }
     getAntParent().registerCustomType(myMacroDefinition);
   }
 
@@ -92,12 +105,12 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
     if (myMacroDefinition != null) {
       final AntFile file = getAntFile();
       for (AntTypeId id : myMacroDefinition.getNestedElements()) {
-        final AntTypeDefinition nestedDef =
-          file.getBaseTypeDefinition(myMacroDefinition.getNestedClassName(id));
+        final AntTypeDefinition nestedDef = file.getBaseTypeDefinition(myMacroDefinition.getNestedClassName(id));
         file.unregisterCustomType(nestedDef);
       }
       getAntParent().unregisterCustomType(myMacroDefinition);
-      invalidateMacroDefinition();
+      myMacroDefinition = null;
+      file.clearCaches();
     }
   }
 }
