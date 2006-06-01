@@ -33,12 +33,8 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
     createCompileDriver();
   }
 
-  public boolean isInitialized() {
-    return myEclipseCompilerDriver != null && myEclipseExternalCompiler.isInitialized();
-  }
-
   public boolean checkCompiler() {
-    return isInitialized() && myEclipseExternalCompiler.checkCompiler();
+    return myEclipseCompilerDriver != null && myEclipseExternalCompiler.checkCompiler();
   }
 
   @NotNull
@@ -134,11 +130,6 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
   }
 
   private void createCompileDriver() {
-    try {
-      myEclipseCompilerDriver = new EclipseCompilerDriver();
-    }
-    catch (NoClassDefFoundError e) {
-      // eclipse jar must be not in the classpath
-    }
+    myEclipseCompilerDriver = new EclipseCompilerDriver();
   }
 }

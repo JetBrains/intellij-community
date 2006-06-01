@@ -156,9 +156,12 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
       if (eclipse.isInitialized()) {
         registeredCompilers.add(eclipse);
       }
-      final EclipseEmbeddedCompiler eclipseEmbedded = new EclipseEmbeddedCompiler(myProject);
-      if (eclipseEmbedded.isInitialized()) {
+      try {
+        final EclipseEmbeddedCompiler eclipseEmbedded = new EclipseEmbeddedCompiler(myProject);
         registeredCompilers.add(eclipseEmbedded);
+      }
+      catch (NoClassDefFoundError e) {
+        // eclipse jar must be not in the classpath
       }
     }
     myDefaultJavaCompiler = JAVAC_EXTERNAL_BACKEND;
