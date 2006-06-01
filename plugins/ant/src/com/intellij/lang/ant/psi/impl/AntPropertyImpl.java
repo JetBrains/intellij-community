@@ -49,9 +49,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     }
   }
 
-  public AntPropertyImpl(final AntElement parent,
-                         final XmlElement sourceElement,
-                         final AntTypeDefinition definition) {
+  public AntPropertyImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     this(parent, sourceElement, definition, "name");
   }
 
@@ -112,7 +110,6 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
       throw new IncorrectOperationException("Can't set value of an unnamed property");
     }
     sourceElement.setAttribute("value", value);
-    subtreeChanged();
   }
 
   @Nullable
@@ -130,7 +127,6 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   public void setPropertiesFile(final String name) throws IncorrectOperationException {
     getSourceElement().setAttribute("file", name);
-    subtreeChanged();
   }
 
   public void clearCaches() {

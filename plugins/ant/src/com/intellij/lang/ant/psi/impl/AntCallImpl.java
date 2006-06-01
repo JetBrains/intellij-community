@@ -46,7 +46,6 @@ public class AntCallImpl extends AntTaskImpl implements AntCall {
 
   public void setTarget(AntTarget target) throws IncorrectOperationException {
     getSourceElement().setAttribute("target", target.getName());
-    subtreeChanged();
   }
 
   @NotNull

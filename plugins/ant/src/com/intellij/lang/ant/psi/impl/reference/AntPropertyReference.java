@@ -34,7 +34,6 @@ public class AntPropertyReference extends AntGenericReference {
       final XmlAttribute attribute = getAttribute();
       final String value = attribute.getValue();
       attribute.setValue(value.replace("${" + oldName + '}', "${" + newElementName + '}'));
-      element.subtreeChanged();
     }
     return element;
   }

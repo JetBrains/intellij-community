@@ -13,14 +13,11 @@ public class AntElementNameReference extends AntGenericReference {
 
   private PsiElement myResolvedElement;
 
-  public AntElementNameReference(final GenericReferenceProvider provider,
-                                 final AntStructuredElement element) {
+  public AntElementNameReference(final GenericReferenceProvider provider, final AntStructuredElement element) {
     super(provider, element);
   }
 
-  public AntElementNameReference(final GenericReferenceProvider provider,
-                                 final AntStructuredElement element,
-                                 final XmlAttribute attr) {
+  public AntElementNameReference(final GenericReferenceProvider provider, final AntStructuredElement element, final XmlAttribute attr) {
     super(provider, element, attr);
   }
 
@@ -54,7 +51,7 @@ public class AntElementNameReference extends AntGenericReference {
         }
       }
     }
-    element.subtreeChanged();
+
     return element;
   }
 
@@ -72,8 +69,7 @@ public class AntElementNameReference extends AntGenericReference {
     if (elementDef != null) {
       if (!(element instanceof AntTask)) {
         final PsiElement nestedMacroElement = elementDef.getDefiningElement();
-        return myResolvedElement =
-          (nestedMacroElement == null) ? findClass(elementDef, element) : nestedMacroElement;
+        return myResolvedElement = (nestedMacroElement == null) ? findClass(elementDef, element) : nestedMacroElement;
       }
       AntTask task = (AntTask)element;
       if (task.isMacroDefined()) {
@@ -81,8 +77,7 @@ public class AntElementNameReference extends AntGenericReference {
         final XmlAttribute attr = getAttribute();
         if (attr != null) {
           for (PsiElement child : macrodef.getChildren()) {
-            if (child instanceof AntStructuredElement &&
-                attr.getName().equals(((AntStructuredElement)child).getName())) {
+            if (child instanceof AntStructuredElement && attr.getName().equals(((AntStructuredElement)child).getName())) {
               return myResolvedElement = child;
             }
           }
@@ -94,8 +89,7 @@ public class AntElementNameReference extends AntGenericReference {
     return null;
   }
 
-  private static PsiElement findClass(final AntTypeDefinition elementDef,
-                                      final AntStructuredElement element) {
+  private static PsiElement findClass(final AntTypeDefinition elementDef, final AntStructuredElement element) {
     return element;
     /*final String clazz = elementDef.getClassName();
     return element.getManager().findClass(clazz, GlobalSearchScope.allScope(element.getProject()));*/

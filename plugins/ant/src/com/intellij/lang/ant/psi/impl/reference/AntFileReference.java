@@ -30,7 +30,6 @@ public class AntFileReference extends AntGenericReference {
     final XmlTag sourceElement = antElement.getSourceElement();
     if (sourceElement.getAttributeValue("file") != null) {
       sourceElement.setAttribute("file", newElementName);
-      antElement.subtreeChanged();
     }
     return antElement;
   }

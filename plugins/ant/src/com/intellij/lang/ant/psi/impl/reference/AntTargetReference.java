@@ -31,7 +31,6 @@ public class AntTargetReference extends AntGenericReference {
     final AntElement element = getElement();
     if (element instanceof AntProject || element instanceof AntCall) {
       getAttribute().setValue(newElementName);
-      element.subtreeChanged();
     }
     else if (element instanceof AntTarget) {
       int start = getElementStartOffset() + getReferenceStartOffset() - getAttributeValueStartOffset();
@@ -50,7 +49,6 @@ public class AntTargetReference extends AntGenericReference {
       finally {
         StringBuilderSpinAllocator.dispose(builder);
       }
-      element.subtreeChanged();
     }
     return element;
   }
@@ -90,8 +88,6 @@ public class AntTargetReference extends AntGenericReference {
   private int getAttributeValueStartOffset() {
     final XmlAttribute attr = getAttribute();
     final XmlAttributeValue valueElement = attr.getValueElement();
-    return (valueElement == null)
-           ? attr.getTextRange().getEndOffset() + 1
-           : valueElement.getTextRange().getStartOffset() + 1;
+    return (valueElement == null) ? attr.getTextRange().getEndOffset() + 1 : valueElement.getTextRange().getStartOffset() + 1;
   }
 }

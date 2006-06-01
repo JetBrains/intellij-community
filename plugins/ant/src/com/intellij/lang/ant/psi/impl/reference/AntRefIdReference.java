@@ -27,7 +27,6 @@ public class AntRefIdReference extends AntGenericReference {
     final AntElement element = getElement();
     if (element instanceof AntStructuredElement) {
       getAttribute().setValue(newElementName);
-      element.subtreeChanged();
     }
     return element;
   }

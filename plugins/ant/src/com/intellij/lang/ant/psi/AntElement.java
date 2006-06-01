@@ -18,8 +18,6 @@ public interface AntElement extends PsiNamedElement {
 
   AntProject getAntProject();
 
-  void subtreeChanged();
-
   void clearCaches();
 
   void setProperty(final String name, final PsiElement element);

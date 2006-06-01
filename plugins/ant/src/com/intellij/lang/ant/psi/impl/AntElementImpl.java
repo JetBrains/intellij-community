@@ -152,12 +152,6 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     myPropertiesArray = null;
   }
 
-  public void subtreeChanged() {
-    final AntElement parent = getAntParent();
-    clearCaches();
-    if (parent != null) parent.subtreeChanged();
-  }
-
   public void setProperty(final String name, final PsiElement element) {
     if (myProperties == null) {
       myProperties = new HashMap<String, PsiElement>();

@@ -26,11 +26,9 @@ class AntNameElementImpl extends AntElementImpl {
   public PsiElement setName(String name) throws IncorrectOperationException {
     final XmlAttribute attr = getAttribute();
     if (attr == null) {
-      throw new IncorrectOperationException(
-        "AntNameElement should wrap a XmlElement with a XmlAttribute available on the path to root!");
+      throw new IncorrectOperationException("AntNameElement should wrap a XmlElement with a XmlAttribute available on the path to root!");
     }
     attr.setValue(name);
-    subtreeChanged();
     return this;
   }
 
