@@ -85,6 +85,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   private static final @NonNls String URI_ATT = "uri";
   private static final @NonNls String TAGDIR_ATT = "tagdir";
   private static final @NonNls String LOCATION_ATT_SUFFIX = "Location";
+  @NonNls private static final String IMPORT_ATTR_NAME = "import";
 
   public void setRefCountHolder(RefCountHolder refCountHolder) {
     myRefCountHolder = refCountHolder;
@@ -705,13 +706,18 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     if (tag.getUserData(DO_NOT_VALIDATE_KEY) != null) {
       return;
     }
-    XmlAttribute[] attributes = tag.getAttributes();
+
+    final XmlAttribute[] attributes = tag.getAttributes();
+    final boolean jspDirective = tag instanceof JspDirective;
 
     ProgressManager progressManager = ProgressManager.getInstance();
     for (XmlAttribute tagAttribute : attributes) {
       progressManager.checkCanceled();
       if (attribute != tagAttribute && Comparing.strEqual(attribute.getName(), tagAttribute.getName())) {
         final String localName = attribute.getLocalName();
+
+        if (jspDirective && IMPORT_ATTR_NAME.equals(localName)) continue; // multiple import attributes are allowed in jsp directive
+
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
           getTagProblemInfoType(tag),
           XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(attribute)),
