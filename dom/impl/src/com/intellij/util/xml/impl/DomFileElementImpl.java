@@ -46,6 +46,11 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     }
 
     @Nullable
+    public XmlElement getNameElement(DomElement element) {
+      return null;
+    }
+
+    @Nullable
     public String getElementName(DomElement element) {
       return null;
     }

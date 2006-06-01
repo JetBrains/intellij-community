@@ -9,12 +9,14 @@ import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.XmlReference;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NotNull;
@@ -35,20 +37,24 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element) {
-    if (!(element instanceof XmlTag || element instanceof XmlAttributeValue)) return GenericReference.EMPTY_ARRAY;
-    PsiElement originalElement = element.getUserData(PsiUtil.ORIGINAL_KEY);
+  public PsiReference[] getReferencesByElement(PsiElement psiElement) {
+    if (!(psiElement instanceof XmlTag || psiElement instanceof XmlAttributeValue)) return GenericReference.EMPTY_ARRAY;
+    PsiElement originalElement = psiElement.getUserData(PsiUtil.ORIGINAL_KEY);
     if (originalElement != null){
-      element = originalElement;
+      psiElement = originalElement;
     }
 
-    final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
+    final XmlTag tag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
 
-    final DomElement domElement = DomManager.getDomManager(element.getManager().getProject()).getDomElement(tag);
+    final DomElement domElement = DomManager.getDomManager(psiElement.getManager().getProject()).getDomElement(tag);
     if (domElement == null) return GenericReference.EMPTY_ARRAY;
 
-    if (element instanceof XmlAttributeValue) {
-      final XmlAttributeValue value = (XmlAttributeValue)element;
+    if (psiElement == domElement.getGenericInfo().getNameElement(domElement)) {
+      return new PsiReference[] { XmlReference.createSelfReference((XmlElement)psiElement) };
+    }
+
+    if (psiElement instanceof XmlAttributeValue) {
+      final XmlAttributeValue value = (XmlAttributeValue)psiElement;
       final PsiElement parent = value.getParent();
       if (parent instanceof XmlAttribute) {
         final String name = ((XmlAttribute)parent).getLocalName();

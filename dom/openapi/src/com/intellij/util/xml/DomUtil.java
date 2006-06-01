@@ -4,6 +4,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
@@ -134,5 +135,15 @@ public class DomUtil {
 
   public static Class getGenericValueParameter(Type type) {
     return DomReflectionUtil.substituteGenericType(GenericValue.class.getTypeParameters()[0], type);
+  }
+
+  public static XmlElement getValueElement(DomElement domElement) {
+    if (domElement instanceof GenericAttributeValue) {
+      return ((GenericAttributeValue)domElement).getXmlAttributeValue();
+    } else if (domElement instanceof GenericDomValue) {
+      return domElement.getXmlTag().getValue().getTextElements()[0];
+    } else {
+      return domElement.getXmlTag();
+    }
   }
 }

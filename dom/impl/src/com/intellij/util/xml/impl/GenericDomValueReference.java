@@ -35,9 +35,8 @@ public class GenericDomValueReference<T> extends GenericReference {
     super(provider);
     myGenericValue = xmlValue;
     final XmlTag tag = xmlValue.getXmlTag();
-    myValueElement = xmlValue instanceof GenericAttributeValue
-                     ? ((GenericAttributeValue)xmlValue).getXmlAttributeValue()
-                     : tag.getValue().getTextElements()[0];
+    assert tag != null;
+    myValueElement = DomUtil.getValueElement(xmlValue);
     myContextElement = xmlValue instanceof GenericAttributeValue ? myValueElement : tag;
     final String text = myValueElement.getText();
     TextRange range = getTextRange(text);
@@ -83,7 +82,7 @@ public class GenericDomValueReference<T> extends GenericReference {
       return (PsiElement)o;
     }
     if (o instanceof DomElement) {
-      return ((DomElement)o).getXmlTag();
+      return ((DomElement)o).getGenericInfo().getNameElement((DomElement)o);
     }
     if (o instanceof MergedObject) {
       final List<T> list = ((MergedObject<T>)o).getImplementations();

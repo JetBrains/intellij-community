@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.Function;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.xml.*;
@@ -542,14 +543,17 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   @Nullable
-  public String getElementName(DomElement element) {
+  public XmlElement getNameElement(DomElement element) {
+    Object o = getNameObject(element);
+    return o instanceof DomElement ? DomUtil.getValueElement((DomElement)o) : null;
+  }
+
+  protected Object getNameObject(DomElement element) {
     if (myNameValueGetter == null) {
       return null;
     }
-    final Object o;
     try {
-      o = myNameValueGetter.invoke(element);
-      return o == null || o instanceof String ? (String)o : ((GenericValue)o).getStringValue();
+      return myNameValueGetter.invoke(element);
     }
     catch (IllegalAccessException e) {
       LOG.error(e);
@@ -558,6 +562,12 @@ public class GenericInfoImpl implements DomGenericInfo {
       LOG.error(e);
     }
     return null;
+  }
+
+  @Nullable
+  public String getElementName(DomElement element) {
+    Object o = getNameObject(element);
+    return o == null || o instanceof String ? (String)o : ((GenericValue)o).getStringValue();
   }
 
   @NotNull
