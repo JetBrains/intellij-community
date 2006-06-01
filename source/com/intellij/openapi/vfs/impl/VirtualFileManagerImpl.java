@@ -178,6 +178,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   public void beforeRefreshStart(final boolean asynchronous, ModalityState modalityState, final Runnable postAction) {
     Runnable action = new Runnable() {
       public void run() {
+        ApplicationManager.getApplication().assertIsDispatchThread();
         myRefreshCount++;
         myPostRefreshRunnables.push(postAction);
         if (myRefreshCount == 1) {
@@ -190,7 +191,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
       ApplicationManager.getApplication().invokeLater(action, modalityState);
     }
     else {
-      ApplicationManager.getApplication().assertIsDispatchThread();
       action.run();
     }
   }
@@ -210,22 +210,20 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   public void afterRefreshFinish(final boolean asynchronous, ModalityState modalityState) {
     Runnable action = new Runnable() {
       public void run() {
-
+        ApplicationManager.getApplication().assertIsDispatchThread();
         Runnable postRunnable = myPostRefreshRunnables.pop();
 
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
             public void run() {
               //noinspection ForLoopReplaceableByForEach
-              if (myRefreshEventsToFire != null) { //todo: quick fix,  rework this
-                for (int i = 0; i < myRefreshEventsToFire.size(); i++) {
-                  Runnable runnable = myRefreshEventsToFire.get(i);
-                  try {
-                    runnable.run();
-                  }
-                  catch (Exception e) {
-                    LOG.error(e);
-                  }
+              for (int i = 0; i < myRefreshEventsToFire.size(); i++) {
+                Runnable runnable = myRefreshEventsToFire.get(i);
+                try {
+                  runnable.run();
+                }
+                catch (Exception e) {
+                  LOG.error(e);
                 }
               }
 
@@ -234,8 +232,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                 myRefreshEventsToFire.clear();
               }
               else {
-                myRefreshEventsToFire = null;
-
                 final FileSystemSynchronizer synchronizer;
                 if (asynchronous) {
                   synchronizer = new FileSystemSynchronizer();
@@ -251,6 +247,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
                 myVirtualFileManagerListenerMulticaster.getMulticaster().afterRefreshFinish(asynchronous);
                 myRefreshCount--;
+                myRefreshEventsToFire = null;
 
                 if (asynchronous) {
                   int filesCount = synchronizer.collectFilesToUpdate();
@@ -285,7 +282,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
       ApplicationManager.getApplication().invokeLater(action, modalityState);
     }
     else {
-      ApplicationManager.getApplication().assertIsDispatchThread();
       action.run();
     }
   }
