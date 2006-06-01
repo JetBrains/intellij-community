@@ -43,7 +43,6 @@ public class FetchExtResourceAction extends BaseIntentionAction {
   private static final @NonNls String FTP_PROTOCOL = "ftp://";
   private static final @NonNls String FETCHING_THREAD_ID = "Fetching Thread";
   private static final @NonNls String EXT_RESOURCES_FOLDER = "extResources";
-  private static final @NonNls String INCLUDE_TAG = "include";
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
@@ -66,7 +65,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     return QuickFixBundle.message("fetch.external.resource");
   }
 
-  static String findUri(PsiFile file, int offset) {
+  public static String findUri(PsiFile file, int offset) {
     PsiElement currentElement = file.findElementAt(offset);
     PsiElement element = PsiTreeUtil.getParentOfType(currentElement, XmlDoctype.class);
     if (element != null) {
@@ -81,6 +80,25 @@ public class FetchExtResourceAction extends BaseIntentionAction {
       PsiElement parent = attribute.getParent();
 
       if (uri != null && parent instanceof XmlTag && ((XmlTag)parent).getNSDescriptor(uri, true) == null) {
+        XmlTag tag = (XmlTag)parent;
+        final String prefix = tag.getPrefixByNamespace(XmlUtil.XML_SCHEMA_INSTANCE_URI);
+        if (prefix != null) {
+          final String attrValue = tag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT, XmlUtil.XML_SCHEMA_INSTANCE_URI);
+          if (attrValue != null) {
+            final StringTokenizer tokenizer = new StringTokenizer(attrValue);
+
+            while(tokenizer.hasMoreElements()) {
+              if (uri.equals(tokenizer.nextToken())) {
+                if (!tokenizer.hasMoreElements()) return uri;
+                final String url = tokenizer.nextToken();
+
+                return url.startsWith(HTTP_PROTOCOL) ? url:uri;
+              }
+
+              tokenizer.nextToken(); // skip file location
+            }
+          }
+        }
         return uri;
       }
     } else if (attribute.getNamespace().equals(XmlUtil.XML_SCHEMA_INSTANCE_URI)) {
