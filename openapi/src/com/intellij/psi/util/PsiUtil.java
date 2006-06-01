@@ -26,9 +26,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import static com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.infos.MethodCandidateInfo;
+import static com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -790,6 +789,7 @@ public final class PsiUtil {
       if (parms.length == 0) return FIXED_ARITY;
       PsiType parmType = getParameterType(parms[parms.length - 1], languageLevel, substitutorForMethod);
       PsiType argType = args[args.length - 1].getType();
+      if (argType == null) return NOT_APPLICABLE;
       if (parmType.isAssignableFrom(argType)) return FIXED_ARITY;
     }
 
