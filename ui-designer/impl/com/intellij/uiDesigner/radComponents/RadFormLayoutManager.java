@@ -178,8 +178,12 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
 
   private static CellConstraints gridToCellConstraints(final RadComponent component) {
     GridConstraints gc = component.getConstraints();
-    CellConstraints.Alignment hAlign = CellConstraints.DEFAULT;
-    CellConstraints.Alignment vAlign = CellConstraints.DEFAULT;
+    CellConstraints.Alignment hAlign = ((gc.getHSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0)
+                                       ? CellConstraints.FILL
+                                       : CellConstraints.DEFAULT;
+    CellConstraints.Alignment vAlign = ((gc.getVSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0)
+                                       ? CellConstraints.FILL
+                                       : CellConstraints.DEFAULT;
     CellConstraints cc = (CellConstraints) component.getCustomLayoutConstraints();
     if (cc != null) {
       hAlign = cc.hAlign;
