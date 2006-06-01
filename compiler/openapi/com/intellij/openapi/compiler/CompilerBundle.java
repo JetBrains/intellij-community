@@ -20,6 +20,8 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
 /**
@@ -27,16 +29,28 @@ import java.util.ResourceBundle;
  *         Date: Sep 9, 2005
  */
 public class CompilerBundle {
+  private static Reference<ResourceBundle> ourBundle;
+
   @NonNls private static final String BUNDLE = "messages.CompilerBundle";
 
   private CompilerBundle() {
   }
 
-  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
-    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
-  }
-
   public static String jdkHomeNotFoundMessage(final ProjectJdk jdk) {
     return message("javac.error.jdk.home.missing", jdk.getName(), jdk.getHomePath());
+  }
+
+  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
+    return CommonBundle.message(getBundle(), key, params);
+  }
+
+  private static ResourceBundle getBundle() {
+    ResourceBundle bundle = null;
+    if (ourBundle != null) bundle = ourBundle.get();
+    if (bundle == null) {
+      bundle = ResourceBundle.getBundle(BUNDLE);
+      ourBundle = new SoftReference<ResourceBundle>(bundle);
+    }
+    return bundle;
   }
 }

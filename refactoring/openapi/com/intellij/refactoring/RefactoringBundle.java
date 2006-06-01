@@ -4,18 +4,19 @@ import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
 /**
  * @author ven
  */
 public class RefactoringBundle {
+  private static Reference<ResourceBundle> ourBundle;
+
   @NonNls private static final String BUNDLE = "messages.RefactoringBundle";
 
-  private RefactoringBundle() {}
-
-  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
-    return CommonBundle.message(ResourceBundle.getBundle(BUNDLE), key, params);
+  private RefactoringBundle() {
   }
 
   public static String getSearchInCommentsAndStringsText() {
@@ -51,6 +52,20 @@ public class RefactoringBundle {
   }
 
   public static String getCannotRefactorMessage(final String message) {
-    return message("cannot.perform.refactoring")  + "\n" + message;
+    return message("cannot.perform.refactoring") + "\n" + message;
+  }
+
+  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
+    return CommonBundle.message(getBundle(), key, params);
+  }
+
+  private static ResourceBundle getBundle() {
+    ResourceBundle bundle = null;
+    if (ourBundle != null) bundle = ourBundle.get();
+    if (bundle == null) {
+      bundle = ResourceBundle.getBundle(BUNDLE);
+      ourBundle = new SoftReference<ResourceBundle>(bundle);
+    }
+    return bundle;
   }
 }

@@ -5,6 +5,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.text.MessageFormat;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -18,11 +20,22 @@ import java.util.ResourceBundle;
  */
 public class CommonBundle {
   @NonNls private static final String BUNDLE = "messages.CommonBundle";
+  private static Reference<ResourceBundle> ourBundle;
 
   private CommonBundle() {}
 
   public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
-    return message(ResourceBundle.getBundle(BUNDLE), key, params);
+    return message(getCommonBundle(), key, params);
+  }
+
+  private static ResourceBundle getCommonBundle() {
+    ResourceBundle bundle = null;
+    if (ourBundle != null) bundle = ourBundle.get();
+    if (bundle == null) {
+      bundle = ResourceBundle.getBundle(BUNDLE);
+      ourBundle = new SoftReference<ResourceBundle>(bundle);
+    }
+    return bundle;
   }
 
   public static String messageOrDefault(@Nullable final ResourceBundle bundle, final String key, String defaultValue, final Object... params) {
