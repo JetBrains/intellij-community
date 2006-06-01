@@ -13,12 +13,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 
 
@@ -41,8 +38,12 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
     }
   }
 
+  public boolean isInitialized() {
+    return myEclipseCompilerDriver != null && myEclipseExternalCompiler.isInitialized();
+  }
+
   public boolean checkCompiler() {
-    return myEclipseCompilerDriver != null && myEclipseExternalCompiler.checkCompiler();
+    return isInitialized() && myEclipseExternalCompiler.checkCompiler();
   }
 
   @NotNull
@@ -79,38 +80,6 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
   public void compileFinished() {
   }
 
-  private static class MyClassLoader extends URLClassLoader {
-    private ClassLoader parent;
-    public MyClassLoader(final URL[] urls, ClassLoader parent) {
-      super(urls, parent);
-      this.parent = parent;
-    }
-
-    protected Class loadClass(String name, boolean resolve) throws ClassNotFoundException {
-      if (canDelegate(name)) {
-        return super.loadClass(name, resolve);
-      }
-      // First, check if the class has already been loaded
-      Class c = findLoadedClass(name);
-      if (c == null) {
-          try {
-            c = parent.loadClass(name);
-          } catch (ClassNotFoundException e) {
-              // If still not found, then invoke findClass in order
-              // to find the class.
-              c = findClass(name);
-          }
-      }
-      if (resolve) {
-          resolveClass(c);
-      }
-      return c;
-    }
-                                                  
-    private static boolean canDelegate(@NonNls final String name) {
-      return !name.startsWith(EclipseCompilerDriver.class.getName()) && !name.startsWith("org.eclipse.");
-    }  
-  }
 
   @NotNull
   public Process launchProcess(final ModuleChunk chunk, final String outputDir, final CompileContext compileContext) throws IOException {
@@ -170,22 +139,11 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
   }
 
   private void createCompileDriver() throws Exception {
-    URL jarUrl = new File(EclipseCompiler.PATH_TO_COMPILER_JAR).toURL();
-    final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    ClassLoader myclassLoader = new MyClassLoader(new URL[]{jarUrl}, classLoader);
     try {
-      String name = "com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerDriver";
-      Class<?> aClass = myclassLoader.loadClass(name);
-      myEclipseCompilerDriver = (IEclipseCompilerDriver)aClass.newInstance();
+      myEclipseCompilerDriver = new EclipseCompilerDriver();
     }
-    catch (InstantiationException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
-    catch (ClassNotFoundException e) {
-      LOG.error(e);
+    catch (NoClassDefFoundError e) {
+      // eclipse jar must be not in the classpath
     }
   }
 }

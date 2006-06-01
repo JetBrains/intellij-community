@@ -4,14 +4,12 @@ import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.ExternalCompiler;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
-import com.intellij.compiler.options.CompilerConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -32,30 +30,28 @@ public class EclipseCompiler extends ExternalCompiler {
 
   private Project myProject;
   private final List<File> myTempFiles = new ArrayList<File>();
-  @NonNls public static final String PATH_TO_COMPILER_JAR = PathManagerEx.getLibRtPath() + "/org.eclipse.jdt.core.jar";
+  @NonNls public static final String PATH_TO_COMPILER_JAR = PathManager.getLibPath() + "/org.eclipse.jdt.core.jar";
 
   public EclipseCompiler(Project project) {
     myProject = project;
   }
 
-  public boolean checkCompiler() {
+  public boolean isInitialized() {
     File file = new File(PATH_TO_COMPILER_JAR);
-    if (!file.exists()) {
+    return file.exists();
+  }
+
+  public boolean checkCompiler() {
+    if (!isInitialized()) {
       Messages.showMessageDialog(
         myProject,
         CompilerBundle.message("eclipse.compiler.error.jar.not.found", PATH_TO_COMPILER_JAR),
         CompilerBundle.message("compiler.eclipse.name"),
         Messages.getErrorIcon()
       );
-      if (!openConfigurationDialog()) return false;
-      return checkCompiler();
+      return false;
     }
-
     return true;
-  }
-
-  private boolean openConfigurationDialog() {
-    return ShowSettingsUtil.getInstance().editConfigurable(myProject, CompilerConfigurable.getInstance(myProject));
   }
 
   @NonNls

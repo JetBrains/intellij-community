@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 package com.intellij.compiler.impl.javaCompiler.eclipse;
-
+              
 import com.intellij.compiler.OutputParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;

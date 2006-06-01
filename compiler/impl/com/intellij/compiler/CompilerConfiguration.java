@@ -56,9 +56,6 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
   private final Collection<BackendCompiler> registeredCompilers = new ArrayList<BackendCompiler>();
   private BackendCompiler JAVAC_EXTERNAL_BACKEND;
   private BackendCompiler JAVAC_EMBEDDED_BACKEND;
-  private BackendCompiler JIKES_BACKEND;
-  private BackendCompiler ECLIPSE_BACKEND;
-  private BackendCompiler ECLIPSE_EMBEDDED_BACKEND;
   private final Perl5Matcher myPatternMatcher = new Perl5Matcher();
 
   {
@@ -152,13 +149,17 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
     //registeredCompilers.add(JAVAC_EMBEDDED_BACKEND);
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      JIKES_BACKEND = new JikesCompiler(myProject);
-      ECLIPSE_BACKEND = new EclipseCompiler(myProject);
-      ECLIPSE_EMBEDDED_BACKEND = new EclipseEmbeddedCompiler(myProject);
-
+      final BackendCompiler JIKES_BACKEND = new JikesCompiler(myProject);
       registeredCompilers.add(JIKES_BACKEND);
-      registeredCompilers.add(ECLIPSE_BACKEND);
-      registeredCompilers.add(ECLIPSE_EMBEDDED_BACKEND);
+
+      final EclipseCompiler eclipse = new EclipseCompiler(myProject);
+      if (eclipse.isInitialized()) {
+        registeredCompilers.add(eclipse);
+      }
+      final EclipseEmbeddedCompiler eclipseEmbedded = new EclipseEmbeddedCompiler(myProject);
+      if (eclipseEmbedded.isInitialized()) {
+        registeredCompilers.add(eclipseEmbedded);
+      }
     }
     myDefaultJavaCompiler = JAVAC_EXTERNAL_BACKEND;
     for (BackendCompiler compiler : registeredCompilers) {
