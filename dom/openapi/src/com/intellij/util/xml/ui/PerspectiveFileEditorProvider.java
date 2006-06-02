@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public abstract class PerspectiveFileEditorProvider implements WeighedFileEditorProvider, ApplicationComponent {
+public abstract class PerspectiveFileEditorProvider extends WeighedFileEditorProvider implements ApplicationComponent {
   @NotNull
   public abstract PerspectiveFileEditor createEditor(Project project, VirtualFile file);
 

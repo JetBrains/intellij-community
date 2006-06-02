@@ -19,11 +19,11 @@ package com.intellij.openapi.fileEditor;
 /**
  * @author peter
  */
-public interface WeighedFileEditorProvider extends FileEditorProvider{
+public abstract class WeighedFileEditorProvider implements FileEditorProvider{
 
   /**
    * @return double value used for editor ascending ordering 
    */
-  double getWeight();
+  public abstract double getWeight();
   
 }
