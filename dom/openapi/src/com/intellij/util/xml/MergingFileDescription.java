@@ -39,6 +39,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
   @NotNull
   protected abstract Set<XmlFile> getFilesToMerge(DomElement element);
 
+  @NotNull
   public DomElement getResolveScope(GenericDomValue<?> reference) {
     final DomElement annotation = getScopeFromAnnotation(reference);
     if (annotation != null) return annotation;
@@ -65,6 +66,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     return myMerger.mergeModels(getRootElementClass(), roots);
   }
 
+  @NotNull
   public DomElement getIdentityScope(DomElement element) {
     final DomElement annotation = getScopeFromAnnotation(element);
     if (annotation != null) return annotation;

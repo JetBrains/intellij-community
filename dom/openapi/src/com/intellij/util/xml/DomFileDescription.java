@@ -22,6 +22,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.InstanceMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -55,6 +56,7 @@ public abstract class DomFileDescription<T> {
     return false;
   }
 
+  @NotNull
   public DomElement getResolveScope(GenericDomValue<?> reference) {
     final DomElement annotation = getScopeFromAnnotation(reference);
     if (annotation != null) return annotation;
@@ -62,6 +64,7 @@ public abstract class DomFileDescription<T> {
     return reference.getRoot();
   }
 
+  @NotNull
   public DomElement getIdentityScope(DomElement element) {
     final DomElement annotation = getScopeFromAnnotation(element);
     if (annotation != null) return annotation;
