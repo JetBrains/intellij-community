@@ -24,7 +24,6 @@
     <orderEntry type="module" module-name="action-system-impl" />
     <orderEntry type="module" module-name="appcore-api" />
     <orderEntry type="module" module-name="ui-impl" />
-    <orderEntry type="library" name="BCEL" level="project" />
     <orderEntry type="module" module-name="inspections-openapi" />
     <orderEntry type="module" module-name="inspections-impl" />
     <orderEntry type="module" module-name="execution-impl" />

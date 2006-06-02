@@ -22,7 +22,6 @@ import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectIterator;
-import org.apache.bcel.classfile.Utility;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -806,7 +805,7 @@ public class DependencyProcessor {
   private @NonNls String getMethodText(MethodInfo methodInfo) throws CacheCorruptedException {
     final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
     StringBuffer text = new StringBuffer(16);
-    final String returnType = Utility.signatureToString(methodInfo.getReturnTypeDescriptor(symbolTable));
+    final String returnType = signatureToSourceTypeName(methodInfo.getReturnTypeDescriptor(symbolTable));
     text.append(returnType);
     text.append(" ");
     text.append(myDependencyCache.resolve(methodInfo.getName()));
@@ -817,7 +816,7 @@ public class DependencyProcessor {
       if (idx > 0) {
         text.append(",");
       }
-      text.append(Utility.signatureToString(parameterSignature));
+      text.append(signatureToSourceTypeName(parameterSignature));
       text.append(" arg");
       text.append(idx);
     }
@@ -988,6 +987,58 @@ public class DependencyProcessor {
       }
     }
     return false;
+  }
+
+  public static @NonNls
+  String signatureToSourceTypeName(String signature)
+  {
+    try {
+      switch(signature.charAt(0)) {
+      case 'B' : return "byte";
+      case 'C' : return "char";
+      case 'D' : return "double";
+      case 'F' : return "float";
+      case 'I' : return "int";
+      case 'J' : return "long";
+
+      case 'L' : { // Full class name
+	int    index = signature.indexOf(';'); // Look for closing `;'
+
+	if(index < 0)
+	  throw new RuntimeException("Invalid signature: " + signature);
+
+        return signature.substring(1, index).replace('/', '.');
+      }
+
+      case 'S' : return "short";
+      case 'Z' : return "boolean";
+
+      case '[' : { // Array declaration
+	int          n;
+	StringBuffer brackets;
+	String       type;
+
+	brackets = new StringBuffer(); // Accumulate []'s
+
+	// Count opening brackets and look for optional size argument
+	for(n=0; signature.charAt(n) == '['; n++)
+	  brackets.append("[]");
+
+
+	// The rest of the string denotes a `<field_type>'
+	type = signatureToSourceTypeName(signature.substring(n));
+
+	return type + brackets.toString();
+      }
+
+      case 'V' : return "void";
+
+      default  : throw new RuntimeException("Invalid signature: `" +
+					    signature + "'");
+      }
+    } catch(StringIndexOutOfBoundsException e) { // Should never occur
+      throw new RuntimeException("Invalid signature: " + e + ":" + signature);
+    }
   }
 
   private static class MethodInfoContainer {
