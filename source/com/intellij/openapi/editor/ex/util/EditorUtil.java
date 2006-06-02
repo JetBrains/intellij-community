@@ -1,6 +1,5 @@
 package com.intellij.openapi.editor.ex.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -11,7 +10,7 @@ import com.intellij.openapi.editor.impl.IterationState;
 import java.awt.*;
 
 public class EditorUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.EditorUtil");
+  private EditorUtil() { }
 
   public static int getLastVisualLineColumnNumber(Editor editor, int line) {
     VisualPosition visStart = new VisualPosition(line, 0);
@@ -144,7 +143,7 @@ public class EditorUtil {
 
       for (int i = start; i < offset; i++) {
         char c = text.charAt(i);
-        LOG.assertTrue(c != '\n' && c != '\r');
+        assert c != '\n' && c != '\r';
         if (c == '\t') {
           shift += getTabLength(i + shift - start, tabSize) - 1;
         }

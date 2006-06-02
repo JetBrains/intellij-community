@@ -264,7 +264,8 @@ public class IterationState {
 
     RangeHighlighterImpl highlighter;
 
-    while (myNextDocumentHighlighter == null && myCurrentDocHighlighterIdx < myDocumentHighlighters.size()) {
+    final int docHighlightersSize = myDocumentHighlighters.size();
+    while (myNextDocumentHighlighter == null && myCurrentDocHighlighterIdx < docHighlightersSize) {
       highlighter = myDocumentHighlighters.get(myCurrentDocHighlighterIdx++);
       if (!skipHighlighter(highlighter)) {
         if (highlighter.getAffectedAreaStartOffset() > myStartOffset) {
@@ -277,7 +278,8 @@ public class IterationState {
       }
     }
 
-    while (myNextViewHighlighter == null && myCurrentViewHighlighterIdx < myViewHighlighters.size()) {
+    final int viewHighlightersSize = myViewHighlighters.size();
+    while (myNextViewHighlighter == null && myCurrentViewHighlighterIdx < viewHighlightersSize) {
       highlighter = myViewHighlighters.get(myCurrentViewHighlighterIdx++);
       if (!skipHighlighter(highlighter)) {
         if (highlighter.getAffectedAreaStartOffset() > myStartOffset) {
@@ -371,7 +373,8 @@ public class IterationState {
                            ? new TextAttributes(null, myReadOnlyColor, null, EffectType.BOXED, Font.PLAIN)
                            : null;
 
-    if (myCurrentHighlighters.size() > 1) {
+    final int size = myCurrentHighlighters.size();
+    if (size > 1) {
       Collections.sort(myCurrentHighlighters, new Comparator() {
         public int compare(Object o1, Object o2) {
           RangeHighlighter h1 = (RangeHighlighter)o1;
@@ -384,7 +387,7 @@ public class IterationState {
 
     myCachedAttributesList.clear();
 
-    for (int i = 0; i < myCurrentHighlighters.size(); i++) {
+    for (int i = 0; i < size; i++) {
       RangeHighlighterImpl highlighter = myCurrentHighlighters.get(i);
       if (selection != null && highlighter.getLayer() < HighlighterLayer.SELECTION) {
         myCachedAttributesList.add(selection);

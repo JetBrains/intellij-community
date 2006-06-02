@@ -306,7 +306,7 @@ public class FileManagerImpl implements FileManager {
         progressManager.checkCanceled();
 
         if (entry instanceof JdkOrderEntry) {
-          ((ProjectRootManagerEx)myProjectRootManager).getScopeForJdk((JdkOrderEntry)entry);
+          return ((ProjectRootManagerEx)myProjectRootManager).getScopeForJdk((JdkOrderEntry)entry);
         }
 
         if (entry instanceof LibraryOrderEntry) {

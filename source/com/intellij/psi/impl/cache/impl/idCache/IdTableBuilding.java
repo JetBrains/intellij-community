@@ -361,7 +361,7 @@ public class IdTableBuilding {
       todoCounts = null;
     }
 
-    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    Document document = FileDocumentManager.getInstance().getDocument(virtualFile); // TODO[wtf]: Performs unnecessary document load plus line separator detection
     final char[] chars;
     final int textLength;
     if (virtualFile.getModificationStamp() != document.getModificationStamp()) {

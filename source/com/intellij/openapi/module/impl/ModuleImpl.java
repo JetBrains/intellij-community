@@ -381,7 +381,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   @NotNull
   public String getName() {
     final String fileName = myFile.getFileName();
-    String moduleName = myFileToModuleName.get(fileName);
+    String moduleName = myFileToModuleName.get(fileName); // TODO[wtf]: What this map is for???
     if (moduleName == null) {
       moduleName = moduleNameByFileName(fileName);
       myFileToModuleName.put(fileName, moduleName);

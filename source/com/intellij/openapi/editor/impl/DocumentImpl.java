@@ -13,8 +13,8 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CoModifiableList;
 import com.intellij.util.containers.WeakList;
@@ -494,7 +494,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public int getLineNumber(int offset) {
     assertReadAccessToDocumentsAllowed();
     int lineIndex = myLineSet.findLineIndex(offset);
-    LOG.assertTrue(lineIndex >= 0);
+    assert (lineIndex >= 0);
     return lineIndex;
   }
 
@@ -507,28 +507,28 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     assertReadAccessToDocumentsAllowed();
     if (line == 0) return 0; // otherwise it crashed for zero-length document
     int lineStart = myLineSet.getLineStart(line);
-    LOG.assertTrue(lineStart >= 0);
+    assert (lineStart >= 0);
     return lineStart;
   }
 
   public final int getLineEndOffset(int line) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     int result = myLineSet.getLineEnd(line) - getLineSeparatorLength(line);
-    LOG.assertTrue(result >= 0);
+    assert (result >= 0);
     return result;
   }
 
   public final int getLineSeparatorLength(int line) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     int separatorLength = myLineSet.getSeparatorLength(line);
-    LOG.assertTrue(separatorLength >= 0);
+    assert (separatorLength >= 0);
     return separatorLength;
   }
 
   public final int getLineCount() {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
     int lineCount = myLineSet.getLineCount();
-    LOG.assertTrue(lineCount >= 0);
+    assert (lineCount >= 0);
     return lineCount;
   }
 
