@@ -12,8 +12,8 @@ import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,6 +23,8 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiRootPackageType;
 import com.intellij.util.ActionRunner;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.util.Query;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -200,15 +202,17 @@ public class PackageUtil {
   }
 
   private static PsiDirectory[] getPackageDirectoriesInModule(PsiPackage rootPackage, Module module) {
-    PsiManager manager = PsiManager.getInstance(module.getProject());
+    final PsiManager manager = PsiManager.getInstance(module.getProject());
     final String packageName = rootPackage.getQualifiedName();
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     final ModuleFileIndex moduleFileIndex = moduleRootManager.getFileIndex();
-    final VirtualFile[] directories = moduleFileIndex.getDirectoriesByPackageName(packageName, false);
-    List<PsiDirectory> moduleDirectoryList = new ArrayList<PsiDirectory>();
-    for (VirtualFile directory : directories) {
-      moduleDirectoryList.add(manager.findDirectory(directory));
-    }
+    final List<PsiDirectory> moduleDirectoryList = new ArrayList<PsiDirectory>();
+    moduleFileIndex.getDirsByPackageName(packageName, false).forEach(new Processor<VirtualFile>() {
+      public boolean process(final VirtualFile directory) {
+        moduleDirectoryList.add(manager.findDirectory(directory));
+        return true;
+      }
+    });
 
     return moduleDirectoryList.toArray(new PsiDirectory[moduleDirectoryList.size()]);
   }
@@ -238,7 +242,7 @@ public class PackageUtil {
     return false;
   }
 
-  private static PsiDirectory getWritableDirectory(VirtualFile[] vFiles, PsiManager manager) {
+  private static PsiDirectory getWritableDirectory(Query<VirtualFile> vFiles, PsiManager manager) {
     for (VirtualFile vFile : vFiles) {
       PsiDirectory directory = manager.findDirectory(vFile);
       if (directory != null && directory.isValid() && directory.isWritable()) {
@@ -254,7 +258,7 @@ public class PackageUtil {
 
     String nameToMatch = packageName;
     while (true) {
-      VirtualFile[] vFiles = moduleFileIndex.getDirectoriesByPackageName(nameToMatch, false);
+      Query<VirtualFile> vFiles = moduleFileIndex.getDirsByPackageName(nameToMatch, false);
       PsiDirectory directory = getWritableDirectory(vFiles, manager);
       if (directory != null) return directory.getPackage();
 

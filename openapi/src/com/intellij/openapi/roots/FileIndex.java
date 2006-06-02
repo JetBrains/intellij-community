@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -88,4 +89,6 @@ public interface FileIndex {
    * @return the list of directories.
    */
   VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources);
+
+  Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources);
 }

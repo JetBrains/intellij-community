@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -33,6 +34,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.FilteredQuery;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -179,15 +181,16 @@ public class ModuleUtil {
                                                      final GlobalSearchScope scope) {
     int index = resourceName.lastIndexOf('/');
     String packageName = index >= 0 ? resourceName.substring(0, index).replace('/', '.') : "";
-    String fileName = index >= 0 ? resourceName.substring(index+1) : resourceName;
-    final VirtualFile[] files = ProjectRootManager.getInstance(project).getFileIndex().getDirectoriesByPackageName(packageName, false);
-    for(VirtualFile file: files) {
-      final VirtualFile child = file.findChild(fileName);
-      if (child != null && scope.contains(child)) {
-        return child;
-      }
-    }
-    return null;
+    final String fileName = index >= 0 ? resourceName.substring(index+1) : resourceName;
+
+    return new FilteredQuery<VirtualFile>(
+      ProjectRootManager.getInstance(project).getFileIndex().getDirsByPackageName(packageName, false),
+      new Condition<VirtualFile>() {
+        public boolean value(final VirtualFile file) {
+          final VirtualFile child = file.findChild(fileName);
+          return child != null && scope.contains(child);
+        }
+      }).findFirst();
   }
 
   public static Collection<Module> collectModulesDependsOn(@NotNull final Collection<Module> modules) {

@@ -31,6 +31,8 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 public abstract class GlobalSearchScope extends SearchScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.GlobalSearchScope");
 
@@ -286,7 +288,7 @@ public abstract class GlobalSearchScope extends SearchScope {
   }
 
   private static class PackageScope extends GlobalSearchScope {
-    private final VirtualFile[] myDirs;
+    private final Collection<VirtualFile> myDirs;
     private final PsiPackage myPackage;
     private final boolean myIncludeSubpackages;
     private final boolean myIncludeLibraries;
@@ -297,7 +299,7 @@ public abstract class GlobalSearchScope extends SearchScope {
 
       Project project = myPackage.getProject();
       FileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      myDirs = fileIndex.getDirectoriesByPackageName(myPackage.getQualifiedName(), true);
+      myDirs = fileIndex.getDirsByPackageName(myPackage.getQualifiedName(), true).findAll();
       myIncludeLibraries = includeLibraries;
     }
 

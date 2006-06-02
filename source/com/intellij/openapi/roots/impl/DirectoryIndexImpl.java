@@ -18,12 +18,11 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.PsiManagerConfiguration;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.PendingEventDispatcher;
+import com.intellij.util.*;
 import gnu.trove.THashMap;
 import junit.framework.Assert;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -405,25 +404,41 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     return myDirToInfoMap.get(dir);
   }
 
-  @NotNull public VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+  private PackageSink mySink = new PackageSink();
+
+  private class PackageSink extends QueryFactory<VirtualFile, VirtualFile[]> {
+    public PackageSink() {
+      registerExecutor(new QueryExecutor<VirtualFile, VirtualFile[]>() {
+        public boolean execute(final VirtualFile[] allDirs, final Processor<VirtualFile> consumer) {
+          for (VirtualFile dir : allDirs) {
+            DirectoryInfo info = getInfoForDirectory(dir);
+            LOG.assertTrue(info != null);
+            if (!info.isInLibrarySource || info.libraryClassRoot != null) {
+              if (!consumer.process(dir)) return false;
+            }
+          }
+          return true;
+        }
+      });
+    }
+
+    public Query<VirtualFile> search(@NotNull String packageName, boolean includeLibrarySources) {
+      VirtualFile[] allDirs = getDirectoriesByPackageName(packageName);
+      if (includeLibrarySources) {
+        return new ArrayQuery<VirtualFile>(allDirs);
+      }
+      else {
+        return createQuery(allDirs);
+      }
+    }
+  }
+
+
+  @NotNull public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     LOG.assertTrue(myInitialized);
     LOG.assertTrue(!myDisposed);
 
-    VirtualFile[] allDirs = getDirectoriesByPackageName(packageName);
-    if (includeLibrarySources) {
-      return allDirs;
-    }
-    else {
-      List<VirtualFile> result = new ArrayList<VirtualFile>();
-      for (VirtualFile dir : allDirs) {
-        DirectoryInfo info = getInfoForDirectory(dir);
-        LOG.assertTrue(info != null);
-        if (!info.isInLibrarySource || info.libraryClassRoot != null) {
-          result.add(dir);
-        }
-      }
-      return result.toArray(new VirtualFile[result.size()]);
-    }
+    return mySink.search(packageName, includeLibrarySources);
   }
 
   @NotNull private VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName) {

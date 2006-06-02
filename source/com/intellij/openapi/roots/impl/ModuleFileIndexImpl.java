@@ -7,17 +7,28 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.util.FilteredQuery;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 public class ModuleFileIndexImpl implements ModuleFileIndex {
   private final Module myModule;
   private final FileTypeManager myFileTypeManager;
   private final DirectoryIndex myDirectoryIndex;
   private final ContentFilter myContentFilter;
+  private final Condition<VirtualFile> myDirCondition = new Condition<VirtualFile>() {
+    public boolean value(final VirtualFile dir) {
+      return getOrderEntryForFile(dir) != null;
+    }
+  };
 
   public ModuleFileIndexImpl(Module module, DirectoryIndex directoryIndex) {
     myModule = module;
@@ -118,17 +129,12 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     }
   }
 
-  public VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
-    VirtualFile[] allDirs = myDirectoryIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
-    if (allDirs.length == 0) return allDirs;
+  public Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+    return new FilteredQuery<VirtualFile>(myDirectoryIndex.getDirectoriesByPackageName(packageName, includeLibrarySources), myDirCondition);
+  }
 
-    ArrayList<VirtualFile> list = new ArrayList<VirtualFile>();
-    for (VirtualFile dir : allDirs) {
-      if (getOrderEntryForFile(dir) != null) {
-        list.add(dir);
-      }
-    }
-    return list.toArray(new VirtualFile[list.size()]);
+  public VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+    return getDirsByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   private class ContentFilter implements VirtualFileFilter {

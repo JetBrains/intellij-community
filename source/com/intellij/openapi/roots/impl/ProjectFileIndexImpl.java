@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -87,6 +88,10 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   }
 
   public VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+    return getDirsByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
+  }
+
+  public Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     return myDirectoryIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
 

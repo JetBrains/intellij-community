@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.Query;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakValueHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -404,8 +405,8 @@ public class FileManagerImpl implements FileManager {
   }
 
   public PsiPackage findPackage(String packageName) {
-    VirtualFile[] dirs = myProjectRootManager.getFileIndex().getDirectoriesByPackageName(packageName, false);
-    if (dirs.length == 0) return null;
+    Query<VirtualFile> dirs = myProjectRootManager.getFileIndex().getDirsByPackageName(packageName, false);
+    if (dirs.findFirst() == null) return null;
     return new PsiPackageImpl(myManager, packageName);
   }
 

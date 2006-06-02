@@ -32,8 +32,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,16 +76,30 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   @NotNull
   public PsiDirectory[] getDirectories(GlobalSearchScope scope) {
-    FileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
-    VirtualFile[] dirs = projectFileIndex.getDirectoriesByPackageName(myQualifiedName, false);
-    ArrayList<PsiDirectory> list = new ArrayList<PsiDirectory>();
-    for (VirtualFile dir : dirs) {
-      if (!scope.contains(dir)) continue;
-      PsiDirectory psiDir = myManager.findDirectory(dir);
-      LOG.assertTrue(psiDir != null);
-      list.add(psiDir);
+    return new DirectoriesSearch().search(scope).toArray(PsiDirectory.EMPTY_ARRAY);
+  }
+
+  private class DirectoriesSearch extends QueryFactory<PsiDirectory, GlobalSearchScope> {
+    public DirectoriesSearch() {
+      registerExecutor(new QueryExecutor<PsiDirectory, GlobalSearchScope>() {
+        public boolean execute(final GlobalSearchScope scope, final Processor<PsiDirectory> consumer) {
+          FileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
+          projectFileIndex.getDirsByPackageName(myQualifiedName, false).forEach(new Processor<VirtualFile>() {
+            public boolean process(final VirtualFile dir) {
+              if (!scope.contains(dir)) return true;
+              PsiDirectory psiDir = myManager.findDirectory(dir);
+              LOG.assertTrue(psiDir != null);
+              return consumer.process(psiDir);
+            }
+          });
+          return true;
+        }
+      });
     }
-    return list.toArray(new PsiDirectory[list.size()]);
+
+    public Query<PsiDirectory> search(GlobalSearchScope scope) {
+      return createQuery(scope);
+    }
   }
 
   public String getName() {
@@ -311,7 +324,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   public boolean isValid() {
-    return getDirectories().length > 0;
+    return new DirectoriesSearch().search(GlobalSearchScope.allScope(getProject())).findFirst() != null;
   }
 
   public boolean isWritable() {
