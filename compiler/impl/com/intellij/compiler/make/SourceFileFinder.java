@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -40,13 +39,12 @@ public class SourceFileFinder {
     }
     LocalFileSystem fs = LocalFileSystem.getInstance();
     for (final VirtualFile virtualFile : dirs.keySet()) {
-      final VirtualFile dir = (VirtualFile)virtualFile;
-      final String prefix = dirs.get(dir);
+      final String prefix = dirs.get(virtualFile);
       String path;
       if (prefix.length() > 0) {
         if (FileUtil.startsWith(relativePath, prefix)) {
           // if there is package prefix assigned to the root, the relative path should be corrected
-          path = dir.getPath() + relativePath.substring(prefix.length() - 1);
+          path = virtualFile.getPath() + relativePath.substring(prefix.length() - 1);
         }
         else {
           // if there is package prefix, but the relative path does not match it, skip the root
@@ -54,7 +52,7 @@ public class SourceFileFinder {
         }
       }
       else {
-        path = dir.getPath() + relativePath;
+        path = virtualFile.getPath() + relativePath;
       }
       VirtualFile file = fs.findFileByPath(path);
       if (file != null) {
@@ -73,8 +71,7 @@ public class SourceFileFinder {
           final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
           for (Module allModule : allModules) {
             final VirtualFile[] sourceRoots = myCompileContext.getSourceRoots(allModule);
-            for (int i = 0; i < sourceRoots.length; i++) {
-              final VirtualFile sourceRoot = sourceRoots[i];
+            for (final VirtualFile sourceRoot : sourceRoots) {
               String packageName = fileIndex.getPackageNameByDirectory(sourceRoot);
               myProjectSourceRoots
                 .put(sourceRoot, packageName == null || packageName.length() == 0 ? "" : "/" + packageName.replace('.', '/') + "/");

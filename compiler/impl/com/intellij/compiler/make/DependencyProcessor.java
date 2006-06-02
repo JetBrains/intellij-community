@@ -88,7 +88,7 @@ public class DependencyProcessor {
     mySuperClassAdded = wasDerivedFromObject && superclassesDiffer;
   }
 
-  private static boolean hasMembersWithoutDefaults(Set addedMembers) {
+  private static boolean hasMembersWithoutDefaults(Set<MemberInfo> addedMembers) {
     for (final Object addedMember : addedMembers) {
       MemberInfo memberInfo = (MemberInfo)addedMember;
       if (memberInfo instanceof MethodInfo) {
@@ -119,14 +119,14 @@ public class DependencyProcessor {
     }
     if (oldGenericSignature != -1 && newGenericSignature != -1) {
       final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
-      final String _oldGenericMethodSignature = cutFormalPatrams(symbolTable.getSymbol(oldGenericSignature));
-      final String _newGenericMethodSignature = cutFormalPatrams(symbolTable.getSymbol(newGenericSignature));
+      final String _oldGenericMethodSignature = cutFormalParams(symbolTable.getSymbol(oldGenericSignature));
+      final String _newGenericMethodSignature = cutFormalParams(symbolTable.getSymbol(newGenericSignature));
       return !_oldGenericMethodSignature.equals(_newGenericMethodSignature);
     }
     return true;
   }
 
-  private String cutFormalPatrams(String genericClassSignature) {
+  private static String cutFormalParams(String genericClassSignature) {
     if (genericClassSignature.charAt(0) == '<') {
       int idx = genericClassSignature.indexOf('>');
       return genericClassSignature.substring(idx + 1);
@@ -269,12 +269,11 @@ public class DependencyProcessor {
                         "; reason: some overloaded methods of " + myDependencyCache.resolve(myQName) + " were added");
             }
           }
-          continue;
         }
       }
     }
 
-    final Set methodsToCheck = new HashSet();
+    final Set<MemberInfo> methodsToCheck = new HashSet<MemberInfo>();
     extractMethods(myRemovedMembers, methodsToCheck, false);
     extractMethods(myAddedMembers, methodsToCheck, false);
 
@@ -381,7 +380,7 @@ public class DependencyProcessor {
     }
   }
 
-  private void extractFieldNames(Collection fromCollection, TIntHashSet toCollection) {
+  private static void extractFieldNames(Collection<MemberInfo> fromCollection, TIntHashSet toCollection) {
     for (final Object aFromCollection : fromCollection) {
       MemberInfo memberInfo = (MemberInfo)aFromCollection;
       if (memberInfo instanceof FieldInfo) {
@@ -390,7 +389,7 @@ public class DependencyProcessor {
     }
   }
 
-  private void extractMethods(Collection fromCollection, Collection toCollection, boolean includeConstructors) {
+  private static void extractMethods(Collection<MemberInfo> fromCollection, Collection<MemberInfo> toCollection, boolean includeConstructors) {
     for (final Object aFromCollection : fromCollection) {
       MemberInfo memberInfo = (MemberInfo)aFromCollection;
       if (memberInfo instanceof MethodInfo) {
@@ -454,7 +453,7 @@ public class DependencyProcessor {
     return false;
   }
 
-  private boolean isDependentOnEquivalentMethods(MethodInfo[] checkedMembers, Set members) throws CacheCorruptedException {
+  private boolean isDependentOnEquivalentMethods(MethodInfo[] checkedMembers, Set<MemberInfo> members) throws CacheCorruptedException {
     // check if 'members' contains method with the same name and the same numbers of parameters, but with different types
     if (members.size() == 0) return false; // optimization
     for (MethodInfo checkedMethod : checkedMembers) {
@@ -465,7 +464,7 @@ public class DependencyProcessor {
     return false;
   }
 
-  private void markUseDependenciesOnEquivalentMethods(final int checkedInfoQName, Set methodsToCheck, int methodsClassName) throws CacheCorruptedException {
+  private void markUseDependenciesOnEquivalentMethods(final int checkedInfoQName, Set<MemberInfo> methodsToCheck, int methodsClassName) throws CacheCorruptedException {
     Dependency[] backDependencies = myDependencyCache.getCache().getBackDependencies(checkedInfoQName);
     for (Dependency dependency : backDependencies) {
       if (myDependencyCache.isTargetClassInfoMarked(dependency)) continue;
@@ -487,8 +486,7 @@ public class DependencyProcessor {
     for (Dependency useDependency : backDependencies) {
       if (!myDependencyCache.isTargetClassInfoMarked(useDependency)) {
         FieldInfo[] usedFields = useDependency.getUsedFields();
-        for (int idx = 0; idx < usedFields.length; idx++) {
-          FieldInfo field = usedFields[idx];
+        for (FieldInfo field : usedFields) {
           if (fieldNames.contains(field.getName())) {
             if (myDependencyCache.markTargetClassInfo(useDependency)) {
               if (LOG.isDebugEnabled()) {
@@ -511,7 +509,7 @@ public class DependencyProcessor {
     boolean becameFinal = !CacheUtils.isFinal(oldCache, myQName) && CacheUtils.isFinal(newCache, myQName);
     final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
 
-    final Set removedConcreteMethods = fetchNonAbstractMethods(myRemovedMembers);
+    final Set<MemberInfo> removedConcreteMethods = fetchNonAbstractMethods(myRemovedMembers);
     final int[] subclasses = oldCache.getSubclasses(oldCache.getClassId(myQName));
     for (final int subclassQName : subclasses) {
       if (myDependencyCache.isClassInfoMarked(subclassQName)) {
@@ -557,8 +555,7 @@ public class DependencyProcessor {
       }
 
       // process added members
-      for (Iterator it = myAddedMembers.iterator(); it.hasNext();) {
-        final MemberInfo member = (MemberInfo)it.next();
+      for (final MemberInfo member : myAddedMembers) {
         if (member instanceof MethodInfo) {
           final MethodInfo method = (MethodInfo)member;
           if (method.isAbstract()) {
@@ -572,7 +569,8 @@ public class DependencyProcessor {
             break;
           }
           if (!method.isPrivate()) {
-            int derivedMethod = oldCache.findMethodsBySignature(oldCache.getClassDeclarationId(subclassQName), method.getDescriptor(symbolTable), symbolTable);
+            int derivedMethod = oldCache
+              .findMethodsBySignature(oldCache.getClassDeclarationId(subclassQName), method.getDescriptor(symbolTable), symbolTable);
             if (derivedMethod != Cache.UNKNOWN) {
               if (!method.getReturnTypeDescriptor(symbolTable)
                 .equals(CacheUtils.getMethodReturnTypeDescriptor(oldCache, derivedMethod, symbolTable))) {
@@ -628,8 +626,7 @@ public class DependencyProcessor {
       }
 
       // process changed members
-      for (Iterator it = myChangedMembers.iterator(); it.hasNext();) {
-        final MemberInfo changedMember = (MemberInfo)it.next();
+      for (final MemberInfo changedMember : myChangedMembers) {
         if (changedMember instanceof MethodInfo) {
           final MethodInfo oldMethod = (MethodInfo)changedMember;
           MethodChangeDescription changeDescription = (MethodChangeDescription)myChangeDescriptions.get(oldMethod);
@@ -644,7 +641,8 @@ public class DependencyProcessor {
               break;
             }
           }
-          int derivedMethod = oldCache.findMethodsBySignature(oldCache.getClassDeclarationId(subclassQName), oldMethod.getDescriptor(symbolTable), symbolTable);
+          int derivedMethod = oldCache
+            .findMethodsBySignature(oldCache.getClassDeclarationId(subclassQName), oldMethod.getDescriptor(symbolTable), symbolTable);
           if (derivedMethod != Cache.UNKNOWN) {
             if (myDependencyCache.markClass(subclassQName)) {
               if (LOG.isDebugEnabled()) {
@@ -658,7 +656,7 @@ public class DependencyProcessor {
       }
 
       if (!ClsUtil.isAbstract(oldCache.getFlags(subclassId))) {
-        if (hasUnimplementedAbstractMethods(subclassQName, new HashSet(removedConcreteMethods))) {
+        if (hasUnimplementedAbstractMethods(subclassQName, new HashSet<MemberInfo>(removedConcreteMethods))) {
           if (myDependencyCache.markClass(subclassQName)) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) +
@@ -671,7 +669,7 @@ public class DependencyProcessor {
     }
   }
 
-  private boolean hasGenericsNameClashes(final MethodInfo baseMethod, final Cache oldCache, final int subclassQName) throws CacheCorruptedException {
+  private static boolean hasGenericsNameClashes(final MethodInfo baseMethod, final Cache oldCache, final int subclassQName) throws CacheCorruptedException {
     // it is illegal if 2 methods in a hierarchy have 1) same name 2) different signatures 3) same erasure
     final int[] methods = oldCache.findMethodsByName(oldCache.getClassDeclarationId(subclassQName), baseMethod.getName());
     if (methods.length > 0) {
@@ -688,8 +686,8 @@ public class DependencyProcessor {
     return false;
   }
 
-  private Set fetchNonAbstractMethods(Set membersToCheck) {
-    final Set methodsToCheck = new HashSet();
+  private static Set<MemberInfo> fetchNonAbstractMethods(Set<MemberInfo> membersToCheck) {
+    final Set<MemberInfo> methodsToCheck = new HashSet<MemberInfo>();
     for (final Object aMembersToCheck : membersToCheck) {
       final MemberInfo memberInfo = (MemberInfo)aMembersToCheck;
       if (memberInfo instanceof MethodInfo) {
@@ -704,10 +702,8 @@ public class DependencyProcessor {
 
   private boolean hasUnimplementedAbstractMethods(int superQName, final Set methodsToCheck) throws CacheCorruptedException {
     if (myDependencyCache.getCache().getClassId(superQName) != Cache.UNKNOWN) {
-      if (hasBaseAbstractMethods(superQName, methodsToCheck)) {
-        return true;
-      }
-      return hasBaseAbstractMethodsInHierarchy(superQName, methodsToCheck);
+      return hasBaseAbstractMethods(superQName, methodsToCheck) ||
+             hasBaseAbstractMethodsInHierarchy(superQName, methodsToCheck);
     }
     else {
       final String qName = myDependencyCache.resolve(superQName);
@@ -846,7 +842,7 @@ public class DependencyProcessor {
   }
 
   /** @return a map [fieldName->FieldInfo]*/
-  private TIntObjectHashMap<FieldInfo> getFieldInfos(Cache cache, int qName) throws CacheCorruptedException {
+  private static TIntObjectHashMap<FieldInfo> getFieldInfos(Cache cache, int qName) throws CacheCorruptedException {
     final TIntObjectHashMap<FieldInfo> map = new TIntObjectHashMap<FieldInfo>();
     final int[] fields = cache.getFieldIds(cache.getClassDeclarationId(qName));
     for (int fieldId : fields) {
@@ -876,7 +872,7 @@ public class DependencyProcessor {
     return map;
   }
 
-  private void addAddedMembers(TIntObjectHashMap<FieldInfo> oldFields, THashMap<String, MethodInfoContainer> oldMethods,
+  private static void addAddedMembers(TIntObjectHashMap<FieldInfo> oldFields, THashMap<String, MethodInfoContainer> oldMethods,
                                TIntObjectHashMap<FieldInfo> newFields, THashMap<String, MethodInfoContainer> newMethods,
                                Collection<MemberInfo> members) throws CacheCorruptedException {
 
@@ -895,7 +891,7 @@ public class DependencyProcessor {
     }
   }
 
-  private void addRemovedMembers(TIntObjectHashMap<FieldInfo> oldFields, THashMap<String, MethodInfoContainer> oldMethods,
+  private static void addRemovedMembers(TIntObjectHashMap<FieldInfo> oldFields, THashMap<String, MethodInfoContainer> oldMethods,
                                TIntObjectHashMap<FieldInfo> newFields, THashMap<String, MethodInfoContainer> newMethods,
                                Collection<MemberInfo> members) throws CacheCorruptedException {
     addAddedMembers(newFields, newMethods, oldFields, oldMethods, members);
@@ -968,7 +964,7 @@ public class DependencyProcessor {
     }
   }
 
-  private boolean hasEquivalentMethod(Collection members, MethodInfo modelMethod) throws CacheCorruptedException {
+  private boolean hasEquivalentMethod(Collection<MemberInfo> members, MethodInfo modelMethod) throws CacheCorruptedException {
     final String[] modelSignature = modelMethod.getParameterDescriptors(myDependencyCache.getSymbolTable());
     for (final Object member1 : members) {
       MemberInfo member = (MemberInfo)member1;

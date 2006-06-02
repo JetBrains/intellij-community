@@ -5,7 +5,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
@@ -106,7 +105,7 @@ outer:
     return null;
   }
 
-  private void checkParametersNumber(final List<CandidateInfo> conflicts, final int argumentsCount) {
+  private static void checkParametersNumber(final List<CandidateInfo> conflicts, final int argumentsCount) {
     boolean parametersNumberMatch = false;
     for (CandidateInfo info : conflicts) {
       if (info instanceof MethodCandidateInfo) {
@@ -171,7 +170,7 @@ outer:
     CONFLICT
   }
 
-  private boolean checkOverriding(final CandidateInfo one, final CandidateInfo two){
+  private static boolean checkOverriding(final CandidateInfo one, final CandidateInfo two){
     final PsiMethod method1 = (PsiMethod)one.getElement();
     final PsiMethod method2 = (PsiMethod)two.getElement();
     if (method1 != method2 && method1.getContainingClass() == method2.getContainingClass()) return false;
@@ -207,8 +206,6 @@ outer:
     for(int i = 0; i < args.length; i++){
       if (i >= params1.length || i >= params2.length) break;
       final PsiType argType = args[i].getType();
-      boolean varArgs1 = params1[i].isVarArgs();
-      boolean varArgs2 = params2[i].isVarArgs();
       final PsiType type1 = TypeConversionUtil.erasure(params1[i].getType());
       final PsiType type2 = TypeConversionUtil.erasure(params2[i].getType());
       assert type1 != null && type2 != null; //because erasure returns null for nulls only
@@ -218,18 +215,6 @@ outer:
         if (isMoreSpecific != null && !lessBoxing.equals(isMoreSpecific)) return Specifics.CONFLICT;
         isMoreSpecific = lessBoxing;
         continue;
-      }
-
-      if (varArgs1 && !varArgs2) {
-        if (argType == null || PsiType.NULL.equals(argType)) return Specifics.CONFLICT;
-        boolean isFirstMoreSpecific = argType.getArrayDimensions() < type1.getArrayDimensions();
-        if (isMoreSpecific != null && isMoreSpecific.booleanValue() != isFirstMoreSpecific) return Specifics.CONFLICT;
-        return isFirstMoreSpecific ? Specifics.TRUE : Specifics.FALSE;
-      } else if (varArgs2 && !varArgs1) {
-        if (argType == null || PsiType.NULL.equals(argType)) return Specifics.CONFLICT;
-        boolean isFirstMoreSpecific = argType.getArrayDimensions() < type2.getArrayDimensions();
-        if (isMoreSpecific != null && isMoreSpecific.booleanValue() != isFirstMoreSpecific) return Specifics.CONFLICT;
-        return isFirstMoreSpecific ? Specifics.TRUE : Specifics.FALSE;
       }
 
       final boolean assignable2From1 = type2.isAssignableFrom(type1);
@@ -245,11 +230,6 @@ outer:
       } else {
         return Specifics.CONFLICT;
       }
-    }
-
-    if (isMoreSpecific == null) {
-      if (method1.isVarArgs() && !method2.isVarArgs()) return Specifics.FALSE;
-      if (method2.isVarArgs() && !method1.isVarArgs()) return Specifics.TRUE;
     }
 
     if (isMoreSpecific == null){
