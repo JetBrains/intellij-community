@@ -100,6 +100,26 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
             if (strippedQualifier == null) {
                 return;
             }
+            if (strippedQualifier instanceof PsiReferenceExpression) {
+                final PsiReferenceExpression referenceExpression =
+                        (PsiReferenceExpression)strippedQualifier;
+                final PsiElement element = referenceExpression.resolve();
+                if (element instanceof PsiField) {
+                    final PsiField field = (PsiField)element;
+                    final PsiClass containingClass = field.getContainingClass();
+                    final String classname = containingClass.getQualifiedName();
+                    if ("java.lang.Boolean".equals(classname)) {
+                        @NonNls final String name = field.getName();
+                        if ("TRUE".equals(name)) {
+                            replaceExpression(methodCall, "true");
+                            return;
+                        } else if ("FALSE".equals(name)) {
+                            replaceExpression(methodCall, "false");
+                            return;
+                        }
+                    }
+                }
+            }
             final String strippedQualifierText = strippedQualifier.getText();
             replaceExpression(methodCall, strippedQualifierText);
         }
