@@ -211,6 +211,8 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   public void dispose() {
+    if (myInvalidated) return;
+    myInvalidated = true;
     stopListeningDocuments();
   }
 
@@ -235,6 +237,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   public void deselectNotify() {
+    if (myInvalidated) return;
     commitAllDocuments();
     myShowing = false;
     commit();
