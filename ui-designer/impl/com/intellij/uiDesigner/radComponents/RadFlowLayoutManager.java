@@ -55,7 +55,8 @@ public class RadFlowLayoutManager extends RadLayoutManager {
   @NotNull @Override
   public DropLocation getDropLocation(RadContainer container, final Point location) {
     FlowLayout flowLayout = (FlowLayout) container.getLayout();
-    return new FlowDropLocation(container, location, (flowLayout.getHgap()+1)/2, (flowLayout.getVgap()+1)/2, false);
+    return new FlowDropLocation(container, location, flowLayout.getAlignment(),
+                                (flowLayout.getHgap()+1)/2, (flowLayout.getVgap()+1)/2);
   }
 
   @Override public Property[] getContainerProperties(final Project project) {

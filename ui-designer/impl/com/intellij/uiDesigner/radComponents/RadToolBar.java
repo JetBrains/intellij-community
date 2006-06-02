@@ -56,7 +56,7 @@ public class RadToolBar extends RadContainer {
 
     @Override @NotNull
     public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
-      return new FlowDropLocation(RadToolBar.this, location, 0, 0, true);
+      return new FlowDropLocation(RadToolBar.this, location, FlowLayout.LEFT, 0, 0);
     }
 
     @Override

@@ -9,9 +9,7 @@ import com.intellij.uiDesigner.designSurface.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.Component;
-import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.*;
 
 /**
  * @author yole
@@ -20,13 +18,15 @@ public class FlowDropLocation implements DropLocation {
   private int myInsertIndex;
   private String myInsertBeforeId;
   private RadContainer myContainer;
+  private final int myAlignment;
   private int myHGap;
-  private boolean mySquareForLast;
+  private final int myVGap;
 
-  public FlowDropLocation(final RadContainer container, final Point location, final int hGap, final int vGap, final boolean squareForLast) {
-    myHGap = hGap;
+  public FlowDropLocation(RadContainer container, Point location, int alignment, int hGap, int vGap) {
     myContainer = container;
-    mySquareForLast = squareForLast;
+    myAlignment = alignment;
+    myHGap = hGap;
+    myVGap = vGap;
     myInsertIndex = myContainer.getDelegee().getComponentCount();
     if (location != null) {
       for(int i=0; i<myContainer.getDelegee().getComponentCount(); i++) {
@@ -61,31 +61,60 @@ public class FlowDropLocation implements DropLocation {
   }
 
   public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
-    if (myInsertIndex == myContainer.getDelegee().getComponentCount()) {
+    if (myContainer.getDelegee().getComponentCount() == 0) {
+      Dimension initialSize = dragObject.getInitialSize(myContainer.getDelegee());
+      int originX;
+      if (myAlignment == FlowLayout.CENTER) {
+        originX = myContainer.getSize().width / 2 - initialSize.width / 2 - myHGap;
+      }
+      else if (isRightAlign()) {
+        originX = myContainer.getSize().width - initialSize.width - 2 * myHGap;
+      }
+      else {
+        originX = 2 * myHGap;
+      }
+      int height = Math.min(initialSize.height, myContainer.getBounds().height);
+      Rectangle rc = new Rectangle(originX, 2 * myVGap, initialSize.width, height);
+      feedbackLayer.putFeedback(myContainer.getDelegee(), rc);
+    }
+    else if ((myInsertIndex == myContainer.getDelegee().getComponentCount() && !isRightAlign()) ||
+        (myInsertIndex == 0 && !isLeftAlign())) {
+      Dimension initialSize = dragObject.getInitialSize(myContainer.getDelegee());
       JComponent component = myContainer.getDelegee();
+      int minX = component.getComponent(0).getBounds().x;
       int maxX = 0;
-      int lastSize = myContainer.getPreferredSize().height;
+      int maxSize = 0;
       int lastTop = myContainer.getDelegee().getInsets().top;
       for(Component child: component.getComponents()) {
         int childX = child.getBounds().x + child.getBounds().width;
         if (childX > maxX) maxX = childX;
-        lastSize = child.getBounds().height;
+        maxSize = Math.max(maxSize, child.getBounds().height);
         lastTop = child.getBounds().y;
       }
-      final Rectangle rc = new Rectangle(maxX, lastTop, lastSize, lastSize);
-      if (mySquareForLast) {
-        feedbackLayer.putFeedback(myContainer.getDelegee(), rc);
+      maxSize = Math.max(maxSize, initialSize.height);
+      maxSize = Math.min(maxSize, myContainer.getBounds().height);
+      final Rectangle rc;
+      if (myInsertIndex == 0) {
+        rc = new Rectangle(minX - myHGap - initialSize.width, lastTop, initialSize.width, maxSize);
       }
       else {
-        rc.setSize(8, lastSize);
-        feedbackLayer.putFeedback(myContainer.getDelegee(), rc, VertInsertFeedbackPainter.INSTANCE);
+        rc = new Rectangle(maxX, lastTop, initialSize.width, maxSize);
       }
+      feedbackLayer.putFeedback(myContainer.getDelegee(), rc);
     }
     else {
       Rectangle bounds = myContainer.getDelegee().getComponent(myInsertIndex).getBounds();
       Rectangle rc = new Rectangle(bounds.x-4-myHGap, bounds.y, 8, bounds.height);
       feedbackLayer.putFeedback(myContainer.getDelegee(), rc, VertInsertFeedbackPainter.INSTANCE);
     }
+  }
+
+  private boolean isLeftAlign() {
+    return myAlignment == FlowLayout.LEFT || myAlignment == FlowLayout.LEADING;
+  }
+
+  private boolean isRightAlign() {
+    return myAlignment == FlowLayout.RIGHT || myAlignment == FlowLayout.TRAILING;
   }
 
   public void processDrop(GuiEditor editor,
