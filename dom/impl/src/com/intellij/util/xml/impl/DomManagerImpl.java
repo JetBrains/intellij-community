@@ -399,7 +399,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   public final boolean isMockElement(DomElement element) {
-    final DomFileElement<?> root = element.getRoot();
+    final DomFileElement<? extends DomElement> root = element.getRoot();
     return root.getUserData(MOCK) != null;
   }
 
