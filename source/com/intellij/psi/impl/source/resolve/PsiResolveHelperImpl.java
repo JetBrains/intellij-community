@@ -52,7 +52,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     }
     else {
       if (argumentList.getParent() instanceof PsiAnonymousClass) {
-        processor = new MethodResolverProcessor((PsiClass)argumentList.getParent(), argumentList, place);
+        final PsiClass anonymous = (PsiClass)argumentList.getParent();
+        processor = new MethodResolverProcessor(anonymous, argumentList, place);
+        final PsiClass superClass = anonymous.getSuperClass();
+        if (superClass != null) {
+          processor.setName(superClass.getName());
+        }
       }
       else {
         processor = new MethodResolverProcessor(aClass, argumentList, place);
