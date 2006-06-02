@@ -15,26 +15,23 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
-
-import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
 
@@ -42,7 +39,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
     public boolean m_ignoreJavadoc = false;
 
     public String getGroupDisplayName(){
-        return com.intellij.codeInsight.daemon.GroupNames.STYLE_GROUP_NAME;
+        return GroupNames.STYLE_GROUP_NAME;
     }
 
     public String getDisplayName() {
@@ -81,27 +78,28 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
 
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
-            final CodeStyleSettingsManager settingsManager =
-                    com.intellij.psi.codeStyle.CodeStyleSettingsManager.getInstance(project);
-            final CodeStyleSettings settings =
-                    settingsManager.getCurrentSettings();
-            final boolean oldUseFQNamesInJavadoc =
-                    settings.USE_FQ_CLASS_NAMES_IN_JAVADOC;
-            final boolean oldUseFQNames = settings.USE_FQ_CLASS_NAMES;
-            try{
-                settings.USE_FQ_CLASS_NAMES_IN_JAVADOC = false;
-                settings.USE_FQ_CLASS_NAMES = false;
-                final PsiJavaCodeReferenceElement reference =
-                        (PsiJavaCodeReferenceElement)
-                                descriptor.getPsiElement();
-                final PsiManager psiManager = reference.getManager();
-                final CodeStyleManager styleManager =
-                        psiManager.getCodeStyleManager();
-                styleManager.shortenClassReferences(reference);
-            } finally{
-                settings.USE_FQ_CLASS_NAMES_IN_JAVADOC = oldUseFQNamesInJavadoc;
-                settings.USE_FQ_CLASS_NAMES = oldUseFQNames;
+            final PsiJavaCodeReferenceElement referenceElement =
+                    (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
+            final PsiJavaFile file =
+                    (PsiJavaFile)referenceElement.getContainingFile();
+            final PsiImportList importList = file.getImportList();
+            if (importList == null) {
+                return;
             }
+            final PsiClass aClass = (PsiClass)referenceElement.resolve();
+            final PsiManager manager = referenceElement.getManager();
+            final PsiElementFactory elementFactory =
+                    manager.getElementFactory();
+            final PsiImportStatement importStatement =
+                    elementFactory.createImportStatement(aClass);
+            final PsiElement nameElement =
+                    referenceElement.getReferenceNameElement();
+            if (nameElement == null) {
+                return;
+            }
+            importList.add(importStatement);
+            referenceElement.replace(nameElement);
+
         }
     }
 
@@ -146,12 +144,9 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             if(!text.startsWith(fqName)){
                 return;
             }
-            final String className = ClassUtil.extractClassName(text);
-            final PsiManager manager = reference.getManager();
-            final PsiResolveHelper resolveHelper = manager.getResolveHelper();
-            final PsiClass psiClass =
-                    resolveHelper.resolveReferencedClass(className, reference);
-            if(psiClass != null && !aClass.equals(psiClass)){
+            final PsiJavaFile javaFile =
+                    PsiTreeUtil.getParentOfType(reference, PsiJavaFile.class);
+            if (!ImportUtils.nameCanBeImported(fqName, javaFile)) {
                 return;
             }
             registerError(reference);

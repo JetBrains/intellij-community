@@ -16,9 +16,11 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
 import com.siyeh.HardcodedMethodConstants;
 
 public class ImportUtils{
+
     private ImportUtils(){
         super();
     }
@@ -62,8 +64,8 @@ public class ImportUtils{
         if(imports == null){
             return false;
         }
-        final PsiImportStatement[] importStatements = imports
-                .getImportStatements();
+        final PsiImportStatement[] importStatements =
+                imports.getImportStatements();
         for(final PsiImportStatement importStatement : importStatements){
             if(!importStatement.isOnDemand()){
                 final String importName = importStatement.getQualifiedName();
@@ -139,7 +141,8 @@ public class ImportUtils{
         }
         if(!HardcodedMethodConstants.JAVA_LANG.equals(packageName)) {
           final PsiManager manager = file.getManager();
-            final PsiPackage javaLangPackage = manager.findPackage(HardcodedMethodConstants.JAVA_LANG);
+            final PsiPackage javaLangPackage =
+                    manager.findPackage(HardcodedMethodConstants.JAVA_LANG);
             if(javaLangPackage == null){
                 return false;
             }
@@ -159,17 +162,32 @@ public class ImportUtils{
         final int lastDotIndex = fqName.lastIndexOf((int) '.');
         final String shortName = fqName.substring(lastDotIndex + 1);
         final PsiClass[] classes = file.getClasses();
-        for(PsiClass aClasses : classes){
-            if(shortName.equals(aClasses.getName())){
-                if(!fqName.equals(aClasses.getQualifiedName())){
-                    return true;
-                }
+        for(PsiClass aClass : classes){
+            if (containsConflictingClass(aClass, fqName)) {
+                return true;
             }
         }
         final ClassReferenceVisitor visitor =
                 new ClassReferenceVisitor(shortName, fqName);
         file.accept(visitor);
         return visitor.isReferenceFound();
+    }
+
+    private static boolean containsConflictingClass(PsiClass aClass,
+                                                    String fqName) {
+        final String shortName = ClassUtil.extractClassName(fqName);
+        if(shortName.equals(aClass.getName())){
+                if(!fqName.equals(aClass.getQualifiedName())){
+                    return true;
+                }
+        }
+        final PsiClass[] classes = aClass.getInnerClasses();
+        for (PsiClass innerClass : classes) {
+            if (containsConflictingClass(innerClass, fqName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static boolean importStatementMatches(
