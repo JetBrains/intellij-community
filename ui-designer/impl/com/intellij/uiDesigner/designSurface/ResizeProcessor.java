@@ -172,10 +172,12 @@ public final class ResizeProcessor extends EventProcessor {
         final Point point = SwingUtilities.convertPoint(myEditor.getDragLayer(), e.getX(), e.getY(), myOriginalParent.getDelegee());
         Rectangle rcGrid = getGridSpanGridRect(myOriginalParent, myOriginalConstraints, point, myResizeMask);
         if (rcGrid != null && isGridSpanDropAllowed(rcGrid)) {
+          GridConstraints oldConstraints = (GridConstraints) myOriginalConstraints.clone();
           myOriginalConstraints.setColumn(rcGrid.x);
           myOriginalConstraints.setRow(rcGrid.y);
           myOriginalConstraints.setColSpan(rcGrid.width);
           myOriginalConstraints.setRowSpan(rcGrid.height);
+          myComponent.fireConstraintsChanged(oldConstraints);
           modified = true;
         }
       }
