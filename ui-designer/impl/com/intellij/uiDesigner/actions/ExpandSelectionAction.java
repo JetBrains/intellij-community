@@ -4,10 +4,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
+import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 
 import java.util.Stack;
 
@@ -20,15 +22,14 @@ import java.util.Stack;
  * @author Vladimir Kondratyev
  */
 public final class ExpandSelectionAction extends AnAction{
-  /** Invoked by reflection */
-  @SuppressWarnings({"RedundantNoArgConstructor"})
-  public ExpandSelectionAction() {}
-
   public void actionPerformed(final AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     assert editor != null;
     final SelectionState selectionState = editor.getSelectionState();
     selectionState.setInsideChange(true);
+
+    ComponentTreeBuilder builder = UIDesignerToolWindowManager.getInstance(editor.getProject()).getComponentTreeBuilder();
+    builder.beginUpdateSelection();
 
     final Stack<ComponentPtr[]> history = selectionState.getSelectionHistory();
 
@@ -64,6 +65,7 @@ public final class ExpandSelectionAction extends AnAction{
       // Store new selection
       history.push(SelectionState.getSelection(editor));
     }finally{
+      builder.endUpdateSelection();
       selectionState.setInsideChange(false);
     }
   }

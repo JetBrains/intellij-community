@@ -5,7 +5,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.uiDesigner.SelectionState;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
+import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 
 import java.util.Stack;
@@ -20,6 +22,8 @@ public final class ShrinkSelectionAction extends AnAction{
     assert editor != null;
     final SelectionState selectionState = editor.getSelectionState();
     selectionState.setInsideChange(true);
+    ComponentTreeBuilder builder = UIDesignerToolWindowManager.getInstance(editor.getProject()).getComponentTreeBuilder();
+    builder.beginUpdateSelection();
 
     try{
       final Stack<ComponentPtr[]> history = selectionState.getSelectionHistory();
@@ -27,6 +31,7 @@ public final class ShrinkSelectionAction extends AnAction{
       SelectionState.restoreSelection(editor, history.peek());
     }
     finally{
+      builder.endUpdateSelection();
       selectionState.setInsideChange(false);
     }
   }
