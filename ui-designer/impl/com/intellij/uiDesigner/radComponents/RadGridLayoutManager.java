@@ -366,6 +366,12 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
     return 1;
   }
 
+  public void copyGridRows(RadContainer grid, int rowIndex, int rowCount, int targetIndex) {
+    for(int i=0; i< rowCount; i++) {
+      insertGridCells(grid, rowIndex, true, false, false);
+    }
+  }
+
   @Override
   public int deleteGridCells(final RadContainer grid, final int cellIndex, final boolean isRow) {
     GridChangeUtil.deleteCell(grid, cellIndex, isRow);

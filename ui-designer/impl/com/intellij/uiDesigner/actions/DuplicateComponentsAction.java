@@ -39,13 +39,10 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
       final int row = c.getConstraints().getRow();
       int rowSpan = c.getConstraints().getRowSpan();
       int insertIndex = parent.indexOfComponent(c);
-
       if (parent.getLayoutManager().isGrid()) {
         if (!insertedRows.contains(row) && !isSpaceBelowEmpty(c)) {
           insertedRows.add(row);
-          for (int i = 0; i < rowSpan; i++) {
-            parent.getGridLayoutManager().insertGridCells(parent, row + rowSpan - 1, true, false, false);
-          }
+          parent.getGridLayoutManager().copyGridRows(parent, row, rowSpan, row + rowSpan);
         }
       }
 
@@ -53,7 +50,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
       if (copyList != null) {
         RadComponent copy = copyList.get(0);
         if (parent.getLayoutManager().isGrid()) {
-          copy.getConstraints().setRow(row + rowSpan);
+          copy.getConstraints().setRow(row + rowSpan + parent.getGridLayoutManager().getGapCellCount());
           copy.getConstraints().setRowSpan(rowSpan);
         }
         parent.addComponent(copy, insertIndex+1);

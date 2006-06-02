@@ -475,6 +475,25 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     return 2;
   }
 
+  @Override
+  public void copyGridRows(RadContainer grid, int rowIndex, int rowCount, int targetIndex) {
+    FormLayout formLayout = getFormLayout(grid);
+    insertOrAppendRow(formLayout, targetIndex+1, FormFactory.RELATED_GAP_ROWSPEC);
+    targetIndex++;
+    if (targetIndex < rowIndex) rowIndex++;
+    for(int i=0; i < rowCount; i++) {
+      RowSpec rowSpec = formLayout.getRowSpec(rowIndex + 1);
+      insertOrAppendRow(formLayout, targetIndex+1, rowSpec);
+      rowIndex += (targetIndex < rowIndex) ? 2 : 1;
+      targetIndex++;
+    }
+  }
+
+  @Override
+  public int getGapCellCount() {
+    return 1;
+  }
+
   /**
    * @return index where new column or row was actually inserted (0-based)
    */
