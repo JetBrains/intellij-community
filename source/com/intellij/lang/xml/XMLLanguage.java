@@ -54,7 +54,7 @@ public class XMLLanguage extends CompositeLanguage {
   private final DocumentationProvider myDocumentationProvider = new DocumentationProvider() {
 
     public String getQuickNavigateInfo(PsiElement element) {
-      if (element instanceof XmlAttributeValue) {
+      if (!(element instanceof PsiFile)) {
         String value = XmlValueProvider.getProvider(element).getValue(element);
         if (value != null) {
           PsiFile file = element.getContainingFile();
