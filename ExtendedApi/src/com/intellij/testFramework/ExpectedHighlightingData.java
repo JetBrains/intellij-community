@@ -29,6 +29,7 @@ public class ExpectedHighlightingData {
  @NonNls private static final String ERROR_MARKER = "error";
  @NonNls private static final String WARNING_MARKER = "warning";
  @NonNls private static final String INFORMATION_MARKER = "weak_warning";
+ @NonNls private static final String SERVER_PROBLEM_MARKER = "server_problem";
  @NonNls private static final String INFO_MARKER = "info";
  @NonNls private static final String END_LINE_HIGHLIGHT_MARKER = "EOLError";
  @NonNls private static final String END_LINE_WARNING_MARKER = "EOLWarning";
@@ -53,14 +54,23 @@ public class ExpectedHighlightingData {
   Map<String,ExpectedHighlightingSet> highlightingTypes;
 
   public ExpectedHighlightingData(Document document,boolean checkWarnings, boolean checkInfos) {
-    this(document, checkWarnings, false, checkInfos);
+    this(document, checkWarnings, false, checkInfos, false);
   }
 
-  public ExpectedHighlightingData(Document document,boolean checkWarnings,boolean checkWeakWarnings, boolean checkInfos) {
+  public ExpectedHighlightingData(Document document, boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos){
+    this(document, checkWarnings, checkWeakWarnings, checkInfos, false);
+  }
+
+  public ExpectedHighlightingData(Document document,
+                                  boolean checkWarnings,
+                                  boolean checkWeakWarnings,
+                                  boolean checkInfos,
+                                  boolean checkServerProblems) {
     highlightingTypes = new THashMap<String,ExpectedHighlightingSet>();
     highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(ERROR_MARKER, HighlightInfoType.ERROR, HighlightSeverity.ERROR, false, true));
     highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(WARNING_MARKER, HighlightInfoType.UNUSED_SYMBOL, HighlightSeverity.WARNING, false, checkWarnings));
     highlightingTypes.put(INFORMATION_MARKER, new ExpectedHighlightingSet(INFORMATION_MARKER, HighlightInfoType.INFO, HighlightSeverity.INFO, false, checkWeakWarnings));
+    highlightingTypes.put(SERVER_PROBLEM_MARKER, new ExpectedHighlightingSet(SERVER_PROBLEM_MARKER, HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER, HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING, false, checkServerProblems));
     highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(INFO_MARKER, HighlightInfoType.TODO, HighlightSeverity.INFORMATION, false, checkInfos));
     highlightingTypes.put(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(END_LINE_HIGHLIGHT_MARKER, HighlightInfoType.ERROR, HighlightSeverity.ERROR, true, true));
     highlightingTypes.put(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(END_LINE_WARNING_MARKER, HighlightInfoType.WARNING, HighlightSeverity.WARNING, true, checkWarnings));
