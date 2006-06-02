@@ -56,6 +56,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
       }
       else {
         processor = new MethodResolverProcessor(aClass, argumentList, place);
+        processor.setName(aClass.getName());
       }
       PsiScopesUtil.processScope(aClass, processor, classResolveResult.getSubstitutor(), aClass, place);
 
