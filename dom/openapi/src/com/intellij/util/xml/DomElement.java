@@ -27,7 +27,7 @@ public interface DomElement {
   @Nullable
   XmlTag getXmlTag();
 
-  DomFileElement<?> getRoot();
+  <T extends DomElement> DomFileElement<T> getRoot();
 
   DomElement getParent();
 

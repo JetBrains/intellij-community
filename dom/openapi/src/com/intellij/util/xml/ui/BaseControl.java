@@ -21,7 +21,7 @@ import java.lang.reflect.InvocationTargetException;
 /**
  * @author peter
  */
-public abstract class BaseControl<Bound extends JComponent, T> implements DomUIControl {
+public abstract class BaseControl<Bound extends JComponent, T> extends DomUIControl {
   public static final Color ERROR_BACKGROUND = new Color(255,204,204);
   public static final Color ERROR_FOREGROUND = SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor();
   public static final Color WARNING_BACKGROUND = new Color(255,255,204);
@@ -112,7 +112,7 @@ public abstract class BaseControl<Bound extends JComponent, T> implements DomUIC
   }
 
   public final DomElement getDomElement() {
-    return myDomWrapper.getDomElement();
+    return myDomWrapper.getWrappedElement();
   }
 
   public final DomWrapper<T> getDomWrapper() {

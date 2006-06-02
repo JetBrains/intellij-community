@@ -6,10 +6,10 @@ package com.intellij.util.xml;
 /**
  * @author peter
  */
-public interface DomNameStrategy {
-  String convertName(String propertyName);
-  String splitIntoWords(final String tagName);
+public abstract class DomNameStrategy {
+  public abstract String convertName(String propertyName);
+  public abstract String splitIntoWords(final String tagName);
 
-  DomNameStrategy HYPHEN_STRATEGY = new HyphenNameStrategy();
-  DomNameStrategy JAVA_STRATEGY = new JavaNameStrategy();
+  public static final DomNameStrategy HYPHEN_STRATEGY = new HyphenNameStrategy();
+  public static final DomNameStrategy JAVA_STRATEGY = new JavaNameStrategy();
 }

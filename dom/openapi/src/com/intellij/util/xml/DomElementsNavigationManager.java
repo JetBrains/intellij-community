@@ -31,11 +31,11 @@ public abstract class DomElementsNavigationManager {
     return project.getComponent(DomElementsNavigationManager.class);
   }
 
-  public abstract Set<DomElementNavigateProvider> getDomElementsNavigateProviders(DomElement domElement);
+  public abstract Set<DomElementNavigationProvider> getDomElementsNavigateProviders(DomElement domElement);
 
-  public abstract DomElementNavigateProvider getDomElementsNavigateProvider(String providerName);
+  public abstract DomElementNavigationProvider getDomElementsNavigateProvider(String providerName);
 
-  public abstract void registerDomElementsNavigateProvider(DomElementNavigateProvider provider);
+  public abstract void registerDomElementsNavigateProvider(DomElementNavigationProvider provider);
 
 
 }

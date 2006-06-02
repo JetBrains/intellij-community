@@ -11,14 +11,14 @@ import com.intellij.openapi.module.Module;
 /**
  * @author peter
  */
-public interface ConvertContext {
-  DomElement getInvocationElement();
+public abstract class ConvertContext {
+  public abstract DomElement getInvocationElement();
 
-  PsiClass findClass(String name);
+  public abstract PsiClass findClass(String name);
 
-  XmlTag getTag();
+  public abstract XmlTag getTag();
 
-  XmlFile getFile();
+  public abstract XmlFile getFile();
 
-  Module getModule();
+  public abstract Module getModule();
 }

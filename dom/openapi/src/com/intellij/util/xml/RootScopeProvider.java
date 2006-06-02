@@ -19,7 +19,7 @@ package com.intellij.util.xml;
 /**
  * @author peter
  */
-public class RootScopeProvider implements ScopeProvider{
+public class RootScopeProvider extends ScopeProvider{
   public static final RootScopeProvider ROOT_SCOPE_PROVIDER = new RootScopeProvider();
 
   public DomElement getScope(DomElement element) {

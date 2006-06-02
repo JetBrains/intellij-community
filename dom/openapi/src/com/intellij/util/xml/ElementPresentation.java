@@ -20,10 +20,10 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public interface ElementPresentation {
-  String getElementName();
+public abstract class ElementPresentation {
+  public abstract String getElementName();
 
-  String getTypeName();
+  public abstract String getTypeName();
 
-  Icon getIcon();
+  public abstract Icon getIcon();
 }

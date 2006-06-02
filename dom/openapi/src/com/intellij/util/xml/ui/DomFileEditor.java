@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.UserActivityWatcher;
-import com.intellij.util.xml.CaptionComponent;
+import com.intellij.util.xml.ui.CaptionComponent;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomEventAdapter;
 import com.intellij.util.xml.DomManager;

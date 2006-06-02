@@ -5,49 +5,37 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author peter
  */
-public class DomFixedWrapper<T> implements DomWrapper<T>{
+public class DomFixedWrapper<T> extends DomWrapper<T>{
   private final GenericDomValue myDomElement;
 
   public DomFixedWrapper(final GenericDomValue<? extends T> domElement) {
     myDomElement = domElement;
   }
 
-  public DomElement getDomElement() {
+  public DomElement getWrappedElement() {
     return myDomElement;
   }
 
   public void setValue(final T value) throws IllegalAccessException, InvocationTargetException {
-    DomUIFactory.SET_VALUE_METHOD.invoke(getDomElement(), value);
+    DomUIFactory.SET_VALUE_METHOD.invoke(getWrappedElement(), value);
   }
 
   public T getValue() throws IllegalAccessException, InvocationTargetException {
-    final DomElement element = getDomElement();
+    final DomElement element = getWrappedElement();
     return element.isValid() ? (T)DomUIFactory.GET_VALUE_METHOD.invoke(element) : null;
   }
 
-  public boolean isValid() {
-    return myDomElement.isValid();
+  @NotNull
+  public DomElement getExistingDomElement() {
+    return myDomElement;
   }
 
-  public Project getProject() {
-    return myDomElement.getManager().getProject();
-  }
-
-  public GlobalSearchScope getResolveScope() {
-    return myDomElement.getResolveScope();
-  }
-
-  public XmlFile getFile() {
-    return myDomElement.getRoot().getFile();
-  }
 
 }

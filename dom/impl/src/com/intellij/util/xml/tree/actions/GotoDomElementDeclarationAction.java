@@ -9,7 +9,7 @@ import com.intellij.util.xml.tree.DomModelTreeView;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.DomElementsNavigationManager;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomElementNavigateProvider;
+import com.intellij.util.xml.DomElementNavigationProvider;
 import com.intellij.ui.treeStructure.SimpleNode;
 
 /**
@@ -22,7 +22,7 @@ public class GotoDomElementDeclarationAction extends BaseDomTreeAction {
 
     if(simpleNode instanceof BaseDomElementNode) {
       final DomElement domElement = ((BaseDomElementNode)simpleNode).getDomElement();
-      final DomElementNavigateProvider provider =
+      final DomElementNavigationProvider provider =
         DomElementsNavigationManager.getManager(domElement.getManager().getProject()).getDomElementsNavigateProvider(DomElementsNavigationManager.DEFAULT_PROVIDER_NAME);
 
       provider.navigate(domElement, true);

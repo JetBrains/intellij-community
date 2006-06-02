@@ -19,7 +19,7 @@ package com.intellij.util.xml;
 /**
  * @author peter
  */
-public class ParentScopeProvider implements ScopeProvider{
+public class ParentScopeProvider extends ScopeProvider{
   public DomElement getScope(DomElement element) {
     return element.getParent();
   }

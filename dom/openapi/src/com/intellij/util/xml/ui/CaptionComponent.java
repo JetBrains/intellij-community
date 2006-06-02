@@ -15,10 +15,7 @@
  *
  */
 
-package com.intellij.util.xml;
-
-import com.intellij.util.xml.ui.Committable;
-import com.intellij.util.xml.ui.CommittablePanel;
+package com.intellij.util.xml.ui;
 
 import javax.swing.*;
 import java.awt.*;

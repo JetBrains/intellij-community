@@ -20,8 +20,8 @@ import com.intellij.util.xml.DomElement;
 /**
  * @author peter
  */
-public interface EditedElementDescription<T extends DomElement> {
-  T find();
-  void initialize(T element);
-  T addElement();
+public abstract class EditedElementDescription<T extends DomElement> {
+  public abstract T find();
+  public abstract void initialize(T element);
+  public abstract T addElement();
 }

@@ -3,13 +3,13 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.DomElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Factory;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +50,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
     return null;
   }
 
-  public DomFileElementImpl getRoot() {
+  public <T extends DomElement> DomFileElementImpl<T> getRoot() {
     return isValid() ? myParent : null;
   }
 

@@ -12,7 +12,7 @@ import java.util.Collection;
 /**
  * @author peter
  */
-public class EnumConverter<T extends Enum> implements ResolvingConverter<T>{
+public class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
   private static final FactoryMap<Class,EnumConverter> ourCache = new FactoryMap<Class, EnumConverter>() {
     @NotNull
     protected EnumConverter create(final Class key) {

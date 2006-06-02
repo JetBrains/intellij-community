@@ -18,7 +18,7 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomElementNavigateProvider;
+import com.intellij.util.xml.DomElementNavigationProvider;
 
 import java.awt.*;
 import java.util.List;
@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * User: Sergey.Vasiliev
  */
-public class DomUINavigationProvider implements DomElementNavigateProvider {
+public class DomUINavigationProvider extends DomElementNavigationProvider {
   public static String DOM_UI_NAVIGATION_PROVIDER_NAME = "DOM_UI_NAVIGATION_PROVIDER_NAME";
 
   private CompositeCommittable myComponent;

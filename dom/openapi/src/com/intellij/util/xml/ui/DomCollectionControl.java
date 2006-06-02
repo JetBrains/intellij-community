@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class DomCollectionControl<T extends DomElement> implements DomUIControl {
+public class DomCollectionControl<T extends DomElement> extends DomUIControl {
   private final EventDispatcher<CommitListener> myDispatcher = EventDispatcher.create(CommitListener.class);
   private DomTableView myCollectionPanel;
 

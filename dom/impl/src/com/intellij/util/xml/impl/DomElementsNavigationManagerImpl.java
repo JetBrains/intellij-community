@@ -4,47 +4,49 @@
 
 package com.intellij.util.xml.impl;
 
-import com.intellij.util.xml.DomElementsNavigationManager;
-import com.intellij.util.xml.DomElementNavigateProvider;
-import com.intellij.util.xml.DomElement;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-
-import java.util.*;
-
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomElementNavigationProvider;
+import com.intellij.util.xml.DomElementsNavigationManager;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * User: Sergey.Vasiliev
  */
 public class DomElementsNavigationManagerImpl extends DomElementsNavigationManager implements ProjectComponent {
-  private Map<String, DomElementNavigateProvider> myProviders = new HashMap<String, DomElementNavigateProvider>();
+  private Map<String, DomElementNavigationProvider> myProviders = new HashMap<String, DomElementNavigationProvider>();
   private Project myProject;
 
-  private DomElementNavigateProvider myTextEditorProvider = new MyDomElementNavigateProvider();
+  private DomElementNavigationProvider myTextEditorProvider = new MyDomElementNavigateProvider();
 
   public DomElementsNavigationManagerImpl(final Project project) {
     myProject = project;
     myProviders.put(myTextEditorProvider.getProviderName(), myTextEditorProvider);
   }
 
-  public Set<DomElementNavigateProvider> getDomElementsNavigateProviders(DomElement domElement) {
-    Set<DomElementNavigateProvider> result = new HashSet<DomElementNavigateProvider>();
+  public Set<DomElementNavigationProvider> getDomElementsNavigateProviders(DomElement domElement) {
+    Set<DomElementNavigationProvider> result = new HashSet<DomElementNavigationProvider>();
 
-    for (DomElementNavigateProvider navigateProvider : myProviders.values()) {
+    for (DomElementNavigationProvider navigateProvider : myProviders.values()) {
       if (navigateProvider.canNavigate(domElement)) result.add(navigateProvider) ;
     }
     return result;
   }
 
-  public DomElementNavigateProvider getDomElementsNavigateProvider(String providerName) {
+  public DomElementNavigationProvider getDomElementsNavigateProvider(String providerName) {
     return myProviders.get(providerName);
   }
 
-  public void registerDomElementsNavigateProvider(DomElementNavigateProvider provider) {
+  public void registerDomElementsNavigateProvider(DomElementNavigationProvider provider) {
     myProviders.put(provider.getProviderName(), provider);
   }
 
@@ -69,7 +71,7 @@ public class DomElementsNavigationManagerImpl extends DomElementsNavigationManag
 
   }
 
-  private class MyDomElementNavigateProvider implements DomElementNavigateProvider {
+  private class MyDomElementNavigateProvider extends DomElementNavigationProvider {
 
     public String getProviderName() {
       return DEFAULT_PROVIDER_NAME;

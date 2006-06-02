@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class DomResolveConverter<T extends DomElement> implements ResolvingConverter<T>{
+public class DomResolveConverter<T extends DomElement> extends ResolvingConverter<T>{
   private static final FactoryMap<Class<? extends DomElement>,DomResolveConverter> ourCache = new FactoryMap<Class<? extends DomElement>, DomResolveConverter>() {
     @NotNull
     protected DomResolveConverter create(final Class<? extends DomElement> key) {

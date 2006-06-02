@@ -9,7 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 /**
  * @author peter
  */
-public class HyphenNameStrategy implements DomNameStrategy {
+public class HyphenNameStrategy extends DomNameStrategy {
   public String convertName(String propertyName) {
     final String[] words = NameUtil.nameToWords(propertyName);
     for (int i = 0; i < words.length; i++) {

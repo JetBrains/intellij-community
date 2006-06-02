@@ -10,7 +10,7 @@ import javax.swing.*;
 /**
  * User: Sergey.Vasiliev
  */
-public class BasicDomElementPresentation implements DomElementPresentation {
+public class BasicDomElementPresentation extends DomElementPresentation {
   private DomElement myElement;
 
 

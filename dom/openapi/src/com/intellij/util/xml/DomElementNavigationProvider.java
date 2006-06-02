@@ -20,10 +20,10 @@ package com.intellij.util.xml;
 /**
  * User: Sergey.Vasiliev
  */
-public interface DomElementNavigateProvider {
-  String getProviderName();
+public abstract class DomElementNavigationProvider {
+  public abstract String getProviderName();
 
-  void navigate(DomElement domElement, boolean requestFocus);
+  public abstract void navigate(DomElement domElement, boolean requestFocus);
 
-  boolean canNavigate(DomElement domElement);
+  public abstract boolean canNavigate(DomElement domElement);
 }

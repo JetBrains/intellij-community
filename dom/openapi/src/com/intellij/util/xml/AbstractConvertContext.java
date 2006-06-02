@@ -13,7 +13,7 @@ import com.intellij.psi.xml.XmlTag;
 /**
  * @author peter
  */
-public abstract class AbstractConvertContext implements ConvertContext {
+public abstract class AbstractConvertContext extends ConvertContext {
 
   public final PsiClass findClass(String name) {
     if (name == null) return null;

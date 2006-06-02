@@ -6,9 +6,7 @@ package com.intellij.util.xml.ui;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -17,7 +15,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class DomCollectionWrapper<T> implements DomWrapper<T>{
+public class DomCollectionWrapper<T> extends DomWrapper<T>{
   private final DomElement myDomElement;
   private final DomCollectionChildDescription myChildDescription;
   private final Method mySetter;
@@ -40,7 +38,12 @@ public class DomCollectionWrapper<T> implements DomWrapper<T>{
     myGetter = getter;
   }
 
-  public DomElement getDomElement() {
+  @NotNull
+  public DomElement getExistingDomElement() {
+    return myDomElement;
+  }
+
+  public DomElement getWrappedElement() {
     final List<? extends DomElement> list = myChildDescription.getValues(myDomElement);
     return list.isEmpty() ? null : list.get(0);
   }
@@ -62,19 +65,4 @@ public class DomCollectionWrapper<T> implements DomWrapper<T>{
     return list.isEmpty() ? null : (T)myGetter.invoke(list.get(0));
   }
 
-  public boolean isValid() {
-    return myDomElement.isValid();
-  }
-
-  public Project getProject() {
-    return myDomElement.getManager().getProject();
-  }
-
-  public GlobalSearchScope getResolveScope() {
-    return myDomElement.getResolveScope();
-  }
-
-  public XmlFile getFile() {
-    return myDomElement.getRoot().getFile();
-  }
 }

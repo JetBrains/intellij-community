@@ -12,17 +12,17 @@ import javax.swing.*;
  * 
  * @see DomUIFactory
  */
-public interface DomUIControl<T extends DomElement> extends CommittablePanel {
+public abstract class DomUIControl<T extends DomElement> implements CommittablePanel {
 
-  T getDomElement();
+  public abstract T getDomElement();
 
-  void bind(JComponent component);
+  public abstract void bind(JComponent component);
 
-  void addCommitListener(CommitListener listener);
+  public abstract void addCommitListener(CommitListener listener);
 
-  void removeCommitListener(CommitListener listener);
+  public abstract void removeCommitListener(CommitListener listener);
 
-  boolean canNavigate(DomElement element);
+  public abstract boolean canNavigate(DomElement element);
 
-  void navigate(DomElement element);
+  public abstract void navigate(DomElement element);
 }

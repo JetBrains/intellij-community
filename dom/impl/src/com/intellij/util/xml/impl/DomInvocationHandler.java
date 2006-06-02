@@ -85,8 +85,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     setType(type);
   }
 
-  public DomFileElementImpl<?> getRoot() {
-    return isValid() ? myParent.getRoot() : null;
+  public <T extends DomElement> DomFileElementImpl<T> getRoot() {
+    return isValid() ? (DomFileElementImpl<T>)myParent.getRoot() : null;
   }
 
   public DomElement getParent() {

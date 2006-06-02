@@ -11,11 +11,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public interface Converter<T> {
-  @Nullable T fromString(@Nullable String s, final ConvertContext context);
-  @Nullable String toString(@Nullable T t, final ConvertContext context);
+public abstract class Converter<T> {
+  public abstract @Nullable T fromString(@Nullable String s, final ConvertContext context);
+  public abstract @Nullable String toString(@Nullable T t, final ConvertContext context);
 
-  Converter<Integer> INTEGER_CONVERTER = new Converter<Integer>() {
+  public static final Converter<Integer> INTEGER_CONVERTER = new Converter<Integer>() {
     public Integer fromString(final String s, final ConvertContext context) {
       if (s == null) return null;
       try {
@@ -32,7 +32,7 @@ public interface Converter<T> {
 
   };
 
-  Converter<String> EMPTY_CONVERTER = new Converter<String>() {
+  public static final Converter<String> EMPTY_CONVERTER = new Converter<String>() {
     public String fromString(final String s, final ConvertContext context) {
       return s;
     }
@@ -43,7 +43,7 @@ public interface Converter<T> {
 
   };
 
-  Converter<PsiClass> PSI_CLASS_CONVERTER = new Converter<PsiClass>() {
+  public static final Converter<PsiClass> PSI_CLASS_CONVERTER = new Converter<PsiClass>() {
     public PsiClass fromString(final String s, final ConvertContext context) {
       return s == null? null:context.findClass(s);
     }
@@ -54,7 +54,7 @@ public interface Converter<T> {
 
   };
 
-  Converter<PsiType> PSI_TYPE_CONVERTER = new Converter<PsiType>() {
+  public static final Converter<PsiType> PSI_TYPE_CONVERTER = new Converter<PsiType>() {
     public PsiType fromString(final String s, final ConvertContext context) {
       if (s == null) return null;
       try {

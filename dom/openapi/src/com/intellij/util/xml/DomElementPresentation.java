@@ -1,5 +1,5 @@
 package com.intellij.util.xml;
 
-public interface DomElementPresentation extends ElementPresentation {
+public abstract class DomElementPresentation extends ElementPresentation {
   
 }

@@ -9,8 +9,8 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author peter
  */
-public interface ClassChooser<T extends DomElement> {
-  Class<? extends T> chooseClass(XmlTag tag);
-  void distinguishTag(XmlTag tag, Class<? extends T> aClass) throws IncorrectOperationException;
-  Class[] getChooserClasses();
+public abstract class ClassChooser<T extends DomElement> {
+  public abstract Class<? extends T> chooseClass(XmlTag tag);
+  public abstract void distinguishTag(XmlTag tag, Class<? extends T> aClass) throws IncorrectOperationException;
+  public abstract Class[] getChooserClasses();
 }

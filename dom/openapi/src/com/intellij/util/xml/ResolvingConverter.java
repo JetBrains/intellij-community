@@ -25,8 +25,8 @@ import java.util.Collections;
 /**
  * @author peter
  */
-public interface ResolvingConverter<T> extends Converter<T> {
-  ResolvingConverter EMPTY_CONVERTER = new ResolvingConverter() {
+public abstract class ResolvingConverter<T> extends Converter<T> {
+  public static final ResolvingConverter EMPTY_CONVERTER = new ResolvingConverter() {
     public Collection getVariants(final ConvertContext context) {
       return Collections.emptyList();
     }
@@ -40,7 +40,7 @@ public interface ResolvingConverter<T> extends Converter<T> {
     }
   };
 
-  Converter<Boolean> BOOLEAN_CONVERTER = new ResolvingConverter<Boolean>() {
+  public static final Converter<Boolean> BOOLEAN_CONVERTER = new ResolvingConverter<Boolean>() {
     public Boolean fromString(final String s, final ConvertContext context) {
       if ("true".equalsIgnoreCase(s)) {
         return Boolean.TRUE;
@@ -62,5 +62,5 @@ public interface ResolvingConverter<T> extends Converter<T> {
   };
 
   @NotNull
-  Collection<T> getVariants(final ConvertContext context);
+  public abstract Collection<T> getVariants(final ConvertContext context);
 }

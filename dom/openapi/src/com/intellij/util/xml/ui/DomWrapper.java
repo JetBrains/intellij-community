@@ -8,23 +8,37 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author peter
  */
-public interface DomWrapper<T> {
+public abstract class DomWrapper<T> {
+
+  @NotNull
+  public abstract DomElement getExistingDomElement();
+
   @Nullable
-  DomElement getDomElement();
-  void setValue(T value) throws IllegalAccessException, InvocationTargetException;
-  T getValue() throws IllegalAccessException, InvocationTargetException;
+  public abstract DomElement getWrappedElement();
 
-  boolean isValid();
+  public abstract void setValue(T value) throws IllegalAccessException, InvocationTargetException;
+  public abstract T getValue() throws IllegalAccessException, InvocationTargetException;
 
-  Project getProject();
+  public boolean isValid() {
+    return getExistingDomElement().isValid();
+  }
 
-  GlobalSearchScope getResolveScope();
+  public Project getProject() {
+    return getExistingDomElement().getManager().getProject();
+  }
 
-  XmlFile getFile();
+  public GlobalSearchScope getResolveScope() {
+    return getExistingDomElement().getResolveScope();
+  }
+
+  public XmlFile getFile() {
+    return getExistingDomElement().getRoot().getFile();
+  }
 }
