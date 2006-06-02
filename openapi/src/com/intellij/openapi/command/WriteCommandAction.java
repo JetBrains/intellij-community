@@ -101,7 +101,11 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
           }
         });
       }
-    }, getCommandName(), getGroupID(), UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
+    }, getCommandName(), getGroupID(), getUndoConfirmationPolicy());
+  }
+
+  protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
+    return UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION;
   }
 
   protected <T> RunResult<T> executeCommand(RunResult<T> result) {
@@ -114,7 +118,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
         results[0].run();
         results[0] = null;
       }
-    }, getCommandName(), getGroupID(), UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
+    }, getCommandName(), getGroupID(), getUndoConfirmationPolicy());
 
     return result;
   }
