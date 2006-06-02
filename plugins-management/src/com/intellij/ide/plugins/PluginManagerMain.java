@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -117,7 +116,7 @@ public class PluginManagerMain
     PopupHandler.installUnknownPopupHandler(pluginTable, getActionGroup(), ActionManager.getInstance());
 
     myToolbarPanel.setLayout(new BorderLayout());
-    toolbar = ActionManagerEx.getInstance().createActionToolbar("PluginManaer", getActionGroup(), true);
+    toolbar = ActionManager.getInstance().createActionToolbar("PluginManaer", getActionGroup(), true);
     myToolbarPanel.add( toolbar.getComponent(), BorderLayout.WEST );
     toolbar.updateActionsImmediately();
 
@@ -208,7 +207,7 @@ public class PluginManagerMain
         SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
         parser.parse( file, handler );
         list = handler.getPluginsList();
-        ModifyPluginsList( list );
+        modifyPluginsList( list );
       }
     }
     catch( Exception ex )
@@ -216,57 +215,55 @@ public class PluginManagerMain
       //  Nothing to do, just ignore - if nothing can be read from the local
       //  file just start downloading of plugins' list from the site.
     }
-    LoadPluginsFromHostInBackground();
+    loadPluginsFromHostInBackground();
   }
 
-  private void  ModifyPluginsList( ArrayList<IdeaPluginDescriptor> list )
-  {
+  private void modifyPluginsList(ArrayList<IdeaPluginDescriptor> list) {
+    IdeaPluginDescriptor[] selected = pluginTable.getSelectedObjects();
     if (pluginsList == null) {
-      genericModel.addData( list );
+      genericModel.addData(list);
     }
     else {
-      genericModel.modifyData( list );
+      genericModel.modifyData(list);
     }
-
     pluginsList = list;
+    if (selected != null) {
+      select(selected);
+    }
   }
 
   /**
    * Start a new thread which downloads new list of plugins from the site in
    * the background and updates a list of plugins in the table.
    */
-  private void  LoadPluginsFromHostInBackground()
-  {
-    SetDownloadStatus( true );
+  private void loadPluginsFromHostInBackground() {
+    setDownloadStatus(true);
 
     final SwingWorker worker = new SwingWorker() {
       ArrayList<IdeaPluginDescriptor> list = null;
-      public Object construct()
-      {
-        try
-        {
-          list = RepositoryHelper.Process( mySynchStatus );
+
+      public Object construct() {
+        try {
+          list = RepositoryHelper.Process(mySynchStatus);
         }
-        catch( Exception e )
-        {
-          Messages.showErrorDialog(getMainPanel(), IdeBundle.message("error.list.of.plugins.was.not.loaded"),
-                                   IdeBundle.message("title.plugins"));
+        catch (Exception e) {
+          Messages
+            .showErrorDialog(getMainPanel(), IdeBundle.message("error.list.of.plugins.was.not.loaded"), IdeBundle.message("title.plugins"));
         }
         return list;
       }
 
       public void finished() {
-        if( list != null )
-        {
-          ModifyPluginsList( list );
+        if (list != null) {
+          modifyPluginsList(list);
         }
-        SetDownloadStatus( false );
+        setDownloadStatus(false);
       }
     };
     worker.start();
   }
 
-  private void  SetDownloadStatus( boolean what)
+  private void setDownloadStatus( boolean what)
   {
     btnCancel.setVisible( what );
     mySynchStatus.setVisible( what );
@@ -494,5 +491,9 @@ public class PluginManagerMain
         }
       }
     }
+  }
+
+  public void select(IdeaPluginDescriptor... descriptors) {
+    pluginTable.select(descriptors);
   }
 }

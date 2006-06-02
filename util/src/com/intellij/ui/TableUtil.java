@@ -21,15 +21,15 @@ import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.*;
+import java.util.List;
 
 public class TableUtil {
   public interface ItemChecker {
     boolean isOperationApplyable(TableModel model, int row);
   }
 
-  public static java.util.List removeSelectedItems(JTable table) {
+  public static List<Object[]> removeSelectedItems(JTable table) {
     return removeSelectedItems(table, null);
   }
 
@@ -37,8 +37,7 @@ public class TableUtil {
     ListSelectionModel selectionModel = table.getSelectionModel();
     selectionModel.clearSelection();
     int count = table.getRowCount();
-    for (int idx = 0; idx < rows.length; idx++) {
-      int row = rows[idx];
+    for (int row : rows) {
       if (row >= 0 && row < count) {
         selectionModel.addSelectionInterval(row, row);
       }
@@ -60,7 +59,7 @@ public class TableUtil {
     table.scrollRectToVisible(new Rectangle(selectPoint, new Dimension(1,allHeight)));
   }
 
-  public static java.util.List removeSelectedItems(JTable table, ItemChecker applyable) {
+  public static List<Object[]> removeSelectedItems(JTable table, ItemChecker applyable) {
     if (table.isEditing()){
       table.getCellEditor().stopCellEditing();
     }
@@ -71,9 +70,9 @@ public class TableUtil {
 
     ListSelectionModel selectionModel = table.getSelectionModel();
     int minSelectionIndex = selectionModel.getMinSelectionIndex();
-    if (minSelectionIndex == -1) return new ArrayList(0);
+    if (minSelectionIndex == -1) return new ArrayList<Object[]>(0);
 
-    java.util.List removedItems = new LinkedList();
+    List<Object[]> removedItems = new LinkedList<Object[]>();
 
     final int columnCount = model.getColumnCount();
     for (int idx = table.getRowCount() - 1; idx >= 0; idx--) {

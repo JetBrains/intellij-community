@@ -30,65 +30,52 @@ public class PluginsTableModel extends PluginTableModel
         sortByColumn(sortableProvider.getSortColumn());
     }
 
-    public void addData( ArrayList<IdeaPluginDescriptor> list )
-    {
-        //  For each downloadable plugin we need to know whether its counterpart
-        //  is already installed, and if yes compare the difference in versions:
-        //  availability of newer versions will be indicated separately.
-        for( IdeaPluginDescriptor descr : list )
-        {
-            IdeaPluginDescriptor existing = PluginManager.getPlugin( descr.getPluginId());
-            if( existing == null )
-            {
-              view.add( descr );
-              UpdateVersions.put( descr.getPluginId(), descr.getVersion() );
-            }
-            else
-            {
-              updateExistingPluginInfo( (PluginNode)descr, existing );
-            }
-        }
-        sortByColumn(sortableProvider.getSortColumn());
+  public void addData(ArrayList<IdeaPluginDescriptor> list) {
+    //  For each downloadable plugin we need to know whether its counterpart
+    //  is already installed, and if yes compare the difference in versions:
+    //  availability of newer versions will be indicated separately.
+    for (IdeaPluginDescriptor descr : list) {
+      IdeaPluginDescriptor existing = PluginManager.getPlugin(descr.getPluginId());
+      if (existing == null) {
+        view.add(descr);
+        UpdateVersions.put(descr.getPluginId(), descr.getVersion());
+      }
+      else {
+        updateExistingPluginInfo((PluginNode)descr, existing);
+      }
     }
+    sortByColumn(sortableProvider.getSortColumn());
+  }
 
-    public void  modifyData( ArrayList<IdeaPluginDescriptor> list )
-    {
-        //  For each downloadable plugin we need to know whether its counterpart
-        //  is already installed, and if yes compare the difference in versions:
-        //  availability of newer versions will be indicated separately.
-        for( IdeaPluginDescriptor descr : list )
-        {
-            PluginId descrId = descr.getPluginId();
-            IdeaPluginDescriptor existing = PluginManager.getPlugin( descrId );
-            if( existing == null )
-            {
-                if( UpdateVersions.containsKey( descrId ) )
-                {
-                    String currVersion = UpdateVersions.get( descrId );
-                    int state = PluginManagerColumnInfo.compareVersion( descr.getVersion(), currVersion );
-                    if( state > 0 )
-                    {
-                        for( int i = 0; i < view.size(); i++ )
-                        {
-                            IdeaPluginDescriptor obsolete = view.get( i );
-                            if( obsolete.getPluginId() == descrId )
-                                view.remove( obsolete );
-                        }
-                        view.add( descr );
-                    }
-                }
-                else
-                {
-                    view.add( descr );
-                }
+  public void modifyData(ArrayList<IdeaPluginDescriptor> list) {
+    //  For each downloadable plugin we need to know whether its counterpart
+    //  is already installed, and if yes compare the difference in versions:
+    //  availability of newer versions will be indicated separately.
+    for (IdeaPluginDescriptor descr : list) {
+      PluginId descrId = descr.getPluginId();
+      IdeaPluginDescriptor existing = PluginManager.getPlugin(descrId);
+      if (existing == null) {
+        if (UpdateVersions.containsKey(descrId)) {
+          String currVersion = UpdateVersions.get(descrId);
+          int state = PluginManagerColumnInfo.compareVersion(descr.getVersion(), currVersion);
+          if (state > 0) {
+            for (int i = 0; i < view.size(); i++) {
+              IdeaPluginDescriptor obsolete = view.get(i);
+              if (obsolete.getPluginId() == descrId) view.remove(obsolete);
             }
-            else
-            {
-              updateExistingPluginInfo( (PluginNode) descr, existing );
-            }
+            view.add(descr);
+          }
         }
-        sortByColumn(sortableProvider.getSortColumn());
+        else {
+          view.add(descr);
+        }
+      }
+      else {
+        updateExistingPluginInfo((PluginNode)descr, existing);
+      }
     }
+    sortByColumn(sortableProvider.getSortColumn());
+  }
 
   private static void  updateExistingPluginInfo( PluginNode descr, IdeaPluginDescriptor existing )
   {

@@ -6,18 +6,24 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.HyperlinkLabel;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.ui.*;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +41,6 @@ public class IntentionDescriptionPanel {
   private TitledSeparator myBeforeSeparator;
   private TitledSeparator myAfterSeparator;
   private JPanel myPoweredByPanel;
-  private JPanel myPoweredByContainer;
   private List<IntentionUsagePanel> myBeforeUsagePanels = new ArrayList<IntentionUsagePanel>();
   private List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<IntentionUsagePanel>();
   private static final @NonNls String BEFORE_TEMPLATE = "before.java.template";
@@ -69,17 +74,22 @@ public class IntentionDescriptionPanel {
     PluginId pluginId = actionMetaData == null ? null : actionMetaData.getPluginId();
     JComponent owner;
     if (pluginId == null) {
-      owner = new JLabel("<html><body><b>Intellij IDEA</b></body></html>");
+      owner = new JLabel(CodeInsightBundle.message("poweredByIntellijIdea"));
     }
     else {
-      IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
-      HyperlinkLabel label = new HyperlinkLabel("'" + pluginDescriptor.getName() + "' plugin.");
-      //label.addHyperlinkListener(new HyperlinkListener() {
-      //  public void hyperlinkUpdate(HyperlinkEvent e) {
-      //    //todo
-      //    Messages.showInfoMessage("Hold on the line please", "Thanks for calling");
-      //  }
-      //});
+      final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
+      HyperlinkLabel label = new HyperlinkLabel(CodeInsightBundle.message("powered.by.plugin", pluginDescriptor.getName()));
+      label.addHyperlinkListener(new HyperlinkListener() {
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          final PluginManagerConfigurable pluginConfigurable = PluginManagerConfigurable.getInstance();
+          final Project project = ProjectManager.getInstance().getDefaultProject();
+          ShowSettingsUtil.getInstance().editConfigurable(project, pluginConfigurable, new Runnable(){
+            public void run() {
+              pluginConfigurable.select(pluginDescriptor);
+            }
+          });
+        }
+      });
       owner = label;
     }
     //myPoweredByContainer.setVisible(true);

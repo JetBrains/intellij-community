@@ -13,6 +13,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.util.ui.SortableColumnModel;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -49,6 +50,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
+  @NotNull
   public String getComponentName() {
     return "PluginManagerConfigurable";
   }
@@ -131,5 +133,9 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
   @Nullable
   public Runnable enableSearch(String option) {
     return null;
+  }
+
+  public void select(IdeaPluginDescriptor... descriptors) {
+    myPluginManagerMain.select(descriptors);
   }
 }
