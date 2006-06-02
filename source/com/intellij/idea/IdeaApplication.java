@@ -41,9 +41,7 @@ public class IdeaApplication {
     ourInstance = this;
     myArgs = args;
     boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY)).booleanValue();
-    @NonNls final String inspectAppCode = "inspect";
-    @NonNls final String diffAppCode = "diff";
-    final boolean isHeadless = myArgs.length > 0 && (Comparing.strEqual(myArgs[0], inspectAppCode) || Comparing.strEqual(myArgs[0], diffAppCode));
+    final boolean isHeadless = isHeadless(myArgs);
     if (isHeadless){
       new CommandLineApplication(isInternal, false, "componentSets/IdeaComponents");
     } else {
@@ -52,6 +50,12 @@ public class IdeaApplication {
 
     myStarter = getStarter();
     myStarter.premain(args);
+  }
+
+  public static boolean isHeadless(final String[] args) {
+    @NonNls final String inspectAppCode = "inspect";
+    @NonNls final String diffAppCode = "diff";
+    return args.length > 0 && (Comparing.strEqual(args[0], inspectAppCode) || Comparing.strEqual(args[0], diffAppCode));    
   }
 
   private ApplicationStarter getStarter() {
