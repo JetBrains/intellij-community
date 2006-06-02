@@ -40,8 +40,8 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
   public boolean canSelect(PsiElement e) {
     if (e instanceof XmlToken) {
       PsiFile file = e.getContainingFile();
-      VirtualFile virtualFile = (file!=null)?file.getVirtualFile():null;
-      FileType fType = (virtualFile!=null)?FileTypeManager.getInstance().getFileTypeByFile(virtualFile):null;
+      VirtualFile virtualFile = file != null ? file.getVirtualFile() : null;
+      FileType fType = virtualFile != null ? FileTypeManager.getInstance().getFileTypeByFile(virtualFile) : null;
 
       return fType == StdFileTypes.HTML || fType == StdFileTypes.XHTML || fType == StdFileTypes.JSPX || fType == StdFileTypes.JSP;
     }
@@ -75,12 +75,11 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
   }
 
   private static void addTagSelection(CharSequence editorText, int cursorOffset, FileType fileType, EditorHighlighter highlighter, List<TextRange> result) {
-    HighlighterIterator i;
     int start = cursorOffset;
 
     while (true) {
       if (start < 0) return;
-      i = highlighter.createIterator(start);
+      HighlighterIterator i = highlighter.createIterator(start);
       if (i.atEnd()) return;
 
       while (true) {
@@ -115,13 +114,13 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
     }
   }
 
-  private void addAttributeSelection(List<TextRange> result, HighlighterIterator i) {
+  private static void addAttributeSelection(List<TextRange> result, HighlighterIterator i) {
     result.add(new TextRange(i.getStart(), i.getEnd()));
     if (i.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
-      boolean hasQuotes=true;
 
       // Check quote before value
       i.retreat();
+      boolean hasQuotes = true;
       if (!i.atEnd()) {
         final IElementType tokenType = i.getTokenType();
         if (tokenType != XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {

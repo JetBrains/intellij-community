@@ -104,7 +104,7 @@ public class SelectWordUtil {
     return end;
   }
 
-  static boolean isDocCommentElement(PsiElement element) {
+  private static boolean isDocCommentElement(PsiElement element) {
     return element instanceof PsiDocTag;
   }
 
@@ -199,7 +199,7 @@ public class SelectWordUtil {
     List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor);
   }
 
-  static class BasicSelectioner implements Selectioner {
+  private static class BasicSelectioner implements Selectioner {
     protected boolean canSelectXml(PsiElement e) {
       return !(e instanceof XmlToken) && !(e instanceof XmlElement);
     }
@@ -220,7 +220,6 @@ public class SelectWordUtil {
     }
 
     public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-      List<TextRange> result = new ArrayList<TextRange>();
 
       final TextRange originalRange = e.getTextRange();
       List<TextRange> ranges = expandToWholeLine(editorText, originalRange, true);
@@ -229,6 +228,7 @@ public class SelectWordUtil {
         ranges = expandToWholeLine(editorText, originalRange, false);
       }
 
+      List<TextRange> result = new ArrayList<TextRange>();
       result.addAll(ranges);
       return result;
     }
@@ -333,7 +333,7 @@ public class SelectWordUtil {
     return null;
   }
 
-  static class LineCommentSelectioner extends WordSelectioner {
+  private static class LineCommentSelectioner extends WordSelectioner {
     public boolean canSelect(PsiElement e) {
       return e instanceof PsiComment && !(e instanceof PsiDocComment);
     }
@@ -375,7 +375,7 @@ public class SelectWordUtil {
     }
   }
 
-  static class DocCommentSelectioner extends LineCommentSelectioner {
+  private static class DocCommentSelectioner extends LineCommentSelectioner {
     public boolean canSelect(PsiElement e) {
       return e instanceof PsiDocComment;
     }
@@ -426,13 +426,12 @@ public class SelectWordUtil {
     }
   }
 
-  static class ListSelectioner extends BasicSelectioner {
+  private static class ListSelectioner extends BasicSelectioner {
     public boolean canSelect(PsiElement e) {
       return e instanceof PsiParameterList || e instanceof PsiExpressionList;
     }
 
     public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-      List<TextRange> result = new ArrayList<TextRange>();
 
       PsiElement[] children = e.getChildren();
 
@@ -452,12 +451,13 @@ public class SelectWordUtil {
         }
       }
 
+      List<TextRange> result = new ArrayList<TextRange>();
       result.add(new TextRange(start, end));
       return result;
     }
   }
 
-  static class LiteralSelectioner extends BasicSelectioner {
+  private static class LiteralSelectioner extends BasicSelectioner {
     public boolean canSelect(PsiElement e) {
       PsiElement parent = e.getParent();
       return
@@ -499,7 +499,7 @@ public class SelectWordUtil {
     }
   }
 
-  static class CodeBlockOrInitializerSelectioner extends BasicSelectioner {
+  private static class CodeBlockOrInitializerSelectioner extends BasicSelectioner {
     public boolean canSelect(PsiElement e) {
       return e instanceof PsiCodeBlock || e instanceof PsiArrayInitializerExpression;
     }
@@ -523,7 +523,7 @@ public class SelectWordUtil {
    *
    */
 
-  static class MethodOrClassSelectioner extends BasicSelectioner {
+  private static class MethodOrClassSelectioner extends BasicSelectioner {
     public boolean canSelect(PsiElement e) {
       return e instanceof PsiClass && !(e instanceof PsiTypeParameter) || e instanceof PsiMethod;
     }
@@ -575,7 +575,7 @@ public class SelectWordUtil {
     }
   }
 
-  static class StatementGroupSelectioner extends BasicSelectioner {
+  private static class StatementGroupSelectioner extends BasicSelectioner {
     public boolean canSelect(PsiElement e) {
       return e instanceof PsiStatement || e instanceof PsiComment && !(e instanceof PsiDocComment);
     }
@@ -653,13 +653,12 @@ public class SelectWordUtil {
     }
   }
 
-  static class ReferenceSelectioner extends BasicSelectioner {
+  private static class ReferenceSelectioner extends BasicSelectioner {
     public boolean canSelect(PsiElement e) {
       return e instanceof PsiJavaCodeReferenceElement;
     }
 
     public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-      List<TextRange> result = new ArrayList<TextRange>();
 
       PsiElement endElement = e;
 
@@ -673,6 +672,7 @@ public class SelectWordUtil {
       }
 
       PsiElement element = e;
+      List<TextRange> result = new ArrayList<TextRange>();
       while (element instanceof PsiJavaCodeReferenceElement) {
         PsiElement firstChild = element.getFirstChild();
 
@@ -710,7 +710,7 @@ public class SelectWordUtil {
     }
   }
 
-  static class DocTagSelectioner extends WordSelectioner {
+  private static class DocTagSelectioner extends WordSelectioner {
     public boolean canSelect(PsiElement e) {
       return e instanceof PsiDocTag;
     }
@@ -760,7 +760,7 @@ public class SelectWordUtil {
     }
   }
 
-  static class FieldSelectioner extends WordSelectioner {
+  private static class FieldSelectioner extends WordSelectioner {
     public boolean canSelect(PsiElement e) {
       return e instanceof PsiField;
     }
@@ -792,17 +792,15 @@ public class SelectWordUtil {
     }
   }
 
-   static class JavaTokenSelectioner extends BasicSelectioner {
+  private static class JavaTokenSelectioner extends BasicSelectioner {
     public boolean canSelect(PsiElement e) {
-      return e instanceof PsiJavaToken && !(e instanceof PsiKeyword);
+      return e instanceof PsiJavaToken && !(e instanceof PsiKeyword) && !(e.getParent()instanceof PsiCodeBlock);
     }
 
     public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
       PsiJavaToken token = (PsiJavaToken)e;
 
-      if (token.getTokenType() != JavaTokenType.SEMICOLON &&
-          token.getTokenType() != JavaTokenType.LPARENTH
-         ) {
+      if (token.getTokenType() != JavaTokenType.SEMICOLON && token.getTokenType() != JavaTokenType.LPARENTH) {
         return super.select(e, editorText, cursorOffset, editor);
       }
       else {
@@ -884,7 +882,6 @@ public class SelectWordUtil {
     }
 
     public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-      List<TextRange> result = new ArrayList<TextRange>(1);
       PsiElement[] children = e.getChildren();
 
       PsiElement first = null;
@@ -904,6 +901,7 @@ public class SelectWordUtil {
         }
       }
 
+      List<TextRange> result = new ArrayList<TextRange>(1);
       if (first != null && last != null) {
         result.addAll(expandToWholeLine(editorText,
                                         new TextRange(first.getTextRange().getStartOffset(),
@@ -977,7 +975,7 @@ public class SelectWordUtil {
       return result;
     }
 
-    private void addTagContentSelection(final PsiElement[] children, final List<TextRange> result, final CharSequence editorText) {
+    private static void addTagContentSelection(final PsiElement[] children, final List<TextRange> result, final CharSequence editorText) {
       PsiElement first = null;
       PsiElement last = null;
       for (PsiElement child : children) {
@@ -1008,9 +1006,8 @@ public class SelectWordUtil {
                e.getParent().getParent() instanceof PsiSwitchStatement;
       }
 
-      public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+      public List<TextRange> select(PsiElement statement, CharSequence editorText, int cursorOffset, Editor editor) {
         List<TextRange> result = new ArrayList<TextRange>();
-        final PsiElement statement = e;
         PsiElement caseStart = statement;
         PsiElement caseEnd = statement;
         
@@ -1018,10 +1015,8 @@ public class SelectWordUtil {
             statement instanceof PsiSwitchStatement) {
           return result;
         }
-        
-        PsiElement sibling;
-        
-        sibling = statement.getPrevSibling();
+
+        PsiElement sibling = statement.getPrevSibling();
         while(sibling != null && !(sibling instanceof PsiSwitchLabelStatement)) {
           if (!(sibling instanceof PsiWhiteSpace)) caseStart = sibling;
           sibling = sibling.getPrevSibling();
@@ -1105,7 +1100,6 @@ public class SelectWordUtil {
     }
 
     public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-      List<TextRange> result = new ArrayList<TextRange>();
       int start = cursorOffset;
       while (start > 0 && editorText.charAt(start - 1) != '\n' && editorText.charAt(start - 1) != '\r') start--;
 
@@ -1114,6 +1108,7 @@ public class SelectWordUtil {
 
       final TextRange range = new TextRange(start, end);
       if (!e.getParent().getTextRange().contains(range)) return null;
+      List<TextRange> result = new ArrayList<TextRange>();
       result.add(range);
       return result;
     }
