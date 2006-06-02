@@ -4,6 +4,7 @@
 package com.intellij.util.xml.reflect;
 
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericDomValue;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -16,8 +17,6 @@ import java.util.List;
  */
 public interface DomGenericInfo {
 
-  @Nullable
-  XmlElement getNameElement(DomElement element);
 
   @Nullable
   String getElementName(DomElement element);
@@ -53,5 +52,10 @@ public interface DomGenericInfo {
    */
   boolean isTagValueElement();
 
+  @Nullable
+  XmlElement getNameElement(DomElement element);
+
+  @Nullable
+  GenericDomValue getNameDomElement(DomElement element);
 
 }

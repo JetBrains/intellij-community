@@ -548,6 +548,12 @@ public class GenericInfoImpl implements DomGenericInfo {
     return o instanceof DomElement ? DomUtil.getValueElement((DomElement)o) : null;
   }
 
+  @Nullable
+  public GenericDomValue getNameDomElement(DomElement element) {
+    Object o = getNameObject(element);
+    return o instanceof GenericDomValue ? (GenericDomValue)o : null;
+  }
+
   protected Object getNameObject(DomElement element) {
     if (myNameValueGetter == null) {
       return null;

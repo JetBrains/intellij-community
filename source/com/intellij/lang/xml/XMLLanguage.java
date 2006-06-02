@@ -8,6 +8,7 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.*;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
@@ -25,15 +26,14 @@ import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.formatter.xml.XmlPolicy;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.XmlValueProvider;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.impl.source.xml.behavior.CDATAOnAnyEncodedPolicy;
 import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.XmlElementType;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +51,21 @@ public class XMLLanguage extends CompositeLanguage {
   protected static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
   private final FormattingModelBuilder myFormattingModelBuilder;
   private XmlFindUsagesProvider myXmlFindUsagesProvider;
+  private final DocumentationProvider myDocumentationProvider = new DocumentationProvider() {
+
+    public String getQuickNavigateInfo(PsiElement element) {
+      if (element instanceof XmlAttributeValue) {
+        String value = XmlValueProvider.getProvider(element).getValue(element);
+        if (value != null) {
+          PsiFile file = element.getContainingFile();
+          if (file != null) {
+            return value + " [" + file.getName() + "]";
+          }
+        }
+      }
+      return null;
+    }
+  };
 
   public XMLLanguage() {
     this("XML", "text/xml");
@@ -135,6 +150,10 @@ public class XMLLanguage extends CompositeLanguage {
 
   public FileViewProvider createViewProvider(final VirtualFile file, final PsiManager manager, final boolean physical) {
     return new XmlFileViewProvider(manager, file, physical, this);
+  }
+
+  public DocumentationProvider getDocumentationProvider() {
+    return myDocumentationProvider;
   }
 
 }

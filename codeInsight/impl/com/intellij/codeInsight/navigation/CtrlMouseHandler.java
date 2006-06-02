@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.Language;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -195,8 +196,14 @@ public class CtrlMouseHandler implements ProjectComponent {
 
     @Nullable
     public static String generateInfo(PsiElement element) {
-      final DocumentationProvider documentationProvider = element.getLanguage().getDocumentationProvider();
-      if(documentationProvider != null) return documentationProvider.getQuickNavigateInfo(element);
+      final Language language = element.getLanguage();
+      final DocumentationProvider documentationProvider = language.getDocumentationProvider();
+      if(documentationProvider != null) {
+        String info = documentationProvider.getQuickNavigateInfo(element);
+        if (info != null) {
+          return info;
+        }
+      }
 
       if (element instanceof PsiFile) {
         return generateFileInfo((PsiFile) element);
@@ -347,7 +354,7 @@ public class CtrlMouseHandler implements ProjectComponent {
         internalComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         FileEditorManager.getInstance(myProject).addFileEditorManagerListener(myFileEditorManagerListener);
 
-        String text = JavaInfoGenerator.generateInfo(info.myTargetElement); //JavaDocManager.getInstance(myProject).getDocInfo(info.myTargetElement);
+        String text = JavaInfoGenerator.generateInfo(info.myTargetElement);
 
         if (text == null) return;
 
