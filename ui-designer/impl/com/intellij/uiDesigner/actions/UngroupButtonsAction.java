@@ -21,7 +21,9 @@ public class UngroupButtonsAction extends AbstractGuiEditorAction {
   }
 
   protected void update(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
-    e.getPresentation().setEnabled(canUngroup(editor, selection));
+    boolean visible = GroupButtonsAction.allButtons(selection);
+    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabled(visible && canUngroup(editor, selection));
   }
 
   private static boolean canUngroup(final GuiEditor editor, final ArrayList<RadComponent> selectedComponents) {

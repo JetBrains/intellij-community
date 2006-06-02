@@ -29,14 +29,12 @@ public class GroupButtonsAction extends AbstractGuiEditorAction {
   }
 
   protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
-    e.getPresentation().setEnabled(canGroup(selection) &&
+    e.getPresentation().setVisible(allButtons(selection));
+    e.getPresentation().setEnabled(allButtons(selection) && selection.size() >= 2 &&
                                    !UngroupButtonsAction.isSameGroup(editor, selection));
   }
 
-  private static boolean canGroup(final ArrayList<RadComponent> selection) {
-    if (selection.size() < 2) {
-      return false;
-    }
+  public static boolean allButtons(final ArrayList<RadComponent> selection) {
     for(RadComponent component: selection) {
       if (!(component.getDelegee() instanceof AbstractButton) ||
           component.getDelegee() instanceof JButton) {
