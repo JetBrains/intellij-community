@@ -1,10 +1,10 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.IndentProperty;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -14,7 +14,6 @@ import java.util.List;
  * @author yole
  */
 public class IncreaseIndentAction extends AbstractGuiEditorAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.IncreaseIndentAction");
   private IndentProperty myIndentProperty = new IndentProperty();
 
   public IncreaseIndentAction() {
@@ -23,18 +22,13 @@ public class IncreaseIndentAction extends AbstractGuiEditorAction {
 
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
     for(RadComponent c: selection) {
-      int indent = ((Integer) myIndentProperty.getValue(c)).intValue();
-      try {
-        myIndentProperty.setValue(c, adjustIndent(indent));
-      }
-      catch (Exception ex) {
-        LOG.error(ex);
-      }
+      int indent = myIndentProperty.getValue(c).intValue();
+      myIndentProperty.setValueEx(c, adjustIndent(indent));
     }
   }
 
   protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
-    e.getPresentation().setEnabled(canAdjustIndent(selection));
+    e.getPresentation().setVisible(canAdjustIndent(selection));
   }
 
   private boolean canAdjustIndent(final ArrayList<RadComponent> selection) {
@@ -51,6 +45,6 @@ public class IncreaseIndentAction extends AbstractGuiEditorAction {
   }
 
   protected boolean canAdjustIndent(final RadComponent component) {
-    return component.getParent().getLayoutManager().isGrid();
+    return component.getParent().getLayout() instanceof GridLayoutManager;
   }
 }
