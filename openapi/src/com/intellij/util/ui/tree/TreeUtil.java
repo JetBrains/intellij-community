@@ -295,6 +295,15 @@ public final class TreeUtil {
     }
   }
 
+  public static boolean traverse(final TreeNode node, final Traverse traverse) {
+    final int childCount = node.getChildCount();
+    for (int i = 0; i < childCount; i++){
+      if (!traverse(node.getChildAt(i), traverse)) return false;
+    }
+    if (!traverse.accept(node)) return false;
+    return true;
+  }
+
   public static boolean traverseDepth(final TreeNode node, final Traverse traverse) {
     if (!traverse.accept(node)) return false;
     final int childCount = node.getChildCount();

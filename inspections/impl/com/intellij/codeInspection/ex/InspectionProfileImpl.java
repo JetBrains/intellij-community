@@ -86,15 +86,19 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   InspectionProfileImpl(InspectionProfileImpl inspectionProfile) {
     super(inspectionProfile.getName());
+
     myRegistrar = inspectionProfile.myRegistrar;
-    myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>(inspectionProfile.myDisplayLevelMap);
     myTools = new HashMap<String, InspectionTool>();
+    initInspectionTools();
+
+    myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>(inspectionProfile.myDisplayLevelMap);
     myVisibleTreeState = new VisibleTreeState(inspectionProfile.myVisibleTreeState);
 
     myBaseProfile = inspectionProfile.myBaseProfile;
     myLocal = inspectionProfile.isLocal();
     myFile = inspectionProfile.myFile;
     mySource = inspectionProfile;
+    copyFrom(inspectionProfile);
   }
 
   public InspectionProfileImpl(final String inspectionProfile, 
@@ -483,7 +487,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private void setState(HighlightDisplayKey key, ToolState state) {
     if (myBaseProfile != null &&
         state.equals(myBaseProfile.getToolState(key))) {
-      myDisplayLevelMap.remove(key);
+      if (toolSettingsAreEqual(key, this, myBaseProfile)){ //settings may differ
+        myDisplayLevelMap.remove(key);
+      }
     }
     else {
       myDisplayLevelMap.put(key, state);

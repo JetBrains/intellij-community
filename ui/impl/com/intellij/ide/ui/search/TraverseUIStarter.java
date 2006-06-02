@@ -20,7 +20,7 @@ import com.intellij.openapi.keymap.impl.ui.KeymapConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.profile.ui.InspectionProfileConfigurable;
+import com.intellij.profile.ui.ErrorOptionsConfigurable;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -80,7 +80,7 @@ public class TraverseUIStarter implements ApplicationStarter {
       }
       if (configurable instanceof KeymapConfigurable){
         processKeymap(configurableElement);
-      } else if (configurable instanceof InspectionProfileConfigurable){
+      } else if (configurable instanceof ErrorOptionsConfigurable){
         processInspectionTools(configurableElement);
       } else if (configurable instanceof IntentionSettingsConfigurable){
         processIntentions(configurableElement);

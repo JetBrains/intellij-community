@@ -78,7 +78,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     final InspectionToolsConfigurable inspectionToolsConfigurable =
       new InspectionToolsConfigurable(project, canChooseDifferentProfile, profileManager, inspectionProfile, null){
         public JComponent createComponent() {
-          final InspectionToolsPanel toolsPanel = getPanel();
+          final SingleInspectionProfilePanel toolsPanel = getPanel();
           toolsPanel.filterTree(filter);
           return toolsPanel;
         }
@@ -162,7 +162,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
       }
     }
 
-    public InspectionToolsPanel getPanel(){
+    public SingleInspectionProfilePanel getPanel(){
       return myPanel;
     }
   }

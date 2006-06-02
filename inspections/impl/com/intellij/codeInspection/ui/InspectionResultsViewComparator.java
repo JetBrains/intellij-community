@@ -8,12 +8,12 @@
  */
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.ex.SingleInspectionProfilePanel;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.codeInspection.ex.InspectionToolsPanel;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Comparing;
 
 import java.util.Comparator;
 
@@ -30,9 +30,9 @@ public class InspectionResultsViewComparator implements Comparator {
     if (node1 instanceof EntryPointsNode && node2 instanceof InspectionPackageNode) return -1;
     if (node2 instanceof EntryPointsNode && node1 instanceof InspectionPackageNode) return 1;
 
-    if (node1 instanceof InspectionNode && node2 instanceof InspectionNode){
-      return InspectionToolsPanel.getDisplayTextToSort(((InspectionNode)node1).toString()).compareToIgnoreCase(InspectionToolsPanel.getDisplayTextToSort(((InspectionNode)node2).toString()));
-    }
+    if (node1 instanceof InspectionNode && node2 instanceof InspectionNode)
+      return SingleInspectionProfilePanel.getDisplayTextToSort(node1.toString())
+      .compareToIgnoreCase(SingleInspectionProfilePanel.getDisplayTextToSort(node2.toString()));
 
     if (node1 instanceof RefElementNode && node2 instanceof RefElementNode){   //sort by filename and inside file by start offset
       final RefElement refElement1 = ((RefElementNode)node1).getElement();

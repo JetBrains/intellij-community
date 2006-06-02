@@ -16,7 +16,7 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.ui.InspectionProfileConfigurable;
+import com.intellij.profile.ui.ErrorOptionsConfigurable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.UIBundle;
@@ -62,8 +62,8 @@ public class TogglePopupHintsPanel extends JPanel {
         final PsiFile file = getCurrentFile();
         if (file != null) {
           if (!DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file)) return;
-          final Project project = getCurrentProject();
-          final InspectionProfileConfigurable profileConfigurable = new InspectionProfileConfigurable(project);
+          final Project project = file.getProject();
+          final ErrorOptionsConfigurable profileConfigurable = ErrorOptionsConfigurable.getInstance(project);
           ShowSettingsUtil.getInstance().editConfigurable(project, profileConfigurable, new Runnable() {
             public void run() {
               profileConfigurable.selectScopeFor(file);

@@ -11,7 +11,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.ex.InspectionToolsPanel;
+import com.intellij.codeInspection.ex.SingleInspectionProfilePanel;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -62,7 +62,7 @@ public class InspectionTree extends Tree {
     TreeUtil.installActions(this);
     new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
       public String convert(TreePath o) {
-        return InspectionToolsPanel.getDisplayTextToSort(o.getLastPathComponent().toString());
+        return SingleInspectionProfilePanel.getDisplayTextToSort(o.getLastPathComponent().toString());
       }
     });
 

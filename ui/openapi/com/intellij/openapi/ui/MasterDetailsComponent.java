@@ -1,0 +1,440 @@
+/*
+ * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
+ */
+
+package com.intellij.openapi.ui;
+
+import com.intellij.CommonBundle;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.*;
+import com.intellij.profile.Profile;
+import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.Icons;
+import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.tree.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.EventObject;
+import java.util.Set;
+
+
+/**
+ * User: anna
+ * Date: 29-May-2006
+ */
+public abstract class MasterDetailsComponent implements Configurable, JDOMExternalizable {
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.MasterDetailsComponent");
+  public static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
+
+
+  protected MyNode myRoot = new MyRootNode();
+  protected JTree myTree;
+
+  private JPanel myOptionsPanel;
+  protected JPanel myWholePanel;
+  public JPanel myNorthPanel;
+  private JScrollPane myScrollPane;
+  private JLabel myBanner;
+
+  private ArrayList<ItemsChangeListener> myListners = new ArrayList<ItemsChangeListener>();
+
+  private Set<NamedConfigurable> myInitializedConfigurables = new HashSet<NamedConfigurable>();
+
+  public String myLastEditedConfigurable = null;
+  private boolean myHasDeletedItems;
+
+  protected MasterDetailsComponent() {
+    myOptionsPanel.setLayout(new BorderLayout());
+    AutoScrollToSourceHandler handler = new AutoScrollToSourceHandler() {
+      protected boolean isAutoScrollMode() {
+        return true;
+      }
+
+      protected void setAutoScrollMode(boolean state) {
+        //do nothing
+      }
+
+      protected void scrollToSource(Component tree) {
+        final TreePath path = myTree.getSelectionPath();
+        if (path != null) {
+          final MyNode node = (MyNode)path.getLastPathComponent();
+          final NamedConfigurable configurable = node.getConfigurable();
+          if (!myInitializedConfigurables.contains(configurable)) {
+            configurable.reset();
+            myInitializedConfigurables.add(configurable);
+          }
+          myLastEditedConfigurable = configurable.getDisplayName();
+          myBanner.setText(configurable.getBannerSlogan());
+          myBanner.repaint();
+          myOptionsPanel.removeAll();
+          myOptionsPanel.add(configurable.createComponent(), BorderLayout.CENTER);
+          myOptionsPanel.revalidate();
+          myOptionsPanel.repaint();
+        }
+      }
+
+      protected boolean needToCheckFocus() {
+        return false;
+      }
+
+    };
+    handler.install(myTree);
+
+    final ArrayList<AnAction> actions = createActions();
+    if (actions != null) {
+      final DefaultActionGroup group = new DefaultActionGroup();
+      for (AnAction action : actions) {
+        group.add(action);
+      }
+      final JComponent component = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+      myNorthPanel.add(component, BorderLayout.NORTH);
+    }
+  }
+
+  protected void addItemsChangeListener(ItemsChangeListener l) {
+    myListners.add(l);
+  }
+
+  public JComponent createComponent() {
+    final Dimension preferredSize = new Dimension(myTree.getPreferredSize().width + 20, myScrollPane.getPreferredSize().height);
+    myScrollPane.setPreferredSize(preferredSize);
+    myScrollPane.setMinimumSize(preferredSize);
+    return myWholePanel;
+  }
+
+  public boolean isModified() {
+    if (myHasDeletedItems) return true;
+    final boolean[] modified = new boolean[1];
+    TreeUtil.traverseDepth(myRoot, new TreeUtil.Traverse() {
+      public boolean accept(Object node) {
+        if (node instanceof MyNode) {
+          if (((MyNode)node).getConfigurable().isModified()) {
+            modified[0] = true;
+            return false;
+          }
+        }
+        return true;
+      }
+    });
+    return modified[0];
+  }
+
+  protected boolean hasDeletedeItems() {
+    return myHasDeletedItems;
+  }
+
+  public void apply() throws ConfigurationException {
+    processRemovedItems();
+    final ConfigurationException[] ex = new ConfigurationException[1];
+    TreeUtil.traverse(myRoot, new TreeUtil.Traverse() {
+      public boolean accept(Object node) {
+        if (node instanceof MyNode) {
+          try {
+            final NamedConfigurable configurable = ((MyNode)node).getConfigurable();
+            if (configurable.isModified()) {
+              configurable.apply();
+            }
+          }
+          catch (ConfigurationException e) {
+            ex[0] = e;
+            return false;
+          }
+        }
+        return true;
+      }
+    });
+    if (ex[0] != null) {
+      throw ex[0];
+    }
+    myHasDeletedItems = false;
+  }
+
+  protected abstract void processRemovedItems();
+
+  protected abstract boolean wasObjectStored(Object editableObject);
+
+  public void reset() {
+    myHasDeletedItems = false;
+    ((DefaultTreeModel)myTree.getModel()).reload();
+    myTree.requestFocus();
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        TreeUtil.selectFirstNode(myTree);
+        final Enumeration enumeration = myRoot.breadthFirstEnumeration();
+        while (enumeration.hasMoreElements()) {
+          final MyNode node = (MyNode)enumeration.nextElement();
+          final Object userObject = node.getUserObject();
+          if (userObject instanceof Configurable) {
+            final Configurable configurable = (Configurable)userObject;
+            if (Comparing.strEqual(configurable.getDisplayName(), myLastEditedConfigurable)) {
+              TreeUtil.selectInTree(node, true, myTree);
+              break;
+            }
+          }
+        }
+      }
+    });
+  }
+
+
+  public void readExternal(Element element) throws InvalidDataException {
+    DefaultJDOMExternalizer.readExternal(this, element);
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    DefaultJDOMExternalizer.writeExternal(this, element);
+  }
+
+  public void disposeUIResources() {
+    myInitializedConfigurables.clear();
+    TreeUtil.traverseDepth((TreeNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
+      public boolean accept(Object node) {
+        if (node instanceof MyNode) {
+          ((MyNode)node).getConfigurable().disposeUIResources();
+        }
+        return true;
+      }
+    });
+  }
+
+  protected ArrayList<AnAction> createActions() {
+    return null;
+  }
+
+
+  protected void initTree() {
+    ((DefaultTreeModel)myTree.getModel()).setRoot(myRoot);
+    myTree.setRootVisible(false);
+    myTree.setShowsRootHandles(true);
+    myTree.setEditable(true);
+    UIUtil.setLineStyleAngled(myTree);
+    TreeUtil.installActions(myTree);
+    final DefaultTreeCellRenderer defaultTreeCellRenderer = new DefaultTreeCellRenderer() {
+      public Component getTreeCellRendererComponent(JTree tree,
+                                                    Object value,
+                                                    boolean sel,
+                                                    boolean expanded,
+                                                    boolean leaf,
+                                                    int row,
+                                                    boolean hasFocus) {
+        final Component rendererComponent = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+        if (value instanceof MyNode) {
+          final MyNode node = ((MyNode)value);
+          setText(node.getDisplayName());
+          final Icon icon = node.getConfigurable().getIcon();
+          setIcon(icon);
+          setLeafIcon(icon);
+          final Font font = getFont();
+          if (!node.isNameEditable()) {
+            setFont(font.deriveFont(Font.BOLD));
+          }
+          else {
+            setFont(font.deriveFont(Font.PLAIN));
+          }
+        }
+        return rendererComponent;
+      }
+    };
+
+    myTree.setCellRenderer(defaultTreeCellRenderer);
+
+    myTree.setCellEditor(new DefaultTreeCellEditor(myTree, defaultTreeCellRenderer, new MyNamedConfigurableEditor(new JTextField())));
+
+  }
+
+  public void fireItemsChangeListener(final Object editableObject) {
+    for (ItemsChangeListener listner : myListners) {
+      listner.itemChanged(editableObject);
+    }
+  }
+
+  public void fireItemsChangedExternally() {
+    for (ItemsChangeListener listner : myListners) {
+      listner.itemsExternallyChanged();
+    }
+  }
+
+  private void createUIComponents() {
+    myTree = new JTree() {
+      public Dimension getPreferredScrollableViewportSize() {
+        Dimension size = super.getPreferredScrollableViewportSize();
+        size = new Dimension(size.width + 20, size.height);
+        return size;
+      }
+    };
+  }
+
+  protected class MyDeleteAction extends AnAction {
+    private Condition<Object> myCondition;
+
+    public MyDeleteAction(Condition<Object> availableCondition) {
+      super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), Icons.DELETE_ICON);
+      myCondition = availableCondition;
+    }
+
+    public void update(AnActionEvent e) {
+      final TreePath selectionPath = myTree.getSelectionPath();
+      e.getPresentation().setEnabled(selectionPath != null && myCondition.value(selectionPath.getLastPathComponent()));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final TreePath selectionPath = myTree.getSelectionPath();
+      final MyNode node = (MyNode)selectionPath.getLastPathComponent();
+      final Object editableObject = node.getConfigurable().getEditableObject();
+      final MyNode parentNode = (MyNode)node.getParent();
+      final int idx = parentNode.getIndex(node);
+      parentNode.remove(node);
+      ((DefaultTreeModel)myTree.getModel()).reload(parentNode);
+      TreeUtil
+        .selectInTree((DefaultMutableTreeNode)(idx < parentNode.getChildCount() ? parentNode.getChildAt(idx) : parentNode), true, myTree);
+      myTree.repaint();
+      myHasDeletedItems = wasObjectStored(editableObject);
+      fireItemsChangeListener(editableObject);
+    }
+  }
+
+  private class MyNamedConfigurableEditor extends DefaultCellEditor {
+    private JTextField myTextField;
+    private MyNode myNode;
+    private String myName;
+
+    public MyNamedConfigurableEditor(JTextField textField) {
+      super(textField);
+      myTextField = textField;
+      myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+        protected void textChanged(DocumentEvent e) {
+          myNode.setDisplayName(myTextField.getText());
+        }
+      });
+      myTextField.setBorder(null);
+    }
+
+    public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
+      myNode = (MyNode)value;
+      myName = myNode.getDisplayName();
+      myTextField.setText(myName);
+      return myTextField;
+    }
+
+    public Object getCellEditorValue() {
+      return myNode.getConfigurable();
+    }
+
+    public void cancelCellEditing() {
+      super.cancelCellEditing();
+      myNode.setDisplayName(myName);
+    }
+
+
+    public boolean stopCellEditing() {
+      fireItemsChangeListener(myNode.getConfigurable().getEditableObject());
+      return super.stopCellEditing();
+    }
+
+    public boolean isCellEditable(EventObject anEvent) {
+      final TreePath selectionPath = myTree.getSelectionPath();
+      if (selectionPath == null) return false;
+      MyNode node = (MyNode)selectionPath.getLastPathComponent();
+      return node.isNameEditable();
+    }
+  }
+
+
+  protected static class MyNode extends DefaultMutableTreeNode {
+    private boolean myEditName;
+
+    public MyNode(final NamedConfigurable userObject, boolean showName) {
+      super(userObject);
+      myEditName = showName;
+    }
+
+    public String getDisplayName() {
+      final NamedConfigurable configurable = ((NamedConfigurable)getUserObject());
+      return configurable != null ? configurable.getDisplayName() : null;
+    }
+
+    public void setDisplayName(String name) {
+      final NamedConfigurable configurable = ((NamedConfigurable)getUserObject());
+      if (configurable != null) {
+        configurable.setDisplayName(name);
+      }
+    }
+
+    public NamedConfigurable getConfigurable() {
+      return (NamedConfigurable)getUserObject();
+    }
+
+    public boolean isNameEditable() {
+      return myEditName;
+    }
+  }
+
+  private static class MyRootNode extends MyNode {
+    public MyRootNode() {
+      super(new NamedConfigurable() {
+        public void setDisplayName(String name) {
+        }
+
+        public Object getEditableObject() {
+          return null;
+        }
+
+        public String getBannerSlogan() {
+          return null;
+        }
+
+        public String getDisplayName() {
+          return "";
+        }
+
+        public Icon getIcon() {
+          return Profile.LOCAL_PROFILE; //just stub
+        }
+
+        @Nullable
+        @NonNls
+        public String getHelpTopic() {
+          return null;
+        }
+
+        public JComponent createComponent() {
+          return null;
+        }
+
+        public boolean isModified() {
+          return false;
+        }
+
+        public void apply() throws ConfigurationException {
+        }
+
+        public void reset() {
+        }
+
+        public void disposeUIResources() {
+        }
+
+      }, false);
+    }
+  }
+
+  protected interface ItemsChangeListener {
+    void itemChanged(@Nullable Object deletedItem);
+
+    void itemsExternallyChanged();
+  }
+
+}

@@ -6,22 +6,22 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.OpenSourceUtil;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.ListSelectionEvent;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.*;
 
 public abstract class AutoScrollToSourceHandler {
   private Alarm myAutoScrollAlarm;
@@ -84,7 +84,7 @@ public abstract class AutoScrollToSourceHandler {
     if (!isAutoScrollMode()) {
       return;
     }
-    if (!component.hasFocus()) {
+    if (needToCheckFocus() && !component.hasFocus()) {
       return;
     }
     myAutoScrollAlarm.cancelAllRequests();
@@ -96,6 +96,10 @@ public abstract class AutoScrollToSourceHandler {
       },
       500
     );
+  }
+
+  protected boolean needToCheckFocus(){
+    return true;
   }
 
   protected abstract boolean isAutoScrollMode();

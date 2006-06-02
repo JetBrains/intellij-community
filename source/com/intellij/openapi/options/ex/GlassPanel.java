@@ -9,7 +9,6 @@ import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.ConvolveOp;
 import java.awt.image.Kernel;
 import java.util.HashSet;
 import java.util.Set;
@@ -21,14 +20,12 @@ import java.util.Set;
 public class GlassPanel extends JComponent {
   private Set<JComponent> myLightComponents = new HashSet<JComponent>();
 
-  private ConvolveOp myConvolveOp;
   protected RenderingHints myHints;
 
   private JComponent myPanel;
 
 
   public GlassPanel(JComponent containingPanel) {
-    myConvolveOp = new ConvolveOp(getBlurKernel(1), ConvolveOp.EDGE_NO_OP, null);
     myHints = new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
     myHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     myHints.put(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);

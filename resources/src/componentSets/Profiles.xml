@@ -17,7 +17,8 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.profile.ui.InspectionProfileConfigurable</implementation-class>
+      <implementation-class>com.intellij.profile.ui.ErrorOptionsConfigurable</implementation-class>
+      <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
   </project-components>

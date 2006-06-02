@@ -141,7 +141,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
-    if (!USE_PROJECT_LEVEL_SETTINGS) return;
+    //if (!USE_PROJECT_LEVEL_SETTINGS) return;
     final Map<NamedScope, String> usedProfiles = getProfilesUsedInProject();
     final HashSet<String> profilesSet = new HashSet<String>(usedProfiles.values());
     profilesSet.add(PROJECT_PROFILE);
