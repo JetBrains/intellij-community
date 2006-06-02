@@ -113,9 +113,9 @@ public class Descriptor {
     myAdditionalConfigPanel = null;
   }
 
-  public InspectionToolsPanel.LevelChooser getChooser() {
+  public SingleInspectionProfilePanel.LevelChooser getChooser() {
     if (myChooser == null){
-      myChooser = new InspectionToolsPanel.LevelChooser();
+      myChooser = new SingleInspectionProfilePanel.LevelChooser();
       myChooser.setLevel(myLevel);
     }
     return myChooser;
