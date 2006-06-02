@@ -94,7 +94,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
 
     Converter converter = ((GenericDomValue)element).getConverter();
     if (converter instanceof PsiReferenceConverter) {
-      return ((PsiReferenceConverter)converter).createReferences(psiElement);
+      return ((PsiReferenceConverter)converter).createReferences(psiElement, false);
     }
 
     GenericDomValue domElement = (GenericDomValue)element;

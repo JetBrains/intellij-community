@@ -16,8 +16,9 @@ public interface PsiReferenceConverter {
   /**
    *
    * @param psiElement
-   * @return empty array if the converter cannot get any references
+   * @param soft
+   *  @return empty array if the converter cannot get any references
    */
   @NotNull
-  PsiReference[] createReferences(PsiElement psiElement);
+  PsiReference[] createReferences(PsiElement psiElement, final boolean soft);
 }

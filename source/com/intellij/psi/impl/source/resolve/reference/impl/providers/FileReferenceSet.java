@@ -45,10 +45,20 @@ public class FileReferenceSet {
   private final @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
 
   @Nullable
-  public static FileReferenceSet createSet(PsiElement element, PsiReferenceProvider provider, boolean isCaseSensitive) {
+  public static FileReferenceSet createSet(PsiElement element, final boolean soft) {
 
     FileReferenceInfo info = new FileReferenceInfo(element);
-    return info.isValid() ? new FileReferenceSet(info.getText(), element, info.getOffset(), ReferenceType.FILE_TYPE, provider, isCaseSensitive) : null;
+    if (info.isValid()) {
+      return new FileReferenceSet(info.getText(), element, info.getOffset(), ReferenceType.FILE_TYPE, null, true) {
+
+        protected boolean isSoft() {
+          return soft;
+        }
+      };
+    }
+    else {
+      return null;
+    }
   }
 
 
