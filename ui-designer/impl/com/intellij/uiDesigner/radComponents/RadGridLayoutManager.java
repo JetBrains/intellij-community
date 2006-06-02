@@ -219,7 +219,7 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
 
     if (mode == GridInsertMode.RowBefore || mode == GridInsertMode.RowAfter ||
         mode == GridInsertMode.ColumnBefore || mode == GridInsertMode.ColumnAfter) {
-      return new GridInsertLocation(container, row, col, mode);
+      return new GridInsertLocation(container, row, col, mode).adjustForGaps();
     }
     return new GridDropLocation(container, row, col);
   }

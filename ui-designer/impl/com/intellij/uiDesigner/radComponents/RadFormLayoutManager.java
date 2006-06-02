@@ -132,7 +132,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     }
   }
 
-  private List<RadComponent> collectComponents(final RadContainer container) {
+  private static List<RadComponent> collectComponents(final RadContainer container) {
     List<RadComponent> contents = new ArrayList<RadComponent>();
     for(int i=container.getComponentCount()-1; i >= 0; i--) {
       final RadComponent component = container.getComponent(i);
@@ -318,14 +318,14 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
     FormLayout formLayout = getFormLayout(container);
     final FormLayout.LayoutInfo layoutInfo = formLayout.getLayoutInfo(container.getDelegee());
-    if (location.x > layoutInfo.getWidth()) {
+    if (location != null && location.x > layoutInfo.getWidth()) {
       int row = findCell(layoutInfo.rowOrigins, location.y);
       if (row == -1) {
         return NoDropLocation.INSTANCE;
       }
       return new GridInsertLocation(container, row, getGridColumnCount(container)-1, GridInsertMode.ColumnAfter);
     }
-    if (location.y > layoutInfo.getHeight()) {
+    if (location != null && location.y > layoutInfo.getHeight()) {
       int column = findCell(layoutInfo.columnOrigins, location.x);
       if (column == -1) {
         return NoDropLocation.INSTANCE;
@@ -370,7 +370,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int index, final Graphics2D g2d,
                                      final Rectangle rc) {
     // don't paint gap rows/columns with red background
-    if (index % 2 == 1 && GridChangeUtil.canDeleteCell(container, index, isRow, true)) {
+    if (isGapCell(container, isRow, index)) {
       g2d.setColor(Color.LIGHT_GRAY);
       g2d.fillRect(rc.x, rc.y, rc.width, rc.height);
     }
@@ -492,6 +492,11 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   @Override
   public int getGapCellCount() {
     return 1;
+  }
+
+  @Override
+  public boolean isGapCell(RadContainer grid, boolean isRow, int cellIndex) {
+    return cellIndex % 2 == 1 && GridChangeUtil.canDeleteCell(grid, cellIndex, isRow, false);
   }
 
   /**

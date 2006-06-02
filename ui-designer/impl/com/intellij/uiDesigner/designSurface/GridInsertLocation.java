@@ -36,6 +36,23 @@ public class GridInsertLocation extends GridDropLocation {
     assert container.getLayoutManager().isGrid();
   }
 
+  public GridInsertLocation adjustForGaps() {
+    final RadAbstractGridLayoutManager gridManager = myContainer.getGridLayoutManager();
+    if (myMode == GridInsertMode.RowAfter && gridManager.isGapCell(myContainer, true, myRow)) {
+      myRow--;
+    }
+    else if (myMode == GridInsertMode.RowBefore && gridManager.isGapCell(myContainer, true, myRow)) {
+      myRow++;
+    }
+    else if (myMode == GridInsertMode.ColumnAfter && gridManager.isGapCell(myContainer, false, myColumn)) {
+      myColumn--;
+    }
+    else if (myMode == GridInsertMode.ColumnBefore && gridManager.isGapCell(myContainer, false, myColumn)) {
+      myColumn++;
+    }
+    return this;
+  }
+
   public GridInsertMode getMode() {
     return myMode;
   }
@@ -209,31 +226,51 @@ public class GridInsertLocation extends GridDropLocation {
 
   public static Rectangle getInsertFeedbackPosition(final GridInsertMode mode, final RadContainer container, final Rectangle cellRect,
                                                     final Rectangle feedbackRect) {
-    int[] vGridLines = container.getGridLayoutManager().getVerticalGridLines(container);
-    int[] hGridLines = container.getGridLayoutManager().getHorizontalGridLines(container);
+    final RadAbstractGridLayoutManager manager = container.getGridLayoutManager();
+    int[] vGridLines = manager.getVerticalGridLines(container);
+    int[] hGridLines = manager.getHorizontalGridLines(container);
 
+    Rectangle rc;
     int w=4;
     //noinspection EnumSwitchStatementWhichMissesCases
     switch (mode) {
       case ColumnBefore:
-        return new Rectangle(vGridLines [cellRect.x] - w, feedbackRect.y - INSERT_ARROW_SIZE,
-                             2 * w, feedbackRect.height + 2 * INSERT_ARROW_SIZE);
+        rc = new Rectangle(vGridLines [cellRect.x] - w, feedbackRect.y - INSERT_ARROW_SIZE,
+                           2 * w, feedbackRect.height + 2 * INSERT_ARROW_SIZE);
+        if (cellRect.x > 0 && manager.isGapCell(container, false, cellRect.x-1)) {
+          rc.translate(-(vGridLines [cellRect.x] - vGridLines [cellRect.x-1]) / 2, 0);
+        }
+        break;
 
       case ColumnAfter:
-        return new Rectangle(vGridLines [cellRect.x + cellRect.width+1] - w, feedbackRect.y - INSERT_ARROW_SIZE,
-                             2 * w, feedbackRect.height + 2 * INSERT_ARROW_SIZE);
+        rc = new Rectangle(vGridLines [cellRect.x + cellRect.width+1] - w, feedbackRect.y - INSERT_ARROW_SIZE,
+                           2 * w, feedbackRect.height + 2 * INSERT_ARROW_SIZE);
+        if (cellRect.x < manager.getGridColumnCount(container)-1 && manager.isGapCell(container, false, cellRect.x+1)) {
+          rc.translate((vGridLines [cellRect.x+2] - vGridLines [cellRect.x+1]) / 2, 0);
+        }
+        break;
 
       case RowBefore:
-        return new Rectangle(feedbackRect.x - INSERT_ARROW_SIZE, hGridLines [cellRect.y] - w,
-                             feedbackRect.width + 2 * INSERT_ARROW_SIZE, 2 * w);
+        rc = new Rectangle(feedbackRect.x - INSERT_ARROW_SIZE, hGridLines [cellRect.y] - w,
+                           feedbackRect.width + 2 * INSERT_ARROW_SIZE, 2 * w);
+        if (cellRect.y > 0 && manager.isGapCell(container, true, cellRect.y-1)) {
+          rc.translate(0, -(hGridLines [cellRect.y] - hGridLines [cellRect.y-1]) / 2);
+        }
+        break;
 
       case RowAfter:
-        return new Rectangle(feedbackRect.x - INSERT_ARROW_SIZE, hGridLines [cellRect.y+cellRect.height+1] - w,
-                             feedbackRect.width + 2 * INSERT_ARROW_SIZE, 2 * w);
+        rc = new Rectangle(feedbackRect.x - INSERT_ARROW_SIZE, hGridLines [cellRect.y+cellRect.height+1] - w,
+                           feedbackRect.width + 2 * INSERT_ARROW_SIZE, 2 * w);
+        if (cellRect.y < manager.getGridRowCount(container)-1 && manager.isGapCell(container, true, cellRect.y+1)) {
+          rc.translate(0, (hGridLines [cellRect.y+2] - hGridLines [cellRect.y+1]) / 2);
+        }
+        break;
 
       default:
         return feedbackRect;
     }
+
+    return rc;
   }
 
 
@@ -294,26 +331,27 @@ public class GridInsertLocation extends GridDropLocation {
 
   @Override @Nullable
   public DropLocation getAdjacentLocation(Direction direction) {
+    RadAbstractGridLayoutManager manager = myContainer.getGridLayoutManager();
     if (isRowInsert()) {
       if (direction == Direction.RIGHT) {
         if (getColumn() < myContainer.getGridColumnCount()-1) {
-          return new GridInsertLocation(myContainer, getRow(), getColumn()+1, getMode());
+          return new GridInsertLocation(myContainer, getRow(), adjustForGap(getColumn()+1, false, 1), getMode());
         }
         return new GridInsertLocation(myContainer, getRow(), getColumn(), GridInsertMode.ColumnAfter);
       }
       if (direction == Direction.LEFT) {
         if (getColumn() > 0) {
-          return new GridInsertLocation(myContainer, getRow(), getColumn()-1, getMode());
+          return new GridInsertLocation(myContainer, getRow(), adjustForGap(getColumn()-1, false, -1), getMode());
         }
         return new GridInsertLocation(myContainer, getRow(), getColumn(), GridInsertMode.ColumnBefore);
       }
       if (direction == Direction.DOWN || direction == Direction.UP) {
         int adjRow = (myMode == GridInsertMode.RowAfter) ? getRow() : getRow()-1;
         if (direction == Direction.DOWN && adjRow+1 < myContainer.getGridRowCount()) {
-          return new GridDropLocation(myContainer, adjRow+1, getColumn());
+          return new GridDropLocation(myContainer, adjustForGap(adjRow+1, true, 1), getColumn());
         }
         if (direction == Direction.UP && adjRow >= 0) {
-          return new GridDropLocation(myContainer, adjRow, getColumn());
+          return new GridDropLocation(myContainer, adjustForGap(adjRow, true, -1), getColumn());
         }
         return getLocationAtParent(direction);
       }
@@ -321,28 +359,35 @@ public class GridInsertLocation extends GridDropLocation {
     else {
       if (direction == Direction.DOWN) {
         if (getRow() < myContainer.getGridRowCount()-1) {
-          return new GridInsertLocation(myContainer, getRow()+1, getColumn(), getMode());
+          return new GridInsertLocation(myContainer, adjustForGap(getRow()+1, true, 1), getColumn(), getMode());
         }
         return new GridInsertLocation(myContainer, getRow(), getColumn(), GridInsertMode.RowAfter);
       }
       if (direction == Direction.UP) {
         if (getRow() > 0) {
-          return new GridInsertLocation(myContainer, getRow()-1, getColumn(), getMode());
+          return new GridInsertLocation(myContainer, adjustForGap(getRow()-1, true, -1), getColumn(), getMode());
         }
         return new GridInsertLocation(myContainer, getRow(), getColumn(), GridInsertMode.RowBefore);
       }
       if (direction == Direction.LEFT || direction == Direction.RIGHT) {
         int adjCol = (myMode == GridInsertMode.ColumnAfter) ? getColumn() : getColumn()-1;
         if (direction == Direction.RIGHT && adjCol+1 < myContainer.getGridColumnCount()) {
-          return new GridDropLocation(myContainer, getRow(), adjCol+1);
+          return new GridDropLocation(myContainer, getRow(), adjustForGap(adjCol+1, false, 1));
         }
         if (direction == Direction.LEFT && adjCol >= 0) {
-          return new GridDropLocation(myContainer, getRow(), adjCol);
+          return new GridDropLocation(myContainer, getRow(), adjustForGap(adjCol, false, -1));
         }
         return getLocationAtParent(direction);
       }
     }
     return null;
+  }
+
+  private int adjustForGap(final int cellIndex, final boolean isRow, final int delta) {
+    if (myContainer.getGridLayoutManager().isGapCell(myContainer, isRow, cellIndex)) {
+      return cellIndex+delta;
+    }
+    return cellIndex;
   }
 
   private DropLocation getLocationAtParent(final Direction direction) {

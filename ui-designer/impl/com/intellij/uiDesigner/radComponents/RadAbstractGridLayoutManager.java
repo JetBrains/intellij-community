@@ -73,6 +73,9 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
   public int getGapCellCount() {
     return 0;
   }
+  public boolean isGapCell(RadContainer grid, boolean isRow, int cellIndex) {
+    return false;
+  }
 
   /**
    * @return the number of deleted rows or columns
