@@ -38,7 +38,14 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public PsiElement getFirstChild() {
-    return SharedImplUtil.getFirstChild(this);
+    TreeElement child = getFirstChildNode();
+    if (child instanceof ChameleonElement) {
+      child = (TreeElement)child.getTransformedFirstOrSelf();
+    }
+    if (child == null) return null;
+    if (child instanceof PsiElement) return (PsiElement)child;
+
+    return child.getPsi();
   }
 
   public PsiElement getLastChild() {
@@ -46,19 +53,41 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public void acceptChildren(PsiElementVisitor visitor) {
-    for (PsiElement child = getFirstChild(); child != null; ) {
-      final PsiElement nextSibling = child.getNextSibling();
-      child.accept(visitor);
-      child = nextSibling;
+    TreeElement childNode = getFirstChildNode();
+    while (childNode != null) {
+      if (childNode instanceof ChameleonElement) {
+        childNode = (TreeElement)childNode.getTransformedFirstOrSelf();
+      }
+
+      final PsiElement psi;
+      if (childNode instanceof PsiElement) {
+        psi = (PsiElement)childNode;
+      }
+      else {
+        psi = childNode.getPsi();
+      }
+
+      psi.accept(visitor);
+      childNode = childNode.getTreeNext();
     }
   }
 
   public PsiElement getParent() {
-    return SharedImplUtil.getParent(this);
+    final CompositeElement treeParent = getTreeParent();
+    if (treeParent == null) return null;
+    if (treeParent instanceof PsiElement) return (PsiElement)treeParent;
+    return treeParent.getPsi();
   }
 
   public PsiElement getNextSibling() {
-    return SharedImplUtil.getNextSibling(this);
+    TreeElement treeNext = getTreeNext();
+    if (treeNext instanceof ChameleonElement) {
+      treeNext = (TreeElement)treeNext.getTransformedFirstOrSelf();
+    }
+    if (treeNext == null) return null;
+    if (treeNext instanceof PsiElement) return (PsiElement)treeNext;
+
+    return treeNext.getPsi();
   }
 
   public PsiElement getPrevSibling() {

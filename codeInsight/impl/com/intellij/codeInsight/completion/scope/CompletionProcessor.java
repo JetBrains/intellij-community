@@ -6,7 +6,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.util.PsiUtil;
@@ -47,7 +46,7 @@ public class CompletionProcessor extends BaseScopeProcessor
     myElement = element;
     myFilter = filter;
     myScope = element;
-    if (ResolveUtil.findParentContextOfClass(myElement, PsiDocComment.class, false) != null)
+    if (ResolveUtil.isInJavaDoc(myElement))
       myMembersFlag = true;
     while(myScope != null && !(myScope instanceof PsiFile || myScope instanceof PsiClass)){
       myScope = myScope.getContext();

@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
@@ -119,7 +118,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   private boolean checkAccessibility(final PsiClass aClass) {
     //We don't care about accessibility in javadocs
 
-    if (ResolveUtil.findParentContextOfClass(myPlace, PsiDocComment.class, false) != null) {
+    if (ResolveUtil.isInJavaDoc(myPlace)) {
       return true;
     }
 
