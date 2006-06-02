@@ -359,7 +359,7 @@ public class JavaDocManager implements ProjectComponent {
           String signature = PsiFormatUtil.formatMethod(method,
                                                         PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME |
                                                                               PsiFormatUtil.SHOW_PARAMETERS,
-                                                        PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES);
+                                                        PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES, 999);
           url += "#" + signature;
         }
       }

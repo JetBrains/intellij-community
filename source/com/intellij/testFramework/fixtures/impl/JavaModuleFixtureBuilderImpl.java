@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -28,6 +29,7 @@ import java.util.List;
  */
 class JavaModuleFixtureBuilderImpl extends ModuleFixtureBuilderImpl<ModuleFixture> implements JavaModuleFixtureBuilder {
   private List<Pair<String, String[]>> myLibraries = new ArrayList<Pair<String, String[]>>();
+  private String myJdk;
 
   public JavaModuleFixtureBuilderImpl(final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder) {
     super(ModuleType.JAVA, fixtureBuilder);
@@ -44,6 +46,11 @@ class JavaModuleFixtureBuilderImpl extends ModuleFixtureBuilderImpl<ModuleFixtur
 
   public JavaModuleFixtureBuilder addLibrary(String libraryName, String[] classPath) {
     myLibraries.add(new Pair<String, String[]>(libraryName, classPath));
+    return this;
+  }
+
+  public JavaModuleFixtureBuilder addJdk(String jdkPath) {
+    myJdk = jdkPath;
     return this;
   }
 
@@ -73,6 +80,10 @@ class JavaModuleFixtureBuilderImpl extends ModuleFixtureBuilderImpl<ModuleFixtur
       }
       
       libraryModel.commit();
+    }
+
+    if (myJdk != null) {
+      model.setJdk(JavaSdkImpl.getInstance().createJdk(module.getName() + "_jdk", myJdk, false));
     }
 
     model.commit();

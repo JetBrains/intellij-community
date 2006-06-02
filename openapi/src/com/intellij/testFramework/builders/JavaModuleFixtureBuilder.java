@@ -27,4 +27,6 @@ public interface JavaModuleFixtureBuilder extends ModuleFixtureBuilder<ModuleFix
   JavaModuleFixtureBuilder setLanguageLevel(LanguageLevel languageLevel);
 
   JavaModuleFixtureBuilder addLibrary(String libraryName, String[] classPath);
+
+  JavaModuleFixtureBuilder addJdk(String jdkPath);
 }
