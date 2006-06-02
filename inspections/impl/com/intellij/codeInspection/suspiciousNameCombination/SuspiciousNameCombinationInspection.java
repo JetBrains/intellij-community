@@ -137,8 +137,12 @@ public class SuspiciousNameCombinationInspection extends BaseLocalInspectionTool
         for(int i=0; i<parameters.length; i++) {
           if (i >= args.length) break;
           if (args [i] instanceof PsiReferenceExpression) {
-            checkCombination(args [i], parameters [i].getName(), ((PsiReferenceExpression) args [i]).getReferenceName(),
-                             "suspicious.name.parameter");
+            // PsiParameter.getName() can be expensive for compiled class files, so check reference name before
+            // fetching parameter name
+            final String refName = ((PsiReferenceExpression)args[i]).getReferenceName();
+            if (findNameGroup(refName) != null) {
+              checkCombination(args [i], parameters [i].getName(), refName, "suspicious.name.parameter");
+            }
           }
         }
       }
