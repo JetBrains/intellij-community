@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -40,7 +41,6 @@ import javax.swing.border.BevelBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * @author Eugene Belyaev
@@ -254,13 +254,13 @@ public class CommanderPanel extends JPanel {
     return !(value instanceof PsiMethod || value instanceof PsiField || isForm(value));
   }
 
-  private boolean isForm(final Object value) {
+  private static boolean isForm(final Object value) {
     return value instanceof PsiFile && ((PsiFile)value).getVirtualFile().getFileType() == StdFileTypes.GUI_DESIGNER_FORM;
   }
 
   private boolean topElementIsSelected() {
     int[] selectedIndices = myList.getSelectedIndices();
-    return selectedIndices.length == 1 && selectedIndices[0] == 0 && (myModel.getElementAt(selectedIndices[0]) instanceof TopLevelNode);
+    return selectedIndices.length == 1 && selectedIndices[0] == 0 && myModel.getElementAt(selectedIndices[0])instanceof TopLevelNode;
   }
 
   public final void setBuilder(final AbstractListBuilder builder) {
@@ -325,6 +325,20 @@ public class CommanderPanel extends JPanel {
     if (index >= myModel.getSize()) return null;
     Object elementAtIndex = myModel.getElementAt(index);
     return elementAtIndex instanceof AbstractTreeNode ? (AbstractTreeNode)elementAtIndex : null;
+  }
+  private ArrayList<AbstractTreeNode> getSelectedNodes(){
+    if (myBuilder == null) return null;
+    final int[] indices = myList.getSelectedIndices();
+    ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    for (int index : indices) {
+      if (index >= myModel.getSize()) continue;
+      Object elementAtIndex = myModel.getElementAt(index);
+      AbstractTreeNode node = elementAtIndex instanceof AbstractTreeNode ? (AbstractTreeNode)elementAtIndex : null;
+      if (node != null) {
+        result.add(node);
+      }
+    }
+    return result;
   }
 
 
@@ -421,7 +435,7 @@ public class CommanderPanel extends JPanel {
     final Object selectedValue = getSelectedValue();
     if (DataConstants.PSI_ELEMENT.equals(dataId)) {
       final PsiElement selectedElement = getSelectedElement();
-      return (selectedElement != null && selectedElement.isValid())? selectedElement : null;
+      return selectedElement != null && selectedElement.isValid() ? selectedElement : null;
     }
     if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
       return filterInvalidElements(getSelectedElements());
@@ -429,7 +443,7 @@ public class CommanderPanel extends JPanel {
     else if (DataConstantsEx.PASTE_TARGET_PSI_ELEMENT.equals(dataId)) {
       final AbstractTreeNode parentNode = myBuilder.getParentNode();
       final Object element = parentNode != null? parentNode.getValue() : null;
-      return (element instanceof PsiElement) && ((PsiElement)element).isValid() ? element : null;
+      return element instanceof PsiElement && ((PsiElement)element).isValid() ? element : null;
     }
     else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
       return getNavigatables();
@@ -459,7 +473,7 @@ public class CommanderPanel extends JPanel {
     }
 
     if (myProjectTreeStructure != null) {
-      return myProjectTreeStructure.getDataFromProviders(Collections.singletonList(getSelectedNode()), dataId);
+      return myProjectTreeStructure.getDataFromProviders(getSelectedNodes(), dataId);
     }
 
     return null;
@@ -492,7 +506,7 @@ public class CommanderPanel extends JPanel {
         validElements.add(element);
       }
     }
-    return (validElements.size() == elements.length)? elements : validElements.toArray(new PsiElement[validElements.size()]);
+    return validElements.size() == elements.length ? elements : validElements.toArray(new PsiElement[validElements.size()]);
   }
 
   protected final Navigatable createEditSourceDescriptor() {
@@ -523,8 +537,7 @@ public class CommanderPanel extends JPanel {
 
   private final class MyDeleteElementProvider implements DeleteProvider {
     public void deleteElement(final DataContext dataContext) {
-      final com.intellij.openapi.localVcs.LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject,
-                                                                                                      IdeBundle.message("progress.deleting"));
+      final LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, IdeBundle.message("progress.deleting"));
       try {
         final PsiElement[] elements = getSelectedElements();
         DeleteHandler.deletePsiElement(elements, myProject);
@@ -566,7 +579,7 @@ public class CommanderPanel extends JPanel {
       if (myBuilder == null) return null;
       final Object parentElement = myBuilder.getParentNode();
       if (parentElement instanceof AbstractTreeNode) {
-        final AbstractTreeNode parentNode = ((AbstractTreeNode)parentElement);
+        final AbstractTreeNode parentNode = (AbstractTreeNode)parentElement;
         if (!(parentNode.getValue() instanceof PsiDirectory)) return null;
         return (PsiDirectory)parentNode.getValue();
       } else {
