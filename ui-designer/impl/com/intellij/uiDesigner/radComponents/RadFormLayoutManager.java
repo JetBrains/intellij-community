@@ -68,6 +68,8 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     if (container.getLayout() instanceof GridLayoutManager) {
       GridLayoutManager grid = (GridLayoutManager) container.getLayout();
 
+      List<RadComponent> contents = collectComponents(container);
+
       RowSpec[] rowSpecs = new RowSpec [grid.getRowCount() * 2 - 1];
       ColumnSpec[] colSpecs = new ColumnSpec [grid.getColumnCount() * 2 - 1];
 
@@ -84,16 +86,8 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
         }
       }
 
-      List<RadComponent> contents = new ArrayList<RadComponent>();
-      for(int i=container.getComponentCount()-1; i >= 0; i--) {
-        final RadComponent component = container.getComponent(i);
-        if (!(component instanceof RadHSpacer) && !(component instanceof RadVSpacer)) {
-          contents.add(0, component);
-        }
-        container.removeComponent(component);
-      }
-
       container.setLayoutManager(this, new FormLayout(colSpecs, rowSpecs));
+
       for(RadComponent c: contents) {
         GridConstraints gc = c.getConstraints();
         gc.setRow(gc.getRow() * 2);
@@ -101,12 +95,53 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
         container.addComponent(c);
       }
     }
+    else if (container.getLayoutManager().isIndexed()) {
+      convertIndexedToForm(container);
+    }
     else if (container.getComponentCount() == 0) {
       container.setLayoutManager(this, new FormLayout(ENCODED_FORMSPEC_GROW, ENCODED_FORMSPEC_GROW));
     }
     else {
       throw new IncorrectOperationException("Cannot change from " + container.getLayout() + " to grid layout");
     }
+  }
+
+  private void convertIndexedToForm(final RadContainer container) {
+    List<RadComponent> components = collectComponents(container);
+    int maxSizePolicy = 0;
+    for(RadComponent c: components) {
+      maxSizePolicy = Math.max(maxSizePolicy, c.getConstraints().getHSizePolicy());
+    }
+    ColumnSpec[] colSpecs = new ColumnSpec [components.size() * 2 - 1];
+    for(int i=0; i<components.size(); i++) {
+      colSpecs [i*2] = components.get(i).getConstraints().getHSizePolicy() == maxSizePolicy
+                       ? new ColumnSpec(ENCODED_FORMSPEC_GROW)
+                       : FormFactory.DEFAULT_COLSPEC;
+      if (i*2+1 < colSpecs.length) {
+        colSpecs [i*2+1] = FormFactory.RELATED_GAP_COLSPEC;
+      }
+    }
+    container.setLayoutManager(this, new FormLayout(colSpecs, new RowSpec[] { FormFactory.DEFAULT_ROWSPEC } ));
+    for(int i=0; i<components.size(); i++) {
+      GridConstraints gc = components.get(i).getConstraints();
+      gc.setRow(0);
+      gc.setColumn(i*2);
+      gc.setRowSpan(1);
+      gc.setColSpan(1);
+      container.addComponent(components.get(i));
+    }
+  }
+
+  private List<RadComponent> collectComponents(final RadContainer container) {
+    List<RadComponent> contents = new ArrayList<RadComponent>();
+    for(int i=container.getComponentCount()-1; i >= 0; i--) {
+      final RadComponent component = container.getComponent(i);
+      if (!(component instanceof RadHSpacer) && !(component instanceof RadVSpacer)) {
+        contents.add(0, component);
+      }
+      container.removeComponent(component);
+    }
+    return contents;
   }
 
   @Override
