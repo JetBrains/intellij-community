@@ -39,7 +39,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
   //todo: Introduce ComponentDescriptor instead of three maps
-  private Map myInterfaceToLockMap = new HashMap();
+  private Map<Class, Object> myInterfaceToLockMap = new HashMap<Class, Object>();
   private Map<Class, Class> myInterfaceToClassMap = new HashMap<Class, Class>();
   private Map<Class, Map> myInterfaceToOptionsMap = new HashMap<Class, Map>();
 
@@ -267,7 +267,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   protected Object[] getComponents(boolean includeLazyComponents) {
     Class[] componentClasses = getComponentInterfaces();
     ArrayList<Object> components = new ArrayList<Object>(componentClasses.length);
-    for (Class interfaceClass : componentClasses) {
+    for (Class<?> interfaceClass : componentClasses) {
       if (includeLazyComponents || !myLazyComponents.contains(interfaceClass)) {
         Object component = getComponent(interfaceClass);
         if (component != null) components.add(component);
