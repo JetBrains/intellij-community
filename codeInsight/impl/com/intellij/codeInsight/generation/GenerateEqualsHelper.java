@@ -465,13 +465,10 @@ public class GenerateEqualsHelper implements Runnable {
     return MethodSignatureUtil.findMethodBySignature(aClass, signature, false);
   }
 
-  static class EqualsFieldsComparator implements Comparator {
+  static class EqualsFieldsComparator implements Comparator<PsiField> {
     public static final EqualsFieldsComparator INSTANCE = new EqualsFieldsComparator();
 
-    public int compare(Object o1, Object o2) {
-      PsiField f1 = (PsiField)o1;
-      PsiField f2 = (PsiField)o2;
-
+    public int compare(PsiField f1, PsiField f2) {
       if (f1.getType() instanceof PsiPrimitiveType && !(f2.getType() instanceof PsiPrimitiveType)) return -1;
       if (!(f1.getType() instanceof PsiPrimitiveType) && f2.getType() instanceof PsiPrimitiveType) return 1;
       final String name1 = f1.getName();
@@ -504,7 +501,6 @@ public class GenerateEqualsHelper implements Runnable {
   public static boolean isNestedArray(PsiType aType) {
     if (!(aType instanceof PsiArrayType)) return false;
     final PsiType componentType = ((PsiArrayType)aType).getComponentType();
-    if (componentType == null) return false;
     return componentType instanceof PsiArrayType;
   }
 
