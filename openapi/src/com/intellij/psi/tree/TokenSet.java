@@ -15,18 +15,13 @@
  */
 package com.intellij.psi.tree;
 
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
-
-import java.util.Arrays;
-
 /**
  * A set of element types.
  */
 
 public class TokenSet {
   public static final TokenSet EMPTY = new TokenSet();
-  private final THashSet<IElementType> mySet = new THashSet<IElementType>(100, (float)0.1, TokenHashingStrategy.INSTANCE) ;
+  private final boolean[] mySet = new boolean[IElementType.getAllocatedTypesCount()] ;
 
   /**
    * Returns the array of element types contained in the set.
@@ -35,7 +30,20 @@ public class TokenSet {
    */
 
   public IElementType[] getTypes() {
-    return mySet.toArray(new IElementType[mySet.size()]);
+    int elementCount = 0;
+    for (boolean bit : mySet) {
+      if (bit) elementCount++;
+    }
+
+    IElementType[] types = new IElementType[elementCount];
+    int count = 0;
+    for (short i = 0; i < mySet.length; i++) {
+      if (mySet[i]) {
+        types[count++] = IElementType.find(i);
+      }
+    }
+
+    return types;
   }
 
   /**
@@ -47,7 +55,9 @@ public class TokenSet {
 
   public static TokenSet create(IElementType... types) {
     TokenSet set = new TokenSet();
-    set.mySet.addAll(Arrays.asList(types));
+    for (IElementType type : types) {
+      set.mySet[type.getIndex()] = true;
+    }
     return set;
   }
 
@@ -61,7 +71,10 @@ public class TokenSet {
   public static TokenSet orSet(TokenSet... sets) {
     TokenSet newSet = new TokenSet();
     for (TokenSet set : sets) {
-      newSet.mySet.addAll(set.mySet);
+      for (int i = 0; i < newSet.mySet.length; i++) {
+        if (i >= set.mySet.length) break;
+        newSet.mySet[i] |= set.mySet[i];
+      }
     }
     return newSet;
   }
@@ -76,8 +89,11 @@ public class TokenSet {
 
   public static TokenSet andSet(TokenSet a, TokenSet b) {
     TokenSet set = new TokenSet();
-    set.mySet.addAll(a.mySet);
-    set.mySet.retainAll(b.mySet);
+    final int andSize = Math.max(set.mySet.length, Math.max(a.mySet.length, b.mySet.length));
+
+    for (int i = 0; i < andSize; i++) {
+      set.mySet[i] = a.mySet[i] && b.mySet[i];
+    }
     return set;
   }
 
@@ -85,7 +101,8 @@ public class TokenSet {
    * @deprecated use {@link #contains(IElementType)} instead. This appears to be a better naming.
    */
   public boolean isInSet(IElementType t) {
-    return mySet.contains(t);
+    final short i = t.getIndex();
+    return i < mySet.length && mySet[i];
   }
 
   /**
@@ -95,17 +112,7 @@ public class TokenSet {
    * @return true if the element type is found in the set, false otherwise.
    */
   public boolean contains(IElementType t) {
-    return mySet.contains(t);
-  }
-
-  private static final class TokenHashingStrategy implements TObjectHashingStrategy<IElementType> {
-    public static final TokenHashingStrategy INSTANCE = new TokenHashingStrategy();
-    public int computeHashCode(final IElementType token) {
-      return token != null ? token.getIndex() : 0;
-    }
-
-    public boolean equals(final IElementType t1, final IElementType t2) {
-      return t1 == t2;
-    }
+    final short i = t.getIndex();
+    return i < mySet.length && mySet[i];
   }
 }

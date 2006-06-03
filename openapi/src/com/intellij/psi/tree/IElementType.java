@@ -37,8 +37,8 @@ public class IElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.tree.IElementType");
 
   private static short ourCounter = 0;
-  private static final short MAX_VALUE = 10000;
-  private static final IElementType[] ourRegistry = new IElementType[MAX_VALUE];
+  private static final short MAX_INDEXED_TYPES = 10000;
+  private static final IElementType[] ourRegistry = new IElementType[MAX_INDEXED_TYPES];
   private final short myIndex;
 
   /**
@@ -52,6 +52,11 @@ public class IElementType {
       return true;
     }
   };
+
+  static int getAllocatedTypesCount() {
+    return ourCounter;
+  }
+
   public static final IElementType[] EMPTY_ARRAY = new IElementType[0];
   private final String myDebugName;
   private final @NotNull Language myLanguage;
@@ -89,7 +94,7 @@ public class IElementType {
     myLanguage = language == null ? Language.ANY : language;
     if (register) {
       myIndex = ourCounter++;
-      LOG.assertTrue(ourCounter < MAX_VALUE, "Too many element types registered. Out of (short) range.");
+      LOG.assertTrue(ourCounter < MAX_INDEXED_TYPES, "Too many element types registered. Out of (short) range.");
       ourRegistry[myIndex] = this;
     }
     else {
