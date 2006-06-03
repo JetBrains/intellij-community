@@ -163,7 +163,9 @@ public class PsiBuilderImpl implements PsiBuilder {
 
   public IElementType getTokenType() {
     final Token lex = getCurrentToken();
-    final IElementType tokenType = lex == null ? null : lex.getTokenType();
+    if (lex == null) return null;
+    
+    final IElementType tokenType = lex.getTokenType();
     LOG.assertTrue(!whitespaceOrComment(tokenType));
     return tokenType;
   }
