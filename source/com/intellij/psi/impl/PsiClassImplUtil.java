@@ -288,7 +288,7 @@ public class PsiClassImplUtil {
     synchronized (PsiLock.LOCK) {
       data = aClass.getUserData(NAME_MAPS_BUILT_FLAG);
     }
-    if (last instanceof PsiReferenceList && data == null || aClass instanceof PsiTypeParameter) {
+    if (data == null) {
       return processDeclarationsInClassNotCached(aClass, processor, substitutor, visited, last, place, isRaw);
     }
 

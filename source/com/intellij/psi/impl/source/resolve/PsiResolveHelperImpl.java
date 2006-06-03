@@ -43,32 +43,32 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
 
   @NotNull
   public JavaResolveResult[] multiResolveConstructor(PsiClassType type, PsiExpressionList argumentList, PsiElement place) {
-    final MethodResolverProcessor processor;
     PsiClassType.ClassResolveResult classResolveResult = type.resolveGenerics();
-    final PsiClass aClass = classResolveResult.getElement();
-    final JavaResolveResult[] result;
+    PsiClass aClass = classResolveResult.getElement();
     if (aClass == null) {
-      result = JavaResolveResult.EMPTY_ARRAY;
+      return JavaResolveResult.EMPTY_ARRAY;
     }
     else {
+      final MethodResolverProcessor processor;
+      PsiSubstitutor substitutor;
       if (argumentList.getParent() instanceof PsiAnonymousClass) {
         final PsiClass anonymous = (PsiClass)argumentList.getParent();
         processor = new MethodResolverProcessor(anonymous, argumentList, place);
-        final PsiClass superClass = anonymous.getSuperClass();
-        if (superClass != null) {
-          processor.setName(superClass.getName());
-        }
+        aClass = anonymous.getSuperClass();
+        if (aClass == null) return JavaResolveResult.EMPTY_ARRAY;
+        substitutor = TypeConversionUtil.getSuperClassSubstitutor(aClass, anonymous, classResolveResult.getSubstitutor());
       }
       else {
         processor = new MethodResolverProcessor(aClass, argumentList, place);
-        processor.setName(aClass.getName());
+        substitutor = classResolveResult.getSubstitutor();
       }
-      PsiScopesUtil.processScope(aClass, processor, classResolveResult.getSubstitutor(), aClass, place);
 
-      // getting the most suitable myResult
-      result = processor.getResult();
+      for (PsiMethod constructor : aClass.getConstructors()) {
+        if (!processor.execute(constructor, substitutor)) break;
+      }
+
+      return processor.getResult();
     }
-    return result;
   }
 
   public PsiClass resolveReferencedClass(String referenceText, PsiElement context) {
