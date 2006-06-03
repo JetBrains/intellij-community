@@ -391,13 +391,12 @@ public class OverrideImplementUtil {
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        overrideOrImplementMethodsInRightPlace(project, editor, aClass, selectedCandidates, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
+        overrideOrImplementMethodsInRightPlace(editor, aClass, selectedCandidates, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
       }
     });
   }
 
-  public static void overrideOrImplementMethodsInRightPlace(Project project,
-                                                            Editor editor,
+  public static void overrideOrImplementMethodsInRightPlace(Editor editor,
                                                             PsiClass aClass,
                                                             CandidateInfo[] candidates,
                                                             boolean copyJavadoc,

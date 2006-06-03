@@ -80,10 +80,9 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
 
   /**
    * Returns the file type for the specified extension.
-   *
+   * Note that a more general way of obtaining file type is with {@link #getFileTypeByFile(VirtualFile)}
    * @param extension The extension for which the file type is requested, not including the leading '.'.
    * @return The file type instance.
-   * @deprecated since more generic way of associations by means of whildcards exist not every associations matches extension paradigm
    */
   public abstract
   @NotNull

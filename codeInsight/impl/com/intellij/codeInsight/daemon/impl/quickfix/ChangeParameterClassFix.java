@@ -58,7 +58,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
             public void run() {
-              OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(project, editor1, myClass, toImplement,
+              OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor1, myClass, toImplement,
                                                                            false, false);
             }
           }
