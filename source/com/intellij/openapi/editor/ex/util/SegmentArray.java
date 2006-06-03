@@ -84,7 +84,7 @@ public class SegmentArray {
       }
     }
 
-    LOG.assertTrue(offset >= myStarts[start] && offset < myEnds[start]);
+    assert (offset >= myStarts[start] && offset < myEnds[start]);
 
     return start;
   }

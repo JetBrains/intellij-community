@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
@@ -39,7 +38,8 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public int getStartOffset() {
-    LOG.assertTrue(prev != this, "Loop in tree");
+    assert prev != this: "Loop in tree";
+
     if(parent == null) return 0;
     synchronized(PsiLock.LOCK){
       CompositeElement parent = this.parent;
@@ -81,10 +81,10 @@ public class CompositeElement extends TreeElement implements Cloneable {
     if(lastKnownStart == null){
       // Step 2: if leaf found cheaper to start from begining to find known startOffset composite
       lastKnownStart = parent;
-      current = (TreeElement)parent.getFirstChildNode();
+      current = parent.getFirstChildNode();
 
       while(current != last){
-        LOG.assertTrue(current != null, "Invalid tree");
+        assert current != null: "Invalid tree";
         if(current instanceof CompositeElement) {
           final CompositeElement compositeElement = (CompositeElement)current;
           if(compositeElement.myParentModifications == parentModificationsCount)
@@ -93,7 +93,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
         current = current.getTreeNext();
       }
     }
-    current = lastKnownStart != parent ? lastKnownStart : (TreeElement)parent.getFirstChildNode();
+    current = lastKnownStart != parent ? lastKnownStart : parent.getFirstChildNode();
     int start = lastKnownStart.myStartOffset;
     while(current != this) {
       if(current instanceof CompositeElement){
@@ -229,7 +229,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public ASTNode findChildByRole(int role) {
-    LOG.assertTrue(ChildRole.isUnique(role));
+    assert (ChildRole.isUnique(role));
     synchronized (PsiLock.LOCK) {
       for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
         if (getChildRole(child) == role) return child;
@@ -239,7 +239,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public int getChildRole(ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
+    assert (child.getTreeParent() == this);
     return ChildRole.NONE;
   }
 
@@ -283,7 +283,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     for (ASTNode child = getFirstChildNode(); child != null && idx < count; child = child.getTreeNext()) {
       if (filter == null || filter.contains(child.getElementType())) {
         T element = (T)SourceTreeToPsiMap.treeElementToPsi(child);
-        LOG.assertTrue(element != null);
+        assert (element != null);
         result[idx++] = element;
       }
     }

@@ -17,10 +17,9 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
-
-import org.jetbrains.annotations.NotNull;
 
 public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.MethodSignatureBackedByPsiMethod");
@@ -37,7 +36,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     super(substitutor, parameterTypes, methodTypeParameters);
     myIsRaw = isRaw;
     myIsInGenericContext = isInGenericContext;
-    LOG.assertTrue(method.isValid());
+    assert (method.isValid());
     myMethod = method;
   }
 

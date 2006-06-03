@@ -139,8 +139,16 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   public void initialize() {
     myNameHelper = PsiManager.getInstance(myProject).getNameHelper();
 
-    LOG.assertTrue(!myInitialized);
-    LOG.assertTrue(!myDisposed);
+    if (myInitialized) {
+      LOG.error("Directory index is already initialized.");
+      return;
+    }
+
+    if (myDisposed) {
+      LOG.error("Directory index is aleady disposed for this project");
+      return;
+    }
+
     myInitialized = true;
 
     myVirtualFileListener = new MyVirtualFileListener();
@@ -390,8 +398,13 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   public DirectoryInfo getInfoForDirectory(VirtualFile dir) {
-    LOG.assertTrue(myInitialized);
-    LOG.assertTrue(!myDisposed);
+    if (!myInitialized) {
+      LOG.error("Directory index is not initialized yet.");
+    }
+
+    if (myDisposed) {
+      LOG.error("Directory index is aleady disposed for this project");
+    }
 
     dispatchPendingEvents();
 
@@ -412,7 +425,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
         public boolean execute(final VirtualFile[] allDirs, final Processor<VirtualFile> consumer) {
           for (VirtualFile dir : allDirs) {
             DirectoryInfo info = getInfoForDirectory(dir);
-            LOG.assertTrue(info != null);
+            assert info != null;
+
             if (!info.isInLibrarySource || info.libraryClassRoot != null) {
               if (!consumer.process(dir)) return false;
             }
@@ -435,8 +449,13 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
 
   @NotNull public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
-    LOG.assertTrue(myInitialized);
-    LOG.assertTrue(!myDisposed);
+    if (!myInitialized) {
+      LOG.error("Directory index is not initialized yet.");
+    }
+
+    if (myDisposed) {
+      LOG.error("Directory index is aleady disposed for this project");
+    }
 
     return mySink.search(packageName, includeLibrarySources);
   }
@@ -710,13 +729,14 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   private void setPackageName(VirtualFile dir, DirectoryInfo info, String newPackageName) {
-    LOG.assertTrue(dir != null);
+    assert dir != null;
+
     if (!LAZY_MODE) {
       String oldPackageName = info.packageName;
       if (oldPackageName != null) {
         VirtualFile[] oldPackageDirs = myPackageNameToDirsMap.get(oldPackageName);
-        LOG.assertTrue(oldPackageDirs != null);
-        LOG.assertTrue(oldPackageDirs.length > 0);
+        assert (oldPackageDirs != null);
+        assert (oldPackageDirs.length > 0);
         if (oldPackageDirs.length != 1) {
           VirtualFile[] dirs = new VirtualFile[oldPackageDirs.length - 1];
 
@@ -729,12 +749,13 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
             }
             dirs[found ? i - 1 : i] = oldDir;
           }
-          LOG.assertTrue(found);
+
+          assert found;
 
           myPackageNameToDirsMap.put(oldPackageName, dirs);
         }
         else {
-          LOG.assertTrue(dir.equals(oldPackageDirs[0]));
+          assert (dir.equals(oldPackageDirs[0]));
           myPackageNameToDirsMap.remove(oldPackageName);
         }
 

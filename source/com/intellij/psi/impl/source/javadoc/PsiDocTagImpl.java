@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
@@ -17,8 +16,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 
 public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.javadoc.PsiDocTagImpl");
-
   private static final TokenSet VALUE_BIT_SET = TokenSet.create(new IElementType[]{
     JAVA_CODE_REFERENCE,
     DOC_TAG_VALUE_TOKEN,
@@ -60,7 +57,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag {
   }
 
   public int getChildRole(ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
+    assert (child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == DOC_TAG_NAME) {
       return ChildRole.DOC_TAG_NAME;

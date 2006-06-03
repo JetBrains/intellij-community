@@ -1,10 +1,10 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
 
 public class FieldElement extends RepositoryTreeElement{
    private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.FieldElement");
@@ -28,7 +28,7 @@ public class FieldElement extends RepositoryTreeElement{
   }
 
   public ASTNode findChildByRole(int role){
-    LOG.assertTrue(ChildRole.isUnique(role));
+    assert (ChildRole.isUnique(role));
     switch(role){
       default:
         return null;
@@ -65,7 +65,7 @@ public class FieldElement extends RepositoryTreeElement{
   }
 
   public int getChildRole(ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
+    assert (child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaTokenType.DOC_COMMENT || i == JavaDocElementType.DOC_COMMENT) {
       return getChildRole(child, ChildRole.DOC_COMMENT);

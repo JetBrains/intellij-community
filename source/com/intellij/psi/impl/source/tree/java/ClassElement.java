@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -10,7 +11,6 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.Nullable;
 
 public class ClassElement extends RepositoryTreeElement {
@@ -162,7 +162,8 @@ public class ClassElement extends RepositoryTreeElement {
 
 
   public ASTNode findChildByRole(int role) {
-    LOG.assertTrue(ChildRole.isUnique(role));
+    assert ChildRole.isUnique(role);
+
     switch (role) {
       default:
         return null;
@@ -253,7 +254,8 @@ public class ClassElement extends RepositoryTreeElement {
   }
 
   public int getChildRole(ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
+    assert child.getTreeParent() == this;
+
     IElementType i = child.getElementType();
     if (i == SEMICOLON) {
       if (!isEnum()) return ChildRole.NONE;

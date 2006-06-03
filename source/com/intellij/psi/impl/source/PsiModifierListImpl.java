@@ -78,7 +78,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
         myCachedModifiers = ((DeclarationView)getRepositoryManager().getItemView(repositoryId)).getModifiers(repositoryId);
       }
       int flag = NAME_TO_MODIFIER_FLAG_MAP.get(name);
-      LOG.assertTrue(flag != 0);
+      assert (flag != 0);
       return (myCachedModifiers & flag) != 0;
     }
     else {

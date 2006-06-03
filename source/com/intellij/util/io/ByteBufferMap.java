@@ -60,9 +60,9 @@ public class ByteBufferMap<K,V> {
                        int endOffset,
                        KeyProvider<K> keyProvider,
                        ValueProvider<V> valueProvider) {
-    LOG.assertTrue(keyProvider != null);
-    LOG.assertTrue(valueProvider != null);
-    LOG.assertTrue(startOffset < endOffset);
+    assert (keyProvider != null);
+    assert (valueProvider != null);
+    assert (startOffset < endOffset);
 
     myBuffer = buffer;
     myStartOffset = startOffset;
@@ -90,11 +90,11 @@ public class ByteBufferMap<K,V> {
     try {
       myBuffer.setPosition(keyGroupOffset);
       int keyGroupSize = myBuffer.readInt();
-      LOG.assertTrue(keyGroupSize > 0);
+      assert (keyGroupSize > 0);
       for (int i = 0; i < keyGroupSize; i++) {
         if (myKeyProvider.equals(myBuffer, key)) {
           int valueOffset = myBuffer.readInt();
-          LOG.assertTrue(valueOffset > 0);
+          assert (valueOffset > 0);
 
           myBuffer.setPosition(myStartOffset + valueOffset);
           return myValueProvider.get(myBuffer);
@@ -111,6 +111,7 @@ public class ByteBufferMap<K,V> {
     return null;
   }
 
+  @SuppressWarnings({"unchecked"})
   public K[] getKeys(Class<K> keyClass) {
     ArrayList<K> result = new ArrayList<K>();
     getKeys(keyClass, result);
@@ -134,9 +135,9 @@ public class ByteBufferMap<K,V> {
       if (firstKeyGroupOffset == -1) {
         return;
       }
-      LOG.assertTrue(firstKeyGroupOffset > myStartOffset);
-      LOG.assertTrue(lastKeyGroupOffset > myStartOffset);
-      LOG.assertTrue(lastKeyGroupOffset >= firstKeyGroupOffset);
+      assert (firstKeyGroupOffset > myStartOffset);
+      assert (lastKeyGroupOffset > myStartOffset);
+      assert (lastKeyGroupOffset >= firstKeyGroupOffset);
 
       int firstValueOffset = -1;
 
@@ -150,7 +151,7 @@ public class ByteBufferMap<K,V> {
           if( firstValueOffset == -1 ) firstValueOffset = valueOffset + myStartOffset;
         }
       }
-      LOG.assertTrue( myBuffer.getPosition() == firstValueOffset );
+      assert myBuffer.getPosition() == firstValueOffset;
     }
     catch (IOException e) {
       LOG.error(e);

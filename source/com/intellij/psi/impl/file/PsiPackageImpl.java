@@ -88,7 +88,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
             public boolean process(final VirtualFile dir) {
               if (!scope.contains(dir)) return true;
               PsiDirectory psiDir = myManager.findDirectory(dir);
-              LOG.assertTrue(psiDir != null);
+              assert (psiDir != null);
               return consumer.process(psiDir);
             }
           });

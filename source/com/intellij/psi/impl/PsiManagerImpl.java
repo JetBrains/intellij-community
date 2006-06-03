@@ -8,6 +8,7 @@ import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,12 +21,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -396,7 +396,9 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   public RepositoryManager getRepositoryManager() {
-    LOG.assertTrue(!myIsDisposed);
+    if (myIsDisposed) {
+      LOG.error("Project is already disposed.");
+    }
     return myRepositoryManager;
   }
 
@@ -405,7 +407,9 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   public CacheManager getCacheManager() {
-    LOG.assertTrue(!myIsDisposed);
+    if (myIsDisposed) {
+      LOG.error("Project is already disposed.");
+    }
     return myCacheManager;
   }
 

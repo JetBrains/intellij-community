@@ -91,7 +91,9 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
 
   // ASSERTIONS ONLY
   public void setWritable(final boolean writable) {
-    LOG.assertTrue(this.writable != writable);
+    if (this.writable == writable) {
+      LOG.error("this.writable != writable");
+    }
     this.writable = writable;
   }
 

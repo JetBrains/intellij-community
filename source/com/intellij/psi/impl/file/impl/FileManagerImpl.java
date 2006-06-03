@@ -192,7 +192,10 @@ public class FileManagerImpl implements FileManager {
   }
 
   private void dispatchPendingEvents() {
-    LOG.assertTrue(myInitialized);
+    if (!myInitialized) {
+      LOG.error("Project is already disposed");
+    }
+
     //LOG.assertTrue(!myDisposed);
 
     // [dsl]todo[max, dsl] this is a hack. MUST FIX
@@ -201,7 +204,7 @@ public class FileManagerImpl implements FileManager {
     myVirtualFileManager.dispatchPendingEvent(myVirtualFileListener);
     myFileDocumentManager.dispatchPendingEvents(myFileDocumentManagerListener);
     myProjectRootManager.dispatchPendingEvent(myModuleRootListener);
-    ((FileTypeManagerEx) myFileTypeManager).dispatchPendingEvents(myFileTypeListener);
+    ((FileTypeManagerEx)myFileTypeManager).dispatchPendingEvents(myFileTypeListener);
     //TODO: other listeners
   }
 
