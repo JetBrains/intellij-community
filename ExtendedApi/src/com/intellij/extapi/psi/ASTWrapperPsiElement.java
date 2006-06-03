@@ -5,6 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -40,6 +41,14 @@ public class ASTWrapperPsiElement extends PsiElementBase {
       child = child.getTreeNext();
     }
     return result.toArray(new PsiElement[result.size()]);
+  }
+
+  public void acceptChildren(PsiElementVisitor visitor) {
+    ASTNode child = getNode().getFirstChildNode();
+    while (child != null) {
+      child.getPsi().accept(visitor);
+      child = child.getTreeNext();
+    }
   }
 
   public PsiElement getParent() {
