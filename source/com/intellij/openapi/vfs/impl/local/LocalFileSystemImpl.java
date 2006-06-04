@@ -40,7 +40,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   private WatchRequest[] myCachedNormalizedRequests = null;
   private BidirectionalMap<VirtualFile, String> myFSRootsToPaths = null;
 
-  private ArrayList<String> myFilePathsToWatchManual = new ArrayList<String>();
+  private List<String> myFilePathsToWatchManual = new ArrayList<String>();
   private final HashSet<String> myDirtyFiles = new HashSet<String>(); // dirty files when FileWatcher is available
   private final HashSet<String> myDeletedFiles = new HashSet<String>();
 
