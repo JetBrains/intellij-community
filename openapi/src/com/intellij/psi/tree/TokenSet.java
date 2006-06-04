@@ -114,6 +114,6 @@ public class TokenSet {
   public boolean contains(IElementType t) {
     if (t == null) return false;
     final short i = t.getIndex();
-    return i < mySet.length && mySet[i];
+    return 0 <= i && i < mySet.length && mySet[i];
   }
 }
