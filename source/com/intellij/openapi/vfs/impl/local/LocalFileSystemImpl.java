@@ -41,8 +41,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   private BidirectionalMap<VirtualFile, String> myFSRootsToPaths = null;
 
   private List<String> myFilePathsToWatchManual = new ArrayList<String>();
-  private final HashSet<String> myDirtyFiles = new HashSet<String>(); // dirty files when FileWatcher is available
-  private final HashSet<String> myDeletedFiles = new HashSet<String>();
+  private final Set<String> myDirtyFiles = new HashSet<String>(); // dirty files when FileWatcher is available
+  private final Set<String> myDeletedFiles = new HashSet<String>();
 
   private final ExecutorService mySynchronizeExecutor = Executors.newSingleThreadExecutor();
 
