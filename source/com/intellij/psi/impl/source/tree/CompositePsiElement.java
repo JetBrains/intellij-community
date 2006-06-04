@@ -57,6 +57,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     while (childNode != null) {
       if (childNode instanceof ChameleonElement) {
         childNode = (TreeElement)childNode.getTransformedFirstOrSelf();
+        if (childNode == null) break;
       }
 
       final PsiElement psi;

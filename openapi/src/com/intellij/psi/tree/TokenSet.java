@@ -101,8 +101,7 @@ public class TokenSet {
    * @deprecated use {@link #contains(IElementType)} instead. This appears to be a better naming.
    */
   public boolean isInSet(IElementType t) {
-    final short i = t.getIndex();
-    return i < mySet.length && mySet[i];
+    return contains(t);
   }
 
   /**
