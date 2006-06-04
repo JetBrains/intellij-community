@@ -16,6 +16,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.profile.ui.ErrorOptionsConfigurable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -96,7 +97,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     private boolean myChooseDifferentProfile;
     private InspectionProfileImpl myInspectionProfile;
     private String mySelectedTool;
-    private InspectionToolsPanel myPanel;
+    private SingleInspectionProfilePanel myPanel;
     private Project myProject;
 
     public InspectionToolsConfigurable(final Project project,
@@ -108,7 +109,9 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
       myChooseDifferentProfile = chooseDifferentProfile;
       myInspectionProfile = inspectionProfile;
       mySelectedTool = selectedTool;
-      myPanel =  new InspectionToolsPanel(myInspectionProfile.getName(), myProject, myChooseDifferentProfile, profileManager);
+      myPanel =  myChooseDifferentProfile
+                 ? new InspectionToolsPanel(myInspectionProfile.getName(), project, profileManager)
+                 : new SingleInspectionProfilePanel(myInspectionProfile.getName(), inspectionProfile.getModifiableModel(), project, profileManager);
     }
 
     public String getDisplayName() {
@@ -136,19 +139,8 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     }
 
     public void apply() throws ConfigurationException {
-      if (myChooseDifferentProfile) {
-        myPanel.apply();
-        final InspectionProfileImpl editedProfile = (InspectionProfileImpl)myPanel.getSelectedProfile().getParentProfile();
-        InspectionProfileManager.getInstance().setRootProfile(editedProfile.getName());
-        myInspectionProfile.copyFrom(editedProfile);
-        InspectionProjectProfileManager.getInstance(myProject).initProfileWrapper(myInspectionProfile);
-      }
-      else {
-        final InspectionProfileImpl editedProfile = (InspectionProfileImpl)myPanel.getSelectedProfile();
-        myInspectionProfile.copyFrom(editedProfile);
-        myInspectionProfile.save();
-        myPanel.initDescriptors();
-      }
+      myPanel.apply();
+      ErrorOptionsConfigurable.getInstance(myProject).fireItemsChangedExternally();
     }
 
     public void reset() {

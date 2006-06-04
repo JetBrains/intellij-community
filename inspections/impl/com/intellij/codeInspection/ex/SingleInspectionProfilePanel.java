@@ -80,7 +80,6 @@ public class SingleInspectionProfilePanel extends JPanel {
   final Alarm myAlarm = new Alarm();
   private boolean myShowInspections = true;
   protected boolean myModified = false;
-  private boolean myTreeFiltered = false;
   protected Tree myTree;
   private TreeExpander myTreeExpander;
   protected String myInitialProfile;
@@ -631,7 +630,6 @@ public class SingleInspectionProfilePanel extends JPanel {
       final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
       if (filters.size() > 1) {
         fillTreeData(filter, false);
-        myTreeFiltered = true;
       }
     }
     sortInspections();
@@ -897,6 +895,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public void reset() {
     myModified = false;
+    setSelectedProfile(mySelectedProfile);
     myProfileFilter.reset();
   }
 
@@ -909,8 +908,8 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
 
-  public boolean isTreeFiltered() {
-    return myTreeFiltered;
+  public String getCurrentTreeFilter() {
+    return myProfileFilter.getFilter();
   }
 
   private static class InputDialog extends DialogWrapper {
