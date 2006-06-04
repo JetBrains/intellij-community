@@ -112,6 +112,7 @@ public class TokenSet {
    * @return true if the element type is found in the set, false otherwise.
    */
   public boolean contains(IElementType t) {
+    if (t == null) return false;
     final short i = t.getIndex();
     return i < mySet.length && mySet[i];
   }
