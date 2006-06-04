@@ -1265,9 +1265,9 @@ public class CompileDriver {
       context.getProgressIndicator().pushState();
       context.getProgressIndicator().setText(CompilerBundle.message("progress.updating.caches"));
       try {
-        final VirtualFile[] vFiles = new VirtualFile[processed.length];
+        List<VirtualFile> vFiles = new ArrayList<VirtualFile>(processed.length);
         for (int idx = 0; idx < processed.length; idx++) {
-          vFiles[idx] = processed[idx].getFile();
+          vFiles.add(processed[idx].getFile());
         }
         CompilerUtil.refreshVirtualFiles(vFiles);
         ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -1473,7 +1473,7 @@ public class CompileDriver {
       }
       final Boolean refreshSuccess = ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
           public Boolean compute() {
-            LocalFileSystem.getInstance().refreshFiles(nonExistingOutputPaths);
+            LocalFileSystem.getInstance().refreshIoFiles(nonExistingOutputPaths);
             for (File file : nonExistingOutputPaths) {
               if (LocalFileSystem.getInstance().findFileByIoFile(file) == null) {
                 return Boolean.FALSE;

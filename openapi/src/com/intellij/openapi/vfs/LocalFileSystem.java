@@ -44,7 +44,15 @@ public abstract class LocalFileSystem extends VirtualFileSystem {
    * @param files files to refresh
    * @since 6.0
    */
-  public abstract void refreshFiles(Iterable<File> files);
+  public abstract void refreshIoFiles(Iterable<File> files);
+
+  /**
+   * Performs a nonrecursive synchronous refresh of specified files
+   * @param files files to refresh
+   * @since 6.0
+   */
+  public abstract void refreshFiles(Iterable<VirtualFile> files);
+
 
   public abstract byte[] physicalContentsToByteArray(final VirtualFile virtualFile) throws IOException;
 

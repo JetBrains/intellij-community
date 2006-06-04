@@ -351,12 +351,21 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return refreshAndFindFileByPath(path);
   }
 
-  public void refreshFiles(Iterable<File> files) {
+  public void refreshIoFiles(Iterable<File> files) {
     final ModalityState modalityState = ModalityState.current();
     myManager.beforeRefreshStart(false, modalityState, null);
     for (File file : files) {
       final VirtualFile virtualFile = refreshAndFindFileByIoFile(file);
       if (virtualFile != null) virtualFile.refresh(false, false);
+    }
+    myManager.afterRefreshFinish(false, modalityState);
+  }
+
+  public void refreshFiles(Iterable<VirtualFile> files) {
+    final ModalityState modalityState = ModalityState.current();
+    myManager.beforeRefreshStart(false, modalityState, null);
+    for (VirtualFile file : files) {
+      file.refresh(false, false);
     }
     myManager.afterRefreshFinish(false, modalityState);
   }

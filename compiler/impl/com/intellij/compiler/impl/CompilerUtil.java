@@ -101,7 +101,7 @@ public class CompilerUtil {
             file.refresh(false, false);
           }
         }*/
-        LocalFileSystem.getInstance().refreshFiles(files);
+        LocalFileSystem.getInstance().refreshIoFiles(files);
       }
     });
   }
@@ -117,12 +117,10 @@ public class CompilerUtil {
     });
   }
 
-  public static void refreshVirtualFiles(final VirtualFile[] files) {
+  public static void refreshVirtualFiles(final Iterable<VirtualFile> files) {
     doRefresh(new Runnable() {
       public void run() {
-        for (VirtualFile file : files) {
-          file.refresh(false, false);
-        }
+        LocalFileSystem.getInstance().refreshFiles(files);
       }
     });
   }
