@@ -2,7 +2,6 @@ package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -10,8 +9,6 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.util.IncorrectOperationException;
-
-import java.util.Calendar;
 
 /**
  * @author dsl
@@ -110,7 +107,6 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
     }, true);
   }
 
-  @Bombed(user = "lesya", day = 30, month = Calendar.JUNE, description = "Need to fix javadoc formatter", year = 2006, time = 15)
   public void testSCR40895() throws Exception {
     doTest(null, new ParameterInfo[] {
       new ParameterInfo(0, "y", PsiType.INT),

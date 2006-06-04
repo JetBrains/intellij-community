@@ -1,15 +1,12 @@
 package com.intellij.refactoring.moveMethod;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.idea.Bombed;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodProcessor;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-
-import java.util.Calendar;
 
 /**
  * @author ven
@@ -24,7 +21,6 @@ public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
 
   public void testWithInner() throws Exception { doTest(true, 0); }
 
-  @Bombed(user = "lesya", day = 30, month = Calendar.JUNE, description = "Need to fix javadoc formatter", year = 2006, time = 15)
   public void testJavadoc() throws Exception { doTest(true, 0); }
 
   public void testRecursive() throws Exception { doTest(true, 0); }

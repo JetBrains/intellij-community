@@ -129,14 +129,16 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     final ASTNode newLine = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{'\n'}, 0, 1, treeCharTab, SharedImplUtil.getManagerByTree(tag));
     tag.addChild(newLine, null);
 
+    ASTNode leadingWhitespaceAnchor = null;
     if (CodeStyleSettingsManager.getSettings(project).JD_LEADING_ASTERISKS_ARE_ENABLED) {
       final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, new char[]{'*'}, 0, 1, treeCharTab,
                                                                           SharedImplUtil.getManagerByTree(tag));
 
-      tag.addInternal(leadingAsterisk, leadingAsterisk, null, Boolean.TRUE);
+      leadingWhitespaceAnchor = tag.addInternal(leadingAsterisk, leadingAsterisk, null, Boolean.TRUE);
     }
+
     final TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{' '}, 0, 1, treeCharTab, SharedImplUtil.getManagerByTree(tag));
-    tag.addInternal(commentData, commentData, null, Boolean.TRUE);
+    tag.addInternal(commentData, commentData, leadingWhitespaceAnchor, Boolean.TRUE);
   }
 
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
@@ -159,6 +161,8 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
         final TreeElement newLine = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{'\n'}, 0, 1, charTable, getManager());
         final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, new char[]{'*'}, 0, 1, charTable, getManager());
         final TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{' '}, 0, 1, charTable, getManager());
+        final TreeElement indentWS = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{' '}, 0, 1, charTable, getManager());
+        newLine.getTreeParent().addChild(indentWS);
         newLine.getTreeParent().addChild(leadingAsterisk);
         newLine.getTreeParent().addChild(commentData);
         super.addInternal(newLine, commentData, anchor, Boolean.FALSE);
@@ -236,6 +240,12 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
               compositePrev.deleteChildInternal(current);
               current = nextChild;
             }
+          }
+        }
+        else {
+          next = child.getTreeNext();
+          if (next != null && next.getElementType() == WHITE_SPACE) {
+            next.getTreeParent().removeChild(next);
           }
         }
       }

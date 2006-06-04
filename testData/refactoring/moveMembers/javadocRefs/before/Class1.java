@@ -7,5 +7,5 @@ public class Class1 {
      * @see #foo Some text {@link #foo label}
      */
     void test() {
-	}
+    }
 }

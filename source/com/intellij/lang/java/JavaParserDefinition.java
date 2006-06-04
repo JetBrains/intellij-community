@@ -95,6 +95,9 @@ public class JavaParserDefinition implements ParserDefinition {
         return SpaceRequirements.MAY;
       }
     }
+    else if (right.getElementType() == JavaDocTokenType.DOC_INLINE_TAG_END) {
+      return SpaceRequirements.MAY;
+    }
 
     return spaceRequirements;
   }
