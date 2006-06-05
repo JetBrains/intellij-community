@@ -1,14 +1,14 @@
 package com.intellij.psi.scope.conflictResolvers;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.pom.java.LanguageLevel;
 
 import java.util.Iterator;
 import java.util.List;
@@ -187,71 +187,24 @@ outer:
     return Comparing.equal(method1.getReturnType(), method2.getReturnType());
   }
 
-  private Specifics isMoreSpecific(final MethodCandidateInfo info1, final MethodCandidateInfo info2) {
-    PsiMethod method1 = info1.getElement();
-    PsiMethod method2 = info2.getElement();
-    final PsiClass class1 = method1.getContainingClass();
-    final PsiClass class2 = method2.getContainingClass();
-    Boolean isMoreSpecific = null;
+  private Specifics checkSubtyping(PsiType type1, PsiType type2, final PsiType argType) {
+    final Specifics lessBoxing = isLessBoxing(argType, type1, type2);
+    if (lessBoxing != null) return lessBoxing;
 
-    final PsiParameter[] params1 = method1.getParameterList().getParameters();
-    final PsiParameter[] params2 = method2.getParameterList().getParameters();
-
-    PsiExpression[] args = myArgumentsList.getExpressions();
-
-    //check again, now that applicability check has been performed
-    if (params1.length == args.length && params2.length != args.length) return Specifics.TRUE;
-    if (params2.length == args.length && params1.length != args.length) return Specifics.FALSE;
-
-    for(int i = 0; i < args.length; i++){
-      if (i >= params1.length || i >= params2.length) break;
-      final PsiType argType = args[i].getType();
-      final PsiType type1 = TypeConversionUtil.erasure(params1[i].getType());
-      final PsiType type2 = TypeConversionUtil.erasure(params2[i].getType());
-      assert type1 != null && type2 != null; //because erasure returns null for nulls only
-
-      Boolean lessBoxing = isLessBoxing(argType, type1, type2);
-      if (lessBoxing != null) {
-        if (isMoreSpecific != null && !lessBoxing.equals(isMoreSpecific)) return Specifics.CONFLICT;
-        isMoreSpecific = lessBoxing;
-        continue;
-      }
-
-      final boolean assignable2From1 = type2.isAssignableFrom(type1);
-      final boolean assignable1From2 = type1.isAssignableFrom(type2);
+    final boolean assignable2From1 = type2.isAssignableFrom(type1);
+    final boolean assignable1From2 = type1.isAssignableFrom(type2);
+    if (assignable1From2 || assignable2From1) {
       if (assignable1From2 && assignable2From1) {
-        continue;
-      } else if (assignable1From2) {
-        if (isMoreSpecific == Boolean.TRUE) return Specifics.CONFLICT;
-        isMoreSpecific = Boolean.FALSE;
-      } else if (assignable2From1) {
-        if (isMoreSpecific == Boolean.FALSE) return Specifics.CONFLICT;
-        isMoreSpecific = Boolean.TRUE;
-      } else {
         return Specifics.CONFLICT;
       }
+
+      return assignable1From2 ? Specifics.FALSE : Specifics.TRUE;
     }
 
-    if (isMoreSpecific == null){
-      if (class1 != class2){
-        if (class2.isInheritor(class1, true)
-            || class1.isInterface() && !class2.isInterface()){
-          isMoreSpecific = Boolean.FALSE;
-        }
-        else if (class1.isInheritor(class2, true)
-                 || class2.isInterface()){
-            isMoreSpecific = Boolean.TRUE;
-          }
-      }
-    }
-    if (isMoreSpecific == null){
-      return Specifics.CONFLICT;
-    }
-
-    return isMoreSpecific.booleanValue() ? Specifics.TRUE : Specifics.FALSE;
+    return Specifics.CONFLICT;
   }
 
-  private Boolean isLessBoxing(PsiType argType, PsiType type1, PsiType type2) {
+  private Specifics isLessBoxing(PsiType argType, PsiType type1, PsiType type2) {
     if (argType == null) return null;
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(myArgumentsList);
     if (type1 instanceof PsiClassType) {
@@ -264,10 +217,90 @@ outer:
     final boolean boxing1 = TypeConversionUtil.boxingConversionApplicable(type1, argType);
     final boolean boxing2 = TypeConversionUtil.boxingConversionApplicable(type2, argType);
     if (boxing1 == boxing2) return null;
-    if (boxing1) return Boolean.FALSE;
-    return Boolean.TRUE;
+    if (boxing1) return Specifics.FALSE;
+    return Specifics.TRUE;
+  }
+
+  private Specifics isMoreSpecific(final MethodCandidateInfo info1, final MethodCandidateInfo info2) {
+    PsiMethod method1 = info1.getElement();
+    PsiMethod method2 = info2.getElement();
+    final PsiClass class1 = method1.getContainingClass();
+    final PsiClass class2 = method2.getContainingClass();
+    Specifics isMoreSpecific = null;
+
+    final PsiParameter[] params1 = method1.getParameterList().getParameters();
+    final PsiParameter[] params2 = method2.getParameterList().getParameters();
+
+    PsiExpression[] args = myArgumentsList.getExpressions();
+
+    //check again, now that applicability check has been performed
+    if (params1.length == args.length && params2.length != args.length) return Specifics.TRUE;
+    if (params2.length == args.length && params1.length != args.length) return Specifics.FALSE;
+
+    if (info1.getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY) {
+      assert params1.length == params2.length;
+
+      for (int i = 0; i < params1.length; i++) {
+        PsiType type1 = params1[i].getType();
+        PsiType type2 = params2[i].getType();
+        PsiType argType = args[i].getType();
+
+        final Specifics specifics = checkSubtyping(type1, type2, argType);
+        switch(specifics) {
+          case TRUE:
+            if (isMoreSpecific == Specifics.FALSE) return Specifics.CONFLICT;
+            isMoreSpecific = specifics;
+            break;
+          case FALSE:
+            if (isMoreSpecific == Specifics.TRUE) return Specifics.CONFLICT;
+            isMoreSpecific = specifics;
+            break;
+          case CONFLICT:
+            //continue
+        }
+      }
+    } else {
+      assert info1.getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS &&
+             info2.getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
+
+      for (int i = 0; i < Math.max(params1.length, params2.length); i++) {
+        PsiType type1 = i < params1.length - 1 ? params1[i].getType() : ((PsiArrayType)params1[params1.length - 1].getType()).getComponentType();
+        PsiType type2 = i < params2.length - 1 ? params2[i].getType() : ((PsiArrayType)params2[params2.length - 1].getType()).getComponentType();
+        PsiType argType = i < args.length ? args[i].getType() : null;
+        final Specifics specifics = checkSubtyping(type1, type2, argType);
+        switch(specifics) {
+          case TRUE:
+            if (isMoreSpecific == Specifics.FALSE) return Specifics.CONFLICT;
+            isMoreSpecific = specifics;
+            break;
+          case FALSE:
+            if (isMoreSpecific == Specifics.TRUE) return Specifics.CONFLICT;
+            isMoreSpecific = specifics;
+            break;
+          case CONFLICT:
+            //continue
+        }
+      }
+    }
+
+    if (isMoreSpecific == null){
+      if (class1 != class2){
+        if (class2.isInheritor(class1, true)
+            || class1.isInterface() && !class2.isInterface()){
+          isMoreSpecific = Specifics.FALSE;
+        }
+        else if (class1.isInheritor(class2, true)
+                 || class2.isInterface()){
+            isMoreSpecific = Specifics.TRUE;
+          }
+      }
+    }
+    if (isMoreSpecific == null){
+      return Specifics.CONFLICT;
+    }
+
+    return isMoreSpecific;
   }
 
   public void handleProcessorEvent(PsiScopeProcessor.Event event, Object associatied){}
-
 }
