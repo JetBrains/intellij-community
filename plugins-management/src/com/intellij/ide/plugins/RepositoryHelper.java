@@ -151,7 +151,7 @@ public class RepositoryHelper {
       String fileName = null;
       //noinspection HardCodedStringLiteral
       String contentDisposition = connection.getHeaderField("Content-Disposition");
-      if (contentDisposition == null) {
+      if (contentDisposition == null || contentDisposition.indexOf(FILENAME) < 0) {
         // try to find filename in URL
         String usedURL = connection.getURL().toString();
         int startPos = usedURL.lastIndexOf("/");
@@ -160,25 +160,18 @@ public class RepositoryHelper {
         if (fileName.length() == 0) {
           throw new IOException("No filename returned by server");
         }
-
-      } else {
+      } 
+      else {
         int startIdx = contentDisposition.indexOf(FILENAME);
-        if (startIdx != -1) {
-          fileName = contentDisposition.substring(startIdx + FILENAME.length(), contentDisposition.length());
-          // according to the HTTP spec, the filename is a quoted string, but some servers don't quote it
-          // for example: http://www.jspformat.com/Download.do?formAction=d&id=8
-          if (fileName.startsWith("\"") && fileName.endsWith("\"")) {
-            fileName = fileName.substring(1, fileName.length()-1);
-          }
-          if (fileName.indexOf('\\') >= 0 || fileName.indexOf('/') >= 0 || fileName.indexOf(File.separatorChar) >= 0 ||
-              fileName.indexOf('\"') >= 0) {
-            // invalid path name passed by the server - fail to download
-            FileUtil.delete(file);
-            throw new IOException("Invalid filename returned by server");
-          }
+        fileName = contentDisposition.substring(startIdx + FILENAME.length(), contentDisposition.length());
+        // according to the HTTP spec, the filename is a quoted string, but some servers don't quote it
+        // for example: http://www.jspformat.com/Download.do?formAction=d&id=8
+        if (fileName.startsWith("\"") && fileName.endsWith("\"")) {
+          fileName = fileName.substring(1, fileName.length()-1);
         }
-        else {
-          // invalid Content-Disposition header passed by the server - fail to download
+        if (fileName.indexOf('\\') >= 0 || fileName.indexOf('/') >= 0 || fileName.indexOf(File.separatorChar) >= 0 ||
+            fileName.indexOf('\"') >= 0) {
+          // invalid path name passed by the server - fail to download
           FileUtil.delete(file);
           throw new IOException("Invalid filename returned by server");
         }
