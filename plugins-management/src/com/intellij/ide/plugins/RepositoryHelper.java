@@ -97,8 +97,9 @@ public class RepositoryHelper {
 
       InputStream is = UrlConnectionUtil.getConnectionInputStream(connection, pi);
 
-      if (is == null)
-        return null;
+      if (is == null) {
+        throw new IOException("Failed to open connection");
+      }
 
       pi.setText(IdeBundle.message("progress.downloading.plugin", pluginNode.getName()));
       //noinspection HardCodedStringLiteral
@@ -157,7 +158,7 @@ public class RepositoryHelper {
 
         fileName = usedURL.substring(startPos + 1);
         if (fileName.length() == 0) {
-          return null;
+          throw new IOException("No filename returned by server");
         }
 
       } else {
@@ -173,13 +174,13 @@ public class RepositoryHelper {
               fileName.indexOf('\"') >= 0) {
             // invalid path name passed by the server - fail to download
             FileUtil.delete(file);
-            return null;
+            throw new IOException("Invalid filename returned by server");
           }
         }
         else {
           // invalid Content-Disposition header passed by the server - fail to download
           FileUtil.delete(file);
-          return null;
+          throw new IOException("Invalid filename returned by server");
         }
       }
 

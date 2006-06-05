@@ -88,11 +88,20 @@ public class PluginInstaller {
         oldFile = PluginManager.getPlugin(pluginNode.getPluginId()).getPath();
       }
       // download plugin
-      File file = RepositoryHelper.downloadPlugin(pluginNode, packet, count, available);
+      File file;
+      String errorMessage = IdeBundle.message("unknown.error");
+      try {
+        file = RepositoryHelper.downloadPlugin(pluginNode, packet, count, available);
+      }
+      catch(IOException ex) {
+        file = null;
+        errorMessage = ex.getMessage();
+      }
       if (file == null) {
+        final String errorMessage1 = errorMessage;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            Messages.showErrorDialog(IdeBundle.message("error.plugin.was.not.installed", pluginNode.getName()),
+            Messages.showErrorDialog(IdeBundle.message("error.plugin.was.not.installed", pluginNode.getName(), errorMessage1),
                                      IdeBundle.message("title.failed.to.download"));
           }
         });
