@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.SelectionWatcher;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,6 +24,7 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.ActiveDecorationLayer");
 
   private final GuiEditor myEditor;
+  private JToolTip myToolTip;
 
   private Map<RadComponent, ListenerNavigateButton> myNavigateButtons = new HashMap<RadComponent, ListenerNavigateButton>();
 
@@ -31,6 +33,7 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
 
   public ActiveDecorationLayer(@NotNull final GuiEditor editor) {
     myEditor = editor;
+    myToolTip = new JToolTip();
   }
 
   public void installSelectionWatcher() {
@@ -69,11 +72,36 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
     }
   }
 
+  public void putToolTip(Component relativeTo, Point pnt, @Nullable String text) {
+    if (text == null) {
+      if (myToolTip.getParent() == this) {
+        remove(myToolTip);
+        repaint();
+      }
+    }
+    else {
+      pnt = SwingUtilities.convertPoint(relativeTo, pnt, this);
+      Dimension prefSize = myToolTip.getPreferredSize();
+      myToolTip.setBounds(pnt.x, pnt.y, prefSize.width, prefSize.height);
+      myToolTip.setTipText(text);
+      if (myToolTip.getParent() != this) {
+        add(myToolTip);
+        repaint();
+      }
+    }
+  }
+
   public void removeFeedback() {
+    boolean needRepaint = false;
     if (myFeedbackPainterPanel.getParent() == this) {
       remove(myFeedbackPainterPanel);
-      repaint();
+      needRepaint = true;
     }
+    if (myToolTip.getParent() == this) {
+      remove(myToolTip);
+      needRepaint = true;
+    }
+    if (needRepaint) repaint();
   }
 
   private static class RectangleFeedbackPainter implements FeedbackPainter {

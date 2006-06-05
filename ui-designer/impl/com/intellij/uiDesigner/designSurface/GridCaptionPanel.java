@@ -386,14 +386,26 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
     public void mouseDragged(MouseEvent e) {
       if (myResizeLine != -1) {
+        Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
+                                                mySelectedContainer.getDelegee());
+        int[] coords = mySelectedContainer.getGridLayoutManager().getGridCellCoords(mySelectedContainer, myIsRow);
+        int prevCoord = coords [myResizeLine-1];
+        int newCoord = myIsRow ? pnt.y : pnt.x;
+        if (newCoord < prevCoord + MINIMUM_RESIZED_SIZE) {
+          return;
+        }
+        int newSize = newCoord - prevCoord;
+
+        String toolTip = mySelectedContainer.getGridLayoutManager().getCellResizeTooltip(mySelectedContainer, myIsRow, myResizeLine-1, newSize);
         final ActiveDecorationLayer layer = myEditor.getActiveDecorationLayer();
-        Point pnt = e.getPoint();
         Rectangle rc;
         if (myIsRow) {
-          rc = new Rectangle(0, pnt.y, layer.getSize().width, 1);
+          rc = new Rectangle(0, e.getPoint().y, layer.getSize().width, 1);
+          layer.putToolTip(layer, new Point(0, e.getPoint().y), toolTip);
         }
         else {
-          rc = new Rectangle(pnt.x, 0, 1, layer.getSize().height);
+          rc = new Rectangle(e.getPoint().x, 0, 1, layer.getSize().height);
+          layer.putToolTip(layer, new Point(e.getPoint().x, 0), toolTip);
         }
         layer.putFeedback(GridCaptionPanel.this, rc, myFeedbackPainter);
       }

@@ -572,19 +572,45 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     return result;
   }
 
+  @Override @Nullable
+  public String getCellResizeTooltip(RadContainer container, boolean isRow, int cell, int newSize) {
+    return getUpdatedSize(container, isRow, cell, newSize).toString();
+  }
+
   @Override
   public void processCellResized(RadContainer container, final boolean isRow, final int cell, final int newSize) {
     FormLayout formLayout = (FormLayout) container.getLayout();
+    final ConstantSize updatedSize = getUpdatedSize(container, isRow, cell, newSize);
     if (isRow) {
       RowSpec rowSpec = formLayout.getRowSpec(cell+1);
-      RowSpec newSpec = new RowSpec(rowSpec.getDefaultAlignment(), new ConstantSize(newSize, ConstantSize.PIXEL), rowSpec.getResizeWeight());
+      RowSpec newSpec = new RowSpec(rowSpec.getDefaultAlignment(), updatedSize, rowSpec.getResizeWeight());
       formLayout.setRowSpec(cell+1, newSpec);
     }
     else {
       ColumnSpec colSpec = formLayout.getColumnSpec(cell+1);
-      ColumnSpec newSpec = new ColumnSpec(colSpec.getDefaultAlignment(), new ConstantSize(newSize, ConstantSize.PIXEL), colSpec.getResizeWeight());
+      ColumnSpec newSpec = new ColumnSpec(colSpec.getDefaultAlignment(), updatedSize, colSpec.getResizeWeight());
       formLayout.setColumnSpec(cell+1, newSpec);
     }
+  }
+
+  private static ConstantSize getUpdatedSize(RadContainer container, boolean isRow, int cell, int newPx) {
+    FormLayout formLayout = (FormLayout) container.getLayout();
+    if (isRow) {
+      return scaleSize(formLayout.getRowSpec(cell+1), container, newPx);
+    }
+    else {
+      return scaleSize(formLayout.getColumnSpec(cell+1), container, newPx);
+    }
+  }
+
+  private static ConstantSize scaleSize(final FormSpec rowSpec, final RadContainer container, final int newPx) {
+    if (rowSpec.getSize() instanceof ConstantSize) {
+      ConstantSize oldSize = (ConstantSize) rowSpec.getSize();
+      int oldPx = oldSize.getPixelSize(container.getDelegee());
+      double newValue = Math.round(oldSize.getValue() * newPx / oldPx * 10) / 10;
+      return new ConstantSize(newValue, oldSize.getUnit());
+    }
+    return new ConstantSize(newPx, ConstantSize.PIXEL);
   }
 
   @Override

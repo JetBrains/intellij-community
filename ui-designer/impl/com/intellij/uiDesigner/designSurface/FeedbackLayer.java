@@ -4,6 +4,8 @@
 
 package com.intellij.uiDesigner.designSurface;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.awt.*;
 
 /**
@@ -12,5 +14,6 @@ import java.awt.*;
 public interface FeedbackLayer {
   void putFeedback(Component relativeTo, final Rectangle rc);
   void putFeedback(Component relativeTo, Rectangle rc, final FeedbackPainter feedbackPainter);
+  void putToolTip(Component relativeTo, Point pnt, @Nullable String text);
   void removeFeedback();
 }

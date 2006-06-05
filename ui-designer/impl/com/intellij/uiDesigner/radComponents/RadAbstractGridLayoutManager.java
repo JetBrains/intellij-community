@@ -82,5 +82,10 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
    */
   public abstract int deleteGridCells(final RadContainer grid, final int cellIndex, final boolean isRow);
   public abstract void processCellsMoved(final RadContainer container, final boolean isRow, final int[] cells, final int targetCell);
+
+  @Nullable
+  public String getCellResizeTooltip(RadContainer container, boolean isRow, int cell, int newSize) {
+    return null;
+  }
   public abstract void processCellResized(RadContainer container, final boolean isRow, final int cell, final int newSize);
 }
