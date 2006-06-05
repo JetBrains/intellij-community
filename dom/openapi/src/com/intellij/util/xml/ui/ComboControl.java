@@ -114,14 +114,14 @@ public class ComboControl extends BaseControl<JComboBox, String> {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         final Pair<String, Icon> pair = (Pair<String, Icon>)value;
-        final String text = pair.first;
+        final String text = pair == null ? null : pair.first;
         setText(text);
         final Dimension dimension = getPreferredSize();
         if (!validity.value(text)) {
           setFont(getFont().deriveFont(Font.ITALIC));
           setForeground(Color.RED);
         }
-        setIcon(pair.second);
+        setIcon(pair == null ? null : pair.second);
         setPreferredSize(new Dimension(-1, dimension.height));
         return this;
       }
