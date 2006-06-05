@@ -333,7 +333,12 @@ public class AsmCodeGenerator {
         if (nestedFormContainer.getComponent(0).getBinding() == null) {
           throw new CodeGenerationException(lwComponent.getId(), "No binding on root component of nested form " + nestedForm.getFormFileName());
         }
-        Utils.validateNestedFormLoop(nestedForm.getFormFileName(), myFormLoader);
+        try {
+          Utils.validateNestedFormLoop(nestedForm.getFormFileName(), myFormLoader);
+        }
+        catch (RecursiveFormNestingException e) {
+          throw new CodeGenerationException(lwComponent.getId(), "Recursive form nesting is not allowed");
+        }
         className = nestedFormContainer.getClassToBind();
       }
       else {

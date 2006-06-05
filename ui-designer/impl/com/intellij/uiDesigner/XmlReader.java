@@ -2,7 +2,7 @@ package com.intellij.uiDesigner;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.uiDesigner.compiler.CodeGenerationException;
+import com.intellij.uiDesigner.compiler.RecursiveFormNestingException;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.make.PsiNestedFormLoader;
@@ -12,7 +12,8 @@ import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.LayoutManager;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,7 +48,7 @@ public final class XmlReader {
       try {
         Utils.validateNestedFormLoop(nestedForm.getFormFileName(), new PsiNestedFormLoader(module));
       }
-      catch(CodeGenerationException ex) {
+      catch(RecursiveFormNestingException ex) {
         recursiveNesting = true;
       }
       if (recursiveNesting) {

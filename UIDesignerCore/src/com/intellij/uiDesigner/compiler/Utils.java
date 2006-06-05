@@ -169,15 +169,16 @@ public final class Utils {
     return null;
   }
 
-  public static void validateNestedFormLoop(final String formName, final NestedFormLoader nestedFormLoader) throws CodeGenerationException {
+  public static void validateNestedFormLoop(final String formName, final NestedFormLoader nestedFormLoader)
+    throws CodeGenerationException, RecursiveFormNestingException {
     HashSet usedFormNames = new HashSet();
     validateNestedFormLoop(usedFormNames, formName, nestedFormLoader);
   }
 
   private static void validateNestedFormLoop(final Set usedFormNames, final String formName, final NestedFormLoader nestedFormLoader)
-    throws CodeGenerationException {
+    throws CodeGenerationException, RecursiveFormNestingException {
     if (usedFormNames.contains(formName)) {
-      throw new CodeGenerationException(null, "Recursive form nesting is not allowed");
+      throw new RecursiveFormNestingException();
     }
     usedFormNames.add(formName);
     final LwRootContainer rootContainer;
@@ -189,6 +190,7 @@ public final class Utils {
     }
     final Set thisFormNestedForms = new HashSet();
     final CodeGenerationException[] validateExceptions = new CodeGenerationException[1];
+    final RecursiveFormNestingException[] recursiveNestingExceptions = new RecursiveFormNestingException[1];
     rootContainer.accept(new ComponentVisitor() {
       public boolean visit(final IComponent component) {
         if (component instanceof LwNestedForm) {
@@ -197,6 +199,10 @@ public final class Utils {
             thisFormNestedForms.add(nestedForm.getFormFileName());
             try {
               validateNestedFormLoop(usedFormNames, nestedForm.getFormFileName(), nestedFormLoader);
+            }
+            catch(RecursiveFormNestingException e) {
+              recursiveNestingExceptions [0] = e;
+              return false;
             }
             catch (CodeGenerationException e) {
               validateExceptions [0] = e;
@@ -207,6 +213,9 @@ public final class Utils {
         return true;
       }
     });
+    if (recursiveNestingExceptions [0] != null) {
+      throw recursiveNestingExceptions [0];
+    }
     if (validateExceptions [0] != null) {
       throw validateExceptions [0];
     }

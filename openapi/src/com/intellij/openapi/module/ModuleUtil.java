@@ -183,14 +183,14 @@ public class ModuleUtil {
     String packageName = index >= 0 ? resourceName.substring(0, index).replace('/', '.') : "";
     final String fileName = index >= 0 ? resourceName.substring(index+1) : resourceName;
 
-    return new FilteredQuery<VirtualFile>(
-      ProjectRootManager.getInstance(project).getFileIndex().getDirsByPackageName(packageName, false),
-      new Condition<VirtualFile>() {
-        public boolean value(final VirtualFile file) {
-          final VirtualFile child = file.findChild(fileName);
-          return child != null && scope.contains(child);
-        }
-      }).findFirst();
+    final VirtualFile dir = new FilteredQuery<VirtualFile>(
+      ProjectRootManager.getInstance(project).getFileIndex().getDirsByPackageName(packageName, false), new Condition<VirtualFile>() {
+      public boolean value(final VirtualFile file) {
+        final VirtualFile child = file.findChild(fileName);
+        return child != null && scope.contains(child);
+      }
+    }).findFirst();
+    return dir != null ? dir.findChild(fileName) : null;
   }
 
   public static Collection<Module> collectModulesDependsOn(@NotNull final Collection<Module> modules) {

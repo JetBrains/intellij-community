@@ -18,7 +18,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.compiler.CodeGenerationException;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.make.PsiNestedFormLoader;
@@ -386,7 +385,7 @@ public final class InsertComponentProcessor extends EventProcessor {
       try {
         Utils.validateNestedFormLoop(FormEditingUtil.buildResourceName(boundForm), new PsiNestedFormLoader(myEditor.getModule()));
       }
-      catch(CodeGenerationException ex) {
+      catch(Exception ex) {
         Messages.showErrorDialog(myEditor, ex.getMessage(), CommonBundle.getErrorTitle());
         return false;
       }
