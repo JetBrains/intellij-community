@@ -105,15 +105,18 @@ public class TreeTableModelAdapter extends AbstractTableModel {
   }
 
   public Object getValueAt(int row, int column) {
-    return treeTableModel.getValueAt(nodeForRow(row), column);
+    final Object o = nodeForRow(row);
+    return o == null? null : treeTableModel.getValueAt(o, column);
   }
 
   public boolean isCellEditable(int row, int column) {
-    return treeTableModel.isCellEditable(nodeForRow(row), column);
+    final Object o = nodeForRow(row);
+    return o == null? false : treeTableModel.isCellEditable(o, column);
   }
 
   public void setValueAt(Object value, int row, int column) {
-    treeTableModel.setValueAt(value, nodeForRow(row), column);
+    final Object o = nodeForRow(row);
+    if (o != null) treeTableModel.setValueAt(value, o, column);
   }
 
   /**
