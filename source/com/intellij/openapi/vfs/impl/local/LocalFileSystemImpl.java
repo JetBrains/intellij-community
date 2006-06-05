@@ -885,7 +885,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       myRootsToWatch.add(result);
       if (!oldPaths.contains(result.getRootPath())) {
         final VirtualFile existingFile = findFileByPath(result.getRootPath(), false, false);
-        if (existingFile != null) synchronizeFiles(existingFile);
+        if (existingFile != null) synchronizeFiles(toWatchRecursively, existingFile);
       }
       setUpFileWatcher();
       return result;
@@ -916,16 +916,16 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       myRootsToWatch.addAll(result);
       setUpFileWatcher();
       if (!filesToSynchronize.isEmpty()) {
-        synchronizeFiles(filesToSynchronize.toArray(new VirtualFile[filesToSynchronize.size()]));
+        synchronizeFiles(toWatchRecursively, filesToSynchronize.toArray(new VirtualFile[filesToSynchronize.size()]));
       }
     }
 
     return result;
   }
 
-  private static void synchronizeFiles(final VirtualFile... files) {
+  private static void synchronizeFiles(final boolean recursively, final VirtualFile... files) {
     for (final VirtualFile file : files) {
-      ((VirtualFileImpl)file).refresh(true, true, true, null);
+      ((VirtualFileImpl)file).refresh(true, recursively, true, null);
     }
   }
 
