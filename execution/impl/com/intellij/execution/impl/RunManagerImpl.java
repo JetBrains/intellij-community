@@ -72,7 +72,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   // separate method needed for tests
   public final void initializeConfigurationTypes(final ConfigurationType[] factories) {
     LOG.assertTrue(factories != null);
-
+    Arrays.sort(factories, new Comparator<ConfigurationType>() {
+      public int compare(final ConfigurationType o1, final ConfigurationType o2) {
+        return o1.getDisplayName().compareTo(o2.getDisplayName());
+      }
+    });
     myTypes = factories;
     for (final ConfigurationType type : factories) {
       myTypesByName.put(type.getComponentName(), type);
@@ -349,7 +353,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public Map<String, RunnerAndConfigurationSettingsImpl> getStableConfigurations() {
-    final HashMap<String,RunnerAndConfigurationSettingsImpl> result = new HashMap<String, RunnerAndConfigurationSettingsImpl>(myConfigurations);
+    final TreeMap<String,RunnerAndConfigurationSettingsImpl> result = new TreeMap<String, RunnerAndConfigurationSettingsImpl>(myConfigurations);
     if (myTempConfiguration != null) {
       result.remove(getUniqueName(myTempConfiguration.getConfiguration()));
     }
