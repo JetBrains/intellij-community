@@ -1,8 +1,8 @@
 package com.intellij.ide.hierarchy.call;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -10,10 +10,12 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
 
-import java.util.Collection;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
   public static final String TYPE = IdeBundle.message("title.hierarchy.callers.of");
@@ -46,62 +48,59 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       searchScope = GlobalSearchScope.allScope(myProject);
     }
 
-    PsiMethod methodToFind = method;
-    final PsiMethod deepestSuperMethod = method.findDeepestSuperMethod();
-    if (deepestSuperMethod != null) {
-      methodToFind = deepestSuperMethod;
-    }
+    final Set<PsiMethod> methodsToFind = new HashSet<PsiMethod>();
+    methodsToFind.add(method);
+    methodsToFind.addAll(Arrays.asList(method.findDeepestSuperMethods()));
 
     final HashMap<PsiMember,CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<PsiMember, CallHierarchyNodeDescriptor>();
-
-    final PsiReference[] refs = searchHelper.findReferencesIncludingOverriding(methodToFind, searchScope, true);
-    for (final PsiReference reference : refs) {
-      if (reference instanceof PsiReferenceExpression) {
-        final PsiExpression qualifier = ((PsiReferenceExpression)reference).getQualifierExpression();
-        if (qualifier instanceof PsiSuperExpression) { // filter super.foo() call inside foo() and similar cases (bug 8411)
-          final PsiClass superClass = PsiUtil.resolveClassInType(qualifier.getType());
-          final PsiClass methodClass = method.getContainingClass();
-          if (methodClass != null && methodClass.isInheritor(superClass, true)) {
-            continue;
-          }
-        }
-      }
-      else {
-        if (!(reference instanceof PsiElement)) {
-          continue;
-        }
-
-        final PsiElement parent = ((PsiElement)reference).getParent();
-        if (parent instanceof PsiNewExpression) {
-          if (((PsiNewExpression)parent).getClassReference() != reference) {
-            continue;
-          }
-        }
-        else if (parent instanceof PsiAnonymousClass) {
-          if (((PsiAnonymousClass)parent).getBaseClassReference() != reference) {
-            continue;
+    for (final PsiMethod methodToFind : methodsToFind) {
+      for (final PsiReference reference : searchHelper.findReferencesIncludingOverriding(methodToFind, searchScope, true)) {
+        if (reference instanceof PsiReferenceExpression) {
+          final PsiExpression qualifier = ((PsiReferenceExpression)reference).getQualifierExpression();
+          if (qualifier instanceof PsiSuperExpression) { // filter super.foo() call inside foo() and similar cases (bug 8411)
+            final PsiClass superClass = PsiUtil.resolveClassInType(qualifier.getType());
+            final PsiClass methodClass = method.getContainingClass();
+            if (methodClass != null && methodClass.isInheritor(superClass, true)) {
+              continue;
+            }
           }
         }
         else {
-          continue;
+          if (!(reference instanceof PsiElement)) {
+            continue;
+          }
+
+          final PsiElement parent = ((PsiElement)reference).getParent();
+          if (parent instanceof PsiNewExpression) {
+            if (((PsiNewExpression)parent).getClassReference() != reference) {
+              continue;
+            }
+          }
+          else if (parent instanceof PsiAnonymousClass) {
+            if (((PsiAnonymousClass)parent).getBaseClassReference() != reference) {
+              continue;
+            }
+          }
+          else {
+            continue;
+          }
         }
-      }
 
-      final PsiElement element = reference.getElement();
-      final PsiMember key = CallHierarchyNodeDescriptor.getEnclosingElement(element);
+        final PsiElement element = reference.getElement();
+        final PsiMember key = CallHierarchyNodeDescriptor.getEnclosingElement(element);
 
-      CallHierarchyNodeDescriptor d = methodToDescriptorMap.get(key);
-      if (d == null) {
-        d = new CallHierarchyNodeDescriptor(myProject, descriptor, element, false, true);
-        methodToDescriptorMap.put(key, d);
+        CallHierarchyNodeDescriptor d = methodToDescriptorMap.get(key);
+        if (d == null) {
+          d = new CallHierarchyNodeDescriptor(myProject, descriptor, element, false, true);
+          methodToDescriptorMap.put(key, d);
+        }
+        else {
+          d.incrementUsageCount();
+        }
+        d.addReference(reference);
       }
-      else {
-        d.incrementUsageCount();
-      }
-      d.addReference(reference);
     }
 
-    final Collection<CallHierarchyNodeDescriptor> descriptors = methodToDescriptorMap.values();
-    return descriptors.toArray(new Object[descriptors.size()]);
+    return methodToDescriptorMap.values().toArray(new Object[methodToDescriptorMap.size()]);
   }
 }
