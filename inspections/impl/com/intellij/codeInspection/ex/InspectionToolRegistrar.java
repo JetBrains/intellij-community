@@ -97,8 +97,9 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   }
 
   private void registerInspectionTool(Class toolClass) {
-    if (myInspectionTools.contains(toolClass)) return;
-    myInspectionTools.add(toolClass);
+    if (!myInspectionTools.contains(toolClass)) {
+      myInspectionTools.add(toolClass);
+    }
   }
 
   public InspectionTool[] createTools() {
