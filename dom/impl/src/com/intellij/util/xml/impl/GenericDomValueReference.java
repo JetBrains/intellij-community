@@ -36,7 +36,7 @@ public class GenericDomValueReference<T> extends GenericReference {
     myGenericValue = xmlValue;
     final XmlTag tag = xmlValue.getXmlTag();
     assert tag != null;
-    myValueElement = xmlValue instanceof GenericAttributeValue ? ((GenericAttributeValue)xmlValue).getXmlAttributeValue() : tag; //DomUtil.getValueElement(xmlValue);
+    myValueElement = DomUtil.getValueElement(xmlValue);
     myContextElement = xmlValue instanceof GenericAttributeValue ? myValueElement : tag;
     final String text = myValueElement.getText();
     TextRange range = getTextRange(text);
