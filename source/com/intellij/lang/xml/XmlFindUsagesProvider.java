@@ -14,9 +14,15 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class XmlFindUsagesProvider implements FindUsagesProvider {
+
   public boolean canFindUsagesFor(PsiElement element) {
-    return element instanceof XmlElementDecl || element instanceof XmlAttributeDecl || element instanceof XmlEntityDecl ||
-           element instanceof XmlTag || element instanceof XmlAttributeValue || (PsiUtil.isInJspFile(element) && element instanceof PsiFile);
+    return element instanceof XmlElementDecl ||
+           element instanceof XmlAttributeDecl ||
+           element instanceof XmlEntityDecl ||
+           element instanceof XmlTag ||
+           element instanceof XmlAttributeValue ||
+           element instanceof XmlText ||
+           (PsiUtil.isInJspFile(element) && element instanceof PsiFile);
   }
 
   @NotNull
@@ -29,6 +35,8 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
       return LangBundle.message("xml.terms.attribute.value");
     } else if (element instanceof XmlEntityDecl) {
       return LangBundle.message("xml.terms.entity");
+    } else if (element instanceof XmlText) {
+      return "";
     }
 
     return null;
@@ -40,12 +48,20 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
 
   @NotNull
   public String getDescriptiveName(PsiElement element) {
-    return ((PsiNamedElement)element).getName();
+    if (element instanceof PsiNamedElement) {
+      return ((PsiNamedElement)element).getName();
+    } else {
+      return element.getText();
+    }
   }
 
   @NotNull
   public String getNodeText(PsiElement element, boolean useFullName) {
-    return ((PsiNamedElement)element).getName();
+    if (element instanceof PsiNamedElement) {
+      return ((PsiNamedElement)element).getName();
+    } else {
+      return element.getText();
+    }
   }
 
   public WordsScanner getWordsScanner() {
