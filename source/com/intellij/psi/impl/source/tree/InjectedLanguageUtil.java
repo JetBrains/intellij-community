@@ -126,11 +126,14 @@ public class InjectedLanguageUtil {
   }
 
   public static Editor getEditorForInjectedLanguage(final Editor editor, PsiFile file) {
-    if (editor == null) return null;
-    if (file == null) return editor;
+    if (editor == null || file == null || editor instanceof EditorDelegate) return editor;
 
     PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
     int offset = editor.getCaretModel().getOffset();
+    return getEditorForInjectedLanguage(editor, file, offset);
+  }
+
+  public static Editor getEditorForInjectedLanguage(final Editor editor, final PsiFile file, final int offset) {
     PsiLanguageInjectionHost injectionHost = findInjectionHost(file.findElementAt(offset));
     if (injectionHost == null && offset != 0) {
       injectionHost = findInjectionHost(file.findElementAt(offset-1));
@@ -177,8 +180,14 @@ public class InjectedLanguageUtil {
     public Result<List<Pair<PsiElement, TextRange>>> compute() {
       final TextRange hostRange = myHost.getTextRange();
       PsiFile hostPsiFile = myHost.getContainingFile();
-      final VirtualFile hostVirtualFile = hostPsiFile.getVirtualFile();
-      final DocumentEx hostDocument = (DocumentEx)PsiDocumentManager.getInstance(myHost.getProject()).getDocument(hostPsiFile);
+      VirtualFile virtualFile = hostPsiFile.getVirtualFile();
+      if (virtualFile == null) {
+        PsiFile originalFile = hostPsiFile.getOriginalFile();
+        if (originalFile != null) virtualFile = originalFile.getVirtualFile();
+      }
+      if (virtualFile == null) return null;
+      final VirtualFile hostVirtualFile = virtualFile;
+      final DocumentEx hostDocument = (DocumentEx)hostPsiFile.getViewProvider().getDocument();
       final PsiManagerImpl psiManager = (PsiManagerImpl)myHost.getManager();
       final List<Pair<PsiElement, TextRange>> result = new SmartList<Pair<PsiElement, TextRange>>();
       InjectedLanguagePlaces placesRegistrar = new InjectedLanguagePlaces() {

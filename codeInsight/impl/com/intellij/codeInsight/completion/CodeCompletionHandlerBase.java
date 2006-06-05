@@ -9,16 +9,15 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.impl.EditorDelegate;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
@@ -58,12 +57,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        EditorUtil.fillVirtualSpaceUntil(editor, editor.getCaretModel().getLogicalPosition().column, editor.getCaretModel().getLogicalPosition().line);
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-      }
-    });
+    EditorUtil.fillVirtualSpaceUntil(editor, editor.getCaretModel().getLogicalPosition().column, editor.getCaretModel().getLogicalPosition().line);
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     int offset1 = editor.getSelectionModel().hasSelection()
       ? editor.getSelectionModel().getSelectionStart()
@@ -297,16 +292,15 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  protected LookupData getLookupData(final CompletionContext context) {
+  protected LookupData getLookupData(CompletionContext context) {
     final PsiFile file = context.file;
     final PsiManager manager = file.getManager();
     final PsiElement lastElement = file.findElementAt(context.startOffset - 1);
 
-    final PsiElement insertedElement = ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>() {
-      public PsiElement compute() {
-        return insertDummyIdentifier(context);
-      }
-    });
+    final Pair<CompletionContext, PsiElement> insertedInfo = insertDummyIdentifier(context);
+    PsiElement insertedElement = insertedInfo.getSecond();
+    CompletionContext newContext = insertedInfo.getFirst();
+    context = newContext;
 
     CompletionData completionData = getCompletionData(context, lastElement);
 
@@ -336,12 +330,27 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return data;
   }
 
-  protected static PsiElement insertDummyIdentifier(final CompletionContext context){
-    final PsiFile fileCopy = createCopy(context);
-    fileCopy.getViewProvider().getDocument().insertString(context.startOffset, CompletionUtil.DUMMY_IDENTIFIER);
-    PsiDocumentManager.getInstance(fileCopy.getProject()).commitDocument(fileCopy.getViewProvider().getDocument());
+  private static Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context){
+    final PsiFile fileCopy = createFileCopy(context.file);
+    Document oldDoc = fileCopy.getViewProvider().getDocument();
+    oldDoc.insertString(context.startOffset, CompletionUtil.DUMMY_IDENTIFIER);
+    PsiDocumentManager.getInstance(fileCopy.getProject()).commitDocument(oldDoc);
     context.offset = context.startOffset;
-    return fileCopy.findElementAt(context.startOffset);
+
+    Editor oldEditor = context.editor;
+    Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(oldEditor, fileCopy, context.startOffset);
+    if (injectedEditor != oldEditor) {
+      final EditorDelegate editorDelegate = (EditorDelegate)injectedEditor;
+      int newOffset1 = editorDelegate.logicalPositionToOffset(editorDelegate.parentToInjected(oldEditor.offsetToLogicalPosition(context.startOffset)));
+      int newOffset2 = editorDelegate.logicalPositionToOffset(editorDelegate.parentToInjected(oldEditor.offsetToLogicalPosition(context.selectionEndOffset)));
+      PsiFile injectedFile = editorDelegate.getInjectedFile();
+      CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, newOffset1, newOffset2);
+      newContext.offset = newContext.startOffset;
+      PsiElement element = injectedFile.findElementAt(newContext.startOffset);
+      return Pair.create(newContext, element);
+    }
+    PsiElement element = fileCopy.findElementAt(context.startOffset);
+    return Pair.create(context, element);
   }
 
 
@@ -412,7 +421,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       });
   }
 
-  public static String findPrefix(PsiElement insertedElement, int offset, String dummyIdentifier, CompletionData completionData){
+  static String findPrefix(PsiElement insertedElement, int offset, String dummyIdentifier, CompletionData completionData){
     final String result = completionData == null ?
                           CompletionData.findPrefixStatic(insertedElement, offset) :
                           completionData.findPrefix(insertedElement, offset);
@@ -424,7 +433,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return true;
   }
 
-  protected static PsiFile createCopy(final CompletionContext context) {
+  protected static PsiFile createFileCopy(PsiFile file) {
     final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       public void visitClass(PsiClass aClass) {
         aClass.putCopyableUserData(PsiUtil.ORIGINAL_KEY, aClass);
@@ -447,8 +456,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
     };
 
-    visitor.visitFile(context.file);
-    final PsiFile fileCopy = (PsiFile)context.file.copy();
+    visitor.visitFile(file);
+    final PsiFile fileCopy = (PsiFile)file.copy();
 
     final PsiElementVisitor copyVisitor = new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
