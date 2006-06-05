@@ -71,7 +71,10 @@ public class VcsGroupsWrapper extends DefaultActionGroup {
                          ", group ID: " +
                          ActionManager.getInstance().getId(child));
         }
-        validChildren.add(child);
+        else
+        {
+          validChildren.add(child);
+        }
       }
 
       myChildren = validChildren.toArray(new AnAction[validChildren.size()]);
