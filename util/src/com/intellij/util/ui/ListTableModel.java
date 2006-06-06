@@ -18,6 +18,7 @@ package com.intellij.util.ui;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Arrays;
 
 public class ListTableModel <Item> extends TableViewModel<Item> implements ItemRemovable {
   private ColumnInfo[] myColumnInfos;
@@ -78,9 +79,19 @@ public class ListTableModel <Item> extends TableViewModel<Item> implements ItemR
     }
   }
 
-  public void setColumnInfos(final ColumnInfo[] columnInfos) {
+  /**
+   * true if changed
+   * @param columnInfos
+   * @return
+   */
+  public boolean setColumnInfos(final ColumnInfo[] columnInfos) {
+    if (myColumnInfos != null && !Arrays.equals(columnInfos, myColumnInfos)) {
+      return false;
+    }
+
     myColumnInfos = columnInfos;
     fireTableStructureChanged();
+    return true;
   }
 
   public List<Item> getItems() {

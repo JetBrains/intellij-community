@@ -195,10 +195,6 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
     return myColumnInfos;
   }
 
-  public final void columnsChanged() {
-    myCollectionPanel.setColumnInfos(createColumnInfos(myParentDomElement));
-  }
-
   protected final void doEdit() {
     doEdit(myData.get(myCollectionPanel.getTable().getSelectedRow()));
   }
@@ -307,6 +303,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
         myCollectionPanel.setItems(myData);
       }
     }
+    myCollectionPanel.setColumnInfos(createColumnInfos(myParentDomElement));
     validate();
   }
 

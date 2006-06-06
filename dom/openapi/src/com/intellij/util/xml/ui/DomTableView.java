@@ -177,9 +177,9 @@ public class DomTableView extends JPanel implements DataProvider{
   }
 
   public final void setColumnInfos(final ColumnInfo[] columnInfos) {
-    myTableModel.setColumnInfos(columnInfos);
-    myTableModel.fireTableStructureChanged();
-    adjustColumnWidths();
+    if (myTableModel.setColumnInfos(columnInfos)) {
+      adjustColumnWidths();
+    }
   }
 
   public final void setItems(List items) {

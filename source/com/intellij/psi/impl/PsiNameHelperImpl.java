@@ -30,6 +30,7 @@ public class PsiNameHelperImpl extends PsiNameHelper{
 
   public boolean isIdentifier(String text) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (text == null) return false;
 
     synchronized (PsiLock.LOCK) {
       updateLexer(myManager.getEffectiveLanguageLevel());
