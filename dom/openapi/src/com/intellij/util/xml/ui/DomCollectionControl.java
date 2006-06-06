@@ -23,6 +23,7 @@ import com.intellij.util.xml.ui.actions.DefaultAddAction;
 import com.intellij.util.xml.ui.actions.AddDomElementAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,6 +43,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
   private ColumnInfo<T, ?>[] myColumnInfos;
   private boolean myEditable = false;
   private AnAction myAddAction = new AddDomElementAction() {
+
     protected DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e) {
       return new DomCollectionChildDescription[] {getChildDescription()};
     }
@@ -52,6 +54,12 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
 
     protected JComponent getComponent(AnActionEvent e) {
       return DomCollectionControl.this.getComponent();
+    }
+
+    @NotNull
+    public AnAction[] getChildren(final AnActionEvent e) {
+      AnAction[] actions = createAdditionActions();
+      return actions == null ? super.getChildren(e) : actions;
     }
 
     protected DefaultAddAction createAddingAction(final AnActionEvent e,
