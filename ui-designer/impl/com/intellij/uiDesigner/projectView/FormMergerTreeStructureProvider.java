@@ -3,13 +3,11 @@ package com.intellij.uiDesigner.projectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.uiDesigner.projectView.Form;
-import com.intellij.uiDesigner.projectView.FormNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +60,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
   }
 
   public Object getData(Collection<AbstractTreeNode> selected, String dataId) {
-    if (dataId.equals(DataConstantsEx.GUI_DESIGNER_FORM_ARRAY)) {
+    if (selected != null && dataId.equals(DataConstantsEx.GUI_DESIGNER_FORM_ARRAY)) {
       List<Form> result = new ArrayList<Form>();
       for(AbstractTreeNode node: selected) {
         if (node.getValue() instanceof Form) {
