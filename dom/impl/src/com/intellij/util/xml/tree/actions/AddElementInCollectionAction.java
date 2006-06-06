@@ -9,21 +9,20 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.DomReflectionUtil;
+import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomElementsGroupNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
 import com.intellij.util.xml.ui.actions.AddDomElementAction;
 import com.intellij.util.xml.ui.actions.DefaultAddAction;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.reflect.Type;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * User: Sergey.Vasiliev
@@ -153,7 +152,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
         return myParent;
       }
 
-      protected void afterAddition(final AnActionEvent e, final DomElement newElement) {
+      protected void afterAddition(final DomElement newElement) {
         myView.setSelectedDomElement(newElement);
       }
     };

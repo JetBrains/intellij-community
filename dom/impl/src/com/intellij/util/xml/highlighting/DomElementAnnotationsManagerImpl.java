@@ -38,7 +38,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   @NotNull
   public DomElementsProblemsHolder getCachedProblemHolder(DomElement element) {
     if (element == null || !element.isValid()) return EMPTY_PROBLEMS_HOLDER;
-    final DomFileElement<?> fileElement = element.getRoot();
+    final DomFileElement fileElement = element.getRoot();
     final CachedValue<DomElementsProblemsHolder> cachedValue = myCache.get(fileElement);
     return cachedValue == null || !cachedValue.hasUpToDateValue() ? EMPTY_PROBLEMS_HOLDER : cachedValue.getValue();
   }

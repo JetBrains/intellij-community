@@ -358,15 +358,25 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
       return myParentDomElement;
     }
 
-    protected void afterAddition(final JTable table, final int rowIndex) {
-      table.setRowSelectionInterval(rowIndex, rowIndex);
+    /**
+     * return negative value to disable auto-edit
+     * @return
+     */
+    protected int getColumnToEditAfterAddition() {
+      return 0;
     }
 
-    protected final void afterAddition(final AnActionEvent e, final DomElement newElement) {
-      if (newElement != null) {
-        reset();
-        afterAddition(myCollectionPanel.getTable(), myData.size() - 1);
+    protected void afterAddition(final JTable table, final int rowIndex) {
+      table.setRowSelectionInterval(rowIndex, rowIndex);
+      final int column = getColumnToEditAfterAddition();
+      if (column >= 0 ) {
+        table.editCellAt(rowIndex, column);
       }
+    }
+
+    protected final void afterAddition(final T newElement) {
+      reset();
+      afterAddition(myCollectionPanel.getTable(), myData.size() - 1);
     }
   }
 
