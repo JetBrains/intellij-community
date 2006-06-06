@@ -61,15 +61,6 @@ public class ConvertInterfaceToClassIntention extends Intention {
 		}
 	}
 
-	@NotNull
-	public String getFamilyName() {
-		return "Convert Interface to Class";
-	}
-
-	public String getTextForElement(PsiElement element) {
-		return "Convert interface to class";
-	}
-
 	protected void processIntention(@NotNull PsiElement element)
 			throws IncorrectOperationException {
 		final PsiClass anInterface = (PsiClass)element.getParent();

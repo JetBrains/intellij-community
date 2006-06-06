@@ -17,7 +17,6 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class AppendChainPredicate implements PsiElementPredicate{
 
