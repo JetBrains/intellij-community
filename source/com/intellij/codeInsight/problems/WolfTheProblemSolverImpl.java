@@ -234,6 +234,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   private boolean hasProblemFilesBeneath(Condition<VirtualFile> condition){
+    if (!myProject.isOpen()) return false;
     synchronized (myProblems) {
       Set<VirtualFile> problemFiles = myProblems.keySet();
       for (VirtualFile problemFile : problemFiles) {

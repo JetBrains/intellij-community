@@ -90,7 +90,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   }
 
   private boolean isLibraryElement() {
-    return getValue().isLibraryElement();
+    return getValue() != null && getValue().isLibraryElement();
   }
 
   @NotNull
