@@ -15,6 +15,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Icons;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -36,6 +37,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
+import java.util.EventListener;
 
 /**
  * @author peter
@@ -77,6 +79,7 @@ public class DomTableView extends JPanel implements DataProvider{
   private final JPanel myInnerPanel;
   private EmptyPane myEmptyPane;
   private final Project myProject;
+  private final EventDispatcher<ChangeListener> myDispatcher = EventDispatcher.create(ChangeListener.class);
 
   public DomTableView(final Project project) {
     this(project, null, null);
@@ -279,6 +282,10 @@ public class DomTableView extends JPanel implements DataProvider{
     return myHelpID;
   }
 
+  public void addChangeListener(ChangeListener listener) {
+    myDispatcher.addListener(listener);
+  }
+
   private class MyListTableModel extends ListTableModel {
     public MyListTableModel() {
       super(ColumnInfo.EMPTY_ARRAY);
@@ -292,6 +299,7 @@ public class DomTableView extends JPanel implements DataProvider{
             MyListTableModel.super.setValueAt("".equals(aValue) ? null : aValue, rowIndex, columnIndex);
           }
         }.execute();
+        myDispatcher.getMulticaster().changed();
       }
     }
   }
@@ -318,5 +326,9 @@ public class DomTableView extends JPanel implements DataProvider{
     public String getPosition() {
       return myPosition;
     }
+  }
+
+  public interface ChangeListener extends EventListener {
+    void changed();
   }
 }

@@ -33,6 +33,25 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
     this(name, description, new DefaultTableCellRenderer(), editor);
   }
 
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    final ChildGenericValueColumnInfo that = (ChildGenericValueColumnInfo)o;
+
+    if (!myChildDescription.equals(that.myChildDescription)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + myChildDescription.hashCode();
+    return result;
+  }
+
   public final TableCellEditor getEditor(T value) {
     return myEditor;
   }

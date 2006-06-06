@@ -6,7 +6,6 @@ package com.intellij.util.xml.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.SmartPointerManager;
@@ -56,16 +55,18 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    final Runnable runnable = new Runnable() {
       public void run() {
         if (beforeAddition()) {
           final T result = performElementAddition();
           if (result != null) {
-            afterAddition((T)((StableElement)result).getWrappedElement());
+            afterAddition(result);
           }
         }
       }
-    });
+    };
+    runnable.run();
+    //ApplicationManager.getApplication().invokeLater(runnable);
   }
 
   protected T performElementAddition() {
@@ -73,8 +74,8 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
     final DomManager domManager = parent.getManager();
     final ClassChooser[] oldChooser = new ClassChooser[]{null};
     final Class[] aClass = new Class[]{null};
-    final T result = new WriteCommandAction<T>(domManager.getProject(), parent.getRoot().getFile()) {
-      protected void run(Result<T> result) throws Throwable {
+    final StableElement<T> result = new WriteCommandAction<StableElement<T>>(domManager.getProject(), parent.getRoot().getFile()) {
+      protected void run(Result<StableElement<T>> result) throws Throwable {
         final T t = (T)getDomCollectionChildDescription().addValue(getParentDomElement(), getElementClass());
         tuneNewValue(t);
         aClass[0] = DomReflectionUtil.getRawType(parent.getGenericInfo().getCollectionChildDescription(t.getXmlElementName()).getType());
@@ -97,12 +98,12 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
             return oldChooser[0].getChooserClasses();
           }
         });
-        result.setResult((T)t.createStableCopy());
+        result.setResult((StableElement<T>)t.createStableCopy());
       }
     }.execute().getResultObject();
     if (result != null) {
       ClassChooserManager.registerClassChooser(aClass[0], oldChooser[0]);
     }
-    return result;
+    return result.getWrappedElement();
   }
 }

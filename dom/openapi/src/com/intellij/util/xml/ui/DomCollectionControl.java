@@ -180,6 +180,11 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
     myCollectionPanel.installPopup(createPopupActionGroup());
     myCollectionPanel.initializeTable();
     myCollectionPanel.setColumnInfos(createColumnInfos(myParentDomElement));
+    myCollectionPanel.addChangeListener(new DomTableView.ChangeListener() {
+      public void changed() {
+        reset();
+      }
+    });
     reset();
   }
 

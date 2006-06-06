@@ -85,7 +85,7 @@ public class ListTableModel <Item> extends TableViewModel<Item> implements ItemR
    * @return
    */
   public boolean setColumnInfos(final ColumnInfo[] columnInfos) {
-    if (myColumnInfos != null && !Arrays.equals(columnInfos, myColumnInfos)) {
+    if (myColumnInfos != null && Arrays.equals(columnInfos, myColumnInfos)) {
       return false;
     }
 
