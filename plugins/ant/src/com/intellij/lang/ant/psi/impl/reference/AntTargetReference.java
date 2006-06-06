@@ -1,10 +1,12 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
-import com.intellij.lang.ant.AntBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.psi.AntCall;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
+import com.intellij.lang.ant.quickfix.AntCreateTargetAction;
+import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -14,6 +16,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.NotNull;
 
 public class AntTargetReference extends AntGenericReference {
 
@@ -75,6 +78,11 @@ public class AntTargetReference extends AntGenericReference {
 
   public String getUnresolvedMessagePattern() {
     return AntBundle.getMessage("cannot.resolve.target", getCanonicalText());
+  }
+
+  @NotNull
+  public IntentionAction[] getFixes() {
+    return new IntentionAction[]{new AntCreateTargetAction(getElement().getAntProject(), getCanonicalText())};
   }
 
   private int getElementStartOffset() {

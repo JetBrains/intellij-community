@@ -1,15 +1,16 @@
 package com.intellij.lang.ant.validation;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.impl.reference.AntGenericReference;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
+import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -73,6 +74,10 @@ public class AntAnnotator implements Annotator {
         final TextRange absoluteRange = ref.getRangeInElement().shiftRight(ref.getElement().getTextRange().getStartOffset());
         final Annotation annotation = holder.createErrorAnnotation(absoluteRange, ((AntGenericReference)ref).getUnresolvedMessagePattern());
         annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        final IntentionAction[] intentionActions = ((AntGenericReference)ref).getFixes();
+        for (IntentionAction action : intentionActions) {
+          annotation.registerFix(action);
+        }
       }
     }
   }

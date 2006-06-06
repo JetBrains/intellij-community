@@ -38,4 +38,8 @@ public class AntDefaultNSProvider implements XmlFileNSInfoProvider, ApplicationC
 
   public void disposeComponent() {
   }
+
+  public static String getDefaultUri() {
+    return ANT_URI;
+  }
 }

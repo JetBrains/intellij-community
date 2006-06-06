@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.openapi.util.TextRange;
@@ -9,10 +10,12 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class AntGenericReference extends GenericReference {
 
   private static final ReferenceType ourRefType = new ReferenceType(ReferenceType.UNKNOWN);
+  protected static final IntentionAction[] ourEmptyIntentions = new IntentionAction[0];
 
   private final AntElement myAntElement;
   private final String myText;
@@ -31,20 +34,16 @@ public abstract class AntGenericReference extends GenericReference {
     myAttribute = attribute;
   }
 
-  protected AntGenericReference(final GenericReferenceProvider provider,
-                                final AntStructuredElement antElement,
-                                final XmlAttribute attr) {
+  protected AntGenericReference(final GenericReferenceProvider provider, final AntStructuredElement antElement, final XmlAttribute attr) {
     super(provider);
     myAntElement = antElement;
     myText = (attr == null) ? antElement.getSourceElement().getName() : attr.getName();
-    int startInElement =
-      (attr == null) ? 1 : attr.getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset();
+    int startInElement = (attr == null) ? 1 : attr.getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset();
     myTextRange = new TextRange(startInElement, myText.length() + startInElement);
     myAttribute = attr;
   }
 
-  protected AntGenericReference(final GenericReferenceProvider provider,
-                                final AntStructuredElement antElement) {
+  protected AntGenericReference(final GenericReferenceProvider provider, final AntStructuredElement antElement) {
     this(provider, antElement, null);
   }
 
@@ -78,6 +77,11 @@ public abstract class AntGenericReference extends GenericReference {
 
   public ReferenceType getSoftenType() {
     return ourRefType;
+  }
+
+  @NotNull
+  public IntentionAction[] getFixes() {
+    return ourEmptyIntentions;
   }
 
   protected XmlAttribute getAttribute() {

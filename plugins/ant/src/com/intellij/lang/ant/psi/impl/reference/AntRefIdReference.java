@@ -1,14 +1,16 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
-import com.intellij.lang.ant.AntBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -50,6 +52,11 @@ public class AntRefIdReference extends AntGenericReference {
 
   public Object[] getVariants() {
     return getVariants(getElement().getAntProject());
+  }
+
+  @NotNull
+  public IntentionAction[] getFixes() {
+    return super.getFixes();
   }
 
   private static String[] getVariants(AntStructuredElement element) {

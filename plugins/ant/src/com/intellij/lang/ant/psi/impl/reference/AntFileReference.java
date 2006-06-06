@@ -1,7 +1,8 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
-import com.intellij.lang.ant.AntBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -9,6 +10,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class AntFileReference extends AntGenericReference {
 
@@ -60,5 +62,10 @@ public class AntFileReference extends AntGenericReference {
 
   public String getUnresolvedMessagePattern() {
     return AntBundle.getMessage("file.doesnt.exist", getCanonicalText());
+  }
+
+  @NotNull
+  public IntentionAction[] getFixes() {
+    return super.getFixes();
   }
 }

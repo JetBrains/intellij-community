@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.psi.AntMacroDef;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.AntTask;
@@ -8,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class AntElementNameReference extends AntGenericReference {
 
@@ -87,6 +89,11 @@ public class AntElementNameReference extends AntGenericReference {
       return myResolvedElement = findClass(elementDef, element);
     }
     return null;
+  }
+
+  @NotNull
+  public IntentionAction[] getFixes() {
+    return super.getFixes();
   }
 
   private static PsiElement findClass(final AntTypeDefinition elementDef, final AntStructuredElement element) {

@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.psi.AntAllTasksContainer;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntMacroDef;
@@ -11,6 +12,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericRefe
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class AntMacroDefParameterReference extends AntGenericReference {
 
@@ -32,8 +34,8 @@ public class AntMacroDefParameterReference extends AntGenericReference {
       if (myXmlElement instanceof XmlAttributeValue) {
         final String text = myXmlElement.getText();
         if (text.length() > 2) {
-          ((XmlAttribute)myXmlElement.getParent()).setValue(
-            text.substring(1, text.length() - 1).replace("@{" + oldName + '}', "@{" + newElementName + '}'));
+          ((XmlAttribute)myXmlElement.getParent())
+            .setValue(text.substring(1, text.length() - 1).replace("@{" + oldName + '}', "@{" + newElementName + '}'));
         }
       }
       else {
@@ -62,5 +64,10 @@ public class AntMacroDefParameterReference extends AntGenericReference {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public IntentionAction[] getFixes() {
+    return super.getFixes();
   }
 }
