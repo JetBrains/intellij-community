@@ -121,7 +121,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
     return false;
   }
 
-  protected boolean hashProblemFileBeneath() {
+  protected boolean hasProblemFileBeneath() {
     return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(this);
   }
 }

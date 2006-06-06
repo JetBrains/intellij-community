@@ -67,7 +67,7 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
     myColor = color;
     myAttributesKey = attributesKey;
 
-    if (hashProblemFileBeneath() ) {
+    if (hasProblemFileBeneath() ) {
       updated |= myAttributesKey != CodeInsightColors.ERRORS_ATTRIBUTES;
       myAttributesKey = CodeInsightColors.ERRORS_ATTRIBUTES;
     }
@@ -83,7 +83,7 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
     return color;
   }
 
-  protected boolean hashProblemFileBeneath() {
+  protected boolean hasProblemFileBeneath() {
     return false;
   }
 
