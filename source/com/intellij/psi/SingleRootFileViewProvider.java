@@ -223,7 +223,14 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   private static boolean isTooLarge(final VirtualFile vFile) {
-    return FileManagerImpl.MAX_INTELLISENSE_FILESIZE != -1 && vFile.getLength() > FileManagerImpl.MAX_INTELLISENSE_FILESIZE;
+    return FileManagerImpl.MAX_INTELLISENSE_FILESIZE != -1 && fileSize(vFile) > FileManagerImpl.MAX_INTELLISENSE_FILESIZE;
+  }
+
+  private static long fileSize(final VirtualFile vFile) {
+    if (vFile instanceof com.intellij.openapi.vfs.impl.local.VirtualFileImpl) {
+      return ((com.intellij.openapi.vfs.impl.local.VirtualFileImpl)vFile).getPhysicalFileLength();
+    }
+    return vFile.getLength();
   }
 
   protected PsiFile createFile(Language lang) {
