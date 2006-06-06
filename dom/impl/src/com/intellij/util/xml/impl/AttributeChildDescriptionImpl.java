@@ -52,9 +52,8 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
 
   public GenericAttributeValue getDomAttributeValue(DomElement parent) {
     final DomElement domElement = ModelMergerUtil.getImplementation(parent, DomElement.class);
-    final DomInvocationHandler invocationHandler = DomManagerImpl.getDomInvocationHandler(domElement);
-    return (GenericAttributeValue)DomReflectionUtil.invokeMethod(myGetterMethod, invocationHandler);
-  } 
+    return (GenericAttributeValue)DomReflectionUtil.invokeMethod(myGetterMethod, domElement);
+  }
 
   public boolean equals(final Object o) {
     if (this == o) return true;
