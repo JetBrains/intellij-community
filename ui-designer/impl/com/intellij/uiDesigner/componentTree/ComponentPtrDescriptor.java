@@ -40,7 +40,7 @@ final class ComponentPtrDescriptor extends NodeDescriptor{
     else{
       myBinding = component.getBinding();
     }
-    myTitle = ComponentTree.getComponentTitle(component);
+    myTitle = component.getComponentTitle();
     return !Comparing.equal(oldBinding,myBinding) || !Comparing.equal(oldTitle, myTitle);
   }
 

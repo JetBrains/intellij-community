@@ -1,12 +1,14 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.actions.*;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.AWTEvent;
+import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
@@ -16,6 +18,8 @@ import java.awt.event.MouseEvent;
  */
 final class GlassLayer extends JComponent implements DataProvider{
   private final GuiEditor myEditor;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GlassLayer");
+  private Point myLastMousePosition;
 
   public GlassLayer(final GuiEditor editor){
     myEditor = editor;
@@ -74,11 +78,26 @@ final class GlassLayer extends JComponent implements DataProvider{
     if(e.getID() == MouseEvent.MOUSE_PRESSED){
       requestFocusInWindow();
     }
-    myEditor.myProcessor.processMouseEvent(e);
+    try {
+      myEditor.myProcessor.processMouseEvent(e);
+    }
+    catch(Exception ex) {
+      LOG.error(ex);
+    }
   }
 
   protected void processMouseMotionEvent(final MouseEvent e){
-    myEditor.myProcessor.processMouseEvent(e);
+    myLastMousePosition = e.getPoint();
+    try {
+      myEditor.myProcessor.processMouseEvent(e);
+    }
+    catch(Exception ex) {
+      LOG.error(ex);
+    }
+  }
+
+  public Point getLastMousePosition() {
+    return myLastMousePosition;
   }
 
   /**

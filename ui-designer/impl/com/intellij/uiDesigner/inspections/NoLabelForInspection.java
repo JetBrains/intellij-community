@@ -6,7 +6,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
@@ -83,7 +82,7 @@ public class NoLabelForInspection extends BaseFormInspection {
 
     public MyQuickFix(final GuiEditor editor, RadComponent component, RadComponent label) {
       super(editor, UIDesignerBundle.message("inspection.no.label.for.quickfix",
-                                             ComponentTree.getComponentTitle(label)), component);
+                                             label.getComponentTitle()), component);
       myLabel = label;
     }
 

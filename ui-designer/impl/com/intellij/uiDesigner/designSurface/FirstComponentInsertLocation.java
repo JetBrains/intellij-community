@@ -115,7 +115,7 @@ public class FirstComponentInsertLocation extends GridDropLocation {
       rc.y = myCellRect.height - rc.height;
     }
 
-    feedbackLayer.putFeedback(myContainer.getDelegee(), rc);
+    feedbackLayer.putFeedback(myContainer.getDelegee(), rc, myContainer.getDisplayName());
   }
 
   private static boolean isInsertTwoSpacers(int sizePolicy) {

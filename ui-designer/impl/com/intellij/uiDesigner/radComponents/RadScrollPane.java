@@ -101,7 +101,7 @@ public final class RadScrollPane extends RadContainer {
     }
 
     public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
-      feedbackLayer.putFeedback(getDelegee(), new Rectangle(0, 0, getWidth(), getHeight()));
+      feedbackLayer.putFeedback(getDelegee(), new Rectangle(0, 0, getWidth(), getHeight()), getDisplayName());
     }
 
     public void processDrop(GuiEditor editor,

@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -185,20 +186,31 @@ public final class RadSplitPane extends RadContainer {
     public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
       final JSplitPane splitPane = getSplitPane();
       int dividerPos = getDividerPos();
-      int dividerLeftPos = dividerPos - splitPane.getDividerSize()/2;
-      int dividerRightPos = dividerPos + splitPane.getDividerSize() - splitPane.getDividerSize()/2;
+      int dividerStartPos = dividerPos - splitPane.getDividerSize()/2;
+      int dividerEndPos = dividerPos + splitPane.getDividerSize() - splitPane.getDividerSize()/2;
       Rectangle rc;
       if (splitPane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
         rc = myLeft
-             ? new Rectangle(0, 0, getWidth(), dividerLeftPos)
-             : new Rectangle(0, dividerRightPos, getWidth(), getHeight() - dividerRightPos);
+             ? new Rectangle(0, 0, getWidth(), dividerStartPos)
+             : new Rectangle(0, dividerEndPos, getWidth(), getHeight() - dividerEndPos);
       }
       else {
         rc = myLeft
-             ? new Rectangle(0, 0, dividerLeftPos, getHeight())
-             : new Rectangle(dividerRightPos, 0, getWidth() - dividerRightPos, getHeight());
+             ? new Rectangle(0, 0, dividerStartPos, getHeight())
+             : new Rectangle(dividerEndPos, 0, getWidth() - dividerEndPos, getHeight());
       }
-      feedbackLayer.putFeedback(getDelegee(), rc);
+      feedbackLayer.putFeedback(getDelegee(), rc, getInsertFeedbackTooltip());
+    }
+
+    private String getInsertFeedbackTooltip() {
+      String pos;
+      if (getSplitPane().getOrientation() == JSplitPane.VERTICAL_SPLIT) {
+        pos = myLeft ? UIDesignerBundle.message("insert.feedback.top") : UIDesignerBundle.message("insert.feedback.bottom");
+      }
+      else {
+        pos = myLeft ? UIDesignerBundle.message("insert.feedback.left") : UIDesignerBundle.message("insert.feedback.right");
+      }
+      return getDisplayName() + " (" + pos + ")";
     }
 
     public void processDrop(GuiEditor editor,

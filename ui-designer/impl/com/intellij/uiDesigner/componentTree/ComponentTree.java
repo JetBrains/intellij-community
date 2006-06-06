@@ -24,12 +24,9 @@ import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
 import com.intellij.uiDesigner.designSurface.*;
-import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.lw.LwInspectionSuppression;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.util.ui.Tree;
@@ -322,46 +319,6 @@ public final class ComponentTree extends Tree implements DataProvider {
     myUnknownAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.RED);
   }
 
-  @Nullable
-  public static String getComponentTitle(final RadComponent component) {
-    Palette palette = Palette.getInstance(component.getModule().getProject());
-    IntrospectedProperty[] props = palette.getIntrospectedProperties(component);
-    for(IntrospectedProperty prop: props) {
-      if (prop.getName().equals(SwingProperties.TEXT) && prop instanceof IntroStringProperty) {
-        StringDescriptor value = (StringDescriptor) prop.getValue(component);
-        if (value != null) {
-          return "\"" + value.getResolvedValue() + "\"";
-        }
-      }
-    }
-
-    if (component instanceof RadContainer) {
-      RadContainer container = (RadContainer) component;
-      StringDescriptor descriptor = container.getBorderTitle();
-      if (descriptor != null) {
-        if (descriptor.getResolvedValue() == null) {
-          descriptor.setResolvedValue(StringDescriptorManager.getInstance(component.getModule()).resolve(component, descriptor));
-        }
-        return "\"" + descriptor.getResolvedValue() + "\"";
-      }
-    }
-
-    if (component.getParent() instanceof RadTabbedPane) {
-      RadTabbedPane parentTabbedPane = (RadTabbedPane) component.getParent();
-      final StringDescriptor descriptor = parentTabbedPane.getChildTitle(component);
-      if (descriptor != null) {
-        if (descriptor.getResolvedValue() == null) {
-          descriptor.setResolvedValue(StringDescriptorManager.getInstance(component.getModule()).resolve(component, descriptor));
-        }
-        return "\"" + descriptor.getResolvedValue() + "\"";
-      }
-      else {
-        parentTabbedPane.getChildTitle(component);
-      }
-    }
-    return null;
-  }
-
   public static Icon getComponentIcon(final RadComponent component) {
     if (!(component instanceof RadErrorComponent)) {
       final Palette palette = Palette.getInstance(component.getModule().getProject());
@@ -418,7 +375,7 @@ public final class ComponentTree extends Tree implements DataProvider {
           hasText = true;
         }
         else {
-          String componentTitle = getComponentTitle(component);
+          String componentTitle = component.getComponentTitle();
           if (componentTitle != null) {
             append(componentTitle, getAttribute(myTitleAttributes, level));
             append(" : ", getAttribute(myClassAttributes, level));

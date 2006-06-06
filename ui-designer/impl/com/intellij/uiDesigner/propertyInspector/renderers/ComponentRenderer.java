@@ -49,7 +49,7 @@ public class ComponentRenderer extends ColoredListCellRenderer implements Proper
       append(binding, baseAttributes);
     }
     else {
-      final String componentTitle = ComponentTree.getComponentTitle(target);
+      final String componentTitle = target.getComponentTitle();
       if (componentTitle != null && componentTitle.length() > "\"\"".length()) {
         append(componentTitle, baseAttributes);
       }

@@ -620,8 +620,9 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
 
     public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
+      final String tooltipText = getDisplayName() + " (" + myInsertIndex + ")";
       if (myInsertIndex < getTabbedPane().getTabCount()) {
-        feedbackLayer.putFeedback(getDelegee(), myFeedbackRect, VertInsertFeedbackPainter.INSTANCE);
+        feedbackLayer.putFeedback(getDelegee(), myFeedbackRect, VertInsertFeedbackPainter.INSTANCE, tooltipText);
       }
       else {
         Rectangle rcFeedback;
@@ -635,7 +636,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
           // approximate
           rcFeedback = new Rectangle(0, 0, 50, tabbedPane.getFontMetrics(tabbedPane.getFont()).getHeight() + 8);
         }
-        feedbackLayer.putFeedback(getDelegee(), rcFeedback);
+        feedbackLayer.putFeedback(getDelegee(), rcFeedback, tooltipText);
       }
     }
 

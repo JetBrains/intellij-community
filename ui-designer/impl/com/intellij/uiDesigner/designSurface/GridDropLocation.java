@@ -8,6 +8,7 @@ import com.intellij.uiDesigner.shared.XYLayoutManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.Rectangle;
 import java.awt.LayoutManager;
 
@@ -96,7 +97,8 @@ public class GridDropLocation implements DropLocation {
       feedbackRect = getGridFeedbackRect(dragObject);
     }
     if (feedbackRect != null) {
-      feedbackLayer.putFeedback(getContainer().getDelegee(), feedbackRect);
+      final JComponent component = getContainer().getDelegee();
+      feedbackLayer.putFeedback(component, feedbackRect, getContainer().getDisplayName() + " (" + myRow + "," + myColumn + ")");
     }
     else {
       feedbackLayer.removeFeedback();

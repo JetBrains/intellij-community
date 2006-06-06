@@ -58,14 +58,16 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
     }
   }
 
-  public void putFeedback(Component relativeTo, final Rectangle rc) {
-    putFeedback(relativeTo, rc, myRectangleFeedbackPainter);
+  public void putFeedback(Component relativeTo, final Rectangle rc, final String tooltipText) {
+    putFeedback(relativeTo, rc, myRectangleFeedbackPainter, tooltipText);
   }
 
-  public void putFeedback(Component relativeTo, Rectangle rc, final FeedbackPainter feedbackPainter) {
+  public void putFeedback(Component relativeTo, Rectangle rc, final FeedbackPainter feedbackPainter, final String tooltipText) {
     rc = SwingUtilities.convertRectangle(relativeTo, rc, this);
     myFeedbackPainterPanel.setBounds(rc);
     myFeedbackPainterPanel.setPainter(feedbackPainter != null ? feedbackPainter : myRectangleFeedbackPainter);
+    Point pntMouse = myEditor.getGlassLayer().getLastMousePosition();
+    putToolTip(this, new Point(pntMouse.x+20, pntMouse.y+30), tooltipText);
     if (myFeedbackPainterPanel.getParent() != this) {
       add(myFeedbackPainterPanel);
       repaint();
@@ -82,6 +84,8 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
     else {
       pnt = SwingUtilities.convertPoint(relativeTo, pnt, this);
       Dimension prefSize = myToolTip.getPreferredSize();
+      pnt.x = Math.min(pnt.x, getBounds().width - prefSize.width);
+      pnt.y = Math.min(pnt.y, getBounds().height - prefSize.height);
       myToolTip.setBounds(pnt.x, pnt.y, prefSize.width, prefSize.height);
       myToolTip.setTipText(text);
       if (myToolTip.getParent() != this) {

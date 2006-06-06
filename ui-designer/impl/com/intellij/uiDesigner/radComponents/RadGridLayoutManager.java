@@ -172,7 +172,7 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
       }
     }
 
-    GridInsertMode mode = GridInsertMode.InCell;
+    GridInsertMode mode = null;
 
     int EPSILON = 4;
     int dy = (int)(location.getY() - ys [row]);
@@ -193,7 +193,7 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
 
     final int cellWidth = vertGridLines[col + 1] - vertGridLines[col];
     final int cellHeight = horzGridLines[row + 1] - horzGridLines[row];
-    if (mode == GridInsertMode.InCell) {
+    if (mode == null) {
       RadComponent component = getComponentAtGrid(container, row, col);
       if (component != null) {
         Rectangle rc = component.getBounds();
@@ -217,9 +217,8 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
       }
     }
 
-    if (mode == GridInsertMode.RowBefore || mode == GridInsertMode.RowAfter ||
-        mode == GridInsertMode.ColumnBefore || mode == GridInsertMode.ColumnAfter) {
-      return new GridInsertLocation(container, row, col, mode).adjustForGaps();
+    if (mode != null) {
+      return new GridInsertLocation(container, row, col, mode).normalize();
     }
     return new GridDropLocation(container, row, col);
   }

@@ -132,7 +132,8 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     }
 
     public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
-      feedbackLayer.putFeedback(myContainer.getDelegee(), getFeedbackRect(myQuadrant));
+      feedbackLayer.putFeedback(myContainer.getDelegee(), getFeedbackRect(myQuadrant),
+                                myContainer.getDisplayName() + " (" + myQuadrant.toLowerCase() + ")");
     }
 
     private Rectangle getFeedbackRect(final String quadrant) {

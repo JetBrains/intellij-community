@@ -1,8 +1,8 @@
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.CutCopyPasteSupport;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -10,10 +10,13 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -21,8 +24,6 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public final class ResizeProcessor extends EventProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.ResizeProcessor");
-
   private RadComponent myComponent;
   private int myResizeMask;
   private Point myLastPoint;
@@ -198,7 +199,8 @@ public final class ResizeProcessor extends EventProcessor {
     if (rcGrid != null) {
       Rectangle rc = myOriginalParent.getGridLayoutManager().getGridCellRangeRect(myOriginalParent, rcGrid.y, rcGrid.x,
                                                                                   rcGrid.y+rcGrid.height-1, rcGrid.x+rcGrid.width-1);
-      myEditor.getActiveDecorationLayer().putFeedback(myOriginalParent.getDelegee(), rc);
+      String tooltip = UIDesignerBundle.message("resize.feedback", rcGrid.height, rcGrid.width);
+      myEditor.getActiveDecorationLayer().putFeedback(myOriginalParent.getDelegee(), rc, tooltip);
       setCursor(isGridSpanDropAllowed(rcGrid) ? getResizeCursor() : FormEditingUtil.getMoveNoDropCursor());
     }
     else {

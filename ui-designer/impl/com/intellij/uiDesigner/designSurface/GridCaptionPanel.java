@@ -407,7 +407,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
           rc = new Rectangle(e.getPoint().x, 0, 1, layer.getSize().height);
           layer.putToolTip(layer, new Point(e.getPoint().x, 0), toolTip);
         }
-        layer.putFeedback(GridCaptionPanel.this, rc, myFeedbackPainter);
+        layer.putFeedback(GridCaptionPanel.this, rc, myFeedbackPainter, null);
       }
     }
   }
@@ -510,7 +510,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         Rectangle cellRect = new Rectangle(gridLine, gridLine, 1, 1);
         rcFeedback = GridInsertLocation.getInsertFeedbackPosition(myIsRow ? GridInsertMode.RowBefore : GridInsertMode.ColumnBefore,
                                                                   mySelectedContainer, cellRect, rcFeedback);
-        myEditor.getActiveDecorationLayer().putFeedback(mySelectedContainer.getDelegee(), rcFeedback, painter);
+        myEditor.getActiveDecorationLayer().putFeedback(mySelectedContainer.getDelegee(), rcFeedback, painter, null);
       }
       else {
         myEditor.getActiveDecorationLayer().removeFeedback();

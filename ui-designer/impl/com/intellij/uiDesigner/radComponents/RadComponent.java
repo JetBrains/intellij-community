@@ -5,6 +5,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.SwingProperties;
+import com.intellij.uiDesigner.StringDescriptorManager;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
@@ -18,6 +20,7 @@ import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.properties.ClientPropertiesProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.ClientPropertyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -697,5 +700,67 @@ public abstract class RadComponent implements IComponent {
   }
 
   protected void importSnapshotComponent(final SnapshotContext context, final JComponent component) {
+  }
+
+  @Nullable
+  public String getComponentTitle() {
+    Palette palette = Palette.getInstance(getModule().getProject());
+    IntrospectedProperty[] props = palette.getIntrospectedProperties(this);
+    for(IntrospectedProperty prop: props) {
+      if (prop.getName().equals(SwingProperties.TEXT) && prop instanceof IntroStringProperty) {
+        StringDescriptor value = (StringDescriptor) prop.getValue(this);
+        if (value != null) {
+          return "\"" + value.getResolvedValue() + "\"";
+        }
+      }
+    }
+
+    if (this instanceof RadContainer) {
+      RadContainer container = (RadContainer)this;
+      StringDescriptor descriptor = container.getBorderTitle();
+      if (descriptor != null) {
+        if (descriptor.getResolvedValue() == null) {
+          descriptor.setResolvedValue(StringDescriptorManager.getInstance(getModule()).resolve(this, descriptor));
+        }
+        return "\"" + descriptor.getResolvedValue() + "\"";
+      }
+    }
+
+    if (getParent() instanceof RadTabbedPane) {
+      RadTabbedPane parentTabbedPane = (RadTabbedPane) getParent();
+      final StringDescriptor descriptor = parentTabbedPane.getChildTitle(this);
+      if (descriptor != null) {
+        if (descriptor.getResolvedValue() == null) {
+          descriptor.setResolvedValue(StringDescriptorManager.getInstance(getModule()).resolve(this, descriptor));
+        }
+        return "\"" + descriptor.getResolvedValue() + "\"";
+      }
+      else {
+        parentTabbedPane.getChildTitle(this);
+      }
+    }
+    return null;
+  }
+
+  public String getDisplayName() {
+    StringBuilder titleBuilder = new StringBuilder();
+    if (getBinding() != null) {
+      titleBuilder.append(getBinding());
+    }
+    else {
+      final String className = getComponentClassName();
+      int pos = className.lastIndexOf('.');
+      if (pos < 0) {
+        titleBuilder.append(className);
+      }
+      else {
+        titleBuilder.append(className.substring(pos + 1).replace('$', '.'));
+      }
+      final String title = getComponentTitle();
+      if (title != null) {
+        titleBuilder.append(" ").append(title);
+      }
+    }
+    return titleBuilder.toString();
   }
 }

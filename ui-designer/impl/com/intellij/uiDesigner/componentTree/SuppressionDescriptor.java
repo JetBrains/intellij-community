@@ -34,20 +34,7 @@ public class SuppressionDescriptor extends NodeDescriptor {
     StringBuilder titleBuilder = new StringBuilder(myInspectionSuppression.getInspectionId());
     if (myTarget != null) {
       titleBuilder.append(" for ");
-      if (myTarget.getBinding() != null) {
-        titleBuilder.append(myTarget.getBinding());
-      }
-      else {
-        final String className = myTarget.getComponentClassName();
-        int pos = className.lastIndexOf('.');
-        if (pos < 0) {
-          titleBuilder.append(className);
-        }
-        else {
-          titleBuilder.append(className.substring(pos + 1).replace('$', '.'));
-        }
-        titleBuilder.append(" ").append(ComponentTree.getComponentTitle(myTarget));
-      }
+      titleBuilder.append(myTarget.getDisplayName());
     }
     return titleBuilder.toString();
   }

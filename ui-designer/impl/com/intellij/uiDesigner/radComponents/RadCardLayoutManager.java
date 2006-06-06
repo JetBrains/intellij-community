@@ -177,7 +177,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
 
     public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
       Rectangle rc = myContainer.getBounds();
-      feedbackLayer.putFeedback(myContainer.getParent().getDelegee(), rc);
+      feedbackLayer.putFeedback(myContainer.getParent().getDelegee(), rc, null);
     }
 
     public void processDrop(GuiEditor editor,

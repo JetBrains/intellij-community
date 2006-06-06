@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.uiDesigner.GridChangeUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
@@ -36,8 +37,18 @@ public class GridInsertLocation extends GridDropLocation {
     assert container.getLayoutManager().isGrid();
   }
 
-  public GridInsertLocation adjustForGaps() {
+  public GridInsertLocation normalize() {
     final RadAbstractGridLayoutManager gridManager = myContainer.getGridLayoutManager();
+
+    if (myMode == GridInsertMode.RowBefore && myRow > 0) {
+      myMode = GridInsertMode.RowAfter;
+      myRow--;
+    }
+    else if (myMode == GridInsertMode.ColumnBefore && myColumn > 0) {
+      myMode = GridInsertMode.ColumnAfter;
+      myColumn--;
+    }
+
     if (myMode == GridInsertMode.RowAfter && gridManager.isGapCell(myContainer, true, myRow)) {
       myRow--;
     }
@@ -50,6 +61,7 @@ public class GridInsertLocation extends GridDropLocation {
     else if (myMode == GridInsertMode.ColumnBefore && gridManager.isGapCell(myContainer, false, myColumn)) {
       myColumn++;
     }
+
     return this;
   }
 
@@ -160,7 +172,7 @@ public class GridInsertLocation extends GridDropLocation {
     Rectangle rc;
 
     Rectangle rcFeedback = null;
-    if (dragObject.getComponentCount() == 1 && myMode != GridInsertMode.InCell) {
+    if (dragObject.getComponentCount() == 1) {
       int cellWidth = vGridLines [insertCol+1] - vGridLines [insertCol];
       int cellHeight = hGridLines [insertRow+1] - hGridLines [insertRow];
       RadComponent component = layoutManager.getComponentAtGrid(getContainer(), insertRow, insertCol);
@@ -213,15 +225,23 @@ public class GridInsertLocation extends GridDropLocation {
     }
 
     if (rcFeedback != null) {
-      feedbackLayer.putFeedback(getContainer().getDelegee(), rcFeedback);
+      feedbackLayer.putFeedback(getContainer().getDelegee(), rcFeedback, getInsertFeedbackTooltip());
       return;
     }
 
     rc = getInsertFeedbackPosition(myMode, getContainer(), cellRect, feedbackRect);
-    if (myMode == GridInsertMode.InCell) {
-      painter = null;
+    feedbackLayer.putFeedback(getContainer().getDelegee(), rc, painter, getInsertFeedbackTooltip());
+  }
+
+  private String getInsertFeedbackTooltip() {
+    String displayName = getContainer().getDisplayName();
+    switch(myMode) {
+      case ColumnBefore: return UIDesignerBundle.message("insert.feedback.before.col", displayName, myRow, myColumn);
+      case ColumnAfter:  return UIDesignerBundle.message("insert.feedback.after.col", displayName, myRow, myColumn);
+      case RowBefore:    return UIDesignerBundle.message("insert.feedback.before.row", displayName, myColumn, myRow);
+      case RowAfter:     return UIDesignerBundle.message("insert.feedback.after.row", displayName, myColumn, myRow);
     }
-    feedbackLayer.putFeedback(getContainer().getDelegee(), rc, painter);
+    return null;
   }
 
   public static Rectangle getInsertFeedbackPosition(final GridInsertMode mode, final RadContainer container, final Rectangle cellRect,

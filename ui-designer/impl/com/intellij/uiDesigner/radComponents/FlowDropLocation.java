@@ -75,7 +75,7 @@ public class FlowDropLocation implements DropLocation {
       }
       int height = Math.min(initialSize.height, myContainer.getBounds().height);
       Rectangle rc = new Rectangle(originX, 2 * myVGap, initialSize.width, height);
-      feedbackLayer.putFeedback(myContainer.getDelegee(), rc);
+      feedbackLayer.putFeedback(myContainer.getDelegee(), rc, myContainer.getDisplayName());
     }
     else if ((myInsertIndex == myContainer.getDelegee().getComponentCount() && !isRightAlign()) ||
         (myInsertIndex == 0 && !isLeftAlign())) {
@@ -100,12 +100,12 @@ public class FlowDropLocation implements DropLocation {
       else {
         rc = new Rectangle(maxX, lastTop, initialSize.width, maxSize);
       }
-      feedbackLayer.putFeedback(myContainer.getDelegee(), rc);
+      feedbackLayer.putFeedback(myContainer.getDelegee(), rc, myContainer.getDisplayName());
     }
     else {
       Rectangle bounds = myContainer.getDelegee().getComponent(myInsertIndex).getBounds();
       Rectangle rc = new Rectangle(bounds.x-4-myHGap, bounds.y, 8, bounds.height);
-      feedbackLayer.putFeedback(myContainer.getDelegee(), rc, VertInsertFeedbackPainter.INSTANCE);
+      feedbackLayer.putFeedback(myContainer.getDelegee(), rc, VertInsertFeedbackPainter.INSTANCE, myContainer.getDisplayName());
     }
   }
 

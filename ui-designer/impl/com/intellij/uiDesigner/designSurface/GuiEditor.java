@@ -872,8 +872,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
         height = Math.max(height, component.getY() + component.getHeight());
       }
 
-      width += 30;
-      height += 30;
+      width += 50;
+      height += 40;
 
       return new Dimension(width, height);
     }
