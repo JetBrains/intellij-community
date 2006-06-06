@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspManager;
@@ -34,7 +33,7 @@ public class FileReferenceSet {
   private FileReference[] myReferences;
   private PsiElement myElement;
   private final int myStartInElement;
-  private final ReferenceType myType;
+  @NotNull private final ReferenceType myType;
   private final PsiReferenceProvider myProvider;
   private boolean myCaseSensitive;
   private String myPathString;
@@ -51,7 +50,6 @@ public class FileReferenceSet {
     FileReferenceInfo info = new FileReferenceInfo(element);
     if (info.isValid()) {
       return new FileReferenceSet(info.getText(), element, info.getOffset(), ReferenceType.FILE_TYPE, null, true) {
-
         protected boolean isSoft() {
           return soft;
         }
@@ -66,7 +64,15 @@ public class FileReferenceSet {
   public FileReferenceSet(String str,
                           PsiElement element,
                           int startInElement,
-                          ReferenceType type,
+                          PsiReferenceProvider provider,
+                          final boolean isCaseSensitive) {
+    this(str, element, startInElement, ReferenceType.FILE_TYPE, provider, isCaseSensitive, true);
+  }
+
+  public FileReferenceSet(String str,
+                          PsiElement element,
+                          int startInElement,
+                          @NotNull ReferenceType type,
                           PsiReferenceProvider provider,
                           final boolean isCaseSensitive) {
     this(str, element, startInElement, type, provider, isCaseSensitive, true);
@@ -75,7 +81,7 @@ public class FileReferenceSet {
   public FileReferenceSet(String str,
                           PsiElement element,
                           int startInElement,
-                          ReferenceType type,
+                          @NotNull ReferenceType type,
                           PsiReferenceProvider provider,
                           final boolean isCaseSensitive,
                           boolean allowEmptyFileReferenceAtEnd) {
@@ -156,6 +162,7 @@ public class FileReferenceSet {
     return myReferences;
   }
 
+  @NotNull
   ReferenceType getType(int index) {
     if (index != myReferences.length - 1) {
       return new ReferenceType(new int[]{myType.getPrimitives()[0], ReferenceType.WEB_DIRECTORY_ELEMENT, ReferenceType.DIRECTORY});

@@ -183,6 +183,7 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     return myIndex > 0 ? myFileReferenceSet.getReference(myIndex - 1) : null;
   }
 
+  @NotNull
   public ReferenceType getType(){
     return myFileReferenceSet.getType(myIndex);
   }
