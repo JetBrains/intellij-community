@@ -251,7 +251,7 @@ public class FileUtil {
     final File tempFile = renameToTempFile(file);
     if (tempFile == null) return;
 
-    startDeletionThread(new File[]{tempFile});
+    startDeletionThread(tempFile);
   }
   public static void asyncDelete(Collection<File> files) {
     List<File> tempFiles = new ArrayList<File>();
@@ -266,7 +266,7 @@ public class FileUtil {
     }
   }
 
-  private static void startDeletionThread(final File[] tempFiles) {
+  private static void startDeletionThread(final File... tempFiles) {
     //noinspection HardCodedStringLiteral
     Thread t = new Thread("File deletion thread") {
       public void run() {
@@ -282,6 +282,7 @@ public class FileUtil {
       }
     };
     t.start();
+    t.setPriority(Thread.MIN_PRIORITY);
   }
 
   private static File renameToTempFile(File file) {
