@@ -511,17 +511,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                String word,
                                                                boolean caseSensitive,
                                                                final short searchContext) {
-    if (SourceTreeToPsiMap.hasTreeElement(scopeElement)) {
-      StringSearcher searcher = new StringSearcher(word);
-      searcher.setCaseSensitive(caseSensitive);
+    StringSearcher searcher = new StringSearcher(word);
+    searcher.setCaseSensitive(caseSensitive);
 
-      return LowLevelSearchUtil.processElementsContainingWordInElement(processor,
-                                                                       scopeElement,
-                                                                       searcher);
-    }
-    else {
-      return true;
-    }
+    return LowLevelSearchUtil.processElementsContainingWordInElement(processor, scopeElement, searcher);
   }
 
   private boolean processElementsWithTextInGlobalScope(TextOccurenceProcessor processor,
