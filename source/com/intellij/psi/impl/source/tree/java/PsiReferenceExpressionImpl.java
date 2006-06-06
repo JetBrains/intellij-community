@@ -5,6 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ConstructorFilter;
 import com.intellij.psi.filters.NotFilter;
@@ -418,12 +420,13 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
           return this;
         }
       }
-      boolean wasFullyQualified = isFullyQualified(this);
+      boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES &&
+                                      isFullyQualified(this);
       final CharTable table = SharedImplUtil.findCharTableByTree(getTreeParent());
       TreeElement ref = ExpressionParsing.parseExpressionText(manager, qName.toCharArray(), 0, qName.toCharArray().length, table);
       getTreeParent().replaceChildInternal(this, ref);
       CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx)manager.getCodeStyleManager();
-      if (!wasFullyQualified) {
+      if (!preserveQualification) {
         ref = (TreeElement)SourceTreeToPsiMap.psiElementToTree(
           codeStyleManager.shortenClassReferences(SourceTreeToPsiMap.treeElementToPsi(ref), CodeStyleManagerEx.UNCOMPLETE_CODE)
         );
