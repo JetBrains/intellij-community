@@ -195,7 +195,7 @@ outer:
     final boolean assignable1From2 = type1.isAssignableFrom(type2);
     if (assignable1From2 || assignable2From1) {
       if (assignable1From2 && assignable2From1) {
-        return Specifics.CONFLICT;
+        return null;
       }
 
       return assignable1From2 ? Specifics.FALSE : Specifics.TRUE;
@@ -242,10 +242,13 @@ outer:
 
       for (int i = 0; i < params1.length; i++) {
         PsiType type1 = params1[i].getType();
+        type1 = TypeConversionUtil.erasure(type1);
         PsiType type2 = params2[i].getType();
+        type2 = TypeConversionUtil.erasure(type2);
         PsiType argType = args[i].getType();
 
         final Specifics specifics = checkSubtyping(type1, type2, argType);
+        if (specifics == null) continue;
         switch(specifics) {
           case TRUE:
             if (isMoreSpecific == Specifics.FALSE) return Specifics.CONFLICT;
@@ -256,7 +259,7 @@ outer:
             isMoreSpecific = specifics;
             break;
           case CONFLICT:
-            //continue
+            return Specifics.CONFLICT;
         }
       }
     } else {
@@ -265,9 +268,12 @@ outer:
 
       for (int i = 0; i < Math.max(params1.length, params2.length); i++) {
         PsiType type1 = i < params1.length - 1 ? params1[i].getType() : ((PsiArrayType)params1[params1.length - 1].getType()).getComponentType();
+        type1 = TypeConversionUtil.erasure(type1);
         PsiType type2 = i < params2.length - 1 ? params2[i].getType() : ((PsiArrayType)params2[params2.length - 1].getType()).getComponentType();
+        type2 = TypeConversionUtil.erasure(type2);
         PsiType argType = i < args.length ? args[i].getType() : null;
         final Specifics specifics = checkSubtyping(type1, type2, argType);
+        if (specifics == null) continue;
         switch(specifics) {
           case TRUE:
             if (isMoreSpecific == Specifics.FALSE) return Specifics.CONFLICT;
@@ -278,7 +284,7 @@ outer:
             isMoreSpecific = specifics;
             break;
           case CONFLICT:
-            //continue
+            return Specifics.CONFLICT;
         }
       }
     }
