@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -215,8 +216,9 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     return getChildTitle((RadComponent) component);
   }
 
-  public void refreshChildTitle(final RadComponent radComponent) {
+  public boolean refreshChildTitle(final RadComponent radComponent) {
     StringDescriptor childTitle = getChildTitle(radComponent);
+    String oldTitle = childTitle.getResolvedValue();
     childTitle.setResolvedValue(null);
     try {
       setChildTitle(radComponent, childTitle);
@@ -224,6 +226,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     catch (Exception e) {
       LOG.error(e);
     }
+    return !Comparing.equal(oldTitle, childTitle.getResolvedValue());
   }
 
   @Override public void loadLwProperty(final LwComponent lwComponent, final LwIntrospectedProperty lwProperty, final IntrospectedProperty property) {

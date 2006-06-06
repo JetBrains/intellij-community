@@ -3,33 +3,34 @@ package com.intellij.uiDesigner.propertyInspector.editors.string;
 import com.intellij.CommonBundle;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
-import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.PropertiesReferenceManager;
+import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.uiDesigner.ReferenceUtil;
-import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.StringDescriptorManager;
-import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -37,12 +38,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.CardLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Locale;
 import java.util.Set;
 
@@ -56,8 +58,7 @@ public final class StringEditorDialog extends DialogWrapper{
   @NonNls private static final String CARD_STRING = "string";
   @NonNls private static final String CARD_BUNDLE = "bundle";
 
-  private final Module myModule;
-  private RadRootContainer myRootContainer;
+  private GuiEditor myEditor;
   /** Descriptor to be edited */
   private StringDescriptor myValue;
   private final MyForm myForm;
@@ -66,14 +67,12 @@ public final class StringEditorDialog extends DialogWrapper{
 
   StringEditorDialog(final Component parent,
                      final StringDescriptor descriptor,
-                     @NotNull final Module module,
                      @Nullable Locale locale,
-                     final RadRootContainer rootContainer) {
+                     final GuiEditor editor) {
     super(parent, true);
     myLocale = locale;
 
-    myModule = module;
-    myRootContainer = rootContainer;
+    myEditor = editor;
 
     myForm = new MyForm();
     setTitle(UIDesignerBundle.message("title.edit.text"));
@@ -102,10 +101,10 @@ public final class StringEditorDialog extends DialogWrapper{
         final String value = myForm.myTfRbValue.getText();
         final PropertiesFile propFile = getPropertiesFile(descriptor);
         if (propFile != null && propFile.findPropertyByKey(descriptor.getKey()) == null) {
-          saveCreatedProperty(propFile, descriptor.getKey(), value);
+          saveCreatedProperty(propFile, descriptor.getKey(), value, myEditor);
         }
         else {
-          saveModifiedPropertyValue(myModule, descriptor, myLocale, value);
+          saveModifiedPropertyValue(myEditor.getModule(), descriptor, myLocale, value, myEditor.getPsiFile());
         }
       }
     }
@@ -113,14 +112,14 @@ public final class StringEditorDialog extends DialogWrapper{
   }
 
   private PropertiesFile getPropertiesFile(final StringDescriptor descriptor) {
-    final PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(myModule.getProject());
-    return manager.findPropertiesFile(myModule, descriptor.getDottedBundleName(), myLocale);
+    final PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(myEditor.getProject());
+    return manager.findPropertiesFile(myEditor.getModule(), descriptor.getDottedBundleName(), myLocale);
   }
 
   public static void saveModifiedPropertyValue(final Module module, final StringDescriptor descriptor,
-                                               final Locale locale, final String editedValue) {
+                                               final Locale locale, final String editedValue, final PsiFile formFile) {
     final PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(module.getProject());
-    PropertiesFile propFile = manager.findPropertiesFile(module, descriptor.getDottedBundleName(), locale);
+    final PropertiesFile propFile = manager.findPropertiesFile(module, descriptor.getDottedBundleName(), locale);
     if (propFile != null) {
       final Property propertyByKey = propFile.findPropertyByKey(descriptor.getKey());
       if (propertyByKey != null && !editedValue.equals(propertyByKey.getValue())) {
@@ -150,11 +149,12 @@ public final class StringEditorDialog extends DialogWrapper{
           module.getProject(),
           new Runnable() {
             public void run() {
+              UndoManager.getInstance(module.getProject()).markDocumentForUndo(formFile);
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
                 public void run() {
                   PsiDocumentManager.getInstance(module.getProject()).commitAllDocuments();
                   try {
-                    propertyByKey.setValue(editedValue);
+                    propFile.findPropertyByKey(descriptor.getKey()).setValue(editedValue);
                   }
                   catch (IncorrectOperationException e) {
                     LOG.error(e);
@@ -162,18 +162,21 @@ public final class StringEditorDialog extends DialogWrapper{
                 }
               });
             }
-          }, null, null);
+          }, UIDesignerBundle.message("command.update.property"), FormEditingUtil.getNextSaveUndoGroupId(module.getProject()));
       }
     }
   }
 
-  public static boolean saveCreatedProperty(final PropertiesFile bundle, final String name, final String value) {
+  public static boolean saveCreatedProperty(final PropertiesFile bundle, final String name, final String value,
+                                            final GuiEditor editor) {
     final Property property = PropertiesElementFactory.createProperty(bundle.getProject(), name, value);
     final ReadonlyStatusHandler.OperationStatus operationStatus =
       ReadonlyStatusHandler.getInstance(bundle.getProject()).ensureFilesWritable(bundle.getVirtualFile());
     if (operationStatus.hasReadonlyFiles()) {
       return false;
     }
+    final Object groupId = FormEditingUtil.getNextSaveUndoGroupId(bundle.getProject());
+    LOG.debug("StringEditorDialog.saveCreatedProperty(): group ID=" + groupId);
     CommandProcessor.getInstance().executeCommand(
       bundle.getProject(),
       new Runnable() {
@@ -189,7 +192,7 @@ public final class StringEditorDialog extends DialogWrapper{
             }
           });
         }
-      }, null, null);
+      }, UIDesignerBundle.message("command.create.property"), groupId);
     return true;
   }
 
@@ -267,7 +270,7 @@ public final class StringEditorDialog extends DialogWrapper{
           public void actionPerformed(final ActionEvent e) {
             if (!myDefaultBundleInitialized) {
               myDefaultBundleInitialized = true;
-              Set<String> bundleNames = FormEditingUtil.collectUsedBundleNames(myRootContainer);
+              Set<String> bundleNames = FormEditingUtil.collectUsedBundleNames(myEditor.getRootContainer());
               if (bundleNames.size() > 0) {
                 myTfBundleName.setText(bundleNames.toArray(new String[bundleNames.size()]) [0]);
               }
@@ -296,10 +299,10 @@ public final class StringEditorDialog extends DialogWrapper{
       myTfBundleName.addActionListener(
         new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
-            Project project = myModule.getProject();
+            Project project = myEditor.getProject();
             final String bundleNameText = myTfBundleName.getText().replace('/', '.');
-            PsiFile initialPropertiesFile = PropertiesUtil.getPropertiesFile(bundleNameText, myModule, myLocale);
-            final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesScope(myModule);
+            PsiFile initialPropertiesFile = PropertiesUtil.getPropertiesFile(bundleNameText, myEditor.getModule(), myLocale);
+            final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesScope(myEditor.getModule());
             TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,
                                                                                                          StdFileTypes.PROPERTIES, new TreeFileChooser.PsiFileFilter() {
               public boolean accept(PsiFile file) {
@@ -344,8 +347,8 @@ public final class StringEditorDialog extends DialogWrapper{
               );
               return;
             }
-            final PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(myModule.getProject());
-            final PropertiesFile bundle = manager.findPropertiesFile(myModule, bundleName.replace('/', '.'), myLocale);
+            final PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(myEditor.getProject());
+            final PropertiesFile bundle = manager.findPropertiesFile(myEditor.getModule(), bundleName.replace('/', '.'), myLocale);
             if(bundle == null){
               Messages.showErrorDialog(
                 UIDesignerBundle.message("error.bundle.does.not.exist", bundleName),
@@ -359,7 +362,8 @@ public final class StringEditorDialog extends DialogWrapper{
               myTfKey,
               bundle,
               bundleName,
-              myTfKey.getText() // key to preselect
+              myTfKey.getText(), // key to preselect
+              myEditor
             );
             dialog.show();
             if(!dialog.isOK()){
@@ -379,7 +383,7 @@ public final class StringEditorDialog extends DialogWrapper{
     }
 
     public void showStringDescriptor(@Nullable final StringDescriptor descriptor) {
-      myTfValue.setText(StringDescriptorManager.getInstance(myModule).resolve(myModule, descriptor, myLocale));
+      myTfValue.setText(StringDescriptorManager.getInstance(myEditor.getModule()).resolve(myEditor.getModule(), descriptor, myLocale));
       myNoI18nCheckbox.setSelected(descriptor != null && descriptor.isNoI18n());
     }
 
@@ -388,7 +392,7 @@ public final class StringEditorDialog extends DialogWrapper{
       LOG.assertTrue(key != null);
       myTfBundleName.setText(descriptor.getBundleName());
       myTfKey.setText(key);
-      myTfRbValue.setText(StringDescriptorManager.getInstance(myModule).resolve(myModule, descriptor, myLocale));
+      myTfRbValue.setText(StringDescriptorManager.getInstance(myEditor.getModule()).resolve(myEditor.getModule(), descriptor, myLocale));
     }
   }
 }

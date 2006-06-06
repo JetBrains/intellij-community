@@ -8,16 +8,16 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -142,9 +142,8 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
       final StringEditorDialog dialog = new StringEditorDialog(
         myTfWithButton.getTextField(),
         getValue(), // we have pass here "live" (modified) value
-        module,
         guiEditor.getStringDescriptorLocale(),
-        guiEditor.getRootContainer()
+        guiEditor
       );
       dialog.show();
       if(!dialog.isOK()){

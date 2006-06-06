@@ -17,6 +17,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.FormHighlightingPass;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -140,7 +141,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     return null;
   }
 
-  private static class MyBackgroundEditorHighlighter implements BackgroundEditorHighlighter {
+  private class MyBackgroundEditorHighlighter implements BackgroundEditorHighlighter {
     private HighlightingPass[] myPasses;
 
     public MyBackgroundEditorHighlighter(final GuiEditor editor) {
@@ -148,10 +149,12 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     }
 
     public HighlightingPass[] createPassesForEditor() {
+      PsiDocumentManager.getInstance(myEditor.getProject()).commitAllDocuments();
       return myPasses;
     }
 
     public HighlightingPass[] createPassesForVisibleArea() {
+      PsiDocumentManager.getInstance(myEditor.getProject()).commitAllDocuments();
       return myPasses;
     }
   }

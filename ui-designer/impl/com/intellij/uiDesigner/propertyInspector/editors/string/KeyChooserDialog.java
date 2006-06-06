@@ -2,12 +2,13 @@ package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.ui.Table;
 import gnu.trove.TObjectIntHashMap;
@@ -18,7 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.FontMetrics;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -43,6 +45,7 @@ public final class KeyChooserDialog extends DialogWrapper{
   private final Table myTable;
   @NonNls private static final String NULL = "null";
   private MyTableModel myModel;
+  private GuiEditor myEditor;
 
   /**
    * @param bundle resource bundle to be shown.
@@ -55,9 +58,11 @@ public final class KeyChooserDialog extends DialogWrapper{
     final Component parent,
     @NotNull final PropertiesFile bundle,
     @NotNull final String bundleName,
-    final String keyToPreselect
+    final String keyToPreselect,
+    final GuiEditor editor
   ) {
     super(parent, true);
+    myEditor = editor;
     myBundle = bundle;
 
     myBundleName = bundleName;
@@ -266,7 +271,7 @@ public final class KeyChooserDialog extends DialogWrapper{
       NewKeyDialog dlg = new NewKeyDialog(getWindow());
       dlg.show();
       if (dlg.isOK()) {
-        if (!StringEditorDialog.saveCreatedProperty(myBundle, dlg.getName(), dlg.getValue())) return;
+        if (!StringEditorDialog.saveCreatedProperty(myBundle, dlg.getName(), dlg.getValue(), myEditor)) return;
 
         fillPropertyList();
         myModel.update();

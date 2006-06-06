@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.core.SupportCode;
@@ -213,14 +214,18 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
     }
   }
 
-  public void refreshValue(RadComponent component) {
+  public boolean refreshValue(RadComponent component) {
     StringDescriptor descriptor = getValue(component);
+    if (descriptor.getValue() != null) return false;
+    String oldResolvedValue = descriptor.getResolvedValue();
     descriptor.setResolvedValue(null);
     try {
       setValueImpl(component, descriptor);
+      return !Comparing.equal(oldResolvedValue, descriptor.getResolvedValue());
     }
     catch (Exception e) {
       LOG.error(e);
+      return false;
     }
   }
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -344,6 +345,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
     return myFile;
   }
 
+  public PsiFile getPsiFile() {
+    return PsiManager.getInstance(getProject()).findFile(myFile);
+  }
+
   public boolean isEditable() {
     final Document document = FileDocumentManager.getInstance().getDocument(myFile);
     return document != null && document.isWritable();
@@ -523,6 +528,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   }
 
   private void saveToFile() {
+    LOG.debug("GuiEditor.saveToFile(): group ID=" + myNextSaveGroupId);
     CommandProcessor.getInstance().executeCommand(myModule.getProject(), new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -576,27 +582,38 @@ public final class GuiEditor extends JPanel implements DataProvider {
   }
 
   private void refreshProperties() {
+    final Ref<Boolean> anythingModified = new Ref<Boolean>();
     FormEditingUtil.iterate(myRootContainer, new FormEditingUtil.ComponentVisitor() {
       public boolean visit(final IComponent component) {
         final RadComponent radComponent = (RadComponent)component;
+        boolean componentModified = false;
         for(IProperty prop: component.getModifiedProperties()) {
           if (prop instanceof IntroStringProperty) {
             IntroStringProperty strProp = (IntroStringProperty) prop;
-            strProp.refreshValue(radComponent);
+            componentModified = strProp.refreshValue(radComponent) || componentModified;
           }
         }
 
         if (component instanceof RadContainer) {
-          ((RadContainer) component).updateBorder();
+          componentModified = ((RadContainer)component).updateBorder() || componentModified;
         }
 
         if (component.getParentContainer() instanceof RadTabbedPane) {
-          ((RadTabbedPane) component.getParentContainer()).refreshChildTitle(radComponent);
+          componentModified = ((RadTabbedPane) component.getParentContainer()).refreshChildTitle(radComponent) || componentModified;
+        }
+        if (componentModified) {
+          anythingModified.set(Boolean.TRUE);
         }
 
         return true;
       }
     });
+    if (!anythingModified.isNull()) {
+      refresh();
+      final UIDesignerToolWindowManager twm = UIDesignerToolWindowManager.getInstance(getProject());
+      twm.getComponentTree().repaint();
+      twm.getPropertyInspector().synchWithTree(true);
+    }
   }
 
   public MainProcessor getMainProcessor() {
@@ -983,6 +1000,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
     private void handleEvent(final PsiTreeChangeEvent event) {
       if (event.getParent() != null && event.getParent().getContainingFile() instanceof PropertiesFile) {
+        LOG.debug("Received PSI change event for properties file");
         myAlarm.cancelRequest(myRefreshPropertiesRequest);
         myAlarm.addRequest(myRefreshPropertiesRequest, 500, ModalityState.stateForComponent(GuiEditor.this));
       }

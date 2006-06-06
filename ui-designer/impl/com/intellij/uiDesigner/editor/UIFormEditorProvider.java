@@ -61,6 +61,7 @@ public final class UIFormEditorProvider implements FileEditorProvider, Applicati
       FileEditorPolicy.PLACE_BEFORE_DEFAULT_EDITOR : FileEditorPolicy.HIDE_DEFAULT_EDITOR;
   }
 
+  @NotNull
   public String getComponentName(){
     return "uiDesignerEditorProvider";
   }

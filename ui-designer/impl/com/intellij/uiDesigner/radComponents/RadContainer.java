@@ -385,15 +385,19 @@ public class RadContainer extends RadComponent implements IContainer {
   /**
    * Updates delegee's border
    */
-  public void updateBorder() {
+  public boolean updateBorder() {
     String title = null;
+    String oldTitle = null;
     if (myBorderTitle != null) {
+      oldTitle = myBorderTitle.getResolvedValue();
+      myBorderTitle.setResolvedValue(null);
       title = StringDescriptorManager.getInstance(getModule()).resolve(this, myBorderTitle);
     }
     Font font = (myBorderTitleFont != null) ? myBorderTitleFont.getResolvedFont(getDelegee().getFont()) : null;
     Color color = (myBorderTitleColor != null) ? myBorderTitleColor.getResolvedColor() : null;
     getDelegee().setBorder(myBorderType.createBorder(title, myBorderTitleJustification, myBorderTitlePosition,
                                                      font, color));
+    return myBorderTitle != null && !Comparing.equal(oldTitle, myBorderTitle.getResolvedValue());
   }
 
   public RadLayoutManager getLayoutManager() {
