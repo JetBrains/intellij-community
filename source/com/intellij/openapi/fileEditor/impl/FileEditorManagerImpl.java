@@ -11,14 +11,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.impl.VirtualFileDelegate;
-import com.intellij.openapi.editor.impl.EditorDelegate;
-import com.intellij.openapi.editor.impl.DocumentRange;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.VirtualFileDelegate;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -40,11 +34,13 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiTreeChangeAdapter;
+import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.codeInsight.TargetElementUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -686,32 +682,50 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
         final FileEditor[] editors = openFile(file, focusEditor);
         result.addAll(Arrays.asList(editors));
 
+        boolean navigated = false;
         for (final FileEditor editor : editors) {
-          if (!(editor instanceof TextEditor)) {
-            continue;
+          if (editor instanceof NavigatableFileEditor && getSelectedEditor(descriptor.getFile()) == editor) { // try to navigate opened editor
+            navigated = navigateAndSelectEditor((NavigatableFileEditor) editor,  descriptor);
+            if (navigated) break;
           }
+        }
 
-          final Editor _editor = ((TextEditor)editor).getEditor();
-
-          // Move myEditor caret to the specified location.
-          if (descriptor.getOffset() >= 0) {
-            _editor.getCaretModel().moveToOffset(Math.min(descriptor.getOffset(), _editor.getDocument().getTextLength()));
-            _editor.getSelectionModel().removeSelection();
-            _editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+        if (!navigated) {
+          for (final FileEditor editor : editors) {
+            if (editor instanceof NavigatableFileEditor && getSelectedEditor(descriptor.getFile()) != editor) { // try other editors
+              if (navigateAndSelectEditor((NavigatableFileEditor) editor, descriptor)) {
+                break;
+              }
+            }
           }
-          else if (descriptor.getLine() != -1 && descriptor.getColumn() != -1) {
-            final LogicalPosition pos = new LogicalPosition(descriptor.getLine(), descriptor.getColumn());
-            _editor.getCaretModel().moveToLogicalPosition(pos);
-            _editor.getSelectionModel().removeSelection();
-            _editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-          }
-
-          break;
         }
       }
     }, "", null);
 
     return result;
+  }
+
+  private boolean navigateAndSelectEditor(final NavigatableFileEditor editor, final OpenFileDescriptor descriptor) {
+    if (editor.canNavigateTo(descriptor)) {
+      setSelectedEditor(editor);
+      editor.navigateTo(descriptor);
+      return true;
+    }
+
+    return false;
+  }
+
+  private void setSelectedEditor(final FileEditor editor) {
+    final EditorWithProviderComposite composite = getEditorComposite(editor);
+    final FileEditor[] editors = composite.getEditors();
+    for (int i = 0; i < editors.length; i++) {
+      final FileEditor each = editors[i];
+      if (editor == each) {
+        composite.setSelectedEditor(i);
+        composite.getSelectedEditor().selectNotify();
+        break;
+      }
+    }
   }
 
   @NotNull
@@ -924,11 +938,11 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     mySplitters.readExternal(element);
   }
 
-  private EditorComposite getEditorComposite(final FileEditor editor) {
+  private EditorWithProviderComposite getEditorComposite(final FileEditor editor) {
     LOG.assertTrue(editor != null);
     final EditorWithProviderComposite[] editorsComposites = mySplitters.getEditorsComposites();
     for (int i = editorsComposites.length - 1; i >= 0; i--) {
-      final EditorComposite composite = editorsComposites[i];
+      final EditorWithProviderComposite composite = editorsComposites[i];
       final FileEditor[] editors = composite.getEditors();
       for (int j = editors.length - 1; j >= 0; j--) {
         final FileEditor _editor = editors[j];

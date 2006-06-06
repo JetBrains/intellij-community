@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -261,6 +262,13 @@ public final class TextEditorProvider implements FileEditorProvider, Application
 
     public FileEditorLocation getCurrentLocation() {
       return null;
+    }
+
+    public boolean canNavigateTo(@NotNull final Navigatable navigatable) {
+      return false;
+    }
+
+    public void navigateTo(@NotNull final Navigatable navigatable) {
     }
   }
 }

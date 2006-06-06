@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.pom.Navigatable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -183,4 +184,28 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
     return file.getFileType().getStructureViewBuilder(file, myProject);
   }
 
+  public boolean canNavigateTo(@NotNull final Navigatable navigatable) {
+    return (navigatable instanceof OpenFileDescriptor) && (((OpenFileDescriptor)navigatable).getOffset() >= 0 || (
+      ((OpenFileDescriptor)navigatable).getLine() != -1 && ((OpenFileDescriptor)navigatable).getColumn() != -1));
+  }
+
+  public void navigateTo(@NotNull final Navigatable navigatable) {
+    assert navigatable instanceof OpenFileDescriptor;
+
+    final OpenFileDescriptor descriptor = ((OpenFileDescriptor)navigatable);
+
+    final Editor _editor = getEditor();
+
+    if (descriptor.getOffset() >= 0) {
+      _editor.getCaretModel().moveToOffset(Math.min(descriptor.getOffset(), _editor.getDocument().getTextLength()));
+      _editor.getSelectionModel().removeSelection();
+      _editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+    }
+    else if (descriptor.getLine() != -1 && descriptor.getColumn() != -1) {
+      final LogicalPosition pos = new LogicalPosition(descriptor.getLine(), descriptor.getColumn());
+      _editor.getCaretModel().moveToLogicalPosition(pos);
+      _editor.getSelectionModel().removeSelection();
+      _editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+    }
+  }
 }

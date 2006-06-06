@@ -18,6 +18,6 @@ package com.intellij.openapi.fileEditor;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 
-public interface TextEditor extends FileEditor{
+public interface TextEditor extends NavigatableFileEditor {
   @NotNull Editor getEditor();
 }

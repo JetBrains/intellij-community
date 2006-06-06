@@ -29,7 +29,7 @@ import java.beans.PropertyChangeListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public interface FileEditor extends UserDataHolder {
+public interface  FileEditor extends UserDataHolder {
   /**
    * @see #isModified()
    */
