@@ -562,19 +562,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   protected Object getNameObject(DomElement element) {
-    if (myNameValueGetter == null) {
-      return null;
-    }
-    try {
-      return myNameValueGetter.invoke(element);
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
-    catch (InvocationTargetException e) {
-      LOG.error(e);
-    }
-    return null;
+    return myNameValueGetter == null ? null : DomReflectionUtil.invokeMethod(myNameValueGetter, element);
   }
 
   @Nullable
