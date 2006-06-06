@@ -84,17 +84,12 @@ public class AntTargetReference extends AntGenericReference {
   public IntentionAction[] getFixes() {
     List<IntentionAction> result = new ArrayList<IntentionAction>();
     final AntProject project = getElement().getAntProject();
-    final String targetName = getCanonicalText();
-    result.add(new AntCreateTargetAction(project, targetName));
+    result.add(new AntCreateTargetAction(this));
     for (PsiElement child : project.getChildren()) {
       if (child instanceof AntImport) {
-        final AntImport antImport = (AntImport)child;
-        AntFile importedFile = antImport.getFile();
+        AntFile importedFile = ((AntImport)child).getFile();
         if (importedFile != null) {
-          AntProject importedProject = importedFile.getAntProject();
-          if (importedProject != null) {
-            result.add(new AntCreateTargetAction(importedProject, targetName, antImport.getFileName()));
-          }
+          result.add(new AntCreateTargetAction(this, importedFile));
         }
       }
     }

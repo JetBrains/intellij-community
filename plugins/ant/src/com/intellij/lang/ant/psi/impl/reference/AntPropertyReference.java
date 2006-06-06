@@ -2,9 +2,13 @@ package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntProject;
+import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.impl.AntElementImpl;
+import com.intellij.lang.ant.quickfix.AntCreatePropertyAction;
 import com.intellij.lang.ant.resources.AntBundle;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -14,7 +18,9 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class AntPropertyReference extends AntGenericReference {
@@ -76,7 +82,18 @@ public class AntPropertyReference extends AntGenericReference {
 
   @NotNull
   public IntentionAction[] getFixes() {
-    return super.getFixes();
+    List<IntentionAction> result = new ArrayList<IntentionAction>();
+    final AntProject project = getElement().getAntProject();
+    result.add(new AntCreatePropertyAction(this));
+    for (PsiElement child : project.getChildren()) {
+      if (child instanceof AntProperty) {
+        PropertiesFile propFile = ((AntProperty)child).getPropertiesFile();
+        if (propFile != null) {
+          result.add(new AntCreatePropertyAction(this, propFile));
+        }
+      }
+    }
+    return result.toArray(new IntentionAction[result.size()]);
   }
 
   private static PsiElement[] getVariants(AntStructuredElement element) {
