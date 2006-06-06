@@ -126,8 +126,9 @@ public class FileReferenceSet {
 
   protected void reparse(String str) {
     final List<FileReference> referencesList = new ArrayList<FileReference>();
+    // skip white space
     int currentSlash = -1;
-    while (currentSlash + 1 < str.length() && str.charAt(currentSlash + 1) == ' ') currentSlash++;
+    while (currentSlash + 1 < str.length() && Character.isWhitespace(str.charAt(currentSlash + 1))) currentSlash++;
     if (currentSlash + 1 < str.length() && str.charAt(currentSlash + 1) == SEPARATOR) currentSlash++;
     int index = 0;
 
