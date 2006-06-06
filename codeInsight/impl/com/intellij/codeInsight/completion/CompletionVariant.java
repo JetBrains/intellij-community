@@ -16,6 +16,7 @@ import org.apache.oro.text.regex.PatternMatcher;
 import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.*;
@@ -179,6 +180,7 @@ public class CompletionVariant {
     }
   }
 
+  @Nullable
   private LookupItem addLookupItem(Set<LookupItem> set, CompletionVariantItem element, @NotNull Object completion, String prefix){
     LookupItem ret = LookupItemUtil.objectToLookupItem(completion);
     if(ret == null) return null;

@@ -5,8 +5,10 @@ package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,37 +25,6 @@ public class DomUtil {
 
   public static Class extractParameterClassFromGenericType(Type type) {
     return getGenericValueParameter(type);
-
-    /*if (type instanceof ParameterizedType) {
-      ParameterizedType parameterizedType = (ParameterizedType)type;
-      final Type rawType = parameterizedType.getRawType();
-
-      if (isGenericValue(rawType)) {
-        final Type[] arguments = parameterizedType.getActualTypeArguments();
-        if (arguments.length == 1 && arguments[0] instanceof Class) {
-          return (Class)arguments[0];
-        }
-      } else {
-        for (final Type t : ((Class)rawType).getGenericInterfaces()) {
-          final Class aClass = extractParameterClassFromGenericType(t);
-          if (aClass != null) {
-            return aClass;
-          }
-        }
-      }
-    } else if (type instanceof Class) {
-      for (final Type t : ((Class)type).getGenericInterfaces()) {
-        final Class aClass = extractParameterClassFromGenericType(t);
-        if (aClass != null) {
-          return aClass;
-        }
-      }
-    }
-    return null;*/
-  }
-
-  private static boolean isGenericValue(final Type rawType) {
-    return rawType == GenericDomValue.class || rawType == GenericAttributeValue.class;
   }
 
   public static boolean isGenericValueType(Type type) {
@@ -137,13 +108,27 @@ public class DomUtil {
     return DomReflectionUtil.substituteGenericType(GenericValue.class.getTypeParameters()[0], type);
   }
 
-  public static XmlElement getValueElement(DomElement domElement) {
-    if (domElement instanceof GenericAttributeValue) {
-      return ((GenericAttributeValue)domElement).getXmlAttributeValue();
-    } else if (domElement instanceof GenericDomValue) {
-      return domElement.getXmlTag().getValue().getTextElements()[0];
+  @Nullable
+  public static XmlElement getValueElement(GenericDomValue domValue) {
+    if (domValue instanceof GenericAttributeValue) {
+      return ((GenericAttributeValue)domValue).getXmlAttributeValue();
     } else {
-      return domElement.getXmlTag();
+      return domValue.getXmlTag();
     }
   }
+
+  @NotNull
+  public static TextRange getValueRange(GenericDomValue domValue) {
+    if (domValue instanceof GenericAttributeValue) {
+      return new TextRange(1, ((GenericAttributeValue)domValue).getXmlAttributeValue().getTextLength() - 1);
+    } else {
+      final XmlTag tag = domValue.getXmlTag();
+      assert tag != null;
+      XmlTagValue tagValue = tag.getValue();
+      final TextRange valueRange = tagValue.getTextRange();
+      final int tagOffset = tag.getTextOffset();
+      return new TextRange(valueRange.getStartOffset() - tagOffset, valueRange.getEndOffset() - tagOffset);
+    }
+  }
+
 }

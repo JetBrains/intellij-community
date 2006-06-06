@@ -21,7 +21,6 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
            element instanceof XmlEntityDecl ||
            element instanceof XmlTag ||
            element instanceof XmlAttributeValue ||
-           element instanceof XmlText ||
            (PsiUtil.isInJspFile(element) && element instanceof PsiFile);
   }
 
@@ -35,11 +34,8 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
       return LangBundle.message("xml.terms.attribute.value");
     } else if (element instanceof XmlEntityDecl) {
       return LangBundle.message("xml.terms.entity");
-    } else if (element instanceof XmlText) {
-      return "";
     }
-
-    return null;
+    throw new IllegalArgumentException("Cannot get type for " + element);
   }
 
   public String getHelpId(PsiElement element) {

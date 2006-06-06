@@ -7,16 +7,15 @@ import com.intellij.javaee.web.PsiReferenceConverter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.XmlReference;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.ArrayUtil;
@@ -38,7 +37,11 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement psiElement) {
-    if (!(psiElement instanceof XmlTag || psiElement instanceof XmlAttributeValue)) return GenericReference.EMPTY_ARRAY;
+    
+    if (!(psiElement instanceof XmlTag || psiElement instanceof XmlAttributeValue)) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+
     PsiElement originalElement = psiElement.getUserData(PsiUtil.ORIGINAL_KEY);
     if (originalElement != null) {
       psiElement = originalElement;
@@ -46,72 +49,60 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
 
     final XmlTag tag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
 
-    final DomElement domElement = DomManager.getDomManager(psiElement.getManager().getProject()).getDomElement(tag);
-    if (domElement == null) return GenericReference.EMPTY_ARRAY;
-
-    PsiReference[] reference = PsiReference.EMPTY_ARRAY;
-
-
+    DomElement domElement = DomManager.getDomManager(psiElement.getManager().getProject()).getDomElement(tag);
+    if (domElement == null) {
+      return PsiReference.EMPTY_ARRAY;
+    }
     if (psiElement instanceof XmlAttributeValue) {
-      final XmlAttributeValue value = (XmlAttributeValue)psiElement;
-      final PsiElement parent = value.getParent();
-      if (parent instanceof XmlAttribute) {
-        final String name = ((XmlAttribute)parent).getLocalName();
+      final XmlAttribute parent = (XmlAttribute)psiElement.getParent();
+        final String name = parent.getLocalName();
         final DomAttributeChildDescription childDescription = domElement.getGenericInfo().getAttributeChildDescription(name);
         if (childDescription != null) {
-          reference = createReference(childDescription.getValues(domElement).get(0));
-        }
+          domElement = childDescription.getValues(domElement).get(0);
       }
     }
-    else {
-      reference = createReference(domElement);
+
+    if (!(domElement instanceof GenericDomValue)) {
+      return PsiReference.EMPTY_ARRAY;
     }
 
-    DomElement parent = (domElement instanceof GenericDomValue) ? domElement.getParent() : domElement;
+    GenericDomValue domValue = (GenericDomValue)domElement;
+
+    PsiReference[] references = createReference(domValue, psiElement);
+
+    // creating "declaration" reference
+    DomElement parent = domElement.getParent();
     GenericDomValue nameElement = parent.getGenericInfo().getNameDomElement(parent);
     if (nameElement != null && nameElement.getValue() instanceof String) {
       final XmlElement valueElement = DomUtil.getValueElement(nameElement);
       if (valueElement == psiElement || nameElement.getXmlTag() == psiElement) {
         PsiReference selfReference = XmlReference.createSelfReference((XmlElement)psiElement, valueElement);
-//      return new PsiReference[] {selfReference};
-        reference = ArrayUtil.append(reference, selfReference);
+        references = ArrayUtil.append(references, selfReference);
       }
     }
 
-    return reference;
+    return references;
   }
 
   @NotNull
-  private PsiReference[] createReference(DomElement element) {
-    if (!(element instanceof GenericDomValue)) return PsiReference.EMPTY_ARRAY;
+  private PsiReference[] createReference(GenericDomValue domValue, PsiElement psiElement) {
 
-    PsiElement psiElement;
-    if (element instanceof GenericAttributeValue) {
-      psiElement = ((GenericAttributeValue)element).getXmlAttributeValue();
-      if (psiElement == null) return PsiReference.EMPTY_ARRAY;
-    }
-    else {
-      if (element.getXmlTag().getValue().getTextElements().length == 0) return PsiReference.EMPTY_ARRAY;
-      psiElement = element.getXmlElement();
-    }
-
-    Converter converter = ((GenericDomValue)element).getConverter();
+    Converter converter = domValue.getConverter();
     if (converter instanceof PsiReferenceConverter) {
       return ((PsiReferenceConverter)converter).createReferences(psiElement, false);
     }
 
-    GenericDomValue domElement = (GenericDomValue)element;
-    final Class clazz = DomUtil.getGenericValueParameter(domElement.getDomElementType());
+    final Class clazz = DomUtil.getGenericValueParameter(domValue.getDomElementType());
     if (PsiType.class.isAssignableFrom(clazz)) {
-      return new PsiReference[]{new PsiTypeReference(this, (GenericDomValue<PsiType>)domElement)};
+      return new PsiReference[]{new PsiTypeReference(this, (GenericDomValue<PsiType>)domValue)};
     }
     if (PsiClass.class.isAssignableFrom(clazz)) {
-      JavaClassReferenceProvider provider = new JavaClassReferenceProvider();
+      ExtendClass extendClass = ((DomElement)domValue).getAnnotation(ExtendClass.class);
+      JavaClassReferenceProvider provider = extendClass == null ? new JavaClassReferenceProvider() : new JavaClassReferenceProvider(extendClass.value());
       return provider.getReferencesByElement(psiElement);
-//      return new PsiReference[] {new PsiClassReference(this, (GenericDomValue<PsiClass>)domElement)};
     }
     if (Integer.class.isAssignableFrom(clazz)) {
-      return new PsiReference[]{new GenericDomValueReference(this, domElement) {
+      return new PsiReference[]{new GenericDomValueReference(this, domValue) {
         public Object[] getVariants() {
           return new Object[]{"239", "42"};
         }
@@ -125,7 +116,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
       return provider.getReferencesByElement(psiElement);
     }
 
-    return new PsiReference[]{new GenericDomValueReference(this, domElement)};
+    return new PsiReference[]{new GenericDomValueReference(this, domValue)};
   }
 
 

@@ -545,7 +545,14 @@ public class GenericInfoImpl implements DomGenericInfo {
   @Nullable
   public XmlElement getNameElement(DomElement element) {
     Object o = getNameObject(element);
-    return o instanceof DomElement ? DomUtil.getValueElement((DomElement)o) : null;
+    if (o instanceof GenericAttributeValue) {
+      return ((GenericAttributeValue)o).getXmlAttributeValue();
+    } else if (o instanceof DomElement) {
+      return ((DomElement)o).getXmlTag();
+    }
+    else {
+      return null;
+    }
   }
 
   @Nullable

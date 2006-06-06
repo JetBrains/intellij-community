@@ -27,24 +27,18 @@ import java.util.List;
  */
 public class GenericDomValueReference<T> extends GenericReference {
   private final GenericDomValue<T> myGenericValue;
-  private final XmlElement myContextElement;
+  private final XmlTag myXmlTag;
   private final TextRange myTextRange;
   private final XmlElement myValueElement;
 
-  public GenericDomValueReference(final PsiReferenceProvider provider, GenericDomValue<T> xmlValue) {
+  public GenericDomValueReference(final PsiReferenceProvider provider, GenericDomValue<T> domValue) {
     super(provider);
-    myGenericValue = xmlValue;
-    final XmlTag tag = xmlValue.getXmlTag();
-    assert tag != null;
-    myValueElement = DomUtil.getValueElement(xmlValue);
-    myContextElement = xmlValue instanceof GenericAttributeValue ? myValueElement : tag;
-    final String text = myValueElement.getText();
-    TextRange range = getTextRange(text);
-    if (xmlValue instanceof GenericAttributeValue) {
-      range = new TextRange(range.getStartOffset() + (text.startsWith("\"") ? 1 : 0),
-                            range.getEndOffset() - (text.endsWith("\"") ? 1 : 0));
-    }
-    myTextRange = range.shiftRight(myValueElement.getTextRange().getStartOffset() - myContextElement.getTextRange().getStartOffset());
+    myGenericValue = domValue;
+    myXmlTag = domValue.getXmlTag();
+    assert myXmlTag != null;
+    myValueElement = DomUtil.getValueElement(domValue);
+    assert myValueElement != null;
+    myTextRange = createTextRange();
   }
 
   protected final PsiManager getPsiManager() {
@@ -55,10 +49,8 @@ public class GenericDomValueReference<T> extends GenericReference {
     return myValueElement;
   }
 
-  protected TextRange getTextRange(String text) {
-    final String trimmedText = text.trim();
-    final int inside = text.indexOf(trimmedText);
-    return new TextRange(inside, inside + trimmedText.length());
+  protected TextRange createTextRange() {
+    return DomUtil.getValueRange(myGenericValue);
   }
 
   protected final GenericDomValue<T> getGenericValue() {
@@ -66,7 +58,7 @@ public class GenericDomValueReference<T> extends GenericReference {
   }
 
   public XmlElement getContext() {
-    return myContextElement;
+    return myXmlTag;
   }
 
   public PsiReference getContextReference() {
@@ -115,7 +107,7 @@ public class GenericDomValueReference<T> extends GenericReference {
   }
 
   public XmlElement getElement() {
-    return myContextElement;
+    return myValueElement;
   }
 
   public TextRange getRangeInElement() {
@@ -125,8 +117,7 @@ public class GenericDomValueReference<T> extends GenericReference {
   public String getCanonicalText() {
     String value = myGenericValue.getStringValue();
     if (value != null) {
-      final TextRange textRange = getTextRange(value);
-      return value.substring(textRange.getStartOffset(), textRange.getEndOffset());
+      return value;
     }
     return J2EEBundle.message("unknown.j2ee.reference.canonical.text");
   }

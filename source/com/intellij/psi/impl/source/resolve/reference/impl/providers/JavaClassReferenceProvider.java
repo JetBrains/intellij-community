@@ -489,8 +489,14 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
         Object value = new LookupValueWithUIHint() {
 
           public String getTypeHint() {
-            PsiElement element = clazz.getParent();
-            return null;
+            String name = clazz.getQualifiedName();
+              int pos = name.lastIndexOf('.');
+              if (pos == -1) {
+                return "";
+              }
+              else {
+                return "(" + name.substring(0, pos) + ")";
+              }
           }
 
           public Color getColorHint() {

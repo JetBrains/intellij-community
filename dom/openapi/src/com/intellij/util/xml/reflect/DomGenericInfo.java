@@ -52,6 +52,11 @@ public interface DomGenericInfo {
    */
   boolean isTagValueElement();
 
+  /**
+   *
+   * @param element
+   * @return {@link com.intellij.psi.xml.XmlAttributeValue} or {@link com.intellij.psi.xml.XmlTag}
+   */
   @Nullable
   XmlElement getNameElement(DomElement element);
 
