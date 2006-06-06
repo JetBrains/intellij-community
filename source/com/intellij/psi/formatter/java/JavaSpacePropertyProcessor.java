@@ -390,10 +390,14 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     if (myRole2 == ChildRole.FINALLY_KEYWORD) {
       processOnNewLineCondition(mySettings.FINALLY_ON_NEW_LINE);
     }
-    else if (myRole2 == ChildRole.FINALLY_BLOCK || myRole2 == ChildRole.TRY_BLOCK) {
-      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_FINALLY_LBRACE, mySettings.BRACE_STYLE, null,
+    else if (myRole2 == ChildRole.TRY_BLOCK) {
+      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_TRY_LBRACE, mySettings.BRACE_STYLE, null,
                                       mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
     }
+    else if (myRole2 == ChildRole.FINALLY_BLOCK) {
+      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_FINALLY_LBRACE, mySettings.BRACE_STYLE, null,
+                                      mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
+    }    
     else if (myRole2 == ChildRole.CATCH_SECTION) {
       processOnNewLineCondition(mySettings.CATCH_ON_NEW_LINE);
     }
