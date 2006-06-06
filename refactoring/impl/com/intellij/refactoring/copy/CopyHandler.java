@@ -130,7 +130,7 @@ public class CopyHandler {
     Project project = elements[0].getProject();
 
     if (type == CLASS) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.copyClass");      
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.copyClass");
       PsiClass aClass = (PsiClass)elements[0];
       if (defaultTargetDirectory == null) {
         final PsiFile containingFile = aClass.getContainingFile();
@@ -260,10 +260,28 @@ public class CopyHandler {
               PsiReference[] refs = psiManager.getSearchHelper().findReferences(psiElement, new LocalSearchScope(newClass), true);
 
               for (final PsiReference ref : refs) {
-                if (!ref.getElement().isValid()) continue;
-                ref.bindToElement(newClass);
-              }
+                PsiElement element = ref.getElement();
+                if (!element.isValid()) continue;
+                element = ref.bindToElement(newClass);
+                final PsiElement parent = element.getParent();
+                if (parent instanceof PsiReferenceExpression && element.equals(((PsiReferenceExpression)parent).getQualifierExpression())) {
+                  final PsiReferenceExpression refExpr = ((PsiReferenceExpression)parent);
+                  final PsiElement resolved = refExpr.resolve();
+                  final PsiReferenceExpression copy;
+                  if (parent.getParent() instanceof PsiMethodCallExpression){
+                    copy = ((PsiMethodCallExpression)parent.getParent().copy()).getMethodExpression();
+                  } else {
+                    copy = (PsiReferenceExpression)refExpr.copy();
+                  }
 
+                  final PsiExpression qualifier = copy.getQualifierExpression();
+                  assert qualifier != null;
+                  qualifier.delete();
+                  if (copy.resolve() == resolved) {
+                    element.delete();
+                  }
+                }
+              }
 
               updateSelectionInActiveProjectView(newClass, project, selectInActivePanel);
               EditorHelper.openInEditor(newClass);
