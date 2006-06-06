@@ -1,10 +1,7 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.ant.psi.AntCall;
-import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.AntTarget;
+import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.quickfix.AntCreateTargetAction;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.util.TextRange;
@@ -17,6 +14,9 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class AntTargetReference extends AntGenericReference {
 
@@ -82,7 +82,23 @@ public class AntTargetReference extends AntGenericReference {
 
   @NotNull
   public IntentionAction[] getFixes() {
-    return new IntentionAction[]{new AntCreateTargetAction(getElement().getAntProject(), getCanonicalText())};
+    List<IntentionAction> result = new ArrayList<IntentionAction>();
+    final AntProject project = getElement().getAntProject();
+    final String targetName = getCanonicalText();
+    result.add(new AntCreateTargetAction(project, targetName));
+    for (PsiElement child : project.getChildren()) {
+      if (child instanceof AntImport) {
+        final AntImport antImport = (AntImport)child;
+        AntFile importedFile = antImport.getFile();
+        if (importedFile != null) {
+          AntProject importedProject = importedFile.getAntProject();
+          if (importedProject != null) {
+            result.add(new AntCreateTargetAction(importedProject, targetName, antImport.getFileName()));
+          }
+        }
+      }
+    }
+    return result.toArray(new IntentionAction[result.size()]);
   }
 
   private int getElementStartOffset() {

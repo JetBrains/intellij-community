@@ -4,8 +4,8 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -16,10 +16,16 @@ public class AntCreateTargetAction extends BaseIntentionAction {
 
   private final AntProject myAntProject;
   private final String myName;
+  private final String myFile;
 
   public AntCreateTargetAction(final AntProject antProject, final String name) {
+    this(antProject, name, null);
+  }
+
+  public AntCreateTargetAction(final AntProject antProject, final String name, final String file) {
     myAntProject = antProject;
     myName = name;
+    myFile = file;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -37,6 +43,10 @@ public class AntCreateTargetAction extends BaseIntentionAction {
       builder.append(" '");
       builder.append(myName);
       builder.append('\'');
+      if (myFile != null) {
+        builder.append(' ');
+        builder.append(AntBundle.getMessage("text.in.the.file", myFile));
+      }
       return builder.toString();
     }
     finally {
@@ -53,7 +63,6 @@ public class AntCreateTargetAction extends BaseIntentionAction {
     XmlTag targetTag = projectTag.createChildTag("target", projectTag.getNamespace(), null, false);
     targetTag.setAttribute("name", myName);
     targetTag = (XmlTag)projectTag.add(targetTag);
-    editor.getCaretModel().moveToOffset(targetTag.getTextOffset() + targetTag.getTextLength() - 2);
-    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    ((Navigatable)targetTag).navigate(true);
   }
 }
