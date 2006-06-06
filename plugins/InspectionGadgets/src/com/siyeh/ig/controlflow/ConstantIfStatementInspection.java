@@ -20,9 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -68,6 +66,7 @@ public class ConstantIfStatementInspection extends StatementInspection {
 
     private static class ConstantIfStatementFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "constant.conditional.expression.simplify.quickfix");
@@ -96,7 +95,8 @@ public class ConstantIfStatementInspection extends StatementInspection {
         private static void replaceStatementWithUnwrapping(
                 PsiStatement branch, PsiIfStatement statement)
                 throws IncorrectOperationException {
-            if (branch instanceof PsiBlockStatement) {
+            if (branch instanceof PsiBlockStatement && 
+                    !(statement.getParent() instanceof PsiIfStatement)) {
                 final PsiCodeBlock parentBlock =
                         PsiTreeUtil.getParentOfType(branch, PsiCodeBlock.class);
                 if (parentBlock == null) {
@@ -118,7 +118,7 @@ public class ConstantIfStatementInspection extends StatementInspection {
                         assert containingElement != null;
                         final PsiElement added =
                                 containingElement.addRangeBefore(children[1],
-                                        children[children .length - 2],
+                                        children[children.length - 2],
                                         statement);
                         final PsiManager manager = statement.getManager();
                         final Project project = manager.getProject();
