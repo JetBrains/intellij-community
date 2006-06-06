@@ -15,9 +15,8 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 
 /**
@@ -84,19 +83,15 @@ public class AutoPopupController implements ProjectComponent {
       final Runnable request = new Runnable(){
         public void run(){
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              CommandProcessor.getInstance().executeCommand(
-                  myProject, new Runnable() {
-                  public void run(){
-                    new DotAutoLookupHandler().invoke(myProject, editor, file);
-                  }
-                },
-                "",
-                null
-              );
-            }
-          });
+          CommandProcessor.getInstance().executeCommand(
+              myProject, new Runnable() {
+              public void run(){
+                new DotAutoLookupHandler().invoke(myProject, editor, file);
+              }
+            },
+            "",
+            null
+          );
         }
       };
       // invoke later prevents cancelling request by keyPressed from the same action
@@ -118,15 +113,11 @@ public class AutoPopupController implements ProjectComponent {
       final Runnable request = new Runnable(){
         public void run(){
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
             public void run() {
-
-              CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-                public void run() {
-                  new XmlAutoLookupHandler().invoke(myProject, editor, file);
-                }
-              }, null, null);
-            }});
+              new XmlAutoLookupHandler().invoke(myProject, editor, file);
+            }
+          }, null, null);
         }
       };
       // invoke later prevents cancelling request by keyPressed from the same action

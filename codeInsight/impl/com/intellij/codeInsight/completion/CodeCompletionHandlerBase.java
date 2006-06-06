@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -292,15 +293,20 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  protected LookupData getLookupData(CompletionContext context) {
-    final PsiFile file = context.file;
+  protected LookupData getLookupData(final CompletionContext _context) {
+    final PsiFile file = _context.file;
     final PsiManager manager = file.getManager();
-    final PsiElement lastElement = file.findElementAt(context.startOffset - 1);
+    final PsiElement lastElement = file.findElementAt(_context.startOffset - 1);
 
-    final Pair<CompletionContext, PsiElement> insertedInfo = insertDummyIdentifier(context);
+    final Pair<CompletionContext, PsiElement> insertedInfo = ApplicationManager.getApplication().runWriteAction(
+      new Computable<Pair<CompletionContext, PsiElement>>() {
+        public Pair<CompletionContext, PsiElement> compute() {
+          return insertDummyIdentifier(_context);
+        }
+      });
+
     PsiElement insertedElement = insertedInfo.getSecond();
-    CompletionContext newContext = insertedInfo.getFirst();
-    context = newContext;
+    final CompletionContext context = insertedInfo.getFirst();
 
     CompletionData completionData = getCompletionData(context, lastElement);
 
