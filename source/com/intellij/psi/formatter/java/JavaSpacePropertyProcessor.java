@@ -11,7 +11,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -64,7 +63,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
             myResult = null;
           }
           else if (!shouldKeepSpace(myParent)){
-            myResult = Spacing.createSpacing(0, 0, 0, true, 0);
+            myResult = Spacing.createSpacing(0, 0, 0, true, mySettings.KEEP_BLANK_LINES_IN_CODE);
           }
         }
       }
@@ -97,9 +96,8 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     }
   }
 
-  private boolean isWhiteSpace(final ASTNode treePrev) {
-    if (treePrev == null) return false;
-    return treePrev.getElementType() == ElementType.WHITE_SPACE || treePrev.getTextLength() == 0;
+  private static boolean isWhiteSpace(final ASTNode treePrev) {
+    return treePrev != null && (treePrev.getElementType() == ElementType.WHITE_SPACE || treePrev.getTextLength() == 0);
   }
 
   public Spacing getResult() {
@@ -599,7 +597,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     }
   }
 
-  private ASTNode getPrevElementType(final ASTNode child) {
+  private static ASTNode getPrevElementType(final ASTNode child) {
     return FormatterUtil.getLeafNonSpaceBefore(child);
   }
 
@@ -892,7 +890,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
   }
 
 
-  private ASTNode findFrom(ASTNode current, final IElementType expected, boolean forward) {
+  private static ASTNode findFrom(ASTNode current, final IElementType expected, boolean forward) {
     while (current != null) {
       if (current.getElementType() == expected) return current;
       current = forward ? current.getTreeNext() : current.getTreePrev();
