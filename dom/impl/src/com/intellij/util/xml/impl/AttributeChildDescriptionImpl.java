@@ -3,7 +3,6 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nullable;
@@ -52,16 +51,10 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   }
 
   public GenericAttributeValue getDomAttributeValue(DomElement parent) {
-    try {
-      return (GenericAttributeValue)DomManagerImpl.getDomInvocationHandler(ModelMergerUtil.getImplementation(parent, DomElement.class)).doInvoke(myGetterMethod);
-    }
-    catch (ProcessCanceledException e) {
-      throw e; 
-    }
-    catch (Throwable e) {
-      throw new RuntimeException(e);
-    }
-  }
+    final DomElement domElement = ModelMergerUtil.getImplementation(parent, DomElement.class);
+    final DomInvocationHandler invocationHandler = DomManagerImpl.getDomInvocationHandler(domElement);
+    return (GenericAttributeValue)DomReflectionUtil.invokeMethod(myGetterMethod, invocationHandler);
+  } 
 
   public boolean equals(final Object o) {
     if (this == o) return true;

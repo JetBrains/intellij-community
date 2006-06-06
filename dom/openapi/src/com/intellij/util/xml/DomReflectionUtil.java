@@ -21,6 +21,10 @@ public class DomReflectionUtil {
   private DomReflectionUtil() {
   }
 
+  public static Object invokeMethod(final JavaMethodSignature method, final Object object, final Object... args) {
+    return invokeMethod(method.findMethod(object.getClass()), object, args);
+  }
+
   public static Object invokeMethod(final Method method, final Object object, final Object... args) {
     try {
       return method.invoke(object, args);
