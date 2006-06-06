@@ -10,6 +10,9 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class AntTargetListReferenceProvider extends AntTargetReferenceProviderBase {
 
   @NotNull
@@ -30,13 +33,20 @@ public class AntTargetListReferenceProvider extends AntTargetReferenceProviderBa
     if (length == 0) {
       return PsiReference.EMPTY_ARRAY;
     }
-    PsiReference[] result = new PsiReference[length];
-    for (int i = 0; i < result.length; i++) {
-      final String t = targets[i].trim();
-      result[i] = new AntTargetReference(this, target, t, new TextRange(offsetInPosition, offsetInPosition + t.length()), attr);
+    List<PsiReference> result = new ArrayList<PsiReference>();
+    for (final String t : targets) {
+      int i = 0;
+      for (; i < t.length(); ++i) {
+        if (!Character.isWhitespace(t.charAt(i))) break;
+      }
+      if (i < t.length()) {
+        final String targetName = t.substring(i).trim();
+        result.add(new AntTargetReference(this, target, targetName,
+                                          new TextRange(offsetInPosition + i, offsetInPosition + i + targetName.length()), attr));
+      }
       offsetInPosition += t.length() + 1;
     }
-    return result;
+    return (result.size() > 0) ? result.toArray(new PsiReference[result.size()]) : PsiReference.EMPTY_ARRAY;
   }
 
   @NotNull
