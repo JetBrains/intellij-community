@@ -40,7 +40,6 @@ public class RunResult<T> extends Result<T> {
     return this;
   }
 
-  @Nullable
   public T getResultObject() {
     return myResult;
   }
