@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -383,24 +384,43 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
   }
 
   public void processCellResized(RadContainer container, final boolean isRow, final int cell, final int newSize) {
-    for(RadComponent component: container.getComponents()) {
-      GridConstraints c = component.getConstraints();
-      if (c.getCell(isRow) == cell && c.getSpan(isRow) == 1) {
-        Dimension preferredSize = new Dimension(c.myPreferredSize);
-        if (isRow) {
-          preferredSize.height = newSize;
-          if (preferredSize.width == -1) {
-            preferredSize.width = component.getDelegee().getPreferredSize().width;
+    int cellCount = isRow ? container.getGridRowCount() : container.getGridColumnCount();
+    if (container.getParent().isXY()  && cell == cellCount-1) {
+      processRootContainerResize(container, isRow, newSize);
+    }
+    else {
+      for(RadComponent component: container.getComponents()) {
+        GridConstraints c = component.getConstraints();
+        if (c.getCell(isRow) == cell && c.getSpan(isRow) == 1) {
+          Dimension preferredSize = new Dimension(c.myPreferredSize);
+          if (isRow) {
+            preferredSize.height = newSize;
+            if (preferredSize.width == -1) {
+              preferredSize.width = component.getDelegee().getPreferredSize().width;
+            }
           }
-        }
-        else {
-          preferredSize.width = newSize;
-          if (preferredSize.height == -1) {
-            preferredSize.height = component.getDelegee().getPreferredSize().height;
+          else {
+            preferredSize.width = newSize;
+            if (preferredSize.height == -1) {
+              preferredSize.height = component.getDelegee().getPreferredSize().height;
+            }
           }
+          PreferredSizeProperty.getInstance(container.getProject()).setValueEx(component, preferredSize);
         }
-        PreferredSizeProperty.getInstance(container.getProject()).setValueEx(component, preferredSize);
       }
     }
+  }
+
+  private static void processRootContainerResize(final RadContainer container, final boolean isRow, final int newSize) {
+    final JComponent parentDelegee = container.getDelegee();
+    Dimension containerSize = parentDelegee.getSize();
+    if (isRow) {
+      containerSize.height = newSize + parentDelegee.getBounds().y;
+    }
+    else {
+      containerSize.width = newSize + parentDelegee.getBounds().x;
+    }
+    parentDelegee.setSize(containerSize);
+    parentDelegee.revalidate();
   }
 }

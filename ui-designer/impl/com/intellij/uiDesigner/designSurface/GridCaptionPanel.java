@@ -347,21 +347,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         return;
       }
 
-      if (mySelectedContainer.getParent().isXY()  && myResizeLine == coords.length) {
-        final JComponent parentDelegee = mySelectedContainer.getDelegee();
-        Dimension containerSize = parentDelegee.getSize();
-        if (myIsRow) {
-          containerSize.height = newCoord;
-        }
-        else {
-          containerSize.width = newCoord;
-        }
-        parentDelegee.setSize(containerSize);
-        parentDelegee.revalidate();
-      }
-      else {
-        mySelectedContainer.getGridLayoutManager().processCellResized(mySelectedContainer, myIsRow, myResizeLine-1, newSize);
-      }
+      mySelectedContainer.getGridLayoutManager().processCellResized(mySelectedContainer, myIsRow, myResizeLine-1, newSize);
 
       myEditor.refreshAndSave(false);
     }
