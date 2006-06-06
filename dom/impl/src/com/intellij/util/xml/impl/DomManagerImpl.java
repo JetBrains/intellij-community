@@ -483,9 +483,12 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
     public boolean isAcceptable(Object element, PsiElement context) {
       if (element instanceof XmlElement) {
-        final DomRootInvocationHandler handler = getDomFileElement((XmlFile)((PsiElement)element).getContainingFile());
-        if (handler != null && myRootClass.isAssignableFrom(DomReflectionUtil.getRawType(handler.getDomElementType()))) {
-          return true;
+        final PsiFile psiFile = ((PsiElement)element).getContainingFile();
+        if (psiFile instanceof XmlFile) {
+          final DomRootInvocationHandler handler = getDomFileElement((XmlFile)psiFile);
+          if (handler != null && myRootClass.isAssignableFrom(DomReflectionUtil.getRawType(handler.getDomElementType()))) {
+            return true;
+          }
         }
       }
       return false;
