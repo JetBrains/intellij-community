@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,15 +19,17 @@ public class XmlTagValueImpl implements XmlTagValue{
   private String myText = null;
   private String myTrimmedText = null;
 
-  public XmlTagValueImpl(XmlTagChild[] bodyElements, XmlTag tag) {
+  public XmlTagValueImpl(@NotNull XmlTagChild[] bodyElements, @NotNull XmlTag tag) {
     myTag = tag;
     myElements = bodyElements;
   }
 
+  @NotNull
   public XmlTagChild[] getChildren() {
     return myElements;
   }
 
+  @NotNull
   public XmlText[] getTextElements() {
     if(myTextElements != null) return myTextElements;
     final List<XmlText> textElements = new ArrayList<XmlText>();
@@ -36,6 +39,7 @@ public class XmlTagValueImpl implements XmlTagValue{
     return myTextElements = textElements.toArray(new XmlText[textElements.size()]);
   }
 
+  @NotNull
   public String getText() {
     if(myText != null) return myText;
     final StringBuffer consolidatedText = new StringBuffer();
@@ -45,6 +49,7 @@ public class XmlTagValueImpl implements XmlTagValue{
     return consolidatedText.toString();
   }
 
+  @NotNull
   public TextRange getTextRange() {
     if(myElements.length == 0){
       final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild( (ASTNode)myTag);
@@ -55,6 +60,7 @@ public class XmlTagValueImpl implements XmlTagValue{
     return new TextRange(myElements[0].getTextRange().getStartOffset(), myElements[myElements.length - 1].getTextRange().getEndOffset());
   }
 
+  @NotNull
   public String getTrimmedText() {
     if(myTrimmedText != null) return myTrimmedText;
 
