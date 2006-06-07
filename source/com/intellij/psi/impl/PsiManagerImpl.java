@@ -894,9 +894,10 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   private static void runRunnables(ArrayList<Runnable> runnables) {
-    Runnable[] array = runnables.toArray(new Runnable[runnables.size()]);
-    for (Runnable aArray : array) {
-      aArray.run();
+    if (runnables.isEmpty()) return;
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < runnables.size(); i++) {
+      runnables.get(i).run();
     }
   }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -145,21 +146,28 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   private void copyTags(final XmlTag fromTag, final XmlTag toTag) throws IncorrectOperationException {
-    for (final XmlAttribute attribute : toTag.getAttributes()) {
-      attribute.delete();
-    }
-    for (final XmlTag xmlTag : toTag.getSubTags()) {
-      xmlTag.delete();
-    }
-    for (final XmlAttribute attribute : fromTag.getAttributes()) {
-      toTag.add(attribute);
-    }
-    final XmlTag[] tags = fromTag.getSubTags();
-    if (tags.length > 0) {
-      for (final XmlTag xmlTag : tags) {
-        copyTags(xmlTag, (XmlTag)toTag.add(createEmptyTag(xmlTag.getName())));
+    PsiElement child = toTag.getFirstChild();
+    while (child != null) {
+      final PsiElement psiElement = child.getNextSibling();
+      if (child instanceof XmlAttribute || child instanceof XmlTag) {
+        child.delete();
       }
-    } else {
+      child = psiElement;
+    }
+
+    child = fromTag.getFirstChild();
+    boolean hasChildren = false;
+    while (child != null) {
+      if (child instanceof XmlTag) {
+        final XmlTag xmlTag = (XmlTag)child;
+        copyTags(xmlTag, (XmlTag)toTag.add(createEmptyTag(xmlTag.getName())));
+        hasChildren = true;
+      } else if (child instanceof XmlAttribute) {
+        toTag.add(child);
+      }
+      child = child.getNextSibling();
+    }
+    if (!hasChildren) {
       toTag.getValue().setText(fromTag.getValue().getText());
     }
   }
@@ -307,7 +315,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public void accept(final DomElementVisitor visitor) {
-    DomImplUtil.tryAccept(visitor, DomReflectionUtil.getRawType(myType), findCallerProxy(ACCEPT_METHOD));
+    myManager.getVisitorDescription(visitor.getClass()).acceptElement(visitor, findCallerProxy(ACCEPT_METHOD));
   }
 
   public final void acceptChildren(DomElementVisitor visitor) {
@@ -479,6 +487,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   @NotNull
   final AttributeChildInvocationHandler getAttributeChild(final JavaMethodSignature method) {
+    checkInitialized(ATTRIBUTES);
     final AttributeChildInvocationHandler domElement = myAttributeChildren.get(myGenericInfoImpl.getAttributeName(method));
     assert domElement != null : method.toString();
     return domElement;
@@ -517,10 +526,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   public final String toString() {
     return myType.toString() + " @" + hashCode();
-  }
-
-  final void checkAttributesInitialized() {
-    checkInitialized(ATTRIBUTES);
   }
 
   final void checkInitialized(final String qname) {

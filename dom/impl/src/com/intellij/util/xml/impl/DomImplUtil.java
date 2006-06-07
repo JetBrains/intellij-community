@@ -5,7 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.xml.*;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ReflectionCache;
 
 import java.lang.reflect.Method;
 
@@ -14,34 +14,6 @@ import java.lang.reflect.Method;
  */
 public class DomImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomImplUtil");
-
-  public static boolean tryAccept(final DomElementVisitor visitor, final Class aClass, DomElement proxy) {
-    try {
-      tryInvoke(visitor, "visit" + aClass.getSimpleName(), aClass, proxy);
-      return true;
-    }
-    catch (NoSuchMethodException e) {
-      try {
-        tryInvoke(visitor, "visit", aClass, proxy);
-        return true;
-      }
-      catch (NoSuchMethodException e1) {
-        for (Class aClass1 : aClass.getInterfaces()) {
-          if (tryAccept(visitor, aClass1, proxy)) {
-            return true;
-          }
-        }
-        return false;
-      }
-    }
-  }
-
-  static void tryInvoke(final DomElementVisitor visitor, @NonNls final String name, final Class aClass, DomElement proxy) throws NoSuchMethodException {
-    final Method method = visitor.getClass().getMethod(name, aClass);
-    method.setAccessible(true);
-    DomReflectionUtil.invokeMethod(method, visitor, proxy);
-  }
-
 
   public static boolean isTagValueGetter(final Method method) {
     if (!isGetter(method)) {
@@ -55,7 +27,7 @@ public class DomImplUtil {
       final Class<?> declaringClass = method.getDeclaringClass();
       if (signature.findAnnotation(SubTag.class, declaringClass) != null) return false;
       if (signature.findAnnotation(SubTagList.class, declaringClass) != null) return false;
-      if (DomElement.class.isAssignableFrom(method.getReturnType())) return false;
+      if (ReflectionCache.isAssignable(DomElement.class, method.getReturnType())) return false;
       return true;
     }
     return false;

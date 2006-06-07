@@ -17,14 +17,12 @@ import java.util.List;
  */
 public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription {
   private final JavaMethodSignature myGetterMethod;
-  private final Required myRequired;
   private Class<?> myDeclaringClass;
 
-  protected AttributeChildDescriptionImpl(final String attributeName, final Method getter, Required required) {
+  protected AttributeChildDescriptionImpl(final String attributeName, final Method getter) {
     super(attributeName, getter.getGenericReturnType());
     myDeclaringClass = getter.getDeclaringClass();
     myGetterMethod = JavaMethodSignature.getSignature(getter);
-    myRequired = required;
   }
 
   public DomNameStrategy getDomNameStrategy(DomElement parent) {
@@ -51,8 +49,11 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   }
 
   public GenericAttributeValue getDomAttributeValue(DomElement parent) {
-    final DomElement domElement = ModelMergerUtil.getImplementation(parent, DomElement.class);
-    return (GenericAttributeValue)DomReflectionUtil.invokeMethod(myGetterMethod, domElement);
+    final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(parent);
+    if (handler != null) {
+      return (GenericAttributeValue)handler.getAttributeChild(myGetterMethod).getProxy();
+    }
+    return (GenericAttributeValue)DomReflectionUtil.invokeMethod(myGetterMethod, parent);
   }
 
   public boolean equals(final Object o) {

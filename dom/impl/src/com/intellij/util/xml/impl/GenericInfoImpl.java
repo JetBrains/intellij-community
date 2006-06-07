@@ -631,7 +631,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   public AttributeChildDescriptionImpl getAttributeChildDescription(String attributeName) {
     final Method getter = findGetterMethod(myAttributeChildrenMethods, attributeName);
     if (getter == null) return null;
-    return new AttributeChildDescriptionImpl(attributeName, getter, isRequired(getter));
+    return new AttributeChildDescriptionImpl(attributeName, getter);
   }
 
   public final Class[] getConcreteInterfaceVariants() {
@@ -649,7 +649,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     final ArrayList<AttributeChildDescriptionImpl> result = new ArrayList<AttributeChildDescriptionImpl>();
     for (Map.Entry<JavaMethodSignature, String> entry : myAttributeChildrenMethods.entrySet()) {
       final Method getter = entry.getKey().findMethod(myClass);
-      result.add(new AttributeChildDescriptionImpl(entry.getValue(), getter, isRequired(getter)));
+      result.add(new AttributeChildDescriptionImpl(entry.getValue(), getter));
     }
     return result;
   }

@@ -8,6 +8,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
+import com.intellij.util.ReflectionCache;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,7 @@ import java.util.*;
  * @author peter
  */
 public class DomUtil {
+  private static final TypeVariable GENERIC_VALUE_TYPE_VARIABLE = ReflectionCache.getTypeParameters(GenericValue.class)[0];
 
   private DomUtil() {
   }
@@ -105,7 +107,7 @@ public class DomUtil {
   }
 
   public static Class getGenericValueParameter(Type type) {
-    return DomReflectionUtil.substituteGenericType(GenericValue.class.getTypeParameters()[0], type);
+    return DomReflectionUtil.substituteGenericType(GENERIC_VALUE_TYPE_VARIABLE, type);
   }
 
   @Nullable

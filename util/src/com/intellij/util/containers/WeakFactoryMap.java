@@ -15,28 +15,33 @@
  */
 package com.intellij.util.containers;
 
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.lang.ref.WeakReference;
 
 /**
  * @author peter
  */
-public abstract class FactoryMap<T,V> {
-  private static final Object NULL_KEY = new Object();
-  private final Map<T,V> myMap = new THashMap<T, V>();
+public abstract class WeakFactoryMap<T,V> {
+  private final Map<T, WeakReference<V>> myMap = new WeakHashMap<T, WeakReference<V>>();
 
   @NotNull
   protected abstract V create(T key);
 
   @NotNull
   public final V get(T key) {
-    V v = myMap.get(key == null ? (T)NULL_KEY : key);
-    if (v == null) {
-      myMap.put(key == null ? (T)NULL_KEY : key, v = create(key));
+    WeakReference<V> reference = myMap.get(key);
+    if (reference != null) {
+      final V v = reference.get();
+      if (v != null) {
+        return v;
+      }
     }
-    return v;
+
+    final V v1 = create(key);
+    myMap.put(key, reference = new WeakReference<V>(v1));
+    return v1;
   }
 
   public final boolean containsKey(T key) {

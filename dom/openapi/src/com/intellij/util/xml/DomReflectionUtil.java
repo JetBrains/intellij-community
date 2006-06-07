@@ -6,6 +6,7 @@ package com.intellij.util.xml;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
@@ -49,12 +50,12 @@ public class DomReflectionUtil {
 
   public static Type resolveVariable(TypeVariable variable, final Class classType) {
     final Class aClass = getRawType(classType);
-    int index = ContainerUtil.findByEquals(aClass.getTypeParameters(), variable);
+    int index = ContainerUtil.findByEquals(ReflectionCache.getTypeParameters(aClass), variable);
     if (index >= 0) {
       return variable;
     }
 
-    final Class[] classes = aClass.getInterfaces();
+    final Class[] classes = ReflectionCache.getInterfaces(aClass);
     final Type[] genericInterfaces = aClass.getGenericInterfaces();
     for (int i = 0; i < classes.length; i++) {
       Class anInterface = classes[i];
@@ -64,8 +65,8 @@ public class DomReflectionUtil {
       }
       if (resolved instanceof TypeVariable) {
         final TypeVariable typeVariable = (TypeVariable)resolved;
-        index = ContainerUtil.findByEquals(anInterface.getTypeParameters(), typeVariable);
-        assert index >= 0 : typeVariable + " " + Arrays.asList(anInterface.getTypeParameters());
+        index = ContainerUtil.findByEquals(ReflectionCache.getTypeParameters(anInterface), typeVariable);
+        assert index >= 0 : typeVariable + " " + Arrays.asList(ReflectionCache.getTypeParameters(anInterface));
         final Type type = genericInterfaces[i];
         if (type instanceof Class) {
           return Object.class;
@@ -90,7 +91,7 @@ public class DomReflectionUtil {
         return (Class<?>)((ParameterizedType)type).getRawType();
       }
       if (type instanceof TypeVariable && classType instanceof ParameterizedType) {
-        final int index = ContainerUtil.findByEquals(aClass.getTypeParameters(), type);
+        final int index = ContainerUtil.findByEquals(ReflectionCache.getTypeParameters(aClass), type);
         if (index >= 0) {
           return getRawType(((ParameterizedType)classType).getActualTypeArguments()[index]);
         }

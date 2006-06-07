@@ -27,6 +27,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
@@ -66,6 +67,12 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     new ArrayList<Function<DomElement, Collection<PsiElement>>>();
   private final Set<DomFileDescription> myFileDescriptions = new HashSet<DomFileDescription>();
   private final Map<XmlFile, Object> myNonDomFiles = new WeakHashMap<XmlFile, Object>();
+  private final FactoryMap<Class<? extends DomElementVisitor>,VisitorDescription> myVisitorDescriptions = new FactoryMap<Class<? extends DomElementVisitor>, VisitorDescription>() {
+    @NotNull
+    protected VisitorDescription create(final Class<? extends DomElementVisitor> key) {
+      return new VisitorDescription(key);
+    }
+  };
 
   private static final InvocationStack ourInvocationStack = new InvocationStack();
 
@@ -159,12 +166,16 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return invocationCache;
   }
 
+  @Nullable
   public static DomInvocationHandler getDomInvocationHandler(DomElement proxy) {
     final InvocationHandler handler = AdvancedProxy.getInvocationHandler(proxy);
     if (handler instanceof StableInvocationHandler) {
       return getDomInvocationHandler(((StableInvocationHandler)handler).getWrappedElement());
     }
-    return (DomInvocationHandler)handler;
+    if (handler instanceof DomInvocationHandler) {
+      return (DomInvocationHandler)handler;
+    }
+    return null;
   }
 
   public static StableInvocationHandler getStableInvocationHandler(Object proxy) {
@@ -471,6 +482,10 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
   public final void clearCaches() {
     myCachedImplementationClasses.clear();
+  }
+
+  public final VisitorDescription getVisitorDescription(Class<? extends DomElementVisitor> aClass) {
+    return myVisitorDescriptions.get(aClass);
   }
 
   private class MyElementFilter implements ElementFilter {

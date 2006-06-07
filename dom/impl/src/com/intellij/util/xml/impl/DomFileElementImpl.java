@@ -262,24 +262,22 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return myFile.isValid();
   }
 
+  @NotNull
   public final DomGenericInfo getGenericInfo() {
     return EMPTY_DOM_GENERIC_INFO;
   }
 
+  @NotNull
   public String getXmlElementName() {
-    return null;
+    return "";
   }
 
   public void accept(final DomElementVisitor visitor) {
-    DomImplUtil.tryAccept(visitor, DomFileElement.class, this);
+    myManager.getVisitorDescription(visitor.getClass()).acceptElement(visitor, this);
   }
 
   public void acceptChildren(DomElementVisitor visitor) {
     getRootHandler().accept(visitor);
-  }
-
-  public int getChildIndex(final DomElement child) {
-    return -1;
   }
 
   public <T> T getUserData(Key<T> key) {

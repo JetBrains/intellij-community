@@ -20,8 +20,10 @@ import com.intellij.pom.event.PomChangeSet;
 import com.intellij.pom.xml.events.XmlChange;
 import com.intellij.psi.xml.XmlFile;
 
+import java.util.List;
+
 public interface XmlChangeSet extends PomChangeSet {
-  XmlChange[] getChanges();
+  List<XmlChange> getChanges();
 
   PomModelAspect getAspect();
 

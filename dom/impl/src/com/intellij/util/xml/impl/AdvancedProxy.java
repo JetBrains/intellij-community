@@ -4,6 +4,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.xml.JavaMethodSignature;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,7 +47,7 @@ public class AdvancedProxy {
   }
 
   public static <T> T createProxy(final InvocationHandler handler, final Class<T> superClassOrInterface, final Class... otherInterfaces) {
-    if (superClassOrInterface.isInterface()) {
+    if (ReflectionCache.isInterface(superClassOrInterface)) {
       Class[] interfaces = new Class[otherInterfaces.length+1];
       interfaces [0] = superClassOrInterface;
       System.arraycopy(otherInterfaces, 0, interfaces, 1, otherInterfaces.length);

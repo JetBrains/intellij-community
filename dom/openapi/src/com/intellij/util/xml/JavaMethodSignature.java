@@ -5,6 +5,7 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
+import com.intellij.util.ReflectionCache;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +89,7 @@ public class JavaMethodSignature {
   public final <T extends Annotation> T findAnnotation(final Class<T> annotationClass, final Class startFrom) {
     for (final Method method : findAllMethods(startFrom)) {
       final T annotation = method.getAnnotation(annotationClass);
-      if (annotation != null && method.getDeclaringClass().isAssignableFrom(startFrom)) {
+      if (annotation != null && ReflectionCache.isAssignable(method.getDeclaringClass(), startFrom)) {
         return annotation;
       }
     }
@@ -99,7 +100,7 @@ public class JavaMethodSignature {
   public final <T extends Annotation> Method findAnnotatedMethod(final Class<T> annotationClass, final Class startFrom) {
     for (final Method method : findAllMethods(startFrom)) {
       final T annotation = method.getAnnotation(annotationClass);
-      if (annotation != null && method.getDeclaringClass().isAssignableFrom(startFrom)) {
+      if (annotation != null && ReflectionCache.isAssignable(method.getDeclaringClass(), startFrom)) {
         return method;
       }
     }
@@ -108,40 +109,6 @@ public class JavaMethodSignature {
 
   public String toString() {
     return myMethodName + Arrays.asList(myMethodParameters);
-  }
-
-  private Method findBestMethod(final Class aClass, Class bestReturnType) {
-    Method method = null;
-    try {
-      method = aClass.getDeclaredMethod(myMethodName, myMethodParameters);
-      final Class<?> newReturnType = method.getReturnType();
-      if (bestReturnType.isAssignableFrom(newReturnType) && !newReturnType.equals(bestReturnType)) {
-        return method;
-      }
-    }
-    catch (NoSuchMethodException e) {
-      final Class[] interfaces = aClass.getInterfaces();
-      for (final Class aClass1 : interfaces) {
-        final Method bestMethod = findBestMethod(aClass1, bestReturnType);
-        if (bestMethod != null) {
-          method = bestMethod;
-          bestReturnType = bestMethod.getReturnType();
-        }
-      }
-      final Class superclass = aClass.getSuperclass();
-      if (superclass != null) {
-        final Method bestMethod = findBestMethod(superclass, bestReturnType);
-        if (bestMethod != null) {
-          return bestMethod;
-        }
-      } else if (aClass.isInterface() && interfaces.length == 0) {
-        final Method bestMethod = findBestMethod(Object.class, bestReturnType);
-        if (bestMethod != null) {
-          return bestMethod;
-        }
-      }
-    }
-    return method;
   }
 
   public static JavaMethodSignature getSignature(Method method) {

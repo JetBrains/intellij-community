@@ -11,6 +11,7 @@ import com.intellij.psi.xml.XmlFile;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Collections;
 
 public class XmlAspectChangeSetImpl implements XmlChangeSet {
   private final PomModel myModel;
@@ -22,8 +23,8 @@ public class XmlAspectChangeSetImpl implements XmlChangeSet {
     mySubjectToChange = fileChanged;
   }
 
-  public XmlChange[] getChanges(){
-    return myChanges.toArray(new XmlChange[myChanges.size()]);
+  public List<XmlChange> getChanges(){
+    return Collections.unmodifiableList(myChanges);
   }
 
   public PomModelAspect getAspect() {

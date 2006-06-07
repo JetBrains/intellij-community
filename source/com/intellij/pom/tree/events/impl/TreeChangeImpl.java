@@ -9,12 +9,13 @@ import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import gnu.trove.THashMap;
 
 import java.util.*;
 
 public class TreeChangeImpl implements TreeChange {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.events.impl.TreeChangeImpl");
-  private final Map<ASTNode, ChangeInfo> myChanges = new HashMap<ASTNode, ChangeInfo>();
+  private final Map<ASTNode, ChangeInfo> myChanges = new THashMap<ASTNode, ChangeInfo>();
   private final List<Pair<ASTNode,Integer>> myOffsets = new ArrayList<Pair<ASTNode, Integer>>();
   private final ASTNode myParent;
 

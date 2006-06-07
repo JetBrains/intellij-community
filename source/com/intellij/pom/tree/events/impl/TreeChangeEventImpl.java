@@ -6,8 +6,12 @@ import com.intellij.pom.event.PomChangeSet;
 import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.pom.tree.events.TreeChangeEvent;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.CharTable;
+import gnu.trove.THashMap;
 
 import java.util.*;
 
@@ -19,7 +23,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class TreeChangeEventImpl implements TreeChangeEvent{
-  private final Map<ASTNode, TreeChange> myChangedElements = new HashMap<ASTNode, TreeChange>();
+  private final Map<ASTNode, TreeChange> myChangedElements = new THashMap<ASTNode, TreeChange>();
   private final List<ASTNode> myChangedInOrder = new ArrayList<ASTNode>();
   private final List<Set<ASTNode>> myOfEqualDepth = new ArrayList<Set<ASTNode>>(10);
   private final PomModelAspect myAspect;
