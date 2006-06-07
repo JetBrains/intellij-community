@@ -267,6 +267,7 @@ public class CopyHandler {
                 if (parent instanceof PsiReferenceExpression && element.equals(((PsiReferenceExpression)parent).getQualifierExpression())) {
                   final PsiReferenceExpression refExpr = ((PsiReferenceExpression)parent);
                   final PsiElement resolved = refExpr.resolve();
+                  if (resolved == null) continue;
                   final PsiReferenceExpression copy;
                   if (parent.getParent() instanceof PsiMethodCallExpression){
                     copy = ((PsiMethodCallExpression)parent.getParent().copy()).getMethodExpression();
