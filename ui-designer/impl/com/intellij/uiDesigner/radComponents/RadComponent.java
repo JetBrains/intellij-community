@@ -75,6 +75,7 @@ public abstract class RadComponent implements IComponent {
    */
   private String myBinding;
   private boolean myCustomCreate = false;
+  private boolean myLoadingProperties = false;
 
   @NotNull private final Module myModule;
   @NotNull private final Class myClass;
@@ -162,6 +163,10 @@ public abstract class RadComponent implements IComponent {
    */
   public final Module getModule() {
     return myModule;
+  }
+
+  public boolean isLoadingProperties() {
+    return myLoadingProperties;
   }
 
   @NotNull public final Project getProject() {
@@ -630,14 +635,20 @@ public abstract class RadComponent implements IComponent {
   public void loadLwProperty(final LwComponent lwComponent,
                              final LwIntrospectedProperty lwProperty,
                              final IntrospectedProperty property) {
+    myLoadingProperties = true;
     try {
-      final Object value = lwComponent.getPropertyValue(lwProperty);
-      //noinspection unchecked
-      property.setValue(this, value);
+      try {
+        final Object value = lwComponent.getPropertyValue(lwProperty);
+        //noinspection unchecked
+        property.setValue(this, value);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        //TODO[anton,vova]: show error and continue to load form
+      }
     }
-    catch (Exception e) {
-      LOG.error(e);
-      //TODO[anton,vova]: show error and continue to load form
+    finally {
+      myLoadingProperties = false;
     }
   }
 

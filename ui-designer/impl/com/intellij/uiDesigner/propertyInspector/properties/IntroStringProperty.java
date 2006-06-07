@@ -182,7 +182,9 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
 
     if(SwingProperties.TEXT.equals(getName())) {
       final SupportCode.TextWithMnemonic textWithMnemonic = SupportCode.parseText(resolvedValue);
-      BindingProperty.checkCreateBindingFromText(component, textWithMnemonic.myText);
+      if (!component.isLoadingProperties()) {
+        BindingProperty.checkCreateBindingFromText(component, textWithMnemonic.myText);
+      }
       if (delegee instanceof JLabel) {
         final JLabel label = (JLabel)delegee;
         label.setText(textWithMnemonic.myText);
