@@ -126,7 +126,7 @@ public class CommentFormatter {
     final String info = getOrigCommentInfo(psiField);
     if (info == null) return null;
 
-    JDComment comment = getParser().parse(info, new JDFieldComment(this));
+    JDComment comment = getParser().parse(info, new JDComment(this));
     return comment.generate(getIndent(psiField));
   }
 
