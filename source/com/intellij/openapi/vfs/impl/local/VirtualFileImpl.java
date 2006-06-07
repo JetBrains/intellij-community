@@ -607,7 +607,6 @@ public class VirtualFileImpl extends VirtualFile {
 
 
   void addChild(VirtualFileImpl child) {
-    ourFileSystem.myUnaccountedFiles.remove(child.getPath());
     getChildren(); // to initialize myChildren
 
     synchronized (ourFileSystem.LOCK) {
@@ -616,6 +615,7 @@ public class VirtualFileImpl extends VirtualFile {
       newChildren[myChildren.length] = child;
       myChildren = newChildren;
       child.setParent(this);
+      ourFileSystem.myUnaccountedFiles.remove(child.getPath());
     }
   }
 
