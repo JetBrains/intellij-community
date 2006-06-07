@@ -238,10 +238,10 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
 
   public GroupItem[] getToolWindowGroups() {
     GroupItem[] groups = new GroupItem[myGroups.size()+1];
-    groups [0] = mySpecialGroup;
     for(int i=0; i<myGroups.size(); i++) {
-      groups [i+1] = myGroups.get(i);
+      groups [i] = myGroups.get(i);
     }
+    groups [myGroups.size()] = mySpecialGroup;
     return groups;
   }
 
