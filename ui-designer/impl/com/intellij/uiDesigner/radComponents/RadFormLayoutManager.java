@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.actions.*;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -577,7 +578,10 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
 
   @Override @Nullable
   public String getCellResizeTooltip(RadContainer container, boolean isRow, int cell, int newSize) {
-    return getUpdatedSize(container, isRow, cell, newSize).toString();
+    final String size = getUpdatedSize(container, isRow, cell, newSize).toString();
+    return isRow
+           ? UIDesignerBundle.message("tooltip.resize.row", cell, size) 
+           : UIDesignerBundle.message("tooltip.resize.column", cell, size);
   }
 
   @Override

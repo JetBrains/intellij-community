@@ -4,6 +4,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.HeavyweightHint;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -25,6 +26,8 @@ import java.util.ArrayList;
  * @author Vladimir Kondratyev
  */
 public abstract class QuickFixManager <T extends JComponent>{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.quickFixes.QuickFixManager");
+
   private GuiEditor myEditor;
   /** Component on which hint will be shown */
   protected final T myComponent;
@@ -193,6 +196,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   }
 
   final void showIntentionPopup(){
+    LOG.debug("showIntentionPopup()");
     if(myHint == null || !myHint.isVisible()){
       return;
     }
@@ -232,6 +236,7 @@ public abstract class QuickFixManager <T extends JComponent>{
     }
 
     public PopupStep onChosen(final ErrorWithFix selectedValue, final boolean finalChoice) {
+      LOG.debug("QuickFixPopupStep.onChosen(): finalChoice=" + finalChoice);
       if (finalChoice || !myShowSuppresses) {
         selectedValue.second.run();
         return FINAL_CHOICE;

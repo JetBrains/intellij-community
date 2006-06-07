@@ -387,13 +387,11 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         Rectangle rc;
         if (myIsRow) {
           rc = new Rectangle(0, e.getPoint().y, layer.getSize().width, 1);
-          layer.putToolTip(layer, new Point(0, e.getPoint().y), toolTip);
         }
         else {
           rc = new Rectangle(e.getPoint().x, 0, 1, layer.getSize().height);
-          layer.putToolTip(layer, new Point(e.getPoint().x, 0), toolTip);
         }
-        layer.putFeedback(GridCaptionPanel.this, rc, myFeedbackPainter, null);
+        layer.putFeedback(GridCaptionPanel.this, rc, myFeedbackPainter, toolTip);
       }
     }
   }

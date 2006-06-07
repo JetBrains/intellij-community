@@ -74,7 +74,7 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
     }
   }
 
-  public void putToolTip(Component relativeTo, Point pnt, @Nullable String text) {
+  private void putToolTip(Component relativeTo, Point pnt, @Nullable String text) {
     if (text == null) {
       if (myToolTip.getParent() == this) {
         remove(myToolTip);
@@ -87,10 +87,14 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
       pnt.x = Math.min(pnt.x, getBounds().width - prefSize.width);
       pnt.y = Math.min(pnt.y, getBounds().height - prefSize.height);
       myToolTip.setBounds(pnt.x, pnt.y, prefSize.width, prefSize.height);
+      String oldText = myToolTip.getTipText();
       myToolTip.setTipText(text);
       if (myToolTip.getParent() != this) {
         add(myToolTip);
         repaint();
+      }
+      else if (!text.equals(oldText)) {
+        myToolTip.repaint();
       }
     }
   }
