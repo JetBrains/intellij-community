@@ -18,15 +18,17 @@
 package com.intellij.testFramework.builders;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.fixtures.ModuleFixture;
 
 /**
  * @author mike
  */
-public interface JavaModuleFixtureBuilder extends ModuleFixtureBuilder<ModuleFixture> {
+public interface JavaModuleFixtureBuilder extends ModuleFixtureBuilder {
+
   JavaModuleFixtureBuilder setLanguageLevel(LanguageLevel languageLevel);
 
-  JavaModuleFixtureBuilder addLibrary(String libraryName, String[] classPath);
+  JavaModuleFixtureBuilder addLibrary(String libraryName, String... classPath);
+
+  JavaModuleFixtureBuilder addLibraryJars(String libraryName, String basePath, String... jarNames);
 
   JavaModuleFixtureBuilder addJdk(String jdkPath);
 }

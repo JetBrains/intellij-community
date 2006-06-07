@@ -37,6 +37,12 @@ public abstract class IdeaTestFixtureFactory {
     return ourInstance;
   }
 
-  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder();
+  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {
+    return createFixtureBuilder(IdeaProjectTestFixture.class);
+  }
+
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder();
+
+  public abstract <T extends IdeaProjectTestFixture> TestFixtureBuilder<T> createFixtureBuilder(Class<T> clazz);
+
 }

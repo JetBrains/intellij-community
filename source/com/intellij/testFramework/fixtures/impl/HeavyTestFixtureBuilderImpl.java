@@ -5,20 +5,35 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.builders.WebModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 
-import java.lang.reflect.Constructor;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author mike
 */
-class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestFixture> {
-  private HeavyIdeaTestFixtureImpl myFixture;
+class HeavyTestFixtureBuilderImpl<T extends IdeaProjectTestFixture> implements TestFixtureBuilder<T> {
+
+  private final Map<Class<? extends ModuleFixtureBuilder>, ModuleFixtureBuilder> myModuleFixtureBuilderFactory = new HashMap<Class<? extends ModuleFixtureBuilder>, ModuleFixtureBuilder>();
+
+  private T myFixture;
+
+  public HeavyTestFixtureBuilderImpl(T fixture) {
+    myFixture = fixture;
+
+    myModuleFixtureBuilderFactory.put(JavaModuleFixtureBuilder.class, new JavaModuleFixtureBuilderImpl(this));
+    myModuleFixtureBuilderFactory.put(WebModuleFixtureBuilder.class, new WebModuleFixtureBuilderImpl(this));
+  }
 
   public TestFixtureBuilder<IdeaProjectTestFixture> setModuleType(final ModuleType moduleType) {
+    new Pair<Class<? extends ModuleFixtureBuilder>, Class<? extends ModuleFixtureBuilder>>(JavaModuleFixtureBuilder.class, JavaModuleFixtureBuilderImpl.class);
     throw new UnsupportedOperationException("setModuleType is not implemented in : " + getClass());
   }
 
@@ -26,30 +41,11 @@ class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestF
     throw new UnsupportedOperationException("setLanguageLevel is not implemented in : " + getClass());
   }
 
-  public IdeaProjectTestFixture getFixture() {
-    if (myFixture == null) {
-      myFixture = new HeavyIdeaTestFixtureImpl();
-    }
-
+  public T getFixture() {
     return myFixture;
   }
 
   public <M extends ModuleFixtureBuilder> M addModule(final Class<M> builderClass) {
-    try {
-      final Class aClass = IdeaTestFixtureFactoryImpl.ourBuilder2Implementation.get(builderClass);
-      if (aClass == null)
-        throw new IllegalArgumentException("Builder implementation not found:" + builderClass.getName());
-
-      final Constructor constructor = aClass.getConstructor(TestFixtureBuilder.class);
-      if (constructor != null) {
-        return (M)constructor.newInstance(this);
-      }
-
-      //noinspection unchecked
-      return (M)aClass.newInstance();
-    }
-    catch (Exception e) {
-      throw new IllegalArgumentException("Can't instantiate builder: " + builderClass.getName(), e);
-    }
+    return (M)myModuleFixtureBuilderFactory.get(builderClass);
   }
 }

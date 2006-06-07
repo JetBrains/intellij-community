@@ -17,6 +17,7 @@ import java.util.HashMap;
  * @author mike
  */
 class LightIdeaTestFixtureImpl implements IdeaProjectTestFixture {
+
   public void setUp() throws Exception {
     LightIdeaTestCase.initApplication(null);
     LightIdeaTestCase.doSetup(JavaSdkImpl.getMockJdk15("50"), new LocalInspectionTool[0], new HashMap<String, LocalInspectionTool>(), null);

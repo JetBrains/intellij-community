@@ -18,7 +18,6 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 
 import java.util.ArrayList;
@@ -27,16 +26,16 @@ import java.util.List;
 /**
  * @author mike
  */
-class JavaModuleFixtureBuilderImpl extends ModuleFixtureBuilderImpl<ModuleFixture> implements JavaModuleFixtureBuilder {
+class JavaModuleFixtureBuilderImpl extends ModuleFixtureBuilderImpl implements JavaModuleFixtureBuilder {
   private List<Pair<String, String[]>> myLibraries = new ArrayList<Pair<String, String[]>>();
   private String myJdk;
 
-  public JavaModuleFixtureBuilderImpl(final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder) {
+  public JavaModuleFixtureBuilderImpl(final TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
     super(ModuleType.JAVA, fixtureBuilder);
   }
 
 
-  public JavaModuleFixtureBuilderImpl(final ModuleType moduleType, final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder) {
+  public JavaModuleFixtureBuilderImpl(final ModuleType moduleType, final TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
     super(moduleType, fixtureBuilder);
   }
 
@@ -47,6 +46,14 @@ class JavaModuleFixtureBuilderImpl extends ModuleFixtureBuilderImpl<ModuleFixtur
   public JavaModuleFixtureBuilder addLibrary(String libraryName, String[] classPath) {
     myLibraries.add(new Pair<String, String[]>(libraryName, classPath));
     return this;
+  }
+
+  public JavaModuleFixtureBuilder addLibraryJars(String libraryName, String basePath, String... jars) {
+    String[] classPath = new String[jars.length];
+    for (int i = 0; i < jars.length; i++) {
+      classPath[i] = basePath + jars[i];
+    }
+    return addLibrary(libraryName, classPath);
   }
 
   public JavaModuleFixtureBuilder addJdk(String jdkPath) {

@@ -13,7 +13,14 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 /**
  * @author mike
 */
-class LightTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestFixture> {
+class LightTestFixtureBuilderImpl<F extends IdeaProjectTestFixture> implements TestFixtureBuilder<F> {
+
+  private final F myFixture;
+
+  public LightTestFixtureBuilderImpl(F fixture) {
+    myFixture = fixture;
+  }
+
   public TestFixtureBuilder<IdeaProjectTestFixture> setModuleType(final ModuleType moduleType) {
     throw new UnsupportedOperationException("setModuleType is not implemented in : " + getClass());
   }
@@ -22,8 +29,8 @@ class LightTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestF
     throw new UnsupportedOperationException("setLanguageLevel is not implemented in : " + getClass());
   }
 
-  public IdeaProjectTestFixture getFixture() {
-    return new LightIdeaTestFixtureImpl();
+  public F getFixture() {
+    return myFixture;
   }
 
   public <M extends ModuleFixtureBuilder> M addModule(final Class<M> builderClass) {
