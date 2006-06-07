@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -256,24 +257,36 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  public boolean runBeforeCommitHandlers() {
-    for (CheckinHandler handler : myHandlers) {
-      final CheckinHandler.ReturnResult result = handler.beforeCheckin();
-      if (result == CheckinHandler.ReturnResult.COMMIT) continue;
-      if (result == CheckinHandler.ReturnResult.CANCEL) return false;
-      if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
-        final ChangeList changeList = myBrowser.getSelectedChangeList();
-        CommitHelper.moveToFailedList(changeList,
-                         getCommitMessage(),
-                         getIncludedChanges(),
-                         VcsBundle.message("commit.dialog.rejected.commit.template", changeList.getName()),
-                         myProject);
-        doCancelAction();
-        return false;
-      }
-    }
+  private void runBeforeCommitHandlers(final Runnable okAction) {
+    Runnable proceedRunnable = new Runnable() {
+      public void run() {
+        FileDocumentManager.getInstance().saveAllDocuments();
 
-    return true;
+        for (CheckinHandler handler : myHandlers) {
+          final CheckinHandler.ReturnResult result = handler.beforeCheckin();
+          if (result == CheckinHandler.ReturnResult.COMMIT) continue;
+          if (result == CheckinHandler.ReturnResult.CANCEL) return;
+
+          if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
+            final ChangeList changeList = myBrowser.getSelectedChangeList();
+            CommitHelper.moveToFailedList(changeList,
+                             getCommitMessage(),
+                             getIncludedChanges(),
+                             VcsBundle.message("commit.dialog.rejected.commit.template", changeList.getName()),
+                             myProject);
+            doCancelAction();
+            return;
+          }
+        }
+
+        okAction.run();
+      }
+    };
+
+    AbstractVcsHelper.getInstance(myProject).optimizeImportsAndReformatCode(getVirtualFiles(),
+                                                                            VcsConfiguration.getInstance(myProject),
+                                                                            proceedRunnable,
+                                                                            true);
   }
 
 
@@ -294,12 +307,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     try {
       saveState();
 
-      if (!runBeforeCommitHandlers()) {
-        return;
-      }
+      runBeforeCommitHandlers(new Runnable() {
+        public void run() {
+          CommitChangeListDialog.super.doOKAction();
+          doCommit();
+        }
+      });
 
-      super.doOKAction();
-      doCommit();
     }
     catch (InputException ex) {
       ex.show();

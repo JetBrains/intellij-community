@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
 import java.util.ArrayList;
@@ -55,30 +54,11 @@ public class CommitHelper {
   }
 
   public void doCommit() {
-    final Runnable checkinAction = new Runnable() {
-      public void run() {
-        final List<VcsException> vcsExceptions = new ArrayList<VcsException>();
-        final List<Change> changesFailedToCommit = new ArrayList<Change>();
+    final List<VcsException> vcsExceptions = new ArrayList<VcsException>();
+    final List<Change> changesFailedToCommit = new ArrayList<Change>();
 
-        ProgressManager.getInstance()
-          .runProcessWithProgressSynchronously(checkinAction(vcsExceptions, changesFailedToCommit, myChangeList), myActionName, true, myProject);
-      }
-    };
-
-    AbstractVcsHelper.getInstance(myProject).optimizeImportsAndReformatCode(collectVirtualFiles(),
-                                                                            VcsConfiguration.getInstance(myProject), checkinAction, true);
-
-  }
-
-  private Collection<VirtualFile> collectVirtualFiles() {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (Change includedChange : myIncludedChanges) {
-      final VirtualFile file = ChangesUtil.getFilePath(includedChange).getVirtualFile();
-      if (file != null) {
-        result.add(file);
-      }
-    }
-    return result;
+    ProgressManager.getInstance()
+      .runProcessWithProgressSynchronously(checkinAction(vcsExceptions, changesFailedToCommit, myChangeList), myActionName, true, myProject);
   }
 
   private Runnable checkinAction(final List<VcsException> vcsExceptions, final List<Change> changesFailedToCommit, final ChangeList changeList) {
