@@ -129,6 +129,9 @@ public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
                              : UIDesignerBundle.message("title.column.properties", myIndex));
         myLeftRadioButton.setText(row ? UIDesignerBundle.message("alignment.top") : UIDesignerBundle.message("alignment.left"));
         myRightRadioButton.setText(row ? UIDesignerBundle.message("alignment.bottom") : UIDesignerBundle.message("alignment.right"));
+        mySizePanel.setBorder(BorderFactory.createTitledBorder(myIsRow
+                                                               ? UIDesignerBundle.message("title.height")
+                                                               : UIDesignerBundle.message("title.width")));
 
         FormSpec formSpec = row ? myLayout.getRowSpec(myIndex) : myLayout.getColumnSpec(myIndex);
         showAlignment(formSpec.getDefaultAlignment());
@@ -195,6 +198,10 @@ public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
 
     if (size instanceof ConstantSize) {
       myConstantRadioButton.setSelected(true);
+      myMinimumCheckBox.setEnabled(false);
+      myMinimumCheckBox.setSelected(false);
+      myMaximumCheckBox.setEnabled(false);
+      myMaximumCheckBox.setSelected(false);
       showConstantSize((ConstantSize) size, myConstantSizeUnitsCombo, myConstantSizeSpinner);
     }
     else {
@@ -208,13 +215,23 @@ public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
       else {
         myDefaultRadioButton.setSelected(true);
       }
-    }
 
-    if (minimumSize instanceof ConstantSize) {
-      showConstantSize((ConstantSize) minimumSize, myMinSizeUnitsCombo, myMinSizeSpinner);
-    }
-    if (maximumSize instanceof ConstantSize) {
-      showConstantSize((ConstantSize) maximumSize, myMaxSizeUnitsCombo, myMaxSizeSpinner);
+      myMinimumCheckBox.setEnabled(true);
+      myMaximumCheckBox.setEnabled(true);
+      if (minimumSize instanceof ConstantSize) {
+        myMinimumCheckBox.setSelected(true);
+        showConstantSize((ConstantSize) minimumSize, myMinSizeUnitsCombo, myMinSizeSpinner);
+      }
+      else {
+        myMinimumCheckBox.setSelected(false);
+      }
+      if (maximumSize instanceof ConstantSize) {
+        myMaximumCheckBox.setSelected(true);
+        showConstantSize((ConstantSize) maximumSize, myMaxSizeUnitsCombo, myMaxSizeSpinner);
+      }
+      else {
+        myMaximumCheckBox.setSelected(false);
+      }
     }
   }
 
