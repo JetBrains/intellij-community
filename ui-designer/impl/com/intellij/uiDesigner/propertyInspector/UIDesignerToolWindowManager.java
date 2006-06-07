@@ -4,6 +4,7 @@
 
 package com.intellij.uiDesigner.propertyInspector;
 
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -11,22 +12,23 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.ui.Splitter;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.editor.UIFormEditor;
-import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 
 /**
@@ -34,7 +36,7 @@ import java.awt.*;
  */
 public class UIDesignerToolWindowManager implements ProjectComponent {
   private Project myProject;
-  private Splitter myToolWindowPanel;
+  private MyToolWindowPanel myToolWindowPanel;
   private ComponentTree myComponentTree;
   private ComponentTreeBuilder myComponentTreeBuilder;
   private PropertyInspector myPropertyInspector;
@@ -52,7 +54,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   public void projectOpened() {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
-        myToolWindowPanel = new Splitter(true, 0.33f);
+        myToolWindowPanel = new MyToolWindowPanel();
         myComponentTree = new ComponentTree();
         final JScrollPane scrollPane = new JScrollPane(myComponentTree);
         scrollPane.setPreferredSize(new Dimension(250, -1));
@@ -76,7 +78,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
     }
   }
 
-  @NonNls
+  @NotNull @NonNls
   public String getComponentName() {
     return "UIDesignerToolWindowManager";
   }
@@ -109,7 +111,6 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
 
   @Nullable
   public UIFormEditor getActiveFormFileEditor() {
-    GuiEditor activeFormEditor = null;
     FileEditor[] fileEditors = myFileEditorManager.getSelectedEditors();
     if (fileEditors.length > 0 && fileEditors [0] instanceof UIFormEditor) {
       return (UIFormEditor) fileEditors [0];
@@ -163,6 +164,20 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
 
     public void selectionChanged(FileEditorManagerEvent event) {
       processFileEditorChange();
+    }
+  }
+
+  private class MyToolWindowPanel extends Splitter implements DataProvider {
+    MyToolWindowPanel() {
+      super(true, 0.33f);
+    }
+
+    @Nullable
+    public Object getData(@NonNls String dataId) {
+      if (dataId.equals(GuiEditor.class.getName())) {
+        return getActiveFormEditor();
+      }
+      return null;
     }
   }
 }

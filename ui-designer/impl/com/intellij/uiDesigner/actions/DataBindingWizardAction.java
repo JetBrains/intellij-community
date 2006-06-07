@@ -1,26 +1,23 @@
 package com.intellij.uiDesigner.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.wizard.DataBindingWizard;
 import com.intellij.uiDesigner.wizard.Generator;
 import com.intellij.uiDesigner.wizard.WizardData;
-import com.intellij.CommonBundle;
 
 import java.text.MessageFormat;
 
@@ -46,9 +43,9 @@ public final class DataBindingWizardAction extends AnAction{
     final Project project;
     final VirtualFile formFile;
     if (myEditor == null) {
-      final DataContext context = e.getDataContext();
-      project = (Project)context.getData(DataConstants.PROJECT);
-      formFile = (VirtualFile)context.getData(DataConstants.VIRTUAL_FILE);
+      GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
+      project = editor.getProject();
+      formFile = editor.getFile();
     }
     else {
       project = myEditor.getProject();
@@ -136,24 +133,7 @@ public final class DataBindingWizardAction extends AnAction{
       return;
     }
 
-    final DataContext context = e.getDataContext();
-    final Project project = (Project)context.getData(DataConstants.PROJECT);
-    if(project == null){
-      e.getPresentation().setVisible(false);
-      return;
-    }
-
-    final VirtualFile vFile = (VirtualFile)context.getData(DataConstants.VIRTUAL_FILE);
-    if (vFile == null) {
-      e.getPresentation().setVisible(false);
-      return;
-    }
-    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(vFile);
-    if(!StdFileTypes.GUI_DESIGNER_FORM.equals(fileType)){
-      e.getPresentation().setVisible(false);
-      return;
-    }
-    e.getPresentation().setVisible(true);
+    e.getPresentation().setVisible(FormEditingUtil.getEditorFromContext(e.getDataContext()) != null);
   }
 
 
