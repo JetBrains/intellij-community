@@ -1153,10 +1153,14 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "$Type$ $Variable$ = $Value$;";
 
     String expectedResult12 = "    class A {\n" +
-                              "        /** comment */\n" +
+                              "        /**\n" +
+                              "         * comment\n" +
+                              "         */\n" +
                               "        int a;\n" +
                               "        char b;\n" +
-                              "        /** comment2 */\n" +
+                              "        /**\n" +
+                              "         * comment2\n" +
+                              "         */\n" +
                               "        int c;\n" +
                               "    }";
     options.setToReformatAccordingToStyle(true);
