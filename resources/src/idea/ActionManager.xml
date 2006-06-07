@@ -129,6 +129,8 @@
       <action id="GenerateResourceReference" class="com.intellij.codeInsight.generation.actions.GenerateResourceReference"/>
       <action id="GenerateInterceptorMethods" class="com.intellij.codeInsight.generation.actions.GenerateInterceptorMethods"/>
       <action id="GenerateEntityListenerMethods" class="com.intellij.codeInsight.generation.actions.GenerateEntityListenerMethods"/>
+
+      <action id="GenerateEJBFinderOrSelectorMethod" class="com.intellij.codeInsight.generation.actions.GenerateEJBFinderOrSelectorMethod"/>
     </group>
 
     <group id="J2EEGenerateGroup">

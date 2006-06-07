@@ -148,26 +148,27 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
     boolean needToChangeCalls = !myGenerateDelegate && (myChangeInfo.isNameChanged || myChangeInfo.isParameterSetOrOrderChanged || myChangeInfo.isExceptionSetOrOrderChanged || myChangeInfo.isVisibilityChanged/*for checking inaccessible*/);
     if (needToChangeCalls) {
-      List<PsiElement> l = new ArrayList<PsiElement>();
+      List<PsiReference> l = new ArrayList<PsiReference>();
       PsiReference[] refs = helper.findReferencesIncludingOverriding(method, projectScope, true);
       for (PsiReference reference : refs) {
-        l.add(reference.getElement());
+        l.add(reference);
       }
 
       int parameterCount = method.getParameterList().getParameters().length;
-      for (PsiElement ref : l) {
-        boolean isToCatchExceptions = isToThrowExceptions && needToCatchExceptions(RefactoringUtil.getEnclosingMethod(ref));
+      for (PsiReference ref : l) {
+        PsiElement element = ref.getElement();
+        boolean isToCatchExceptions = isToThrowExceptions && needToCatchExceptions(RefactoringUtil.getEnclosingMethod(element));
         if (!isToCatchExceptions) {
-          if (RefactoringUtil.isMethodUsage(ref)) {
-            PsiExpressionList list = RefactoringUtil.getArgumentListByMethodReference(ref);
+          if (RefactoringUtil.isMethodUsage(element)) {
+            PsiExpressionList list = RefactoringUtil.getArgumentListByMethodReference(element);
             if (!method.isVarArgs() && list.getExpressions().length != parameterCount) continue;
           }
         }
-        if (RefactoringUtil.isMethodUsage(ref)) {
-          result.add(new MethodCallUsageInfo(ref, isToModifyArgs, isToCatchExceptions));
+        if (RefactoringUtil.isMethodUsage(element)) {
+          result.add(new MethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions));
         }
         else {
-          result.add(new UsageInfo(ref));
+          result.add(new MoveRenameUsageInfo(element, ref, method));
         }
       }
 
@@ -501,7 +502,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       for (UsageInfo usageInfo : postponedUsages) {
         PsiElement element = usageInfo.getElement();
         if (element == null) continue;
-        PsiReference reference = element.getReference();
+        PsiReference reference = usageInfo instanceof MoveRenameUsageInfo ?
+                                 ((MoveRenameUsageInfo)usageInfo).getReference() : 
+                                 element.getReference();
         if (reference != null) {
           PsiElement target = null;
           if (usageInfo instanceof MyParameterUsageInfo) {

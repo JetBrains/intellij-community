@@ -305,7 +305,8 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
                 roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMP_SETTER_IMPL ||
                 roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_GETTER_IMPL ||
                 roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_SETTER_IMPL ||
-                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_FINDER_IMPL) {
+                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_FINDER_IMPL ||
+                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_SELECTOR_IMPL) {
               for (RefParameter refParameter : myParameters) {
                 refParameter.parameterReferenced(false);
                 refParameter.parameterReferenced(true);

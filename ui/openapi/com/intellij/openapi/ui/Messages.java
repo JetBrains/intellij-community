@@ -449,7 +449,16 @@ public class Messages {
       if (myMessage != null) {
         JLabel textLabel = new JLabel(myMessage);
         textLabel.setUI(new MultiLineLabelUI());
-        panel.add(textLabel, BorderLayout.CENTER);
+        if (myMessage.length() > 50 || myMessage.indexOf('\n')>-1) {
+          final JScrollPane pane = ScrollPaneFactory.createScrollPane(textLabel);
+          pane.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+          pane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+          pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+          panel.add(pane, BorderLayout.CENTER);
+        }
+        else {
+          panel.add(textLabel, BorderLayout.CENTER);
+        }
       }
       return panel;
     }
