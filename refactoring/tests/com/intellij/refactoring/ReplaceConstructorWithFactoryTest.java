@@ -6,11 +6,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryProcessor;
+import com.intellij.pom.java.LanguageLevel;
 
 /**
  * @author dsl
  */
 public class ReplaceConstructorWithFactoryTest extends CodeInsightTestCase {
+  private LanguageLevel myPrevLanguageLevel;
+
   public void testEmptyConstructor() throws Exception { runTest("01", null); }
 
   public void testSubclass() throws Exception { runTest("02", null); }
@@ -24,6 +27,8 @@ public class ReplaceConstructorWithFactoryTest extends CodeInsightTestCase {
   public void testImplicitConstructorUsages() throws Exception { runTest("06", null); }
 
   public void testImplicitConstructorCreation() throws Exception { runTest("07", null); }
+
+  public void testConstructorTypeParameters() throws Exception { runTest("08", null); }
 
   private void runTest(final String testIndex, String targetClassName) throws Exception {
     configureByFile("/refactoring/replaceConstructorWithFactory/before" + testIndex + ".java");
@@ -76,5 +81,18 @@ public class ReplaceConstructorWithFactoryTest extends CodeInsightTestCase {
         myProject, null, aClass, targetClass, "new" + aClass.getName());
     }
     replaceConstructorWithFactoryProcessor.run();
+  }
+
+
+  protected void setUp() throws Exception {
+    super.setUp();
+    myPrevLanguageLevel = getPsiManager().getEffectiveLanguageLevel();
+    getPsiManager().setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+  }
+
+
+  protected void tearDown() throws Exception {
+    getPsiManager().setEffectiveLanguageLevel(myPrevLanguageLevel);
+    super.tearDown();
   }
 }

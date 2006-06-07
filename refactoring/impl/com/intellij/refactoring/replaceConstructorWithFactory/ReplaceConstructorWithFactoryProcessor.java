@@ -19,10 +19,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -242,12 +239,12 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
       factoryMethod.getThrowsList().replace(myConstructor.getThrowsList());
 
       Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(myConstructor);
-      List<String> names = new ArrayList<String>();
+      Collection<String> names = new HashSet<String>();
       while(iterator.hasNext()) {
         PsiTypeParameter typeParameter = iterator.next();
         if (!names.contains(typeParameter.getName())) { //Otherwise type parameter is hidden in the constructor
           names.add(typeParameter.getName());
-          factoryMethod.getTypeParameterList().add(typeParameter);
+          factoryMethod.getTypeParameterList().addAfter(typeParameter, null);
         }
       }
     }
