@@ -1,10 +1,10 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -28,6 +28,14 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiJav
 
   @Nullable
   public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
-    return InjectedLanguageUtil.getInjectedPsiFiles(this, null);
+    InjectedLanguageUtil.LiteralTextEscaper<PsiCommentImpl> escaper = null;
+    if (getTokenType() == C_STYLE_COMMENT) {
+      escaper = new InjectedLanguageUtil.BlockCommentTextLiteralEscaper();
+    }
+    else if (getTokenType() == END_OF_LINE_COMMENT) {
+      escaper = new InjectedLanguageUtil.LineCommentTextLiteralEscaper();
+    }
+
+    return InjectedLanguageUtil.getInjectedPsiFiles(this, escaper);
   }
 }
