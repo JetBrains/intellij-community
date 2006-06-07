@@ -5,11 +5,15 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.ant.misc.AntPsiUtil;
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntFile;
+import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.impl.reference.AntGenericReference;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
+import com.intellij.lang.ant.quickfix.AntCreateMacroDefAction;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -27,7 +31,8 @@ public class AntAnnotator implements Annotator {
       AntTypeDefinition def = se.getTypeDefinition();
       final String name = se.getSourceElement().getName();
       if (def == null) {
-        holder.createErrorAnnotation(se, AntBundle.getMessage("undefined.element", name));
+        final Annotation annotation = holder.createErrorAnnotation(se, AntBundle.getMessage("undefined.element", name));
+        addMacrodefQuickFixes(annotation, se);
       }
       else {
         checkValidAttributes(se, def, holder);
@@ -43,6 +48,14 @@ public class AntAnnotator implements Annotator {
       }
     }
     checkReferences(element, holder);
+  }
+
+  private static void addMacrodefQuickFixes(final Annotation annotation, final AntStructuredElement se) {
+    final AntProject project = se.getAntProject();
+    annotation.registerFix(new AntCreateMacroDefAction(se));
+    for (AntFile antFile : AntPsiUtil.getImportedFiles(project)) {
+      annotation.registerFix(new AntCreateMacroDefAction(se, antFile));
+    }
   }
 
   private static void checkValidAttributes(AntStructuredElement se, AntTypeDefinition def, AnnotationHolder holder) {

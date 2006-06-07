@@ -6,37 +6,37 @@ import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
-import com.intellij.lang.ant.psi.impl.reference.AntTargetReference;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
-public class AntCreateTargetAction extends BaseIntentionAction {
+public class AntCreateMacroDefAction extends BaseIntentionAction {
 
-  private final AntTargetReference myRef;
+  private final AntStructuredElement myUndefinedElement;
   private final AntFile myFile;
 
-  public AntCreateTargetAction(final AntTargetReference ref) {
-    this(ref, null);
+  public AntCreateMacroDefAction(final AntStructuredElement undefinedElement) {
+    this(undefinedElement, null);
   }
 
-  public AntCreateTargetAction(final AntTargetReference ref, final AntFile file) {
-    myRef = ref;
+  public AntCreateMacroDefAction(final AntStructuredElement undefinedElement, final AntFile file) {
+    myUndefinedElement = undefinedElement;
     myFile = file;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   @NotNull
   public String getFamilyName() {
-    final String i18nName = AntBundle.getMessage("intention.create.target.family.name");
-    return (i18nName == null) ? "Create target" : i18nName;
+    final String i18nName = AntBundle.getMessage("intention.create.macrodef.family.name");
+    return (i18nName == null) ? "Create macrodef" : i18nName;
   }
 
   @NotNull
@@ -45,7 +45,7 @@ public class AntCreateTargetAction extends BaseIntentionAction {
     try {
       builder.append(getFamilyName());
       builder.append(" '");
-      builder.append(myRef.getCanonicalText());
+      builder.append(myUndefinedElement.getSourceElement().getName());
       builder.append('\'');
       if (myFile != null) {
         builder.append(' ');
@@ -63,14 +63,26 @@ public class AntCreateTargetAction extends BaseIntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final AntElement element = myRef.getElement();
+    final AntStructuredElement element = myUndefinedElement;
     final AntProject antProject = (myFile == null) ? element.getAntProject() : myFile.getAntProject();
     final AntElement anchor =
       (myFile == null) ? AntPsiUtil.getSubProjectElement(element) : PsiTreeUtil.getChildOfType(antProject, AntStructuredElement.class);
+    final XmlTag se = element.getSourceElement();
     final XmlTag projectTag = antProject.getSourceElement();
-    XmlTag targetTag = projectTag.createChildTag("target", projectTag.getNamespace(), null, false);
-    targetTag.setAttribute("name", myRef.getCanonicalText());
-    targetTag = (XmlTag)((anchor == null) ? projectTag.add(targetTag) : projectTag.addBefore(targetTag, anchor.getSourceElement()));
-    ((Navigatable)targetTag).navigate(true);
+    XmlTag macrodefTag = projectTag.createChildTag("macrodef", projectTag.getNamespace(), null, false);
+    macrodefTag.setAttribute("name", se.getName());
+    for (XmlAttribute attr : se.getAttributes()) {
+      XmlTag attrTag = macrodefTag.createChildTag("attribute", macrodefTag.getNamespace(), null, false);
+      attrTag.setAttribute("name", attr.getName());
+      macrodefTag.add(attrTag);
+    }
+    for (XmlTag subtag : se.getSubTags()) {
+      XmlTag elementTag = macrodefTag.createChildTag("element", macrodefTag.getNamespace(), null, false);
+      elementTag.setAttribute("name", subtag.getName());
+      macrodefTag.add(elementTag);
+    }
+    macrodefTag = (XmlTag)((anchor == null) ? projectTag.add(macrodefTag) : projectTag.addBefore(macrodefTag, anchor.getSourceElement()));
+    ((Navigatable)macrodefTag).navigate(true);
   }
 }
+

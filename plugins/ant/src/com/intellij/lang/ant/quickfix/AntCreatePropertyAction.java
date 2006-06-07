@@ -34,7 +34,7 @@ public class AntCreatePropertyAction extends BaseIntentionAction {
   @NotNull
   public String getFamilyName() {
     final String i18nName = AntBundle.getMessage("intention.create.target.family.name");
-    return (i18nName == null) ? "Create Target" : i18nName;
+    return (i18nName == null) ? "Create property" : i18nName;
   }
 
   @NotNull
