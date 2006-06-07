@@ -496,6 +496,9 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
 
   @Override
   public boolean isGapCell(RadContainer grid, boolean isRow, int cellIndex) {
+    if (cellIndex < 0 || cellIndex >= (isRow ? getGridRowCount(grid) : getGridColumnCount(grid))) {
+      return false;
+    }
     return cellIndex % 2 == 1 && GridChangeUtil.canDeleteCell(grid, cellIndex, isRow, false);
   }
 

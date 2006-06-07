@@ -663,6 +663,13 @@ public final class FormEditingUtil {
     return guiEditor == null ? null : guiEditor.getNextSaveGroupId();
   }
 
+  public static int adjustForGap(final RadContainer container, final int cellIndex, final boolean isRow, final int delta) {
+    if (container.getGridLayoutManager().isGapCell(container, isRow, cellIndex)) {
+      return cellIndex+delta;
+    }
+    return cellIndex;
+  }
+
   public static interface StringDescriptorVisitor<T extends IComponent> {
     boolean visit(T component, StringDescriptor descriptor);
   }

@@ -6,6 +6,7 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
@@ -355,23 +356,23 @@ public class GridInsertLocation extends GridDropLocation {
     if (isRowInsert()) {
       if (direction == Direction.RIGHT) {
         if (getColumn() < myContainer.getGridColumnCount()-1) {
-          return new GridInsertLocation(myContainer, getRow(), adjustForGap(getColumn()+1, false, 1), getMode());
+          return new GridInsertLocation(myContainer, getRow(), FormEditingUtil.adjustForGap(myContainer, getColumn()+1, false, 1), getMode());
         }
         return new GridInsertLocation(myContainer, getRow(), getColumn(), GridInsertMode.ColumnAfter);
       }
       if (direction == Direction.LEFT) {
         if (getColumn() > 0) {
-          return new GridInsertLocation(myContainer, getRow(), adjustForGap(getColumn()-1, false, -1), getMode());
+          return new GridInsertLocation(myContainer, getRow(), FormEditingUtil.adjustForGap(myContainer, getColumn()-1, false, -1), getMode());
         }
         return new GridInsertLocation(myContainer, getRow(), getColumn(), GridInsertMode.ColumnBefore);
       }
       if (direction == Direction.DOWN || direction == Direction.UP) {
         int adjRow = (myMode == GridInsertMode.RowAfter) ? getRow() : getRow()-1;
         if (direction == Direction.DOWN && adjRow+1 < myContainer.getGridRowCount()) {
-          return new GridDropLocation(myContainer, adjustForGap(adjRow+1, true, 1), getColumn());
+          return new GridDropLocation(myContainer, FormEditingUtil.adjustForGap(myContainer, adjRow+1, true, 1), getColumn());
         }
         if (direction == Direction.UP && adjRow >= 0) {
-          return new GridDropLocation(myContainer, adjustForGap(adjRow, true, -1), getColumn());
+          return new GridDropLocation(myContainer, FormEditingUtil.adjustForGap(myContainer, adjRow, true, -1), getColumn());
         }
         return getLocationAtParent(direction);
       }
@@ -379,35 +380,28 @@ public class GridInsertLocation extends GridDropLocation {
     else {
       if (direction == Direction.DOWN) {
         if (getRow() < myContainer.getGridRowCount()-1) {
-          return new GridInsertLocation(myContainer, adjustForGap(getRow()+1, true, 1), getColumn(), getMode());
+          return new GridInsertLocation(myContainer, FormEditingUtil.adjustForGap(myContainer, getRow()+1, true, 1), getColumn(), getMode());
         }
         return new GridInsertLocation(myContainer, getRow(), getColumn(), GridInsertMode.RowAfter);
       }
       if (direction == Direction.UP) {
         if (getRow() > 0) {
-          return new GridInsertLocation(myContainer, adjustForGap(getRow()-1, true, -1), getColumn(), getMode());
+          return new GridInsertLocation(myContainer, FormEditingUtil.adjustForGap(myContainer, getRow()-1, true, -1), getColumn(), getMode());
         }
         return new GridInsertLocation(myContainer, getRow(), getColumn(), GridInsertMode.RowBefore);
       }
       if (direction == Direction.LEFT || direction == Direction.RIGHT) {
         int adjCol = (myMode == GridInsertMode.ColumnAfter) ? getColumn() : getColumn()-1;
         if (direction == Direction.RIGHT && adjCol+1 < myContainer.getGridColumnCount()) {
-          return new GridDropLocation(myContainer, getRow(), adjustForGap(adjCol+1, false, 1));
+          return new GridDropLocation(myContainer, getRow(), FormEditingUtil.adjustForGap(myContainer, adjCol+1, false, 1));
         }
         if (direction == Direction.LEFT && adjCol >= 0) {
-          return new GridDropLocation(myContainer, getRow(), adjustForGap(adjCol, false, -1));
+          return new GridDropLocation(myContainer, getRow(), FormEditingUtil.adjustForGap(myContainer, adjCol, false, -1));
         }
         return getLocationAtParent(direction);
       }
     }
     return null;
-  }
-
-  private int adjustForGap(final int cellIndex, final boolean isRow, final int delta) {
-    if (myContainer.getGridLayoutManager().isGapCell(myContainer, isRow, cellIndex)) {
-      return cellIndex+delta;
-    }
-    return cellIndex;
   }
 
   private DropLocation getLocationAtParent(final Direction direction) {

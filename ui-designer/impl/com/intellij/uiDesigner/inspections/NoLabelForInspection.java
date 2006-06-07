@@ -55,9 +55,10 @@ public class NoLabelForInspection extends BaseFormInspection {
               if (radComponent.getParent() == radComponent2.getParent()) {
                 GridConstraints gc1 = radComponent.getConstraints();
                 GridConstraints gc2 = radComponent2.getConstraints();
-                if ((gc1.getRow() == gc2.getRow() && gc1.getColumn() == gc2.getColumn()+1) ||
-                    (gc1.getColumn() == gc2.getColumn() && gc1.getRow() == gc2.getRow()+1)) {
-                  candidateLabel.set(radComponent2);
+                int nextColumn = FormEditingUtil.adjustForGap(radComponent.getParent(), gc2.getColumn()+1, false, 1);
+                int nextRow = FormEditingUtil.adjustForGap(radComponent.getParent(), gc2.getRow()+1, true, 1);
+                if ((gc1.getRow() == gc2.getRow() && nextColumn == gc1.getColumn()) ||
+                    (gc1.getColumn() == gc2.getColumn() && nextRow == gc1.getRow())) {
                   candidateLabel.set(radComponent2);
                 }
               }
