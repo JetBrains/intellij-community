@@ -4,10 +4,14 @@ import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ant.AntLanguage;
 import com.intellij.lang.ant.AntSupport;
+import com.intellij.lang.ant.misc.AntPsiUtil;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
+import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.impl.reference.AntReferenceProvidersRegistry;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
@@ -235,13 +239,28 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return element;
   }
 
-  public static PsiElement resolveProperty(AntElement element, final String name) {
-    while (element != null) {
-      final PsiElement psiElement = element.getProperty(name);
+  public static PsiElement resolveProperty(@NotNull final AntElement element, final String name) {
+    AntElement temp = element;
+    while (temp != null) {
+      final PsiElement psiElement = temp.getProperty(name);
       if (psiElement != null) {
         return psiElement;
       }
-      element = element.getAntParent();
+      temp = temp.getAntParent();
+    }
+    final AntElement anchor = AntPsiUtil.getSubProjectElement(element);
+    for (PsiElement child : element.getAntProject().getChildren()) {
+      if (child == anchor) break;
+      if (child instanceof AntProperty) {
+        AntProperty prop = (AntProperty)child;
+        final PropertiesFile propFile = prop.getPropertiesFile();
+        if (propFile != null) {
+          final Property property = propFile.findPropertyByKey(name);
+          if (property != null) {
+            return property;
+          }
+        }
+      }
     }
     return null;
   }

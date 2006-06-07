@@ -5,7 +5,6 @@ import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -31,18 +30,6 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     }
     if (getName() != null) {
       propHolder.setProperty(getName(), this);
-    }
-    else if (getFileName() != null) {
-      final PropertiesFile file = getPropertiesFile();
-      if (file != null) {
-        String prefix = getPrefix();
-        if (prefix != null && !prefix.endsWith(".")) {
-          prefix += '.';
-        }
-        for (Property prop : file.getProperties()) {
-          propHolder.setProperty((prefix == null) ? prop.getKey() : prefix + prop.getKey(), prop);
-        }
-      }
     }
     else if (getEnvironment() != null) {
       getAntProject().addEnvironmentPropertyPrefix(getEnvironment());
