@@ -4,12 +4,17 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.DeleteHandler;
+import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -60,14 +65,25 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
   }
 
   public Object getData(Collection<AbstractTreeNode> selected, String dataId) {
-    if (selected != null && dataId.equals(DataConstantsEx.GUI_DESIGNER_FORM_ARRAY)) {
-      List<Form> result = new ArrayList<Form>();
-      for(AbstractTreeNode node: selected) {
-        if (node.getValue() instanceof Form) {
-          result.add((Form) node.getValue());
+    if (selected != null) {
+      if (dataId.equals(DataConstantsEx.GUI_DESIGNER_FORM_ARRAY)) {
+        List<Form> result = new ArrayList<Form>();
+        for(AbstractTreeNode node: selected) {
+          if (node.getValue() instanceof Form) {
+            result.add((Form) node.getValue());
+          }
+        }
+        if (result.size() > 0) {
+          return result.toArray(new Form[result.size()]);
         }
       }
-      return result.toArray(new Form[result.size()]);
+      else if (dataId.equals(DataConstants.DELETE_ELEMENT_PROVIDER)) {
+        for(AbstractTreeNode node: selected) {
+          if (node.getValue() instanceof Form) {
+            return new MyDeleteProvider(selected);
+          }
+        }
+      }
     }
     return null;
   }
@@ -107,5 +123,35 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
 
   public void initComponent() {
   }
-}
 
+  private static class MyDeleteProvider implements DeleteProvider {
+    private PsiElement[] myElements;
+
+    public MyDeleteProvider(final Collection<AbstractTreeNode> selected) {
+      myElements = collectFormPsiElements(selected);
+    }
+
+    public void deleteElement(DataContext dataContext) {
+      Project project = (Project) dataContext.getData(DataConstants.PROJECT);
+      DeleteHandler.deletePsiElement(myElements, project);
+    }
+
+    public boolean canDeleteElement(DataContext dataContext) {
+      return DeleteHandler.shouldEnableDeleteAction(myElements);
+    }
+
+    private static PsiElement[] collectFormPsiElements(Collection<AbstractTreeNode> selected) {
+      List<PsiElement> result = new ArrayList<PsiElement>();
+      for(AbstractTreeNode node: selected) {
+        if (node.getValue() instanceof Form) {
+          Form form = (Form) node.getValue();
+          result.add(form.getClassToBind());
+          for(PsiFile file: form.getFormFiles()) {
+            result.add(file);
+          }
+        }
+      }
+      return result.toArray(new PsiElement[result.size()]);
+    }
+  }
+}
