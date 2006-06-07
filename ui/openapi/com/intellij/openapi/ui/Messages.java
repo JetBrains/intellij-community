@@ -447,17 +447,26 @@ public class Messages {
       }
 
       if (myMessage != null) {
-        JLabel textLabel = new JLabel(myMessage);
-        textLabel.setUI(new MultiLineLabelUI());
-        if (myMessage.length() > 50 || myMessage.indexOf('\n')>-1) {
-          final JScrollPane pane = ScrollPaneFactory.createScrollPane(textLabel);
-          pane.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-          pane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-          pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        JTextPane messagePane = new JTextPane();
+        messagePane.setBackground(panel.getBackground());
+        messagePane.setText(myMessage);
+        messagePane.setEditable(false);
+        messagePane.setCaretPosition(0);
+        final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        final Dimension textSize = messagePane.getPreferredSize();
+        if (textSize.width > screenSize.width /2 || textSize.height > screenSize.height / 2) {
+
+          final JScrollPane pane = ScrollPaneFactory.createScrollPane(messagePane);
+          pane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+          pane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+          pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+          final Dimension preferredSize = new Dimension(Math.min(textSize.width, screenSize.width/2), Math.min(textSize.height, screenSize.height/2));
+          pane.setPreferredSize(preferredSize);
           panel.add(pane, BorderLayout.CENTER);
         }
         else {
-          panel.add(textLabel, BorderLayout.CENTER);
+          panel.add(messagePane, BorderLayout.CENTER);
         }
       }
       return panel;
