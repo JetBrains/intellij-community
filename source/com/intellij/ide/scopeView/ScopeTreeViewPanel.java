@@ -275,7 +275,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
         } else if (node instanceof ModuleGroupNode){
           final ModuleGroupNode groupNode = (ModuleGroupNode)node;
           final ModuleGroup moduleGroup = groupNode.getModuleGroup();
-          result.addAll(Arrays.asList(moduleGroup.modulesInGroup(myProject, true)));
+          result.addAll(moduleGroup.modulesInGroup(myProject, true));
         }
       }
       return result.isEmpty() ? null : result.toArray(new Module[result.size()]);

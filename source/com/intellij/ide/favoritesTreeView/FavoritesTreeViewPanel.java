@@ -391,7 +391,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         result.add((Module)element);
       }
       else if (element instanceof ModuleGroup) {
-        result.addAll(Arrays.asList(((ModuleGroup)element).modulesInGroup(myProject, true)));
+        result.addAll(((ModuleGroup)element).modulesInGroup(myProject, true));
       }
     }
 
@@ -519,8 +519,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         if (parentDescriptor != null) {
           final Object parentElement = parentDescriptor.getElement();
           if (parentElement instanceof AbstractTreeNode) {
-            final AbstractTreeNode<PsiDirectory> parentNode = ((AbstractTreeNode<PsiDirectory>)parentElement);
-            if (parentNode.getValue() instanceof PsiDirectory) {
+            final AbstractTreeNode<PsiDirectory> parentNode = (AbstractTreeNode<PsiDirectory>)parentElement;
+            if (parentNode.getValue() != null) {
               return parentNode.getValue();
             }
           }

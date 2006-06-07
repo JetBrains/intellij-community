@@ -36,8 +36,8 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
     for (final ModuleGroup childGroup : childGroups) {
       result.add(createModuleGroupNode(childGroup));
     }
-    Module[] modules = getValue().modulesInGroup(getProject(), false);
-    final List<AbstractTreeNode> childModules = ProjectViewNode.wrap(Arrays.asList(modules), getProject(), getModuleNodeClass(), getSettings());
+    Collection<Module> modules = getValue().modulesInGroup(getProject(), false);
+    final List<AbstractTreeNode> childModules = ProjectViewNode.wrap(modules, getProject(), getModuleNodeClass(), getSettings());
     result.addAll(childModules);
     return result;
   }

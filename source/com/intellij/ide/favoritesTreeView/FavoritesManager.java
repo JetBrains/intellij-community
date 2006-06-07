@@ -339,7 +339,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       }
       if (element instanceof ModuleGroup){
         ModuleGroup group = (ModuleGroup) element;
-        final Module[] modules = group.modulesInGroup(myProject, true);
+        final Collection<Module> modules = group.modulesInGroup(myProject, true);
         for (Module module : modules) {
           ModuleRootManager.getInstance(module).getFileIndex().iterateContent(contentIterator);
         }

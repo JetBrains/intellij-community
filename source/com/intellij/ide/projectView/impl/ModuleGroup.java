@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -40,7 +41,8 @@ public class ModuleGroup {
     return myGroupPath;
   }
 
-  public Module[] modulesInGroup(Project project, boolean recursively) {
+  @NotNull
+  public Collection<Module> modulesInGroup(Project project, boolean recursively) {
     final Module[] allModules = ModuleManager.getInstance(project).getModules();
     List<Module> result = new ArrayList<Module>();
     for (final Module module : allModules) {
@@ -50,7 +52,7 @@ public class ModuleGroup {
         result.add(module);
       }
     }
-    return result.toArray(new Module[result.size()]);
+    return result;
   }
 
   public Collection<ModuleGroup> childGroups(Project project) {

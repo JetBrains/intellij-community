@@ -83,7 +83,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
     return mySettings;
   }
 
-  public static List<AbstractTreeNode> wrap(List objects,
+  public static List<AbstractTreeNode> wrap(Collection objects,
                                             Project project,
                                             Class<? extends AbstractTreeNode> nodeClass,
                                             ViewSettings settings) {
