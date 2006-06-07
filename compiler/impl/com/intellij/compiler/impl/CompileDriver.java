@@ -653,6 +653,8 @@ public class CompileDriver {
         clearOutputDirectories(outputDirectories);
       }
       else { // refresh is still required
+        pruneEmptyDirectories(outputDirectories); // to avoid too much files deleted events
+
         CompilerUtil.doRefresh(new Runnable() {
           public void run() {
             final VirtualFile[] outputDirectories = CompilerPathsEx.getOutputDirectories(ModuleManager.getInstance(myProject).getModules());
@@ -668,6 +670,30 @@ public class CompileDriver {
     finally {
       context.getProgressIndicator().popState();
     }
+  }
+
+  private static void pruneEmptyDirectories(final Set<File> directories) {
+    for (File directory : directories) {
+      doPrune(directory);
+    }
+  }
+
+  private static boolean doPrune(final File directory) {
+    final File[] files = directory.listFiles();
+    boolean isEmpty = true;
+    for (File file : files) {
+      if (file.isDirectory()) {
+        if (doPrune(file)) {
+          file.delete();
+        } else {
+          isEmpty = false;
+        }
+      } else {
+        isEmpty = false;
+      }
+    }
+
+    return isEmpty;
   }
 
   private Set<File> getAllOutputDirectories() {
