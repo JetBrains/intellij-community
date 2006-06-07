@@ -24,10 +24,11 @@ import javax.swing.tree.TreeNode;
 
 public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private final RootGroupNode myRootNode;
-  private final DefaultMutableTreeNode myTargetsNode;
+  private DefaultMutableTreeNode myTargetsNode;
 
   private UsageTarget[] myTargets;
   private UsageTargetNode[] myTargetNodes;
+  private String myTargetsNodeText;
 
   public UsageViewTreeModelBuilder(UsageViewPresentation presentation, UsageTarget[] targets) {
     //noinspection HardCodedStringLiteral
@@ -36,9 +37,12 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
     setRoot(myRootNode);
 
     myTargets = targets;
-    myTargetsNode = new DefaultMutableTreeNode(presentation.getTargetsNodeText());
+    myTargetsNodeText = presentation.getTargetsNodeText();
+    if (myTargetsNodeText != null) {
+      myTargetsNode = new DefaultMutableTreeNode(myTargetsNodeText);
 
-    addTargetNodes();
+      addTargetNodes();
+    }
   }
 
   private void addTargetNodes() {
@@ -74,16 +78,16 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   }
 
   public boolean areTargetsValid() {
-    if (myTargets.length == 0) return true;
-    for (int i = 0; i < myTargetNodes.length; i++) {
-      if (!myTargetNodes[i].isValid()) return false;
+    if (myTargetNodes == null) return true;
+    for (UsageTargetNode targetNode : myTargetNodes) {
+      if (!targetNode.isValid()) return false;
     }
     return true;
   }
 
   public void reset() {
     myRootNode.removeAllChildren();
-    if (myTargets.length > 0) {
+    if (myTargetsNodeText != null && myTargets.length > 0) {
       addTargetNodes();
     }
   }

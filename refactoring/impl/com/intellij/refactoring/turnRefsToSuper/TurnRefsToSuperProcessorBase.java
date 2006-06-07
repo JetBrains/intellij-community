@@ -46,7 +46,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   protected HashSet<PsiElement> myMarkedNodes = new HashSet<PsiElement>();
   private Queue<PsiExpression> myExpressionsQueue;
   protected HashMap<PsiElement, Node> myElementToNode = new HashMap<PsiElement, Node>();
-  private Map<PsiVariable, String> myVariablesRenames = new HashMap<PsiVariable, String>();
+  protected Map<SmartPsiElementPointer, String> myVariablesRenames = new HashMap<SmartPsiElementPointer, String>();
   private final String mySuperClassName;
   private List<UsageInfo> myVariablesUsages = new ArrayList<UsageInfo>();
 
@@ -69,7 +69,8 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       final List<PsiNamedElement> variables = myVariableRenamer.getElements();
       for (final PsiNamedElement namedElement : variables) {
         final PsiVariable variable = (PsiVariable)namedElement;
-        myVariablesRenames.put(variable, myVariableRenamer.getNewName(variable));
+        final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(variable);
+        myVariablesRenames.put(pointer, myVariableRenamer.getNewName(variable));
       }
 
       Runnable runnable = new Runnable() {
@@ -92,10 +93,16 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
   protected void performVariablesRenaming() {
     try {
+      //forget about smart pointers
+      Map<PsiElement, String> variableRenames = new HashMap<PsiElement, String>();
+      for (Map.Entry<SmartPsiElementPointer, String> entry : myVariablesRenames.entrySet()) {
+        variableRenames.put(entry.getKey().getElement(), entry.getValue());
+      }
+
       for (UsageInfo usage : myVariablesUsages) {
         if (usage instanceof MoveRenameUsageInfo) {
           final MoveRenameUsageInfo renameUsageInfo = ((MoveRenameUsageInfo)usage);
-          final String newName = myVariablesRenames.get(renameUsageInfo.getReferencedElement());
+          final String newName = variableRenames.get(renameUsageInfo.getReferencedElement());
           final PsiReference reference = renameUsageInfo.getReference();
           if (reference != null) {
             reference.handleElementRename(newName);
@@ -103,10 +110,11 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         }
       }
 
-      for (Map.Entry<PsiVariable, String> entry : myVariablesRenames.entrySet()) {
+      for (Map.Entry<SmartPsiElementPointer,String> entry : myVariablesRenames.entrySet()) {
         final String newName = entry.getValue();
         if (newName != null) {
-          entry.getKey().setName(newName);
+          final PsiVariable variable = (PsiVariable)entry.getKey().getElement();
+          variable.setName(newName);
         }
       }
     }

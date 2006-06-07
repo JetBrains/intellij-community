@@ -21,6 +21,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Created by IntelliJ IDEA.
  * User: max
@@ -75,6 +77,7 @@ public class UsageViewPresentation {
     myUsagesString = usagesString;
   }
 
+  @Nullable("null means the targets node must not be visible")
   public String getTargetsNodeText() {
     return myTargetsNodeText;
   }

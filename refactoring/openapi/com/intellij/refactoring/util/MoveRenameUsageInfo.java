@@ -24,7 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveRenameUsageInfo extends UsageInfo{
-  private final PsiElement myReferencedElement;
+  private final SmartPsiElementPointer myReferencedElementPointer;
 
   private final PsiReference myReference;
   private RangeMarker myReferenceRangeMarker = null;
@@ -32,7 +32,7 @@ public class MoveRenameUsageInfo extends UsageInfo{
   public MoveRenameUsageInfo(PsiElement element, PsiReference reference, PsiElement referencedElement){
     super(element);
     final Project project = element.getProject();
-    myReferencedElement = referencedElement;
+    myReferencedElementPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(referencedElement);
     if (reference == null) reference = element.getReference();
     myReference = reference;
     if (reference != null) {
@@ -47,7 +47,7 @@ public class MoveRenameUsageInfo extends UsageInfo{
   public MoveRenameUsageInfo(PsiElement element, PsiReference reference, int startOffset, int endOffset, PsiElement referencedElement, boolean nonCodeUsage){
     super(element, startOffset, endOffset, nonCodeUsage);
     final Project project = element.getProject();
-    myReferencedElement = referencedElement;
+    myReferencedElementPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(referencedElement);
     if (reference == null) reference = element.getReference();
     myReference = reference;
     if (reference != null) {
@@ -60,7 +60,7 @@ public class MoveRenameUsageInfo extends UsageInfo{
 
   @Nullable
   public PsiElement getReferencedElement() {
-    return myReferencedElement;
+    return myReferencedElementPointer.getElement();
   }
 
   @Nullable
