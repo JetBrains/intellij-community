@@ -171,7 +171,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
 
   protected void initialize(final DomTableView boundComponent) {
     if (boundComponent == null) {
-      myCollectionPanel = new DomTableView(getProject(), getHelpId(), getEmptyPaneText());
+      myCollectionPanel = new DomTableView(getProject(), getEmptyPaneText(), getHelpId());
     }
     else {
       myCollectionPanel = boundComponent;

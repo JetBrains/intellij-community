@@ -15,6 +15,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -47,28 +48,17 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
 
   protected abstract DomElement getParentDomElement();
 
-  protected boolean beforeAddition() {
-    return true;
-  }
-
   protected void afterAddition(@NotNull T newElement) {
   }
 
-  public void actionPerformed(final AnActionEvent e) {
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        if (beforeAddition()) {
-          final T result = performElementAddition();
-          if (result != null) {
-            afterAddition(result);
-          }
-        }
-      }
-    };
-    runnable.run();
-    //ApplicationManager.getApplication().invokeLater(runnable);
+  public final void actionPerformed(final AnActionEvent e) {
+    final T result = performElementAddition();
+    if (result != null) {
+      afterAddition(result);
+    }
   }
 
+  @Nullable
   protected T performElementAddition() {
     final DomElement parent = getParentDomElement();
     final DomManager domManager = parent.getManager();
