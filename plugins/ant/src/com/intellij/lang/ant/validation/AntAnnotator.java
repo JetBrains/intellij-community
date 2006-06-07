@@ -6,10 +6,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.ant.misc.AntPsiUtil;
-import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.reference.AntGenericReference;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
@@ -28,15 +25,25 @@ public class AntAnnotator implements Annotator {
     AntElement element = (AntElement)psiElement;
     if (element instanceof AntStructuredElement) {
       final AntStructuredElement se = (AntStructuredElement)element;
+      AntElement parent = se.getAntParent();
       AntTypeDefinition def = se.getTypeDefinition();
       final String name = se.getSourceElement().getName();
       if (def == null) {
         final Annotation annotation = holder.createErrorAnnotation(se, AntBundle.getMessage("undefined.element", name));
-        addMacrodefQuickFixes(annotation, se);
+        boolean macroDefined = false;
+        while (!(parent instanceof AntFile)) {
+          if (parent instanceof AntTask && ((AntTask)parent).isMacroDefined()) {
+            macroDefined = true;
+            break;
+          }
+          parent = parent.getAntParent();
+        }
+        if (!macroDefined) {
+          addMacrodefQuickFixes(annotation, se);
+        }
       }
       else {
         checkValidAttributes(se, def, holder);
-        final AntElement parent = se.getAntParent();
         if (parent instanceof AntStructuredElement) {
           final AntStructuredElement pe = (AntStructuredElement)parent;
           final AntTypeDefinition parentDef = pe.getTypeDefinition();
