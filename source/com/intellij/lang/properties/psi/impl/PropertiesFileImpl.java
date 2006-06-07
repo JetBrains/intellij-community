@@ -12,26 +12,17 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLock;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 28, 2005
- * Time: 12:25:04 AM
- * To change this template use File | Settings | File Templates.
- */
 public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   private static TokenSet outPropertiesListSet = TokenSet.create(PropertiesElementTypes.PROPERTIES_LIST);
   private Map<String,List<Property>> myPropertiesMap;
@@ -46,6 +37,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return StdFileTypes.PROPERTIES;
   }
 
+  @NonNls
   public String toString() {
     return "Properties file:" + getName();
   }
@@ -103,7 +95,9 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
       return ResourceBundleImpl.NULL;
     }
     String baseName = PropertiesUtil.getBaseName(virtualFile);
-    return new ResourceBundleImpl(getContainingFile().getContainingDirectory().getVirtualFile(), baseName);
+    PsiDirectory directory = getContainingFile().getContainingDirectory();
+    if (directory == null) return ResourceBundleImpl.NULL;
+    return new ResourceBundleImpl(directory.getVirtualFile(), baseName);
   }
 
   @NotNull
@@ -132,13 +126,12 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
 
   private boolean haveToAddNewLine() {
     ASTNode lastChild = getPropertiesList().getLastChildNode();
-    if (lastChild == null) return false;
-    return lastChild.getText().indexOf('\n') == -1;
+    return lastChild != null && lastChild.getText().indexOf('\n') == -1;
   }
 
   @NotNull
   public Map<String, String> getNamesMap() {
-    THashMap<String, String> result = new THashMap<String, String>();
+    Map<String, String> result = new THashMap<String, String>();
     for (Property property : getProperties()) {
       result.put(property.getName(), property.getValue());
     }
