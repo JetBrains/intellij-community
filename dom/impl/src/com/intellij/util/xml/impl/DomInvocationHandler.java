@@ -146,16 +146,13 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   private void copyTags(final XmlTag fromTag, final XmlTag toTag) throws IncorrectOperationException {
-    PsiElement child = toTag.getFirstChild();
-    while (child != null) {
-      final PsiElement psiElement = child.getNextSibling();
+    for (PsiElement child : toTag.getChildren()) {
       if (child instanceof XmlAttribute || child instanceof XmlTag) {
         child.delete();
       }
-      child = psiElement;
     }
 
-    child = fromTag.getFirstChild();
+    PsiElement child = fromTag.getFirstChild();
     boolean hasChildren = false;
     while (child != null) {
       if (child instanceof XmlTag) {
