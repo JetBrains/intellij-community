@@ -278,8 +278,7 @@ public final class InsertComponentProcessor extends EventProcessor {
               myInsertedComponent.setSize(newSize);
             }
 
-            if (!GuiDesignerConfiguration.getInstance(myEditor.getProject()).IRIDA_LAYOUT_MODE &&
-                myInsertedComponent.getParent() instanceof RadRootContainer &&
+            if (myInsertedComponent.getParent() instanceof RadRootContainer &&
                 myInsertedComponent instanceof RadAtomicComponent) {
               GridBuildUtil.convertToGrid(myEditor);
               FormEditingUtil.selectSingleComponent(myEditor, myInsertedComponent);

@@ -89,9 +89,6 @@ public class RadContainer extends RadComponent implements IContainer {
     String defaultLayoutManager = UIFormXmlConstants.LAYOUT_INTELLIJ;
     if (getModule() != null) {
       final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(getModule().getProject());
-      if (configuration.IRIDA_LAYOUT_MODE) {
-        return new RadXYLayoutManager();
-      }
       defaultLayoutManager = configuration.DEFAULT_LAYOUT_MANAGER;
     }
 

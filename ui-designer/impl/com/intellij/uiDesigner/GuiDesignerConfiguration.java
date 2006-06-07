@@ -7,6 +7,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -24,14 +25,13 @@ public final class GuiDesignerConfiguration implements ProjectComponent, JDOMExt
   
   public boolean COPY_FORMS_RUNTIME_TO_OUTPUT = true;
 
-  public boolean IRIDA_LAYOUT_MODE = false;
-
   public String DEFAULT_LAYOUT_MANAGER = UIFormXmlConstants.LAYOUT_INTELLIJ;
 
   public void projectOpened() {}
 
   public void projectClosed() {}
 
+  @NotNull
   public String getComponentName() {
     return "uidesigner-configuration";
   }

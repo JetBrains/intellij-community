@@ -84,9 +84,6 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
     if (myGeneralUI.myChkCopyFormsRuntime.isSelected() != configuration.COPY_FORMS_RUNTIME_TO_OUTPUT) {
       return true;
     }
-    if (myGeneralUI.myIridaCompatibleLayout.isSelected() != configuration.IRIDA_LAYOUT_MODE) {
-      return true;
-    }
 
     if (!Comparing.equal(configuration.DEFAULT_LAYOUT_MANAGER, myGeneralUI.myLayoutManagerCombo.getSelectedItem())) {
       return true;
@@ -106,7 +103,6 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
 
     final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(myProject);
     configuration.COPY_FORMS_RUNTIME_TO_OUTPUT = myGeneralUI.myChkCopyFormsRuntime.isSelected();
-    configuration.IRIDA_LAYOUT_MODE = myGeneralUI.myIridaCompatibleLayout.isSelected();
     configuration.DEFAULT_LAYOUT_MANAGER = (String)myGeneralUI.myLayoutManagerCombo.getSelectedItem();
 
     // We have to store value of the radio button here because myGeneralUI will be cleared
@@ -127,7 +123,6 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
       myGeneralUI.myRbInstrumentSources.setSelected(true);
     }
     myGeneralUI.myChkCopyFormsRuntime.setSelected(configuration.COPY_FORMS_RUNTIME_TO_OUTPUT);
-    myGeneralUI.myIridaCompatibleLayout.setSelected(configuration.IRIDA_LAYOUT_MODE);
 
     myGeneralUI.myLayoutManagerCombo.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getLayoutManagerNames()));
     myGeneralUI.myLayoutManagerCombo.setRenderer(new ColoredListCellRenderer() {
@@ -147,7 +142,6 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
     public JRadioButton myRbInstrumentClasses;
     public JRadioButton myRbInstrumentSources;
     public JCheckBox myChkCopyFormsRuntime;
-    private JCheckBox myIridaCompatibleLayout;
     private JComboBox myLayoutManagerCombo;
   }
 
