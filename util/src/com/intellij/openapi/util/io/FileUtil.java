@@ -281,8 +281,8 @@ public class FileUtil {
         }
       }
     };
-    t.start();
     t.setPriority(Thread.MIN_PRIORITY);
+    t.start();
   }
 
   private static File renameToTempFile(File file) {
