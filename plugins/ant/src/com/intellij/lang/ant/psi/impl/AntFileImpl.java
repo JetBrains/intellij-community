@@ -41,6 +41,10 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   private Map<String, AntTypeDefinition> myTypeDefinitions;
   private AntTypeDefinition[] myTypeDefinitionArray;
   private AntTypeDefinition myTargetDefinition;
+  /**
+   * Set of classnames of custom definitions.
+   */
+  private Set<String> myCustomDefinitions;
 
   public AntFileImpl(final FileViewProvider viewProvider) {
     super(viewProvider, AntSupport.getLanguage());
@@ -94,6 +98,11 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       myPrologElement = null;
       myProject = null;
       myEpilogueElement = null;
+      for (String classname : myCustomDefinitions) {
+        myTypeDefinitionArray = null;
+        myTypeDefinitions.remove(classname);
+      }
+      myTargetDefinition = null;
     }
   }
 
@@ -174,6 +183,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   public AntTypeDefinition getBaseTypeDefinition(final String className) {
     if (myTypeDefinitions == null) {
       myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
+      myCustomDefinitions = new HashSet<String>();
       myAntProject = new Project();
       myAntProject.init();
       // first, create task definitons
@@ -206,7 +216,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   public void registerCustomType(final AntTypeDefinition def) {
     myTypeDefinitionArray = null;
-    myTypeDefinitions.put(def.getClassName(), def);
+    final String classname = def.getClassName();
+    myTypeDefinitions.put(classname, def);
+    myCustomDefinitions.add(classname);
     if (myTargetDefinition != null && myTargetDefinition != def) {
       myTargetDefinition = null;
     }
@@ -214,7 +226,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   public void unregisterCustomType(final AntTypeDefinition def) {
     myTypeDefinitionArray = null;
-    myTypeDefinitions.remove(def.getClassName());
+    final String classname = def.getClassName();
+    myTypeDefinitions.remove(classname);
+    myCustomDefinitions.remove(classname);
     if (myTargetDefinition != null && myTargetDefinition != def) {
       myTargetDefinition = null;
     }
