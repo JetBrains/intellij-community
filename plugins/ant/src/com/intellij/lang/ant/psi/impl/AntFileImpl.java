@@ -98,9 +98,12 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       myPrologElement = null;
       myProject = null;
       myEpilogueElement = null;
-      for (String classname : myCustomDefinitions) {
+      if (myCustomDefinitions != null) {
+        for (final String classname : myCustomDefinitions) {
+          myTypeDefinitions.remove(classname);
+        }
+        myCustomDefinitions.clear();
         myTypeDefinitionArray = null;
-        myTypeDefinitions.remove(classname);
       }
       myTargetDefinition = null;
     }
