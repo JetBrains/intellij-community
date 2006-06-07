@@ -72,7 +72,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
         fqClassName = packageName.length() == 0 ? newName : packageName + "." + myLastClassName;
       }
 
-      final String formBody = createFormBody(fqClassName, "/com/intellij/uiDesigner/NewForm.xml");
+      final String formBody = createFormBody(directory.getProject(), fqClassName, "/com/intellij/uiDesigner/NewForm.xml");
       final PsiFile formFile = directory.getManager().getElementFactory().createFileFromText(newName + ".form", formBody);
       createdFile = directory.add(formFile);
 
