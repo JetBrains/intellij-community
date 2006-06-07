@@ -35,7 +35,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   public PsiFile myOriginalFile = null;
   private boolean myExplicitlySetAsValid = false;
-  private final FileViewProvider myViewProvider;
+  private FileViewProvider myViewProvider;
 
   protected PsiFileImpl(IElementType elementType, IElementType contentElementType, FileViewProvider provider) {
     super((PsiManagerImpl)provider.getManager(), !provider.isPhysical() ? -1 : -2);
@@ -45,6 +45,21 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   protected PsiFileImpl( FileViewProvider provider ) {
     super((PsiManagerImpl)provider.getManager(), !provider.isPhysical() ? -1 : -2);
+    myViewProvider = provider;
+  }
+
+  /**
+   * For Irida API compatibility
+   */
+  @Deprecated protected PsiFileImpl(PsiManagerImpl manager) {
+    super(manager, -2);
+  }
+
+  /**
+   * For Irida API compatibility
+   */
+  @Deprecated public void setViewProvider(FileViewProvider provider) {
+    LOG.assertTrue(myViewProvider == null);
     myViewProvider = provider;
   }
 

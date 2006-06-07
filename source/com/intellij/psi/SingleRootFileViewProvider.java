@@ -35,6 +35,7 @@ import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Set;
 
@@ -237,9 +238,33 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     if (lang != getBaseLanguage()) return null;
     final ParserDefinition parserDefinition = lang.getParserDefinition();
     if (parserDefinition != null) {
-      return parserDefinition.createFile(this);
+      try {
+        return parserDefinition.createFile(this);
+      }
+      catch(AbstractMethodError ame) {
+        // support 5.x version of the API
+        try {
+          return createFileIridaAPI(lang);
+        }
+        catch(Exception ex) {
+          throw ame;
+        }
+      }
     }
     return null;
+  }
+
+  private PsiFile createFileIridaAPI(final Language lang) throws Exception {
+    ParserDefinition parserDefinition = lang.getParserDefinition();
+    //noinspection HardCodedStringLiteral
+    assert parserDefinition != null;
+    Method m = parserDefinition.getClass().getMethod("createFile", Project.class, VirtualFile.class);
+    PsiFile file = (PsiFile)m.invoke(parserDefinition, myManager.getProject(), myFile);
+    if (file instanceof PsiFileImpl) {
+      ((PsiFileImpl)file).setViewProvider(this);
+      return file;
+    }
+    throw new IllegalStateException("Original version of ParserDefinition is supported only for PsiFileImpl implementations");
   }
 
   public PsiManager getManager() {
