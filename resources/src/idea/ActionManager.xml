@@ -1464,18 +1464,45 @@
       <add-to-group group-id="J2EEViewPopupMenu" anchor="last"/>
     </action>
 
+     <!-- ***** yFiles actions *************************************** -->
+    <action id="Graph.ZoomIn" class="com.intellij.javaee.diagram.y.actions.ZoomInAction" text="Zoom In">
+      <keyboard-shortcut first-keystroke="ADD" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="EQUALS" keymap="$default"/>
+    </action>
+
+    <action id="Graph.ZoomOut" class="com.intellij.javaee.diagram.y.actions.ZoomOutAction" text="Zoom Out">
+      <keyboard-shortcut first-keystroke="SUBTRACT" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="MINUS" keymap="$default"/>
+    </action>
+
+    <action id="Graph.ShowHideGrid" class="com.intellij.javaee.diagram.y.actions.ShowHideGridAction" text="Show/Hide Grid"/>
+
+    <!-- ***** yFiles layouts ********************** -->
+    <action id="Graph.Layout.HierarchicGroupLayouter" class="com.intellij.javaee.diagram.y.actions.layout.HierarchicGroupLayouterAction"
+            text="Hierarchic Group">
+    </action>
+
+    <group id="Graph.CommonLayoutGroup" text="Layout" popup="true">
+      <reference ref="Graph.Layout.HierarchicGroupLayouter"/>
+    </group>
+
+    <group id="Graph.DefaultGraphPopup">
+      <reference ref="Graph.ZoomIn"/>
+      <reference ref="Graph.ZoomOut"/>
+
+      <separator/>
+      <reference ref="Graph.ShowHideGrid"/>
+
+      <separator/>
+      <reference ref="Graph.CommonLayoutGroup"/>
+    </group>
+    <!-- ***** yFiles actions end*************************************** -->
+
 
     <action id="Faces.Navigation.Graph.OpenInEditorAction" class="com.intellij.jsf.graph.actions.OpenInEditorAction"
             text="_Jump to source" use-shortcut-of="EditSource" keymap="$default">
     </action>
-    <action id="Faces.Navigation.Graph.ScaleIncreaseAction" class="com.intellij.jsf.graph.actions.ScaleIncreaseAction" text="Increase">
-      <keyboard-shortcut first-keystroke="ADD" keymap="$default"/>
-      <keyboard-shortcut first-keystroke="EQUALS" keymap="$default"/>
-    </action>
-    <action id="Faces.Navigation.Graph.ScaleDecreaseAction" class="com.intellij.jsf.graph.actions.ScaleDecreaseAction" text="Decrease">
-      <keyboard-shortcut first-keystroke="SUBTRACT" keymap="$default"/>
-      <keyboard-shortcut first-keystroke="MINUS" keymap="$default"/>
-    </action>
+
     <action id="Faces.Navigation.Graph.HideSelectionAction" class="com.intellij.jsf.graph.actions.HideSelectionAction"
             text="Hide Selection" use-shortcut-of="CollapseAll">
     </action>
@@ -1516,44 +1543,11 @@
             text="_Goto declaration">
     </action>
 
-    <group id="Faces.Navigation.Graph.LayoutGroup" text="Layout" popup="true">
-      <reference ref="Faces.Navigation.Graph.Layout.OrganicLayout"/>
-      <separator/>
-      <reference ref="Faces.Navigation.Graph.Layout.SugiyamaLayout"/>
-      <reference ref="Faces.Navigation.Graph.Layout.RadialTreeLayout"/>
-      <reference ref="Faces.Navigation.Graph.Layout.CircleLayout"/>
-    </group>
 
     <group id="Faces.MainGraphPopup">
-      <reference ref="Faces.Navigation.Graph.OpenInEditorAction"/>
 
-      <separator/>
-      <reference ref="Faces.Navigation.Graph.ScaleIncreaseAction"/>
-      <reference ref="Faces.Navigation.Graph.ScaleDecreaseAction"/>
-
-      <separator/>
-      <reference ref="Faces.Navigation.Graph.HideSelectionAction"/>
-      <reference ref="Faces.Navigation.Graph.ShowHiddenCellsAction"/>
-
-      <separator/>
-      <reference ref="Faces.Navigation.Graph.ShowNeibours"/>
-      <reference ref="Faces.Navigation.Graph.HideNeibours"/>
-
-      <separator/>
-      <reference ref="Faces.Navigation.Graph.LayoutGroup"/>
     </group>
     <group id="Faces.MainPageGraphPopup">
-      <reference ref="Faces.Navigation.Graph.OpenInEditorAction"/>
-
-      <separator/>
-      <reference ref="Faces.Navigation.Graph.HideSelectionAction"/>
-      <reference ref="Faces.Navigation.Graph.ShowHiddenCellsAction"/>
-      <separator/>
-      <reference ref="Faces.Navigation.Graph.ShowOutEdges"/>
-      <reference ref="Faces.Navigation.Graph.ShowInEdges"/>
-
-      <separator/>
-      <reference ref="Faces.Navigation.Graph.LayoutGroup"/>
     </group>
     <group id="Faces.MainPageTreePopup">
       <reference ref="Faces.Navigation.Graph.PageTree.GotoSourceAction"/>
