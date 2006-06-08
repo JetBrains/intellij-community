@@ -19,8 +19,9 @@ import com.intellij.j2ee.ClassUtil;
 public class RequiredLibrariesInfo {
   private List<LibraryInfo> myLibraryInfos = new ArrayList<LibraryInfo>();
 
-  public void addLibraryInfo(@NonNls String expectedJarName, @Nullable @NonNls String downloadingUrl, @NonNls String... requiredClasses) {
-    myLibraryInfos.add(new LibraryInfo(expectedJarName, downloadingUrl, requiredClasses));
+  public void addLibraryInfo(@NonNls String expectedJarName, @Nullable @NonNls String downloadingUrl, @Nullable String presentableUrl, 
+                             @NonNls String... requiredClasses) {
+    myLibraryInfos.add(new LibraryInfo(expectedJarName, downloadingUrl, presentableUrl, requiredClasses));
   }
 
   public @Nullable RequiredClassesNotFoundInfo checkLibraries(VirtualFile[] libraryFiles) {

@@ -70,8 +70,10 @@ public class LibraryDownloader {
       public void run() {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         try {
-          for (LibraryInfo info : myLibraryInfos) {
+          for (int i = 0; i < myLibraryInfos.length; i++) {
+            LibraryInfo info = myLibraryInfos[i];
             indicator.checkCanceled();
+            indicator.setText(J2EEBundle.message("progress.0.of.1.file.downloaded.text", i, myLibraryInfos.length));
             final File file = download(info);
             if (file != null) {
               downloadedFiles.add(Pair.create(info, file));
@@ -171,7 +173,7 @@ public class LibraryDownloader {
     if (url == null) return null;
 
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    indicator.setText(J2EEBundle.message("progress.download.jar.text", libraryInfo.getExpectedJarName()));
+    indicator.setText2(J2EEBundle.message("progress.download.jar.text", libraryInfo.getExpectedJarName(), libraryInfo.getPresentableUrl()));
     final File tempFile = FileUtil.createTempFile("downloaded", "jar");
     HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
 

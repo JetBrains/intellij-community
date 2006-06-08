@@ -1461,6 +1461,7 @@
     <!-- ***** java server faces actions *************************************** -->
     <action id="Faces.EnableSupport" class="com.intellij.jsf.actions.AddFacesSupportAction">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+      <add-to-group group-id="J2EEViewPopupMenu" anchor="last"/>
     </action>
 
 
