@@ -20,10 +20,7 @@ import com.intellij.util.ui.SortableColumnModel;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 public class ListTreeTableModelOnColumns extends DefaultTreeModel
   implements TreeTableModel, SortableColumnModel{
@@ -71,8 +68,16 @@ public class ListTreeTableModelOnColumns extends DefaultTreeModel
     myColumns[column].setValue(node, aValue);
   }
 
-  public void setColumns(ColumnInfo[] columns) {
+  /**
+   * @param columns
+   * @return true if changed
+   */
+  public boolean setColumns(ColumnInfo[] columns) {
+    if (myColumns != null && Arrays.equals(myColumns, columns)) {
+      return false;
+    }
     myColumns = columns;
+    return true;
   }
 
   public ColumnInfo[] getColumnInfos() {
