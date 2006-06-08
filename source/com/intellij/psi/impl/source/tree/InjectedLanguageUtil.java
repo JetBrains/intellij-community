@@ -367,26 +367,26 @@ public class InjectedLanguageUtil {
     return oldFile;
   }
 
-  public static class LineCommentTextLiteralEscaper implements LiteralTextEscaper<PsiCommentImpl> {
-    public boolean decode(final PsiCommentImpl text, final TextRange rangeInsideHost, final StringBuilder outChars) {
-      outChars.append(text.getText(), rangeInsideHost.getStartOffset() + 2, rangeInsideHost.getEndOffset() + 2);
-      return true;
-    }
-
-    public int getOffsetInSource(final int offsetInDecoded) {
-      return offsetInDecoded + 2;
-    }
-  }
-
-  public static class BlockCommentTextLiteralEscaper implements LiteralTextEscaper<PsiCommentImpl> {
-    public boolean decode(final PsiCommentImpl text, final TextRange rangeInsideHost, final StringBuilder outChars) {
-      final String value = text.getText();
-      outChars.append(value, rangeInsideHost.getStartOffset() + 2, Math.min(rangeInsideHost.getEndOffset(), value.length() - 2) + 2);
-      return true;
-    }
-
-    public int getOffsetInSource(final int offsetInDecoded) {
-      return offsetInDecoded + 2;
-    }
-  }
+  //public static class LineCommentTextLiteralEscaper implements LiteralTextEscaper<PsiCommentImpl> {
+  //  public boolean decode(final PsiCommentImpl text, final TextRange rangeInsideHost, final StringBuilder outChars) {
+  //    outChars.append(text.getText(), rangeInsideHost.getStartOffset() + 2, rangeInsideHost.getEndOffset() + 2);
+  //    return true;
+  //  }
+  //
+  //  public int getOffsetInSource(final int offsetInDecoded) {
+  //    return offsetInDecoded + 2;
+  //  }
+  //}
+  //
+  //public static class BlockCommentTextLiteralEscaper implements LiteralTextEscaper<PsiCommentImpl> {
+  //  public boolean decode(final PsiCommentImpl text, final TextRange rangeInsideHost, final StringBuilder outChars) {
+  //    final String value = text.getText();
+  //    outChars.append(value, rangeInsideHost.getStartOffset() + 2, Math.min(rangeInsideHost.getEndOffset(), value.length() - 2) + 2);
+  //    return true;
+  //  }
+  //
+  //  public int getOffsetInSource(final int offsetInDecoded) {
+  //    return offsetInDecoded + 2;
+  //  }
+  //}
 }

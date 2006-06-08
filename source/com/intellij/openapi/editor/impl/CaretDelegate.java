@@ -1,9 +1,6 @@
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 
@@ -48,9 +45,12 @@ public class CaretDelegate implements CaretModel {
   }
 
   public LogicalPosition getLogicalPosition() {
-    int rangeLine = myEditorDelegate.getDocument().getLineNumber(myRange.getStartOffset());
-    int line = myEditorDelegate.getDocument().getLineNumber(myDelegate.getOffset()) - rangeLine;
-    return new LogicalPosition(line, Math.max(0,myDelegate.getOffset() - myRange.getStartOffset()));
+    Document hostDocument = myEditorDelegate.getDocument();
+    int rangeLine = hostDocument.getLineNumber(myRange.getStartOffset());
+    int hostLineNumber = hostDocument.getLineNumber(myDelegate.getOffset());
+    int line = hostLineNumber - rangeLine;
+    int hostLineOffset = hostDocument.getLineStartOffset(hostLineNumber);
+    return new LogicalPosition(line, Math.max(0,myDelegate.getOffset() - hostLineOffset));
   }
 
   public VisualPosition getVisualPosition() {
