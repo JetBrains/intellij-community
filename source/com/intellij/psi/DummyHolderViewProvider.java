@@ -3,33 +3,29 @@
  */
 package com.intellij.psi;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.lang.Language;
+import com.intellij.lexer.Lexer;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.lexer.Lexer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
 import java.util.Collections;
+import java.util.Set;
 
 public class DummyHolderViewProvider implements FileViewProvider{
   private DummyHolder myHolder;
   private PsiManager myManager;
   private final long myModificationStamp;
-  final LightVirtualFile myLightVirtualFile = new LightVirtualFile(myHolder != null ? myHolder.getName() : "DummyHolder", ""){
-    public CharSequence getContent() {
-      return DummyHolderViewProvider.this.getContents();
-    }
-  };
+  final LightVirtualFile myLightVirtualFile = new LightVirtualFile("DummyHolder");
 
   public DummyHolderViewProvider(final PsiManager manager) {
     myManager = manager;
@@ -89,6 +85,7 @@ public class DummyHolderViewProvider implements FileViewProvider{
 
   public void setDummyHolder(final DummyHolder dummyHolder) {
     myHolder = dummyHolder;
+    //myLightVirtualFile.setContent(null, getContents(), false);
   }
 
   public FileViewProvider clone(){

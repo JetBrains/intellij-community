@@ -1,22 +1,24 @@
 package com.intellij.testFramework;
 
+import com.intellij.lang.Language;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.lang.Language;
 import junit.framework.Assert;
-
-import java.io.*;
-import java.nio.charset.Charset;
-
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 
 public class LightVirtualFile extends VirtualFile {
   private FileType myFileType;
@@ -32,7 +34,7 @@ public class LightVirtualFile extends VirtualFile {
   public LightVirtualFile() {
   }
 
-  public LightVirtualFile(String name) {
+  public LightVirtualFile(@NonNls String name) {
     myName = name;
   }
 
@@ -196,7 +198,7 @@ public class LightVirtualFile extends VirtualFile {
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
   }
 
-  public void setContent(Object requestor, String content, boolean fireEvent) {
+  public void setContent(Object requestor, CharSequence content, boolean fireEvent) {
     long oldStamp = myModStamp;
     myContent = content;
     if (fireEvent) {

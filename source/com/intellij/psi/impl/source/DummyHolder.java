@@ -1,15 +1,15 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
@@ -18,8 +18,8 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
@@ -59,7 +59,10 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     LOG.assertTrue(manager != null);
     myContext = context;
     myTable = table;
-    if(contentElement != null) TreeUtil.addChildren(getTreeElement(), contentElement);
+    if(contentElement != null) {
+      TreeUtil.addChildren(getTreeElement(), contentElement);
+      clearCaches();
+    }
   }
 
   public DummyHolder(PsiManager manager, PsiElement context, CharTable table) {
@@ -184,6 +187,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
       myFileElement = new FileElement(DUMMY_HOLDER);
       myFileElement.setPsiElement(this);
       if(myTable != null) myFileElement.setCharTable(myTable);
+      clearCaches();
     }
     return myFileElement;
   }
