@@ -1,6 +1,5 @@
 package com.intellij.lang.ant.psi;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
@@ -20,13 +19,13 @@ public interface AntElement extends PsiNamedElement {
 
   void clearCaches();
 
-  void setProperty(final String name, final PsiElement element);
-
   @Nullable
-  PsiElement getProperty(final String name);
+  AntProperty getProperty(final String name);
+
+  void setProperty(final String name, final AntProperty element);
 
   @NotNull
-  PsiElement[] getProperties();
+  AntProperty[] getProperties();
 
   /**
    * Does the same as findElementAt() but without rebuilding cleared PSI.

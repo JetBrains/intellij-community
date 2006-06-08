@@ -3,9 +3,7 @@ package com.intellij.lang.ant.psi.impl;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -32,8 +30,8 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
       final AntElement[] importedChildren = importedProject.getChildren();
       if (importedChildren.length > 0) {
         // copy project properties
-        for (PsiElement prop : importedProject.getProperties()) {
-          project.setProperty(((PsiNamedElement)prop).getName(), prop);
+        for (AntProperty prop : importedProject.getProperties()) {
+          project.setProperty(prop.getName(), prop);
         }
         AntStructuredElement firstChild = PsiTreeUtil.getChildOfType(importedProject, AntStructuredElement.class);
         if (firstChild != null) {

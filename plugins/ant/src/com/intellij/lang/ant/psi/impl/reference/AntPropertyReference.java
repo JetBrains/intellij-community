@@ -47,13 +47,7 @@ public class AntPropertyReference extends AntGenericReference {
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-    final AntElement antElement = getElement();
-    final AntElement parent = antElement.getAntParent();
-    if (parent != null) {
-      parent.setProperty(getCanonicalText(), element);
-      return handleElementRename(((PsiNamedElement)element).getName());
-    }
-    return antElement;
+    return handleElementRename(((PsiNamedElement)element).getName());
   }
 
   public static ReferenceType getReferenceType() {

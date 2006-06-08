@@ -4,7 +4,9 @@ import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.xml.XmlDocument;
@@ -94,8 +96,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     final String env = (envPrefix.endsWith(".")) ? envPrefix : envPrefix + '.';
     if (myEnvPrefixes.indexOf(env) < 0) {
       myEnvPrefixes.add(env);
-      for (PsiElement element : getProperties()) {
-        final String name = ((PsiNamedElement)element).getName();
+      for (AntProperty element : getProperties()) {
+        final String name = element.getName();
         if (name != null && name.startsWith(myDefaultEnvPrefix)) {
           setProperty(env + name.substring(myDefaultEnvPrefix.length()), element);
         }
@@ -125,21 +127,20 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   }
 
   @Nullable
-  public PsiElement getProperty(final String name) {
+  public AntProperty getProperty(final String name) {
     checkPropertiesMap();
     return super.getProperty(name);
   }
 
-  @NotNull
-  public PsiElement[] getProperties() {
-    checkPropertiesMap();
-    return super.getProperties();
-  }
-
-
-  public void setProperty(final String name, final PsiElement element) {
+  public void setProperty(final String name, final AntProperty element) {
     checkPropertiesMap();
     super.setProperty(name, element);
+  }
+
+  @NotNull
+  public AntProperty[] getProperties() {
+    checkPropertiesMap();
+    return super.getProperties();
   }
 
   @SuppressWarnings({"UseOfObsoleteCollectionType"})
@@ -221,7 +222,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
   private void checkPropertiesMap() {
     if (myProperties == null) {
-      myProperties = new HashMap<String, PsiElement>(myPredefinedProps.size());
+      myProperties = new HashMap<String, AntProperty>(myPredefinedProps.size());
       setPredefinedProperties();
     }
   }

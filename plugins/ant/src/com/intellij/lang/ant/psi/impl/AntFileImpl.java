@@ -6,6 +6,7 @@ import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
+import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
@@ -150,17 +151,17 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     }
   }
 
-  public void setProperty(final String name, final PsiElement element) {
-  }
-
   @Nullable
-  public PsiElement getProperty(final String name) {
+  public AntProperty getProperty(final String name) {
     return null;
   }
 
+  public void setProperty(final String name, final AntProperty element) {
+  }
+
   @NotNull
-  public PsiElement[] getProperties() {
-    return PsiElement.EMPTY_ARRAY;
+  public AntProperty[] getProperties() {
+    return AntProperty.EMPTY_ARRAY;
   }
 
   public AntElement lightFindElementAt(int offset) {

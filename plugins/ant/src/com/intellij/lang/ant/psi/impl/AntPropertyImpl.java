@@ -116,16 +116,16 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     getSourceElement().setAttribute("file", name);
   }
 
-  public void clearCaches() {
-    super.clearCaches();
-    propHolder.clearCaches();
-  }
-
-  private String getPrefix() {
+  public String getPrefix() {
     return getSourceElement().getAttributeValue("prefix");
   }
 
-  private String getEnvironment() {
+  public String getEnvironment() {
     return getSourceElement().getAttributeValue("environment");
+  }
+
+  public void clearCaches() {
+    super.clearCaches();
+    propHolder.clearCaches();
   }
 }

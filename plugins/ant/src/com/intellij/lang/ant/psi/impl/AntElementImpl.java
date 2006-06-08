@@ -42,8 +42,8 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   private final AntElement myParent;
   private AntElement[] myChildren = null;
   private PsiReference[] myReferences = null;
-  protected Map<String, PsiElement> myProperties;
-  private PsiElement[] myPropertiesArray;
+  protected Map<String, AntProperty> myProperties;
+  private AntProperty[] myPropertiesArray;
 
   public AntElementImpl(final AntElement parent, final XmlElement sourceElement) {
     super(sourceElement);
@@ -156,26 +156,26 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     myPropertiesArray = null;
   }
 
-  public void setProperty(final String name, final PsiElement element) {
+  @Nullable
+  public AntProperty getProperty(final String name) {
+    return (myProperties == null) ? null : myProperties.get(name);
+  }
+
+  public void setProperty(final String name, final AntProperty element) {
     if (myProperties == null) {
-      myProperties = new HashMap<String, PsiElement>();
+      myProperties = new HashMap<String, AntProperty>();
     }
     myProperties.put(name, element);
     myPropertiesArray = null;
   }
 
-  @Nullable
-  public PsiElement getProperty(final String name) {
-    return (myProperties == null) ? null : myProperties.get(name);
-  }
-
   @NotNull
-  public PsiElement[] getProperties() {
+  public AntProperty[] getProperties() {
     if (myProperties == null) {
-      return PsiElement.EMPTY_ARRAY;
+      return AntProperty.EMPTY_ARRAY;
     }
     if (myPropertiesArray == null) {
-      myPropertiesArray = myProperties.values().toArray(new PsiElement[myProperties.size()]);
+      myPropertiesArray = myProperties.values().toArray(new AntProperty[myProperties.size()]);
     }
     return myPropertiesArray;
   }
@@ -242,9 +242,9 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   public static PsiElement resolveProperty(@NotNull final AntElement element, final String name) {
     AntElement temp = element;
     while (temp != null) {
-      final PsiElement psiElement = temp.getProperty(name);
-      if (psiElement != null) {
-        return psiElement;
+      final PsiElement property = temp.getProperty(name);
+      if (property != null) {
+        return property;
       }
       temp = temp.getAntParent();
     }
@@ -255,7 +255,12 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
         AntProperty prop = (AntProperty)child;
         final PropertiesFile propFile = prop.getPropertiesFile();
         if (propFile != null) {
-          final Property property = propFile.findPropertyByKey(name);
+          String prefix = prop.getPrefix();
+          if (prefix != null && !prefix.endsWith(".")) {
+            prefix += '.';
+          }
+          final String key = (prefix == null) ? name : prefix + name;
+          final Property property = propFile.findPropertyByKey(key);
           if (property != null) {
             return property;
           }
