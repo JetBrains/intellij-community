@@ -33,7 +33,7 @@ public class AntCreatePropertyAction extends BaseIntentionAction {
   @SuppressWarnings({"HardCodedStringLiteral"})
   @NotNull
   public String getFamilyName() {
-    final String i18nName = AntBundle.getMessage("intention.create.target.family.name");
+    final String i18nName = AntBundle.getMessage("intention.create.property.family.name");
     return (i18nName == null) ? "Create property" : i18nName;
   }
 
