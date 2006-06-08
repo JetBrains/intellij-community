@@ -7,8 +7,8 @@ import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author dsl
@@ -19,8 +19,8 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
    */
   private final ArrayList<Runnable> myRunnables = new ArrayList<Runnable>();
   private final List<RefactoringElementListenerProvider> myListenerProviders;
-  private final HashMap<PsiElement,ArrayList<RefactoringElementListener>> myOldElementToListenerListMap = new com.intellij.util.containers.HashMap<PsiElement, ArrayList<RefactoringElementListener>>();
-  private final HashMap<PsiElement,RefactoringElementListener> myOldElementToTransactionListenerMap = new com.intellij.util.containers.HashMap<PsiElement, RefactoringElementListener>();
+  private final Map<PsiElement,ArrayList<RefactoringElementListener>> myOldElementToListenerListMap = new HashMap<PsiElement,ArrayList<RefactoringElementListener>>();
+  private final Map<PsiElement,RefactoringElementListener> myOldElementToTransactionListenerMap = new HashMap<PsiElement,RefactoringElementListener>();
 
   public RefactoringTransactionImpl(List<RefactoringElementListenerProvider> listenerProviders) {
     myListenerProviders = listenerProviders;
@@ -29,10 +29,9 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
   private void addAffectedElement(PsiElement oldElement) {
     if(myOldElementToListenerListMap.get(oldElement) != null) return;
     ArrayList<RefactoringElementListener> listenerList = new ArrayList<RefactoringElementListener>();
-    for (int i = 0; i < myListenerProviders.size(); i++) {
-      RefactoringElementListenerProvider provider = myListenerProviders.get(i);
+    for (RefactoringElementListenerProvider provider : myListenerProviders) {
       final RefactoringElementListener listener = provider.getListener(oldElement);
-      if(listener != null) {
+      if (listener != null) {
         listenerList.add(listener);
       }
     }
@@ -61,8 +60,7 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
       myRunnables.add(
               new Runnable() {
                 public void run() {
-                  for (Iterator<RefactoringElementListener> iterator = myListenerList.iterator(); iterator.hasNext();) {
-                    RefactoringElementListener refactoringElementListener = iterator.next();
+                  for (RefactoringElementListener refactoringElementListener : myListenerList) {
                     refactoringElementListener.elementMoved(newElement);
                   }
                 }
@@ -74,8 +72,7 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
       myRunnables.add(
               new Runnable() {
                 public void run() {
-                  for (Iterator<RefactoringElementListener> iterator = myListenerList.iterator(); iterator.hasNext();) {
-                    RefactoringElementListener refactoringElementListener = iterator.next();
+                  for (RefactoringElementListener refactoringElementListener : myListenerList) {
                     refactoringElementListener.elementRenamed(newElement);
                   }
                 }
@@ -85,8 +82,7 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
   }
 
   public void commit() {
-    for (int i = 0; i < myRunnables.size(); i++) {
-      Runnable runnable = myRunnables.get(i);
+    for (Runnable runnable : myRunnables) {
       runnable.run();
     }
   }
