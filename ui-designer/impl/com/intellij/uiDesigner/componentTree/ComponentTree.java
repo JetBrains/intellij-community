@@ -468,7 +468,7 @@ public final class ComponentTree extends Tree implements DataProvider {
                                                  (int) dtde.getLocation().getY());
         final RadComponent targetComponent = getComponentFromPath(path);
         if (path != null && targetComponent instanceof RadContainer) {
-          DropLocation dropLocation = ((RadContainer) targetComponent).getDropLocation(null);
+          final com.intellij.uiDesigner.designSurface.DropLocation dropLocation = ((RadContainer)targetComponent).getDropLocation(null);
           canDrop = dropLocation.canDrop(dragObject);
           if (dcl != null && FormEditingUtil.isDropOnChild(dcl, dropLocation)) {
             canDrop = false;
@@ -497,7 +497,7 @@ public final class ComponentTree extends Tree implements DataProvider {
                                                  (int) dtde.getLocation().getY());
         final RadComponent targetComponent = getComponentFromPath(path);
         if (targetComponent instanceof RadContainer) {
-          DropLocation dropLocation = ((RadContainer) targetComponent).getDropLocation(null);
+          final com.intellij.uiDesigner.designSurface.DropLocation dropLocation = ((RadContainer)targetComponent).getDropLocation(null);
           if (dcl != null) {
             if (!FormEditingUtil.isDropOnChild(dcl, dropLocation)) {
               RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);

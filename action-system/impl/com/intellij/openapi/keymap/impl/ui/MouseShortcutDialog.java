@@ -13,10 +13,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 import org.jetbrains.annotations.NonNls;
 
@@ -267,19 +264,18 @@ class MouseShortcutDialog extends DialogWrapper{
       // Alt and Meta modifiers. I means that pressing of middle button causes
       // Alt+Button2 event.
       // See bug ID 4109826 on Sun's bug parade.
-      MouseShortcutDialog.this.addMouseListener(
-        new MouseAdapter(){
-          public void mouseReleased(MouseEvent e){
-            Component component=SwingUtilities.getDeepestComponentAt(e.getComponent(),e.getX(),e.getY());
-            if(component==MyClickPad.this){
-              e.consume();
-              myButton=e.getButton();
-              myModifiers=e.getModifiersEx();
-              updatePreviewAndConflicts();
-            }
+      //cast is needed in order to compile with mustang
+      MouseShortcutDialog.this.addMouseListener((MouseListener)new MouseAdapter(){
+        public void mouseReleased(MouseEvent e){
+          Component component= SwingUtilities.getDeepestComponentAt(e.getComponent(),e.getX(),e.getY());
+          if(component== MyClickPad.this){
+            e.consume();
+            myButton=e.getButton();
+            myModifiers=e.getModifiersEx();
+            updatePreviewAndConflicts();
           }
         }
-      );
+      });
     }
   }
 }
