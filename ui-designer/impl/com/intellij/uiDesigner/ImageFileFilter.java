@@ -26,7 +26,7 @@ public class ImageFileFilter implements TreeFileChooser.PsiFileFilter {
   public ImageFileFilter(@Nullable Module module) {
     myExtensions = new HashSet<String>(Arrays.asList(ImageIO.getReaderFormatNames()));
     if (module != null) {
-      myModuleScope = GlobalSearchScope.moduleWithDependenciesScope(module);
+      myModuleScope = module.getModuleWithDependenciesAndLibrariesScope(true);
     }
   }
 

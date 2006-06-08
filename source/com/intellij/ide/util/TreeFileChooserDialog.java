@@ -65,18 +65,21 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   @Nullable private final FileType myFileType;
 
   private boolean myDisableStructureProviders;
+  private final boolean myShowLibraryContents;
 
   public TreeFileChooserDialog(final Project project,
                                String title,
                                @Nullable final PsiFile initialFile,
                                @Nullable FileType fileType,
                                @Nullable PsiFileFilter filter,
-                               final boolean disableStructureProviders) {
+                               final boolean disableStructureProviders,
+                               final boolean showLibraryContents) {
     super(project, true);
     myInitialFile = initialFile;
     myFilter = filter;
     myFileType = fileType;
     myDisableStructureProviders = disableStructureProviders;
+    myShowLibraryContents = showLibraryContents;
     setTitle(title);
     myProject = project;
     init();
@@ -122,7 +125,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       }
 
       public boolean isShowLibraryContents() {
-        return false;
+        return myShowLibraryContents;
       }
 
       public boolean isShowModules() {

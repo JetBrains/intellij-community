@@ -99,13 +99,14 @@ public final class ComponentItemDialog extends DialogWrapper {
     myClassNamePlaceholder.add(myTfClassName, BorderLayout.CENTER);
 
     myTfIconPath.setText(myItemToBeEdited.getIconPath());
-    myTfIconPath.addActionListener(new MyChooseFileActionListener(project, new ImageFileFilter(null), myTfIconPath));
+    myTfIconPath.addActionListener(new MyChooseFileActionListener(project, new ImageFileFilter(null), myTfIconPath,
+                                                                  UIDesignerBundle.message("add.component.choose.icon")));
 
     myTfNestedForm.addActionListener(new MyChooseFileActionListener(project, new TreeFileChooser.PsiFileFilter() {
       public boolean accept(PsiFile file) {
         return file.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM);
       }
-    }, myTfNestedForm));
+    }, myTfNestedForm, UIDesignerBundle.message("add.component.choose.form")));
 
     myTfNestedForm.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
@@ -304,26 +305,29 @@ public final class ComponentItemDialog extends DialogWrapper {
     private final Project myProject;
     private TreeFileChooser.PsiFileFilter myFilter;
     private TextFieldWithBrowseButton myTextField;
+    private String myTitle;
 
     public MyChooseFileActionListener(final Project project,
                                       final TreeFileChooser.PsiFileFilter filter,
-                                      final TextFieldWithBrowseButton textField) {
+                                      final TextFieldWithBrowseButton textField,
+                                      final String title) {
       myProject = project;
       myFilter = filter;
       myTextField = textField;
+      myTitle = title;
     }
 
     public void actionPerformed(ActionEvent e) {
       final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
       PsiFile formFile = null;
       if (myTextField.getText().length() > 0) {
-        VirtualFile formVFile = ModuleUtil.findResourceFileInProject(myProject, myTextField.getText());
+        VirtualFile formVFile = ModuleUtil.findResourceFileInScope(myTextField.getText(), myProject, myProject.getAllScope());
         if (formVFile != null) {
           formFile = PsiManager.getInstance(myProject).findFile(formVFile);
         }
       }
-      TreeFileChooser fileChooser = factory.createFileChooser(UIDesignerBundle.message("add.component.choose.form"), formFile,
-                                                              null, myFilter, true);
+      TreeFileChooser fileChooser = factory.createFileChooser(myTitle, formFile,
+                                                              null, myFilter, true, true);
       fileChooser.showDialog();
       PsiFile file = fileChooser.getSelectedFile();
       if (file != null) {

@@ -41,7 +41,7 @@ public class IconEditor extends PropertyEditor<IconDescriptor> {
           }
         }
         TreeFileChooser fileChooser = factory.createFileChooser(UIDesignerBundle.message("title.choose.icon.file"), iconFile,
-                                                                null, new ImageFileFilter(myModule));
+                                                                null, new ImageFileFilter(myModule), false, true);
         fileChooser.showDialog();
         PsiFile file = fileChooser.getSelectedFile();
         if (file != null) {

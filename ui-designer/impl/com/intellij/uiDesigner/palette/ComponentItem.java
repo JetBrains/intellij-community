@@ -159,7 +159,7 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
 
     // Create new icon
     if(myIconPath != null && myIconPath.length() > 0) {
-      final VirtualFile iconFile = ModuleUtil.findResourceFileInProject(myProject, myIconPath);
+      final VirtualFile iconFile = ModuleUtil.findResourceFileInScope(myIconPath, myProject, GlobalSearchScope.allScope(myProject));
       if (iconFile != null) {
         try {
           myIcon = new ImageIcon(iconFile.contentsToByteArray());

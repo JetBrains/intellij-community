@@ -176,9 +176,9 @@ public class ModuleUtil {
     return findResourceFileInScope(resourceName, project, GlobalSearchScope.projectScope(project));
   }
 
-  private static VirtualFile findResourceFileInScope(final String resourceName,
-                                                     final Project project,
-                                                     final GlobalSearchScope scope) {
+  public static VirtualFile findResourceFileInScope(final String resourceName,
+                                                    final Project project,
+                                                    final GlobalSearchScope scope) {
     int index = resourceName.lastIndexOf('/');
     String packageName = index >= 0 ? resourceName.substring(0, index).replace('/', '.') : "";
     final String fileName = index >= 0 ? resourceName.substring(index+1) : resourceName;

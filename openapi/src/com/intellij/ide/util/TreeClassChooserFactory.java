@@ -89,4 +89,13 @@ public abstract class TreeClassChooserFactory implements ProjectComponent {
                                                     @Nullable FileType fileType,
                                                     @Nullable TreeFileChooser.PsiFileFilter filter,
                                                     boolean disableStructureProviders);
+
+
+  @NotNull
+  public abstract TreeFileChooser createFileChooser(@NotNull String title,
+                                                    @Nullable PsiFile initialFile,
+                                                    @Nullable FileType fileType,
+                                                    @Nullable TreeFileChooser.PsiFileFilter filter,
+                                                    boolean disableStructureProviders,
+                                                    boolean showLibraryContents);
 }
