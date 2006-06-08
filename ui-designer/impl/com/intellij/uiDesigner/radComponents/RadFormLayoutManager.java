@@ -270,6 +270,10 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     return getFormLayout(container).getColumnCount();
   }
 
+  private int getGridCellCount(RadContainer container, boolean isRow) {
+    return isRow ? getGridRowCount(container) : getGridColumnCount(container);
+  }
+
   @Override public int[] getGridCellCoords(RadContainer container, boolean isRow) {
     final FormLayout.LayoutInfo layoutInfo = getFormLayout(container).getLayoutInfo(container.getDelegee());
     int[] origins = isRow ? layoutInfo.rowOrigins : layoutInfo.columnOrigins;
@@ -318,6 +322,12 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   @NotNull @Override
   public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
     FormLayout formLayout = getFormLayout(container);
+    if (formLayout.getRowCount() == 0 && formLayout.getColumnCount() == 0) {
+      if (location != null) {
+        Rectangle rc = new Rectangle(new Point(), container.getDelegee().getSize());
+        return new FormFirstComponentInsertLocation(container, 0, 0, location, rc);
+      }
+    }
     final FormLayout.LayoutInfo layoutInfo = formLayout.getLayoutInfo(container.getDelegee());
     if (location != null && location.x > layoutInfo.getWidth()) {
       int row = findCell(layoutInfo.rowOrigins, location.y);
@@ -473,7 +483,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
       formSpec = grow ? new ColumnSpec(ENCODED_FORMSPEC_GROW) : new ColumnSpec(new ConstantSize(10, ConstantSize.DLUX));
     }
     insertGridCells(grid, cellIndex, isRow, isBefore, formSpec);
-    return 2;
+    return getGridCellCount(grid, isRow) == 1 ? 1 : 2;
   }
 
   @Override
@@ -506,21 +516,21 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   /**
    * @return index where new column or row was actually inserted (0-based)
    */
-  private static int insertGridCells(final RadContainer grid,
-                                     final int cellIndex,
-                                     final boolean isRow,
-                                     final boolean isBefore,
-                                     final FormSpec formSpec) {
+  private int insertGridCells(RadContainer grid, int cellIndex, boolean isRow, boolean isBefore, FormSpec formSpec) {
     FormLayout formLayout = (FormLayout) grid.getLayout();
     int index = isBefore ? cellIndex+1 : cellIndex+2;
     if (isRow) {
-      insertOrAppendRow(formLayout, index, FormFactory.RELATED_GAP_ROWSPEC);
-      if (!isBefore) index++;
+      if (getGridCellCount(grid, true) > 0) {
+        insertOrAppendRow(formLayout, index, FormFactory.RELATED_GAP_ROWSPEC);
+        if (!isBefore) index++;
+      }
       insertOrAppendRow(formLayout, index, (RowSpec) formSpec);
     }
     else {
-      insertOrAppendColumn(formLayout, index, FormFactory.RELATED_GAP_COLSPEC);
-      if (!isBefore) index++;
+      if (getGridCellCount(grid, false) > 0) {
+        insertOrAppendColumn(formLayout, index, FormFactory.RELATED_GAP_COLSPEC);
+        if (!isBefore) index++;
+      }
       insertOrAppendColumn(formLayout, index, (ColumnSpec)formSpec);
     }
     updateGridConstraintsFromCellConstraints(grid);
@@ -580,7 +590,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   public String getCellResizeTooltip(RadContainer container, boolean isRow, int cell, int newSize) {
     final String size = getUpdatedSize(container, isRow, cell, newSize).toString();
     return isRow
-           ? UIDesignerBundle.message("tooltip.resize.row", cell, size) 
+           ? UIDesignerBundle.message("tooltip.resize.row", cell, size)
            : UIDesignerBundle.message("tooltip.resize.column", cell, size);
   }
 
