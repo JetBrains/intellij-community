@@ -4,6 +4,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.misc.AntPsiUtil;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
+import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.util.TextRange;
@@ -53,8 +54,10 @@ public class AntRefIdReference extends AntGenericReference {
     AntElement refId = element.getElementByRefId(id);
     if (refId == null) {
       final AntElement anchor = AntPsiUtil.getSubProjectElement(element);
-      for (AntFile file : AntPsiUtil.getImportedFiles(element.getAntProject(), anchor)) {
-        refId = file.getAntProject().getElementByRefId(id);
+      for (final AntFile file : AntPsiUtil.getImportedFiles(element.getAntProject(), anchor)) {
+        final AntProject importedProject = file.getAntProject();
+        importedProject.getChildren();
+        refId = importedProject.getElementByRefId(id);
         if (refId != null) {
           return refId;
         }

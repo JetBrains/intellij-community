@@ -2,6 +2,7 @@ package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.misc.PsiElementHashSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
@@ -182,11 +183,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   public AntElement getElementByRefId(String refid) {
     refid = computeAttributeValue(refid);
     AntElement parent = this;
-    while (true) {
-      parent = parent.getAntParent();
-      if (parent == null) {
-        return null;
-      }
+    do {
       if (parent instanceof AntStructuredElement) {
         AntStructuredElementImpl se = (AntStructuredElementImpl)parent;
         if (se.myReferencedElements != null) {
@@ -196,7 +193,10 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
           }
         }
       }
+      parent = parent.getAntParent();
     }
+    while (!(parent instanceof AntFile));
+    return null;
   }
 
   @NotNull

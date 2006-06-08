@@ -1,10 +1,11 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.AntSupport;
-import com.intellij.lang.ant.psi.*;
+import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntFile;
+import com.intellij.lang.ant.psi.AntImport;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -15,7 +16,7 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
 
   public AntImportImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
-    final AntFile imported = getFile();
+    final AntFile imported = getImportedFile();
     if (imported != null) {
       imported.getChildren();
       final AntFile file = getAntFile();
@@ -23,18 +24,6 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
       for (AntTypeDefinition def : importedFile.getBaseTypeDefinitions()) {
         if (file.getBaseTypeDefinition(def.getClassName()) == null) {
           registerCustomType(def);
-        }
-      }
-      final AntProject project = getAntProject();
-      final AntProjectImpl importedProject = (AntProjectImpl)importedFile.getAntProject();
-      final AntElement[] importedChildren = importedProject.getChildren();
-      if (importedChildren.length > 0) {
-        AntStructuredElement firstChild = PsiTreeUtil.getChildOfType(importedProject, AntStructuredElement.class);
-        if (firstChild != null) {
-          // copy project ids
-          for (String id : importedProject.getRefIds()) {
-            project.registerRefId(id, firstChild.getElementByRefId(id));
-          }
         }
       }
     }
@@ -62,7 +51,7 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
     return getSourceElement().getAttributeValue("file");
   }
 
-  public AntFile getFile() {
+  public AntFile getImportedFile() {
     final String name = getFileName();
     if (name == null) return null;
     PsiFile psiFile = findFileByName(name);

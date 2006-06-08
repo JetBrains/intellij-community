@@ -270,7 +270,9 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
       }
     }
     for (AntFile file : AntPsiUtil.getImportedFiles(element.getAntProject(), anchor)) {
-      final AntProperty property = file.getAntProject().getProperty(name);
+      final AntProject importedProject = file.getAntProject();
+      importedProject.getChildren();
+      final AntProperty property = importedProject.getProperty(name);
       if (property != null) {
         return property;
       }

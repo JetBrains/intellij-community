@@ -8,5 +8,5 @@ public interface AntImport extends AntTask {
   String getFileName();
 
   @Nullable
-  AntFile getFile();
+  AntFile getImportedFile();
 }

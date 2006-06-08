@@ -52,7 +52,7 @@ public class AntPsiUtil {
       for (PsiElement child : project.getChildren()) {
         if (child == anchor) break;
         if (child instanceof AntImport) {
-          set.add(((AntImport)child).getAntFile());
+          set.add(((AntImport)child).getImportedFile());
         }
       }
       return (set.size() > 0) ? set.toArray(new AntFile[set.size()]) : NO_FILES;
