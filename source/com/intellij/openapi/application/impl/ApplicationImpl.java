@@ -157,6 +157,24 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     super.initComponents();
   }
 
+
+  @Override
+  protected void handleInitComponentError(final BaseComponent component, final Class componentClass, final Throwable ex) {
+    if (PluginManager.isPluginClass(componentClass.getName())) {
+      PluginId pluginId = PluginManager.getPluginByClassName(componentClass.getName());
+      final String errorMessage = "Plugin " + pluginId.getIdString() + " failed to initialize:\n" + ex.getMessage() +
+                                  "\nPlease remove the plugin and restart " + ApplicationNamesInfo.getInstance().getFullProductName() + ".";
+      if (!GraphicsEnvironment.isHeadless()) {
+        JOptionPane.showMessageDialog(null, errorMessage);
+      }
+      else {
+        System.out.println(errorMessage);
+      }
+      System.exit(1);
+    }
+    super.handleInitComponentError(component, componentClass, ex);
+  }
+
   private void loadApplicationComponents() {
     loadComponentsConfiguration(APPLICATION_LAYER, true);
 

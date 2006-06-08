@@ -213,10 +213,19 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   private void initComponent(BaseComponent component, Class componentClass) {
-    if (component instanceof JDOMExternalizable) {
-      initJdomExternalizable(componentClass, component);
+    try {
+      if (component instanceof JDOMExternalizable) {
+        initJdomExternalizable(componentClass, component);
+      }
+      component.initComponent();
     }
-    component.initComponent();
+    catch(Throwable ex) {
+      handleInitComponentError(component, componentClass, ex);
+    }
+  }
+
+  protected void handleInitComponentError(final BaseComponent component, final Class componentClass, final Throwable ex) {
+    LOG.error(ex);
   }
 
   protected synchronized Object getLock(Class componentClass) {
