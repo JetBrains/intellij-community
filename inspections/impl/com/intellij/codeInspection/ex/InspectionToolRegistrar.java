@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -118,27 +117,9 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
       tools[i] = new GlobalInspectionToolWrapper((GlobalInspectionTool)instantiateWrapper(myGlobalInspectionTools.get(i - withLocal)));
     }
 
-    checkDescriptionProvided(tools);
-
     buildInspectionIndex(tools);
 
     return tools;
-  }
-
-  private static void checkDescriptionProvided(final InspectionTool[] tools) {
-    for (InspectionTool tool : tools) {
-      URL url = getDescriptionUrl(tool, tool.getDescriptionFileName());
-      Class inspectionClass = tool instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)tool).getTool().getClass() :
-        tool instanceof GlobalInspectionToolWrapper ? ((GlobalInspectionToolWrapper)tool).getTool().getClass() : tool.getClass();
-      LOG.assertTrue(url != null,"Description is null for inspection '"+ tool.getDisplayName()+"'; class "+inspectionClass);
-      try {
-        InputStream inputStream = url.openStream();
-        inputStream.close();
-      }
-      catch (IOException e) {
-        LOG.error("Problem reading description '" + url + "' when instantiating tool "+inspectionClass,e);
-      }
-    }
   }
 
   private static Object instantiateWrapper(Class toolClass) {
