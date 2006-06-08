@@ -54,6 +54,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   private Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<RadComponent, MyPropertyChangeListener>();
 
   @NonNls private static final String ENCODED_FORMSPEC_GROW = "d:grow";
+  private static final Size DEFAULT_NOGROW_SIZE = Sizes.DEFAULT;
 
   @Nullable public String getName() {
     return UIFormXmlConstants.LAYOUT_FORM;
@@ -75,13 +76,13 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
       ColumnSpec[] colSpecs = new ColumnSpec [grid.getColumnCount() * 2 - 1];
 
       for(int i=0; i<grid.getRowCount(); i++) {
-        rowSpecs [i*2] = grid.willGrow(true, i) ? new RowSpec(ENCODED_FORMSPEC_GROW) : FormFactory.DEFAULT_ROWSPEC;
+        rowSpecs [i*2] = grid.willGrow(true, i) ? new RowSpec(ENCODED_FORMSPEC_GROW) : new RowSpec(DEFAULT_NOGROW_SIZE);
         if (i*2+1 < rowSpecs.length) {
           rowSpecs [i*2+1] = FormFactory.RELATED_GAP_ROWSPEC;
         }
       }
       for(int i=0; i<grid.getColumnCount(); i++) {
-        colSpecs [i*2] = grid.willGrow(false, i) ? new ColumnSpec(ENCODED_FORMSPEC_GROW) : FormFactory.DEFAULT_COLSPEC;
+        colSpecs [i*2] = grid.willGrow(false, i) ? new ColumnSpec(ENCODED_FORMSPEC_GROW) : new ColumnSpec(DEFAULT_NOGROW_SIZE);
         if (i*2+1 < colSpecs.length) {
           colSpecs [i*2+1] = FormFactory.RELATED_GAP_COLSPEC;
         }
@@ -477,10 +478,10 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   public int insertGridCells(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore, final boolean grow) {
     FormSpec formSpec;
     if (isRow) {
-      formSpec = grow ? new RowSpec(ENCODED_FORMSPEC_GROW) : new RowSpec(new ConstantSize(10, ConstantSize.DLUY));
+      formSpec = grow ? new RowSpec(ENCODED_FORMSPEC_GROW) : new RowSpec(DEFAULT_NOGROW_SIZE);
     }
     else {
-      formSpec = grow ? new ColumnSpec(ENCODED_FORMSPEC_GROW) : new ColumnSpec(new ConstantSize(10, ConstantSize.DLUX));
+      formSpec = grow ? new ColumnSpec(ENCODED_FORMSPEC_GROW) : new ColumnSpec(DEFAULT_NOGROW_SIZE);
     }
     insertGridCells(grid, cellIndex, isRow, isBefore, formSpec);
     return getGridCellCount(grid, isRow) == 1 ? 1 : 2;
