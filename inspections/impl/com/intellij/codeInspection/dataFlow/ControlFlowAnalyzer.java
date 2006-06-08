@@ -1029,7 +1029,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       PsiExpression[] params = argList.getExpressions();
       PsiClass owner = resolved.getContainingClass();
       final int exitPoint = getEndOffset(expression) - 1;
-      if (owner != null) {
+      if (owner != null && exitPoint >= 0) {
         final String className = owner.getQualifiedName();
         if ("java.lang.System".equals(className)) {
           if ("exit".equals(methodName)) {
