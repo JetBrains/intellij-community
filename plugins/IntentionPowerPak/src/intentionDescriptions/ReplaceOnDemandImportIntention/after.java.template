@@ -1,0 +1,8 @@
+import java.util.ArrayList;
+import java.util.List;
+
+public class X {
+  List<String> f() {
+    return new ArrayList<String>();
+  }
+}
