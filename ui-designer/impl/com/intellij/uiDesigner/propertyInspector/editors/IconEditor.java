@@ -35,7 +35,8 @@ public class IconEditor extends PropertyEditor<IconDescriptor> {
         final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myModule.getProject());
         PsiFile iconFile = null;
         if (myValue != null) {
-          VirtualFile iconVFile = ModuleUtil.findResourceFileInDependents(myModule, myValue.getIconPath());
+          VirtualFile iconVFile = ModuleUtil.findResourceFileInScope(myValue.getIconPath(), myModule.getProject(),
+                                                                     myModule.getModuleWithDependenciesAndLibrariesScope(true));
           if (iconVFile != null) {
             iconFile = PsiManager.getInstance(myModule.getProject()).findFile(iconVFile);
           }
@@ -58,7 +59,10 @@ public class IconEditor extends PropertyEditor<IconDescriptor> {
   }
 
   public IconDescriptor getValue() throws Exception {
-    return myValue;
+    if (myTextField.getText().length() == 0) {
+      return null;
+    }
+    return new IconDescriptor(myTextField.getText());
   }
 
   public JComponent getComponent(RadComponent component, IconDescriptor value, boolean inplace) {

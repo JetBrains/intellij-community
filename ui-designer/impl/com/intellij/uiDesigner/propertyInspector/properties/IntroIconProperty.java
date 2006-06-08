@@ -58,11 +58,15 @@ public class IntroIconProperty extends IntrospectedProperty<IconDescriptor> {
       ensureIconLoaded(component.getModule(), value);
       invokeSetter(component, value.getIcon());
     }
+    else {
+      invokeSetter(component, null);
+    }
   }
 
   public static void ensureIconLoaded(final Module module, final IconDescriptor value) {
     if (value.getIcon() == null) {
-      VirtualFile iconFile = ModuleUtil.findResourceFileInDependents(module, value.getIconPath());
+      VirtualFile iconFile = ModuleUtil.findResourceFileInScope(value.getIconPath(), module.getProject(),
+                                                                module.getModuleWithDependenciesAndLibrariesScope(true));
       if (iconFile != null) {
         loadIconFromFile(iconFile, value);
       }
