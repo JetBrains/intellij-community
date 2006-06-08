@@ -44,12 +44,11 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
 
   private boolean myInvalidated;
   private boolean myShowing;
-  private boolean myCommitting;
   private final Set<Document> myCurrentDocuments = new HashSet<Document>();
   private boolean myDirty;
   private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
     public void documentChanged(DocumentEvent e) {
-      if (myShowing && !myCommitting) {
+      if (myShowing && !CommittableUtil.isCommitting()) {
         myDirty = true;
       }
     }
@@ -149,16 +148,6 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     stopListeningDocuments();
     myCurrentDocuments.remove(document);
     startListeningDocuments();
-  }
-
-  protected final void doCommit() {
-    myCommitting = true;
-    try {
-      commit();
-    }
-    finally {
-      myCommitting = false;
-    }
   }
 
   protected DomElement getSelectedDomElementFromTextEditor(final TextEditor textEditor) {

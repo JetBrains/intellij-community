@@ -445,7 +445,7 @@ public abstract class AbstractTreeBuilder {
           for (int i = 0; i < node.getChildCount(); i++) {
             TreeNode child = node.getChildAt(i);
             if (child instanceof LoadingNode) {
-              if (TreeBuilderUtil.isNodeOrChildSelected(myTree, node)) {
+              if (TreeBuilderUtil.isNodeSelected(myTree, node)) {
                 myTree.addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)));
               }
               myTreeModel.removeNodeFromParent((MutableTreeNode)child);

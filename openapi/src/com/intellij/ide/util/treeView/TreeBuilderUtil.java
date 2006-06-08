@@ -1,5 +1,6 @@
 package com.intellij.ide.util.treeView;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
@@ -7,6 +8,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class TreeBuilderUtil {
@@ -64,6 +66,14 @@ public class TreeBuilderUtil {
       }
     }
   }
+
+  public static boolean isNodeSelected(JTree tree, DefaultMutableTreeNode node){
+    TreePath[] selectionPaths = tree.getSelectionPaths();
+    return selectionPaths != null && selectionPaths.length != 0 &&
+           ContainerUtil.find(Arrays.asList(selectionPaths), new TreePath(node.getPath())) != null;
+
+  }
+
 
   public static boolean isNodeOrChildSelected(JTree tree, DefaultMutableTreeNode node){
     TreePath[] selectionPaths = tree.getSelectionPaths();

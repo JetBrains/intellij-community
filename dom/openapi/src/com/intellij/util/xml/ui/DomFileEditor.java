@@ -5,12 +5,11 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.UserActivityWatcher;
-import com.intellij.util.xml.ui.CaptionComponent;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomEventAdapter;
 import com.intellij.util.xml.DomManager;
@@ -34,7 +33,7 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
     final UserActivityWatcher userActivityWatcher = DomUIFactory.getDomUIFactory().createEditorAwareUserActivityWatcher();
     final CommitablePanelUserActivityListener userActivityListener = new CommitablePanelUserActivityListener() {
       protected void applyChanges() {
-        doCommit();
+        commit();
       }
     };
     userActivityWatcher.addUserActivityListener(userActivityListener, this);
