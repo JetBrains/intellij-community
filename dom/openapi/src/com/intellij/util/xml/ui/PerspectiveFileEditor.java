@@ -6,13 +6,8 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.command.CommandAdapter;
-import com.intellij.openapi.command.CommandEvent;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -28,11 +23,8 @@ import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * User: Sergey.Vasiliev
@@ -41,18 +33,9 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private final Project myProject;
   private final VirtualFile myFile;
-
+  private final UndoHelper myUndoHelper;
   private boolean myInvalidated;
-  private boolean myShowing;
-  private final Set<Document> myCurrentDocuments = new HashSet<Document>();
-  private boolean myDirty;
-  private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
-    public void documentChanged(DocumentEvent e) {
-      if (myShowing && !CommittableUtil.isCommitting()) {
-        myDirty = true;
-      }
-    }
-  };
+
   private static final FileEditorState FILE_EDITOR_STATE = new FileEditorState() {
     public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
       return true;
@@ -61,7 +44,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
 
   protected PerspectiveFileEditor(final Project project, final VirtualFile file) {
     myProject = project;
-
+    myUndoHelper = new UndoHelper(project, this);
     myFile = file;
 
     FileEditorManager.getInstance(myProject).addFileEditorManagerListener(new FileEditorManagerAdapter() {
@@ -85,7 +68,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
         }
       }
     }, this);
-    startListeningDocuments();
+    myUndoHelper.startListeningDocuments();
 
     final PsiFile psiFile = getPsiFile();
     if (psiFile != null) {
@@ -93,37 +76,6 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
       if (document != null) {
         addWatchedDocument(document);
       }
-    }
-
-    CommandProcessor.getInstance().addCommandListener(new CommandAdapter() {
-      public void commandStarted(CommandEvent event) {
-        undoTransparentActionStarted();
-      }
-
-      public void undoTransparentActionStarted() {
-        myDirty = false;
-      }
-
-      public void undoTransparentActionFinished() {
-        if (myDirty) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              PsiDocumentManager.getInstance(project).commitAllDocuments();
-              reset();
-            }
-          });
-        }
-      }
-
-      public void commandFinished(CommandEvent event) {
-        undoTransparentActionFinished();
-      }
-    }, this);
-  }
-
-  protected final void startListeningDocuments() {
-    for (final Document document : myCurrentDocuments) {
-      document.addDocumentListener(myDocumentAdapter);
     }
   }
 
@@ -139,15 +91,11 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   public final void addWatchedDocument(final Document document) {
-    stopListeningDocuments();
-    myCurrentDocuments.add(document);
-    startListeningDocuments();
+    myUndoHelper.addWatchedDocument(document);
   }
 
   public final void removeWatchedDocument(final Document document) {
-    stopListeningDocuments();
-    myCurrentDocuments.remove(document);
-    startListeningDocuments();
+    myUndoHelper.removeWatchedDocument(document);
   }
 
   protected DomElement getSelectedDomElementFromTextEditor(final TextEditor textEditor) {
@@ -188,7 +136,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   public final Document[] getDocuments() {
-    return myCurrentDocuments.toArray(new Document[myCurrentDocuments.size()]);
+    return myUndoHelper.getDocuments();
   }
 
   public final Project getProject() {
@@ -202,13 +150,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   public void dispose() {
     if (myInvalidated) return;
     myInvalidated = true;
-    stopListeningDocuments();
-  }
-
-  protected final void stopListeningDocuments() {
-    for (final Document document : myCurrentDocuments) {
-      document.removeDocumentListener(myDocumentAdapter);
-    }
+    myUndoHelper.stopListeningDocuments();
   }
 
   public final boolean isModified() {
@@ -220,23 +162,14 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   public void selectNotify() {
-    commitAllDocuments();
-    myShowing = true;
+    myUndoHelper.setShowing(true);
     reset();
   }
 
   public void deselectNotify() {
     if (myInvalidated) return;
-    commitAllDocuments();
-    myShowing = false;
+    myUndoHelper.setShowing(false);
     commit();
-  }
-
-  private void commitAllDocuments() {
-    final PsiDocumentManager manager = getDocumentManager();
-    for (final Document document : myCurrentDocuments) {
-      manager.commitDocument(document);
-    }
   }
 
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
