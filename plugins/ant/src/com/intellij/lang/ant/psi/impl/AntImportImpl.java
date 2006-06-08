@@ -29,10 +29,6 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
       final AntProjectImpl importedProject = (AntProjectImpl)importedFile.getAntProject();
       final AntElement[] importedChildren = importedProject.getChildren();
       if (importedChildren.length > 0) {
-        // copy project properties
-        for (AntProperty prop : importedProject.getProperties()) {
-          project.setProperty(prop.getName(), prop);
-        }
         AntStructuredElement firstChild = PsiTreeUtil.getChildOfType(importedProject, AntStructuredElement.class);
         if (firstChild != null) {
           // copy project ids

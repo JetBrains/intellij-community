@@ -251,7 +251,14 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     final AntElement anchor = AntPsiUtil.getSubProjectElement(element);
     for (PsiElement child : element.getAntProject().getChildren()) {
       if (child == anchor) break;
-      if (child instanceof AntProperty) {
+      if (child instanceof AntImportImpl) {
+        final AntProject antProject = ((AntImportImpl)child).getAntFile().getAntProject();
+        final AntProperty property = antProject.getProperty(name);
+        if (property != null) {
+          return property;
+        }
+      }
+      else if (child instanceof AntProperty) {
         AntProperty prop = (AntProperty)child;
         final PropertiesFile propFile = prop.getPropertiesFile();
         if (propFile != null) {
