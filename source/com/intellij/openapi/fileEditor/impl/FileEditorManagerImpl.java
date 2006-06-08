@@ -670,7 +670,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     assertThread();
     if (descriptor.getFile() instanceof VirtualFileDelegate) {
       VirtualFileDelegate delegate = (VirtualFileDelegate)descriptor.getFile();
-      int offset = delegate.getWindowRange().getStartOffset();
+      int offset = delegate.getTextRange().getStartOffset();
       OpenFileDescriptor realDescriptor = new OpenFileDescriptor(descriptor.getProject(), delegate.getDelegate(), descriptor.getOffset() + offset);
       return openEditor(realDescriptor, focusEditor);
     }

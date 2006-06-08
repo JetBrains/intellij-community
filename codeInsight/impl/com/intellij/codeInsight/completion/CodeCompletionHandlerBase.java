@@ -10,13 +10,13 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.impl.EditorDelegate;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorDelegate;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -346,6 +346,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     Editor oldEditor = context.editor;
     Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(oldEditor, fileCopy, context.startOffset);
     if (injectedEditor != oldEditor) {
+      // newly inserted identifier can well end up in the injected language region
       final EditorDelegate editorDelegate = (EditorDelegate)injectedEditor;
       int newOffset1 = editorDelegate.logicalPositionToOffset(editorDelegate.parentToInjected(oldEditor.offsetToLogicalPosition(context.startOffset)));
       int newOffset2 = editorDelegate.logicalPositionToOffset(editorDelegate.parentToInjected(oldEditor.offsetToLogicalPosition(context.selectionEndOffset)));

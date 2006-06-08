@@ -19,11 +19,13 @@ import java.beans.PropertyChangeListener;
  */
 public class DocumentRange extends UserDataHolderBase implements DocumentEx {
   private final DocumentEx myDelegate;
-  private TextRange myRange;
+  private RangeMarker myRange;
 
   public DocumentRange(DocumentEx delegate, TextRange range) {
     myDelegate = delegate;
-    myRange = range;
+    myRange = delegate.createRangeMarker(range);
+    myRange.setGreedyToLeft(true);
+    myRange.setGreedyToRight(true);
   }
 
   public int getLineCount() {
@@ -52,7 +54,7 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
   }
 
   public int getTextLength() {
-    return myRange.getLength();
+    return myRange.getEndOffset()-myRange.getStartOffset();
   }
 
   public int getLineNumber(final int offset) {
@@ -60,17 +62,14 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
   }
 
   public void insertString(final int offset, final CharSequence s) {
-    myRange = myRange.grown(s.length());
     myDelegate.insertString(offset + myRange.getStartOffset(), s);
   }
 
   public void deleteString(final int startOffset, final int endOffset) {
-    myRange = myRange.grown(startOffset - endOffset);
     myDelegate.deleteString(startOffset + myRange.getStartOffset(), endOffset + myRange.getStartOffset());
   }
 
   public void replaceString(final int startOffset, final int endOffset, final CharSequence s) {
-    myRange = myRange.grown(s.length() + startOffset - endOffset);
     myDelegate.replaceString(startOffset + myRange.getStartOffset(), endOffset + myRange.getStartOffset(), s);
   }
 
@@ -153,7 +152,6 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
 
   public void setText(final CharSequence text) {
     myDelegate.replaceString(myRange.getStartOffset(), myRange.getEndOffset(), text);
-    myRange = new TextRange(myRange.getStartOffset(), myRange.getStartOffset() + text.length());
   }
 
   public RangeMarker createRangeMarker(final TextRange textRange) {
@@ -208,7 +206,7 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
     return myDelegate.isInEventsHandling();
   }
 
-  public TextRange getTextRange() {
+  public RangeMarker getTextRange() {
     return myRange;
   }
 

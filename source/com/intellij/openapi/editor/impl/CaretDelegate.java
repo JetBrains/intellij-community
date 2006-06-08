@@ -2,21 +2,20 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.event.CaretListener;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.editor.ex.EditorEx;
 
 /**
  * @author Alexey
  */
 public class CaretDelegate implements CaretModel {
   private final CaretModel myDelegate;
-  private TextRange myRange;
+  private RangeMarker myRange;
   private final EditorEx myEditorDelegate;
 
-
-  public CaretDelegate(CaretModel delegate, final TextRange range, EditorEx editorDelegate) {
+  public CaretDelegate(CaretModel delegate, final RangeMarker range, EditorEx editorDelegate) {
     myDelegate = delegate;
     myRange = range;
     myEditorDelegate = editorDelegate;

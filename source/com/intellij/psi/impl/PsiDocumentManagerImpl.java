@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.impl.DocumentRange;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -24,9 +25,11 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
+import com.intellij.psi.impl.source.tree.InjectedLanguageUtil;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -73,6 +76,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public void projectClosed() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "PsiDocumentManager";
   }
@@ -157,7 +161,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     //Statistics.commitTime += (time2 - time1);
   }
 
-  public void commitDocument(final Document document) {
+  public void commitDocument(final Document doc) {
+    final Document document = doc instanceof DocumentRange ? ((DocumentRange)doc).getDelegate() : doc;
     if (!isUncommited(document)) return;
 
     ApplicationManager.getApplication().runWriteAction(
@@ -273,9 +278,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   public boolean isDocumentBlockedByPsi(Document doc) {
     final FileViewProvider viewProvider = getCachedViewProvider(doc);
-    if(viewProvider != null)
-      return viewProvider.isLockedByPsiOperations();
-    return false;
+    return viewProvider != null && viewProvider.isLockedByPsiOperations();
   }
 
   public void doPostponedOperationsAndUnblockDocument(Document doc) {
@@ -284,22 +287,21 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if(viewProvider != null) component.doPostponedFormatting(viewProvider);
   }
 
-  protected void fireDocumentCreated(Document document, PsiFile file) {
+  private void fireDocumentCreated(Document document, PsiFile file) {
     Listener[] listeners = getCachedListeners();
     for (Listener listener : listeners) {
       listener.documentCreated(document, file);
     }
   }
 
-  protected void fireFileCreated(Document document, PsiFile file) {
+  private void fireFileCreated(Document document, PsiFile file) {
     Listener[] listeners = getCachedListeners();
     for (Listener listener : listeners) {
       listener.fileCreated(file, document);
     }
   }
 
-  protected void
-    commit(final Document document, final PsiFile file) {
+  protected void commit(final Document document, final PsiFile file) {
     document.putUserData(TEMP_TREE_IN_DOCUMENT_KEY, null);
 
     TextBlock textBlock = getTextBlock(document);
@@ -326,13 +328,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         myBlockSupport.reparseRange(file, startOffset, psiEndOffset, endOffset - psiEndOffset, chars);
         //checkConsistency(file, document);
         //file.setModificationStamp(document.getModificationStamp());
+        InjectedLanguageUtil.commitAllInjectedDocuments(this, document);
       }
 
       textBlock.clear();
     }
     finally{
       myIsCommitInProgress = false;
-      document.putUserData(KEY_COMMITING, false);
+      document.putUserData(KEY_COMMITING, Boolean.FALSE);
     }
 
     //mySmartPointerManager.synchronizePointers(file);
@@ -471,7 +474,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     return mySynchronizer;
   }
 
-  public boolean isCommitingDocument(final Document doc) {
+  public static boolean isCommitingDocument(final Document doc) {
     return doc.getUserData(KEY_COMMITING) != null;
   }
 }
