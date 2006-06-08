@@ -7,10 +7,10 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.impl.DocumentRange;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.DocumentRange;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -134,7 +134,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
     if (!file.getViewProvider().isEventSystemEnabled()) return null;
     document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
-    document.putUserData(HARD_REF_TO_PSI, file);
+
+    if (!file.getViewProvider().isPhysical()) {
+      document.putUserData(HARD_REF_TO_PSI, file);
+    }
 
     fireDocumentCreated(document, file);
 
