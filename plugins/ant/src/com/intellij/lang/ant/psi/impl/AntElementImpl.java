@@ -250,13 +250,8 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     }
     final AntElement anchor = AntPsiUtil.getSubProjectElement(element);
     for (PsiElement child : element.getAntProject().getChildren()) {
-      if (child == anchor) break;
-      if (child instanceof AntImportImpl) {
-        final AntProject antProject = ((AntImportImpl)child).getAntFile().getAntProject();
-        final AntProperty property = antProject.getProperty(name);
-        if (property != null) {
-          return property;
-        }
+      if (child == anchor) {
+        break;
       }
       else if (child instanceof AntProperty) {
         AntProperty prop = (AntProperty)child;
@@ -272,6 +267,12 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
             return property;
           }
         }
+      }
+    }
+    for (AntFile file : AntPsiUtil.getImportedFiles(element.getAntProject(), anchor)) {
+      final AntProperty property = file.getAntProject().getProperty(name);
+      if (property != null) {
+        return property;
       }
     }
     return null;

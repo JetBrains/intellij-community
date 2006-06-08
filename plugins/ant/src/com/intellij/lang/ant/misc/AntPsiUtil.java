@@ -39,9 +39,18 @@ public class AntPsiUtil {
    */
   @NotNull
   public static AntFile[] getImportedFiles(final AntProject project) {
+    return getImportedFiles(project, null);
+  }
+
+  /**
+   * Returns imported ant files for a project from the first project element upto the anchor.
+   */
+  @NotNull
+  public static AntFile[] getImportedFiles(final AntProject project, final AntElement anchor) {
     final HashSet<PsiElement> set = PsiElementHashSetSpinAllocator.alloc();
     try {
       for (PsiElement child : project.getChildren()) {
+        if (child == anchor) break;
         if (child instanceof AntImport) {
           set.add(((AntImport)child).getAntFile());
         }

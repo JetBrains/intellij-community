@@ -1,7 +1,9 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.ant.misc.AntPsiUtil;
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.util.TextRange;
@@ -47,7 +49,18 @@ public class AntRefIdReference extends AntGenericReference {
 
   public PsiElement resolve() {
     final AntStructuredElement element = (AntStructuredElement)getElement();
-    return element.getElementByRefId(getCanonicalText());
+    final String id = getCanonicalText();
+    AntElement refId = element.getElementByRefId(id);
+    if (refId == null) {
+      final AntElement anchor = AntPsiUtil.getSubProjectElement(element);
+      for (AntFile file : AntPsiUtil.getImportedFiles(element.getAntProject(), anchor)) {
+        refId = file.getAntProject().getElementByRefId(id);
+        if (refId != null) {
+          return refId;
+        }
+      }
+    }
+    return refId;
   }
 
   public Object[] getVariants() {
