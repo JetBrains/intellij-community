@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2005 JetBrains s.r.o. All Rights Reserved.
  */
-package com.intellij.psi.impl.cache.impl.repositoryCache;
+package com.intellij.util.containers;
 
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;

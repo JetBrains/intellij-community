@@ -9,13 +9,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.cache.impl.repositoryCache.StringInterner;
 import com.intellij.psi.impl.source.codeStyle.StatisticsManagerEx;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ScrambledInputStream;
 import com.intellij.util.ScrambledOutputStream;
+import com.intellij.util.containers.StringInterner;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;

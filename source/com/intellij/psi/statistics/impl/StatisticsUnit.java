@@ -1,7 +1,7 @@
 
 package com.intellij.psi.statistics.impl;
 
-import com.intellij.psi.impl.cache.impl.repositoryCache.StringInterner;
+import com.intellij.util.containers.StringInterner;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import gnu.trove.TObjectProcedure;
