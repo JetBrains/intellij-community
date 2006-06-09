@@ -39,13 +39,10 @@ import java.util.Set;
 
 public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog{
   private final FileChooserDescriptor myChooserDescriptor;
-  /** @fabrique **/
   protected FileSystemTreeImpl myFileSystemTree;
 
   private static VirtualFile ourLastFile;
-  /** @fabrique **/
-  protected Project myProject;
-  /** @fabrique **/
+  private Project myProject;
   private VirtualFile[] myChosenFiles = VirtualFile.EMPTY_ARRAY;
 
   private final java.util.List<Disposable> myDisposables = new ArrayList<Disposable>();
