@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -110,6 +111,16 @@ public class PasteProcessor extends EventProcessor {
     if (location.canDrop(myPastedComponentList)) {
       RadComponent[] componentsToPaste = myComponentsToPaste.toArray(new RadComponent[myComponentsToPaste.size()]);
       location.processDrop(myEditor, componentsToPaste, null, myPastedComponentList);
+      for(RadComponent c: componentsToPaste) {
+        FormEditingUtil.iterate(c, new FormEditingUtil.ComponentVisitor() {
+          public boolean visit(final IComponent component) {
+            if (component.getBinding() != null) {
+              InsertComponentProcessor.createBindingField(myEditor, (RadComponent) component);
+            }
+            return true;
+          }
+        });
+      }
       FormEditingUtil.selectComponents(myEditor, myComponentsToPaste);
       endPaste();
     }

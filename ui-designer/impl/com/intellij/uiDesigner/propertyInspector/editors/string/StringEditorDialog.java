@@ -383,7 +383,7 @@ public final class StringEditorDialog extends DialogWrapper{
     }
 
     public void showStringDescriptor(@Nullable final StringDescriptor descriptor) {
-      myTfValue.setText(StringDescriptorManager.getInstance(myEditor.getModule()).resolve(myEditor.getModule(), descriptor, myLocale));
+      myTfValue.setText(StringDescriptorManager.getInstance(myEditor.getModule()).resolve(descriptor, myLocale));
       myNoI18nCheckbox.setSelected(descriptor != null && descriptor.isNoI18n());
     }
 
@@ -392,7 +392,7 @@ public final class StringEditorDialog extends DialogWrapper{
       LOG.assertTrue(key != null);
       myTfBundleName.setText(descriptor.getBundleName());
       myTfKey.setText(key);
-      myTfRbValue.setText(StringDescriptorManager.getInstance(myEditor.getModule()).resolve(myEditor.getModule(), descriptor, myLocale));
+      myTfRbValue.setText(StringDescriptorManager.getInstance(myEditor.getModule()).resolve(descriptor, myLocale));
     }
   }
 }

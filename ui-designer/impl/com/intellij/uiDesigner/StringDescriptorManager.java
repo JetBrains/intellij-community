@@ -26,7 +26,12 @@ import java.util.Map;
  * @author yole
  */
 public class StringDescriptorManager implements ModuleComponent {
+  private Module myModule;
   private Map<Pair<Locale, String>, SoftReference<PropertiesFile>> myPropertiesFileCache = new HashMap<Pair<Locale, String>, SoftReference<PropertiesFile>>();
+
+  public StringDescriptorManager(final Module module) {
+    myModule = module;
+  }
 
   public static StringDescriptorManager getInstance(Module module) {
     return module.getComponent(StringDescriptorManager.class);
@@ -56,11 +61,10 @@ public class StringDescriptorManager implements ModuleComponent {
   @Nullable public String resolve(@NotNull RadComponent component, @Nullable StringDescriptor descriptor) {
     RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
     Locale locale = (root != null) ? root.getStringDescriptorLocale() : null;
-    Module module = component.getModule();
-    return resolve(module, descriptor, locale);
+    return resolve(descriptor, locale);
   }
 
-  @Nullable public String resolve(Module module, @Nullable StringDescriptor descriptor, @Nullable Locale locale) {
+  @Nullable public String resolve(@Nullable StringDescriptor descriptor, @Nullable Locale locale) {
     if (descriptor == null) {
       return null;
     }
@@ -69,29 +73,33 @@ public class StringDescriptorManager implements ModuleComponent {
       return descriptor.getValue();
     }
 
-    return resolveFromProperty(module, descriptor, locale);
+    Property prop = resolveToProperty(descriptor, locale);
+    if (prop != null) {
+      final String value = prop.getValue();
+      if (value != null) {
+        return value;
+      }
+    }
+    // We have to return surrogate string in case if propFile name is invalid or bundle doesn't have specified key
+    return "[" + descriptor.getKey() + " / " + descriptor.getBundleName() + "]";
   }
 
-  private String resolveFromProperty(@NotNull Module module, @NotNull StringDescriptor descriptor, @Nullable Locale locale) {
+  public Property resolveToProperty(@NotNull StringDescriptor descriptor, @Nullable Locale locale) {
     String propFileName = descriptor.getDottedBundleName();
     Pair<Locale, String> cacheKey = new Pair<Locale, String>(locale, propFileName);
     SoftReference<PropertiesFile> propertiesFileRef = myPropertiesFileCache.get(cacheKey);
     PropertiesFile propertiesFile = (propertiesFileRef == null) ? null : propertiesFileRef.get();
     if (propertiesFile == null || !propertiesFile.isValid()) {
-      propertiesFile = PropertiesUtil.getPropertiesFile(propFileName, module, locale);
+      propertiesFile = PropertiesUtil.getPropertiesFile(propFileName, myModule, locale);
       myPropertiesFileCache.put(cacheKey, new SoftReference<PropertiesFile>(propertiesFile));
     }
 
     if (propertiesFile != null) {
       final Property propertyByKey = propertiesFile.findPropertyByKey(descriptor.getKey());
       if (propertyByKey != null) {
-        final String value = propertyByKey.getValue();
-        if (value != null) {
-          return value;
-        }
+        return propertyByKey;
       }
     }
-    // We have to return surrogate string in case if propFile name is invalid or bundle doesn't have specified key
-    return "[" + descriptor.getKey() + " / " + descriptor.getBundleName() + "]";
+    return null;
   }
 }

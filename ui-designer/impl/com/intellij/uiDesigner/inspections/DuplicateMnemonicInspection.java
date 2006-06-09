@@ -59,7 +59,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
           value = StringDescriptorManager.getInstance(module).resolve((RadComponent) component, descriptor);
         }
         else {
-          value = StringDescriptorManager.getInstance(module).resolve(module, descriptor, null);
+          value = StringDescriptorManager.getInstance(module).resolve(descriptor, null);
         }
         SupportCode.TextWithMnemonic twm = SupportCode.parseText(value);
         if (twm.myMnemonicIndex >= 0 &&

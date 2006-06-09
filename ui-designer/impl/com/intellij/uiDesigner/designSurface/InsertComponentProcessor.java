@@ -181,11 +181,15 @@ public final class InsertComponentProcessor extends EventProcessor {
     insertedComponent.setBinding(binding);
     insertedComponent.setDefaultBinding(true);
 
+    createBindingField(editor, insertedComponent);
+  }
+
+  public static void createBindingField(final GuiEditor editor, final RadComponent insertedComponent) {
     // Try to create field in the corresponding bound class
     final String classToBind = editor.getRootContainer().getClassToBind();
     if(classToBind != null){
       final PsiClass aClass = FormEditingUtil.findClassToBind(editor.getModule(), classToBind);
-      if(aClass != null){
+      if(aClass != null && aClass.findFieldByName(insertedComponent.getBinding(), true) == null) {
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
             public void run() {
@@ -193,7 +197,7 @@ public final class InsertComponentProcessor extends EventProcessor {
                                      editor.getRootContainer(),
                                      aClass,
                                      insertedComponent.getComponentClassName(),
-                                     binding,
+                                     insertedComponent.getBinding(),
                                      false, // silently skip all errors (if any)
                                      null);
             }

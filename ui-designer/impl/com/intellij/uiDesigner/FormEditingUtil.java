@@ -65,11 +65,11 @@ public final class FormEditingUtil {
    */
   public static void deleteSelection(final GuiEditor editor){
     final List<RadComponent> selection = getSelectedComponents(editor);
-    deleteComponents(selection, true);
+    deleteComponents(selection, true, editor.getNextSaveGroupId());
     editor.refreshAndSave(true);
   }
 
-  public static void deleteComponents(final List<? extends RadComponent> selection, final boolean deleteEmptyCells) {
+  public static void deleteComponents(final List<? extends RadComponent> selection, boolean deleteEmptyCells, final Object undoGroupId) {
     if (selection.size() == 0) {
       return;
     }
@@ -90,7 +90,7 @@ public final class FormEditingUtil {
       FormEditingUtil.iterate(component, new ComponentVisitor() {
         public boolean visit(final IComponent c) {
           RadComponent rc = (RadComponent) c;
-          BindingProperty.checkRemoveUnusedField(rc, rc.getBinding(), null);
+          BindingProperty.checkRemoveUnusedField(rc, rc.getBinding(), undoGroupId);
           deletedComponentIds.add(rc.getId());
           return true;
         }
@@ -481,7 +481,7 @@ public final class FormEditingUtil {
           return;
         }
 
-        deleteComponents(componentsInColumn, false);
+        deleteComponents(componentsInColumn, false, null);
       }
     }
 

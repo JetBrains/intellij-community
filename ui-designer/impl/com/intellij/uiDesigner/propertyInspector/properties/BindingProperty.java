@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -241,6 +242,10 @@ public final class BindingProperty extends Property<RadComponent, String> {
     final Query<PsiReference> query = ReferencesSearch.search(field);
     return query.forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference t) {
+        PsiFile f = t.getElement().getContainingFile();
+        if (f != null && f.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
+          return true;
+        }
         PsiMethod method = PsiTreeUtil.getParentOfType(t.getElement(), PsiMethod.class);
         if (method != null && method.getName().equals(AsmCodeGenerator.SETUP_METHOD_NAME)) {
           return true;

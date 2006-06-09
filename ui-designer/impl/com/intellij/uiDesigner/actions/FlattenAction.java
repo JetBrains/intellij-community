@@ -56,7 +56,7 @@ public class FlattenAction extends AbstractGuiEditorAction {
       container.removeComponent(container.getComponent(i));
     }
 
-    FormEditingUtil.deleteComponents(Collections.singletonList(container), false);
+    FormEditingUtil.deleteComponents(Collections.singletonList(container), false, null);
     for(RadComponent child: contents) {
       final GridConstraints childConstraints = child.getConstraints();
       childConstraints.setRow(childConstraints.getRow() + containerConstraints.getRow());
@@ -75,7 +75,7 @@ public class FlattenAction extends AbstractGuiEditorAction {
       child.getConstraints().restore(container.getConstraints());
     }
     int childIndex = parent.indexOfComponent(container);
-    FormEditingUtil.deleteComponents(Collections.singletonList(container), false);
+    FormEditingUtil.deleteComponents(Collections.singletonList(container), false, null);
     if (child != null) {
       parent.addComponent(child, childIndex);
       child.revalidate();

@@ -45,7 +45,7 @@ public class FormInspectionUtil {
           value = StringDescriptorManager.getInstance(module).resolve((RadComponent) component, descriptor);
         }
         else {
-          value = StringDescriptorManager.getInstance(module).resolve(module, descriptor, null);
+          value = StringDescriptorManager.getInstance(module).resolve(descriptor, null);
         }
       }
       else if (propValue instanceof String) {
