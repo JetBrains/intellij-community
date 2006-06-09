@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.PsiBundle;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
@@ -138,5 +139,10 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
            " include libraries:" + myIncludeLibraries +
            " include other modules:" + myIncludeOtherModules +
            " include tests:" + myIncludeTests;
+  }
+
+  @Override
+  public String getDisplayName() {
+    return PsiBundle.message("psi.search.scope.module", myModule.getName());
   }
 }

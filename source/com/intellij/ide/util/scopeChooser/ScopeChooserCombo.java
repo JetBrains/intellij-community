@@ -11,6 +11,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -144,6 +145,10 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     if (selectedTextEditor != null) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(selectedTextEditor.getDocument());
       if (psiFile != null) {
+        final Module module = ModuleUtil.findModuleForPsiElement(psiFile);
+        if (module != null) {
+          model.addElement(new ScopeDescriptor(module.getModuleScope()));
+        }
         model.addElement(new ScopeDescriptor(new LocalSearchScope(psiFile, IdeBundle.message("scope.current.file"))));
 
         if (selectedTextEditor.getSelectionModel().hasSelection()) {
