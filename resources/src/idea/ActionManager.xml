@@ -1421,17 +1421,25 @@
     </group>
 
     <group id="GuiDesigner.PaletteComponentPopupMenu">
-      <action id="GuiDesigner.AddComponent" class="com.intellij.uiDesigner.palette.AddComponentAction"/>
-      <action id="GuiDesigner.EditComponent" class="com.intellij.uiDesigner.palette.EditComponentAction"/>
-      <action id="GuiDesigner.DeleteComponent" class="com.intellij.uiDesigner.palette.DeleteComponentAction"/>
+      <action id="GuiDesigner.AddComponent" class="com.intellij.uiDesigner.palette.AddComponentAction">
+        <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
+      </action>
+      <action id="GuiDesigner.EditComponent" class="com.intellij.uiDesigner.palette.EditComponentAction">
+        <keyboard-shortcut first-keystroke="F2" keymap="$default"/>
+      </action>
+      <action id="GuiDesigner.DeleteComponent" class="com.intellij.uiDesigner.palette.DeleteComponentAction"
+        use-shortcut-of="$Delete"/>
       <action id="GuiDesigner.AddGroup" class="com.intellij.uiDesigner.palette.AddGroupAction"/>
     </group>
 
     <group id="GuiDesigner.PaletteGroupPopupMenu">
       <reference ref="GuiDesigner.AddComponent"/>
       <reference ref="GuiDesigner.AddGroup"/>
-      <action id="GuiDesigner.EditGroup" class="com.intellij.uiDesigner.palette.EditGroupAction"/>
-      <action id="GuiDesigner.DeleteGroup" class="com.intellij.uiDesigner.palette.DeleteGroupAction"/>
+      <action id="GuiDesigner.EditGroup" class="com.intellij.uiDesigner.palette.EditGroupAction">
+        <keyboard-shortcut first-keystroke="F2" keymap="$default"/>
+      </action>
+      <action id="GuiDesigner.DeleteGroup" class="com.intellij.uiDesigner.palette.DeleteGroupAction"
+        use-shortcut-of="$Delete"/>
     </group>
 
     <!-- ****************************************************************** -->

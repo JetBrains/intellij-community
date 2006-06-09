@@ -31,6 +31,10 @@ public class DeleteComponentAction extends AnAction {
       return;
     }
 
+    int rc = Messages.showYesNoDialog(project, UIDesignerBundle.message("delete.component.prompt", selectedItem.getClassShortName()),
+                                      UIDesignerBundle.message("delete.component.title"), Messages.getQuestionIcon());
+    if (rc != 0) return;
+
     final Palette palette = Palette.getInstance(project);
     palette.removeItem(groupItem, selectedItem);
     palette.fireGroupsChanged();
