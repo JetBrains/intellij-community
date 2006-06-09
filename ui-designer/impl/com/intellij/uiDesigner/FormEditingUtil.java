@@ -55,7 +55,12 @@ public final class FormEditingUtil {
 
   public static boolean canDeleteSelection(final GuiEditor editor){
     final ArrayList<RadComponent> selection = getSelectedComponents(editor);
-    return !selection.isEmpty();
+    if (selection.isEmpty()) return false;
+    final RadRootContainer rootContainer = editor.getRootContainer();
+    if (rootContainer.getComponentCount() > 0 && selection.contains(rootContainer.getComponent(0))) {
+      return false;
+    }
+    return true;
   }
 
   /**

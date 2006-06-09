@@ -34,14 +34,11 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.CutCopyPasteSupport");
   private static final SAXBuilder SAX_BUILDER = new SAXBuilder();
 
-  private static String myRecentyCopiedString;
-  private static int myRecentyCopiedStringCount;
-
   private final GuiEditor myEditor;
   @NonNls private static final String ELEMENT_SERIALIZED = "serialized";
   @NonNls private static final String ATTRIBUTE_X = "x";
   @NonNls private static final String ATTRIBUTE_Y = "y";
-  private static final String ATTRIBUTE_PARENT_LAYOUT = "parent-layout";
+  @NonNls private static final String ATTRIBUTE_PARENT_LAYOUT = "parent-layout";
 
   public CutCopyPasteSupport(final GuiEditor uiEditor) {
     myEditor = uiEditor;
@@ -72,7 +69,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   }
 
   public boolean isCutEnabled(final DataContext dataContext) {
-    return isCopyEnabled(dataContext);
+    return isCopyEnabled(dataContext) && FormEditingUtil.canDeleteSelection(myEditor);
   }
 
   public void performCut(final DataContext dataContext) {
@@ -93,14 +90,6 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     final String serializedComponents = getSerializedComponents();
     if (serializedComponents == null) {
       return;
-    }
-
-    if (serializedComponents.equals(myRecentyCopiedString)) {
-      myRecentyCopiedStringCount++;
-    }
-    else {
-      myRecentyCopiedString = serializedComponents;
-      myRecentyCopiedStringCount = 1;
     }
 
     final ArrayList<RadComponent> componentsToPaste = new ArrayList<RadComponent>();
