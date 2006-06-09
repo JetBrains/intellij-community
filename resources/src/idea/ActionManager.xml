@@ -1475,6 +1475,8 @@
       <keyboard-shortcut first-keystroke="MINUS" keymap="$default"/>
     </action>
 
+    <action id="Graph.ActualZoom" class="com.intellij.javaee.diagram.y.actions.ActualZoomAction" text="Actual size"/>
+
     <action id="Graph.ShowHideGrid" class="com.intellij.javaee.diagram.y.actions.ShowHideGridAction" text="Show/Hide Grid"/>
 
     <!-- ***** yFiles layouts ********************** -->
@@ -1489,6 +1491,7 @@
     <group id="Graph.DefaultGraphPopup">
       <reference ref="Graph.ZoomIn"/>
       <reference ref="Graph.ZoomOut"/>
+      <reference ref="Graph.ActualZoom"/>
 
       <separator/>
       <reference ref="Graph.ShowHideGrid"/>
