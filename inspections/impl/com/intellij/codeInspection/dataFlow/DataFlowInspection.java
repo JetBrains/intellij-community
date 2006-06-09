@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -70,14 +71,21 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   }
 
   private static @Nullable LocalQuickFix[] createNPEFixes(PsiExpression qualifier) {
-    if (qualifier != null &&!(qualifier instanceof PsiMethodCallExpression) && PsiUtil.getLanguageLevel(qualifier).hasAssertKeyword()) {
+    if (qualifier != null &&
+        !(qualifier instanceof PsiMethodCallExpression) &&
+        !(qualifier instanceof PsiLiteralExpression && ((PsiLiteralExpression)qualifier).getValue() == null)) {
       try {
         PsiBinaryExpression binary = (PsiBinaryExpression)qualifier.getManager().getElementFactory().createExpressionFromText("a != null",
                                                                                                                               null);
         binary.getLOperand().replace(qualifier);
-        AddAssertStatementFix assertStatementFix = new AddAssertStatementFix(binary);
-        SurroundWithIfFix surroundWithIfFix = new SurroundWithIfFix(qualifier);
-        return new LocalQuickFix[]{assertStatementFix, surroundWithIfFix};
+        if (PsiUtil.getLanguageLevel(qualifier).hasAssertKeyword()) {
+          return new LocalQuickFix[]{
+            new AddAssertStatementFix(binary),
+            new SurroundWithIfFix(qualifier)
+          };
+        } else {
+          return new LocalQuickFix[]{new SurroundWithIfFix(qualifier)};
+        }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -102,15 +110,9 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     allProblems.addAll(cceSet);
     allProblems.addAll(redundantInstanceofs);
 
-    Collections.sort(allProblems, new Comparator() {
-      public int compare(Object o1, Object o2) {
-        int i1 = ((Instruction)o1).getIndex();
-        int i2 = ((Instruction)o2).getIndex();
-
-        if (i1 == i2) return 0;
-        if (i1 > i2) return 1;
-
-        return -1;
+    Collections.sort(allProblems, new Comparator<Instruction>() {
+      public int compare(Instruction i1, Instruction i2) {
+        return i1.getIndex() - i2.getIndex();
       }
     });
 
@@ -275,7 +277,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       return null;
     }
     return new LocalQuickFix() {
-      public String getName() {
+      @NotNull public String getName() {
         return fix.getText();
       }
 
@@ -290,6 +292,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         }
       }
 
+      @NotNull
       public String getFamilyName() {
         return InspectionsBundle.message("inspection.data.flow.simplify.boolean.expression.quickfix");
       }
@@ -297,6 +300,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   }
 
   private static class RedundantInstanceofFix implements LocalQuickFix {
+    @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.data.flow.redundant.instanceof.quickfix");
     }
@@ -316,6 +320,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       }
     }
 
+    @NotNull
     public String getFamilyName() {
       return getName();
     }
