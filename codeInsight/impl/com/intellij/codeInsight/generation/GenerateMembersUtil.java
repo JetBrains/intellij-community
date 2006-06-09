@@ -229,7 +229,7 @@ public class GenerateMembersUtil {
         PsiParameter parameter = parameters[i];
         PsiType paramType = substituteType(substitutor, parameter.getType(), isRaw);
         @NonNls String paramName = parameter.getName();
-        if (paramName == null) {
+        if (paramName == null || !paramType.equals(parameter.getType())) {
           Pair<String, Integer> pair = m.get(paramType);
           if (pair != null) {
             paramName = pair.first + pair.second;
