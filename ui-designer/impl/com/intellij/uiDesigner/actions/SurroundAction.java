@@ -84,14 +84,24 @@ public class SurroundAction extends AbstractGuiEditorAction {
             newContainer = (RadContainer) newContainer.getComponent(0);
           }
           else if (newContainer instanceof RadSplitPane) {
-            RadContainer panel = (RadContainer) InsertComponentProcessor.createInsertedComponent(editor, palette.getPanelItem());
-            assert panel != null;
-            panel.setCustomLayoutConstraints(LwSplitPane.POSITION_LEFT);
-            newContainer.addComponent(panel);
-            newContainer = panel;
+            if (selection.size() > 2) {
+              RadContainer panel = (RadContainer) InsertComponentProcessor.createInsertedComponent(editor, palette.getPanelItem());
+              assert panel != null;
+              panel.setCustomLayoutConstraints(LwSplitPane.POSITION_LEFT);
+              newContainer.addComponent(panel);
+              newContainer = panel;
+            }
+            else {
+              if (selection.size() > 0) {
+                selection.get(0).setCustomLayoutConstraints(LwSplitPane.POSITION_LEFT);
+              }
+              if (selection.size() > 1) {
+                selection.get(1).setCustomLayoutConstraints(LwSplitPane.POSITION_RIGHT);
+              }
+            }
           }
 
-          if (!(newContainer instanceof RadScrollPane)) {
+          if (!(newContainer instanceof RadScrollPane) && !(newContainer instanceof RadSplitPane)) {
             newContainer.setLayout(new GridLayoutManager(rc.height, rc.width));
           }
 
