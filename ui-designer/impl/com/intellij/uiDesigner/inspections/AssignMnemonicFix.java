@@ -44,8 +44,12 @@ public class AssignMnemonicFix extends QuickFix {
           prop.setValue(myComponent, StringDescriptor.create(result));
         }
         else {
-          StringEditorDialog.saveModifiedPropertyValue(myEditor.getModule(), descriptor, myEditor.getStringDescriptorLocale(), result,
-                                                       myEditor.getPsiFile());
+          final String newKeyName = StringEditorDialog.saveModifiedPropertyValue(myEditor.getModule(), descriptor,
+                                                                                 myEditor.getStringDescriptorLocale(), result,
+                                                                                 myEditor.getPsiFile());
+          if (newKeyName != null) {
+            prop.setValue(myComponent, new StringDescriptor(descriptor.getBundleName(), newKeyName));
+          }
         }
         myEditor.refreshAndSave(false);
       }

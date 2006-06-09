@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -104,7 +105,10 @@ public final class StringEditorDialog extends DialogWrapper{
           saveCreatedProperty(propFile, descriptor.getKey(), value, myEditor);
         }
         else {
-          saveModifiedPropertyValue(myEditor.getModule(), descriptor, myLocale, value, myEditor.getPsiFile());
+          final String newKeyName = saveModifiedPropertyValue(myEditor.getModule(), descriptor, myLocale, value, myEditor.getPsiFile());
+          if (newKeyName != null) {
+            myForm.myTfKey.setText(newKeyName);
+          }
         }
       }
     }
@@ -116,8 +120,8 @@ public final class StringEditorDialog extends DialogWrapper{
     return manager.findPropertiesFile(myEditor.getModule(), descriptor.getDottedBundleName(), myLocale);
   }
 
-  public static void saveModifiedPropertyValue(final Module module, final StringDescriptor descriptor,
-                                               final Locale locale, final String editedValue, final PsiFile formFile) {
+  public static String saveModifiedPropertyValue(final Module module, final StringDescriptor descriptor,
+                                                 final Locale locale, final String editedValue, final PsiFile formFile) {
     final PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(module.getProject());
     final PropertiesFile propFile = manager.findPropertiesFile(module, descriptor.getDottedBundleName(), locale);
     if (propFile != null) {
@@ -132,19 +136,32 @@ public final class StringEditorDialog extends DialogWrapper{
           }, UIDesignerBundle.message("edit.text.searching.references"), false, module.getProject()
         );
 
+        String newKeyName = null;
         if (references.size() > 1) {
-          final int rc = Messages.showYesNoDialog(module.getProject(), UIDesignerBundle.message("edit.text.multiple.usages",
-                                                                                                propertyByKey.getKey(), references.size()),
-                                                  UIDesignerBundle.message("edit.text.multiple.usages.title"), Messages.getWarningIcon());
-          if (rc != OK_EXIT_CODE) {
-            return;
+          final int rc = Messages.showDialog(module.getProject(), UIDesignerBundle.message("edit.text.multiple.usages",
+                                                                                           propertyByKey.getKey(), references.size()),
+                                             UIDesignerBundle.message("edit.text.multiple.usages.title"),
+                                             new String[] {
+                                               UIDesignerBundle.message("edit.text.change.all"),
+                                               UIDesignerBundle.message("edit.text.make.unique"),
+                                               CommonBundle.getCancelButtonText()
+                                             },
+                                             0,
+                                             Messages.getWarningIcon());
+          if (rc == 2) {
+            return null;
+          }
+          if (rc == 1) {
+            newKeyName = promptNewKeyName(module.getProject(), propFile, descriptor.getKey());
+            if (newKeyName == null) return null;
           }
         }
         final ReadonlyStatusHandler.OperationStatus operationStatus =
           ReadonlyStatusHandler.getInstance(module.getProject()).ensureFilesWritable(propFile.getVirtualFile());
         if (operationStatus.hasReadonlyFiles()) {
-          return;
+          return null;
         }
+        final String newKeyName1 = newKeyName;
         CommandProcessor.getInstance().executeCommand(
           module.getProject(),
           new Runnable() {
@@ -154,7 +171,12 @@ public final class StringEditorDialog extends DialogWrapper{
                 public void run() {
                   PsiDocumentManager.getInstance(module.getProject()).commitAllDocuments();
                   try {
-                    propFile.findPropertyByKey(descriptor.getKey()).setValue(editedValue);
+                    if (newKeyName1 != null) {
+                      propFile.addProperty(PropertiesElementFactory.createProperty(module.getProject(), newKeyName1, editedValue));
+                    }
+                    else {
+                      propFile.findPropertyByKey(descriptor.getKey()).setValue(editedValue);
+                    }
                   }
                   catch (IncorrectOperationException e) {
                     LOG.error(e);
@@ -163,8 +185,32 @@ public final class StringEditorDialog extends DialogWrapper{
               });
             }
           }, UIDesignerBundle.message("command.update.property"), FormEditingUtil.getNextSaveUndoGroupId(module.getProject()));
+        return newKeyName;
       }
     }
+    return null;
+  }
+
+  private static String promptNewKeyName(final Project project, final PropertiesFile propFile, final String key) {
+    String newName;
+    int index = 0;
+    do {
+      index++;
+      newName = key + index;
+    } while(propFile.findPropertyByKey(newName) != null);
+
+    InputValidator validator = new InputValidator() {
+      public boolean checkInput(String inputString) {
+        return inputString.length() > 0 && propFile.findPropertyByKey(inputString) == null;
+      }
+
+      public boolean canClose(String inputString) {
+        return checkInput(inputString);
+      }
+    };
+    return Messages.showInputDialog(project, UIDesignerBundle.message("edit.text.unique.key.prompt"),
+                                    UIDesignerBundle.message("edit.text.multiple.usages.title"),
+                                    Messages.getQuestionIcon(), newName, validator);
   }
 
   public static boolean saveCreatedProperty(final PropertiesFile bundle, final String name, final String value,
