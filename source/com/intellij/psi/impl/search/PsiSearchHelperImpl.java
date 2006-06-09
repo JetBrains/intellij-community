@@ -14,7 +14,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.*;
@@ -42,6 +41,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     ReferencesSearch.INSTANCE.registerExecutor(new CachesBasedRefSearcher());
     ReferencesSearch.INSTANCE.registerExecutor(new PsiAnnotationMethodReferencesSearcher());
     ReferencesSearch.INSTANCE.registerExecutor(new ConstructorReferencesSearcher());
+    ReferencesSearch.INSTANCE.registerExecutor(new SimpleAccessorReferenceSearcher());
+    ReferencesSearch.INSTANCE.registerExecutor(new PropertyReferenceSearcher());
 
     DirectClassInheritorsSearch.INSTANCE.registerExecutor(new JavaDirectInheritorsSearcher());
 

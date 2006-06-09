@@ -41,6 +41,16 @@ public class ReferencesSearch extends QueryFactory<PsiReference, ReferencesSearc
     public boolean isIgnoreAccessScope() {
       return myIgnoreAccessScope;
     }
+
+    public SearchScope getEffectiveSearchScope () {
+      if (!myIgnoreAccessScope) {
+        SearchScope accessScope = myElementToSearch.getUseScope();
+        return myScope.intersectWith(accessScope);
+      }
+      else {
+        return myScope;
+      }
+    }
   }
 
   public static Query<PsiReference> search(PsiElement element) {

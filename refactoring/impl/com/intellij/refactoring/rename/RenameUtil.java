@@ -449,7 +449,8 @@ public class RenameUtil {
   }
 
   static String getQualifiedNameAfterRename(String qName, String newName) {
-    int index = qName != null ? qName.lastIndexOf('.') : -1;
+    if (qName == null) return newName;
+    int index = qName.lastIndexOf('.');
     return index < 0 ? newName : qName.substring(0, index + 1) + newName;
   }
 
