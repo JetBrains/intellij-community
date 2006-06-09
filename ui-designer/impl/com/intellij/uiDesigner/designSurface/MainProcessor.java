@@ -309,6 +309,7 @@ public final class MainProcessor extends EventProcessor{
       if (myCurrentProcessor.cancelOperation()){
         myCurrentProcessor = null;
         myEditor.getLayeredPane().setCursor(Cursor.getDefaultCursor());
+        myEditor.getActiveDecorationLayer().removeFeedback();
         return true;
       }
     }

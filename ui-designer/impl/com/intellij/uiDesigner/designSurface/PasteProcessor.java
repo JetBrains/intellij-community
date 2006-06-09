@@ -134,7 +134,8 @@ public class PasteProcessor extends EventProcessor {
   }
 
   protected boolean cancelOperation() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    WindowManager.getInstance().getStatusBar(myEditor.getProject()).setInfo("");
+    return true;
   }
 
   @Override public boolean needMousePressed() {
