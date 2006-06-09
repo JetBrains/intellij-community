@@ -75,7 +75,9 @@ public class PathManager {
       File root = new File(rootPath).getAbsoluteFile();
 
       do {
-        root = new File(root.getParent()).getAbsoluteFile(); // one step back to get folder
+        final String parent = root.getParent();
+        assert parent != null : "No parent found for " + root + "; " + BIN_FOLDER + " folder with " + IDEA_PROPERTIES + " file not found";
+        root = new File(parent).getAbsoluteFile(); // one step back to get folder
       }
       while (root != null && !isIdeaHome(root));
 

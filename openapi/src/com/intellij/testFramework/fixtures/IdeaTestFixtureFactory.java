@@ -45,4 +45,5 @@ public abstract class IdeaTestFixtureFactory {
 
   public abstract <T extends IdeaProjectTestFixture> TestFixtureBuilder<T> createFixtureBuilder(Class<T> clazz);
 
+  public abstract TempDirTestFixture createTempDirTestFixture();
 }

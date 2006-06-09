@@ -28,11 +28,23 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NonNls String SELECTION_START_MARKER = "<selection>";
   @NonNls String SELECTION_END_MARKER = "</selection>";
 
+  @NonNls String ERROR_MARKER = "error";
+  @NonNls String WARNING_MARKER = "warning";
+  @NonNls String INFORMATION_MARKER = "weak_warning";
+  @NonNls String SERVER_PROBLEM_MARKER = "server_problem";
+  @NonNls String INFO_MARKER = "info";
+  @NonNls String END_LINE_HIGHLIGHT_MARKER = "EOLError";
+  @NonNls String END_LINE_WARNING_MARKER = "EOLWarning";
+
   void setTestDataPath(String dataPath);
+
+  String getTempDirPath();
+
+  void test(String filePath, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings);
 
   /**
    * Runs highliting test for the given file
    * @param filePath path relative to the one set by {@link #setTestDataPath(String)}
    */
-  void test(String filePath, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings);
+  void test(String filePath);
 }

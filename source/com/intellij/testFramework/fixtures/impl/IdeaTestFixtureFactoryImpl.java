@@ -4,10 +4,7 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.*;
 
 /**
  *
@@ -34,5 +31,9 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
   public <T extends IdeaProjectTestFixture> TestFixtureBuilder<T> createFixtureBuilder(Class<T> clazz) {
     T fixture = myFactory.getInstance(clazz);
     return new HeavyTestFixtureBuilderImpl<T>(fixture);
+  }
+
+  public TempDirTestFixture createTempDirTestFixture() {
+    return new TempDirTextFixtureImpl();
   }
 }

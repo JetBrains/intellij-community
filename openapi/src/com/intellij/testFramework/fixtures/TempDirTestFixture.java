@@ -15,16 +15,16 @@
  *
  */
 
-package com.intellij.testFramework.builders;
+package com.intellij.testFramework.fixtures;
 
-import com.intellij.testFramework.fixtures.ModuleFixture;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /**
- * @author mike
+ * @author Dmitry Avdeev
  */
-public interface ModuleFixtureBuilder<T extends ModuleFixture> {
+public interface TempDirTestFixture extends IdeaTestFixture {
 
-  ModuleFixtureBuilder<T> addContentRoot(final String contentRootPath);
+  VirtualFile copyFile(VirtualFile file);
 
-  T getFixture();
+  String getTempDirPath();
 }

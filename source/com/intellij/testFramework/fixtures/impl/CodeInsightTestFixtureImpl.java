@@ -5,6 +5,7 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -16,7 +17,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
@@ -30,6 +32,7 @@ import com.intellij.mock.MockProgressIndicator;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.io.File;
+import java.io.IOException;
 
 import junit.framework.TestCase;
 
@@ -43,8 +46,24 @@ public class CodeInsightTestFixtureImpl extends HeavyIdeaTestFixtureImpl impleme
   private Editor myEditor;
   private String myTestDataPath;
 
+  protected final TempDirTestFixture myTempDirFixture = new TempDirTextFixtureImpl() {
+
+    protected File createTempDirectory() {
+      return super.createTempDirectory();
+/*
+      final File file = new File(myTestDataPath + "/temp");
+        file.mkdir();
+      return file;
+*/      
+    }
+  };
+
   public void setTestDataPath(String dataPath) {
     myTestDataPath = dataPath;
+  }
+
+  public String getTempDirPath() {
+    return myTempDirFixture.getTempDirPath();
   }
 
   public void test(String filePath, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
@@ -52,10 +71,19 @@ public class CodeInsightTestFixtureImpl extends HeavyIdeaTestFixtureImpl impleme
     collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings);
   }
 
+  public void test(final String filePath) {
+    new WriteCommandAction(getProject()) {
+
+      protected void run(final Result result) throws Throwable {
+        test(filePath, true, true, true);
+
+      }
+    }.execute();
+  }
+
   public void setUp() throws Exception {
     super.setUp();
     myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
-    myTestDataPath = PathManagerEx.getTestDataPath();
   }
 
   public void tearDown() throws Exception {
@@ -65,6 +93,7 @@ public class CodeInsightTestFixtureImpl extends HeavyIdeaTestFixtureImpl impleme
       editorManager.closeFile(openFile);
     }
     myEditor = null;
+    myTempDirFixture.tearDown();
     super.tearDown();
   }
 
@@ -73,13 +102,13 @@ public class CodeInsightTestFixtureImpl extends HeavyIdeaTestFixtureImpl impleme
 
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     TestCase.assertNotNull("file " + fullPath + " not found", vFile);
-
     configureByFile(vFile);
   }
 
   protected void configureByFile(VirtualFile file) {
-    myFile = myPsiManager.findFile(file);
-    myEditor = createEditor(file);
+    VirtualFile copy = myTempDirFixture.copyFile(file);
+    myFile = myPsiManager.findFile(copy);
+    myEditor = createEditor(copy);
   }
 
   protected Editor createEditor(VirtualFile file) {

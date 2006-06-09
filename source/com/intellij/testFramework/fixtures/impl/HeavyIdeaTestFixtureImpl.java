@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -90,7 +91,7 @@ class HeavyIdeaTestFixtureImpl implements IdeaProjectTestFixture {
   }
 
   public Module getModule() {
-    throw new UnsupportedOperationException();
+    return ModuleManager.getInstance(myProject).getModules()[0];
   }
 
   private static void doPostponedFormatting(final Project project) {
