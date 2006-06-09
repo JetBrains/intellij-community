@@ -121,6 +121,7 @@ public class PasteProcessor extends EventProcessor {
           }
         });
       }
+      myEditor.refreshAndSave(true);
       FormEditingUtil.selectComponents(myEditor, myComponentsToPaste);
       endPaste();
     }
