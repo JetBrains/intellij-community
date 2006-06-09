@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.cache.impl.repositoryCache.StringInterner;
 import com.intellij.psi.impl.source.codeStyle.StatisticsManagerEx;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.reference.SoftReference;
@@ -40,6 +41,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
 
   private SoftReference[] myUnits = new SoftReference[UNIT_COUNT];
   private HashSet<StatisticsUnit> myModifiedUnits = new HashSet<StatisticsUnit>();
+  private final StringInterner myKeys = new StringInterner();
 
   private StatisticsManagerImpl() {
   }
@@ -177,14 +179,14 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     }
     StatisticsUnit unit = loadUnit(unitNumber);
     if (unit == null){
-      unit = new StatisticsUnit(unitNumber);
+      unit = new StatisticsUnit(unitNumber, myKeys);
     }
     myUnits[unitNumber] = new SoftReference(unit);
     return unit;
   }
 
   private StatisticsUnit loadUnit(int unitNumber) {
-    StatisticsUnit unit = new StatisticsUnit(unitNumber);
+    StatisticsUnit unit = new StatisticsUnit(unitNumber, myKeys);
     if (!ApplicationManager.getApplication().isUnitTestMode()){
       String path = getPathToUnit(unitNumber);
       try{

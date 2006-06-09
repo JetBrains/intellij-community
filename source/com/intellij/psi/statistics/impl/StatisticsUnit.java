@@ -1,6 +1,7 @@
 
 package com.intellij.psi.statistics.impl;
 
+import com.intellij.psi.impl.cache.impl.repositoryCache.StringInterner;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import gnu.trove.TObjectProcedure;
@@ -34,20 +35,25 @@ class StatisticsUnit {
   }
 
   private final int myNumber;
+  private final StringInterner myKeys;
 
   private TObjectIntHashMap<MyDataKey> myDataMap = new TObjectIntHashMap<MyDataKey>();
 
-  public StatisticsUnit(int number) {
+  public StatisticsUnit(int number, StringInterner keys) {
     myNumber = number;
+    myKeys = keys;
   }
 
   public int getData(String key1, String key2) {
-    return myDataMap.get(new MyDataKey(key1, key2));
+    return myDataMap.get(createKey(key1, key2));
+  }
+
+  private MyDataKey createKey(final String key1, final String key2) {
+    return new MyDataKey(myKeys.intern(key1), myKeys.intern(key2));
   }
 
   public void putData(String key1, String key2, int data) {
-    MyDataKey key = new MyDataKey(key1, key2);
-    myDataMap.put(key, data);
+    myDataMap.put(createKey(key1, key2), data);
   }
 
   public String[] getKeys2(final String key1){
@@ -111,7 +117,7 @@ class StatisticsUnit {
       String key1 = dataIn.readUTF();
       String key2 = dataIn.readUTF();
       int value = dataIn.readInt();
-      myDataMap.put(new MyDataKey(key1, key2), value);
+      myDataMap.put(createKey(key1, key2), value);
     }
   }
 }
