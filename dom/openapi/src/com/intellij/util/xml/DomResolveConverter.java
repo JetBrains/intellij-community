@@ -16,12 +16,19 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.WeakFactoryMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -33,7 +40,40 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
       return new DomResolveConverter(key);
     }
   };
+  private final WeakFactoryMap<DomElement, CachedValue<Map<String, DomElement>>> myResolveCache = new WeakFactoryMap<DomElement, CachedValue<Map<String, DomElement>>>() {
+    @NotNull
+    protected CachedValue<Map<String, DomElement>> create(final DomElement scope) {
+      return PsiManager.getInstance(scope.getManager().getProject()).getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<String, DomElement>>() {
+        public Result<Map<String, DomElement>> compute() {
+          final Map<String, DomElement> map = new THashMap<String, DomElement>();
+          scope.acceptChildren(new DomElementVisitor() {
+            public void visitDomElement(DomElement element) {
+              if (myClass.isInstance(element)) {
+                final String name = element.getGenericInfo().getElementName(element);
+                if (!map.containsKey(name)) {
+                  map.put(name, element);
+                }
+              } else {
+                element.acceptChildren(this);
+              }
+            }
+          });
+          return new Result<Map<String, DomElement>>(map, getPsiFiles(scope));
+        }
+      }, false);
+    }
+  };
+
   private final Class<T> myClass;
+
+  private static XmlFile[] getPsiFiles(DomElement element) {
+    final Collection<DomElement> collection = ModelMergerUtil.getImplementations(element, DomElement.class);
+    return ContainerUtil.map2Array(collection, XmlFile.class, new Function<DomElement, XmlFile>() {
+      public XmlFile fun(final DomElement s) {
+        return s.getRoot().getFile();
+      }
+    });
+  }
 
   public DomResolveConverter(final Class<T> aClass) {
     myClass = aClass;
@@ -45,19 +85,7 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
 
   public final T fromString(final String s, final ConvertContext context) {
     if (s == null) return null;
-    final DomElement[] result = new DomElement[]{null};
-    final DomElement scope = getResolvingScope(context);
-    scope.acceptChildren(new DomElementVisitor() {
-      public void visitDomElement(DomElement element) {
-        if (result[0] != null) return;
-        if (myClass.isInstance(element) && s.equals(element.getGenericInfo().getElementName(element))) {
-          result[0] = element;
-        } else {
-          element.acceptChildren(this);
-        }
-      }
-    });
-    return (T) result[0];
+    return (T) myResolveCache.get(getResolvingScope(context)).getValue().get(s);
   }
 
   private static DomElement getResolvingScope(final ConvertContext context) {
@@ -70,18 +98,10 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
     return t.getGenericInfo().getElementName(t);
   }
 
+  @NotNull
   public Collection<T> getVariants(final ConvertContext context) {
     final DomElement reference = context.getInvocationElement();
-    final Class<T> aClass = myClass;
-    final List<T> result = new ArrayList<T>();
-    reference.getManager().getResolvingScope((GenericDomValue)reference).acceptChildren(new DomElementVisitor() {
-      public void visitDomElement(DomElement element) {
-        if (aClass.isInstance(element)) {
-          result.add((T)element);
-        }
-        element.acceptChildren(this);
-      }
-    });
-    return result;
+    final DomElement scope = reference.getManager().getResolvingScope((GenericDomValue)reference);
+    return (Collection<T>)myResolveCache.get(scope).getValue().values();
   }
 }

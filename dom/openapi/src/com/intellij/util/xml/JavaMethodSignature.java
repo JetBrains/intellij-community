@@ -80,14 +80,12 @@ public class JavaMethodSignature {
     }
   }
 
-  private List<Method> findAllMethods(final Class aClass) {
-    addMethodsIfNeeded(aClass);
-    return myAllMethods;
-  }
-
   @Nullable
   public final <T extends Annotation> T findAnnotation(final Class<T> annotationClass, final Class startFrom) {
-    for (final Method method : findAllMethods(startFrom)) {
+    addMethodsIfNeeded(startFrom);
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < myAllMethods.size(); i++) {
+      Method method = myAllMethods.get(i);
       final T annotation = method.getAnnotation(annotationClass);
       if (annotation != null && ReflectionCache.isAssignable(method.getDeclaringClass(), startFrom)) {
         return annotation;
@@ -98,7 +96,10 @@ public class JavaMethodSignature {
 
   @Nullable
   public final <T extends Annotation> Method findAnnotatedMethod(final Class<T> annotationClass, final Class startFrom) {
-    for (final Method method : findAllMethods(startFrom)) {
+    addMethodsIfNeeded(startFrom);
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < myAllMethods.size(); i++) {
+      Method method = myAllMethods.get(i);
       final T annotation = method.getAnnotation(annotationClass);
       if (annotation != null && ReflectionCache.isAssignable(method.getDeclaringClass(), startFrom)) {
         return method;

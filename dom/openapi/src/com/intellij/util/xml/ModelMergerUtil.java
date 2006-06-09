@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author peter
@@ -39,6 +40,18 @@ public class ModelMergerUtil {
     };
     new ImplementationProcessor<T>(processor, true).process(element);
     return (V)processor.getFoundValue();
+  }
+
+  @Nullable
+  public static <T, V> Collection<V> getImplementations(final T element, final Class<V> clazz) {
+    if (element == null) return null;
+    CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>() {
+      public boolean process(final T t) {
+        return !ReflectionCache.isAssignable(clazz, t.getClass()) || super.process(t);
+      }
+    };
+    new ImplementationProcessor<T>(processor, true).process(element);
+    return (Collection<V>)processor.getResults();
   }
 
   @NotNull

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import net.sf.cglib.proxy.Factory;
 import org.jetbrains.annotations.NotNull;
@@ -186,7 +187,7 @@ public class ElementPresentationManager {
   }
 
   public static Method findNameValueMethod(final Class<? extends Object> aClass) {
-    for (final Method method : aClass.getMethods()) {
+    for (final Method method : ReflectionCache.getMethods(aClass)) {
       if (DomReflectionUtil.findAnnotationDFS(method, NameValue.class) != null) {
         return method;
       }
