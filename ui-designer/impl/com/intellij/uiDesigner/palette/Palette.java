@@ -641,6 +641,10 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
             // these properties are set through layout
             continue;
           }
+          if (JMenuBar.class.isAssignableFrom(propertyType) || JPopupMenu.class.isAssignableFrom(propertyType)) {
+            // no menu editing yet
+            continue;
+          }
           Condition<RadComponent> filter = null;
           if (name.equals(SwingProperties.LABEL_FOR)) {
             filter = new Condition<RadComponent>() {
