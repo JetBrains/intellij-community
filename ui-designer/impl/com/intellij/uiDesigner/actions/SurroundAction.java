@@ -7,6 +7,7 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.shared.XYLayoutManager;
 import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -71,6 +72,9 @@ public class SurroundAction extends AbstractGuiEditorAction {
             newConstraints.setColumn(rc.x);
             newConstraints.setRowSpan(rc.height);
             newConstraints.setColSpan(rc.width);
+          }
+          else if (selectionParent.getLayout() instanceof XYLayoutManager && selection.size() == 1) {
+            newContainer.setBounds(selection.get(0).getBounds());
           }
 
           if (selection.size() == 1) {
