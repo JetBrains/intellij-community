@@ -3,8 +3,7 @@ package com.intellij.ide.palette.impl;
 import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.ide.palette.PaletteItemProvider;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,6 +15,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -42,7 +42,8 @@ public class PaletteWindow extends JPanel implements DataProvider {
 
     setLayout(new GridLayout(1, 1));
     myScrollPane.addMouseListener(new MyScrollPanePopupHandler());
-
+    KeyStroke escStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+    new ClearActiveItemAction().registerCustomShortcutSet(new CustomShortcutSet(escStroke), myScrollPane);
     refreshPalette();
   }
 
@@ -142,9 +143,12 @@ public class PaletteWindow extends JPanel implements DataProvider {
   }
 
   public void clearActiveItem() {
+    if (getActiveItem() == null) return;
     for(PaletteGroupHeader group: myGroupHeaders) {
       group.getComponentList().clearSelection();
     }
+    ListSelectionEvent event = new ListSelectionEvent(this, -1, -1, false);
+    PaletteManager.getInstance(myProject).notifySelectionChanged(event);
   }
 
   @Nullable public PaletteItem getActiveItem() {
@@ -206,6 +210,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
           break;
         }
       }
+      PaletteManager.getInstance(myProject).notifySelectionChanged(e);
     }
   }
 
@@ -225,6 +230,12 @@ public class PaletteWindow extends JPanel implements DataProvider {
           groupHeader.showGroupPopupMenu(comp, x, y);
         }
       }
+    }
+  }
+
+  private class ClearActiveItemAction extends AnAction {
+    public void actionPerformed(AnActionEvent e) {
+      clearActiveItem();
     }
   }
 }

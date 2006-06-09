@@ -46,6 +46,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.ListSelectionEvent;
 import java.awt.*;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
@@ -172,6 +174,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private GridCaptionPanel myVertCaptionPanel;
   private MyPaletteKeyListener myPaletteKeyListener;
   private MyPaletteDragListener myPaletteDragListener;
+  private MyPaletteSelectionListener myPaletteSelectionListener;
   private ComponentPtr mySelectionAnchor;
   private ComponentPtr mySelectionLead;
   /**
@@ -301,10 +304,13 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
     myActiveDecorationLayer.installSelectionWatcher();
 
+    final PaletteManager paletteManager = PaletteManager.getInstance(getProject());
     myPaletteKeyListener = new MyPaletteKeyListener();
-    PaletteManager.getInstance(getProject()).addKeyListener(myPaletteKeyListener);
+    paletteManager.addKeyListener(myPaletteKeyListener);
     myPaletteDragListener = new MyPaletteDragListener();
-    PaletteManager.getInstance(getProject()).addDragEventListener(myPaletteDragListener);
+    paletteManager.addDragEventListener(myPaletteDragListener);
+    myPaletteSelectionListener = new MyPaletteSelectionListener();
+    paletteManager.addSelectionListener(myPaletteSelectionListener);
   }
 
   @NotNull
@@ -323,8 +329,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
       myWhere = new Exception();
     }
 
-    PaletteManager.getInstance(getProject()).removeKeyListener(myPaletteKeyListener);
-    PaletteManager.getInstance(getProject()).removeDragEventListener(myPaletteDragListener);
+    final PaletteManager paletteManager = PaletteManager.getInstance(getProject());
+    paletteManager.removeKeyListener(myPaletteKeyListener);
+    paletteManager.removeDragEventListener(myPaletteDragListener);
+    paletteManager.removeSelectionListener(myPaletteSelectionListener);
     myDocument.removeDocumentListener(myDocumentListener);
     PsiManager.getInstance(myModule.getProject()).removePsiTreeChangeListener(myPsiTreeChangeListener);
     myPsiTreeChangeListener.dispose();
@@ -1069,6 +1077,14 @@ public final class GuiEditor extends JPanel implements DataProvider {
       }
       else {
         setDesignTimeInsets(2);
+      }
+    }
+  }
+
+  private class MyPaletteSelectionListener implements ListSelectionListener {
+    public void valueChanged(ListSelectionEvent e) {
+      if (PaletteManager.getInstance(getProject()).getActiveItem() == null) {
+        myProcessor.cancelPaletteInsert();
       }
     }
   }

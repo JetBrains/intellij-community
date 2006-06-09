@@ -4,9 +4,9 @@
 
 package com.intellij.ide.palette.impl;
 
-import com.intellij.ide.palette.PaletteItem;
-import com.intellij.ide.palette.PaletteDragEventListener;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.palette.PaletteDragEventListener;
+import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -17,13 +17,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.KeyListener;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.ListSelectionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.List;
-import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author yole
@@ -34,8 +36,9 @@ public class PaletteManager implements ProjectComponent {
   private PaletteWindow myPaletteWindow;
   private ToolWindow myPaletteToolWindow;
   private PaletteManager.MyFileEditorManagerListener myListener;
-  private List<KeyListener> myKeyListeners = new ArrayList<KeyListener>();
-  private List<PaletteDragEventListener> myDragEventListeners = new ArrayList<PaletteDragEventListener>();
+  private List<KeyListener> myKeyListeners = new CopyOnWriteArrayList<KeyListener>();
+  private List<PaletteDragEventListener> myDragEventListeners = new CopyOnWriteArrayList<PaletteDragEventListener>();
+  private List<ListSelectionListener> mySelectionListeners = new CopyOnWriteArrayList<ListSelectionListener>();
 
   public PaletteManager(Project project, FileEditorManager fileEditorManager) {
     myProject = project;
@@ -118,6 +121,14 @@ public class PaletteManager implements ProjectComponent {
     myDragEventListeners.remove(l);
   }
 
+  public void addSelectionListener(ListSelectionListener l) {
+    mySelectionListeners.add(l);
+  }
+
+  public void removeSelectionListener(ListSelectionListener l) {
+    mySelectionListeners.remove(l);
+  }
+
   private void processFileEditorChange() {
     myPaletteWindow.refreshPaletteIfChanged();
     if (myPaletteWindow.getActiveGroupCount() == 0) {
@@ -146,6 +157,12 @@ public class PaletteManager implements ProjectComponent {
   void notifyDropActionChanged(int gestureModifiers) {
     for(PaletteDragEventListener l: myDragEventListeners) {
       l.dropActionChanged(gestureModifiers);
+    }
+  }
+
+  void notifySelectionChanged(final ListSelectionEvent event) {
+    for(ListSelectionListener l: mySelectionListeners) {
+      l.valueChanged(event);
     }
   }
 

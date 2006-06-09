@@ -313,11 +313,16 @@ public final class MainProcessor extends EventProcessor{
       }
     }
     else if (PaletteManager.getInstance(myEditor.getProject()).getActiveItem(ComponentItem.class) != null) {
-      PaletteManager.getInstance(myEditor.getProject()).clearActiveItem();
-      myEditor.getLayeredPane().setCursor(Cursor.getDefaultCursor());
+      cancelPaletteInsert();
       return true;
     }
     return false;
+  }
+
+  void cancelPaletteInsert() {
+    PaletteManager.getInstance(myEditor.getProject()).clearActiveItem();
+    myEditor.getLayeredPane().setCursor(Cursor.getDefaultCursor());
+    myEditor.getActiveDecorationLayer().removeFeedback();
   }
 
   public void setInsertFeedbackEnabled(final boolean enabled) {
