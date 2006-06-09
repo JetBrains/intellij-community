@@ -5,7 +5,7 @@ class B {
         return myDelegate.method1();
     }
 
-    public String method2(String t) {
-        return myDelegate.method2(t);
+    public String method2(String s) {
+        return myDelegate.method2(s);
     }
 }
