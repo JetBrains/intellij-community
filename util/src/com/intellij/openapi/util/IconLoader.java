@@ -217,7 +217,7 @@ public final class IconLoader {
       if (icon != null) {
         myRealIcon = new SoftReference<Icon>(icon);
       }
-      return icon;
+      return icon != null ? icon : EMPTY_ICON;
     }
 
 
