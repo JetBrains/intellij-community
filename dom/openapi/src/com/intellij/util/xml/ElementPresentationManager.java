@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -71,19 +69,7 @@ public class ElementPresentationManager {
       return null;
     }
 
-    try {
-      return nameValueMethod.invoke(element);
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-    catch (InvocationTargetException e) {
-      final Throwable throwable = e.getCause();
-      if (throwable instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)throwable;
-      }
-      throw new RuntimeException(e);
-    }
+    return DomReflectionUtil.invokeMethod(nameValueMethod, element);
   }
 
   public static String getTypeName(Object o) {
