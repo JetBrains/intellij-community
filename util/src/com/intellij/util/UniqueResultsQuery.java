@@ -37,7 +37,7 @@ public class UniqueResultsQuery<T> implements Query<T> {
 
   public boolean forEach(final Processor<T> consumer) {
     final Set<T> processedElements = new THashSet<T>();
-    myOriginal.forEach(new Processor<T>() {
+    return myOriginal.forEach(new Processor<T>() {
       public boolean process(final T t) {
         if (processedElements.contains(t)) return true;
         processedElements.add(t);
@@ -47,8 +47,6 @@ public class UniqueResultsQuery<T> implements Query<T> {
         return true;
       }
     });
-
-    return true;
   }
 
   @NotNull
