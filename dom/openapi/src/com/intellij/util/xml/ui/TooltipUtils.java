@@ -19,6 +19,7 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
@@ -26,14 +27,14 @@ import java.util.List;
  * User: Sergey.Vasiliev
  */
 public class TooltipUtils {
-  private static String MESSAGE_DELIMITER = "<hr size=1 noshade>";
+  @NonNls private static String MESSAGE_DELIMITER = "<hr size=1 noshade>";
 
   public static String getTooltipText(List<DomElementProblemDescriptor> annotations) {
     if (annotations.size() == 0) return null;
 
     return getTooltipText(getMessages(annotations));
   }
-
+  
   public static String getTooltipText(List<DomElementProblemDescriptor> annotations, String[] messages) {
     return getTooltipText(ArrayUtil.mergeArrays(getMessages(annotations), messages, String.class));
   }
@@ -49,14 +50,15 @@ public class TooltipUtils {
   public static String getTooltipText(String[] messages) {
     if (messages.length == 0) return null;
 
-    String text = "<table><tr><td>&nbsp;</td><td>";
+    StringBuilder text = new StringBuilder("<html><body><table><tr><td>&nbsp;</td><td>");
     for (int i = 0; i < messages.length; i++) {
-      text += (i==0 ? "": MESSAGE_DELIMITER);
-      text += messages[i];
+      if (i != 0) {
+        text.append(MESSAGE_DELIMITER);
+      }
+      text.append(messages[i]);
     }
-    text+= "</td><td>&nbsp;</td></tr></table>";
-
-    return "<html><body>" + text + "</body></html>";
+    text.append("</td><td>&nbsp;</td></tr></table></body></html>");
+    return  text.toString();
   }
 
 }
