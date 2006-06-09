@@ -72,17 +72,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
         if (path != null) {
           final MyNode node = (MyNode)path.getLastPathComponent();
           final NamedConfigurable configurable = node.getConfigurable();
-          if (!myInitializedConfigurables.contains(configurable)) {
-            configurable.reset();
-            myInitializedConfigurables.add(configurable);
-          }
-          myLastEditedConfigurable = configurable.getDisplayName();
-          myBanner.setText(configurable.getBannerSlogan());
-          myBanner.repaint();
-          myOptionsPanel.removeAll();
-          myOptionsPanel.add(configurable.createComponent(), BorderLayout.CENTER);
-          myOptionsPanel.revalidate();
-          myOptionsPanel.repaint();
+          updateSelection(configurable);
         }
       }
 
@@ -111,7 +101,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
   public JComponent createComponent() {
     final Dimension preferredSize = new Dimension(myTree.getPreferredSize().width + 20, myScrollPane.getPreferredSize().height);
     myScrollPane.setPreferredSize(preferredSize);
-    myScrollPane.setMinimumSize(preferredSize);
+    myScrollPane.setMaximumSize(new Dimension(150, -1));
     return myWholePanel;
   }
 
@@ -121,7 +111,8 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     TreeUtil.traverseDepth(myRoot, new TreeUtil.Traverse() {
       public boolean accept(Object node) {
         if (node instanceof MyNode) {
-          if (((MyNode)node).getConfigurable().isModified()) {
+          final NamedConfigurable configurable = ((MyNode)node).getConfigurable();
+          if (myInitializedConfigurables.contains(configurable) && configurable.isModified()) {
             modified[0] = true;
             return false;
           }
@@ -187,6 +178,10 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
         }
       }
     });
+    //update tree size
+    final Dimension preferredSize = new Dimension(myTree.getPreferredSize().width + 20, myScrollPane.getPreferredSize().height);
+    myScrollPane.setPreferredSize(preferredSize);
+    myScrollPane.setMaximumSize(new Dimension(150, -1));
   }
 
 
@@ -208,6 +203,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
         return true;
       }
     });
+    myRoot.removeAllChildren();
   }
 
   protected ArrayList<AnAction> createActions() {
@@ -277,6 +273,64 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     };
   }
 
+  public void selectNodeInTree(final DefaultMutableTreeNode nodeToSelect) {
+    myTree.requestFocus();
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        TreeUtil.selectInTree(nodeToSelect, true, myTree);
+      }
+    });
+  }
+
+  public void selectNodeInTree(String displayName) {
+    final MyNode nodeByName = findNodeByName(myRoot, displayName);
+    selectNodeInTree(nodeByName);
+  }
+
+  protected static MyNode findNodeByName(final TreeNode root, final String profileName) {
+    return findNodeByCondition(root, new Condition<NamedConfigurable>() {
+      public boolean value(final NamedConfigurable configurable) {
+        return Comparing.strEqual(profileName, configurable.getDisplayName());
+      }
+    });
+  }
+
+  protected static MyNode findNodeByObject(final TreeNode root, final Object editableObject) {
+    return findNodeByCondition(root, new Condition<NamedConfigurable>() {
+      public boolean value(final NamedConfigurable configurable) {
+        return Comparing.equal(editableObject, configurable.getEditableObject());
+      }
+    });
+  }
+
+  protected static MyNode findNodeByCondition(final TreeNode root, final Condition<NamedConfigurable> condition) {
+     final MyNode[] nodeToSelect = new MyNode[1];
+     TreeUtil.traverseDepth(root, new TreeUtil.Traverse() {
+       public boolean accept(Object node) {
+         if (condition.value(((MyNode)node).getConfigurable())) {
+           nodeToSelect[0] = (MyNode)node;
+           return false;
+         }
+         return true;
+       }
+     });
+     return nodeToSelect[0];
+   }
+
+  protected void updateSelection(NamedConfigurable configurable) {
+    myLastEditedConfigurable = configurable.getDisplayName();
+    myBanner.setText(configurable.getBannerSlogan());
+    myBanner.repaint();
+    myOptionsPanel.removeAll();
+    myOptionsPanel.add(configurable.createComponent(), BorderLayout.CENTER);
+    if (!myInitializedConfigurables.contains(configurable)) {
+      configurable.reset();
+      myInitializedConfigurables.add(configurable);
+    }
+    myOptionsPanel.revalidate();
+    myOptionsPanel.repaint();
+  }
+
   protected class MyDeleteAction extends AnAction {
     private Condition<Object> myCondition;
 
@@ -340,7 +394,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
 
 
     public boolean stopCellEditing() {
-      fireItemsChangeListener(myNode.getConfigurable().getEditableObject());
+      fireItemsChangedExternally();
       return super.stopCellEditing();
     }
 
