@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
 
 public class RenameUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameUtil");
-  public static boolean ourRenameXmlAttributeValuesInReverseOrder = false;
+
 
   public static UsageInfo[] findUsages(final PsiElement element,
                                        String newName,
@@ -570,12 +570,6 @@ public class RenameUtil {
     if (newName.equals(originalName)) return;
     final PsiSearchHelper searchHelper = originalElement.getManager().getSearchHelper();
     Queue<PsiReference> queue = new Queue<PsiReference>(infos.length);
-    if (ourRenameXmlAttributeValuesInReverseOrder) {
-      LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
-      ArrayList<UsageInfo> tmp = new ArrayList<UsageInfo>(Arrays.asList(infos));
-      Collections.reverse(tmp);
-      infos = tmp.toArray(new UsageInfo[tmp.size()]);
-    }
     for (UsageInfo info : infos) {
       if (info.getElement() == null) continue;
       PsiReference ref = ((MoveRenameUsageInfo)info).getReference();
