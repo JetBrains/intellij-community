@@ -4,6 +4,7 @@ import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -24,6 +25,7 @@ import java.util.*;
 public class AntProjectImpl extends AntStructuredElementImpl implements AntProject {
   final static AntTarget[] EMPTY_TARGETS = new AntTarget[0];
   private AntTarget[] myTargets;
+  private AntImport[] myImports;
   private List<AntProperty> myPredefinedProps = new ArrayList<AntProperty>();
   @NonNls private List<String> myEnvPrefixes;
   @NonNls private static final String myDefaultEnvPrefix = "env.";
@@ -55,6 +57,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   public void clearCaches() {
     super.clearCaches();
     myTargets = null;
+    myImports = null;
     myEnvPrefixes = null;
   }
 
@@ -91,6 +94,47 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     return null;
   }
 
+  @Nullable
+  public AntTarget getTarget(final String name) {
+    AntTarget[] targets = getTargets();
+    for (AntTarget target : targets) {
+      if (name.equals(target.getName())) {
+        return target;
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public AntImport[] getImports() {
+    if (myImports == null) {
+      // this is necessary to avoid recurrent getImports() and stack overflow
+      myImports = AntImport.EMPTY_ARRAY;
+      List<AntImport> imports = new ArrayList<AntImport>();
+      for (PsiElement child : getChildren()) {
+        if (child instanceof AntImport) {
+          imports.add((AntImport)child);
+        }
+      }
+      final int importedFiles = imports.size();
+      if (importedFiles > 0) {
+        myImports = imports.toArray(new AntImport[importedFiles]);
+      }
+    }
+    return myImports;
+  }
+
+  @Nullable
+  public AntImport getImport(final String file) {
+    for (AntImport antImport : getImports()) {
+      final String fileName = antImport.getFileName();
+      if (fileName != null && fileName.equals(file)) {
+        return antImport;
+      }
+    }
+    return null;
+  }
+
   public void addEnvironmentPropertyPrefix(@NotNull final String envPrefix) {
     checkEnvList();
     final String env = (envPrefix.endsWith(".")) ? envPrefix : envPrefix + '.';
@@ -113,17 +157,6 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       }
     }
     return false;
-  }
-
-  @Nullable
-  public AntTarget getTarget(final String name) {
-    AntTarget[] targets = getTargets();
-    for (AntTarget target : targets) {
-      if (name.equals(target.getName())) {
-        return target;
-      }
-    }
-    return null;
   }
 
   @Nullable

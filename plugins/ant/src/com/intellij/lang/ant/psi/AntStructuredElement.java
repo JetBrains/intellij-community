@@ -19,6 +19,8 @@ public interface AntStructuredElement extends AntElement {
 
   void unregisterCustomType(final AntTypeDefinition def);
 
+  boolean hasImportedTypeDefinition();
+
   @Nullable
   PsiFile findFileByName(final String name);
 

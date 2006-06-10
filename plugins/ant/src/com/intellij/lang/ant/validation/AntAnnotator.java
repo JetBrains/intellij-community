@@ -44,7 +44,9 @@ public class AntAnnotator implements Annotator {
       }
       else {
         checkValidAttributes(se, def, holder);
-        if (parent instanceof AntStructuredElement) {
+        // impoted types wouldn't be registered as valid types of nested elements,
+        // so we just don't check elements for nested validness if they have imported types
+        if (!se.hasImportedTypeDefinition() && parent instanceof AntStructuredElement) {
           final AntStructuredElement pe = (AntStructuredElement)parent;
           final AntTypeDefinition parentDef = pe.getTypeDefinition();
           if (parentDef != null && parentDef.getNestedClassName(def.getTypeId()) == null) {

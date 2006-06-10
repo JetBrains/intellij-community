@@ -69,20 +69,33 @@ public class AntCreateMacroDefAction extends BaseIntentionAction {
       (myFile == null) ? AntPsiUtil.getSubProjectElement(element) : PsiTreeUtil.getChildOfType(antProject, AntStructuredElement.class);
     final XmlTag se = element.getSourceElement();
     final XmlTag projectTag = antProject.getSourceElement();
+
+    // create macrodef tag
     XmlTag macrodefTag = projectTag.createChildTag("macrodef", projectTag.getNamespace(), null, false);
     macrodefTag.setAttribute("name", se.getName());
+
+    // create attribute definitons
     for (XmlAttribute attr : se.getAttributes()) {
       XmlTag attrTag = macrodefTag.createChildTag("attribute", macrodefTag.getNamespace(), null, false);
       attrTag.setAttribute("name", attr.getName());
       macrodefTag.add(attrTag);
     }
+
+    // create definitons of nested elements
     for (XmlTag subtag : se.getSubTags()) {
       XmlTag elementTag = macrodefTag.createChildTag("element", macrodefTag.getNamespace(), null, false);
       elementTag.setAttribute("name", subtag.getName());
       macrodefTag.add(elementTag);
     }
+
+    // insert macrodef in file and navigate to it
     macrodefTag = (XmlTag)((anchor == null) ? projectTag.add(macrodefTag) : projectTag.addBefore(macrodefTag, anchor.getSourceElement()));
     ((Navigatable)macrodefTag).navigate(true);
+
+    // if macrodef is inserted into an imported file, clear caches in order to re-annotate current element
+    if (myFile != null) {
+      element.getAntFile().clearCaches();
+    }
   }
 }
 

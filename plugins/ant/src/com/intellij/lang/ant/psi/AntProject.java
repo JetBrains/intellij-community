@@ -20,6 +20,12 @@ public interface AntProject extends AntStructuredElement {
   @Nullable
   AntTarget getDefaultTarget();
 
+  @NotNull
+  AntImport[] getImports();
+
+  @Nullable
+  AntImport getImport(final String file);
+
   void addEnvironmentPropertyPrefix(@NotNull final String envPrefix);
 
   boolean isEnvironmentProperty(@NotNull final String propName);

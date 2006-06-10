@@ -39,6 +39,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   private String[] myRefIdsArray;
   private int myLastFoundElementOffset = -1;
   private AntElement myLastFoundElement;
+  private boolean myIsImported;
 
   public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement, @NonNls final String nameElementAttribute) {
     super(parent, sourceElement);
@@ -142,6 +143,14 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       myDefinition.unregisterNestedType(def.getTypeId());
     }
     getAntFile().unregisterCustomType(def);
+  }
+
+  public boolean hasImportedTypeDefinition() {
+    return myIsImported;
+  }
+
+  void setImportedTypeDefinition(boolean imported) {
+    myIsImported = imported;
   }
 
   @Nullable

@@ -16,17 +16,6 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
 
   public AntImportImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
-    final AntFile imported = getImportedFile();
-    if (imported != null) {
-      imported.getChildren();
-      final AntFile file = getAntFile();
-      final AntFileImpl importedFile = (AntFileImpl)imported;
-      for (AntTypeDefinition def : importedFile.getBaseTypeDefinitions()) {
-        if (file.getBaseTypeDefinition(def.getClassName()) == null) {
-          registerCustomType(def);
-        }
-      }
-    }
   }
 
   public String toString() {
