@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,16 +31,16 @@ public class ImportUtils{
     //     class Vector {}
     // }
     public static boolean nameCanBeImported(String fqName, PsiJavaFile file){
-        if(hasExactImportMatch(fqName, file)){
-            return true;
-        }
+        //if(hasExactImportMatch(fqName, file)){
+        //    return true;
+        //}
         if(hasExactImportConflict(fqName, file)){
             return false;
         }
-        if(hasOnDemandImportConflict(fqName, file)){
-            return false;
-        }
-        if(containsConflictingClassReference(fqName, file)){
+        //if(hasOnDemandImportConflict(fqName, file)){
+        //    return false;
+        //}
+        if(containsConflictingClass(fqName, file)){
             return false;
         }
         return !containsConflictingClassName(fqName, file);
@@ -110,23 +110,23 @@ public class ImportUtils{
         if(imports == null){
             return false;
         }
-        final PsiImportStatement[] importStatements = imports
-                .getImportStatements();
+        final PsiImportStatement[] importStatements =
+                imports.getImportStatements();
         final int lastDotIndex = fqName.lastIndexOf((int) '.');
         final String shortName = fqName.substring(lastDotIndex + 1);
-        final String packageName = fqName.substring(0, lastDotIndex);
+        final String packageName = ClassUtil.extractPackageName(fqName);
         for(final PsiImportStatement importStatement : importStatements){
             if(importStatement.isOnDemand()){
-                final PsiJavaCodeReferenceElement ref = importStatement
-                        .getImportReference();
-                if(ref == null){
+                final PsiJavaCodeReferenceElement importReference =
+                        importStatement.getImportReference();
+                if(importReference == null){
                     continue;
                 }
-                final String packageText = ref.getText();
+                final String packageText = importReference.getText();
                 if(packageText.equals(packageName)){
                     continue;
                 }
-                final PsiElement element = ref.resolve();
+                final PsiElement element = importReference.resolve();
                 if(element != null && element instanceof PsiPackage){
                     final PsiPackage aPackage = (PsiPackage) element;
                     final PsiClass[] classes = aPackage.getClasses();
@@ -139,8 +139,28 @@ public class ImportUtils{
                 }
             }
         }
-        if(!HardcodedMethodConstants.JAVA_LANG.equals(packageName)) {
-          final PsiManager manager = file.getManager();
+        return hasDefaultImportConflict(fqName, file);
+    }
+
+    public static boolean hasDefaultImportConflict(String fqName,
+                                                   PsiJavaFile file) {
+        final String shortName = ClassUtil.extractClassName(fqName);
+        final String packageName = ClassUtil.extractPackageName(fqName);
+        final PsiManager manager = file.getManager();
+        final String filePackageName = file.getPackageName();
+        if(!filePackageName.equals(packageName)){
+            final PsiPackage filePackage = manager.findPackage(filePackageName);
+            if(filePackage != null){
+                final PsiClass[] classes = filePackage.getClasses();
+                for (PsiClass aClass : classes) {
+                    final String className = aClass.getName();
+                    if(shortName.equals(className)){
+                        return true;
+                    }
+                }
+            }
+        }
+        if(!HardcodedMethodConstants.JAVA_LANG.equals(packageName)){
             final PsiPackage javaLangPackage =
                     manager.findPackage(HardcodedMethodConstants.JAVA_LANG);
             if(javaLangPackage == null){
@@ -157,24 +177,25 @@ public class ImportUtils{
         return false;
     }
 
-    private static boolean containsConflictingClassReference(String fqName,
-                                                             PsiJavaFile file){
-        final int lastDotIndex = fqName.lastIndexOf((int) '.');
-        final String shortName = fqName.substring(lastDotIndex + 1);
+    private static boolean containsConflictingClass(String fqName,
+                                                    PsiJavaFile file){
         final PsiClass[] classes = file.getClasses();
         for(PsiClass aClass : classes){
-            if (containsConflictingClass(aClass, fqName)) {
+            if (containsConflictingClass(fqName, aClass)) {
                 return true;
             }
         }
+        //return false;
+        final int lastDotIndex = fqName.lastIndexOf((int) '.');
+        final String shortName = fqName.substring(lastDotIndex + 1);
         final ClassReferenceVisitor visitor =
                 new ClassReferenceVisitor(shortName, fqName);
         file.accept(visitor);
         return visitor.isReferenceFound();
     }
 
-    private static boolean containsConflictingClass(PsiClass aClass,
-                                                    String fqName) {
+    private static boolean containsConflictingClass(String fqName,
+                                                    PsiClass aClass){
         final String shortName = ClassUtil.extractClassName(fqName);
         if(shortName.equals(aClass.getName())){
                 if(!fqName.equals(aClass.getQualifiedName())){
@@ -183,7 +204,7 @@ public class ImportUtils{
         }
         final PsiClass[] classes = aClass.getInnerClasses();
         for (PsiClass innerClass : classes) {
-            if (containsConflictingClass(innerClass, fqName)) {
+            if (containsConflictingClass(fqName, innerClass)) {
                 return true;
             }
         }

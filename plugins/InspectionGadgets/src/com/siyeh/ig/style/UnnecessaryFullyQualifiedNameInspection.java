@@ -71,6 +71,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
     private static class UnnecessaryFullyQualifiedNameFix
             extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "unnecessary.fully.qualified.name.replace.quickfix");
@@ -87,28 +88,41 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
                 return;
             }
             final PsiClass aClass = (PsiClass)referenceElement.resolve();
-            final PsiManager manager = referenceElement.getManager();
-            final PsiElementFactory elementFactory =
-                    manager.getElementFactory();
-            final PsiImportStatement importStatement =
-                    elementFactory.createImportStatement(aClass);
-            final PsiElement nameElement =
-                    referenceElement.getReferenceNameElement();
-            if (nameElement == null) {
+            if (aClass == null) {
                 return;
             }
-            importList.add(importStatement);
-            referenceElement.replace(nameElement);
-
+            final String qualifiedName = aClass.getQualifiedName();
+            if (importList.findSingleClassImportStatement(qualifiedName) ==
+                    null) {
+                final PsiManager manager = referenceElement.getManager();
+                final PsiElementFactory elementFactory =
+                        manager.getElementFactory();
+                final PsiImportStatement importStatement =
+                        elementFactory.createImportStatement(aClass);
+                importList.add(importStatement);
+            }
+            final PsiElement qualifier = referenceElement.getQualifier();
+            if (qualifier == null) {
+                return;
+            }
+            qualifier.delete();
         }
     }
 
     private class UnnecessaryFullyQualifiedNameVisitor
             extends BaseInspectionVisitor{
 
-        public void visitReferenceElement(
-                PsiJavaCodeReferenceElement reference){
+        public void visitReferenceExpression(PsiReferenceExpression reference) {
+            super.visitReferenceExpression(reference);
+            checkReference(reference);
+        }
+
+        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
             super.visitReferenceElement(reference);
+            checkReference(reference);
+        }
+
+        private void checkReference(PsiJavaCodeReferenceElement reference) {
             if (!reference.isQualified()) {
                 return;
             }
