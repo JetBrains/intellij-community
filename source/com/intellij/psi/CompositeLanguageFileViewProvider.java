@@ -57,6 +57,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
       final PsiFile root = entry.getValue();
       if (root instanceof PsiFileImpl && root != psiFile) {
         final PsiFileImpl copy = (PsiFileImpl)viewProvider.getPsi(entry.getKey());
+        if (copy == null) continue; // Unreleivant language due to partial parsing.
         JspImplUtil.copyRoot((PsiFileImpl)root, xmlTexts, copy);
       }
     }

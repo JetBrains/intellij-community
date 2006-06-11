@@ -5,15 +5,15 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.jsp.JspFileViewProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.Document;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
@@ -109,6 +109,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
       ASTNode bestReparseable = null;
       ASTNode prevReparseable = null;
       boolean theOnlyReparseable = false;
+      boolean unparseableChameleonDetected = false;
 
       while(parent != null && !(parent instanceof FileElement)){
         if(parent.getElementType() instanceof IChameleonElementType){
@@ -121,6 +122,8 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
 
           final String newTextStr = StringFactory.createStringFromConstantArray(newFileText, textRange.getStartOffset(), textRange.getLength() + lengthShift);
           if(reparseable.isParsable(newTextStr, project)){
+            unparseableChameleonDetected = false;
+
             final ChameleonElement chameleon =
               (ChameleonElement)Factory.createSingleLeafElement(reparseable, newFileText, textRange.getStartOffset(),
                                                                 textRange.getEndOffset() + lengthShift, charTable, file.getManager(), fileImpl);
@@ -128,6 +131,8 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
             return;
           }
           else if(reparseable instanceof IErrorCounterChameleonElementType){
+            unparseableChameleonDetected = false;
+
             int currentErrorLevel = ((IErrorCounterChameleonElementType)reparseable).getErrorsCount(newTextStr, project);
             if(currentErrorLevel == IErrorCounterChameleonElementType.FATAL_ERROR){
               prevReparseable = parent;
@@ -138,6 +143,9 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
               minErrorLevel = currentErrorLevel;
               if (languageChanged) break;
             }
+          }
+          else {
+            unparseableChameleonDetected = true;
           }
           // invalid content;
         }
@@ -183,10 +191,15 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
           if(file.getLanguage() == StdLanguages.JSP){
             newTaglibPrefixes = ((JspFileViewProvider)file.getViewProvider()).getKnownTaglibPrefixes();
           }
-          if(newTaglibPrefixes == null || newTaglibPrefixes.equals(oldTaglibPrefixes))
-            ParsingUtil.reparse(grammarByFileType, treeFileElement.getCharTable(), treeFileElement, newFileText, startOffset, endOffset, lengthShift,
-                                file.getViewProvider());
-          else makeFullParse(parent, newFileText, textLength, fileImpl, fileType);
+
+          if (!unparseableChameleonDetected && (newTaglibPrefixes == null || newTaglibPrefixes.equals(oldTaglibPrefixes))) {
+            ParsingUtil.reparse(grammarByFileType, treeFileElement.getCharTable(), treeFileElement, newFileText, startOffset, endOffset,
+                                lengthShift, file.getViewProvider());
+          }
+          else {
+            ParsingUtil.reparse(grammarByFileType, treeFileElement.getCharTable(), treeFileElement, newFileText, 0, textLength,
+                                lengthShift, file.getViewProvider());
+          }
         }
         else{
           makeFullParse(parent, newFileText, textLength, fileImpl, fileType);
