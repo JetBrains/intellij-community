@@ -939,8 +939,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
           ThreadReferenceProxyImpl thread = context.getThread();
           try {
             try {
-              final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
               if (LOG.isDebugEnabled()) {
+                final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
                 virtualMachineProxy.logThreads();
                 LOG.debug("Invoke in " + thread.name());
                 LOG.assertTrue(thread.isSuspended(), thread.toString());

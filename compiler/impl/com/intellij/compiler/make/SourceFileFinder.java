@@ -11,6 +11,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.HashMap;
 
 import java.util.Map;
@@ -31,7 +35,18 @@ public class SourceFileFinder {
     myCompileContext = compileContext;
   }
 
-  public VirtualFile findSourceFile(String qualifiedName, String srcName) {
+  public VirtualFile findSourceFile(String qualifiedName, final String srcName) {
+    // optimization
+    final int dollar = qualifiedName.indexOf('$');
+    final String outerQName = (dollar >= 0)? qualifiedName.substring(0, dollar) : qualifiedName;
+    final PsiClass[] classes = PsiManager.getInstance(myProject).findClasses(outerQName, GlobalSearchScope.projectScope(myProject));
+    for (PsiClass aClass : classes) {
+      final PsiFile file = aClass.getContainingFile();
+      if (srcName.equals(file.getName())) {
+        return file.getVirtualFile();
+      }
+    }
+
     String relativePath = MakeUtil.createRelativePathToSource(qualifiedName, srcName);
     Map<VirtualFile, String> dirs = getAllSourceRoots();
     if (!StringUtil.startsWithChar(relativePath, '/')) {

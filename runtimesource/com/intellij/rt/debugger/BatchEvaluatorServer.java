@@ -11,9 +11,9 @@ public class BatchEvaluatorServer {
   public Object[] evaluate(Object[] objects) {
     myObjects = objects;
     Object[] result = new Object[objects.length];
-    for (int idx = 0; idx < myObjects.length; idx++) {
+    for (int idx = 0; idx < objects.length; idx++) {
       try {
-        result[idx] = myObjects[idx].toString();
+        result[idx] = objects[idx].toString();
       }
       catch (Throwable e) {
         result[idx] = e;
