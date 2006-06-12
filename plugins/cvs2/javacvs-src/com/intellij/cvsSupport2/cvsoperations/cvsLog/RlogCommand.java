@@ -40,6 +40,7 @@ public class RlogCommand extends AbstractCommand {
     requests.addArgumentRequest(myHeadersOnly, "-h");
     requests.addArgumentRequest(myNoTags, "-N");
     requests.addArgumentRequest(mySuppressEmptyHeaders, "-S");
+    requests.addArgumentRequest(!isRecursive(), "-l");
 
     requests.addArgumentRequest(getDateFilter(), "-d");
 
