@@ -3,17 +3,16 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.xml.JavaMethodSignature;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import net.sf.cglib.proxy.AdvancedEnhancer;
 import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.Factory;
 import net.sf.cglib.proxy.InvocationHandler;
-import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -40,7 +39,6 @@ public class AdvancedProxy {
 
 
   private static final Map<ProxyDescription, Factory> ourFactories = new WeakValueHashMap<ProxyDescription, Factory>();
-  private static final Map<Class, Constructor> ourConstructors = new WeakValueHashMap<Class, Constructor>();
 
   public static InvocationHandler getInvocationHandler(Object proxy) {
     return (InvocationHandler)((Factory) proxy).getCallback(0);
@@ -68,7 +66,7 @@ public class AdvancedProxy {
       Factory factory = ourFactories.get(key);
       if (factory != null) {
         final Class<? extends Factory> aClass = factory.getClass();
-        return (T) factory.newInstance(findConstructor(aClass, constructorArgs).getParameterTypes(), constructorArgs, callbacks);
+        return (T) factory.newInstance(getConstructorParameterTypes(aClass, constructorArgs), constructorArgs, callbacks);
       }
 
       //System.out.println("key = " + key);
@@ -78,7 +76,7 @@ public class AdvancedProxy {
       e.setInterfaces(interfaces);
       e.setCallbacks(callbacks);
       if (superClass != null) {
-        factory = (Factory)e.create(findConstructor(superClass, constructorArgs).getParameterTypes(), constructorArgs);
+        factory = (Factory)e.create(getConstructorParameterTypes(superClass, constructorArgs), constructorArgs);
       } else {
         assert constructorArgs.length == 0;
         factory = (Factory)e.create();
@@ -95,21 +93,8 @@ public class AdvancedProxy {
     }
   }
 
-  @NotNull
-  private static Constructor findConstructor(final Class aClass, final Object... constructorArgs) {
-    if (constructorArgs.length == 0) {
-      try {
-        Constructor constructor = ourConstructors.get(aClass);
-        if (constructor == null) {
-          constructor = aClass.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
-          ourConstructors.put(aClass, constructor);
-        }
-        return constructor;
-      }
-      catch (NoSuchMethodException e) {
-        throw new AssertionError("Cannot find constructor for arguments: " + Arrays.asList(constructorArgs) + " in class " + aClass);
-      }
-    }
+  private static Class[] getConstructorParameterTypes(final Class aClass, final Object... constructorArgs) {
+    if (constructorArgs.length == 0) return ArrayUtil.EMPTY_CLASS_ARRAY;
 
     loop: for (final Constructor constructor : aClass.getDeclaredConstructors()) {
       final Class[] parameterTypes = constructor.getParameterTypes();
@@ -121,7 +106,7 @@ public class AdvancedProxy {
             continue loop;
           }
         }
-        return constructor;
+        return constructor.getParameterTypes();
       }
     }
     throw new AssertionError("Cannot find constructor for arguments: " + Arrays.asList(constructorArgs));

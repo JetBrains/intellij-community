@@ -56,7 +56,7 @@ public class DomReflectionUtil {
     }
 
     final Class[] classes = ReflectionCache.getInterfaces(aClass);
-    final Type[] genericInterfaces = aClass.getGenericInterfaces();
+    final Type[] genericInterfaces = ReflectionCache.getGenericInterfaces(aClass);
     for (int i = 0; i < classes.length; i++) {
       Class anInterface = classes[i];
       final Type resolved = resolveVariable(variable, anInterface);

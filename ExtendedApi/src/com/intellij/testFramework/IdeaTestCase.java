@@ -54,7 +54,7 @@ import java.util.HashSet;
 /**
  * @author mike
  */
-@NonNls public abstract class IdeaTestCase extends TestCase implements DataProvider {
+@NonNls public abstract class IdeaTestCase extends UsefulTestCase implements DataProvider {
   protected static final String PROFILE = "Configurable";
   static {
     Logger.setFactory(TestLoggerFactory.getInstance());

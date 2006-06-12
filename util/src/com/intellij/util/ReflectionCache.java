@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.TypeVariable;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -63,6 +64,12 @@ public class ReflectionCache {
       return key.getTypeParameters();
     }
   };
+  private static final WeakFactoryMap<Class, Type[]> ourGenericInterfaces = new WeakFactoryMap<Class, Type[]>() {
+    @NotNull
+    protected Type[] create(final Class key) {
+      return key.getGenericInterfaces();
+    }
+  };
 
   public static Class getSuperClass(Class aClass) {
     Class superClass = ourSuperClasses.get(aClass);
@@ -90,6 +97,10 @@ public class ReflectionCache {
 
   public static TypeVariable[] getTypeParameters(Class aClass) {
     return ourTypeParameters.get(aClass);
+  }
+
+  public static Type[] getGenericInterfaces(Class aClass) {
+    return ourGenericInterfaces.get(aClass);
   }
 
 }
