@@ -315,7 +315,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myManager.getVisitorDescription(visitor.getClass()).acceptElement(visitor, findCallerProxy(ACCEPT_METHOD));
   }
 
-  public final void acceptChildren(DomElementVisitor visitor) {
+  public void acceptChildren(DomElementVisitor visitor) {
     final DomElement element = ModelMergerUtil.getImplementation(findCallerProxy(ACCEPT_CHILDREN_METHOD), DomElement.class);
     for (final DomChildrenDescription description : getGenericInfo().getChildrenDescriptions()) {
       final List<? extends DomElement> values = description.getValues(element);

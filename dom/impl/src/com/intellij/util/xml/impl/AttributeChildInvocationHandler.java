@@ -10,6 +10,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,9 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     if (tag != null && tag.getAttributeValue(attributeName) != null) {
       myWasDefined = true;
     }
+  }
+
+  public void acceptChildren(DomElementVisitor visitor) {
   }
 
   protected final XmlTag setXmlTag(final XmlTag tag) {

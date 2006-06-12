@@ -52,13 +52,30 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private static final Key<DomFileElementImpl> CACHED_FILE_ELEMENT = Key.create("CachedFileElement");
   private static final Key<DomFileDescription> CACHED_FILE_DESCRIPTION = Key.create("CachedFileDescription");
 
-  private final Map<Type, GenericInfoImpl> myMethodsMaps = new HashMap<Type, GenericInfoImpl>();
+  private final FactoryMap<Type, GenericInfoImpl> myMethodsMaps = new FactoryMap<Type, GenericInfoImpl>() {
+    @NotNull
+    protected GenericInfoImpl create(final Type type) {
+      if (type instanceof Class) {
+        return new GenericInfoImpl((Class<? extends DomElement>)type, DomManagerImpl.this);
+      }
+      if (type instanceof ParameterizedType) {
+        ParameterizedType parameterizedType = (ParameterizedType)type;
+        return new GenericInfoImpl((Class<? extends DomElement>)parameterizedType.getRawType(), DomManagerImpl.this);
+      }
+      throw new AssertionError("Type not supported: " + type);
+    }
+  };
 
   private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
 
 
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
-  private final Map<Pair<Type, Type>, InvocationCache> myInvocationCaches = new HashMap<Pair<Type, Type>, InvocationCache>();
+  private final FactoryMap<Pair<Type, Type>, InvocationCache> myInvocationCaches = new FactoryMap<Pair<Type, Type>, InvocationCache>() {
+    @NotNull
+    protected InvocationCache create(final Pair<Type, Type> key) {
+      return new InvocationCache();
+    }
+  };
   private final Map<Class<? extends DomElement>, Class<? extends DomElement>> myImplementationClasses =
     new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
   private final Map<Class<? extends DomElement>, Class<? extends DomElement>> myCachedImplementationClasses =
@@ -73,8 +90,6 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       return new VisitorDescription(key);
     }
   };
-
-  private static final InvocationStack ourInvocationStack = new InvocationStack();
 
   private Project myProject;
   private boolean myChanging;
@@ -139,31 +154,11 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   public final GenericInfoImpl getGenericInfo(final Type type) {
-    GenericInfoImpl genericInfoImpl = myMethodsMaps.get(type);
-    if (genericInfoImpl == null) {
-      if (type instanceof Class) {
-        genericInfoImpl = new GenericInfoImpl((Class<? extends DomElement>)type, this);
-        myMethodsMaps.put(type, genericInfoImpl);
-      }
-      else if (type instanceof ParameterizedType) {
-        ParameterizedType parameterizedType = (ParameterizedType)type;
-        genericInfoImpl = new GenericInfoImpl((Class<? extends DomElement>)parameterizedType.getRawType(), this);
-        myMethodsMaps.put(type, genericInfoImpl);
-      }
-      else {
-        assert false : "Type not supported " + type;
-      }
-    }
-    return genericInfoImpl;
+    return myMethodsMaps.get(type);
   }
 
   final InvocationCache getInvocationCache(final Pair<Type, Type> type) {
-    InvocationCache invocationCache = myInvocationCaches.get(type);
-    if (invocationCache == null) {
-      invocationCache = new InvocationCache();
-      myInvocationCaches.put(type, invocationCache);
-    }
-    return invocationCache;
+    return myInvocationCaches.get(type);
   }
 
   @Nullable
