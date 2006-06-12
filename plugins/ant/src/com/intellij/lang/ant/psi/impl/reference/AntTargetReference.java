@@ -62,6 +62,22 @@ public class AntTargetReference extends AntGenericReference {
     throw new IncorrectOperationException("Can bind only to ant targets.");
   }
 
+
+  public PsiElement resolve() {
+    final String name = getCanonicalText();
+    AntProject project = getElement().getAntProject();
+    AntTarget result = project.getTarget(name);
+    if (result == null) {
+      final AntFile[] importedFiles = AntPsiUtil.getImportedFiles(project);
+      for (AntFile imported : importedFiles) {
+        if ((result = imported.getAntProject().getTarget(name)) != null) {
+          break;
+        }
+      }
+    }
+    return result;
+  }
+
   public static ReferenceType getReferenceType() {
     return ourRefType;
   }
