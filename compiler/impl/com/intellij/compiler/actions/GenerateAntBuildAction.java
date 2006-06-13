@@ -119,9 +119,20 @@ public class GenerateAntBuildAction extends CompileActionBase {
       return null;
     }
 
-    destFile.createNewFile();
+    generateSingleFileBuild(project, genOptions, destFile, propertiesFile);
+
+    filesToRefresh.add(destFile);
+    filesToRefresh.add(propertiesFile);
+    return new File[] {destFile, propertiesFile};
+  }
+
+  public static void generateSingleFileBuild(final Project project,
+                                             final GenerationOptions genOptions,
+                                             final File buildxmlFile,
+                                             final File propertiesFile) throws IOException {
+    buildxmlFile.createNewFile();
     propertiesFile.createNewFile();
-    final DataOutputStream dataOutput = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(destFile)));
+    final DataOutputStream dataOutput = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(buildxmlFile)));
     try {
       new SingleFileProjectBuild(project, genOptions).generate(dataOutput);
     }
@@ -135,9 +146,6 @@ public class GenerateAntBuildAction extends CompileActionBase {
     finally {
       propertiesOut.close();
     }
-    filesToRefresh.add(destFile);
-    filesToRefresh.add(propertiesFile);
-    return new File[] {destFile, propertiesFile};
   }
 
   private void ensureFilesWritable(Project project, File[] files) throws IOException {

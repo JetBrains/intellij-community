@@ -55,7 +55,10 @@ public class IdeaApplication {
   public static boolean isHeadless(final String[] args) {
     @NonNls final String inspectAppCode = "inspect";
     @NonNls final String diffAppCode = "diff";
-    return args.length > 0 && (Comparing.strEqual(args[0], inspectAppCode) || Comparing.strEqual(args[0], diffAppCode));    
+    @NonNls final String antAppCode = "ant";
+    return args.length > 0 && (Comparing.strEqual(args[0], inspectAppCode) ||
+                               Comparing.strEqual(args[0], diffAppCode) ||
+                               Comparing.strEqual(args[0], antAppCode));
   }
 
   private ApplicationStarter getStarter() {
