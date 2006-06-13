@@ -25,8 +25,8 @@ public final class IntroDimensionProperty extends IntrospectedProperty<Dimension
   public IntroDimensionProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient){
     super(name, readMethod, writeMethod, storeAsClient);
     myChildren = new Property[]{
-      new IntFieldProperty(this, "width", -1),
-      new IntFieldProperty(this, "height", -1),
+      new IntFieldProperty(this, "width", -1, new Dimension(0, 0)),
+      new IntFieldProperty(this, "height", -1, new Dimension(0, 0)),
     };
     myRenderer = new DimensionRenderer();
     myEditor = new IntRegexEditor<Dimension>(Dimension.class, myRenderer, new int[] { -1, -1 });

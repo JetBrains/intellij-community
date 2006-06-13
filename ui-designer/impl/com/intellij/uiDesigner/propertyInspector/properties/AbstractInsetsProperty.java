@@ -20,13 +20,17 @@ public abstract class AbstractInsetsProperty<T extends RadComponent> extends Pro
   private final InsetsPropertyRenderer myRenderer;
   private final IntRegexEditor<Insets> myEditor;
 
-  public AbstractInsetsProperty(@NonNls final String name){
-    super(null, name);
+  public AbstractInsetsProperty(@NonNls final String name) {
+    this(null, name);
+  }
+
+  public AbstractInsetsProperty(Property parent, @NonNls final String name){
+    super(parent, name);
     myChildren=new Property[]{
-      new IntFieldProperty(this, "top", 0),
-      new IntFieldProperty(this, "left", 0),
-      new IntFieldProperty(this, "bottom", 0),
-      new IntFieldProperty(this, "right", 0),
+      new IntFieldProperty(this, "top", 0, new Insets(0, 0, 0, 0)),
+      new IntFieldProperty(this, "left", 0, new Insets(0, 0, 0, 0)),
+      new IntFieldProperty(this, "bottom", 0, new Insets(0, 0, 0, 0)),
+      new IntFieldProperty(this, "right", 0, new Insets(0, 0, 0, 0)),
     };
     myRenderer=new InsetsPropertyRenderer();
     myEditor = new IntRegexEditor<Insets>(Insets.class, myRenderer, new int[] { 0, 0, 0, 0 });

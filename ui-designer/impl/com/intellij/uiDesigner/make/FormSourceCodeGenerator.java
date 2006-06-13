@@ -532,6 +532,7 @@ public final class FormSourceCodeGenerator {
   private void generateBorder(final LwContainer container, final String variable) {
     final BorderType borderType = container.getBorderType();
     final StringDescriptor borderTitle = container.getBorderTitle();
+    final Insets borderSize = container.getBorderSize();
     final String borderFactoryMethodName = borderType.getBorderFactoryMethodName();
 
     final boolean borderNone = borderType.equals(BorderType.NONE);
@@ -545,6 +546,12 @@ public final class FormSourceCodeGenerator {
         startStaticMethodCall(BorderFactory.class, borderFactoryMethodName);
         if (borderType.equals(BorderType.LINE)) {
           pushVar("Color.black");
+        }
+        else if (borderType.equals(BorderType.EMPTY) && borderSize != null) {
+          push(borderSize.top);
+          push(borderSize.left);
+          push(borderSize.bottom);
+          push(borderSize.right);
         }
         endMethod();
       }

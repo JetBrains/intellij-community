@@ -12,17 +12,7 @@ import java.awt.*;
  */
 public final class BorderTypeEditor extends ComboBoxPropertyEditor<BorderType> {
   public BorderTypeEditor(){
-    myCbx.setModel(
-      new DefaultComboBoxModel(
-        new BorderType[]{
-          BorderType.NONE,
-          BorderType.BEVEL_LOWERED,
-          BorderType.BEVEL_RAISED,
-          BorderType.ETCHED,
-          BorderType.LINE
-        }
-      )
-    );
+    myCbx.setModel(new DefaultComboBoxModel(BorderType.getAllTypes()));
     myCbx.setRenderer(new MyListCellRenderer());
   }
 

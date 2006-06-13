@@ -19,8 +19,7 @@ import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import java.awt.Color;
-import java.awt.Font;
+import java.awt.*;
 
 /**
  * @author Vladimir Kondratyev
@@ -31,6 +30,7 @@ public final class BorderType {
   public static final BorderType BEVEL_RAISED = new BorderType("bevel-raised", "Bevel Raised", BorderFactory.createRaisedBevelBorder(), "createRaisedBevelBorder");
   public static final BorderType ETCHED = new BorderType("etched", "Etched", BorderFactory.createEtchedBorder(), "createEtchedBorder");
   public static final BorderType LINE = new BorderType("line", "Line", BorderFactory.createLineBorder(Color.BLACK), "createLineBorder");
+  public static final BorderType EMPTY = new BorderType("empty", "Empty", BorderFactory.createEmptyBorder(0, 0, 0, 0), "createEmptyBorder");
 
   private final String myId;
   private final String myName;
@@ -56,12 +56,23 @@ public final class BorderType {
                              final int titleJustification,
                              final int titlePosition,
                              final Font titleFont,
-                             final Color titleColor){
+                             final Color titleColor,
+                             final Insets borderSize){
+    Border baseBorder = myBorder;
+    if (equals(EMPTY)) {
+      if (borderSize != null) {
+        baseBorder = BorderFactory.createEmptyBorder(borderSize.top, borderSize.left, borderSize.bottom, borderSize.right);
+      }
+      else {
+        baseBorder = BorderFactory.createEmptyBorder();
+      }
+    }
+
     if (title != null) {
-      return BorderFactory.createTitledBorder(myBorder, title, titleJustification, titlePosition, titleFont, titleColor);
+      return BorderFactory.createTitledBorder(baseBorder, title, titleJustification, titlePosition, titleFont, titleColor);
     }
     else {
-      return myBorder;
+      return baseBorder;
     }
   }
 
@@ -81,23 +92,21 @@ public final class BorderType {
   }
 
   public static BorderType valueOf(final String name){
-    if(NONE.getId().equals(name)){
-      return NONE;
+    BorderType[] allTypes = getAllTypes();
+    for(int i=0; i<allTypes.length; i++) {
+      if (allTypes [i].getId().equals(name)) return allTypes [i];
     }
-    else if(BEVEL_LOWERED.getId().equals(name)){
-      return BEVEL_LOWERED;
-    }
-    else if(BEVEL_RAISED.getId().equals(name)){
-      return BEVEL_RAISED;
-    }
-    else if(ETCHED.getId().equals(name)){
-      return ETCHED;
-    }
-    else if (LINE.getId().equals(name)) {
-      return LINE;
-    }
-    else{
-      throw new UnexpectedFormElementException("unknown type: "+name);
-    }
+    throw new UnexpectedFormElementException("unknown type: "+name);
+  }
+
+  public static BorderType[] getAllTypes() {
+    return new BorderType[]{
+          BorderType.NONE,
+          BorderType.EMPTY,
+          BorderType.BEVEL_LOWERED,
+          BorderType.BEVEL_RAISED,
+          BorderType.ETCHED,
+          BorderType.LINE
+        };
   }
 }

@@ -1,13 +1,13 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntRegexEditor;
+import com.intellij.uiDesigner.propertyInspector.editors.InsetsEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.InsetsPropertyRenderer;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,20 +26,17 @@ public final class IntroInsetsProperty extends IntrospectedProperty<Insets> {
   public IntroInsetsProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient){
     super(name, readMethod, writeMethod, storeAsClient);
     myChildren=new Property[]{
-      new IntFieldProperty(this, "top", 0),
-      new IntFieldProperty(this, "left", 0),
-      new IntFieldProperty(this, "bottom", 0),
-      new IntFieldProperty(this, "right", 0),
+      new IntFieldProperty(this, "top", 0, new Insets(0, 0, 0, 0)),
+      new IntFieldProperty(this, "left", 0, new Insets(0, 0, 0, 0)),
+      new IntFieldProperty(this, "bottom", 0, new Insets(0, 0, 0, 0)),
+      new IntFieldProperty(this, "right", 0, new Insets(0, 0, 0, 0)),
     };
     myRenderer=new InsetsPropertyRenderer();
-    myEditor = new IntRegexEditor<Insets>(Insets.class, myRenderer, new int[] { 0, 0, 0, 0 });
+    myEditor = new InsetsEditor(myRenderer);
   }
 
   public void write(final Insets value, final XmlWriter writer) {
-    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_TOP,value.top);
-    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_LEFT,value.left);
-    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_BOTTOM,value.bottom);
-    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_RIGHT,value.right);
+    writer.writeInsets(value);
   }
 
   @NotNull

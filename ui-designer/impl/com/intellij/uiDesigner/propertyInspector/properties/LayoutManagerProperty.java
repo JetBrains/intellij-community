@@ -78,4 +78,9 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
   public PropertyEditor<String> getEditor() {
     return myEditor;
   }
+
+  @Override
+  public boolean needRefreshPropertyList() {
+    return true;
+  }
 }

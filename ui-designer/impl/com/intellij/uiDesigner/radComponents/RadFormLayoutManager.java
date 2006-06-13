@@ -8,27 +8,23 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.GridChangeUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.actions.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.lw.FormLayoutSerializer;
 import com.intellij.uiDesigner.propertyInspector.Property;
-import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
-import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
-import com.intellij.uiDesigner.propertyInspector.editors.IntRegexEditor;
+import com.intellij.uiDesigner.propertyInspector.properties.AbstractInsetsProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.AlignPropertyProvider;
 import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
-import com.intellij.uiDesigner.propertyInspector.properties.IntFieldProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty;
-import com.intellij.uiDesigner.propertyInspector.renderers.InsetsPropertyRenderer;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.jgoodies.forms.factories.FormFactory;
 import com.jgoodies.forms.layout.*;
 import org.jetbrains.annotations.NonNls;
@@ -40,11 +36,11 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.*;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.lang.reflect.Method;
 
 /**
  * @author yole
@@ -848,24 +844,9 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     }
   }
 
-  private static class ComponentInsetsProperty extends Property<RadComponent, Insets> {
-    private InsetsPropertyRenderer myRenderer;
-    private IntRegexEditor<Insets> myEditor;
-    private Property[] myChildren;
-
+  private static class ComponentInsetsProperty extends AbstractInsetsProperty<RadComponent> {
     public ComponentInsetsProperty() {
       super(null, "Insets");
-      myChildren=new Property[]{
-        new IntFieldProperty(this, "top", 0),
-        new IntFieldProperty(this, "left", 0),
-        new IntFieldProperty(this, "bottom", 0),
-        new IntFieldProperty(this, "right", 0),
-      };
-    }
-
-    @NotNull @Override
-    public Property[] getChildren(final RadComponent component) {
-      return myChildren;
     }
 
     public Insets getValue(final RadComponent component) {
@@ -886,21 +867,6 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
         cc.insets = value;
         layout.setConstraints(component.getDelegee(), cc);
       }
-    }
-
-    @NotNull
-    public PropertyRenderer<Insets> getRenderer() {
-      if (myRenderer == null) {
-        myRenderer = new InsetsPropertyRenderer();
-      }
-      return myRenderer;
-    }
-
-    public PropertyEditor<Insets> getEditor() {
-      if (myEditor == null) {
-        myEditor = new IntRegexEditor<Insets>(Insets.class, myRenderer, new int[] { 0, 0, 0, 0 });
-      }
-      return myEditor;
     }
   }
 }

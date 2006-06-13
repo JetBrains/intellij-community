@@ -695,6 +695,16 @@ public class AsmCodeGenerator {
                                    new Method(borderFactoryMethodName, ourBorderType,
                                               new Type[] { Type.getType(Color.class) } ));
           }
+          else if (borderType.equals(BorderType.EMPTY) && container.getBorderSize() != null) {
+            Insets size = container.getBorderSize();
+            generator.push(size.top);
+            generator.push(size.left);
+            generator.push(size.bottom);
+            generator.push(size.right);
+            generator.invokeStatic(ourBorderFactoryType,
+                                   new Method(borderFactoryMethodName, ourBorderType,
+                                              new Type[] { Type.INT_TYPE, Type.INT_TYPE, Type.INT_TYPE, Type.INT_TYPE }));
+          }
           else {
             generator.invokeStatic(ourBorderFactoryType,
                                    new Method(borderFactoryMethodName, ourBorderType, new Type[0]));

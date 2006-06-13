@@ -26,10 +26,10 @@ public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle
     super(name, readMethod, writeMethod, storeAsClient);
     myRenderer=new RectangleRenderer();
     myChildren=new Property[]{
-      new IntFieldProperty(this, "x", Integer.MIN_VALUE),
-      new IntFieldProperty(this, "y", Integer.MIN_VALUE),
-      new IntFieldProperty(this, "width", 0),
-      new IntFieldProperty(this, "height", 0),
+      new IntFieldProperty(this, "x", Integer.MIN_VALUE, new Rectangle(0, 0, 0, 0)),
+      new IntFieldProperty(this, "y", Integer.MIN_VALUE, new Rectangle(0, 0, 0, 0)),
+      new IntFieldProperty(this, "width", 0, new Rectangle(0, 0, 0, 0)),
+      new IntFieldProperty(this, "height", 0, new Rectangle(0, 0, 0, 0)),
     };
     myEditor = new IntRegexEditor<Rectangle>(Rectangle.class, myRenderer, new int[] { Integer.MIN_VALUE, Integer.MIN_VALUE, 0, 0 });
   }

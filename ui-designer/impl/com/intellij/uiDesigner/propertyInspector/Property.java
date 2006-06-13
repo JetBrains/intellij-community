@@ -146,4 +146,8 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
   public boolean appliesToSelection(List<RadComponent> selection) {
     return true;
   }
+
+  public boolean needRefreshPropertyList() {
+    return false;
+  }
 }

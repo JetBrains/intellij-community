@@ -9,10 +9,7 @@ import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
-import com.intellij.uiDesigner.propertyInspector.editors.BorderTypeEditor;
-import com.intellij.uiDesigner.propertyInspector.editors.ColorEditor;
-import com.intellij.uiDesigner.propertyInspector.editors.FontEditor;
-import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
+import com.intellij.uiDesigner.propertyInspector.editors.*;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.*;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -20,6 +17,8 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.shared.BorderType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 
 /**
  * @author Anton Katilin
@@ -57,6 +56,18 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
 
   @NotNull
   public Property[] getChildren(final RadComponent component){
+    BorderType borderType = ((RadContainer) component).getBorderType();
+    if (borderType.equals(BorderType.EMPTY)) {
+      return new Property[]{
+        new MyTypeProperty(),
+        new MySizeProperty(this),
+        new MyTitleProperty(),
+        new MyTitleIntEnumProperty(this, "title justification", true),
+        new MyTitleIntEnumProperty(this, "title position", false),
+        new MyTitleFontProperty(this),
+        new MyTitleColorProperty(this)
+      };
+    }
     return myChildren;
   }
 
@@ -114,6 +125,11 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
 
     @Override public void resetValue(RadContainer component) throws Exception {
       setValueImpl(component, BorderType.NONE);
+    }
+
+    @Override
+    public boolean needRefreshPropertyList() {
+      return true;
     }
   }
 
@@ -313,6 +329,20 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
 
     @Override public void resetValue(final RadContainer component) throws Exception {
       component.setBorderTitleColor(null);
+    }
+  }
+
+  private static class MySizeProperty extends AbstractInsetsProperty<RadContainer> {
+    public MySizeProperty(final Property parent) {
+      super(parent, "size");
+    }
+
+    public Insets getValue(final RadContainer container) {
+      return container.getBorderSize();
+    }
+
+    protected void setValueImpl(final RadContainer container, final Insets insets) throws Exception {
+      container.setBorderSize(insets);
     }
   }
 }

@@ -36,6 +36,7 @@ import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.IndentedIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -290,8 +291,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     super.setValueAt(aValue, row, column);
     // We need to repaint whole inspector because change of one property
     // might causes change of another property.
-    // TODO[yole]: hack!
-    if (myProperties.get(row) instanceof LayoutManagerProperty) {
+    if (myProperties.get(row).needRefreshPropertyList()) {
       synchWithTree(true);
     }
     repaint();
@@ -502,11 +502,31 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
   private void addProperty(final ArrayList<Property> result, final Property property) {
     result.add(property);
-    if (myExpandedProperties.contains(property.getName())) {
+    if (isPropertyExpanded(property, property.getParent())) {
       for(Property child: getPropChildren(property)) {
         addProperty(result, child);
       }
     }
+  }
+
+  private boolean isPropertyExpanded(final Property property, final Property parent) {
+    return myExpandedProperties.contains(getDottedName(property));
+  }
+
+  private String getDottedName(final Property property) {
+    final Property parent = property.getParent();
+    if (parent != null) {
+      return parent.getName() + "." + property.getName();
+    }
+    return property.getName();
+  }
+
+  private int getPropertyIndent(final Property property) {
+    final Property parent = property.getParent();
+    if (parent != null) {
+      return parent.getParent() != null ? 2 : 1;
+    }
+    return 0;
   }
 
   private Property[] getPropChildren(final Property property) {
@@ -598,8 +618,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     // Expand property
     final Property property=myProperties.get(index);
-    LOG.assertTrue(!myExpandedProperties.contains(property));
-    myExpandedProperties.add(property.getName());
+    LOG.assertTrue(!myExpandedProperties.contains(getDottedName(property)));
+    myExpandedProperties.add(getDottedName(property));
 
     final Property[] children=getPropChildren(property);
     for (int i = 0; i < children.length; i++) {
@@ -622,8 +642,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     // Expand property
     final Property property=myProperties.get(index);
-    LOG.assertTrue(myExpandedProperties.contains(property.getName()));
-    myExpandedProperties.remove(property.getName());
+    LOG.assertTrue(isPropertyExpanded(property, property.getParent()));
+    myExpandedProperties.remove(getDottedName(property));
 
     final Property[] children=getPropChildren(property);
     for (int i=0; i<children.length; i++){
@@ -737,6 +757,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       property.setValue(c, newValue);
     }
     catch (Throwable e) {
+      LOG.debug(e);
       if(e instanceof InvocationTargetException){ // special handling of warapped exceptions
         e = ((InvocationTargetException)e).getTargetException();
       }
@@ -846,8 +867,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     private final ColoredTableCellRenderer myPropertyNameRenderer;
     private final Icon myExpandIcon;
     private final Icon myCollapseIcon;
-    private final Icon myLevel1ShiftIcon;
-    private final Icon myLevel2ShiftIcon;
+    private final Icon myIndentedExpandIcon;
+    private final Icon myIndentedCollapseIcon;
+    private final Icon[] myIndentIcons = new Icon[3];
 
     public MyCompositeTableCellRenderer(){
       myPropertyNameRenderer = new ColoredTableCellRenderer() {
@@ -866,8 +888,11 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       };
       myExpandIcon=IconLoader.getIcon("/com/intellij/uiDesigner/icons/expandNode.png");
       myCollapseIcon=IconLoader.getIcon("/com/intellij/uiDesigner/icons/collapseNode.png");
-      myLevel1ShiftIcon=new EmptyIcon(9, 9);
-      myLevel2ShiftIcon= new EmptyIcon(20, 9);
+      for(int i=0; i<myIndentIcons.length; i++) {
+        myIndentIcons [i] = new EmptyIcon(9 + 11 * i, 9);
+      }
+      myIndentedExpandIcon = new IndentedIcon(myExpandIcon, 11);
+      myIndentedCollapseIcon = new IndentedIcon(myCollapseIcon, 11);
     }
 
     public Component getTableCellRendererComponent(
@@ -886,12 +911,13 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       final Property property=(Property)value;
 
       final Color background;
+      final Property parent = property.getParent();
       if (property instanceof IntrospectedProperty){
         background = table.getBackground();
       }
       else {
         // syntetic property 
-        background = property.getParent() == null ? SYNTETIC_PROPERTY_BACKGROUND : SYNTETIC_SUBPROPERTY_BACKGROUND;
+        background = parent == null ? SYNTETIC_PROPERTY_BACKGROUND : SYNTETIC_SUBPROPERTY_BACKGROUND;
       }
 
       if (!selected){
@@ -903,22 +929,26 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         myPropertyNameRenderer.append(property.getName(), attrs);
 
         // 2. Icon
-        if(getPropChildren(property).length>0){
+        if(getPropChildren(property).length>0) {
           // This is composite property and we have to show +/- sign
-          if(myExpandedProperties.contains(property.getName())){
-            myPropertyNameRenderer.setIcon(myCollapseIcon);
-          }else{
-            myPropertyNameRenderer.setIcon(myExpandIcon);
+          if (parent != null) {
+            if(isPropertyExpanded(property, parent)){
+              myPropertyNameRenderer.setIcon(myIndentedCollapseIcon);
+            }else{
+              myPropertyNameRenderer.setIcon(myIndentedExpandIcon);
+            }
+          }
+          else {
+            if(isPropertyExpanded(property, parent)){
+              myPropertyNameRenderer.setIcon(myCollapseIcon);
+            }else{
+              myPropertyNameRenderer.setIcon(myExpandIcon);
+            }
           }
         }else{
           // If property doesn't have children then we have shift its text
           // to the right
-          if(property.getParent()!=null){
-            // Second level has larger shift
-            myPropertyNameRenderer.setIcon(myLevel2ShiftIcon);
-          }else{
-            myPropertyNameRenderer.setIcon(myLevel1ShiftIcon);
-          }
+          myPropertyNameRenderer.setIcon(myIndentIcons [getPropertyIndent(property)]);
         }
       }
       else if(column==1){ // painter for second column
@@ -1019,18 +1049,19 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       if (row == -1){
         return;
       }
+      final Property property = myProperties.get(row);
+      int indent = getPropertyIndent(property) * 11;
       final Rectangle rect = getCellRect(row, convertColumnIndexToView(0), false);
-      if (e.getX() < rect.x || e.getX() > rect.x + 9 || e.getY() < rect.y || e.getY() > rect.y + rect.height) {
+      if (e.getX() < rect.x + indent || e.getX() > rect.x + 9 + indent || e.getY() < rect.y || e.getY() > rect.y + rect.height) {
         return;
       }
 
-      final Property property = myProperties.get(row);
       final Property[] children = getPropChildren(property);
       if (children.length == 0) {
         return;
       }
 
-      if (myExpandedProperties.contains(property.getName())) {
+      if (isPropertyExpanded(property, property.getParent())) {
         collapseProperty(row);
       }
       else {
@@ -1128,7 +1159,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
       final Property property=myProperties.get(selectedRow);
       if(getPropChildren(property).length>0){
-        if(myExpandedProperties.contains(property.getName())){
+        if(isPropertyExpanded(property, property.getParent())){
           collapseProperty(selectedRow);
         }else{
           expandProperty(selectedRow);
@@ -1154,12 +1185,12 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       final Property property=myProperties.get(selectedRow);
       if(getPropChildren(property).length>0) {
         if (myExpand) {
-          if (!myExpandedProperties.contains(property.getName())) {
+          if (!isPropertyExpanded(property, property.getParent())) {
             expandProperty(selectedRow);
           }
         }
         else {
-          if (myExpandedProperties.contains(property.getName())) {
+          if (isPropertyExpanded(property, property.getParent())) {
             collapseProperty(selectedRow);
           }
         }

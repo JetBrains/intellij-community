@@ -56,6 +56,7 @@ public class RadContainer extends RadComponent implements IContainer {
   private int myBorderTitlePosition;
   private FontDescriptor myBorderTitleFont;
   private ColorDescriptor myBorderTitleColor;
+  private Insets myBorderSize;
 
   protected RadLayoutManager myLayoutManager;
 
@@ -379,6 +380,17 @@ public class RadContainer extends RadComponent implements IContainer {
     }
   }
 
+  public Insets getBorderSize() {
+    return myBorderSize;
+  }
+
+  public void setBorderSize(final Insets borderSize) {
+    if (!Comparing.equal(myBorderSize, borderSize)) {
+      myBorderSize = borderSize;
+      updateBorder();
+    }
+  }
+
   /**
    * Updates delegee's border
    */
@@ -393,7 +405,7 @@ public class RadContainer extends RadComponent implements IContainer {
     Font font = (myBorderTitleFont != null) ? myBorderTitleFont.getResolvedFont(getDelegee().getFont()) : null;
     Color color = (myBorderTitleColor != null) ? myBorderTitleColor.getResolvedColor() : null;
     getDelegee().setBorder(myBorderType.createBorder(title, myBorderTitleJustification, myBorderTitlePosition,
-                                                     font, color));
+                                                     font, color, myBorderSize));
     return myBorderTitle != null && !Comparing.equal(oldTitle, myBorderTitle.getResolvedValue());
   }
 
@@ -449,6 +461,11 @@ public class RadContainer extends RadComponent implements IContainer {
       if (myBorderTitleColor != null) {
         writer.startElement(UIFormXmlConstants.ELEMENT_COLOR);
         writer.writeColorDescriptor(myBorderTitleColor);
+        writer.endElement();
+      }
+      if (myBorderSize != null) {
+        writer.startElement(UIFormXmlConstants.ELEMENT_SIZE);
+        writer.writeInsets(myBorderSize);
         writer.endElement();
       }
     }finally{

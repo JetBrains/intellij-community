@@ -220,6 +220,7 @@ public final class XmlReader {
     container.setBorderTitlePosition(lwContainer.getBorderTitlePosition());
     container.setBorderTitleFont(lwContainer.getBorderTitleFont());
     container.setBorderTitleColor(lwContainer.getBorderTitleColor());
+    container.setBorderSize(lwContainer.getBorderSize());
   }
 
   private static RadErrorComponent createErrorComponent(final Module module, final String id, final LwComponent lwComponent, final ClassLoader loader) {

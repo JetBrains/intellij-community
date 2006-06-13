@@ -9,8 +9,7 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.Color;
-import java.awt.Dimension;
+import java.awt.*;
 import java.util.Stack;
 
 /**
@@ -191,5 +190,12 @@ public final class XmlWriter{
         addAttribute(UIFormXmlConstants.ATTRIBUTE_STYLE, value.getFontStyle());
       }
     }
+  }
+
+  public void writeInsets(final Insets value) {
+    addAttribute(UIFormXmlConstants.ATTRIBUTE_TOP, value.top);
+    addAttribute(UIFormXmlConstants.ATTRIBUTE_LEFT, value.left);
+    addAttribute(UIFormXmlConstants.ATTRIBUTE_BOTTOM, value.bottom);
+    addAttribute(UIFormXmlConstants.ATTRIBUTE_RIGHT, value.right);
   }
 }
