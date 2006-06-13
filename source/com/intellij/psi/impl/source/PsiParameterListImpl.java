@@ -9,6 +9,8 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements PsiParameterList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterListImpl");
@@ -52,6 +54,7 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
     }
   }
 
+  @NotNull
   public PsiParameter[] getParameters(){
     long repositoryId = getRepositoryId();
     if (repositoryId >= 0) {
@@ -82,10 +85,31 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
     return PsiImplUtil.getParameterIndex(parameter, this);
   }
 
+  public int getParametersCount() {
+    long repositoryId = getRepositoryId();
+    if (repositoryId >= 0) {
+      if (myRepositoryParameters == null) {
+        CompositeElement treeElement = getTreeElement();
+        if (treeElement != null) {
+          return treeElement.countChildren(PARAMETER_BIT_SET);
+        }
+        else {
+          return getRepositoryManager().getMethodView().getParameterCount(repositoryId);
+        }
+
+      }
+      return myRepositoryParameters.length;
+    }
+    else{
+      return calcTreeElement().countChildren(PARAMETER_BIT_SET);
+    }
+  }
+
   public void accept(PsiElementVisitor visitor){
     visitor.visitParameterList(this);
   }
 
+  @NonNls
   public String toString(){
     return "PsiParameterList:" + getText();
   }

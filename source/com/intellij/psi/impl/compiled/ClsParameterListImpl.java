@@ -9,6 +9,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class ClsParameterListImpl extends ClsElementImpl implements PsiParameterList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsParameterListImpl");
@@ -30,6 +31,7 @@ public class ClsParameterListImpl extends ClsElementImpl implements PsiParameter
     return myParent;
   }
 
+  @NotNull
   public PsiParameter[] getParameters() {
     return myParameters;
   }
@@ -37,6 +39,10 @@ public class ClsParameterListImpl extends ClsElementImpl implements PsiParameter
   public int getParameterIndex(PsiParameter parameter) {
     LOG.assertTrue(parameter.getParent() == this);
     return PsiImplUtil.getParameterIndex(parameter, this);
+  }
+
+  public int getParametersCount() {
+    return myParameters.length;
   }
 
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
@@ -67,6 +73,7 @@ public class ClsParameterListImpl extends ClsElementImpl implements PsiParameter
     visitor.visitParameterList(this);
   }
 
+  @NonNls
   public String toString() {
     return "PsiParameterList";
   }

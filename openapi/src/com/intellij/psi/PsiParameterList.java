@@ -15,17 +15,21 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Represents the list of parameters of a Java method.
  *
  * @see PsiMethod#getParameterList()
  */
 public interface PsiParameterList extends PsiElement {
+
   /**
    * Returns the array of parameters in the list.
    *
    * @return the array of parameters.
    */
+  @NotNull
   PsiParameter[] getParameters();
 
   /**
@@ -35,4 +39,11 @@ public interface PsiParameterList extends PsiElement {
    * @return the index of the parameter.
    */
   int getParameterIndex(PsiParameter parameter);
+
+  /**
+   * Returns the number of parameters.
+   *
+   * @return the parameters count
+   */
+  int getParametersCount();
 }
