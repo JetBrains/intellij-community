@@ -51,11 +51,16 @@ public class TooltipUtils {
     if (messages.length == 0) return null;
 
     StringBuilder text = new StringBuilder("<html><body><table><tr><td>&nbsp;</td><td>");
-    for (int i = 0; i < messages.length; i++) {
+    int len = messages.length > 10 ? 10 : messages.length;
+    for (int i = 0; i < len; i++) {
       if (i != 0) {
         text.append(MESSAGE_DELIMITER);
       }
       text.append(messages[i]);
+    }
+    if (messages.length > 10) {
+      text.append(MESSAGE_DELIMITER);
+      text.append("...");
     }
     text.append("</td><td>&nbsp;</td></tr></table></body></html>");
     return  text.toString();
