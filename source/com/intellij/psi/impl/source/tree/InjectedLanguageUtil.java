@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
@@ -313,8 +314,10 @@ public class InjectedLanguageUtil {
     if (injected == null) return;
     PsiFile psiFile = documentManager.getPsiFile(document);
     for (RangeMarker documentRange : new ArrayList<RangeMarker>(injected.keySet())) {
-      if (!documentRange.isValid()) continue;
       final PsiFileImpl oldFile = (PsiFileImpl)injected.get(documentRange);
+      if (!documentRange.isValid() || oldFile == null) {
+        injected.remove(documentRange);
+      }
       PsiElement element = psiFile.findElementAt(documentRange.getStartOffset());
       PsiLanguageInjectionHost injectionHost = findInjectionHost(element);
       if (injectionHost == null) continue;
@@ -346,47 +349,24 @@ public class InjectedLanguageUtil {
       return injectedPsi;
     }
 
-    injectedPsi.getManager().performActionWithFormatterDisabled(new Runnable(){
-      public void run() {
-        // replace psi
-        FileElement newFileElement = (FileElement)injectedPsi.getNode().copyElement();
-        FileElement oldFileElement = oldFile.getTreeElement();
+    // replace psi
+    FileElement newFileElement = (FileElement)injectedPsi.getNode().copyElement();
+    FileElement oldFileElement = oldFile.getTreeElement();
 
-        if (oldFileElement.getFirstChildNode() != null) {
-          TreeUtil.removeRange(oldFileElement.getFirstChildNode(), null);
-        }
-        final ASTNode firstChildNode = newFileElement.getFirstChildNode();
-        if (firstChildNode != null) {
-          TreeUtil.addChildren(oldFileElement, (TreeElement)firstChildNode);
-        }
-        oldFileElement.setCharTable(newFileElement.getCharTable());
-        oldFile.subtreeChanged();
+    if (!newFileElement.getText().equals(oldFileElement.getText())) {
+      if (oldFileElement.getFirstChildNode() != null) {
+        TreeUtil.removeRange(oldFileElement.getFirstChildNode(), null);
       }
-    });
+      final ASTNode firstChildNode = newFileElement.getFirstChildNode();
+      if (firstChildNode != null) {
+        TreeUtil.addChildren(oldFileElement, (TreeElement)firstChildNode);
+      }
+      oldFileElement.setCharTable(newFileElement.getCharTable());
+      oldFile.subtreeChanged();
+
+      PsiDocumentManagerImpl.checkConsistency(oldFile, documentRange);
+    }
 
     return oldFile;
   }
-
-  //public static class LineCommentTextLiteralEscaper implements LiteralTextEscaper<PsiCommentImpl> {
-  //  public boolean decode(final PsiCommentImpl text, final TextRange rangeInsideHost, final StringBuilder outChars) {
-  //    outChars.append(text.getText(), rangeInsideHost.getStartOffset() + 2, rangeInsideHost.getEndOffset() + 2);
-  //    return true;
-  //  }
-  //
-  //  public int getOffsetInSource(final int offsetInDecoded) {
-  //    return offsetInDecoded + 2;
-  //  }
-  //}
-  //
-  //public static class BlockCommentTextLiteralEscaper implements LiteralTextEscaper<PsiCommentImpl> {
-  //  public boolean decode(final PsiCommentImpl text, final TextRange rangeInsideHost, final StringBuilder outChars) {
-  //    final String value = text.getText();
-  //    outChars.append(value, rangeInsideHost.getStartOffset() + 2, Math.min(rangeInsideHost.getEndOffset(), value.length() - 2) + 2);
-  //    return true;
-  //  }
-  //
-  //  public int getOffsetInSource(final int offsetInDecoded) {
-  //    return offsetInDecoded + 2;
-  //  }
-  //}
 }

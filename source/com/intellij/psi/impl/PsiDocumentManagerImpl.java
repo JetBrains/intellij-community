@@ -29,11 +29,11 @@ import com.intellij.psi.impl.source.tree.InjectedLanguageUtil;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -41,20 +41,20 @@ import java.util.Set;
 
 public class PsiDocumentManagerImpl extends PsiDocumentManager implements ProjectComponent, DocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
-  final Key<PsiFile> HARD_REF_TO_PSI = new Key<PsiFile>("HARD_REFERENCE_TO_PSI");
+  private static final Key<PsiFile> HARD_REF_TO_PSI = new Key<PsiFile>("HARD_REFERENCE_TO_PSI");
   private static final Key<Boolean> KEY_COMMITING = new Key<Boolean>("Commiting");
 
   private final Project myProject;
-  private PsiManager myPsiManager;
-  private final Key<TextBlock> KEY_TEXT_BLOCK = Key.create("KEY_TEXT_BLOCK");
-  private Set<Document> myUncommittedDocuments = new HashSet<Document>();
-  private boolean myProcessDocumentEvents = true;
-  private SmartPointerManagerImpl mySmartPointerManager;
-  private BlockSupportImpl myBlockSupport;
+  private final PsiManager myPsiManager;
+  private static final Key<TextBlock> KEY_TEXT_BLOCK = Key.create("KEY_TEXT_BLOCK");
+  private final Set<Document> myUncommittedDocuments = new THashSet<Document>();
+  private final Set<Document> myDocumentsBeingProcessed = new THashSet<Document>();
+  private final SmartPointerManagerImpl mySmartPointerManager;
+  private final BlockSupportImpl myBlockSupport;
   private boolean myIsCommitInProgress;
   private final PsiToDocumentSynchronizer mySynchronizer;
 
-  private List<Listener> myListeners = new ArrayList<Listener>();
+  private final List<Listener> myListeners = new ArrayList<Listener>();
   private Listener[] myCachedListeners = null;
 
   public PsiDocumentManagerImpl(Project project,
@@ -331,7 +331,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         myBlockSupport.reparseRange(file, startOffset, psiEndOffset, endOffset - psiEndOffset, chars);
         //checkConsistency(file, document);
         //file.setModificationStamp(document.getModificationStamp());
-        InjectedLanguageUtil.commitAllInjectedDocuments(this, document);
       }
 
       textBlock.clear();
@@ -339,6 +338,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     finally{
       myIsCommitInProgress = false;
       document.putUserData(KEY_COMMITING, Boolean.FALSE);
+      InjectedLanguageUtil.commitAllInjectedDocuments(this, document);
     }
 
     //mySmartPointerManager.synchronizePointers(file);
@@ -355,20 +355,28 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   public boolean hasUncommitedDocuments() {
-    if (myIsCommitInProgress) return false;
-    return !myUncommittedDocuments.isEmpty();
+    return !myIsCommitInProgress && !myUncommittedDocuments.isEmpty();
   }
 
-  public void setProcessDocumentEvents(boolean processDocumentEvents) {
-    myProcessDocumentEvents = processDocumentEvents;
+  public void setProcessDocumentEvents(final Document document, boolean processDocumentEvents) {
+    if (processDocumentEvents) {
+      myDocumentsBeingProcessed.remove(document);
+    }
+    else {
+      myDocumentsBeingProcessed.add(document);
+    }
   }
 
-  private final Key<ASTNode> TEMP_TREE_IN_DOCUMENT_KEY = Key.create("TEMP_TREE_IN_DOCUMENT_KEY");
+  private boolean processDocEvents(final Document document) {
+    return !myDocumentsBeingProcessed.contains(document);
+  }
+
+  private static final Key<ASTNode> TEMP_TREE_IN_DOCUMENT_KEY = Key.create("TEMP_TREE_IN_DOCUMENT_KEY");
 
   public void beforeDocumentChange(DocumentEvent event) {
-    if (!myProcessDocumentEvents) return;
-
     final Document document = event.getDocument();
+    if (!processDocEvents(document)) return;
+
     final PsiFile file = getCachedPsiFile(document);
     if (file == null) return;
 
@@ -390,9 +398,9 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   public void documentChanged(DocumentEvent event) {
-    if (!myProcessDocumentEvents) return;
-
     final Document document = event.getDocument();
+    if (!processDocEvents(document)) return;
+
     final PsiFile file = getCachedPsiFile(document);
     if (file == null || (file instanceof SrcRepositoryPsiElement && ((SrcRepositoryPsiElement)file).getTreeElement() == null)) return;
 
@@ -424,6 +432,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
     CharSequence editorText = document.getCharsSequence();
     int documentLength = document.getTextLength();
+    LOG.assertTrue(documentLength == psiFile.getTextLength());
     if (psiFile.textMatches(editorText)) {
       LOG.assertTrue(psiFile.getTextLength() == documentLength);
       LOG.debug("Consistent OK: length=" + documentLength + "; file=" + psiFile.getName() + ":" + psiFile.getClass());
@@ -469,8 +478,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   public boolean isDocumentCommited(Document doc) {
-    if (myIsCommitInProgress) return true;
-    return !myUncommittedDocuments.contains(doc);
+    return myIsCommitInProgress || !myUncommittedDocuments.contains(doc);
   }
 
   public PsiToDocumentSynchronizer getSynchronizer() {

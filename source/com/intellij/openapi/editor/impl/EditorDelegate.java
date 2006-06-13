@@ -98,7 +98,7 @@ public class EditorDelegate implements EditorEx {
 
   @NotNull
   public CaretModel getCaretModel() {
-    return new CaretDelegate(myDelegate.getCaretModel(), myDocument.getTextRange(), myDelegate);
+    return new CaretDelegate(myDelegate.getCaretModel(), myDocument.getTextRange(), this);
   }
 
   @NotNull

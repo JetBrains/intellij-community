@@ -66,7 +66,6 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.pom.core.impl.PomModelImpl");
   private final PomProject myPomProject;
   private Map<Class<? extends PomModelAspect>, PomModelAspect> myAspects = new HashMap<Class<? extends PomModelAspect>, PomModelAspect>();
-  private Map<PomModelAspect, Set<PomModelAspect>> myAspectDependencies = new HashMap<PomModelAspect, Set<PomModelAspect>>();
   private Map<PomModelAspect, List<PomModelAspect>> myIncidence = new HashMap<PomModelAspect, List<PomModelAspect>>();
   private Map<PomModelAspect, List<PomModelAspect>> myInvertedIncidence = new HashMap<PomModelAspect, List<PomModelAspect>>();
   private List<PomModelListener> myListeners = new ArrayList<PomModelListener>();
@@ -84,7 +83,6 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   public void registerAspect(Class<? extends PomModelAspect> aClass, PomModelAspect aspect, Set<PomModelAspect> dependencies) {
-    myAspectDependencies.put(aspect, dependencies);
     myAspects.put(aClass, aspect);
     final Iterator<PomModelAspect> iterator = dependencies.iterator();
     final List<PomModelAspect> deps = new ArrayList<PomModelAspect>();
@@ -150,9 +148,6 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
           LOG.error(e);
           return;
         }
-        //catch(IncorrectOperationException ioe){
-        //  return;
-        //}
         finally{
           myBlockedAspects.pop();
         }
@@ -195,16 +190,15 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   private Pair<PomModelAspect,PomTransaction> getBlockingTransaction(final PomModelAspect aspect, PomTransaction transaction) {
     final List<PomModelAspect> allDependants = getAllDependants(aspect);
-    final Iterator<PomModelAspect> iterator = allDependants.iterator();
-    while (iterator.hasNext()) {
-      final PomModelAspect pomModelAspect = iterator.next();
+    for (final PomModelAspect pomModelAspect : allDependants) {
       final ListIterator<Pair<PomModelAspect, PomTransaction>> blocksIterator = myBlockedAspects.listIterator(myBlockedAspects.size());
-      while(blocksIterator.hasPrevious()){
+      while (blocksIterator.hasPrevious()) {
         final Pair<PomModelAspect, PomTransaction> pair = blocksIterator.previous();
         if (pomModelAspect == pair.getFirst() && // aspect dependance
-            PsiTreeUtil.isAncestor(pair.getSecond().getChangeScope(), transaction.getChangeScope(), false) && // target scope contain current
+            PsiTreeUtil.isAncestor(pair.getSecond().getChangeScope(), transaction.getChangeScope(), false) &&
+            // target scope contain current
             getContainingFileByTree(pair.getSecond().getChangeScope()) != null  // target scope physical
-        ) {
+          ) {
           return pair;
         }
       }

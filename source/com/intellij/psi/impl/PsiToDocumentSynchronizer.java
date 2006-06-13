@@ -9,8 +9,6 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
 
 import java.util.*;
 
@@ -53,12 +51,12 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       textBlock.clear();
     }
 
-    myPsiDocumentManager.setProcessDocumentEvents(false);
+    myPsiDocumentManager.setProcessDocumentEvents(document, false);
     try {
       syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event);
     }
     finally {
-      myPsiDocumentManager.setProcessDocumentEvents(true);
+      myPsiDocumentManager.setProcessDocumentEvents(document, true);
     }
     
 

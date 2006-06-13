@@ -43,10 +43,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -213,7 +210,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
                     "document length:" + document.getTextLength(),
                     "file stamp:" + file.getModificationStamp(),
                     "document stamp:" + document.getModificationStamp(),
-                    "file text:" + file.getText(),
+                    "file text     :" + file.getText(),
                     "document text:" + document.getText());
         }
         if (LOG.isDebugEnabled()) {

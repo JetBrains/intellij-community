@@ -10,11 +10,13 @@ import com.intellij.openapi.editor.ex.EditorEx;
 public class CaretDelegate implements CaretModel {
   private final CaretModel myDelegate;
   private RangeMarker myRange;
-  private final EditorEx myEditorDelegate;
+  private final EditorEx myHostEditor;
+  private final EditorDelegate myEditorDelegate;
 
-  public CaretDelegate(CaretModel delegate, final RangeMarker range, EditorEx editorDelegate) {
+  public CaretDelegate(CaretModel delegate, final RangeMarker range, EditorDelegate editorDelegate) {
     myDelegate = delegate;
     myRange = range;
+    myHostEditor = (EditorEx)editorDelegate.getDelegate();
     myEditorDelegate = editorDelegate;
   }
 
@@ -27,17 +29,13 @@ public class CaretDelegate implements CaretModel {
   }
 
   public void moveToLogicalPosition(final LogicalPosition pos) {
-    int rangeLine = myEditorDelegate.getDocument().getLineNumber(myRange.getStartOffset());
-    LogicalPosition newPos = new LogicalPosition(pos.line + rangeLine, pos.column + myRange.getStartOffset() -
-                                                                       myEditorDelegate.getDocument().getLineStartOffset(rangeLine));
-    myDelegate.moveToLogicalPosition(newPos);
+    LogicalPosition hostPos = myEditorDelegate.injectedToParent(pos);
+    myDelegate.moveToLogicalPosition(hostPos);
   }
 
   public void moveToVisualPosition(final VisualPosition pos) {
-    int rangeLine = myEditorDelegate.getDocument().getLineNumber(myRange.getStartOffset());
-    VisualPosition newPos = new VisualPosition(pos.line + rangeLine, pos.column + myRange.getStartOffset() -
-                                                                       myEditorDelegate.getDocument().getLineStartOffset(rangeLine));
-    myDelegate.moveToVisualPosition(newPos);
+    LogicalPosition hostPos = myEditorDelegate.injectedToParent(myEditorDelegate.visualToLogicalPosition(pos));
+    myDelegate.moveToLogicalPosition(hostPos);
   }
 
   public void moveToOffset(final int offset) {
@@ -45,17 +43,12 @@ public class CaretDelegate implements CaretModel {
   }
 
   public LogicalPosition getLogicalPosition() {
-    Document hostDocument = myEditorDelegate.getDocument();
-    int rangeLine = hostDocument.getLineNumber(myRange.getStartOffset());
-    int hostLineNumber = hostDocument.getLineNumber(myDelegate.getOffset());
-    int line = hostLineNumber - rangeLine;
-    int hostLineOffset = hostDocument.getLineStartOffset(hostLineNumber);
-    return new LogicalPosition(line, Math.max(0,myDelegate.getOffset() - hostLineOffset));
+    return myEditorDelegate.parentToInjected(myHostEditor.offsetToLogicalPosition(myDelegate.getOffset()));
   }
 
   public VisualPosition getVisualPosition() {
     LogicalPosition logicalPosition = getLogicalPosition();
-    return new VisualPosition(logicalPosition.line, logicalPosition.column);
+    return myEditorDelegate.logicalToVisualPosition(logicalPosition);
   }
 
   public int getOffset() {
