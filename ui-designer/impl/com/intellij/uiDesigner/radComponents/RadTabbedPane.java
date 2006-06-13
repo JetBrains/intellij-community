@@ -84,9 +84,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   @Override public void init(final GuiEditor editor, @NotNull final ComponentItem item) {
     super.init(editor, item);
     // add one tab by default
-    Palette palette = Palette.getInstance(editor.getProject());
-    RadComponent panel = InsertComponentProcessor.createInsertedComponent(editor, palette.getPanelItem());
-    addComponent(panel);
+    addComponent(InsertComponentProcessor.createPanelComponent(editor));
   }
 
   @NotNull
@@ -623,7 +621,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
 
     public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
-      final String tooltipText = getDisplayName() + " (" + myInsertIndex + ")";
+      final String tooltipText = UIDesignerBundle.message("insert.feedback.add.tab", getDisplayName(), myInsertIndex);
       if (myInsertIndex < getTabbedPane().getTabCount()) {
         feedbackLayer.putFeedback(getDelegee(), myFeedbackRect, VertInsertFeedbackPainter.INSTANCE, tooltipText);
       }
@@ -664,8 +662,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       }
       else {
         Palette palette = Palette.getInstance(editor.getProject());
-        RadContainer panel = (RadContainer) InsertComponentProcessor.createInsertedComponent(editor, palette.getPanelItem());
-        assert panel != null;
+        RadContainer panel = (RadContainer) InsertComponentProcessor.createPanelComponent(editor);
         addComponent(panel);
         panel.getDropLocation(null).processDrop(editor, new RadComponent[] { componentToAdd }, null, palette.getPanelItem());
       }

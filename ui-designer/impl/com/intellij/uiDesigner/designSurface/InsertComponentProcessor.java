@@ -396,6 +396,12 @@ public final class InsertComponentProcessor extends EventProcessor {
     return true;
   }
 
+  public static RadContainer createPanelComponent(GuiEditor editor) {
+    RadComponent c = createInsertedComponent(editor, Palette.getInstance(editor.getProject()).getPanelItem());
+    LOG.assertTrue(c != null);
+    return (RadContainer) c;
+  }
+
   @Nullable
   public static RadComponent createInsertedComponent(GuiEditor editor, ComponentItem item) {
     if (item.isAnyComponent()) {

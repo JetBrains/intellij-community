@@ -89,8 +89,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
           }
           else if (newContainer instanceof RadSplitPane) {
             if (selection.size() > 2) {
-              RadContainer panel = (RadContainer) InsertComponentProcessor.createInsertedComponent(editor, palette.getPanelItem());
-              assert panel != null;
+              RadContainer panel = InsertComponentProcessor.createPanelComponent(editor);
               panel.setCustomLayoutConstraints(LwSplitPane.POSITION_LEFT);
               newContainer.addComponent(panel);
               newContainer = panel;
