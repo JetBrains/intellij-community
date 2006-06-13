@@ -80,6 +80,10 @@ public final class BindingProperty extends Property<RadComponent, String> {
   }
 
   protected void setValueImpl(final RadComponent component, final String value) throws Exception {
+    if (value.equals(component.getBinding())) {
+      return;
+    }
+
     if (value.length() == 0) {
       if (component.isCustomCreateRequired()) {
         throw new Exception(UIDesignerBundle.message("error.custom.create.binding.required"));

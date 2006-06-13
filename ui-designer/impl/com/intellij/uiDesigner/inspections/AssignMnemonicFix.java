@@ -1,18 +1,20 @@
 package com.intellij.uiDesigner.inspections;
 
-import com.intellij.uiDesigner.quickFixes.QuickFix;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.StringDescriptorManager;
+import com.intellij.uiDesigner.SwingProperties;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.SupportCode;
-import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
-import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditorDialog;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditorDialog;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
+import com.intellij.uiDesigner.quickFixes.QuickFix;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 
 import java.util.ArrayList;
 
@@ -20,8 +22,6 @@ import java.util.ArrayList;
  * @author yole
  */
 public class AssignMnemonicFix extends QuickFix {
-  private static Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.inspections.AssignMnemonicFix");
-
   public AssignMnemonicFix(final GuiEditor editor, final RadComponent component, final String name) {
     super(editor, name, component);
   }
@@ -39,23 +39,18 @@ public class AssignMnemonicFix extends QuickFix {
         return;
       }
       IntroStringProperty prop = (IntroStringProperty) textProperty;
-      try {
-        if (descriptor.getBundleName() == null) {
-          prop.setValue(myComponent, StringDescriptor.create(result));
-        }
-        else {
-          final String newKeyName = StringEditorDialog.saveModifiedPropertyValue(myEditor.getModule(), descriptor,
-                                                                                 myEditor.getStringDescriptorLocale(), result,
-                                                                                 myEditor.getPsiFile());
-          if (newKeyName != null) {
-            prop.setValue(myComponent, new StringDescriptor(descriptor.getBundleName(), newKeyName));
-          }
-        }
-        myEditor.refreshAndSave(false);
+      if (descriptor.getBundleName() == null) {
+        prop.setValueEx(myComponent, StringDescriptor.create(result));
       }
-      catch (Exception e) {
-        LOG.error(e);
+      else {
+        final String newKeyName = StringEditorDialog.saveModifiedPropertyValue(myEditor.getModule(), descriptor,
+                                                                               myEditor.getStringDescriptorLocale(), result,
+                                                                               myEditor.getPsiFile());
+        if (newKeyName != null) {
+          prop.setValueEx(myComponent, new StringDescriptor(descriptor.getBundleName(), newKeyName));
+        }
       }
+      myEditor.refreshAndSave(false);
     }
   }
 
