@@ -13,8 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class AntElementNameReference extends AntGenericReference {
 
-  private PsiElement myResolvedElement;
-
   public AntElementNameReference(final GenericReferenceProvider provider, final AntStructuredElement element) {
     super(provider, element);
   }
@@ -65,28 +63,27 @@ public class AntElementNameReference extends AntGenericReference {
   }
 
   public PsiElement resolve() {
-    if (myResolvedElement != null) return myResolvedElement;
     final AntStructuredElement element = getElement();
     final AntTypeDefinition elementDef = element.getTypeDefinition();
     if (elementDef != null) {
       if (!(element instanceof AntTask)) {
         final PsiElement nestedMacroElement = elementDef.getDefiningElement();
-        return myResolvedElement = (nestedMacroElement == null) ? findClass(elementDef, element) : nestedMacroElement;
+        return (nestedMacroElement == null) ? findClass(elementDef, element) : nestedMacroElement;
       }
       AntTask task = (AntTask)element;
       if (task.isMacroDefined()) {
         final PsiElement macrodef = elementDef.getDefiningElement();
         final XmlAttribute attr = getAttribute();
-        if (attr != null) {
+        if (macrodef != null && attr != null) {
           for (PsiElement child : macrodef.getChildren()) {
             if (child instanceof AntStructuredElement && attr.getName().equals(((AntStructuredElement)child).getName())) {
-              return myResolvedElement = child;
+              return child;
             }
           }
         }
-        return myResolvedElement = macrodef;
+        return macrodef;
       }
-      return myResolvedElement = findClass(elementDef, element);
+      return findClass(elementDef, element);
     }
     return null;
   }

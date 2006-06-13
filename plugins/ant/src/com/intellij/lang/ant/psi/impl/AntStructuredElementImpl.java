@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -124,7 +125,15 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public AntTypeDefinition getTypeDefinition() {
-    return myDefinition;
+    AntTypeDefinition def = myDefinition;
+    if (def != null) {
+      final PsiNamedElement definingElement = (PsiNamedElement)def.getDefiningElement();
+      if (definingElement != null && !getSourceElement().getName().equals(definingElement.getName())) {
+        myDefinition = def = null;
+        super.clearCaches();
+      }
+    }
+    return def;
   }
 
   public void registerCustomType(final AntTypeDefinition def) {

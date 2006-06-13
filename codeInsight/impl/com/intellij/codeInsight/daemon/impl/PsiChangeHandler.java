@@ -59,7 +59,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     if (editor != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          EditorMarkupModel markupModel = (EditorMarkupModel) editor.getMarkupModel();
+          EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
           markupModel.setErrorStripeRenderer(markupModel.getErrorStripeRenderer());
         }
       }, ModalityState.stateForComponent(editor.getComponent()));
@@ -73,20 +73,17 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
     if (document == null) return;
     // optimization
-    if (child instanceof PsiWhiteSpace
-        || child instanceof PsiComment
-        || child instanceof PsiDocToken
-        || child.getNode() != null && PropertiesTokenTypes.PROPERTIES_TYPES_TO_IGNORE.contains(child.getNode().getElementType()))
-    {
+    if (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiDocToken ||
+        child.getNode() != null && PropertiesTokenTypes.PROPERTIES_TYPES_TO_IGNORE.contains(child.getNode().getElementType())) {
       return;
     }
 
     if (file instanceof XmlFile) {
       // TODO: Hackery. Need an API for language plugin developers to define dirty scope for their changes.
       final FileViewProvider provider = file.getViewProvider();
-      if (provider instanceof XmlFileViewProvider &&
-          ((XmlFileViewProvider)provider).getLanguageExtensions().length > 0) {
-        myDaemonCodeAnalyzer.getFileStatusMap().markFileDirty(document);
+      if (provider instanceof XmlFileViewProvider && ((XmlFileViewProvider)provider).getLanguageExtensions().length > 0) {
+        myDaemonCodeAnalyzer.getFileStatusMap().markAllFilesDirty();
+        return;
       }
     }
 
@@ -102,16 +99,12 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
       if (parent instanceof XmlTag) {
         PsiElement dirtyScope = pparent;
 
-        if (pparent instanceof XmlTag &&
-            "head".equals(((XmlTag) pparent).getLocalName())) {
+        if (pparent instanceof XmlTag && "head".equals(((XmlTag)pparent).getLocalName())) {
           final PsiFile containingFile = parent.getContainingFile();
           final FileType fileType = containingFile == null ? null : containingFile.getFileType();
 
-          if (fileType == StdFileTypes.JSP ||
-              fileType == StdFileTypes.JSPX ||
-              fileType == StdFileTypes.HTML ||
-              fileType == StdFileTypes.XHTML
-              ) {
+          if (fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX || fileType == StdFileTypes.HTML ||
+              fileType == StdFileTypes.XHTML) {
             // change in head will result in changes for css/javascript code highlighting
             dirtyScope = containingFile;
           }
@@ -121,11 +114,8 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
         return;
       }
 
-      if (parent instanceof PsiCodeBlock
-          && pparent instanceof PsiMethod
-          && !((PsiMethod) pparent).isConstructor()
-          && pparent.getParent()instanceof PsiClass
-          && !(pparent.getParent()instanceof PsiAnonymousClass)) {
+      if (parent instanceof PsiCodeBlock && pparent instanceof PsiMethod && !((PsiMethod)pparent).isConstructor() &&
+          pparent.getParent()instanceof PsiClass && !(pparent.getParent()instanceof PsiAnonymousClass)) {
         // do not use this optimization for constructors and class initializers - to update non-initialized fields
         myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirty(document, pparent);
         return;
