@@ -448,41 +448,46 @@ public final class ComponentTree extends Tree implements DataProvider {
 
   private final class MyDropTargetListener extends DropTargetAdapter {
     public void dragOver(DropTargetDragEvent dtde) {
-      RadComponent dropTargetComponent = null;
-      ComponentDragObject dragObject = null;
+      try {
+        RadComponent dropTargetComponent = null;
+        ComponentDragObject dragObject = null;
 
-      final DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
-      if (dcl != null) {
-        dragObject = dcl;
-      }
-      else {
-        ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
-        if (componentItem != null) {
-          dragObject = componentItem;
+        final DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
+        if (dcl != null) {
+          dragObject = dcl;
         }
-      }
-
-      boolean canDrop = false;
-      if (dragObject != null) {
-        final TreePath path = getPathForLocation((int) dtde.getLocation().getX(),
-                                                 (int) dtde.getLocation().getY());
-        final RadComponent targetComponent = getComponentFromPath(path);
-        if (path != null && targetComponent instanceof RadContainer) {
-          final com.intellij.uiDesigner.designSurface.DropLocation dropLocation = ((RadContainer)targetComponent).getDropLocation(null);
-          canDrop = dropLocation.canDrop(dragObject);
-          if (dcl != null && FormEditingUtil.isDropOnChild(dcl, dropLocation)) {
-            canDrop = false;
-          }
-          if (canDrop) {
-            dropTargetComponent = targetComponent;
-            dtde.acceptDrag(dtde.getDropAction());
+        else {
+          ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
+          if (componentItem != null) {
+            dragObject = componentItem;
           }
         }
+
+        boolean canDrop = false;
+        if (dragObject != null) {
+          final TreePath path = getPathForLocation((int) dtde.getLocation().getX(),
+                                                   (int) dtde.getLocation().getY());
+          final RadComponent targetComponent = getComponentFromPath(path);
+          if (path != null && targetComponent instanceof RadContainer) {
+            final DropLocation dropLocation = ((RadContainer)targetComponent).getDropLocation(null);
+            canDrop = dropLocation.canDrop(dragObject);
+            if (dcl != null && FormEditingUtil.isDropOnChild(dcl, dropLocation)) {
+              canDrop = false;
+            }
+            if (canDrop) {
+              dropTargetComponent = targetComponent;
+              dtde.acceptDrag(dtde.getDropAction());
+            }
+          }
+        }
+        if (!canDrop) {
+          dtde.rejectDrag();
+        }
+        setDropTargetComponent(dropTargetComponent);
       }
-      if (!canDrop) {
-        dtde.rejectDrag();
+      catch (Exception e) {
+        LOG.error(e);
       }
-      setDropTargetComponent(dropTargetComponent);
     }
 
     public void dragExit(DropTargetEvent dte) {
@@ -490,26 +495,32 @@ public final class ComponentTree extends Tree implements DataProvider {
     }
 
     public void drop(DropTargetDropEvent dtde) {
-      final DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
-      ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
-      if (dcl != null || componentItem != null) {
-        final TreePath path = getPathForLocation((int) dtde.getLocation().getX(),
-                                                 (int) dtde.getLocation().getY());
-        final RadComponent targetComponent = getComponentFromPath(path);
-        if (targetComponent instanceof RadContainer) {
-          final com.intellij.uiDesigner.designSurface.DropLocation dropLocation = ((RadContainer)targetComponent).getDropLocation(null);
-          if (dcl != null) {
-            if (!FormEditingUtil.isDropOnChild(dcl, dropLocation)) {
-              RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
-              dropLocation.processDrop(myEditor, components, null, dcl);
+      try {
+        final DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
+        ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
+        if (dcl != null || componentItem != null) {
+          final TreePath path = getPathForLocation((int) dtde.getLocation().getX(),
+                                                   (int) dtde.getLocation().getY());
+          final RadComponent targetComponent = getComponentFromPath(path);
+          if (targetComponent instanceof RadContainer) {
+            final DropLocation dropLocation = ((RadContainer)targetComponent).getDropLocation(null);
+            if (dcl != null) {
+              if (!FormEditingUtil.isDropOnChild(dcl, dropLocation)) {
+                RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
+                dropLocation.processDrop(myEditor, components, null, dcl);
+              }
+            }
+            else {
+              new InsertComponentProcessor(myEditor).processComponentInsert(componentItem, dropLocation);
             }
           }
-          else {
-            new InsertComponentProcessor(myEditor).processComponentInsert(componentItem, dropLocation);
-          }
+          myEditor.refreshAndSave(true);
         }
+        setDropTargetComponent(null);
       }
-      setDropTargetComponent(null);
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
   }
 

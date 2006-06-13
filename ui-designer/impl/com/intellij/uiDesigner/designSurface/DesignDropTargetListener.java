@@ -219,7 +219,7 @@ class DesignDropTargetListener implements DropTargetListener {
       setDraggingState(dcl, false);
       return false;
     }
-    if (location != null && !location.canDrop(dcl)) {
+    if (!location.canDrop(dcl)) {
       setDraggingState(dcl, false);
       return false;
     }
@@ -260,9 +260,7 @@ class DesignDropTargetListener implements DropTargetListener {
     final RadComponent[] components = droppedComponents.toArray(new RadComponent[componentCount]);
     final GridConstraints[] originalConstraints = dcl.getOriginalConstraints();
 
-    if (location != null) {
-      location.processDrop(myEditor, components, originalConstraints, dcl);
-    }
+    location.processDrop(myEditor, components, originalConstraints, dcl);
 
     if (dropAction == DnDConstants.ACTION_COPY) {
       for (RadComponent component : droppedComponents) {
