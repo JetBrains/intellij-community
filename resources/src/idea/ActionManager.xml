@@ -1488,12 +1488,24 @@
     <action id="Graph.ShowHideGrid" class="com.intellij.javaee.diagram.y.actions.ShowHideGridAction" text="Show/Hide Grid"/>
 
     <!-- ***** yFiles layouts ********************** -->
+    <action id="Graph.Layout.CircularLayouter" class="com.intellij.javaee.diagram.y.actions.layout.CircularLayouterAction"
+            text="Circular">
+    </action>
     <action id="Graph.Layout.HierarchicGroupLayouter" class="com.intellij.javaee.diagram.y.actions.layout.HierarchicGroupLayouterAction"
             text="Hierarchic Group">
     </action>
+    <action id="Graph.Layout.OrganicLayouter" class="com.intellij.javaee.diagram.y.actions.layout.OrganicLayouterAction"
+            text="Organic">
+    </action>
+    <action id="Graph.Layout.OrthogonalLayouter" class="com.intellij.javaee.diagram.y.actions.layout.OrthogonalLayouterAction"
+            text="Orthogonal">
+    </action>
 
     <group id="Graph.CommonLayoutGroup" text="Layout" popup="true">
+      <reference ref="Graph.Layout.CircularLayouter"/>
       <reference ref="Graph.Layout.HierarchicGroupLayouter"/>
+      <reference ref="Graph.Layout.OrganicLayouter"/>
+      <reference ref="Graph.Layout.OrthogonalLayouter"/>
     </group>
 
     <group id="Graph.DefaultGraphPopup">
