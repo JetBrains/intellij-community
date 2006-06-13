@@ -523,7 +523,7 @@ public abstract class ChooseByNameBase{
         final Runnable request = new Runnable() {
           public void run() {
             final CalcElementsCallback callback = new CalcElementsCallback() {
-              public void run(final List<?> elements) {
+              public void run(final Set<?> elements) {
                 synchronized (myRebuildMutex) {
                   ApplicationManager.getApplication().assertIsDispatchThread();
                   if (myDisposedFlag) {
@@ -567,7 +567,7 @@ public abstract class ChooseByNameBase{
     }
   }
 
-  private void setElementsToList(int pos, List<?> elements) {
+  private void setElementsToList(int pos, Set<?> elements) {
     myListUpdater.cancelAll();
     if (myDisposedFlag) return;
     if (elements.size() == 0) {
@@ -859,7 +859,7 @@ public abstract class ChooseByNameBase{
     private final CalcElementsCallback myCallback;
     private final ModalityState myModalityState;
 
-    private List<Object> myElements = null;
+    private Set<Object> myElements = null;
 
     private volatile boolean [] myCancelled = new boolean[]{false};
     private boolean myCanCancel = true;
@@ -875,7 +875,7 @@ public abstract class ChooseByNameBase{
     public void run() {
       showCard(SEARCHING_CARD, 200);
 
-      final List<Object> elements = new ArrayList<Object>();
+      final Set<Object> elements = new HashSet<Object>();
       Runnable action = new Runnable() {
         public void run() {
           try {
@@ -933,7 +933,7 @@ public abstract class ChooseByNameBase{
     }
 
 
-    private void addElementsByPattern(List<Object> elementsArray, String pattern) {
+    private void addElementsByPattern(Set<Object> elementsArray, String pattern) {
       List<String> namesList = new ArrayList<String>();
       boolean overflow = getNamesByPattern(myCheckboxState, myCancelled, namesList, pattern);
       if (myCancelled[0]) {
@@ -1001,6 +1001,6 @@ public abstract class ChooseByNameBase{
   }
 
   private static interface CalcElementsCallback {
-    void run(List<?> elements);
+    void run(Set<?> elements);
   }
 }
