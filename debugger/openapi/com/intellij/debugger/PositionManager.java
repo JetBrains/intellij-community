@@ -23,10 +23,12 @@ import com.sun.jdi.request.ClassPrepareRequest;
 import java.util.List;
 
 public interface PositionManager {
-  public SourcePosition      getSourcePosition (Location location) throws NoDataException;
-  public List<ReferenceType> getAllClasses     (SourcePosition classPosition) throws NoDataException;
-  public List<Location>      locationsOfLine   (ReferenceType type,
-                                                  SourcePosition position) throws NoDataException;
+  
+  SourcePosition getSourcePosition(Location location) throws NoDataException;
 
-  public ClassPrepareRequest createPrepareRequest(ClassPrepareRequestor requestor, SourcePosition position)throws NoDataException;
+  List<ReferenceType> getAllClasses(SourcePosition classPosition) throws NoDataException;
+
+  List<Location> locationsOfLine (ReferenceType type, SourcePosition position) throws NoDataException;
+
+  ClassPrepareRequest createPrepareRequest(ClassPrepareRequestor requestor, SourcePosition position)throws NoDataException;
 }
