@@ -264,7 +264,7 @@ public final class ComponentItemDialog extends DialogWrapper {
 
   private void updateOKAction() {
     if (myClassRadioButton.isSelected()) {
-      setOKActionEnabled(myDocument.getTextLength() > 0);
+      setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isQualifiedName(myDocument.getText()));
     }
     else {
       setOKActionEnabled(myTfNestedForm.getText().length() > 0);
