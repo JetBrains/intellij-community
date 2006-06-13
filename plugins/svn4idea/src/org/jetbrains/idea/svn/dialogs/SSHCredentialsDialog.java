@@ -233,6 +233,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
 
       myPortField = new JTextField();
       myPortField.setColumns(6);
+      myPortField.setMinimumSize(myPortField.getMinimumSize());
       panel.add(myPortField, gb);
       myPortLabel.setLabelFor(myPortField);
       myPortField.setText("22");
