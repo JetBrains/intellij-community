@@ -74,7 +74,8 @@ public class GenericDomValueReference<T> extends GenericReference {
       return (PsiElement)o;
     }
     if (o instanceof DomElement) {
-      return ((DomElement)o).getGenericInfo().getNameElement((DomElement)o);
+      final XmlElement element = ((DomElement)o).getGenericInfo().getNameElement((DomElement)o);
+      return element != null? element : ((DomElement)o).getXmlElement();
     }
     if (o instanceof MergedObject) {
       final List<T> list = ((MergedObject<T>)o).getImplementations();
