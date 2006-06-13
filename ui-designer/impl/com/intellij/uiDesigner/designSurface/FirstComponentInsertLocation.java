@@ -6,6 +6,7 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.uiDesigner.HSpacer;
 import com.intellij.uiDesigner.VSpacer;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
@@ -57,7 +58,6 @@ public class FirstComponentInsertLocation extends GridDropLocation {
     }
   }
 
-
   public FirstComponentInsertLocation(final RadContainer container,
                                       final int row,
                                       final int column,
@@ -82,14 +82,8 @@ public class FirstComponentInsertLocation extends GridDropLocation {
       rc.width = initialWidth(dragObject, midX1 - myCellRect.x);
     }
     else if (myXPart == 1) {
-      if (!isInsertTwoSpacers(dragObject.getHSizePolicy())) {
-        rc.x = myCellRect.x;
-        rc.width = myCellRect.width;
-      }
-      else {
-        rc.x = midX1;
-        rc.width = midX2 - midX1;
-      }
+      rc.x = myCellRect.x;
+      rc.width = myCellRect.width;
     }
     else {
       rc.width = initialWidth(dragObject, myCellRect.width - (midX2 - myCellRect.x));
@@ -101,26 +95,42 @@ public class FirstComponentInsertLocation extends GridDropLocation {
       rc.height = initialHeight(dragObject, midY1 - myCellRect.y);
     }
     else if (myYPart == 1) {
-      if (!isInsertTwoSpacers(dragObject.getVSizePolicy())) {
-        rc.y = myCellRect.y;
-        rc.height = myCellRect.height;
-      }
-      else {
-        rc.y = midY1;
-        rc.height = midY2 - midY1;
-      }
+      rc.y = myCellRect.y;
+      rc.height = myCellRect.height;
     }
     else {
       rc.height = initialHeight(dragObject, myCellRect.height - (midY2 - myCellRect.y));
       rc.y = myCellRect.height - rc.height;
     }
 
-    feedbackLayer.putFeedback(myContainer.getDelegee(), rc, myContainer.getDisplayName());
+    feedbackLayer.putFeedback(myContainer.getDelegee(), rc, getInsertFeedbackTooltip());
   }
 
-  private static boolean isInsertTwoSpacers(int sizePolicy) {
-    // return (sizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) != 0;
-    return false;
+  private String getInsertFeedbackTooltip() {
+    StringBuilder result = new StringBuilder(myContainer.getDisplayName());
+    result.append(" (");
+    if (myXPart == 1 && myYPart == 1) {
+      result.append(UIDesignerBundle.message("insert.feedback.fill"));
+    }
+    else {
+      if (myYPart == 0) {
+        result.append(UIDesignerBundle.message("insert.feedback.top"));
+      }
+      else if (myYPart == 2) {
+        result.append(UIDesignerBundle.message("insert.feedback.bottom"));
+      }
+      if (myYPart != 1 && myXPart != 1) {
+        result.append(" ");
+      }
+      if (myXPart == 0) {
+        result.append(UIDesignerBundle.message("insert.feedback.left"));
+      }
+      else if (myXPart == 2) {
+        result.append(UIDesignerBundle.message("insert.feedback.right"));
+      }
+    }
+    result.append(")");
+    return result.toString();
   }
 
   private int initialWidth(ComponentDragObject dragObject, int defaultSize) {
@@ -149,26 +159,19 @@ public class FirstComponentInsertLocation extends GridDropLocation {
     ComponentItem hSpacerItem = palette.getItem(HSpacer.class.getName());
     ComponentItem vSpacerItem = palette.getItem(VSpacer.class.getName());
 
-    int hSizePolicy = getSizePolicy(components, true);
-    int vSizePolicy = getSizePolicy(components, false);
-
     InsertComponentProcessor icp = new InsertComponentProcessor(editor);
 
-    if (myXPart == 0 ||
-        (myXPart == 1 && isInsertTwoSpacers(hSizePolicy))) {
+    if (myXPart == 0) {
       insertSpacer(icp, hSpacerItem, GridInsertMode.ColumnAfter);
     }
-    if (myXPart == 2 ||
-        (myXPart == 1 && isInsertTwoSpacers(hSizePolicy))) {
+    if (myXPart == 2) {
       insertSpacer(icp, hSpacerItem, GridInsertMode.ColumnBefore);
     }
 
-    if (myYPart == 0 ||
-        (myYPart == 1 && isInsertTwoSpacers(vSizePolicy))) {
+    if (myYPart == 0) {
       insertSpacer(icp, vSpacerItem, GridInsertMode.RowAfter);
     }
-    if (myYPart == 2 ||
-        (myYPart == 1 && isInsertTwoSpacers(vSizePolicy))) {
+    if (myYPart == 2) {
       insertSpacer(icp, vSpacerItem, GridInsertMode.RowBefore);
     }
   }
@@ -197,14 +200,5 @@ public class FirstComponentInsertLocation extends GridDropLocation {
   private void insertSpacer(InsertComponentProcessor icp, ComponentItem spacerItem, GridInsertMode mode) {
     GridInsertLocation location = new GridInsertLocation(myContainer, 0, 0, mode);
     icp.processComponentInsert(spacerItem, location);
-  }
-
-  private static int getSizePolicy(final RadComponent[] components, final boolean horizontal) {
-    int result = 0;
-    for(RadComponent component: components) {
-      GridConstraints c = component.getConstraints();
-      result |= horizontal ? c.getHSizePolicy() : c.getVSizePolicy();
-    }
-    return result;
   }
 }
