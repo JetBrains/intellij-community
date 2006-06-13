@@ -7,6 +7,7 @@ package com.intellij.util.xml.ui.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -26,6 +27,7 @@ import javax.swing.*;
 public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
 
   public DefaultAddAction() {
+    super(ApplicationBundle.message("action.add"));
   }
 
   public DefaultAddAction(String text) {

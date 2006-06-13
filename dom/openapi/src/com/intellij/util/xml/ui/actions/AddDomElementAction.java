@@ -97,11 +97,6 @@ public abstract class AddDomElementAction extends AnAction {
           if (descriptions.length > 1) {
             icon = ElementPresentationManager.getIconForClass(clazz);
           }
-/*
-          if (icon == null) {
-            icon = DomCollectionControl.ADD_ICON;
-          }
-*/
         }
         AnAction action = createAddingAction(e, ApplicationBundle.message("action.add") + " " + name, icon, clazz, description);
         actions.add(action);

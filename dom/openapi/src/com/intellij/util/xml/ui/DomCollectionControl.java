@@ -44,6 +44,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
   private boolean myEditable = false;
   private AnAction myAddAction = new AddDomElementAction() {
 
+    @NotNull
     protected DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e) {
       return new DomCollectionChildDescription[] {getChildDescription()};
     }
