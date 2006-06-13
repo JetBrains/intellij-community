@@ -66,13 +66,18 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     DnDManager.getInstance(editor.getProject()).registerTarget(new MyDnDTarget(), this);
 
     addFocusListener(new FocusAdapter() {
-      public void focusGained(FocusEvent e) {
+      @Override public void focusGained(FocusEvent e) {
+        repaint();
         // ensure we don't have two repaints of properties panel - one from focus gain and another from click
         myAlarm.addRequest(new Runnable() {
           public void run() {
             editor.fireSelectedComponentChanged();
           }
         }, 1000);
+      }
+
+      @Override public void focusLost(FocusEvent e) {
+        repaint();
       }
     });
   }
