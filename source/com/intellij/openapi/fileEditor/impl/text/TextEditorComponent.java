@@ -265,6 +265,9 @@ final class TextEditorComponent extends JPanel implements DataProvider{
   }
 
   public Object getData(final String dataId) {
+    if (dataId.equals(DataConstants.EDITOR_NO_COMMIT)) {
+      return myEditor;
+    }
     if (dataId.equals(DataConstants.EDITOR)) {
       return getOutsideVisibleEditor();
     }

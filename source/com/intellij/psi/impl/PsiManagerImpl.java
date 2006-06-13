@@ -71,22 +71,22 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   private final Project myProject;
 
-  private FileManager myFileManager;
-  private PsiElementFactory myElementFactory;
-  private PsiSearchHelper mySearchHelper;
+  private final FileManager myFileManager;
+  private final PsiElementFactory myElementFactory;
+  private final PsiSearchHelper mySearchHelper;
   private PsiShortNamesCache myShortNamesCache;
-  private PsiResolveHelper myResolveHelper;
+  private final PsiResolveHelper myResolveHelper;
   //private MemoryManager myMemoryManager;
-  private CacheManager myCacheManager;
-  private RepositoryManager myRepositoryManager;
-  private RepositoryElementsManager myRepositoryElementsManager;
-  private JavadocManager myJavadocManager;
-  private PsiNameHelper myNameHelper;
-  private PsiModificationTrackerImpl myModificationTracker;
-  private ResolveCache myResolveCache;
-  private CachedValuesManager myCachedValuesManager;
-  private PsiConstantEvaluationHelper myConstantEvaluationHelper;
-  private Map<String, PsiPackage> myPackageCache = new HashMap<String, PsiPackage>();
+  private final CacheManager myCacheManager;
+  private final RepositoryManager myRepositoryManager;
+  private final RepositoryElementsManager myRepositoryElementsManager;
+  private final JavadocManager myJavadocManager;
+  private final PsiNameHelper myNameHelper;
+  private final PsiModificationTrackerImpl myModificationTracker;
+  private final ResolveCache myResolveCache;
+  private final CachedValuesManager myCachedValuesManager;
+  private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
+  private final Map<String, PsiPackage> myPackageCache = new HashMap<String, PsiPackage>();
 
   private final ArrayList<PsiTreeChangeListener> myTreeChangeListeners = new ArrayList<PsiTreeChangeListener>();
   private PsiTreeChangeListener[] myCachedTreeChangeListeners = null;
@@ -99,7 +99,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   private final ArrayList<Runnable> myRunnablesOnAnyChange = new ArrayList<Runnable>();
   private final ArrayList<Runnable> myRunnablesAfterAnyChange = new ArrayList<Runnable>();
 
-  private ExternalResourceListener myExternalResourceListener;
+  private final ExternalResourceListener myExternalResourceListener;
   private boolean myIsDisposed;
 
   private VirtualFileFilter myAssertOnFileLoadingFilter = VirtualFileFilter.NONE;
@@ -123,8 +123,8 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   private LanguageLevel myLanguageLevel;
   private PsiElementFinder[] myElementFinders;
 
-  private List<LanguageInjector> myLanguageInjectors = new ArrayList<LanguageInjector>();
-  private ProgressManager myProgressManager;
+  private final List<LanguageInjector> myLanguageInjectors = new ArrayList<LanguageInjector>();
+  private final ProgressManager myProgressManager;
 
   public PsiManagerImpl(Project project,
                         PsiManagerConfiguration psiManagerConfiguration,

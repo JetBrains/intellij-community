@@ -42,9 +42,9 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.PomProject;
 import com.intellij.pom.PomTransaction;
-import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
+import com.intellij.pom.tree.TreeAspect;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -53,11 +53,12 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -93,9 +94,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       deps.addAll(getAllDependencies(depend));
     }
     deps.add(aspect); // add self to block same aspect transactions from event processing and update
-    final Iterator<PomModelAspect> depsIterator = deps.iterator();
-    while (depsIterator.hasNext()) {
-      final PomModelAspect pomModelAspect = depsIterator.next();
+    for (final PomModelAspect pomModelAspect : deps) {
       final List<PomModelAspect> pomModelAspects = myInvertedIncidence.get(pomModelAspect);
       if (pomModelAspects != null) {
         pomModelAspects.add(aspect);
@@ -140,9 +139,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       startTransaction(transaction);
       try{
 
-        final PomModelEvent event;
         myBlockedAspects.push(new Pair<PomModelAspect, PomTransaction>(aspect, transaction));
 
+        final PomModelEvent event;
         try{
           transaction.run();
           event = transaction.getAccumulatedEvent();
@@ -167,22 +166,17 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         { // update
           final Set<PomModelAspect> changedAspects = event.getChangedAspects();
           final Set<PomModelAspect> dependants = new LinkedHashSet<PomModelAspect>();
-          final Iterator<PomModelAspect> changedIterator = changedAspects.iterator();
-          while (changedIterator.hasNext()) {
-            final PomModelAspect pomModelAspect = changedIterator.next();
+          for (final PomModelAspect pomModelAspect : changedAspects) {
             dependants.addAll(getAllDependants(pomModelAspect));
           }
-          final Iterator<PomModelAspect> depsIter = dependants.iterator();
-          while (depsIter.hasNext()) {
-            final PomModelAspect modelAspect = depsIter.next();
-            if(myBlockedAspects.contains(modelAspect) || changedAspects.contains(modelAspect)) continue;
+          for (final PomModelAspect modelAspect : dependants) {
+            if (myBlockedAspects.contains(modelAspect) || changedAspects.contains(modelAspect)) continue;
             modelAspect.update(event);
           }
         }
         {
           final PomModelListener[] listeners = getListeners();
-          for (int i = 0; i < listeners.length; i++) {
-            final PomModelListener listener = listeners[i];
+          for (final PomModelListener listener : listeners) {
             final Set<PomModelAspect> changedAspects = event.getChangedAspects();
             for (PomModelAspect modelAspect : changedAspects) {
               if (listener.isAspectChangeInteresting(modelAspect)) {
@@ -260,7 +254,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     return psiFile.getLanguage() == psiFile.getViewProvider().getBaseLanguage() ? psiFile : null;
   }
 
-  private void sendPsiBeforeEvent(final PsiElement scope) {
+  private static void sendPsiBeforeEvent(final PsiElement scope) {
     if(!scope.isPhysical()) return;
     final PsiManagerImpl manager = (PsiManagerImpl)scope.getManager();
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
@@ -280,6 +274,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   public void projectOpened() {}
   public void projectClosed() {}
+  @NotNull
   public String getComponentName() {
     return "PomModel";
   }
