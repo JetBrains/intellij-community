@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -80,7 +81,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
   }
 
   protected void setValueImpl(final RadComponent component, final String value) throws Exception {
-    if (value.equals(component.getBinding())) {
+    if (Comparing.equal(value, component.getBinding())) {
       return;
     }
 

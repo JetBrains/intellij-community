@@ -25,7 +25,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
   private Presentation myPresentation;
 
   public ChooseLocaleAction() {
-    getTemplatePresentation().setText(UIDesignerBundle.message("choose.locale.default"));
+    getTemplatePresentation().setText("");
     getTemplatePresentation().setDescription(UIDesignerBundle.message("choose.locale.description"));
     getTemplatePresentation().setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/chooseLocale.png"));
   }
@@ -41,7 +41,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
     GuiEditor editor = myLastEditor;
     if (editor != null) {
       Locale[] locales = FormEditingUtil.collectUsedLocales(editor.getModule(), editor.getRootContainer());
-      if (locales.length > 0) {
+      if (locales.length > 1 || (locales.length == 1 && locales [0].getDisplayName().length() > 0)) {
         Arrays.sort(locales, new Comparator<Locale>() {
           public int compare(final Locale o1, final Locale o2) {
             return o1.getDisplayName().compareTo(o2.getDisplayName());
