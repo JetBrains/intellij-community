@@ -18,6 +18,7 @@ package com.intellij.util.xml;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionCache;
@@ -33,7 +34,27 @@ import java.util.*;
 /**
  * @author peter
  */
-public class ElementPresentationManager {
+public abstract class ElementPresentationManager {
+
+  private final static Function<? extends DomElement, String> DEFAULT_NAMER = new Function<DomElement, String>() {
+    public String fun(final DomElement element) {
+      return element.getGenericInfo().getElementName(element);
+    }
+  };
+
+  public static ElementPresentationManager getInstance() {
+    return ApplicationManager.getApplication().getComponent(ElementPresentationManager.class);
+  }
+
+  @NotNull
+  public <T extends DomElement> Object[] createVariants(Collection<T> elements) {
+    return createVariants(elements, (Function<T, String>)DEFAULT_NAMER);
+  }
+
+  @NotNull
+  public abstract  <T extends DomElement> Object[] createVariants(Collection<T> elements, Function<T, String> namer);
+
+
   private static final Map<Class, String> ourTypeNames = new HashMap<Class, String>();
   private static final Map<Class, Icon[]> ourIcons = new HashMap<Class, Icon[]>();
 

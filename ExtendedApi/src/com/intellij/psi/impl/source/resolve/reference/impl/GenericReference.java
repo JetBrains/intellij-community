@@ -16,6 +16,8 @@ import com.intellij.util.ArrayUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Created by IntelliJ IDEA.
  * User: ik
@@ -26,6 +28,7 @@ import java.util.List;
 public abstract class GenericReference implements PsiReference, EmptyResolveMessageProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.GenericReference");
   public static final GenericReference[] EMPTY_ARRAY = new GenericReference[0];
+  @Nullable
   private final PsiReferenceProvider myProvider;
 
   public boolean isSoft(){
@@ -86,7 +89,7 @@ public abstract class GenericReference implements PsiReference, EmptyResolveMess
     if(context != null){
       PsiScopesUtil.processScope(context, processor, PsiSubstitutor.EMPTY, getElement(), getElement());
     }
-    else if(getContextReference() == null){
+    else if(getContextReference() == null && myProvider != null){
       myProvider.handleEmptyContext(processor, getElement());
     }
   }

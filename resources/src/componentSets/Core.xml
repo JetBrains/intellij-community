@@ -150,6 +150,10 @@
       <interface-class>com.intellij.lang.cacheBuilder.CacheBuilderRegistry</interface-class>
       <implementation-class>com.intellij.lang.cacheBuilder.CacheBuilderRegistryImpl</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.util.xml.ElementPresentationManager</interface-class>
+      <implementation-class>com.intellij.util.xml.ElementPresentationManagerImpl</implementation-class>
+    </component>
   </application-components>
 
 
