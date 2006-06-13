@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * Date: Jan 25, 2005
  */
 public abstract class TreeClassChooserFactory implements ProjectComponent {
+
   public static TreeClassChooserFactory getInstance(Project project) {
     return project.getComponent(TreeClassChooserFactory.class);
   }
@@ -74,6 +75,13 @@ public abstract class TreeClassChooserFactory implements ProjectComponent {
                                                                  GlobalSearchScope scope,
                                                                  PsiClass base,
                                                                  PsiClass initialClass);
+
+  @NotNull
+  public abstract TreeClassChooser createInheritanceClassChooser(String title,
+                                                                 GlobalSearchScope scope,
+                                                                 PsiClass base,
+                                                                 PsiClass initialClass,
+                                                                 TreeClassChooser.ClassFilter classFilter);
 
 
   @NotNull

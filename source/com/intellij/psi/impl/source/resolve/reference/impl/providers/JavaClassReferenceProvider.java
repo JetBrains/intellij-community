@@ -1,17 +1,17 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.codeInsight.completion.scope.CompletionProcessor;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.quickFix.JavaClassReferenceQuickFixProvider;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
-import com.intellij.codeInsight.completion.scope.CompletionProcessor;
+import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxStaticImportStatement;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
@@ -32,9 +32,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -56,8 +54,13 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     new CustomizationKey<Boolean>(PsiBundle.message("qualified.resolve.class.reference.provider.option"));
 
   public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<String[]>("EXTEND_CLASS_NAMES");
+  public static final CustomizationKey<Boolean> INSTANTIATABLE = new CustomizationKey<Boolean>("INSTANTIATABLE");
 
 
+  public JavaClassReferenceProvider(String extendClassName, boolean instantiatable) {
+    this(extendClassName);
+    INSTANTIATABLE.putValue(myOptions, instantiatable);
+  }
 
   public JavaClassReferenceProvider(String[] extendClassNames) {
     myOptions = new HashMap<CustomizationKey, Object>();
@@ -65,7 +68,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   public JavaClassReferenceProvider(@NotNull String extendClassName) {
-    this(new String[] {extendClassName});
+    this(new String[]{extendClassName});
   }
 
   public JavaClassReferenceProvider() {
@@ -366,8 +369,9 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
           context = myElement.getManager().findPackage("");
         }
         if (context instanceof PsiPackage) {
-          if (EXTEND_CLASS_NAMES.getValue(myOptions) != null) {
-            return getSubclassVariants((PsiPackage)context);
+          final String[] extendClasses = EXTEND_CLASS_NAMES.getValue(myOptions);
+          if (extendClasses != null) {
+            return getSubclassVariants((PsiPackage)context, extendClasses);
           }
           return processPackage((PsiPackage)context);
         }
@@ -470,53 +474,47 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       }
 
       @NotNull
-      protected Object[] getSubclassVariants(PsiPackage context) {
+      protected Object[] getSubclassVariants(PsiPackage context, String[] extendClasses) {
         HashSet<Object> lookups = new HashSet<Object>();
         GlobalSearchScope scope = GlobalSearchScope.packageScope(context, true);
-        for (String extendClassName : EXTEND_CLASS_NAMES.getValue(myOptions)) {
+        Boolean inst = INSTANTIATABLE.getValue(myOptions);
+        boolean instantiatable = inst == null || inst.booleanValue();
+
+        for (String extendClassName : extendClasses) {
           PsiClass extendClass = context.getManager().findClass(extendClassName, scope);
           if (extendClass != null) {
             PsiClass[] result = context.getManager().getSearchHelper().findInheritors(extendClass, scope, true);
             for (final PsiClass clazz : result) {
-              lookups.add(createSubclassLookupItem(clazz));
+              Object value = createSubclassLookupValue(clazz, instantiatable);
+              if (value != null) {
+                lookups.add(value);
+              }
+            }
+            // add itself
+            Object value = createSubclassLookupValue(extendClass, instantiatable);
+            if (value != null) {
+              lookups.add(value);
             }
           }
         }
         return lookups.toArray();
       }
 
-      protected LookupItem createSubclassLookupItem(final PsiClass clazz) {
-        Object value = new LookupValueWithUIHint() {
-
-          public String getTypeHint() {
-            String name = clazz.getQualifiedName();
-              int pos = name.lastIndexOf('.');
-              if (pos == -1) {
-                return "";
-              }
-              else {
-                return "(" + name.substring(0, pos) + ")";
-              }
-          }
-
-          public Color getColorHint() {
-            return Color.LIGHT_GRAY;
-          }
-
-          public boolean isBold() {
-            return false;
-          }
-
-          public String getPresentation() {
-            return clazz.getName();
-          }
-        };
-        LookupItem item = new LookupItem(value, clazz.getQualifiedName());
-        item.setAttribute(LookupItem.ICON_ATTR, clazz.getIcon(Iconable.ICON_FLAG_READ_STATUS));
-        return item;
-      }
+      @Nullable
+      protected Object createSubclassLookupValue(final PsiClass clazz, boolean instantiatable) {
+        if (instantiatable && !PsiUtil.isInstantiatable(clazz)) {
+          return null;
+        }
+        String name = clazz.getQualifiedName();
+        if (name == null) return null;
+        String hint = "";
+        int pos = name.lastIndexOf('.');
+        if (pos != -1) {
+          hint = "(" + name.substring(0, pos) + ")";
+        }
+        return LookupValueFactory.createLookupValueWithHint(name, clazz.getIcon(Iconable.ICON_FLAG_READ_STATUS), hint);
+       }
     }
-
 
 
     protected boolean isSoft() {

@@ -354,14 +354,19 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
 
       ArrayList<PsiClass> list = new ArrayList<PsiClass>();
       for (PsiClass aClass : classes) {
-        if (myClassFilter != null && !myClassFilter.isAccepted(aClass)) continue;
+        if (isAccepted(aClass)) {
         list.add(aClass);
+        }
       }
       return list.toArray(new PsiClass[list.size()]);
     }
 
     public String getPromptText() {
       return null;
+    }
+
+    protected boolean isAccepted(PsiClass aClass) {
+      return myClassFilter == null || myClassFilter.isAccepted(aClass);
     }
   }
 
@@ -374,13 +379,23 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     public String[] getNames(boolean checkBoxState) {
       final PsiManager manager = PsiManager.getInstance(myProject);
       PsiClass[] classes = manager.getSearchHelper().findInheritors(myBaseClass, myScope, true);
-      String[] names = new String[classes.length + 1];
-      names[0] = myBaseClass.getName();
-      for (int i = 0; i < classes.length; i++) {
-        names[i + 1] = classes[i].getName();
+      ArrayList<String> names = new ArrayList<String>(classes.length + 1);
+      if (myClassFilter == null || myClassFilter.isAccepted(myBaseClass)) {
+        names.add(myBaseClass.getName());
       }
-      return names;
+      for (PsiClass aClass : classes) {
+        if (myClassFilter == null || myClassFilter.isAccepted(myBaseClass)) {
+          names.add(aClass.getName());
+        }
+      }
+      return names.toArray(new String[names.size()]);
     }
+
+    protected boolean isAccepted(PsiClass aClass) {
+
+      return (aClass.isInheritor(myBaseClass, true) || aClass == myBaseClass) && (myClassFilter == null || myClassFilter.isAccepted(aClass));
+    }
+
   }
 
   private class MyCallback extends ChooseByNamePopupComponent.Callback {
@@ -411,10 +426,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     public boolean isAccepted(PsiClass aClass) {
       if (!myAcceptsInner && !(aClass.getParent() instanceof PsiJavaFile)) return false;
       if (!myAddtionalCondition.value(aClass)) return false;
-      if (myBase == null) return true;
-      return myAcceptsSelf ?
-             InheritanceUtil.isInheritorOrSelf(aClass, myBase, true) :
-             aClass.isInheritor(myBase, true);
+      return myBase == null || myAcceptsSelf ? InheritanceUtil.isInheritorOrSelf(aClass, myBase, true) : aClass.isInheritor(myBase, true);
     }
   }
 }

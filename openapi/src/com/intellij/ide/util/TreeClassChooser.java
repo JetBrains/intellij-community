@@ -17,6 +17,7 @@ package com.intellij.ide.util;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 
 /**
@@ -24,6 +25,12 @@ import com.intellij.psi.search.GlobalSearchScope;
  * Date: Jan 24, 2005
  */
 public interface TreeClassChooser{
+
+  ClassFilter INSTANTIATABLE = new ClassFilter() {
+    public boolean isAccepted(PsiClass aClass) {
+      return PsiUtil.isInstantiatable(aClass);
+    }
+  };
 
   PsiClass getSelectedClass();
 

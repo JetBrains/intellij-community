@@ -68,7 +68,13 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
 
   @NotNull
   public TreeClassChooser createInheritanceClassChooser(String title, GlobalSearchScope scope, PsiClass base, PsiClass initialClass) {
-    return new TreeClassChooserDialog(title, myProject, scope, null, base, initialClass, null);
+    return createInheritanceClassChooser(title, scope, base, initialClass, null);
+  }
+
+  @NotNull
+  public TreeClassChooser createInheritanceClassChooser(String title, GlobalSearchScope scope, PsiClass base, PsiClass initialClass,
+                                                        TreeClassChooser.ClassFilter classFilter) {
+    return new TreeClassChooserDialog(title, myProject, scope, classFilter, base, initialClass, null);
   }
 
   @NotNull

@@ -25,5 +25,14 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ExtendClass {
+
+  /**
+   * Full name of the base class
+   */
   String value();
+
+  /**
+   * States that the class should be concrete and have public default constructor.
+   */
+  boolean instantiatable() default true;
 }

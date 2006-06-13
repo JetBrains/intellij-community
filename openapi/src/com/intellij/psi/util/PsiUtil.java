@@ -1168,4 +1168,27 @@ public final class PsiUtil {
     }
     return ((PsiJavaFile)file).getLanguageLevel();
   }
+
+
+  public static boolean isInstantiatable(PsiClass clazz) {
+    return !clazz.hasModifierProperty(PsiModifier.ABSTRACT) &&
+           clazz.hasModifierProperty(PsiModifier.PUBLIC) &&
+           hasDefaultConstructor(clazz);
+  }
+
+  public static boolean hasDefaultConstructor(PsiClass clazz) {
+    final PsiMethod[] constructors = clazz.getConstructors();
+    if (constructors.length > 0) {
+      for (PsiMethod cls: constructors) {
+        if (cls.hasModifierProperty(PsiModifier.PUBLIC) && cls.getParameterList().getParametersCount() == 0) {
+          return true;
+        }
+      }
+    } else {
+      final PsiClass superClass = clazz.getSuperClass();
+      return superClass == null || hasDefaultConstructor(superClass);
+    }
+    return false;
+  }
+
 }

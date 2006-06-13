@@ -53,17 +53,18 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
     final GlobalSearchScope resolveScope = control.getDomWrapper().getResolveScope();
     editor.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-//        final Condition<PsiClass> c = Conditions.alwaysTrue();
 
         final DomElement domElement = control.getDomElement();
         ExtendClass extend = domElement.getAnnotation(ExtendClass.class);
-        final PsiClass baseClass;
+        PsiClass baseClass = null;
+        TreeClassChooser.ClassFilter filter = null;
         if (extend != null) {
           baseClass = PsiManager.getInstance(control.getProject()).findClass(extend.value(), resolveScope);
+          if (extend.instantiatable()) {
+            filter = TreeClassChooser.INSTANTIATABLE;
+          }
         }
-        else {
-          baseClass = null;
-        }
+
         PsiClass initialClass;
         if (domElement instanceof GenericDomValue) {
           initialClass = (PsiClass)((GenericDomValue)domElement).getValue();
@@ -73,7 +74,7 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
         }
 
         TreeClassChooser chooser = TreeClassChooserFactory.getInstance(control.getProject())
-          .createInheritanceClassChooser(UIBundle.message("choose.class"), resolveScope, baseClass, initialClass);
+          .createInheritanceClassChooser(UIBundle.message("choose.class"), resolveScope, baseClass, initialClass, filter);
         chooser.showDialog();
         final PsiClass psiClass = chooser.getSelectedClass();
         if (psiClass != null) {

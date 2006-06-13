@@ -875,7 +875,7 @@ public abstract class ChooseByNameBase{
     public void run() {
       showCard(SEARCHING_CARD, 200);
 
-      final Set<Object> elements = new HashSet<Object>();
+      final Set<Object> elements = new LinkedHashSet<Object>();
       Runnable action = new Runnable() {
         public void run() {
           try {
