@@ -37,23 +37,26 @@ public class ScriptSupportUtil {
 
     if (myCachedScriptTags == null) {
       final List<XmlTag> scriptTags = new ArrayList<XmlTag>();
-      XmlUtil.processXmlElements(
-        HtmlUtil.getRealXmlDocument(element.getDocument()),
-        new PsiElementProcessor() {
-        public boolean execute(final PsiElement element) {
-          if (element instanceof XmlTag) {
-            final XmlTag tag = (XmlTag)element;
-            
-            if (SCRIPT_TAG.equalsIgnoreCase(tag.getName())) {
-              final XmlElementDescriptor descriptor = tag.getDescriptor();
-              if (descriptor != null && SCRIPT_TAG.equals(descriptor.getName())) {
-                scriptTags.add(tag);
+      final XmlDocument document = HtmlUtil.getRealXmlDocument(element.getDocument());
+
+      if (document != null) {
+        XmlUtil.processXmlElements(document,
+          new PsiElementProcessor() {
+          public boolean execute(final PsiElement element) {
+            if (element instanceof XmlTag) {
+              final XmlTag tag = (XmlTag)element;
+
+              if (SCRIPT_TAG.equalsIgnoreCase(tag.getName())) {
+                final XmlElementDescriptor descriptor = tag.getDescriptor();
+                if (descriptor != null && SCRIPT_TAG.equals(descriptor.getName())) {
+                  scriptTags.add(tag);
+                }
               }
             }
+            return true;
           }
-          return true;
-        }
-      }, true);
+        }, true);
+      }
 
       myCachedScriptTags = scriptTags.toArray(new XmlTag[scriptTags.size()]);
       element.putUserData(CachedScriptTagsKey, myCachedScriptTags);

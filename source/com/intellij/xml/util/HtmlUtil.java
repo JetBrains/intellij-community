@@ -11,6 +11,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -124,7 +125,8 @@ public class HtmlUtil {
     }
   }
 
-  public static XmlDocument getRealXmlDocument(XmlDocument doc) {
+  public static @Nullable XmlDocument getRealXmlDocument(@Nullable XmlDocument doc) {
+    if (doc == null) return null;
     final PsiFile containingFile = doc.getContainingFile();
 
     if (PsiUtil.isInJspFile(containingFile)) {
