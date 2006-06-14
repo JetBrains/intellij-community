@@ -177,6 +177,7 @@
       <action id="ImplementMethods" class="com.intellij.codeInsight.generation.actions.ImplementMethodsAction"/>
       <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.GenerateDelegateAction"/>
       <action id="GenerateSuperMethodCall" class="com.intellij.codeInsight.generation.actions.GenerateSuperMethodCallAction"/>
+      <action id="GuiDesigner.GenerateMain" class="com.intellij.uiDesigner.actions.GenerateMainAction"/>
       <reference ref="JavaeeEditorGenerateGroup"/>
     </group>
 
