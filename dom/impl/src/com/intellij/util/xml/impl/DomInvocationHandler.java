@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
@@ -98,9 +99,16 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myGenericInfo = manager.getGenericInfo(concreteInterface);
     myType = concreteInterface;
     myGenericConverter = converter;
-    myInvocationCache = manager.getInvocationCache(new Pair<Type, Type>(concreteInterface, converter == null ? null : converter.getClass()));
+    myInvocationCache =
+      manager.getInvocationCache(new Pair<Type, Type>(concreteInterface, converter == null ? null : converter.getClass()));
     final Class<?> rawType = DomReflectionUtil.getRawType(concreteInterface);
-    myProxy = AdvancedProxy.createProxy(this, manager.getImplementation(rawType), rawType);
+    Class<? extends DomElement> implementation = manager.getImplementation(rawType);
+    if (implementation == null && !rawType.isInterface()) {
+      implementation = (Class<? extends DomElement>)rawType;
+    }
+    myProxy = rawType.isInterface()
+              ? AdvancedProxy.createProxy(this, implementation, rawType)
+              : AdvancedProxy.createProxy(this, implementation, ArrayUtil.EMPTY_CLASS_ARRAY);
     attach(tag);
   }
 
@@ -168,7 +176,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
         final XmlTag xmlTag = (XmlTag)child;
         copyTags(xmlTag, (XmlTag)toTag.add(createEmptyTag(xmlTag.getName())));
         hasChildren = true;
-      } else if (child instanceof XmlAttribute) {
+      }
+      else if (child instanceof XmlAttribute) {
         toTag.add(child);
       }
       child = child.getNextSibling();
@@ -374,13 +383,15 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   @Nullable
-  private Converter getConverter(final Function<Class<? extends Annotation>, Annotation> annotationProvider, Class parameter, final Factory<Converter> continuation) {
-    final Resolve resolveAnnotation = (Resolve) annotationProvider.fun(Resolve.class);
+  private Converter getConverter(final Function<Class<? extends Annotation>, Annotation> annotationProvider,
+                                 Class parameter,
+                                 final Factory<Converter> continuation) {
+    final Resolve resolveAnnotation = (Resolve)annotationProvider.fun(Resolve.class);
     if (resolveAnnotation != null) {
       return DomResolveConverter.createConverter(resolveAnnotation.value());
     }
 
-    final Convert convertAnnotation = (Convert) annotationProvider.fun(Convert.class);
+    final Convert convertAnnotation = (Convert)annotationProvider.fun(Convert.class);
     final ConverterManager converterManager = myManager.getConverterManager();
     if (convertAnnotation != null) {
       return converterManager.getConverterInstance(convertAnnotation.value());
@@ -568,8 +579,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   private void getOrCreateAttributeChild(final Method method, final String attributeName) {
-    final AttributeChildInvocationHandler handler = new AttributeChildInvocationHandler(method.getGenericReturnType(), getXmlTag(), this,
-                                                                                        attributeName, myManager);
+    final AttributeChildInvocationHandler handler =
+      new AttributeChildInvocationHandler(method.getGenericReturnType(), getXmlTag(), this, attributeName, myManager);
     myAttributeChildren.put(handler.getXmlElementName(), handler);
   }
 
@@ -722,7 +733,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   public void setFixedChildClass(final String tagName, final Class<? extends DomElement> aClass) {
     synchronized (PsiLock.LOCK) {
-      assert !myInitializedChildren.contains(tagName);
+      assert!myInitializedChildren.contains(tagName);
       myFixedChildrenClasses.put(tagName, aClass);
     }
   }
