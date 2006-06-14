@@ -117,6 +117,9 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     if (myRootTreeEditor != null) {
       myRootTreeEditor.setContentEntryEditor(null);
     }
+    if (myModulesProvider instanceof ModulesConfigurator) {
+      ((ModulesConfigurator)myModulesProvider).disposeUIResources();
+    }
     super.disposeUIResources();
   }
 
