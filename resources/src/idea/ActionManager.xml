@@ -1411,6 +1411,10 @@
       <separator/>
       <reference ref="GuiDesigner.AddTab"/>
       <separator/>
+      <reference ref="GuiDesigner.Morph"/>
+      <reference ref="GuiDesigner.CreateListener"/>
+      <reference ref="GuiDesigner.GoToListener"/>      
+      <separator/>
       <reference ref="GuiDesigner.SurroundPopup"/>
       <reference ref="GuiDesigner.Flatten"/>
     </group>
