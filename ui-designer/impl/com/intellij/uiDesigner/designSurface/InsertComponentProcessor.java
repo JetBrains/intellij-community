@@ -64,6 +64,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     myComponentClassMap.put(JTabbedPane.class.getName(), RadTabbedPane.class);
     myComponentClassMap.put(JSplitPane.class.getName(), RadSplitPane.class);
     myComponentClassMap.put(JToolBar.class.getName(), RadToolBar.class);
+    myComponentClassMap.put(JTable.class.getName(), RadTable.class);
   }
 
   public InsertComponentProcessor(@NotNull final GuiEditor editor) {

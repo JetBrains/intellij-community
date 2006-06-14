@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.Color;
 import java.awt.LayoutManager;
 import java.text.MessageFormat;
@@ -77,6 +78,9 @@ public final class XmlReader {
       else if (lwComponent instanceof LwAtomicComponent) {
         if (componentClass == null) {
           component = createErrorComponent(module, id, lwComponent, loader);
+        }
+        else if (lwComponent.getComponentClassName().equals(JTable.class.getName())) {
+          component = new RadTable(module, id);
         }
         else {
           RadComponent component1;
