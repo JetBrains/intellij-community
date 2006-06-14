@@ -131,8 +131,7 @@ public class DataFlowRunner {
         if (after != null) {
           for (DfaInstructionState state : after) {
             Instruction nextInstruction = state.getInstruction();
-            if (!(nextInstruction instanceof BranchingInstruction) ||
-                !nextInstruction.isMemoryStateProcessed(state.getMemoryState())) {
+            if (!(nextInstruction instanceof BranchingInstruction) || !nextInstruction.isMemoryStateProcessed(state.getMemoryState())) {
               state.setDistanceFromStart(distance + 1);
               queue.add(state);
             }
@@ -141,6 +140,10 @@ public class DataFlowRunner {
       }
 
       return true;
+    }
+    catch (ArrayIndexOutOfBoundsException e) {
+      LOG.error(psiBlock.getText(), e); /* TODO[max] !!! hack (of 18186). Please fix in better times. */
+      return false;
     }
     catch (EmptyStackException e) /* TODO[max] !!! hack (of 18186). Please fix in better times. */ {
       return false;
