@@ -4,24 +4,24 @@
 
 package com.intellij.ide.dnd;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.dnd.MouseDragGestureRecognizer;
 import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeEvent;
 
 /**
  * Utility tool to patch DnD listeners to enable multiple selection when original dnd is switched off
@@ -152,7 +152,9 @@ public class DnDEnabler implements Activatable, Disposable {
           else {
             myDnDSource.processMouseEvent(e);
             if (!e.isConsumed()) {
-              for (EventListener[] listeners : myMouseListeners) {
+              assert e.getComponent() != null : "component is null! IDEADEV-6339";
+              final EventListener[][] eventListeners = myMouseListeners.toArray(new EventListener[myMouseListeners.size()][]);
+              for (EventListener[] listeners : eventListeners) {
                 for (EventListener each : listeners) {
                   dispatchMouseEvent((MouseListener)each, e);
                   if (e.isConsumed()) break;
