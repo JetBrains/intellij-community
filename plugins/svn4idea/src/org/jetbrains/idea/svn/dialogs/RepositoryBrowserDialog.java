@@ -256,6 +256,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public void update(AnActionEvent e) {
       e.getPresentation().setDescription("Add Repository Location");
       e.getPresentation().setText("Add Repository Location");
+      e.getPresentation().setIcon(IconLoader.findIcon("/general/add.png"));
       super.update(e);
     }
 
@@ -460,6 +461,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public void update(final AnActionEvent e) {
       e.getPresentation().setDescription("Show/Hide Details");
       e.getPresentation().setText("Show/Hide Details");
+      e.getPresentation().setIcon(IconLoader.findIcon("/actions/annotate.png"));
       super.update(e);
     }
 

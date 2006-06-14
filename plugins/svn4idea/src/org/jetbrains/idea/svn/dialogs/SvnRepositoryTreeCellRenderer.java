@@ -63,7 +63,6 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
       if (node.getUserObject() instanceof String) {
         append(CommonBundle.getLoadingTreeNodeText(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       } else if (node.getUserObject() instanceof SVNErrorMessage) {
-        setIcon(Icons.WARNING_INTRODUCTION_ICON);
         append(node.getUserObject().toString(), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
     }
