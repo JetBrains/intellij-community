@@ -203,6 +203,8 @@
       <action id="NewInterface" class="com.intellij.ide.actions.CreateInterfaceAction"/>
       <action id="NewEnum" class="com.intellij.ide.actions.CreateEnumAction"/>
       <action id="NewAnnotationType" class="com.intellij.ide.actions.CreateAnnotationTypeAction"/>
+      <action id="NewHtmlType" class="com.intellij.ide.actions.CreateHtmlAction"/>
+      <action id="NewXhtmlType" class="com.intellij.ide.actions.CreateXhtmlAction"/>
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
       <separator/>
