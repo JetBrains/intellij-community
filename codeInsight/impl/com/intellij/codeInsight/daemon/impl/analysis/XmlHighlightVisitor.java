@@ -1262,6 +1262,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
 
     public void invoke(final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+      if (!CodeInsightUtil.prepareFileForWrite(file)) return;
       final boolean taglib = myTaglibDeclaration || file instanceof JspFile;
       final String[] namespaces = guessNamespace(
         file,
@@ -1346,9 +1347,17 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           element
         );
 
-        element = rootTag.addBefore(
-          childTag, rootTag.getFirstChild()
-        );
+        final XmlTag[] directives = ((JspFile)file).getDirectiveTags(JspDirectiveKind.TAGLIB, false);
+
+        if (directives == null || directives.length == 0) {
+          element = rootTag.addBefore(
+            childTag, rootTag.getFirstChild()
+          );
+        } else {
+          element = rootTag.addAfter(
+            childTag, directives[directives.length - 1]
+          );
+        }
 
         CodeStyleManager.getInstance(project).reformat(element);
         return ((XmlTag)element).getAttribute(URI_ATTR_NAME,null);
