@@ -52,6 +52,7 @@ public class LwContainer extends LwComponent implements IContainer{
   private FontDescriptor myBorderTitleFont;
   private ColorDescriptor myBorderTitleColor;
   private Insets myBorderSize;
+  private ColorDescriptor myBorderColor;
   private LayoutManager myLayout;
   private String myLayoutManager;
   protected LayoutSerializer myLayoutSerializer;
@@ -199,6 +200,10 @@ public class LwContainer extends LwComponent implements IContainer{
     return myBorderSize;
   }
 
+  public ColorDescriptor getBorderColor() {
+    return myBorderColor;
+  }
+
   /**
    * TODO[anton,vova] looks like it is better to pass contraints tag
    * 
@@ -232,15 +237,8 @@ public class LwContainer extends LwComponent implements IContainer{
     if (fontElement != null) {
       myBorderTitleFont = LwXmlReader.getFontDescriptor(fontElement);
     }
-    Element colorElement = LwXmlReader.getChild(borderElement, UIFormXmlConstants.ELEMENT_COLOR);
-    if (colorElement != null) {
-      try {
-        myBorderTitleColor = LwXmlReader.getColorDescriptor(colorElement);
-      }
-      catch (Exception e) {
-        myBorderTitleColor = null;
-      }
-    }
+    myBorderTitleColor = LwXmlReader.getOptionalColorDescriptor(LwXmlReader.getChild(borderElement, UIFormXmlConstants.ELEMENT_TITLE_COLOR));
+    myBorderColor = LwXmlReader.getOptionalColorDescriptor(LwXmlReader.getChild(borderElement, UIFormXmlConstants.ELEMENT_COLOR));
     Element sizeElement = LwXmlReader.getChild(borderElement, UIFormXmlConstants.ELEMENT_SIZE);
     if (sizeElement != null) {
       try {

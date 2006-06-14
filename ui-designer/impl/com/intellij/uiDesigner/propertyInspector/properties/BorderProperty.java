@@ -43,7 +43,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
       new MyTitleIntEnumProperty(this, "title justification", true),
       new MyTitleIntEnumProperty(this, "title position", false),
       new MyTitleFontProperty(this),
-      new MyTitleColorProperty(this)
+      new MyBorderColorProperty(this, true)
     };
   }
 
@@ -65,7 +65,18 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
         new MyTitleIntEnumProperty(this, "title justification", true),
         new MyTitleIntEnumProperty(this, "title position", false),
         new MyTitleFontProperty(this),
-        new MyTitleColorProperty(this)
+        new MyBorderColorProperty(this, true)
+      };
+    }
+    else if (borderType.equals(BorderType.LINE)) {
+      return new Property[]{
+        new MyTypeProperty(),
+        new MyBorderColorProperty(this, false),
+        new MyTitleProperty(),
+        new MyTitleIntEnumProperty(this, "title justification", true),
+        new MyTitleIntEnumProperty(this, "title position", false),
+        new MyTitleFontProperty(this),
+        new MyBorderColorProperty(this, true)
       };
     }
     return myChildren;
@@ -292,20 +303,27 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     }
   }
 
-  private static class MyTitleColorProperty extends Property<RadContainer, ColorDescriptor> {
+  private static class MyBorderColorProperty extends Property<RadContainer, ColorDescriptor> {
     private ColorRenderer myRenderer;
     private ColorEditor myEditor;
+    private boolean myTitleColor;
 
-    public MyTitleColorProperty(final Property parent) {
-      super(parent, "title color");
+    public MyBorderColorProperty(final Property parent, final boolean titleColor) {
+      super(parent, titleColor ? "title color" : "color");
+      myTitleColor = titleColor;
     }
 
     public ColorDescriptor getValue(final RadContainer component) {
-      return component.getBorderTitleColor();
+      return myTitleColor ? component.getBorderTitleColor() : component.getBorderColor();
     }
 
     protected void setValueImpl(final RadContainer component, final ColorDescriptor value) throws Exception {
-      component.setBorderTitleColor(value);
+      if (myTitleColor) {
+        component.setBorderTitleColor(value);
+      }
+      else {
+        component.setBorderColor(value);
+      }
     }
 
     @NotNull
@@ -318,17 +336,19 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
 
     public PropertyEditor<ColorDescriptor> getEditor() {
       if (myEditor == null) {
-        myEditor = new ColorEditor(UIDesignerBundle.message("border.title.editor.title"));
+        myEditor = new ColorEditor(myTitleColor
+                                   ? UIDesignerBundle.message("border.title.editor.title")
+                                   : UIDesignerBundle.message("border.color.editor.title"));
       }
       return myEditor;
     }
 
     @Override public boolean isModified(final RadContainer component) {
-      return component.getBorderTitleColor() != null;
+      return getValue(component) != null;
     }
 
     @Override public void resetValue(final RadContainer component) throws Exception {
-      component.setBorderTitleColor(null);
+      setValueImpl(component, null);
     }
   }
 

@@ -57,15 +57,14 @@ public final class BorderType {
                              final int titlePosition,
                              final Font titleFont,
                              final Color titleColor,
-                             final Insets borderSize){
+                             final Insets borderSize, 
+                             final Color borderColor) {
     Border baseBorder = myBorder;
-    if (equals(EMPTY)) {
-      if (borderSize != null) {
-        baseBorder = BorderFactory.createEmptyBorder(borderSize.top, borderSize.left, borderSize.bottom, borderSize.right);
-      }
-      else {
-        baseBorder = BorderFactory.createEmptyBorder();
-      }
+    if (equals(EMPTY) && borderSize != null) {
+      baseBorder = BorderFactory.createEmptyBorder(borderSize.top, borderSize.left, borderSize.bottom, borderSize.right);
+    }
+    else if (equals(LINE) && borderColor != null) {
+      baseBorder = BorderFactory.createLineBorder(borderColor);
     }
 
     if (title != null) {

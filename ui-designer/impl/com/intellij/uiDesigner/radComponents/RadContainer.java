@@ -20,10 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.Border;
-import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
+import javax.swing.border.*;
 import java.awt.*;
 import java.util.ArrayList;
 
@@ -57,6 +54,7 @@ public class RadContainer extends RadComponent implements IContainer {
   private FontDescriptor myBorderTitleFont;
   private ColorDescriptor myBorderTitleColor;
   private Insets myBorderSize;
+  private ColorDescriptor myBorderColor;
 
   protected RadLayoutManager myLayoutManager;
 
@@ -391,6 +389,17 @@ public class RadContainer extends RadComponent implements IContainer {
     }
   }
 
+  public ColorDescriptor getBorderColor() {
+    return myBorderColor;
+  }
+
+  public void setBorderColor(final ColorDescriptor borderColor) {
+    if (!Comparing.equal(myBorderColor, borderColor)) {
+      myBorderColor = borderColor;
+      updateBorder();
+    }
+  }
+
   /**
    * Updates delegee's border
    */
@@ -403,9 +412,10 @@ public class RadContainer extends RadComponent implements IContainer {
       title = StringDescriptorManager.getInstance(getModule()).resolve(this, myBorderTitle);
     }
     Font font = (myBorderTitleFont != null) ? myBorderTitleFont.getResolvedFont(getDelegee().getFont()) : null;
-    Color color = (myBorderTitleColor != null) ? myBorderTitleColor.getResolvedColor() : null;
+    Color titleColor = (myBorderTitleColor != null) ? myBorderTitleColor.getResolvedColor() : null;
+    Color borderColor = (myBorderColor != null) ? myBorderColor.getResolvedColor() : null;
     getDelegee().setBorder(myBorderType.createBorder(title, myBorderTitleJustification, myBorderTitlePosition,
-                                                     font, color, myBorderSize));
+                                                     font, titleColor, myBorderSize, borderColor));
     return myBorderTitle != null && !Comparing.equal(oldTitle, myBorderTitle.getResolvedValue());
   }
 
@@ -459,13 +469,18 @@ public class RadContainer extends RadComponent implements IContainer {
         writer.endElement();
       }
       if (myBorderTitleColor != null) {
-        writer.startElement(UIFormXmlConstants.ELEMENT_COLOR);
+        writer.startElement(UIFormXmlConstants.ELEMENT_TITLE_COLOR);
         writer.writeColorDescriptor(myBorderTitleColor);
         writer.endElement();
       }
       if (myBorderSize != null) {
         writer.startElement(UIFormXmlConstants.ELEMENT_SIZE);
         writer.writeInsets(myBorderSize);
+        writer.endElement();
+      }
+      if (myBorderColor != null) {
+        writer.startElement(UIFormXmlConstants.ELEMENT_COLOR);
+        writer.writeColorDescriptor(myBorderColor);
         writer.endElement();
       }
     }finally{
@@ -585,6 +600,16 @@ public class RadContainer extends RadComponent implements IContainer {
       else if (border instanceof BevelBorder) {
         BevelBorder bevelBorder = (BevelBorder) border;
         setBorderType(bevelBorder.getBevelType() == BevelBorder.RAISED ? BorderType.BEVEL_RAISED : BorderType.BEVEL_LOWERED);
+      }
+      else if (border instanceof EmptyBorder) {
+        EmptyBorder emptyBorder = (EmptyBorder) border;
+        setBorderType(BorderType.EMPTY);
+        setBorderSize(emptyBorder.getBorderInsets());
+      }
+      else if (border instanceof LineBorder) {
+        LineBorder lineBorder = (LineBorder) border;
+        setBorderType(BorderType.LINE);
+        setBorderColor(new ColorDescriptor(lineBorder.getLineColor()));
       }
     }
   }

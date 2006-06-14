@@ -76,6 +76,7 @@ public class UIFormXmlConstants {
   public static final String ELEMENT_BORDER = "border";
   public static final String ELEMENT_FONT = "font";
   public static final String ELEMENT_COLOR = "color";
+  public static final String ELEMENT_TITLE_COLOR = "title-color";
   public static final String ELEMENT_SIZE = "size";
   public static final String ELEMENT_ITEM = "item";
   public static final String ELEMENT_CONSTRAINTS = "constraints";

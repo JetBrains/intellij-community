@@ -689,8 +689,13 @@ public class AsmCodeGenerator {
 
         if (!borderNone) {
           if (borderType.equals(BorderType.LINE)) {
-            Type colorType = Type.getType(Color.class);
-            generator.getStatic(colorType, "black", colorType);
+            if (container.getBorderColor() == null) {
+              Type colorType = Type.getType(Color.class);
+              generator.getStatic(colorType, "black", colorType);
+            }
+            else {
+              pushPropValue(generator, Color.class.getName(), container.getBorderColor());
+            }
             generator.invokeStatic(ourBorderFactoryType,
                                    new Method(borderFactoryMethodName, ourBorderType,
                                               new Type[] { Type.getType(Color.class) } ));

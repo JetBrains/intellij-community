@@ -157,6 +157,16 @@ public final class LwXmlReader {
     return new ColorDescriptor(null);
   }
 
+  public static ColorDescriptor getOptionalColorDescriptor(final Element element) {
+    if (element == null) return null;
+    try {
+      return getColorDescriptor(element);
+    }
+    catch(Exception ex) {
+      return null;
+    }
+  }
+
   public static Insets readInsets(final Element element) {
     final int top = getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_TOP);
     final int left = getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_LEFT);
