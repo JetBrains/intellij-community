@@ -366,11 +366,17 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       }
     );
 
+    final NamespaceFilter webAppNSFilter = new NamespaceFilter(XmlUtil.WEB_XML_URIS);
     registerXmlTagReferenceProvider(
-      new String[]{"welcome-file","location","taglib-location"},
-      new NamespaceFilter(XmlUtil.WEB_XML_URIS),
+      new String[]{"welcome-file","location","taglib-location"}, webAppNSFilter,
       true,
       webXmlPathReferenceProvider
+    );
+
+    registerXmlTagReferenceProvider(
+      new String[]{"small-icon","large-icon"}, webAppNSFilter,
+      true,
+      getProviderByType(PATH_REFERENCES_PROVIDER)
     );
 
     registerXmlAttributeValueReferenceProvider(
