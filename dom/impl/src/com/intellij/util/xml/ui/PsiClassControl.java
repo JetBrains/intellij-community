@@ -65,12 +65,11 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
           }
         }
 
-        PsiClass initialClass;
+        PsiClass initialClass = null;
         if (domElement instanceof GenericDomValue) {
-          initialClass = (PsiClass)((GenericDomValue)domElement).getValue();
-        }
-        else {
-          initialClass = null;
+          final Object value = ((GenericDomValue)domElement).getValue();
+          if (value instanceof PsiClass)
+            initialClass = (PsiClass)value;
         }
 
         TreeClassChooser chooser = TreeClassChooserFactory.getInstance(control.getProject())

@@ -86,10 +86,10 @@ public abstract class DomUIFactory implements ApplicationComponent {
       return getDomUIFactory().createTextControl(wrapper, commitOnEveryChange);
     }
 
-    final BaseControl customControl = getDomUIFactory().createCustomControl(type, new DomStringWrapper(element), commitOnEveryChange);
+    final BaseControl customControl = getDomUIFactory().createCustomControl(type, stringWrapper, commitOnEveryChange);
     if (customControl != null) return customControl;
 
-    throw new IllegalArgumentException("Not supported: " + type);
+    return getDomUIFactory().createTextControl(stringWrapper, commitOnEveryChange);
   }
 
   public static Method findMethod(Class clazz, String methodName) {
