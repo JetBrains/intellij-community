@@ -459,11 +459,13 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   }
 
   public FileTemplate[] getInternalTemplates() {
-    FileTemplate[] result = new FileTemplate[4];
+    FileTemplate[] result = new FileTemplate[6];
     result[0] = getInternalTemplate(INTERNAL_CLASS_TEMPLATE_NAME);
     result[1] = getInternalTemplate(INTERNAL_INTERFACE_TEMPLATE_NAME);
     result[2] = getInternalTemplate(INTERNAL_ENUM_TEMPLATE_NAME);
     result[3] = getInternalTemplate(INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
+    result[4] = getInternalTemplate(INTERNAL_HTML_TEMPLATE_NAME);
+    result[5] = getInternalTemplate(INTERNAL_XHTML_TEMPLATE_NAME);
     return result;
   }
 

@@ -25,6 +25,8 @@ public abstract class FileTemplateManager{
   @NonNls public static final String INTERNAL_INTERFACE_TEMPLATE_NAME = "Interface";
   @NonNls public static final String INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME = "AnnotationType";
   @NonNls public static final String INTERNAL_ENUM_TEMPLATE_NAME = "Enum";
+  @NonNls public static final String INTERNAL_HTML_TEMPLATE_NAME = "Html";
+  @NonNls public static final String INTERNAL_XHTML_TEMPLATE_NAME = "Xhtml";
   @NonNls public static final String FILE_HEADER_TEMPLATE_NAME = "File Header";
 
   public static FileTemplateManager getInstance(){
