@@ -465,4 +465,18 @@ public class CompletionUtil {
     element.getManager().performActionWithFormatterDisabled(result);
     return result.result;
   }
+
+  public static boolean isInExcludedPackage(final PsiClass psiClass) {
+    final String name = psiClass.getQualifiedName();
+    CodeInsightSettings cis = CodeInsightSettings.getInstance();
+    boolean isExcluded = false;
+    //noinspection ForLoopReplaceableByForEach
+    for(int i=0; i<cis.EXCLUDED_PACKAGES.length; i++) {
+      if (name.startsWith(cis.EXCLUDED_PACKAGES [i])) {
+        isExcluded = true;
+      }
+    }
+    if (isExcluded) return true;
+    return false;
+  }
 }

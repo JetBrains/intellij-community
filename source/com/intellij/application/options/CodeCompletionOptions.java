@@ -6,6 +6,7 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -45,6 +46,7 @@ public class CodeCompletionOptions extends BaseConfigurable implements Searchabl
     return "preferences.codeCompletion";
   }
 
+  @NotNull
   public String getComponentName() {
     return "CodeCompletionOptions";
   }

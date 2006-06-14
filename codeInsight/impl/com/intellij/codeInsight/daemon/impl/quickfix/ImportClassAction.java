@@ -9,6 +9,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -18,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,10 +31,12 @@ public class ImportClassAction implements IntentionAction {
     myRef = element;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("import.class.fix");
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("import.class.fix");
   }
@@ -59,6 +63,7 @@ public class ImportClassAction implements IntentionAction {
     boolean isAnnotationReference = myRef.getParent() instanceof PsiAnnotation;
     for (PsiClass aClass : classes) {
       if (isAnnotationReference && !aClass.isAnnotationType()) continue;
+      if (CompletionUtil.isInExcludedPackage(aClass)) continue;
       PsiFile file = aClass.getContainingFile();
       if (file instanceof PsiJavaFile) {
         if (((PsiJavaFile)file).getPackageName().length() != 0) { //do not show classes from default package

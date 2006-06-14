@@ -4,12 +4,19 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.ListUtil;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
+import java.util.regex.Pattern;
 
 public class CodeCompletionPanel {
   JPanel myPanel;
@@ -43,10 +50,15 @@ public class CodeCompletionPanel {
   private JRadioButton myRbInsertParenth;
   private JRadioButton myRbInsertBothParenthes;
   private JCheckBox myCbInsertBothParenthesWhenNoArgs;
+  private JList myExcludePackagesList;
+  private JButton myAddPackageButton;
+  private JButton myRemoveButton;
   ButtonGroup buttonGroup = new ButtonGroup();
 
+  private DefaultListModel myExcludePackagesModel;
+  private static Pattern ourPackagePattern = Pattern.compile("(\\w+\\.)*\\w+");
 
- public CodeCompletionPanel(){
+  public CodeCompletionPanel(){
    myCaseSensitiveCombo.setModel(new DefaultComboBoxModel(new String[]{CASE_SENSITIVE_ALL, CASE_SENSITIVE_NONE,
                                                                        CASE_SENSITIVE_FIRST_LETTER}));
 
@@ -106,6 +118,37 @@ public class CodeCompletionPanel {
    buttonGroup.add(myRbInsertBothParenthes);
 
     reset();
+    myAddPackageButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        InputValidator validator = new InputValidator() {
+
+          public boolean checkInput(String inputString) {
+            return ourPackagePattern.matcher(inputString).matches();
+          }
+
+          public boolean canClose(String inputString) {
+            return checkInput(inputString);
+          }
+        };
+        String packageName = Messages.showInputDialog(myPanel, ApplicationBundle.message("exclude.from.completion.prompt"),
+                                                      ApplicationBundle.message("exclude.from.completion.title"),
+                                                      Messages.getWarningIcon(), "", validator);
+        if (packageName != null) {
+          myExcludePackagesModel.add(myExcludePackagesModel.size(), packageName);
+          myExcludePackagesList.setSelectedValue(packageName, true);
+        }
+      }
+    });
+    myExcludePackagesList.addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+        myRemoveButton.setEnabled(myExcludePackagesList.getSelectedValue() != null);
+      }
+    });
+    myRemoveButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        ListUtil.removeSelectedItems(myExcludePackagesList);
+      }
+    });
   }
 
     /*
@@ -150,11 +193,11 @@ public class CodeCompletionPanel {
 
     myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_MEMBER_LOOKUP);
     myAutocompletionDelayField.setEnabled(codeInsightSettings.AUTO_POPUP_MEMBER_LOOKUP);
-    myAutocompletionDelayField.setText(""+codeInsightSettings.MEMBER_LOOKUP_DELAY);
+    myAutocompletionDelayField.setText(String.valueOf(codeInsightSettings.MEMBER_LOOKUP_DELAY));
 
     myCbXmlAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_XML_LOOKUP);
     myXmlAutocompletionDelayField.setEnabled(codeInsightSettings.AUTO_POPUP_XML_LOOKUP);
-    myXmlAutocompletionDelayField.setText(""+codeInsightSettings.XML_LOOKUP_DELAY);
+    myXmlAutocompletionDelayField.setText(String.valueOf(codeInsightSettings.XML_LOOKUP_DELAY));
 
     myCbJavadocAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_JAVADOC_LOOKUP);
     myFldJavadocAutocompletionDelayField.setEnabled(codeInsightSettings.AUTO_POPUP_JAVADOC_LOOKUP);
@@ -173,6 +216,11 @@ public class CodeCompletionPanel {
 
     myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_MEMBER_LOOKUP);
 
+    myExcludePackagesModel = new DefaultListModel();
+    for(String aPackage: codeInsightSettings.EXCLUDED_PACKAGES) {
+      myExcludePackagesModel.add(myExcludePackagesModel.size(), aPackage);
+    }
+    myExcludePackagesList.setModel(myExcludePackagesModel);
   }
 
   public void apply() {
@@ -205,10 +253,20 @@ public class CodeCompletionPanel {
     codeInsightSettings.JAVADOC_INFO_DELAY = getIntegerValue(myAutopopupJavaDocField.getText(), 0);
     codeInsightSettings.LOOKUP_HEIGHT = getIntegerValue(myFldLookupHeight.getText(), 0);
 
+    codeInsightSettings.EXCLUDED_PACKAGES = getExcludedPackages();
+
     final Project project = (Project)DataManager.getInstance().getDataContext(this.myPanel).getData(DataConstants.PROJECT);
     if (project != null){
       DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     }
+  }
+
+  private String[] getExcludedPackages() {
+    String[] excludedPackages = new String[myExcludePackagesModel.size()];
+    for (int i = 0; i < myExcludePackagesModel.size(); i++) {
+      excludedPackages [i] = (String)myExcludePackagesModel.elementAt(i);
+    }
+    return excludedPackages;
   }
 
 
@@ -240,6 +298,8 @@ public class CodeCompletionPanel {
     isModified |= isModified(myParameterInfoDelayField, codeInsightSettings.PARAMETER_INFO_DELAY, 0);
     isModified |= isModified(myAutopopupJavaDocField, codeInsightSettings.JAVADOC_INFO_DELAY, 0);
     isModified |= isModified(myFldLookupHeight, codeInsightSettings.LOOKUP_HEIGHT, 11);
+
+    isModified |= !Arrays.deepEquals(getExcludedPackages(), codeInsightSettings.EXCLUDED_PACKAGES);
 
     return isModified;
   }

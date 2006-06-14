@@ -12,17 +12,24 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.util.List;
 
 /**
  *
  */
 public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, ExportableApplicationComponent {
+  @NonNls private static final String EXCLUDED_PACKAGE = "EXCLUDED_PACKAGE";
+  @NonNls private static final String ATTRIBUTE_NAME = "NAME";
+
   public static CodeInsightSettings getInstance() {
     return ApplicationManager.getApplication().getComponent(CodeInsightSettings.class);
   }
 
+  @NotNull
   public String getComponentName() {
     return "CodeInsightSettings";
   }
@@ -109,6 +116,8 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
   public boolean OPTIMIZE_IMPORTS_ON_THE_FLY = false;
   public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
 
+  public String[] EXCLUDED_PACKAGES = new String[0];
+
   public CodeInsightSettings(EditorActionManager actionManager) {
     actionManager.setActionHandler(IdeActions.ACTION_EDITOR_ENTER, new EnterHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER)));
     actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END, new EndHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END)));
@@ -131,9 +140,19 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
+    final List list = element.getChildren(EXCLUDED_PACKAGE);
+    EXCLUDED_PACKAGES = new String[list.size()];
+    for(int i=0; i<list.size(); i++) {
+      EXCLUDED_PACKAGES [i] = ((Element) list.get(i)).getAttributeValue(ATTRIBUTE_NAME);
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
+    for(String s: EXCLUDED_PACKAGES) {
+      final Element child = new Element(EXCLUDED_PACKAGE);
+      child.setAttribute(ATTRIBUTE_NAME, s);
+      element.addContent(child);
+    }
   }
 }

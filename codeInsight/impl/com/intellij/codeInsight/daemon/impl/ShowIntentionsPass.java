@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -289,6 +290,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       if (!(file instanceof PsiJavaFile) || ((PsiJavaFile)file).getPackageName().length() == 0) continue;
       if (isAnnotationReference && !aClass.isAnnotationType()) continue;
       if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) continue;
+      if (CompletionUtil.isInExcludedPackage(aClass)) continue;
       availableClasses.add(aClass);
     }
     if (availableClasses.size() == 0) return false;

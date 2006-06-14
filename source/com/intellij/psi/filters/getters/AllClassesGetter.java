@@ -58,14 +58,14 @@ public class AllClassesGetter implements ContextGetter{
       if (prefix != null && !(CompletionUtil.checkName(name, prefix) || myMatcher.matches(name, myPattern))) continue;
       final PsiClass[] classesByName = cache.getClassesByName(name, scope);
       
-      if (lookingForAnnotations) {
-        for (PsiClass psiClass : classesByName) {
-          if (psiClass.isAnnotationType()) {
-            classesList.add(psiClass);
-          }
+      for (PsiClass psiClass : classesByName) {
+        if (lookingForAnnotations && !psiClass.isAnnotationType()) {
+          continue;
         }
-      } else {
-        classesList.addAll(Arrays.asList(classesByName));
+        if (CompletionUtil.isInExcludedPackage(psiClass)) {
+          continue;
+        }
+        classesList.add(psiClass);
       }
     }
 
