@@ -23,6 +23,9 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -41,7 +44,7 @@ import java.awt.*;
 public class SelectLocationDialog extends DialogWrapper {
   private Project myProject;
   private RepositoryBrowserComponent myRepositoryBrowser;
-  private String myURL;
+  private SVNURL myURL;
   private String myDstName;
   private String myDstLabel;
   private JTextField myDstText;
@@ -59,7 +62,11 @@ public class SelectLocationDialog extends DialogWrapper {
     myProject = project;
     myDstLabel = dstLabel;
     myDstName = dstName;
-    myURL = url;
+    try {
+      myURL = SVNURL.parseURIEncoded(url);
+    } catch (SVNException e) {
+      //
+    }
     myIsShowFiles = showFiles;
     setTitle(SvnBundle.message("dialog.title.select.repository.location"));
     getHelpAction().setEnabled(true);
@@ -80,10 +87,13 @@ public class SelectLocationDialog extends DialogWrapper {
 
   protected void init() {
     super.init();
-    myRepositoryBrowser.setRepositoryURL(myURL, myIsShowFiles);
-    if (myRepositoryBrowser.getRootURL() != null) {
-      myRepositoryBrowser.getPreferredFocusedComponent().requestFocus();
+    try {
+      SVNRepository repos = SvnVcs.getInstance(myProject).createRepository(myURL.toString());
+      myURL = repos.getRepositoryRoot(true);
+    } catch (SVNException e) {
+      // show error dialog.
     }
+    myRepositoryBrowser.setRepositoryURL(myURL, myIsShowFiles);
     myRepositoryBrowser.addChangeListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         getOKAction().setEnabled(isOKActionEnabled());

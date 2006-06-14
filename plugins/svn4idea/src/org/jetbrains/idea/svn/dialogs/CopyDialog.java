@@ -15,17 +15,16 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.help.HelpManager;
-import com.intellij.util.ui.DialogUtil;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -43,7 +42,6 @@ import java.io.File;
  * User: alex
  * Date: 05.07.2005
  * Time: 23:35:12
- * To change this template use File | Settings | File Templates.
  */
 public class CopyDialog extends DialogWrapper implements ActionListener {
   private File mySrcFile;

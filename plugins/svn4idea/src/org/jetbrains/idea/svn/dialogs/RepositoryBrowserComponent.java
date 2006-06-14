@@ -17,14 +17,34 @@ package org.jetbrains.idea.svn.dialogs;
 
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
+import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.wc.SVNUpdateClient;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
+
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,8 +54,8 @@ import java.awt.*;
  * To change this template use File | Settings | File Templates.
  */
 public class RepositoryBrowserComponent extends JPanel {
-  private JTree myRepositoryTree;
 
+  private JTree myRepositoryTree;
   private SvnVcs myVCS;
 
   public RepositoryBrowserComponent(SvnVcs vcs) {
@@ -47,32 +67,33 @@ public class RepositoryBrowserComponent extends JPanel {
     return myRepositoryTree;
   }
 
-  public void setCellRenderer(TreeCellRenderer renderer) {
-    myRepositoryTree.setCellRenderer(renderer);
+  public void setRepositoryURLs(SVNURL[] urls, boolean showFiles) {
+    RepositoryTreeModel model = new RepositoryTreeModel(myVCS, true);
+    model.setRoots(urls);
+    myRepositoryTree.setModel(model);
   }
 
-  public void setRepositoryURL(String url, boolean showFiles) {
-    if (url == null || "".equals(url)) {
-      RepositoryTreeModel.ErrorNode node = new RepositoryTreeModel.ErrorNode(SvnBundle.message("node.text.browser.type.valid.url"),
-                                                                             false);
-      DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(node));
-      myRepositoryTree.setModel(model);
-      myRepositoryTree.setEnabled(false);
+  public void setRepositoryURL(SVNURL url, boolean showFiles) {
+    RepositoryTreeModel model = new RepositoryTreeModel(myVCS, showFiles);
+    model.setSingleRoot(url);
+    myRepositoryTree.setModel(model);
+    myRepositoryTree.setRootVisible(true);
+    myRepositoryTree.setSelectionRow(0);
+  }
+
+  public void addURL(String url) {
+    try {
+      ((RepositoryTreeModel) myRepositoryTree.getModel()).addRoot(SVNURL.parseURIEncoded(url));
+    } catch (SVNException e) {
+      //
     }
-    else {
-      myRepositoryTree.setRootVisible(true);
-      myRepositoryTree.setShowsRootHandles(true);
-      myRepositoryTree.setEnabled(true);
-      RepositoryTreeModel model = new RepositoryTreeModel(myRepositoryTree, myVCS, url, showFiles);
-      myRepositoryTree.setModel(model);
-      TreePath selectionPath = model.getRootPath();
-      if (selectionPath != null) {
-        myRepositoryTree.expandPath(selectionPath);
-        myRepositoryTree.setSelectionPath(selectionPath);
-      }
-      else {
-        myRepositoryTree.setSelectionRow(0);
-      }
+  }
+
+  public void removeURL(String url) {
+    try {
+      ((RepositoryTreeModel) myRepositoryTree.getModel()).removeRoot(SVNURL.parseURIEncoded(url));
+    } catch (SVNException e) {
+      //
     }
   }
 
@@ -82,8 +103,9 @@ public class RepositoryBrowserComponent extends JPanel {
       return null;
     }
     Object element = selection.getLastPathComponent();
-    if (element instanceof SVNDirEntry) {
-      return (SVNDirEntry)element;
+    if (element instanceof RepositoryTreeNode) {
+      RepositoryTreeNode node = (RepositoryTreeNode) element;
+      return node.getSVNDirEntry();
     }
     return null;
   }
@@ -94,26 +116,14 @@ public class RepositoryBrowserComponent extends JPanel {
       return null;
     }
     Object element = selection.getLastPathComponent();
-    if (element instanceof SVNDirEntry) {
-      RepositoryTreeModel model = (RepositoryTreeModel)myRepositoryTree.getModel();
-      String rootURL = model.getRootURL();
-      if (rootURL != null) {
-        String path = SVNEncodingUtil.uriEncode(((SVNDirEntry)element).getRelativePath());
-        String url = SVNPathUtil.append(rootURL, path);
-        if (url != null && url.endsWith("/") && url.length() > 1) {
-          url = url.substring(0, url.length() - 1);
-        }
-        return url;
-      }
+    if (element instanceof RepositoryTreeNode) {
+      RepositoryTreeNode node = (RepositoryTreeNode) element;
+      return node.getURL().toString();
     }
     return null;
   }
 
   public void refresh(SVNDirEntry entry, boolean deleted) {
-    if (myRepositoryTree.getModel() instanceof RepositoryTreeModel) {
-      RepositoryTreeModel model = (RepositoryTreeModel)myRepositoryTree.getModel();
-      model.refresh(entry, deleted);
-    }
   }
 
   public boolean isValid() {
@@ -133,45 +143,23 @@ public class RepositoryBrowserComponent extends JPanel {
   }
 
   private void createComponent() {
-    setLayout(new GridBagLayout());
-
-    GridBagConstraints gc = new GridBagConstraints();
-    gc.insets = new Insets(2, 2, 2, 2);
-    gc.weightx = 0;
-    gc.weighty = 0;
-    gc.gridwidth = 1;
-    gc.gridheight = 1;
-    gc.gridy = 0;
-    gc.gridx = 0;
-    gc.anchor = GridBagConstraints.SOUTHWEST;
-
-    JLabel topLabel = new JLabel(SvnBundle.message("label.browser.select.location"));
-    add(topLabel, gc);
-
-    gc.gridy += 1;
-    gc.gridx = 0;
-    gc.gridwidth = 2;
-    gc.gridheight = 1;
-    gc.weightx = 1;
-    gc.weighty = 1;
-    gc.fill = GridBagConstraints.BOTH;
-
+    setLayout(new BorderLayout());
     myRepositoryTree = new JTree();
     myRepositoryTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-    myRepositoryTree.setRootVisible(true);
+    myRepositoryTree.setRootVisible(false);
+    myRepositoryTree.setShowsRootHandles(true);
     JScrollPane scrollPane = new JScrollPane(myRepositoryTree,
                                              JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-    add(scrollPane, gc);
-    topLabel.setLabelFor(myRepositoryTree);
-
+    add(scrollPane, BorderLayout.CENTER);
     myRepositoryTree.setCellRenderer(new SvnRepositoryTreeCellRenderer());
   }
 
-
-  public String getRootURL() {
-    if (!(myRepositoryTree.getModel() instanceof RepositoryTreeModel)) {
-      return null;
+  public RepositoryTreeNode getSelectedNode() {
+    TreePath selection = myRepositoryTree.getSelectionPath();
+    if (selection != null && selection.getLastPathComponent() instanceof RepositoryTreeNode) {
+      return (RepositoryTreeNode) selection.getLastPathComponent();
     }
-    return ((RepositoryTreeModel)myRepositoryTree.getModel()).getRootURL();
+    return null;
   }
+
 }

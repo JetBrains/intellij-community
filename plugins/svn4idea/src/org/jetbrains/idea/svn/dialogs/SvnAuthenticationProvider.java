@@ -52,7 +52,7 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
     Runnable command = null;
 
     final String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : System.getProperty(USER_NAME_PROPERTY);
-    if (ISVNAuthenticationManager.PASSWORD.equals(kind) || ISVNAuthenticationManager.USERNAME.equals(kind)) {
+    if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {// || ISVNAuthenticationManager.USERNAME.equals(kind)) {
       command = new Runnable() {
         public void run() {
           SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myProject);
@@ -65,11 +65,25 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
           }
           dialog.show();
           if (dialog.isOK()) {
-            if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
-                result[0] = new SVNPasswordAuthentication(dialog.getUserName(), dialog.getPassword(), dialog.isSaveAllowed());
-            } else {
-                result[0] = new SVNUserNameAuthentication(dialog.getUserName(), dialog.isSaveAllowed());
-            }
+            result[0] = new SVNPasswordAuthentication(dialog.getUserName(), dialog.getPassword(), dialog.isSaveAllowed());
+          }
+        }
+      };
+    }
+    else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
+      command = new Runnable() {
+        public void run() {
+          UserNameCredentialsDialog dialog = new UserNameCredentialsDialog(myProject);
+          dialog.setup(realm, userName, authMayBeStored);
+          if (previousAuth == null) {
+            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
+          }
+          else {
+            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required.was.failed"));
+          }
+          dialog.show();
+          if (dialog.isOK()) {
+              result[0] = new SVNUserNameAuthentication(dialog.getUserName(), dialog.isSaveAllowed());
           }
         }
       };

@@ -160,9 +160,6 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
       Element child = (Element)url1;
       String url = child.getText();
       if (url != null) {
-        if ("true".equals(child.getAttributeValue("active"))) {
-          myLastSelectedCheckoutURL = url;
-        }
         myCheckoutURLs.add(url);
       }
     }
@@ -219,8 +216,11 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
       return;
     }
     myCheckoutURLs.add(0, url);
-    if (myCheckoutURLs.size() > 5) {
-      myCheckoutURLs.remove(myCheckoutURLs.size() - 1);
+  }
+
+  public void removeCheckoutURL(String url) {
+    if (myCheckoutURLs != null) {
+      myCheckoutURLs.remove(url);
     }
   }
 
@@ -246,15 +246,6 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
 
   public void setKeepLocks(boolean keepLocks) {
     myIsKeepLocks = keepLocks;
-  }
-
-  public void setLastSelectedCheckoutURL(String url) {
-    addCheckoutURL(url);
-    myLastSelectedCheckoutURL = url;
-  }
-
-  public String getLastSelectedCheckoutURL() {
-    return myLastSelectedCheckoutURL;
   }
 
   public boolean isRemoteStatus() {
