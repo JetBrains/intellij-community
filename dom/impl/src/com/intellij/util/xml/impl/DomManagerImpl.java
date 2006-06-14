@@ -24,14 +24,18 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.usages.Usage;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
+import com.intellij.util.Processor;
+import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.WeakFactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
-import net.sf.cglib.core.CodeGenerationException;
+import gnu.trove.THashMap;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,19 +81,41 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     }
   };
   private final Map<Class<? extends DomElement>, Class<? extends DomElement>> myImplementationClasses =
-    new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
-  private final Map<Class<? extends DomElement>, Class<? extends DomElement>> myCachedImplementationClasses =
-    new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
+    new THashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
+  private final WeakFactoryMap<Class<? extends DomElement>, Class<? extends DomElement>> myCachedImplementationClasses =
+    new WeakFactoryMap<Class<? extends DomElement>, Class<? extends DomElement>>() {
+      protected Class<? extends DomElement> create(final Class<? extends DomElement> concreteInterface) {
+        final TreeSet<Class<? extends DomElement>> set = new TreeSet<Class<? extends DomElement>>(CLASS_COMPARATOR);
+        findImplementationClassDFS(concreteInterface, set);
+        if (!set.isEmpty()) {
+          return set.first();
+        }
+        final Implementation implementation = DomReflectionUtil.findAnnotationDFS(concreteInterface, Implementation.class);
+        return implementation == null ? null : implementation.value();
+      }
+
+      private void findImplementationClassDFS(final Class concreteInterface, SortedSet<Class<? extends DomElement>> results) {
+        Class<? extends DomElement> aClass = myImplementationClasses.get(concreteInterface);
+        if (aClass != null) {
+          results.add(aClass);
+        }
+        for (final Class aClass1 : ReflectionCache.getInterfaces(concreteInterface)) {
+          findImplementationClassDFS(aClass1, results);
+        }
+      }
+
+    };
   private final List<Function<DomElement, Collection<PsiElement>>> myPsiElementProviders =
     new ArrayList<Function<DomElement, Collection<PsiElement>>>();
   private final Set<DomFileDescription> myFileDescriptions = new HashSet<DomFileDescription>();
   private final Map<XmlFile, Object> myNonDomFiles = new WeakHashMap<XmlFile, Object>();
-  private final FactoryMap<Class<? extends DomElementVisitor>,VisitorDescription> myVisitorDescriptions = new FactoryMap<Class<? extends DomElementVisitor>, VisitorDescription>() {
-    @NotNull
-    protected VisitorDescription create(final Class<? extends DomElementVisitor> key) {
-      return new VisitorDescription(key);
-    }
-  };
+  private final FactoryMap<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =
+    new FactoryMap<Class<? extends DomElementVisitor>, VisitorDescription>() {
+      @NotNull
+      protected VisitorDescription create(final Class<? extends DomElementVisitor> key) {
+        return new VisitorDescription(key);
+      }
+    };
 
   private Project myProject;
   private boolean myChanging;
@@ -97,6 +123,14 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private final GenericValueReferenceProvider myGenericValueReferenceProvider = new GenericValueReferenceProvider();
   private final ReferenceProvidersRegistry myReferenceProvidersRegistry;
   private final PsiElementFactory myElementFactory;
+  private static final Comparator<Class<? extends DomElement>> CLASS_COMPARATOR = new Comparator<Class<? extends DomElement>>() {
+    public int compare(final Class<? extends DomElement> o1, final Class<? extends DomElement> o2) {
+      if (o1.isAssignableFrom(o2)) return 1;
+      if (o2.isAssignableFrom(o1)) return -1;
+      if (o1.equals(o2)) return 0;
+      throw new AssertionError("Incompatible implementation classes: " + o1 + " & " + o2);
+    }
+  };
 
   public DomManagerImpl(final PomModel pomModel,
                         final Project project,
@@ -177,73 +211,9 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return (StableInvocationHandler)AdvancedProxy.getInvocationHandler(proxy);
   }
 
-  final DomElement createDomElement(final DomInvocationHandler handler) {
-    synchronized (PsiLock.LOCK) {
-      try {
-        XmlTag tag = handler.getXmlTag();
-        final Class abstractInterface = DomReflectionUtil.getRawType(handler.getDomElementType());
-        final ClassChooser<? extends DomElement> classChooser = ClassChooserManager.getClassChooser(abstractInterface);
-        final Class<? extends DomElement> concreteInterface = classChooser.chooseClass(tag);
-        final DomElement element = doCreateDomElement(concreteInterface, handler);
-        if (concreteInterface != abstractInterface) {
-          handler.setType(concreteInterface);
-        }
-        handler.setProxy(element);
-        handler.attach(tag);
-        return element;
-      }
-      catch (RuntimeException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        throw new CodeGenerationException(e);
-      }
-    }
-  }
-
-  private DomElement doCreateDomElement(final Class<? extends DomElement> concreteInterface, final DomInvocationHandler handler) {
-    final Class<? extends DomElement> aClass = getImplementation(concreteInterface);
-    if (aClass != null) {
-      return AdvancedProxy.createProxy(aClass, new Class[]{concreteInterface}, handler, Collections.<JavaMethodSignature>emptySet());
-    }
-    return AdvancedProxy.createProxy(handler, concreteInterface);
-  }
-
   @Nullable
-  Class<? extends DomElement> getImplementation(final Class<? extends DomElement> concreteInterface) {
-    if (myCachedImplementationClasses.containsKey(concreteInterface)) {
-      return myCachedImplementationClasses.get(concreteInterface);
-    }
-
-    final TreeSet<Class<? extends DomElement>> set =
-      new TreeSet<Class<? extends DomElement>>(new Comparator<Class<? extends DomElement>>() {
-        public int compare(final Class<? extends DomElement> o1, final Class<? extends DomElement> o2) {
-          if (o1.isAssignableFrom(o2)) return 1;
-          if (o2.isAssignableFrom(o1)) return -1;
-          if (o1.equals(o2)) return 0;
-          throw new AssertionError("Incompatible implementation classes: " + o1 + " & " + o2);
-        }
-      });
-    findImplementationClassDFS(concreteInterface, set);
-    if (!set.isEmpty()) {
-      final Class<? extends DomElement> aClass = set.first();
-      myCachedImplementationClasses.put(concreteInterface, aClass);
-      return aClass;
-    }
-    final Implementation implementation = DomReflectionUtil.findAnnotationDFS(concreteInterface, Implementation.class);
-    final Class<? extends DomElement> aClass1 = implementation == null ? null : implementation.value();
-    myCachedImplementationClasses.put(concreteInterface, aClass1);
-    return aClass1;
-  }
-
-  private void findImplementationClassDFS(final Class concreteInterface, SortedSet<Class<? extends DomElement>> results) {
-    Class<? extends DomElement> aClass = myImplementationClasses.get(concreteInterface);
-    if (aClass != null) {
-      results.add(aClass);
-    }
-    for (final Class aClass1 : concreteInterface.getInterfaces()) {
-      findImplementationClassDFS(aClass1, results);
-    }
+  final Class<? extends DomElement> getImplementation(final Class concreteInterface) {
+    return myCachedImplementationClasses.get(concreteInterface);
   }
 
   public final Project getProject() {
@@ -374,7 +344,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
         final XmlFile originalFile = (XmlFile)xmlFile.getOriginalFile();
         final DomInvocationHandler originalElement = getDomFileElement(originalFile);
         if (originalElement != null) {
-          final Class<? extends DomElement> aClass = (Class<? extends DomElement>)DomReflectionUtil.getRawType(originalElement.getDomElementType());
+          final Class<? extends DomElement> aClass =
+            (Class<? extends DomElement>)DomReflectionUtil.getRawType(originalElement.getDomElementType());
           final String rootTagName = originalElement.getXmlElementName();
           return getFileElement(xmlFile, aClass, rootTagName).getRootHandler();
         }
@@ -473,6 +444,30 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   public final DomElement getIdentityScope(DomElement element) {
     final DomFileDescription description = findFileDescription(element);
     return description == null ? element.getParent() : description.getIdentityScope(element);
+  }
+
+  public void processUsages(final Object target, DomElement scope, final Processor<Usage> processor) {
+    final Class elementClass = target.getClass();
+    final boolean[] stopped = new boolean[]{false};
+    scope.accept(new DomElementVisitor() {
+      public void visitGenericDomValue(GenericDomValue reference) {
+        if (reference.getXmlTag() == null) return;
+        final Class parameter = DomUtil.getGenericValueParameter(reference.getDomElementType());
+        if (parameter != null && ReflectionCache.isAssignable(parameter, elementClass) && target.equals(reference.getValue())) {
+          if (!processor.process(new DomUsage(reference))) {
+            stopped[0] = true;
+          }
+          return;
+        }
+        visitDomElement(reference);
+      }
+
+      public void visitDomElement(DomElement element) {
+        if (!stopped[0] && element.getXmlTag() != null) {
+          element.acceptChildren(this);
+        }
+      }
+    });
   }
 
   public final void clearCaches() {

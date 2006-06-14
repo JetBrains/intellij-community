@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="openapi" exported="" />
     <orderEntry type="library" name="CGLIB" level="project" />
     <orderEntry type="module" module-name="treeStructure" />
+    <orderEntry type="module" module-name="UsageView" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

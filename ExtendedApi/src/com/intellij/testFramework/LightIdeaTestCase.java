@@ -71,7 +71,7 @@ import java.util.Map;
  * idea installation home that is used for test running. Place src.zip under that folder. We'd suggest this is real mock
  * so it contains classes that is really needed in order to speed up tests startup.
  */
-@NonNls public class LightIdeaTestCase extends TestCase implements DataProvider {
+@NonNls public class LightIdeaTestCase extends UsefulTestCase implements DataProvider {
   protected static final String PROFILE = "Configurable";
   private static IdeaTestApplication ourApplication;
   private static Project ourProject;

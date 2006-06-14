@@ -103,7 +103,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
       return null;
     }
 
-    public Class[] getConcreteInterfaceVariants() {
+    public Type[] getConcreteInterfaceVariants() {
       return new Class[]{DomFileElement.class};
     }
   };
@@ -209,7 +209,6 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
       if (myRootHandler == null) {
         final XmlTag tag = getRootTag();
         myRootHandler = new DomRootInvocationHandler(myRootElementClass, tag, this, myRootTagName);
-        myManager.createDomElement(myRootHandler);
       }
       return myRootHandler;
     }

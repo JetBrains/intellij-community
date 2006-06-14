@@ -7,32 +7,31 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.vfs.VirtualFile;import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiLock;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.*;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.CollectionElementAddedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
-import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
-import java.lang.annotation.Annotation;
 import java.util.*;
 
 /**
@@ -55,54 +54,64 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   private final Type myAbstractType;
-  private Type myType;
+  private final Type myType;
   private final DomInvocationHandler myParent;
   private final DomManagerImpl myManager;
   private final String myTagName;
-  private Converter myGenericConverter;
+  private final Converter myGenericConverter;
   private XmlTag myXmlTag;
 
   private XmlFile myFile;
-  private DomElement myProxy;
+  private final DomElement myProxy;
   private final Set<String> myInitializedChildren = new com.intellij.util.containers.HashSet<String>();
   private final Map<Pair<String, Integer>, IndexedElementInvocationHandler> myFixedChildren =
     new HashMap<Pair<String, Integer>, IndexedElementInvocationHandler>();
   private final Map<String, AttributeChildInvocationHandler> myAttributeChildren = new HashMap<String, AttributeChildInvocationHandler>();
-  private GenericInfoImpl myGenericInfoImpl;
+  final private GenericInfoImpl myGenericInfo;
   private final Map<String, Class> myFixedChildrenClasses = new HashMap<String, Class>();
   private boolean myInvalidated;
   private InvocationCache myInvocationCache;
+  private final Factory<Converter> myGenericConverterFactory = new Factory<Converter>() {
+    public Converter create() {
+      return myGenericConverter;
+    }
+  };
 
   protected DomInvocationHandler(final Type type,
                                  final XmlTag tag,
                                  final DomInvocationHandler parent,
                                  final String tagName,
                                  final DomManagerImpl manager) {
-    myXmlTag = tag;
+    myManager = manager;
     myParent = parent;
     myTagName = tagName;
-    myManager = manager;
     myAbstractType = type;
-    setType(type);
+
+    final Type concreteInterface = ClassChooserManager.getClassChooser(type).chooseType(tag);
+    final Converter converter = getConverter(new Function<Class<? extends Annotation>, Annotation>() {
+      @Nullable
+      public Annotation fun(final Class<? extends Annotation> s) {
+        return getAnnotation(s);
+      }
+    }, DomUtil.getGenericValueParameter(concreteInterface), Factory.NULL_FACTORY);
+
+    myGenericInfo = manager.getGenericInfo(concreteInterface);
+    myType = concreteInterface;
+    myGenericConverter = converter;
+    myInvocationCache = manager.getInvocationCache(new Pair<Type, Type>(concreteInterface, converter == null ? null : converter.getClass()));
+    final Class<?> rawType = DomReflectionUtil.getRawType(concreteInterface);
+    myProxy = AdvancedProxy.createProxy(this, manager.getImplementation(rawType), rawType);
+    attach(tag);
   }
 
+  @Nullable
   public <T extends DomElement> DomFileElementImpl<T> getRoot() {
     return isValid() ? (DomFileElementImpl<T>)myParent.getRoot() : null;
   }
 
+  @Nullable
   public DomElement getParent() {
     return isValid() ? myParent.getProxy() : null;
-  }
-
-  public final void setType(final Type type) {
-    myType = type;
-    myGenericInfoImpl = myManager.getGenericInfo(type);
-    myGenericConverter = getConverter(new Function<Class<? extends Annotation>, Annotation>() {
-      public Annotation fun(final Class<? extends Annotation> s) {
-        return getAnnotation(s);
-      }
-    }, DomUtil.getGenericValueParameter(type), Factory.NULL_FACTORY);
-    myInvocationCache = myManager.getInvocationCache(new Pair<Type, Type>(type, myGenericConverter == null ? null : myGenericConverter.getClass()));
   }
 
   final DomInvocationHandler getParentHandler() {
@@ -230,8 +239,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   @NotNull
   public final GenericInfoImpl getGenericInfo() {
-    myGenericInfoImpl.buildMethodMaps();
-    return myGenericInfoImpl;
+    myGenericInfo.buildMethodMaps();
+    return myGenericInfo;
   }
 
   protected abstract void undefineInternal();
@@ -274,7 +283,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   protected abstract XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException, IllegalAccessException, InstantiationException;
 
   protected final void addRequiredChildren() {
-    for (final DomChildrenDescription description : myGenericInfoImpl.getChildrenDescriptions()) {
+    for (final DomChildrenDescription description : myGenericInfo.getChildrenDescriptions()) {
       if (description instanceof DomAttributeChildDescription) {
         if (((DomAttributeChildDescription)description).getAnnotation(Required.class) != null) {
           description.getValues(getProxy()).get(0).ensureXmlElementExists();
@@ -318,22 +327,21 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   public void acceptChildren(DomElementVisitor visitor) {
     final DomElement element = ModelMergerUtil.getImplementation(findCallerProxy(ACCEPT_CHILDREN_METHOD), DomElement.class);
     for (final DomChildrenDescription description : getGenericInfo().getChildrenDescriptions()) {
-      final List<? extends DomElement> values = description.getValues(element);
-      for (final DomElement value : values) {
+      for (final DomElement value : description.getValues(element)) {
         value.accept(visitor);
       }
     }
   }
 
   public final void initializeAllChildren() {
-    myGenericInfoImpl.buildMethodMaps();
-    for (final String s : myGenericInfoImpl.getFixedChildrenNames()) {
+    myGenericInfo.buildMethodMaps();
+    for (final String s : myGenericInfo.getFixedChildrenNames()) {
       checkInitialized(s);
     }
-    for (final String s : myGenericInfoImpl.getCollectionChildrenNames()) {
+    for (final String s : myGenericInfo.getCollectionChildrenNames()) {
       checkInitialized(s);
     }
-    for (final String s : myGenericInfoImpl.getAttributeChildrenNames()) {
+    for (final String s : myGenericInfo.getAttributeChildrenNames()) {
       checkInitialized(s);
     }
   }
@@ -353,23 +361,19 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   @NotNull
-  protected final Converter getScalarConverter(final Method method, final boolean getter) {
-    final Type type = getter ? method.getGenericReturnType() : method.getGenericParameterTypes()[0];
+  protected final Converter getScalarConverter(final Type type, final Method method) {
     final Class parameter = DomReflectionUtil.substituteGenericType(type, myType);
     assert parameter != null : type + " " + myType;
     final Converter converter = getConverter(new Function<Class<? extends Annotation>, Annotation>() {
       public Annotation fun(final Class<? extends Annotation> s) {
         return DomReflectionUtil.findAnnotationDFS(method, s);
       }
-    }, parameter, type instanceof TypeVariable ?  new Factory<Converter>() {
-      public Converter create() {
-        return myGenericConverter;
-      }
-    } : Factory.NULL_FACTORY);
+    }, parameter, type instanceof TypeVariable ? myGenericConverterFactory : Factory.NULL_FACTORY);
     assert converter != null : "No converter specified: String<->" + parameter.getName();
     return converter;
   }
 
+  @Nullable
   private Converter getConverter(final Function<Class<? extends Annotation>, Annotation> annotationProvider, Class parameter, final Factory<Converter> continuation) {
     final Resolve resolveAnnotation = (Resolve) annotationProvider.fun(Resolve.class);
     if (resolveAnnotation != null) {
@@ -392,10 +396,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   public final DomElement getProxy() {
     return myProxy;
-  }
-
-  public final void setProxy(final DomElement proxy) {
-    myProxy = proxy;
   }
 
   @NotNull
@@ -455,14 +455,14 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   protected final Invocation createInvocation(final Method method) throws IllegalAccessException, InstantiationException {
     if (DomImplUtil.isTagValueGetter(method)) {
-      return createGetValueInvocation(getScalarConverter(method, true), method);
+      return createGetValueInvocation(getScalarConverter(method.getGenericReturnType(), method), method);
     }
 
     if (DomImplUtil.isTagValueSetter(method)) {
-      return createSetValueInvocation(getScalarConverter(method, false), method);
+      return createSetValueInvocation(getScalarConverter(method.getGenericParameterTypes()[0], method), method);
     }
 
-    return myGenericInfoImpl.createInvocation(method);
+    return myGenericInfo.createInvocation(method);
   }
 
   protected Invocation createSetValueInvocation(final Converter converter, final Method method) {
@@ -485,7 +485,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   @NotNull
   final AttributeChildInvocationHandler getAttributeChild(final JavaMethodSignature method) {
     checkInitialized(ATTRIBUTES);
-    final AttributeChildInvocationHandler domElement = myAttributeChildren.get(myGenericInfoImpl.getAttributeName(method));
+    final AttributeChildInvocationHandler domElement = myAttributeChildren.get(myGenericInfo.getAttributeName(method));
     assert domElement != null : method.toString();
     return domElement;
   }
@@ -533,24 +533,24 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
         return;
       }
       try {
-        myGenericInfoImpl.buildMethodMaps();
+        myGenericInfo.buildMethodMaps();
 
         if (ATTRIBUTES.equals(qname)) {
-          for (Map.Entry<JavaMethodSignature, String> entry : myGenericInfoImpl.getAttributeChildrenEntries()) {
+          for (Map.Entry<JavaMethodSignature, String> entry : myGenericInfo.getAttributeChildrenEntries()) {
             getOrCreateAttributeChild(entry.getKey().findMethod(DomReflectionUtil.getRawType(myType)), entry.getValue());
           }
         }
 
         final XmlTag tag = getXmlTag();
-        if (myGenericInfoImpl.isFixedChild(qname)) {
-          final int count = myGenericInfoImpl.getFixedChildrenCount(qname);
+        if (myGenericInfo.isFixedChild(qname)) {
+          final int count = myGenericInfo.getFixedChildrenCount(qname);
           for (int i = 0; i < count; i++) {
             getOrCreateIndexedChild(findSubTag(tag, qname, i), new Pair<String, Integer>(qname, i));
           }
         }
-        else if (tag != null && myGenericInfoImpl.isCollectionChild(qname)) {
+        else if (tag != null && myGenericInfo.isCollectionChild(qname)) {
           for (XmlTag subTag : tag.findSubTags(qname)) {
-            createCollectionElement(myGenericInfoImpl.getCollectionChildrenType(qname), subTag);
+            new CollectionElementInvocationHandler(myGenericInfo.getCollectionChildrenType(qname), subTag, this);
           }
         }
 
@@ -570,7 +570,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private void getOrCreateAttributeChild(final Method method, final String attributeName) {
     final AttributeChildInvocationHandler handler = new AttributeChildInvocationHandler(method.getGenericReturnType(), getXmlTag(), this,
                                                                                         attributeName, myManager);
-    myManager.createDomElement(handler);
     myAttributeChildren.put(handler.getXmlElementName(), handler);
   }
 
@@ -579,7 +578,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     if (handler == null) {
       handler = createIndexedChild(subTag, pair);
       myFixedChildren.put(pair, handler);
-      myManager.createDomElement(handler);
     }
     else {
       handler.attach(subTag);
@@ -588,7 +586,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   private IndexedElementInvocationHandler createIndexedChild(final XmlTag subTag, final Pair<String, Integer> pair) {
-    final JavaMethodSignature signature = myGenericInfoImpl.getFixedChildGetter(pair);
+    final JavaMethodSignature signature = myGenericInfo.getFixedChildGetter(pair);
     final String qname = pair.getFirst();
     final Class<?> rawType = DomReflectionUtil.getRawType(myType);
     final Method method = signature.findMethod(rawType);
@@ -605,10 +603,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myFixedChildrenClasses.get(tagName);
   }
 
-  final DomElement createCollectionElement(final Type type, final XmlTag subTag) {
-    return myManager.createDomElement(new CollectionElementInvocationHandler(type, subTag, this));
-  }
-
+  @Nullable
   protected static XmlTag findSubTag(final XmlTag tag, final String qname, final int index) {
     if (tag == null) {
       return null;
@@ -667,14 +662,13 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public final DomElement addChild(final String tagName, final Type type, int index) throws IncorrectOperationException {
-    final VirtualFile virtualFile = getFile().getVirtualFile();
-    if (virtualFile != null && !virtualFile.isWritable()) {
-      VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(virtualFile);
-      return null;
-    }
-
     checkInitialized(tagName);
-    return addCollectionElement(type, addEmptyTag(tagName, index));
+    final XmlTag tag = addEmptyTag(tagName, index);
+    final CollectionElementInvocationHandler handler = new CollectionElementInvocationHandler(type, tag, this);
+    final DomElement element = handler.getProxy();
+    myManager.fireEvent(new CollectionElementAddedEvent(element, tag.getName()));
+    handler.addRequiredChildren();
+    return element;
   }
 
   protected final void createFixedChildrenTags(String tagName, int count) throws IncorrectOperationException {
@@ -684,13 +678,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     if (subTags.length < count) {
       getFixedChild(new Pair<String, Integer>(tagName, count - 1)).ensureTagExists();
     }
-  }
-
-  private DomElement addCollectionElement(final Type type, final XmlTag tag) {
-    final DomElement element = createCollectionElement(type, tag);
-    myManager.fireEvent(new CollectionElementAddedEvent(element, tag.getName()));
-    DomManagerImpl.getDomInvocationHandler(element).addRequiredChildren();
-    return element;
   }
 
   private XmlTag addEmptyTag(final String tagName, int index) throws IncorrectOperationException {

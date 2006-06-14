@@ -15,10 +15,8 @@
  */
 package com.intellij.util.containers;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
 import java.lang.ref.WeakReference;
+import java.util.Map;
 
 /**
  * @author peter
@@ -26,21 +24,19 @@ import java.lang.ref.WeakReference;
 public abstract class WeakFactoryMap<T,V> {
   private final Map<T, WeakReference<V>> myMap = new WeakHashMap<T, WeakReference<V>>();
 
-  @NotNull
   protected abstract V create(T key);
 
-  @NotNull
   public final V get(T key) {
-    WeakReference<V> reference = myMap.get(key);
+    final WeakReference<V> reference = myMap.get(key);
     if (reference != null) {
       final V v = reference.get();
       if (v != null) {
-        return v;
+        return v == FactoryMap.NULL ? null : v;
       }
     }
 
     final V v1 = create(key);
-    myMap.put(key, reference = new WeakReference<V>(v1));
+    myMap.put(key, new WeakReference<V>(v1 == null ? (V)FactoryMap.NULL : v1));
     return v1;
   }
 
@@ -48,4 +44,7 @@ public abstract class WeakFactoryMap<T,V> {
     return myMap.containsKey(key);
   }
 
+  public void clear() {
+    myMap.clear();
+  }
 }

@@ -3,7 +3,6 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +29,6 @@ import java.util.*;
  * @author peter
  */
 public class GenericInfoImpl implements DomGenericInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.GenericInfoImpl");
   private final Class<? extends DomElement> myClass;
   private DomManagerImpl myDomManager;
   private final BidirectionalMap<JavaMethodSignature, Pair<String, Integer>> myFixedChildrenMethods =
@@ -410,7 +408,7 @@ public class GenericInfoImpl implements DomGenericInfo {
             else {
               newTag = (XmlTag)tag.addAfter(emptyTag, lastTag);
             }
-            return handler.createCollectionElement(type, newTag);
+            return new CollectionElementInvocationHandler(type, newTag, handler).getProxy();
           }
           finally {
             manager.setChanging(b);
@@ -634,7 +632,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     return new AttributeChildDescriptionImpl(attributeName, getter);
   }
 
-  public final Class[] getConcreteInterfaceVariants() {
+  public final Type[] getConcreteInterfaceVariants() {
     return ClassChooserManager.getClassChooser(myClass).getChooserClasses();
   }
 
@@ -700,7 +698,7 @@ public class GenericInfoImpl implements DomGenericInfo {
 
   private void addReferenceElementNames(final Condition<Class> condition, final HashSet<String> set, final HashSet<GenericInfoImpl> visited) {
     visited.add(this);
-    Class[] classes = getConcreteInterfaceVariants();
+    Type[] classes = getConcreteInterfaceVariants();
     if (classes.length == 1 && classes[0].equals(myClass)) {
       for (final DomChildDescriptionImpl description : getChildrenDescriptions()) {
         final Type type = description.getType();
@@ -716,7 +714,7 @@ public class GenericInfoImpl implements DomGenericInfo {
         }
       }
     } else {
-      for (final Class aClass : classes) {
+      for (final Type aClass : classes) {
         final GenericInfoImpl info = myDomManager.getGenericInfo(aClass);
         if (!visited.contains(info)) {
           info.addReferenceElementNames(condition, set, visited);

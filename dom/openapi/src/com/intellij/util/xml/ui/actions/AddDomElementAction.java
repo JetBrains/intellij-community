@@ -18,6 +18,7 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.lang.reflect.Type;
 
 /**
  * User: Sergey.Vasiliev
@@ -89,17 +90,17 @@ public abstract class AddDomElementAction extends AnAction {
     DomCollectionChildDescription[] descriptions = getDomCollectionChildDescriptions(e);
     final List<AnAction> actions = new ArrayList<AnAction>();
     for (DomCollectionChildDescription description : descriptions) {
-      final ClassChooser chooser = ClassChooserManager.getClassChooser(DomReflectionUtil.getRawType(description.getType()));
-      for (Class clazz : chooser.getChooserClasses()) {
-        String name = ElementPresentationManager.getTypeName(clazz);
+      final ClassChooser chooser = ClassChooserManager.getClassChooser(description.getType());
+      for (Type type : chooser.getChooserClasses()) {
+        String name = ElementPresentationManager.getTypeName(type);
         Icon icon = null;
+        final Class<?> rawType = DomReflectionUtil.getRawType(type);
         if (!showAsPopup() || descriptions.length == 1) {
           if (descriptions.length > 1) {
-            icon = ElementPresentationManager.getIconForClass(clazz);
+            icon = ElementPresentationManager.getIconForClass(rawType);
           }
         }
-        AnAction action = createAddingAction(e, ApplicationBundle.message("action.add") + " " + name, icon, clazz, description);
-        actions.add(action);
+        actions.add(createAddingAction(e, ApplicationBundle.message("action.add") + " " + name, icon, rawType, description));
       }
     }
     if (actions.size() > 1 && showAsPopup()) {

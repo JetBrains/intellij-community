@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="ui-impl" />
     <orderEntry type="module" module-name="plugins-management" />
     <orderEntry type="module" module-name="ExtendedApi" />
+    <orderEntry type="module" module-name="UsageView" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

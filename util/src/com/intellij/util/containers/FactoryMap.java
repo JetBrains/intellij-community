@@ -16,7 +16,6 @@
 package com.intellij.util.containers;
 
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -24,23 +23,26 @@ import java.util.Map;
  * @author peter
  */
 public abstract class FactoryMap<T,V> {
-  private static final Object NULL_KEY = new Object();
+  static final Object NULL = new Object();
   private final Map<T,V> myMap = new THashMap<T, V>();
 
-  @NotNull
   protected abstract V create(T key);
 
-  @NotNull
   public final V get(T key) {
-    V v = myMap.get(key == null ? (T)NULL_KEY : key);
+    V v = myMap.get(getKey(key));
     if (v == null) {
-      myMap.put(key == null ? (T)NULL_KEY : key, v = create(key));
+      v = create(key);
+      myMap.put(getKey(key), v == null ? (V)NULL : v);
     }
-    return v;
+    return v == NULL ? null : v;
+  }
+
+  static <T> T getKey(final T key) {
+    return key == null ? (T)NULL : key;
   }
 
   public final boolean containsKey(T key) {
-    return myMap.containsKey(key);
+    return myMap.containsKey(getKey(key));
   }
 
 }

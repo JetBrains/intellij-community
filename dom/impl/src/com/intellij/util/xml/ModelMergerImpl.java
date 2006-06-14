@@ -149,8 +149,8 @@ public class ModelMergerImpl implements ModelMerger {
   private <T> T _mergeModels(final Class<? extends T> aClass, final MergingInvocationHandler<T> handler, final T... implementations) {
     final Set<Class> commonClasses = getCommonClasses(implementations);
     commonClasses.add(MergedObject.class);
-    commonClasses.remove(aClass);
-    final T t = AdvancedProxy.createProxy(handler, aClass, commonClasses.toArray(new Class[commonClasses.size()]));
+    commonClasses.add(aClass);
+    final T t = AdvancedProxy.<T>createProxy(handler, null, commonClasses.toArray(new Class[commonClasses.size()]));
     myMergedMap.put(implementations, t);
     return t;
   }

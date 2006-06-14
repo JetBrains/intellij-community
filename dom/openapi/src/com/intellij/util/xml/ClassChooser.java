@@ -6,11 +6,13 @@ package com.intellij.util.xml;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 
+import java.lang.reflect.Type;
+
 /**
  * @author peter
  */
 public abstract class ClassChooser<T extends DomElement> {
-  public abstract Class<? extends T> chooseClass(XmlTag tag);
-  public abstract void distinguishTag(XmlTag tag, Class<? extends T> aClass) throws IncorrectOperationException;
-  public abstract Class[] getChooserClasses();
+  public abstract Type chooseType(XmlTag tag);
+  public abstract void distinguishTag(XmlTag tag, Type aClass) throws IncorrectOperationException;
+  public abstract Type[] getChooserClasses();
 }

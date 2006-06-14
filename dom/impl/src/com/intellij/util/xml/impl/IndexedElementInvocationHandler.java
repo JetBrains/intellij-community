@@ -9,7 +9,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.ClassChooserManager;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 
 import java.lang.annotation.Annotation;
@@ -46,8 +45,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     parent.createFixedChildrenTags(getXmlElementName(), myIndex);
     final XmlTag newTag = (XmlTag)parent.getXmlTag().add(tag);
     if (getParentHandler().getFixedChildrenClass(tag.getName()) != null) {
-      final Type type = getChildDescription().getType();
-      ClassChooserManager.getClassChooser(DomReflectionUtil.getRawType(type)).distinguishTag(newTag, DomReflectionUtil.getRawType(getDomElementType()));
+      ClassChooserManager.getClassChooser(getChildDescription().getType()).distinguishTag(newTag, getDomElementType());
     }
     return newTag;
   }

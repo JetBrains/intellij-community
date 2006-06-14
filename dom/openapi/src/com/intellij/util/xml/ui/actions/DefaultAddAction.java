@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.reflect.Type;
 
 /**
  * User: Sergey.Vasiliev
@@ -65,28 +66,28 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
     final DomElement parent = getParentDomElement();
     final DomManager domManager = parent.getManager();
     final ClassChooser[] oldChooser = new ClassChooser[]{null};
-    final Class[] aClass = new Class[]{null};
+    final Type[] aClass = new Type[]{null};
     final StableElement<T> result = new WriteCommandAction<StableElement<T>>(domManager.getProject(), parent.getRoot().getFile()) {
       protected void run(Result<StableElement<T>> result) throws Throwable {
         final T t = (T)getDomCollectionChildDescription().addValue(getParentDomElement(), getElementClass());
         tuneNewValue(t);
-        aClass[0] = DomReflectionUtil.getRawType(parent.getGenericInfo().getCollectionChildDescription(t.getXmlElementName()).getType());
+        aClass[0] = parent.getGenericInfo().getCollectionChildDescription(t.getXmlElementName()).getType();
         oldChooser[0] = ClassChooserManager.getClassChooser(aClass[0]);
         final SmartPsiElementPointer pointer =
           SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(t.getXmlTag());
         ClassChooserManager.registerClassChooser(aClass[0], new ClassChooser() {
-          public Class<? extends T> chooseClass(final XmlTag tag) {
+          public Type chooseType(final XmlTag tag) {
             if (tag == pointer.getElement()) {
               return getElementClass();
             }
-            return oldChooser[0].chooseClass(tag);
+            return oldChooser[0].chooseType(tag);
           }
 
-          public void distinguishTag(final XmlTag tag, final Class aClass) throws IncorrectOperationException {
+          public void distinguishTag(final XmlTag tag, final Type aClass) throws IncorrectOperationException {
             oldChooser[0].distinguishTag(tag, aClass);
           }
 
-          public Class[] getChooserClasses() {
+          public Type[] getChooserClasses() {
             return oldChooser[0].getChooserClasses();
           }
         });
