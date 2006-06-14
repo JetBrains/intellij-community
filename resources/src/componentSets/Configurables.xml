@@ -33,9 +33,6 @@
       <implementation-class>com.intellij.application.options.CodeStyleSchemesConfigurable</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.roots.ui.configuration.GlobalLibrariesConfigurable</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.debugger.settings.DebuggerConfigurable</implementation-class>
     </component>
     <component>
@@ -86,7 +83,7 @@
 
   <project-components>
     <component>
-      <implementation-class>com.intellij.openapi.roots.ui.configuration.ProjectModulesConfigurable</implementation-class>
+      <implementation-class>com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable</implementation-class>
       <skipForDummyProject/>
     </component>
     <component>

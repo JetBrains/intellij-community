@@ -4,12 +4,14 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.OrderRootType;
@@ -18,6 +20,8 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -34,7 +38,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.javaee.serverInstances.ApplicationServersManager;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -76,6 +80,8 @@ public class LibraryTableEditor {
 
   private final Collection<Runnable> myListeners = new ArrayList<Runnable>();
 
+  @Nullable private Project myProject = null;
+
   private LibraryTableEditor(final LibraryTable libraryTable) {
     this(new LibraryTableModifiableModelProvider() {
       public LibraryTable.ModifiableModel getModifiableModel() {
@@ -88,6 +94,13 @@ public class LibraryTableEditor {
     });
   }
 
+  public static LibraryTableEditor editLibraryTable(LibraryTableModifiableModelProvider provider, Project project){
+    LibraryTableEditor result = new LibraryTableEditor(provider);
+    result.myProject = project;
+    result.init(new LibraryTableTreeStructure(result));
+    return result;
+  }
+
   public static LibraryTableEditor editLibraryTable(LibraryTableModifiableModelProvider provider){
     LibraryTableEditor result = new LibraryTableEditor(provider);
     result.init(new LibraryTableTreeStructure(result));
@@ -98,6 +111,14 @@ public class LibraryTableEditor {
     LibraryTableEditor result = new LibraryTableEditor(libraryTable);
     result.init(new LibraryTableTreeStructure(result));
     return result;
+  }
+
+  public static LibraryTableEditor editLibrary(final LibraryTableModifiableModelProvider provider,
+                                               final Library library,
+                                               final Project project) {
+    final LibraryTableEditor tableEditor = editLibrary(provider, library);
+    tableEditor.myProject = project;
+    return tableEditor;
   }
 
   public static LibraryTableEditor editLibrary(LibraryTableModifiableModelProvider provider, Library library){
@@ -191,6 +212,9 @@ public class LibraryTableEditor {
 
 
   public LibraryEditor getLibraryEditor(Library library) {
+    if (myTableModifiableModel instanceof LibrariesModifiableModel){
+      return ((LibrariesModifiableModel)myTableModifiableModel).getLibraryEditor(library);
+    }
     LibraryEditor libraryEditor = myLibraryToEditorMap.get(library);
     if (libraryEditor == null) {
       libraryEditor = new LibraryEditor(library);
@@ -202,6 +226,9 @@ public class LibraryTableEditor {
   private void removeLibrary(Library library) {
     myLibraryToEditorMap.remove(library);
     myTableModifiableModel.removeLibrary(library);
+    if (myProject != null){
+      ProjectRootConfigurable.getInstance(myProject).fireItemsChangeListener(library);
+    }
   }
 
   /**
@@ -263,7 +290,7 @@ public class LibraryTableEditor {
     return elements.toArray(new Object[elements.size()]);
   }
 
-  private Object getPathElement(final TreePath selectionPath) {
+  private static Object getPathElement(final TreePath selectionPath) {
     if (selectionPath == null) {
       return null;
     }
@@ -302,7 +329,7 @@ public class LibraryTableEditor {
     return libs.toArray(new Library[libs.size()]);
   }
 
-  private Library convertElementToLibrary(Object selectedElement) {
+  private static Library convertElementToLibrary(Object selectedElement) {
     LibraryElement libraryElement = null;
     if (selectedElement instanceof LibraryElement) {
       libraryElement = (LibraryElement)selectedElement;
@@ -352,10 +379,22 @@ public class LibraryTableEditor {
     return dialogWrapper.isOK();
   }
 
+  public ActionListener createAddLibraryAction(boolean select, JComponent parent){
+    return new AddLibraryAction(select, parent);
+  }
+
   private class AddLibraryAction implements ActionListener {
     private final FileChooserDescriptor myFileChooserDescriptor = new FileChooserDescriptor(false, true, true, false, false, true);
+    private boolean myNeedToSelect;
+    private JComponent myParent;
 
     public AddLibraryAction() {
+      this(false, myPanel);
+    }
+
+    public AddLibraryAction(boolean select, JComponent parent) {
+      myNeedToSelect = select;
+      myParent = parent;
       myFileChooserDescriptor.setTitle(ProjectBundle.message("library.choose.classes.title"));
       myFileChooserDescriptor.setDescription(ProjectBundle.message("library.choose.classes.description"));
     }
@@ -366,12 +405,12 @@ public class LibraryTableEditor {
       final VirtualFile[] files;
       final String name;
       if (myEditingModuleLibraries) {
-        final Pair<String, VirtualFile[]> pair = new LibraryFileChooser(myFileChooserDescriptor, myPanel, false, LibraryTableEditor.this).chooseNameAndFiles();
+        final Pair<String, VirtualFile[]> pair = new LibraryFileChooser(myFileChooserDescriptor, myParent, false, LibraryTableEditor.this).chooseNameAndFiles();
         files = filterAlreadyAdded(null, pair.getSecond(), OrderRootType.CLASSES);
         name = null;
       }
       else {
-        final Pair<String, VirtualFile[]> pair = new LibraryFileChooser(myFileChooserDescriptor, myPanel, true, LibraryTableEditor.this).chooseNameAndFiles();
+        final Pair<String, VirtualFile[]> pair = new LibraryFileChooser(myFileChooserDescriptor, myParent, true, LibraryTableEditor.this).chooseNameAndFiles();
         files = pair.getSecond();
         name = pair.getFirst();
       }
@@ -402,6 +441,21 @@ public class LibraryTableEditor {
       librariesChanged(true);
       if (libraryToSelect[0] != null) {
         selectLibrary(libraryToSelect[0], false);
+        if (myProject != null){
+          final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(myProject);
+          final LibraryEditor libraryEditor = getLibraryEditor(libraryToSelect[0]);
+          if (libraryEditor.hasChanges()) {
+            ApplicationManager.getApplication().runWriteAction(new Runnable(){
+              public void run() {
+                libraryEditor.commit();  //update lib node
+              }
+            });
+          }
+          final DefaultMutableTreeNode libraryNode = rootConfigurable.createLibraryNode(libraryToSelect[0]);
+          if (myNeedToSelect){
+            rootConfigurable.selectNodeInTree(libraryNode);
+          }
+        }
       }
     }
   }
@@ -629,7 +683,7 @@ public class LibraryTableEditor {
   boolean libraryAlreadyExists(String libraryName) {
     for (Iterator it = myTableModifiableModel.getLibraryIterator(); it.hasNext(); ) {
       final Library lib = (Library)it.next();
-      final LibraryEditor editor = myLibraryToEditorMap.get(lib);
+      final LibraryEditor editor = getLibraryEditor(lib);
       final String libName = (editor != null)? editor.getName() : lib.getName();
       if (libraryName.equals(libName)) {
         return true;
@@ -801,7 +855,7 @@ public class LibraryTableEditor {
       }
     }
 
-    private boolean hasCapitals(String str) {
+    private static boolean hasCapitals(String str) {
       for (int idx = 0; idx < str.length(); idx++) {
         if (Character.isUpperCase(str.charAt(idx))) {
           return true;

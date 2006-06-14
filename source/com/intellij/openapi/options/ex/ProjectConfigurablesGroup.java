@@ -4,7 +4,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurable;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -34,14 +33,7 @@ public class ProjectConfigurablesGroup implements ConfigurableGroup {
   }
 
   public Configurable[] getConfigurables() {
-    Configurable[] components = myProject.getComponents(Configurable.class);
-    Configurable[] configurables = new Configurable[components.length - (isDefault() ? 1 : 0)];
-    int j = 0;
-    for (int i = 0; i < components.length; i++) {
-      if (components[i] instanceof ModulesConfigurable && isDefault()) continue;
-      configurables[j++] = components[i];
-    }
-    return configurables;
+    return myProject.getComponents(Configurable.class);
   }
 
   public int hashCode() {

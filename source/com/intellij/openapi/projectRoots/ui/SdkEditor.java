@@ -8,21 +8,19 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -54,15 +52,17 @@ public class SdkEditor implements Configurable{
 
   // GUI components
   private JPanel myMainPanel;
-  private JTextField myNameField;
   private TabbedPaneWrapper myTabbedPane;
   private final NotifiableSdkModel mySdkModel;
   private JLabel myHomeFieldLabel;
   private String myVersionString;
   @NonNls private static final String MAC_HOME_PATH = "/Home";
 
+  private String myInitialName;
+
   public SdkEditor(NotifiableSdkModel sdkModel) {
     mySdkModel = sdkModel;
+    createMainPanel();
   }
 
   public ProjectJdk getEditedSdk(){
@@ -71,6 +71,7 @@ public class SdkEditor implements Configurable{
 
   public void setSdk(ProjectJdk sdk){
     mySdk = sdk;
+    myInitialName = mySdk.getName();
     final AdditionalDataConfigurable additionalDataConfigurable = getAdditionalDataConfigurable();
     if (additionalDataConfigurable != null) {
       additionalDataConfigurable.setSdk(sdk);
@@ -93,7 +94,6 @@ public class SdkEditor implements Configurable{
   }
 
   public JComponent createComponent(){
-    createMainPanel();
     return myMainPanel;
   }
 
@@ -107,12 +107,6 @@ public class SdkEditor implements Configurable{
     myJavadocPathEditor = new MyPathsEditor(ProjectBundle.message("sdk.configure.javadoc.tab"), ProjectRootType.JAVADOC, new FileChooserDescriptor(false, true, true, false, true, true), true);
 
     myMainPanel = new JPanel(new GridBagLayout());
-    myNameField = new JTextField();
-
-    JLabel nameLabel = new JLabel(ProjectBundle.message("sdk.configure.name.label"));
-    nameLabel.setLabelFor(myNameField);
-    myMainPanel.add(nameLabel,   new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 2, 2), 0, 0));
-    myMainPanel.add(myNameField, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 2, 2, 0), 0, 0));
 
     myTabbedPane = new TabbedPaneWrapper();
     myTabbedPane.addTab(myClassPathEditor.getDisplayName(), myClassPathEditor.createComponent());
@@ -134,12 +128,6 @@ public class SdkEditor implements Configurable{
     myMainPanel.add(myAdditionalDataPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(2, 0, 0, 0), 0, 0));
 
     myMainPanel.add(myTabbedPane.getComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(2, 0, 0, 0), 0, 0));
-
-    myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
-      public void textChanged(DocumentEvent event) {
-        myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(SdkEditor.this));
-      }
-    });
   }
 
   private String getHomeFieldLabelValue() {
@@ -150,9 +138,9 @@ public class SdkEditor implements Configurable{
   }
 
   public boolean isModified(){
-    final String initialName = (mySdk == null) ? "" : mySdk.getName();
+
     final String initialHome = (mySdk == null) ? "" : mySdk.getHomePath();
-    boolean isModified = !Comparing.equal(getNameValue(), initialName);
+    boolean isModified = !Comparing.equal(mySdk == null? null : mySdk.getName(), myInitialName);
     isModified = isModified || !Comparing.equal(getHomeValue().replace(File.separatorChar, '/'), initialHome);
     isModified = isModified || myClassPathEditor.isModified();
     isModified = isModified || mySourcePathEditor.isModified();
@@ -165,20 +153,14 @@ public class SdkEditor implements Configurable{
   }
 
   public void apply() throws ConfigurationException{
-    final String currName = getNameValue();
-    if(!Comparing.equal(currName, (mySdk == null) ? "" : mySdk.getName())){
-      if(currName.length() == 0){
-        ApplicationManager.getApplication().invokeLater(new Runnable(){
-          public void run(){
-            focusToNameField();
-          }
-        });
+    if(!Comparing.equal(myInitialName, (mySdk == null) ? "" : mySdk.getName())){
+      if(mySdk.getName().length() == 0){
         throw new ConfigurationException(ProjectBundle.message("sdk.list.name.required.error"));
       }
     }
     if (mySdk != null){
+      myInitialName = mySdk.getName();
       final SdkModificator sdkModificator = mySdk.getSdkModificator();
-      sdkModificator.setName(getNameValue());
       sdkModificator.setHomePath(getHomeValue().replace(File.separatorChar, '/'));
       myClassPathEditor.apply(sdkModificator);
       mySourcePathEditor.apply(sdkModificator);
@@ -197,7 +179,6 @@ public class SdkEditor implements Configurable{
 
   public void reset(){
     if (mySdk == null){
-      setNameValue("");
       setHomePathValue("");
       myClassPathEditor.reset(null);
       mySourcePathEditor.reset(null);
@@ -209,7 +190,6 @@ public class SdkEditor implements Configurable{
       mySourcePathEditor.reset(sdkModificator.getRoots(mySourcePathEditor.getRootType()));
       myJavadocPathEditor.reset(sdkModificator.getRoots(myJavadocPathEditor.getRootType()));
       sdkModificator.commitChanges();
-      setNameValue(mySdk.getName());
       setHomePathValue(mySdk.getHomePath().replace('/', File.separatorChar));
     }
     myVersionString = null;
@@ -220,7 +200,6 @@ public class SdkEditor implements Configurable{
       configurable.reset();
     }
 
-    myNameField.setEnabled(mySdk != null);
     myHomeComponent.setEnabled(mySdk != null);
 
     for(int i = 0; i < myTabbedPane.getTabCount(); i++){
@@ -229,7 +208,6 @@ public class SdkEditor implements Configurable{
   }
 
   public void disposeUIResources(){
-    myMainPanel = null;
     for (final SdkType sdkType : myAdditionalDataConfigurables.keySet()) {
       final AdditionalDataConfigurable configurable = myAdditionalDataConfigurables.get(sdkType);
       configurable.disposeUIResources();
@@ -238,20 +216,8 @@ public class SdkEditor implements Configurable{
     myAdditionalDataComponents.clear();
   }
 
-  public void focusToNameField(){
-    myNameField.requestFocus();
-  }
-
-  public String getNameValue(){
-    return myNameField.getText().trim();
-  }
-
   private String getHomeValue() {
     return myHomeComponent.getText().trim();
-  }
-
-  public void setNameValue(String value){
-    myNameField.setText(value);
   }
 
   public void addChangeListener(ChangeListener listener){
@@ -356,7 +322,7 @@ public class SdkEditor implements Configurable{
     setHomePathValue(homePath.replace('/', File.separatorChar));
 
     final String newSdkName = suggestSdkName(homePath);
-    setNameValue(newSdkName);
+    ((ProjectJdkImpl)mySdk).setName(newSdkName);
 
     try {
       final ProjectJdk dummySdk = (ProjectJdk)mySdk.clone();
@@ -382,7 +348,7 @@ public class SdkEditor implements Configurable{
   }
 
   private String suggestSdkName(final String homePath) {
-    final String currentName = getNameValue();
+    final String currentName = mySdk.getName();
     final String suggestedName = mySdk.getSdkType().suggestSdkName(currentName , homePath);
     if (Comparing.equal(currentName, suggestedName)) return currentName;
     String newSdkName = suggestedName;
@@ -432,11 +398,11 @@ public class SdkEditor implements Configurable{
 
   private class EditedSdkModificator implements SdkModificator {
     public String getName() {
-      return getNameValue();
+      return mySdk.getName();
     }
 
     public void setName(String name) {
-      setNameValue(name);
+      ((ProjectJdkImpl)mySdk).setName(name);
     }
 
     public String getHomePath() {

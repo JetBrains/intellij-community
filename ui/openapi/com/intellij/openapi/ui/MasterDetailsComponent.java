@@ -25,10 +25,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.EventObject;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -271,6 +268,18 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
         return size;
       }
     };
+  }
+
+  protected void addNode(MyNode nodeToAdd, MyNode parent){
+    parent.add(nodeToAdd);
+    TreeUtil.sort(parent, new Comparator() {
+      public int compare(final Object o1, final Object o2) {
+        MyNode node1 = (MyNode)o1;
+        MyNode node2 = (MyNode)o2;
+        return node1.getDisplayName().compareTo(node2.getDisplayName());
+      }
+    });
+    ((DefaultTreeModel)myTree.getModel()).reload(parent);
   }
 
   public void selectNodeInTree(final DefaultMutableTreeNode nodeToSelect) {

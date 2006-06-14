@@ -195,8 +195,20 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
 
   public boolean isChanged() {
     final boolean sameName = Comparing.equal(mySource.myName, myName);
-    final boolean sameRoots = myRoots.equals(mySource.myRoots);
-    return !sameName || !sameRoots;
+    if (!sameName) return true;
+    final OrderRootType[] allTypes = OrderRootType.ALL_TYPES;
+    for (OrderRootType type : allTypes) {
+      final String[] orderedRootUrls1 = getUrls(type);
+      final String[] orderedRootUrls2 = mySource.getUrls(type);
+      if (!Arrays.equals(orderedRootUrls1, orderedRootUrls2)) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  public Library getSource() {
+    return mySource;
   }
 
   public void commit() {

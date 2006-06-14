@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.roots.InheritedJdkOrderEntry;
@@ -7,6 +8,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -78,11 +80,19 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   }
 
   public ProjectJdk getJdk() {
-    return myProjectRootManager.getProjectJdk();
+    if (!getRootModel().isWritable()){
+      return myProjectRootManager.getProjectJdk();
+    }
+    final Project project = getRootModel().getModule().getProject();
+    return ProjectRootConfigurable.getInstance(project).getProjectJdksModel().getProjectJdk();
   }
 
   public String getJdkName() {
-    return myProjectRootManager.getProjectJdkName();
+    if (!getRootModel().isWritable()){
+      myProjectRootManager.getProjectJdkName();
+    }
+    final ProjectJdk projectJdk = getJdk();
+    return projectJdk != null ? projectJdk.getName() : null;
   }
 
   private RootProvider getRootProvider() {

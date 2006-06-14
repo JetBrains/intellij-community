@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.RootPolicy;
@@ -8,6 +9,7 @@ import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -111,7 +113,19 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
   }
 
   public Library getLibrary() {
-    return myLibrary;
+    if (myLibrary == null || !getRootModel().isWritable()){
+      return myLibrary;
+    }
+    final Project project = getRootModel().getModule().getProject();
+    final Library library = ProjectRootConfigurable.getInstance(project).getLibrary(myLibrary);
+    if (library != null){
+      return library;
+    }
+    //library was deleted
+    myLibraryName = myLibrary.getName();
+    myLibraryLevel = myLibrary.getTable().getTableLevel();
+    myLibrary = null;
+    return null;
   }
 
   public boolean isModuleLevel() {
@@ -187,7 +201,8 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
 
   protected void dispose() {
     super.dispose();
-    final LibraryTable libraryTable = (LibraryTable)LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(getLibraryLevel(), myRootModel.getModule().getProject());
+    final LibraryTable libraryTable =
+      LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(getLibraryLevel(), myRootModel.getModule().getProject());
     if (libraryTable != null) {
       myProjectRootManagerImpl.removeListenerForTable(myLibraryListener, libraryTable);
     }

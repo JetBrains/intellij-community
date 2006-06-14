@@ -40,7 +40,7 @@ public class CellAppearanceUtils {
   public static final Icon GENERIC_JDK_ICON = IconLoader.getIcon("/general/jdk.png");
   public static final String NO_JDK = ProjectBundle.message("jdk.missing.item");
 
-  public static final SimpleTextAttributes createSimpleCellAttributes(boolean isSelected){
+  public static SimpleTextAttributes createSimpleCellAttributes(boolean isSelected){
     return isSelected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES;
   }
 
@@ -97,7 +97,11 @@ public class CellAppearanceUtils {
     }
     else if (orderEntry instanceof LibraryOrderEntry) {
       LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
-      return forLibrary(libraryOrderEntry.getLibrary());
+      final Library library = libraryOrderEntry.getLibrary();
+      if (!libraryOrderEntry.isValid()){ //library can be removed
+        return SimpleTextCellAppearance.invalid(orderEntry.getPresentableName(), INVALID_ICON);
+      }
+      return forLibrary(library);
     }
     else if (orderEntry.isSynthetic()) {
       String presentableName = orderEntry.getPresentableName();

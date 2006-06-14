@@ -1,10 +1,10 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.Patches;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.JavaUtil;
 import com.intellij.ide.util.projectWizard.ToolbarPanel;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,8 +20,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
@@ -34,23 +32,26 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.Disposable;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -76,8 +77,6 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
   private JCheckBox myCbExcludeOutput;
   private final String myModuleName;
   private final ModulesProvider myModulesProvider;
-  private LanguageLevelCombo myLanguageLevelCombo;
-  private JRadioButton myRbUseModuleLanguageLevel;
 
   public ContentEntriesEditor(Project project, String moduleName, ModifiableRootModel model, ModulesProvider modulesProvider) {
     super(project, model);
@@ -127,14 +126,7 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     }
     final Module selfModule = getModule();
     if (selfModule == null) return false;
-    if (myRbRelativePaths != null && selfModule.isSavePathsRelative() != myRbRelativePaths.isSelected()) return true;
-    final LanguageLevel moduleLanguageLevel = selfModule.getLanguageLevel();
-    if (moduleLanguageLevel == null) {
-      return myRbUseModuleLanguageLevel.isSelected();
-    } else {
-      if (!myRbUseModuleLanguageLevel.isSelected()) return true;
-    }
-    return !myLanguageLevelCombo.getSelectedItem().equals(moduleLanguageLevel);
+    return myRbRelativePaths != null && selfModule.isSavePathsRelative() != myRbRelativePaths.isSelected();
   }
 
   public JPanel createComponentImpl() {
@@ -195,41 +187,6 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     else {
       rbAbsolutePaths.setSelected(true);
     }
-
-    final JRadioButton rbUseProjectLanguageLevel = new JRadioButton(ProjectBundle.message("module.use.project.language.level"));
-    myRbUseModuleLanguageLevel = new JRadioButton(ProjectBundle.message("module.module.language.level"));
-    ButtonGroup languageGroup = new ButtonGroup();
-    languageGroup.add(myRbUseModuleLanguageLevel);
-    languageGroup.add(rbUseProjectLanguageLevel);
-
-    myLanguageLevelCombo = new LanguageLevelCombo(myProject);
-    final LanguageLevel moduleLanguageLevel = module.getLanguageLevel();
-    if (moduleLanguageLevel != null) {
-      myRbUseModuleLanguageLevel.setSelected(true);
-      myLanguageLevelCombo.setSelectedItem(moduleLanguageLevel);
-    } else {
-      rbUseProjectLanguageLevel.setSelected(true);
-    }
-
-    myLanguageLevelCombo.setEnabled(myRbUseModuleLanguageLevel.isSelected());
-    myRbUseModuleLanguageLevel.addItemListener(new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        myLanguageLevelCombo.setEnabled(myRbUseModuleLanguageLevel.isSelected());
-      }
-    });
-
-    innerPanel.add(rbUseProjectLanguageLevel,
-                   new GridBagConstraints(0, 1, 3, 1, 1.0, 0.0, GridBagConstraints.WEST,
-                                          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-
-    final Box horizontalBox = Box.createHorizontalBox();
-    horizontalBox.add(myRbUseModuleLanguageLevel);
-    horizontalBox.add(Box.createHorizontalStrut(5));
-    horizontalBox.add(myLanguageLevelCombo);
-
-    innerPanel.add(horizontalBox,
-                   new GridBagConstraints(0, 2, 3, 1, 1.0, 0.0, GridBagConstraints.WEST,
-                                          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
     mainPanel.add(innerPanel, BorderLayout.SOUTH);
 
@@ -476,13 +433,8 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
   public void saveData() {
     final Module module = getModule();
     module.setSavePathsRelative(myRbRelativePaths.isSelected());
-    final LanguageLevel newLanguageLevel = getConfiguredLanguageLevel();
-    ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).setLanguageLevel(newLanguageLevel);
   }
 
-  private LanguageLevel getConfiguredLanguageLevel() {
-    return myRbUseModuleLanguageLevel.isSelected() ? myLanguageLevelCombo.getSelectedItem() : null;
-  }
 
   private static void addSourceRoots(final Project project, final ContentEntry[] contentEntries, final Runnable finishRunnable) {
     final HashMap<ContentEntry, List<Pair<File, String>>> entryToRootMap = new HashMap<ContentEntry, List<Pair<File, String>>>();

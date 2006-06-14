@@ -121,10 +121,7 @@ class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
   public OrderEntry cloneEntry(RootModelImpl rootModel,
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
-    final Library thatLibrary;
-    thatLibrary = ((LibraryEx) myLibrary).cloneLibrary();
-
-    return new ModuleLibraryOrderEntryImpl(thatLibrary, rootModel, myExported, ProjectRootManagerImpl.getInstanceImpl(myRootModel.getModule().getProject()), VirtualFilePointerManager.getInstance());
+    return new ModuleLibraryOrderEntryImpl(myLibrary, rootModel, myExported, ProjectRootManagerImpl.getInstanceImpl(myRootModel.getModule().getProject()), VirtualFilePointerManager.getInstance());
   }
 
   public void writeExternal(Element rootElement) throws WriteExternalException {

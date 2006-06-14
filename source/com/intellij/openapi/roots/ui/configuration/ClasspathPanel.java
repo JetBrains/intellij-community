@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -28,18 +27,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryFileChooser;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -52,8 +48,8 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -63,7 +59,9 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -168,8 +166,8 @@ public class ClasspathPanel extends JPanel {
       JComponent.WHEN_FOCUSED
     );
 
-    this.add(ScrollPaneFactory.createScrollPane(myEntryTable), BorderLayout.CENTER);
-    this.add(createButtonsBlock(), BorderLayout.EAST);
+    add(ScrollPaneFactory.createScrollPane(myEntryTable), BorderLayout.CENTER);
+    add(createButtonsBlock(), BorderLayout.EAST);
 
     if (myEntryTable.getRowCount() > 0) {
       myEntryTable.getSelectionModel().setSelectionInterval(0,0);
@@ -180,13 +178,11 @@ public class ClasspathPanel extends JPanel {
   private JComponent createButtonsBlock() {
     final JButton addButton = new JButton(ProjectBundle.message("button.add"));
     final JButton removeButton = new JButton(ProjectBundle.message("button.remove"));
-    final JButton editButton = new JButton(ProjectBundle.message("button.edit"));
     final JButton upButton = new JButton(ProjectBundle.message("button.move.up"));
     final JButton downButton = new JButton(ProjectBundle.message("button.move.down"));
 
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.add(addButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
-    panel.add(editButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
     panel.add(removeButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
     panel.add(upButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
     panel.add(downButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 2, 0, 0), 0, 0));
@@ -197,7 +193,6 @@ public class ClasspathPanel extends JPanel {
           return;
         }
         final int[] selectedRows = myEntryTable.getSelectedRows();
-        boolean editButtonEnabled = selectedRows.length == 1;
         boolean removeButtonEnabled = true;
         int minRow = myEntryTable.getRowCount() + 1;
         int maxRow = -1;
@@ -208,13 +203,9 @@ public class ClasspathPanel extends JPanel {
           if (!item.isRemovable()) {
             removeButtonEnabled = false;
           }
-          if (!item.isEditable()) {
-            editButtonEnabled = false;
-          }
         }
         upButton.setEnabled(minRow > 0 && minRow < myEntryTable.getRowCount());
         downButton.setEnabled(maxRow >= 0 && maxRow < myEntryTable.getRowCount() - 1);
-        editButton.setEnabled(editButtonEnabled);
         removeButton.setEnabled(removeButtonEnabled);
       }
     });
@@ -227,14 +218,6 @@ public class ClasspathPanel extends JPanel {
     downButton.addActionListener(new ButtonAction() {
       protected void executeImpl() {
         moveSelectedRows(+1);
-      }
-    });
-
-    myEntryTable.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2 && editButton.isEnabled()) {
-          editButton.doClick();
-        }
       }
     });
 
@@ -270,41 +253,6 @@ public class ClasspathPanel extends JPanel {
       }
     });
 
-    editButton.addActionListener(new ButtonAction() {
-      protected void executeImpl() {
-        final int row = myEntryTable.getSelectedRow();
-        final TableItem tableItem = myModel.getItemAt(row);
-        if (tableItem instanceof JdkItem) {
-          editJdk((JdkItem)tableItem, row);
-        }
-        else if (tableItem instanceof LibItem) {
-          final LibraryOrderEntry entry = ((LibItem)tableItem).getEntry();
-          if (entry != null && entry.isValid()) {
-            final Library library = entry.getLibrary();
-            final LibraryTable moduleLibraryTable = myRootModel.getModuleLibraryTable();
-            final boolean isModuleLibrary = moduleLibraryTable.getTableLevel().equals(entry.getLibraryLevel());
-            final LibraryTable table = isModuleLibrary ? moduleLibraryTable : library.getTable();
-            final Library[] libraries = table.getLibraries();
-            // need the following code because library instance can be proxied
-            final ArrayList<Library> toSelect = new ArrayList<Library>(1);
-            for (final Library lib : libraries) {
-              if (lib.equals(library)) { // the order is important, not library.equals(lib)!
-                toSelect.add(lib);
-              }
-            }
-            LibraryTableEditor.showEditDialog(ClasspathPanel.this, table, toSelect);
-            // library's name may have changed, so update the row with the entry
-            if (isModuleLibrary) {
-              // there might be new libraries edded from this dialog
-              forceInitFromModel();
-            }
-            else {
-              myModel.fireTableRowsUpdated(row, row);
-            }
-          }
-        }
-      }
-    });
     removeButton.addActionListener(new ButtonAction() {
       protected void executeImpl() {
         final List removedRows = TableUtil.removeSelectedItems(myEntryTable);
@@ -326,6 +274,7 @@ public class ClasspathPanel extends JPanel {
                 modifiableModel = moduleLibraryTable.getModifiableModel();
               }
               modifiableModel.removeLibrary(libEntry.getLibrary());
+              ProjectRootConfigurable.getInstance(myRootModel.getModule().getProject()).deleteLibraryNode(libEntry);
               continue;
             }
           }
@@ -354,40 +303,6 @@ public class ClasspathPanel extends JPanel {
       KeyStroke.getKeyStroke(keyEvent, modifiers),
       JComponent.WHEN_FOCUSED
     );
-  }
-
-  private void editJdk(JdkItem item, int row) {
-    final EditJdkDialog editJdkDialog = new EditJdkDialog();
-    editJdkDialog.show();
-    if (editJdkDialog.isOK()) {
-      if (editJdkDialog.isInheritJdk()) {
-        if (!myRootModel.isJdkInherited()) {
-          myRootModel.inheritJdk();
-        }
-      }
-      else { // use custom
-        final ProjectJdk jdk = editJdkDialog.getSelectedModuleJdk();
-        if (jdk != null) {
-          if (!jdk.equals(myRootModel.getJdk())) {
-            myRootModel.setJdk(jdk);
-          }
-        }
-        else {
-          myRootModel.setJdk(null);
-        }
-      }
-      // now update my order entry
-      JdkOrderEntry jdkEntry = null;
-      final OrderEntry[] orderEntries = myRootModel.getOrderEntries();
-      for (OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof JdkOrderEntry) {
-          jdkEntry = (JdkOrderEntry)orderEntry;
-          break;
-        }
-      }
-      item.setEntry(jdkEntry);
-      myModel.fireTableRowsUpdated(row, row);
-    }
   }
 
   private abstract class ButtonAction implements ActionListener {
@@ -477,6 +392,7 @@ public class ClasspathPanel extends JPanel {
 
   private void initPopupActions() {
     if (myPopupActions == null) {
+      final ProjectRootConfigurable projectRootConfigurable = ProjectRootConfigurable.getInstance(myProject);
       myPopupActions = new PopupAction[] {
         new ChooseAndAddAction<Library>(1, ProjectBundle.message("classpath.add.jar.directory.action"), Icons.JAR_ICON) {
           protected TableItem createTableItem(final Library item) {
@@ -485,6 +401,7 @@ public class ClasspathPanel extends JPanel {
               if (entry instanceof LibraryOrderEntry) {
                 final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
                 if (item.equals(libraryOrderEntry.getLibrary())) {
+                  projectRootConfigurable.createLibraryNode(libraryOrderEntry, myRootModel);
                   return new LibItem(libraryOrderEntry);
                 }
               }
@@ -497,9 +414,9 @@ public class ClasspathPanel extends JPanel {
             return new ChooseModuleLibrariesDialog(ClasspathPanel.this, myRootModel.getModuleLibraryTable());
           }
         },
-        new ChooseNamedLibraryAction(2, ProjectBundle.message("classpath.add.project.library.action"), LibraryTablesRegistrar.getInstance().getLibraryTable(myProject)),
-        new ChooseNamedLibraryAction(3, ProjectBundle.message("classpath.add.global.library.action"), LibraryTablesRegistrar.getInstance().getLibraryTable()),
-        new ChooseNamedLibraryAction(4, ProjectBundle.message("classpath.add.appserver.library.action"), ApplicationServersManager.getInstance().getLibraryTable()),
+        new ChooseNamedLibraryAction(2, ProjectBundle.message("classpath.add.project.library.action"), projectRootConfigurable.getProjectLibrariesProvider()),
+        new ChooseNamedLibraryAction(3, ProjectBundle.message("classpath.add.global.library.action"), projectRootConfigurable.getGlobalLibrariesProvider()),
+        new ChooseNamedLibraryAction(4, ProjectBundle.message("classpath.add.appserver.library.action"), projectRootConfigurable.getApplicationServerLibrariesProvider()),
         new ChooseAndAddAction<Module>(5, ProjectBundle.message("classpath.add.module.dependency.action"), IconUtilEx.getModuleTypeIcon(ModuleType.JAVA, 0)) {
           protected TableItem createTableItem(final Module item) {
             return new ModuleItem(myRootModel.addModuleOrderEntry(item));
@@ -833,7 +750,7 @@ public class ClasspathPanel extends JPanel {
     }
   }
 
-  private CellAppearance getCellAppearance(final TableItem item, final boolean selected) {
+  private static CellAppearance getCellAppearance(final TableItem item, final boolean selected) {
     if (item instanceof JdkItem && item.getEntry() == null) {
       return CellAppearanceUtils.forJdk(null, false, selected);
     }
@@ -976,8 +893,7 @@ public class ClasspathPanel extends JPanel {
         libModel.addRoot(file, OrderRootType.CLASSES);
         libModel.commit();
         addedLibraries.add(library);
-      }
-      modifiableModel.commit();
+      }      
       return addedLibraries;
     }
 
@@ -1003,191 +919,12 @@ public class ClasspathPanel extends JPanel {
     }
   }
 
-  private class EditJdkDialog extends DialogWrapper{
-    private JRadioButton myRbUseProjectJdk;
-    private JRadioButton myRbUseCustomJdk;
-    private SimpleColoredComponent myProjectJdkNameLabel;
-    private JdkComboBox myCbModuleJdk;
-    private JButton myChangeProjectJdkButton;
-    private JButton myChangeModuleJdkButton;
-    private ProjectJdk mySelectedModuleJdk = null;
-
-    public EditJdkDialog() {
-      super(ClasspathPanel.this, true);
-      setTitle("Set Module JDK");
-      init();
-    }
-
-    /**
-     * @return null if JDK should be inherited
-     */
-    public ProjectJdk getSelectedModuleJdk() {
-      return mySelectedModuleJdk;
-    }
-
-    public boolean isInheritJdk() {
-      return myRbUseProjectJdk.isSelected();
-    }
-
-    protected JComponent createCenterPanel() {
-      final JPanel jdkPanel = new JPanel(new GridBagLayout());
-      myProjectJdkNameLabel = new SimpleColoredComponent();
-      myCbModuleJdk = new JdkComboBox();
-      myCbModuleJdk.addItemListener(new ItemListener() {
-        public void itemStateChanged(ItemEvent e) {
-          if (e.getStateChange() == ItemEvent.SELECTED) {
-            mySelectedModuleJdk = myCbModuleJdk.getSelectedJdk();
-          }
-        }
-      });
-
-      myRbUseProjectJdk = new JRadioButton(ProjectBundle.message("module.libraries.target.jdk.project.radio"), myRootModel.isJdkInherited());
-      myRbUseCustomJdk = new JRadioButton(ProjectBundle.message("module.libraries.target.jdk.module.radio"), !myRootModel.isJdkInherited());
-      final ButtonGroup buttonGroup = new ButtonGroup();
-      buttonGroup.add(myRbUseProjectJdk);
-      buttonGroup.add(myRbUseCustomJdk);
-      myRbUseProjectJdk.addItemListener(new ItemListener() {
-        public void itemStateChanged(ItemEvent e) {
-          if (e.getStateChange() == ItemEvent.SELECTED) {
-            updateJdkPanelControls();
-          }
-        }
-      });
-      myRbUseCustomJdk.addItemListener(new ItemListener() {
-        public void itemStateChanged(ItemEvent e) {
-          if (e.getStateChange() == ItemEvent.SELECTED) {
-            updateJdkPanelControls();
-          }
-        }
-      });
-
-      myChangeProjectJdkButton = new FixedSizeButton(20);
-      myChangeProjectJdkButton.addActionListener(new ConfigureJdkAction(myChangeProjectJdkButton) {
-        public ProjectJdk getProjectJdkToSelect() {
-          return ProjectRootManager.getInstance(myProject).getProjectJdk();
-        }
-
-        public void setChosenJdk(ProjectJdk jdk) {
-          ProjectRootManager.getInstance(myProject).setProjectJdk(jdk);
-        }
-      });
-      myChangeModuleJdkButton = new FixedSizeButton(20);
-      myChangeModuleJdkButton.addActionListener(new ConfigureJdkAction(myChangeModuleJdkButton) {
-        public ProjectJdk getProjectJdkToSelect() {
-          return myRootModel.getJdk();
-        }
-
-        public void setChosenJdk(ProjectJdk jdk) {
-          myCbModuleJdk.update(jdk);
-        }
-      });
-
-      myCbModuleJdk.setPreferredSize(new Dimension(myCbModuleJdk.getPreferredSize().width, myChangeModuleJdkButton.getPreferredSize().height));
-
-      jdkPanel.add(myRbUseProjectJdk,
-                   new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                          new Insets(0, 6, 0, 0), 0, 0));
-      jdkPanel.add(myProjectJdkNameLabel,
-                   new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                          new Insets(0, 2, 0, 0), 0, 0));
-      jdkPanel.add(myChangeProjectJdkButton,
-                   new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-                                          new Insets(0, 4, 0, 6), 0, 0));
-
-      jdkPanel.add(myRbUseCustomJdk,
-                   new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                          new Insets(5, 6, 0, 0), 0, 0));
-      jdkPanel.add(myCbModuleJdk,
-                   new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                          new Insets(5, 2, 0, 0), 0, 0));
-      jdkPanel.add(myChangeModuleJdkButton,
-                   new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-                                          new Insets(5, 4, 0, 6), 0, 0));
-
-      jdkPanel.add(Box.createHorizontalGlue(),
-                   new GridBagConstraints(3, GridBagConstraints.RELATIVE, 1, 2, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                          new Insets(0, 0, 0, 0), 0, 0));
-
-      updateJdkPanelControls();
-      return jdkPanel;
-    }
-
-    private void updateJdkPanelControls() {
-      myChangeModuleJdkButton.setEnabled(myRbUseCustomJdk.isSelected());
-      myCbModuleJdk.setEnabled(myRbUseCustomJdk.isSelected());
-
-      myChangeProjectJdkButton.setEnabled(myRbUseProjectJdk.isSelected());
-      myProjectJdkNameLabel.setEnabled(myRbUseProjectJdk.isSelected());
-      myProjectJdkNameLabel.clear();
-
-      final CellAppearance appearance = CellAppearanceUtils.forProjectJdk(myProject);
-      appearance.customize(myProjectJdkNameLabel);
-      myProjectJdkNameLabel.repaint();
-
-      if (!myRootModel.isJdkInherited()) {
-        final ProjectJdk modelJdk = myRootModel.getJdk();
-        if (modelJdk != null) {
-          myCbModuleJdk.setSelectedJdk(modelJdk);
-        }
-        else {
-          final OrderEntry[] orderEntries = myRootModel.getOrderEntries();
-          String moduleJdkName = null;
-          for (final OrderEntry orderEntry : orderEntries) {
-            if (orderEntry instanceof JdkOrderEntry) {
-              moduleJdkName = ((JdkOrderEntry)orderEntry).getJdkName();
-              if (moduleJdkName != null) {
-                break;
-              }
-            }
-          }
-          if (moduleJdkName != null) {
-            myCbModuleJdk.setInvalidJdk(moduleJdkName);
-          }
-          else {
-            myCbModuleJdk.setSelectedJdk(null);
-          }
-        }
-      }
-      else {
-        myCbModuleJdk.setSelectedJdk(mySelectedModuleJdk);
-      }
-    }
-
-    private abstract class ConfigureJdkAction implements ActionListener {
-      private final JComponent myParent;
-
-      protected ConfigureJdkAction(JComponent parent) {
-        myParent = parent;
-      }
-
-      public abstract ProjectJdk getProjectJdkToSelect();
-      public abstract void setChosenJdk(ProjectJdk jdk);
-
-      public void actionPerformed(ActionEvent e) {
-        ProjectJdksEditor editor = new ProjectJdksEditor(getProjectJdkToSelect(), myParent);
-        editor.show();
-        if (editor.isOK()) {
-          final ProjectJdk selectedJdk = editor.getSelectedJdk();
-          if (selectedJdk != null) {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                setChosenJdk(selectedJdk);
-              }
-            });
-          }
-        }
-        updateJdkPanelControls(); // should update, no matter pressed user ok or cancel (the jdk itself could change)
-      }
-    }
-
-  }
-
   private class ChooseNamedLibraryAction extends ChooseAndAddAction<Library> {
-    private LibraryTable myLibraryTable;
+    private LibraryTableModifiableModelProvider myLibraryTableModelProvider;
 
-    public ChooseNamedLibraryAction(final int index, final String title, final LibraryTable libraryTable) {
+    public ChooseNamedLibraryAction(final int index, final String title, final LibraryTableModifiableModelProvider libraryTable) {
       super(index, title, Icons.LIBRARY_ICON);
-      myLibraryTable = libraryTable;
+      myLibraryTableModelProvider = libraryTable;
     }
 
     protected TableItem createTableItem(final Library item) {
@@ -1205,7 +942,7 @@ public class ClasspathPanel extends JPanel {
 
     protected ChooserDialog<Library> createChooserDialog() {
       return new ChooserDialog<Library>() {
-        private LibraryTableEditor myEditor = LibraryTableEditor.editLibraryTable(myLibraryTable);
+        private LibraryTableEditor myEditor = LibraryTableEditor.editLibraryTable(myLibraryTableModelProvider, myProject);
         private boolean myIsOk;
 
         public List<Library> getChosenElements() {
@@ -1215,7 +952,7 @@ public class ClasspathPanel extends JPanel {
         }
 
         public void doChoose() {
-          final Iterator iter = myLibraryTable.getLibraryIterator();
+          final Iterator iter = myLibraryTableModelProvider.getModifiableModel().getLibraryIterator();
           myIsOk = myEditor.openDialog(ClasspathPanel.this, iter.hasNext()? Collections.singleton((Library)iter.next()) : Collections.<Library>emptyList(), false);
         }
 

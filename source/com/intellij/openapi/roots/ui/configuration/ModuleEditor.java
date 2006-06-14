@@ -1,7 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.javaee.ex.JavaeeModulePropertiesEx;
 import com.intellij.javaee.JavaeeModuleProperties;
+import com.intellij.javaee.ex.JavaeeModulePropertiesEx;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
@@ -31,17 +32,24 @@ import java.util.List;
  *         Date: Oct 4, 2003
  *         Time: 6:29:56 PM
  */
+@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class ModuleEditor {
   private final Project myProject;
   private JPanel myPanel;
   private ModifiableRootModel myModifiableRootModel; // important: in order to correctly update OrderEntries UI use corresponding proxy for the model
-  private String mySelectedTabName;
+  private static String ourSelectedTabName;
   private TabbedPaneWrapper myTabbedPane;
   private final ModulesProvider myModulesProvider;
   private final String myName;
   private List<ModuleConfigurationEditor> myEditors = new ArrayList<ModuleConfigurationEditor>();
   private DependenciesEditor myDependenciesEditor;
   private ModifiableRootModel myModifiableRootModelProxy;
+  private ModuleJdkConfigurable myJdkConfigurable;
+  private LanguageLevelConfigurable myLanguageLevelConfigurable;
+
+  //callback
+  private ProjectRootConfigurable myProjectRootConfigurable;
+
   private EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
   @NonNls private static final String METHOD_COMMIT = "commit";
 
@@ -49,9 +57,10 @@ public class ModuleEditor {
     void moduleStateChanged(ModifiableRootModel moduleRootModel);
   }
 
-  public ModuleEditor(Project project, ModulesProvider modulesProvider, String moduleName) {
+  public ModuleEditor(Project project, ModulesProvider modulesProvider, String moduleName, final ProjectRootConfigurable projectRootConfigurable) {
     myProject = project;
     myModulesProvider = modulesProvider;
+    myProjectRootConfigurable = projectRootConfigurable;
     myName = moduleName;
   }
 
@@ -68,23 +77,30 @@ public class ModuleEditor {
   }
 
   public ModifiableRootModel getModifiableRootModel() {
+    if (myModifiableRootModel == null){
+      myModifiableRootModel = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+    }
     return myModifiableRootModel;
   }
 
   public ModifiableRootModel getModifiableRootModelProxy() {
     if (myModifiableRootModelProxy == null) {
-      createPanel(); // this will initialize the proxy
+      myModifiableRootModelProxy = (ModifiableRootModel)Proxy.newProxyInstance(
+        getClass().getClassLoader(), new Class[]{ModifiableRootModel.class}, new ModifiableRootModelInvocationHandler(myModifiableRootModel)
+      );
     }
     return myModifiableRootModelProxy;
   }
 
+  @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isModified() {
     for (ModuleConfigurationEditor moduleElementsEditor : myEditors) {
       if (moduleElementsEditor.isModified()) {
         return true;
       }
     }
-    return false;
+    if ( myJdkConfigurable != null && myJdkConfigurable.isModified()) return true;
+    return myLanguageLevelConfigurable != null && myLanguageLevelConfigurable.isModified();
   }
 
   private void createEditors(Module module) {
@@ -117,14 +133,24 @@ public class ModuleEditor {
   }
 
   private JPanel createPanel() {
-    myModifiableRootModel = ModuleRootManager.getInstance(getModule()).getModifiableModel();
-    myModifiableRootModelProxy = (ModifiableRootModel)Proxy.newProxyInstance(
-      getClass().getClassLoader(), new Class[]{ModifiableRootModel.class}, new ModifiableRootModelInvocationHandler(myModifiableRootModel)
-    );
+    getModifiableRootModel(); //initialize model if needed
+    getModifiableRootModelProxy();
 
     myPanel = new ModuleEditorPanel();
 
     createEditors(getModule());
+
+    JPanel northPanel = new JPanel(new GridBagLayout());
+
+    myLanguageLevelConfigurable = new LanguageLevelConfigurable(getModule());
+    northPanel.add(myLanguageLevelConfigurable.createComponent(), new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0));
+    myLanguageLevelConfigurable.reset();
+
+    myJdkConfigurable = new ModuleJdkConfigurable(this, myModifiableRootModel, myProjectRootConfigurable);
+    northPanel.add(myJdkConfigurable.createComponent(), new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,10,0,0), 0,0));
+    myJdkConfigurable.reset();
+
+    myPanel.add(northPanel, BorderLayout.NORTH);
 
     myTabbedPane = new TabbedPaneWrapper();
     for (ModuleConfigurationEditor editor : myEditors) {
@@ -134,7 +160,7 @@ public class ModuleEditor {
       myTabbedPane.addTab(editor.getDisplayName(), editor.getIcon(), editor.createComponent(), null);
       editor.reset();
     }
-    setSelectedTabName(mySelectedTabName);
+    setSelectedTabName(ourSelectedTabName);
 
     myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
 
@@ -157,6 +183,7 @@ public class ModuleEditor {
     if (myPanel == null) {
       myPanel = createPanel();
     }
+    myJdkConfigurable.createComponent(); //reload inherited jdk
     return myPanel;
   }
 
@@ -179,7 +206,7 @@ public class ModuleEditor {
     updateOrderEntriesInEditors();
   }
 
-  private void updateOrderEntriesInEditors() {
+  public void updateOrderEntriesInEditors() {
     for (final ModuleConfigurationEditor myEditor : myEditors) {
       myEditor.moduleStateChanged();
     }
@@ -195,9 +222,15 @@ public class ModuleEditor {
       myEditors.clear();
 
       if (myTabbedPane != null) {
-        mySelectedTabName = getSelectedTabName();
+        ourSelectedTabName = getSelectedTabName();
         myTabbedPane = null;
       }
+
+      if (myPanel != null) {
+        myJdkConfigurable.disposeUIResources();
+        myLanguageLevelConfigurable.disposeUIResources();
+      }
+
       myPanel = null;
       return myModifiableRootModel;
     }
@@ -215,10 +248,13 @@ public class ModuleEditor {
 
     if (getModule().getModuleType().isJ2EE() && myModifiableRootModel != null) {
       final JavaeeModulePropertiesEx j2EEModulePropertiesEx = (JavaeeModulePropertiesEx)JavaeeModuleProperties.getInstance(getModule());
-      if (j2EEModulePropertiesEx != null) {
+      if (j2EEModulePropertiesEx != null && j2EEModulePropertiesEx.getModifiableModel() != null) { //start edit was call
         j2EEModulePropertiesEx.commit(myModifiableRootModel);
       }
     }
+
+    if (myJdkConfigurable != null) myJdkConfigurable.apply();
+    if (myLanguageLevelConfigurable != null) myLanguageLevelConfigurable.apply();
 
     return dispose();
   }
@@ -237,7 +273,7 @@ public class ModuleEditor {
       final int editorTabIndex = getEditorTabIndex(name);
       if (editorTabIndex >= 0 && editorTabIndex < myTabbedPane.getTabCount()) {
         myTabbedPane.setSelectedIndex(editorTabIndex);
-        mySelectedTabName = name;
+        ourSelectedTabName = name;
       }
     }
   }
