@@ -7,7 +7,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -115,12 +115,16 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
   }
 
   protected void setValue(final String value) {
-    new WriteCommandAction(getProject()) {
-      protected void run(Result result) throws Throwable {
-        final T component = EditorTextFieldControl.this.getComponent();
-        getEditorTextField(component).getDocument().replaceString(0, getValue().length(), value == null ? "" : value);
+    com.intellij.openapi.command.CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+      public void run() {
+        new WriteAction() {
+          protected void run(Result result) throws Throwable {
+            final T component = EditorTextFieldControl.this.getComponent();
+            getEditorTextField(component).getDocument().replaceString(0, getValue().length(), value == null ? "" : value);
+          }
+        }.execute();
       }
-    }.execute();
+    });
   }
 
   protected void updateComponent() {

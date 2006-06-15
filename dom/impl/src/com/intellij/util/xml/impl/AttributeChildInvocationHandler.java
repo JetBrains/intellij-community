@@ -114,12 +114,16 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     setDefined(false);
     setXmlTagToNull();
     if (tag != null) {
-      try {
-        tag.setAttribute(getXmlElementName(), null);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+      getManager().runChange(new Runnable() {
+        public void run() {
+          try {
+            tag.setAttribute(getXmlElementName(), null);
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        }
+      });
       fireUndefinedEvent();
     }
   }

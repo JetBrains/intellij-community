@@ -3,8 +3,6 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.Converter;
 
@@ -24,32 +22,19 @@ public abstract class SetInvocation implements Invocation {
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     assert handler.isValid();
-    final VirtualFile virtualFile = handler.getFile().getVirtualFile();
-    if (virtualFile != null && !virtualFile.isWritable()) {
-      VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(virtualFile);
-      return null;
-    }
-
-    final DomManagerImpl manager = handler.getManager();
-    final boolean changing = manager.setChanging(true);
-    try {
-      if (handler.isIndicator()) {
-        if ((Boolean)args[0]) {
-          handler.ensureTagExists();
-        } else {
-          handler.undefineInternal();
-        }
+    if (handler.isIndicator()) {
+      if ((Boolean)args[0]) {
+        handler.ensureTagExists();
       } else {
-        String value = myConverter.toString(args[0], new ConvertContextImpl(handler));
-        if (value == null) {
-          handler.undefineInternal();
-        } else {
-          setValue(handler, value);
-        }
+        handler.undefineInternal();
       }
-    }
-    finally {
-      manager.setChanging(changing);
+    } else {
+      String value = myConverter.toString(args[0], new ConvertContextImpl(handler));
+      if (value == null) {
+        handler.undefineInternal();
+      } else {
+        setValue(handler, value);
+      }
     }
     return null;
   }

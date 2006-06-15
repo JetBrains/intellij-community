@@ -262,8 +262,21 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return getClass().getName();
   }
 
-  public final synchronized boolean setChanging(final boolean changing) {
+  public final void runChange(Runnable change) {
+    final boolean b = setChanging(true);
+    try {
+      change.run();
+    }
+    finally {
+      setChanging(b);
+    }
+  }
+
+  public final boolean setChanging(final boolean changing) {
     boolean oldChanging = myChanging;
+    if (changing) {
+      assert !oldChanging;
+    }
     myChanging = changing;
     return oldChanging;
   }

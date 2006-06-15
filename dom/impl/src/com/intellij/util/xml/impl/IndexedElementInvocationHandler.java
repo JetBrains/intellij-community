@@ -40,14 +40,24 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     return myIndex;
   }
 
-  protected XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException, IllegalAccessException, InstantiationException {
+  protected XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException {
     final DomInvocationHandler parent = getParentHandler();
     parent.createFixedChildrenTags(getXmlElementName(), myIndex);
-    final XmlTag newTag = (XmlTag)parent.getXmlTag().add(tag);
-    if (getParentHandler().getFixedChildrenClass(tag.getName()) != null) {
-      ClassChooserManager.getClassChooser(getChildDescription().getType()).distinguishTag(newTag, getDomElementType());
-    }
-    return newTag;
+    final XmlTag[] newTag = new XmlTag[1];
+    getManager().runChange(new Runnable() {
+      public void run() {
+        try {
+          newTag[0] = (XmlTag)parent.getXmlTag().add(tag);
+          if (getParentHandler().getFixedChildrenClass(tag.getName()) != null) {
+            ClassChooserManager.getClassChooser(getChildDescription().getType()).distinguishTag(newTag[0], getDomElementType());
+          }
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    });
+    return newTag[0];
   }
 
   public void undefineInternal() {
@@ -86,7 +96,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     } finally {
       getManager().setChanging(changing);
     }
-    undefineChildren();
+    detachChildren();
     fireUndefinedEvent();
   }
 

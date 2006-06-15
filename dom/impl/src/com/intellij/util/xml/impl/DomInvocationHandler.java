@@ -201,24 +201,15 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   public XmlTag ensureTagExists() {
     if (myXmlTag != null) return myXmlTag;
 
-    final boolean changing = myManager.setChanging(true);
     try {
       attach(setXmlTag(createEmptyTag()));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
-    catch (InstantiationException e) {
-      LOG.error(e);
-    }
-    finally {
-      myManager.setChanging(changing);
-      myManager.fireEvent(new ElementDefinedEvent(getProxy()));
-      addRequiredChildren();
-    }
+
+    myManager.fireEvent(new ElementDefinedEvent(getProxy()));
+    addRequiredChildren();
     return myXmlTag;
   }
 
@@ -258,7 +249,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     undefineInternal();
   }
 
-  protected final void undefineChildren() {
+  protected final void detachChildren() {
     for (final AttributeChildInvocationHandler handler : myAttributeChildren.values()) {
       handler.detach(false);
     }
@@ -289,7 +280,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myManager.fireEvent(new ElementUndefinedEvent(getProxy()));
   }
 
-  protected abstract XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException, IllegalAccessException, InstantiationException;
+  protected abstract XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException;
 
   protected final void addRequiredChildren() {
     for (final DomChildrenDescription description : myGenericInfo.getChildrenDescriptions()) {

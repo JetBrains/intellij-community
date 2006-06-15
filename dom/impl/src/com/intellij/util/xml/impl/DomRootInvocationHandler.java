@@ -36,7 +36,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
       final XmlTag tag = getXmlTag();
       if (tag != null) {
         deleteTag(tag);
-        undefineChildren();
+        detachChildren();
         fireUndefinedEvent();
       }
     }
@@ -67,7 +67,18 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
   }
 
   protected XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException {
-    return ((XmlDocument)getFile().getDocument().replace(((XmlFile)tag.getContainingFile()).getDocument())).getRootTag();
+    final XmlTag[] result = new XmlTag[]{null};
+    getManager().runChange(new Runnable() {
+      public void run() {
+        try {
+          result[0] = ((XmlDocument)getFile().getDocument().replace(((XmlFile)tag.getContainingFile()).getDocument())).getRootTag();
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    });
+    return result[0];
   }
 
 }
