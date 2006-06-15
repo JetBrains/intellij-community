@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -88,7 +89,7 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   }
 
   public String getJdkName() {
-    if (!getRootModel().isWritable()){
+    if (!getRootModel().isWritable() || ApplicationManager.getApplication().isUnitTestMode()){
       myProjectRootManager.getProjectJdkName();
     }
     final ProjectJdk projectJdk = getJdk();

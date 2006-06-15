@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -116,6 +117,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
     if (myLibrary == null || !getRootModel().isWritable()){
       return myLibrary;
     }
+    if (ApplicationManager.getApplication().isUnitTestMode()) return myLibrary;
     final Project project = getRootModel().getModule().getProject();
     final Library library = ProjectRootConfigurable.getInstance(project).getLibrary(myLibrary);
     if (library != null){
