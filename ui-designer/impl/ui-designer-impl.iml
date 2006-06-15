@@ -36,6 +36,7 @@
     <orderEntry type="module" module-name="icons" />
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
+    <orderEntry type="library" name="asm" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
@@ -38,6 +39,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.make.CopyResourcesUtil;
 import com.intellij.uiDesigner.make.Form2ByteCodeCompiler;
+import com.intellij.uiDesigner.make.PreviewNestedFormLoader;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
@@ -55,6 +57,8 @@ import java.util.Locale;
  * @author Vladimir Kondratyev
  */
 public final class PreviewFormAction extends AnAction{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.PreviewFormAction");
+
   private final GuiEditor myEditor;
   /**
    * The problem is that this class is in a default package so it's not
@@ -63,6 +67,7 @@ public final class PreviewFormAction extends AnAction{
   private static final String CLASS_TO_BIND_NAME = "FormPreviewFrame";
   @NonNls private static final String RUNTIME_BUNDLE_PREFIX = "RuntimeBundle";
   @NonNls private static final String RUNTIME_BUNDLE_EXTENSION = ".properties";
+  @NonNls public static final String PREVIEW_BINDING_FIELD = "myComponent";
 
   public PreviewFormAction() {
     myEditor = null;
@@ -147,24 +152,12 @@ public final class PreviewFormAction extends AnAction{
       return;
     }
 
-    // 1. Prepare form to preview. We have to change container so that it has only one binding.
-    rootContainer.setClassToBind(CLASS_TO_BIND_NAME);
-    FormEditingUtil.iterate(
-      rootContainer,
-      new FormEditingUtil.ComponentVisitor<LwComponent>() {
-        public boolean visit(final LwComponent iComponent) {
-          iComponent.setBinding(null);
-          return true;
-        }
-      }
-    );
-    if (rootContainer.getComponentCount() == 1) {
-      //noinspection HardCodedStringLiteral
-      ((LwComponent)rootContainer.getComponent(0)).setBinding("myComponent");
-    }
+    setPreviewBindings(rootContainer, CLASS_TO_BIND_NAME);
 
     // 2. Copy previewer class and all its superclasses into TEMP directory and instrument it.
     try {
+      PreviewNestedFormLoader nestedFormLoader = new PreviewNestedFormLoader(module, tempPath, loader);
+
       final File tempFile = CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME, true);
       //CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$1", true);
       CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyWindowListener", true);
@@ -183,7 +176,7 @@ public final class PreviewFormAction extends AnAction{
       CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + RUNTIME_BUNDLE_EXTENSION);
       CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + RUNTIME_BUNDLE_EXTENSION);
 
-      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, null, true);
+      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, nestedFormLoader, true);
       codeGenerator.patchFile(tempFile);
       final FormErrorInfo[] errors = codeGenerator.getErrors();
       if(errors.length != 0){
@@ -198,6 +191,7 @@ public final class PreviewFormAction extends AnAction{
       }
     }
     catch (Exception e) {
+      LOG.debug(e);
       Messages.showErrorDialog(
         module.getProject(),
         UIDesignerBundle.message("error.cannot.preview.form", formFile.getPath().replace('/', File.separatorChar),
@@ -243,6 +237,24 @@ public final class PreviewFormAction extends AnAction{
     }
     else {
       runPreviewProcess(tempPath, sources, module, formFile, dataContext);
+    }
+  }
+
+  public static void setPreviewBindings(final LwRootContainer rootContainer, final String classToBindName) {
+    // 1. Prepare form to preview. We have to change container so that it has only one binding.
+    rootContainer.setClassToBind(classToBindName);
+    FormEditingUtil.iterate(
+      rootContainer,
+      new FormEditingUtil.ComponentVisitor<LwComponent>() {
+        public boolean visit(final LwComponent iComponent) {
+          iComponent.setBinding(null);
+          return true;
+        }
+      }
+    );
+    if (rootContainer.getComponentCount() == 1) {
+      //noinspection HardCodedStringLiteral
+      ((LwComponent)rootContainer.getComponent(0)).setBinding(PREVIEW_BINDING_FIELD);
     }
   }
 

@@ -315,10 +315,6 @@ public class AsmCodeGenerator {
       String className;
       LwRootContainer nestedFormContainer = null;
       if (lwComponent instanceof LwNestedForm) {
-        // TODO[yole]: remove
-        if (myFormLoader == null) {
-          throw new CodeGenerationException(null, "Nested forms not supported in this compile configuration");
-        }
         LwNestedForm nestedForm = (LwNestedForm) lwComponent;
         try {
           nestedFormContainer = myFormLoader.loadForm(nestedForm.getFormFileName());
