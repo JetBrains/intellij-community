@@ -63,4 +63,22 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
 
   @NotNull
   public abstract Collection<T> getVariants(final ConvertContext context);
+
+  public static abstract class WrappedResolvingConverter<T> extends ResolvingConverter<T> {
+
+    private final Converter<T> myWrappedConverter;
+
+    public WrappedResolvingConverter(Converter<T> converter) {
+
+      myWrappedConverter = converter;
+    }
+
+    public T fromString(final String s, final ConvertContext context) {
+      return myWrappedConverter.fromString(s, context);
+    }
+
+    public String toString(final T t, final ConvertContext context) {
+      return myWrappedConverter.toString(t, context);
+    }
+  }
 }

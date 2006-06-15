@@ -19,6 +19,9 @@ import javax.swing.table.TableCellEditor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author peter
  */
@@ -40,11 +43,12 @@ public abstract class DomUIFactory implements ApplicationComponent {
     }
   }
 
-
+  @NotNull
   public static DomUIControl<GenericDomValue> createControl(GenericDomValue element) {
     return createControl(element, false);
   }
 
+  @NotNull
   public static DomUIControl<GenericDomValue> createControl(GenericDomValue element, boolean commitOnEveryChange) {
     return createGenericValueControl(DomUtil.getGenericValueParameter(element.getDomElementType()), element, commitOnEveryChange);
   }
@@ -57,6 +61,7 @@ public abstract class DomUIFactory implements ApplicationComponent {
     return getDomUIFactory().createTextControl(new DomCollectionWrapper<String>(parent, parent.getGenericInfo().getCollectionChildDescription("description")), commitOnEveryChange);
   }
 
+  @NotNull
   private static BaseControl createGenericValueControl(final Type type, final GenericDomValue<?> element, boolean commitOnEveryChange) {
     final DomStringWrapper stringWrapper = new DomStringWrapper(element);
     final Class rawType = DomReflectionUtil.getRawType(type);
@@ -92,7 +97,7 @@ public abstract class DomUIFactory implements ApplicationComponent {
     return getDomUIFactory().createTextControl(stringWrapper, commitOnEveryChange);
   }
 
-  public static Method findMethod(Class clazz, String methodName) {
+  public static Method findMethod(Class clazz, @NonNls String methodName) {
     final Method[] methods = clazz.getMethods();
     for (Method method : methods) {
       if (methodName.equals(method.getName())) {

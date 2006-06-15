@@ -6,6 +6,8 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.AbstractConvertContext;
+import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -17,6 +19,7 @@ public class ConvertContextImpl extends AbstractConvertContext {
     myHandler = handler;
   }
 
+  @NotNull
   public final DomElement getInvocationElement() {
     return myHandler.getProxy();
   }
@@ -25,5 +28,7 @@ public class ConvertContextImpl extends AbstractConvertContext {
     return myHandler.getModule();
   }
 
-
+  public PsiManager getPsiManager() {
+    return myHandler.getFile().getManager();
+  }
 }

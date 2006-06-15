@@ -52,6 +52,7 @@ public interface DomElement {
 
   void acceptChildren(DomElementVisitor visitor);
 
+  @NotNull
   DomManager getManager();
 
   Type getDomElementType();

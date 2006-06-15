@@ -6,9 +6,11 @@ package com.intellij.util.xml;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -33,6 +35,7 @@ public abstract class AbstractConvertContext extends ConvertContext {
     return getInvocationElement().getXmlTag();
   }
 
+  @NotNull
   public final XmlFile getFile() {
     return getInvocationElement().getRoot().getFile();
   }

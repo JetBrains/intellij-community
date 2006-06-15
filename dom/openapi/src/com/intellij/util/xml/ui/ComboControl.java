@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
+import com.intellij.psi.PsiManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,6 +17,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -63,8 +66,13 @@ public class ComboControl extends BaseControl<JComboBox, String> {
         if (converter instanceof ResolvingConverter) {
           final ResolvingConverter<?> resolvingConverter = (ResolvingConverter)converter;
           return ContainerUtil.map(resolvingConverter.getVariants(new AbstractConvertContext() {
+            @NotNull
             public DomElement getInvocationElement() {
               return reference;
+            }
+
+            public PsiManager getPsiManager() {
+              return getFile().getManager();
             }
           }), new Function<Object, Pair<String, Icon>>() {
             public Pair<String, Icon> fun(final Object s) {
