@@ -1,0 +1,8 @@
+<project name="testProject" default="test">
+  <property name="p1-after" value="v1"/>
+  <target name="test" depends="beforeTest" if="p1-after">
+    <echo message="${p1-after}"/>
+  </target>
+  <target name="beforeTest" unless="p1-after">
+  </target>
+</project>

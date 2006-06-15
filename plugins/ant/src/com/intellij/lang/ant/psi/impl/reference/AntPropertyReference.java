@@ -15,7 +15,9 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -39,9 +41,28 @@ public class AntPropertyReference extends AntGenericReference {
     final AntElement element = getElement();
     final String oldName = getCanonicalText();
     if (!oldName.equals(newElementName)) {
-      final XmlAttribute attribute = getAttribute();
-      final String value = attribute.getValue();
-      attribute.setValue(value.replace("${" + oldName + '}', "${" + newElementName + '}'));
+      final XmlAttribute attr = getAttribute();
+      final XmlAttributeValue attrValue = attr.getValueElement();
+      if (attrValue != null) {
+        final int valueStartOffset = attrValue.getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1;
+        final String value = attr.getValue();
+        final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+        try {
+          final int startOffset = getRangeInElement().getStartOffset();
+          final int endOffset = getRangeInElement().getEndOffset();
+          if (valueStartOffset < startOffset) {
+            builder.append(value.substring(0, startOffset - valueStartOffset));
+          }
+          builder.append(newElementName);
+          if (endOffset < valueStartOffset + value.length()) {
+            builder.append(value.substring(endOffset - valueStartOffset));
+          }
+          attr.setValue(builder.toString());
+        }
+        finally {
+          StringBuilderSpinAllocator.dispose(builder);
+        }
+      }
     }
     return element;
   }

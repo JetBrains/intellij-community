@@ -70,14 +70,17 @@ public class AntRenameTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testTargetProperties() throws Exception {
+    doTest();
+  }
+
   protected String getTestDataPath() {
     return PathManager.getHomePath().replace('\\', '/') + "/plugins/ant/tests/data/psi/rename/";
   }
 
   private void doTest() throws Exception {
     final String filename = getTestName(true) + ".xml";
-    VirtualFile vfile = VirtualFileManager.getInstance().findFileByUrl(
-        "file://" + getTestDataPath() + filename);
+    VirtualFile vfile = VirtualFileManager.getInstance().findFileByUrl("file://" + getTestDataPath() + filename);
     String text = FileDocumentManager.getInstance().getDocument(vfile).getText();
     int off = text.indexOf("<ren>");
     text = text.replace("<ren>", "");
@@ -90,16 +93,17 @@ public class AntRenameTest extends LightCodeInsightTestCase {
     if (refs.length > 0) {
       int i = 0;
       element = refs[0].resolve();
-      while (element != null && !text.substring(off).trim().startsWith(((PsiNamedElement) element).getName())) {
+      while (element != null && !text.substring(off).trim().startsWith(((PsiNamedElement)element).getName())) {
         element = refs[++i].resolve();
       }
-    } else {
+    }
+    else {
       element = element.getParent();
     }
     assertNotNull(element);
     assertTrue(element instanceof PsiNamedElement);
-    final RenameRefactoring rename = RefactoringFactory.getInstance(getProject()).createRename(
-        element, ((PsiNamedElement) element).getName() + "-after");
+    final RenameRefactoring rename =
+      RefactoringFactory.getInstance(getProject()).createRename(element, ((PsiNamedElement)element).getName() + "-after");
     rename.setSearchInComments(false);
     rename.setSearchInNonJavaFiles(false);
     rename.run();

@@ -91,12 +91,12 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
   private void getAttributeReference(final AntElement element, final XmlAttribute attr, final List<PsiReference> refs) {
     final AntProject project = element.getAntProject();
     final String value = attr.getValue();
-    final PsiElement resilvedProp = AntElementImpl.resolveProperty(element, value);
-    if (project.isEnvironmentProperty(value) && resilvedProp == null) {
+    final PsiElement resolvedProp = AntElementImpl.resolveProperty(element, value);
+    if (project.isEnvironmentProperty(value) && resolvedProp == null) {
       return;
     }
     final XmlAttributeValue xmlAttributeValue = attr.getValueElement();
-    if (xmlAttributeValue != null && resilvedProp != null) {
+    if (xmlAttributeValue != null && resolvedProp != null) {
       final int offsetInPosition = xmlAttributeValue.getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1;
       refs.add(new AntPropertyReference(this, element, value, new TextRange(offsetInPosition, offsetInPosition + value.length()), attr));
     }
