@@ -38,9 +38,7 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Collection;
@@ -504,6 +502,12 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         scopePanel,
         BorderLayout.SOUTH
       );
+
+      myScopeChooserCombo.getComboBox().addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent e) {
+          initiateValidation();
+        }
+      });
     }
 
     buildOptions(searchOptions);
@@ -783,7 +787,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       result = false;
     }
     catch (UnsupportedPatternException ex) {
-      reportMessage("this.pattern.is.unsupported.message", searchCriteriaEdit);
+      reportMessage("this.pattern.is.unsupported.message", searchCriteriaEdit, ex.getPattern());
       result = false;
     }
 
@@ -792,7 +796,9 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   protected void reportMessage(@NonNls String messageId, Editor editor, Object... params) {
-    status.setText(messageId != null ? SSRBundle.message(messageId, params):"");
+    final String message = messageId != null ? SSRBundle.message(messageId, params) : "";
+    status.setText(message);
+    status.setToolTipText(message);
     status.revalidate();
     statusText.setLabelFor(editor != null ? editor.getContentComponent() : null);
   }
@@ -873,6 +879,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     );
 
     EditorFactory.getInstance().releaseEditor(searchCriteriaEdit);
+    myAlarm.cancelAllRequests();
 
     super.dispose();
   }

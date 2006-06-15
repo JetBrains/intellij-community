@@ -12,7 +12,7 @@ public class UnsupportedPatternException extends RuntimeException {
     pattern = _pattern;
   }
 
-  public String toString() {
+  public String getPattern() {
     return pattern;
   }
 }

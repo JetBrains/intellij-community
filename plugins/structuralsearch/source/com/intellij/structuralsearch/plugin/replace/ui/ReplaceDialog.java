@@ -336,7 +336,7 @@ public class ReplaceDialog extends SearchDialog {
       );
     }
     catch (UnsupportedPatternException ex) {
-      reportMessage("unsupported.replacement.pattern.message",replaceCriteriaEdit, ex.getMessage());
+      reportMessage("unsupported.replacement.pattern.message",replaceCriteriaEdit, ex.getPattern());
       result = false;
     }
 

@@ -161,11 +161,9 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
         ((RegExpPredicate)handler.getPredicate()).setMultiline(true);
       }
 
-      if (context.findMatchingFiles) {
-        RegExpPredicate predicate = Handler.getSimpleRegExpPredicate( handler );
-        if (!IsNotSuitablePredicate(predicate, handler)) {
-          processTokenizedName(predicate.getRegExp(),true, OccurenceKind.COMMENT);
-        }
+      RegExpPredicate predicate = Handler.getSimpleRegExpPredicate( handler );
+      if (!IsNotSuitablePredicate(predicate, handler)) {
+        processTokenizedName(predicate.getRegExp(),true, OccurenceKind.COMMENT);
       }
 
       matches = true;
@@ -278,9 +276,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
         buf.append( shieldSpecialChars(word) );
         hasLiteralContent = true;
 
-        if (context.findMatchingFiles) {
-          processTokenizedName(word,false,kind);
-        }
+        processTokenizedName(word,false,kind);
       }
 
       RegExpPredicate predicate = Handler.getSimpleRegExpPredicate( handler );
@@ -290,10 +286,8 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
         buf.append(".*?\\b(").append(predicate.getRegExp()).append(")\\b.*?");
       }
 
-      if (context.findMatchingFiles) {
-        if (!IsNotSuitablePredicate(predicate, handler)) {
-          processTokenizedName(predicate.getRegExp(),false,kind);
-        }
+      if (!IsNotSuitablePredicate(predicate, handler)) {
+        processTokenizedName(predicate.getRegExp(),false,kind);
       }
 
       start = matcher.end();
@@ -305,9 +299,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
       hasLiteralContent = true;
       buf.append( shieldSpecialChars(word) );
 
-      if (context.findMatchingFiles) {
-        processTokenizedName(word,false,kind);
-      }
+      processTokenizedName(word,false,kind);
     }
 
     if (hasLiteralContent) {
@@ -415,7 +407,6 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   }
   // structural search
   private void handleReferenceText(String refname) {
-    if (!context.findMatchingFiles) return;
     if (refname==null) return;
 
     if (context.pattern.isTypedVar( refname )) {
@@ -467,6 +458,9 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
 
 
   private void addFilesToSearchForGivenWord(String refname, boolean endTransaction,OccurenceKind kind) {
+    if (!context.findMatchingFiles) {
+      return;
+    }
     if(ourReservedWords.contains(refname)) return; // skip our special annotations !!!
 
     boolean addedSomething = false;
