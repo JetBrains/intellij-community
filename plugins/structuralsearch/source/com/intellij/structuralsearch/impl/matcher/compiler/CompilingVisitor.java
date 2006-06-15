@@ -47,6 +47,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   }
 
   private List<PsiElement> buildDescendants(String className, boolean includeSelf) {
+    if (!context.findMatchingFiles) return Collections.<PsiElement>emptyList();
     PsiShortNamesCache cache = PsiManager.getInstance(context.project).getShortNamesCache();
     SearchScope scope = context.options.getScope();
     PsiClass[] classes = cache.getClassesByName(className,(GlobalSearchScope)scope);

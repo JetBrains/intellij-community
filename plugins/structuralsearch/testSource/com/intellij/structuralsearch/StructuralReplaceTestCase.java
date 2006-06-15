@@ -5,6 +5,12 @@ import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.psi.PsiManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.application.PathManager;
+
+import java.io.IOException;
+import java.io.File;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,4 +33,5 @@ abstract class StructuralReplaceTestCase extends IdeaTestCase {
     options.setMatchOptions(new MatchOptions());
     replacer = new Replacer(myProject, null);
   }
+
 }

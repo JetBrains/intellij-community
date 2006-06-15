@@ -85,10 +85,10 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
   public void testHtmlReplacement1() throws IOException {
     xmlOptions.getMatchOptions().setFileType(StdFileTypes.HTML);
     
-    String content = XmlStructuralSearchTest.loadFile("in1.html");
-    String pattern = XmlStructuralSearchTest.loadFile("pattern2.html");
-    String replacement = XmlStructuralSearchTest.loadFile("replacement2.html");
-    String expectedResult = XmlStructuralSearchTest.loadFile("out1.html");
+    String content = TestUtils.loadFile("in1.html");
+    String pattern = TestUtils.loadFile("pattern2.html");
+    String replacement = TestUtils.loadFile("replacement2.html");
+    String expectedResult = TestUtils.loadFile("out1.html");
 
     actualResult = replacer.testReplace(content,pattern,replacement,xmlOptions);
     assertEquals("Large html replacement",

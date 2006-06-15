@@ -1,5 +1,7 @@
 package com.intellij.structuralsearch;
 
+import java.io.IOException;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Maxim.Mossienko
@@ -1427,6 +1429,30 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     assertEquals(
       "Class field replacement with simple pattern",
+      expectedResult,
+      actualResult
+    );
+  }
+
+  public void testClassReplacement9() throws IOException {
+    String s1 = TestUtils.loadFile("before1.java");
+    String s2 = "class 'A extends 'TestCaseCass:[regex( .*TestCase ) ] {\n" +
+                "  'OtherStatement*;\n" +
+                "  public void 'testMethod*:[regex( test.* )] () {\n" +
+                "  }\n" +
+                "  'OtherStatement2*;\n" +
+                "}";
+    String s3 = "class $A$ extends $TestCaseCass$ {\n" +
+                "    $OtherStatement$;\n" +
+                "    $OtherStatement2$;\n" +
+                "}";
+    String expectedResult = TestUtils.loadFile("after1.java");
+
+    options.setToReformatAccordingToStyle(true);
+    actualResult = replacer.testReplace(s1,s2,s3,options,true);
+
+    assertEquals(
+      "Class replacement 9",
       expectedResult,
       actualResult
     );

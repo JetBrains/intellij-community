@@ -1,12 +1,6 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,29 +13,21 @@ import java.io.IOException;
 public class XmlStructuralSearchTest extends StructuralSearchTestCase {
   
   public void testHtmlSearch() throws Exception {
-    String content = loadFile("in1.html");
-    String pattern = loadFile("pattern1.html");
-    String pattern2 = loadFile("pattern2.html");
+    String content = TestUtils.loadFile("in1.html");
+    String pattern = TestUtils.loadFile("pattern1.html");
+    String pattern2 = TestUtils.loadFile("pattern2.html");
     
     assertEquals("Simple html find",1,findMatchesCount(content,pattern,false,StdFileTypes.HTML));
     assertEquals("Simple html find",9,findMatchesCount(content,pattern2,false,StdFileTypes.HTML));
   }
   
   public void testJspSearch() throws Exception {
-    String content = loadFile("in1.html");
-    String pattern = loadFile("pattern1.html");
-    String pattern2 = loadFile("pattern2.html");
+    String content = TestUtils.loadFile("in1.html");
+    String pattern = TestUtils.loadFile("pattern1.html");
+    String pattern2 = TestUtils.loadFile("pattern2.html");
     
     assertEquals("Simple html find",1,findMatchesCount(content,pattern,false,StdFileTypes.JSP));
     assertEquals("Simple html find",9,findMatchesCount(content,pattern2,false,StdFileTypes.JSP));
-  }
-
-  static String loadFile(String fileName) throws IOException {
-    return StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(new File(getBasePath()+"/html/" + fileName))));
-  }
-
-  static String getBasePath() {
-    return PathManager.getHomePath() + File.separatorChar + "plugins/structuralsearch" + File.separatorChar + "testData";
   }
 
   public void testXmlSearch() {
