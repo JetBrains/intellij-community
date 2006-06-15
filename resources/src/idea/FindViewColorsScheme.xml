@@ -9,9 +9,9 @@
         <value>
           <option name="FOREGROUND" value="FF0000" />
           <option name="BACKGROUND" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="EFFECT_COLOR" />
-          <option name="FONT_TYPE" value="0" />
+          <option name="FONT_TYPE" />
         </value>
       </option>
 
@@ -20,9 +20,9 @@
         <value>
           <option name="FOREGROUND" value="FF0000" />
           <option name="BACKGROUND" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="EFFECT_COLOR" />
-          <option name="FONT_TYPE" value="0" />
+          <option name="FONT_TYPE" />
         </value>
       </option>
 
@@ -31,9 +31,9 @@
         <value>
           <option name="FOREGROUND" value="FF0000" />
           <option name="BACKGROUND" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="EFFECT_COLOR" />
-          <option name="FONT_TYPE" value="0" />
+          <option name="FONT_TYPE" />
         </value>
       </option>
 
@@ -42,7 +42,7 @@
         <value>
           <option name="FOREGROUND" />
           <option name="BACKGROUND" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="EFFECT_COLOR" />
           <option name="FONT_TYPE" value="1" />
         </value>
@@ -53,7 +53,7 @@
         <value>
           <option name="FOREGROUND" value="808080" />
           <option name="BACKGROUND" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="EFFECT_COLOR" />
           <option name="FONT_TYPE" value="2" />
         </value>
@@ -64,7 +64,7 @@
         <value>
           <option name="FOREGROUND" />
           <option name="BACKGROUND" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="EFFECT_COLOR" />
           <option name="FONT_TYPE" value="1" />
         </value>
@@ -75,7 +75,7 @@
         <value>
           <option name="FOREGROUND" />
           <option name="BACKGROUND" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="EFFECT_COLOR" />
           <option name="FONT_TYPE" value="1" />
         </value>
@@ -88,7 +88,7 @@
           <option name="BACKGROUND" />
           <option name="EFFECT_TYPE" value="3" />
           <option name="EFFECT_COLOR" value="808080" />
-          <option name="FONT_TYPE" value="0" />
+          <option name="FONT_TYPE" />
         </value>
       </option>
     </attributes>

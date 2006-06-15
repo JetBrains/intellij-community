@@ -53,7 +53,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="JAVA_PARENTH">
@@ -61,7 +60,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="JAVA_BRACKETS">
@@ -69,7 +67,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="JAVA_BRACES">
@@ -77,7 +74,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="JAVA_COMMA">
@@ -85,7 +81,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="JAVA_DOT">
@@ -93,7 +88,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="JAVA_SEMICOLON">
@@ -101,7 +95,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -120,7 +113,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="e2ffe2"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -129,7 +121,6 @@
           <option name="FOREGROUND" value="ff0000"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -139,7 +130,6 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="ff0000"/>
           <option name="EFFECT_TYPE" value="2"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -149,7 +139,6 @@
           <option name="FOREGROUND" value="ff0000"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -159,7 +148,6 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="ff0000"/>
           <option name="EFFECT_TYPE" value="2"/>
-          <option name="FONT_TYPE" value="0"/>
           <option name="ERROR_STRIPE_COLOR" value="ff0000" />
         </value>
       </option>
@@ -168,8 +156,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="808080"/>
-          <option name="EFFECT_TYPE" value="0"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="HYPERLINK_ATTRIBUTES">
@@ -183,18 +169,16 @@
       </option>
       <option name="INFORMATION_ATTRIBUTES">
         <value>
-          <option name="FOREGROUND" value="000000"/>
+          <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
           <option name="EFFECT_TYPE"/>
-          <option name="FONT_TYPE"/>
         </value>
       </option>
       <option name="WARNING_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="f6ebbc"/>
-          <option name="FONT_TYPE" value="0"/>
           <option name="EFFECT_COLOR"/>
           <option name="EFFECT_TYPE" value="1"/>
           <option name="ERROR_STRIPE_COLOR" value="ffff00" />
@@ -204,7 +188,6 @@
         <value>
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
-          <option name="FONT_TYPE" value="0"/>
           <option name="EFFECT_COLOR" value="f6ebbc"/>
           <option name="EFFECT_TYPE" value="2"/>
           <option name="ERROR_STRIPE_COLOR" value="999999" />
@@ -214,7 +197,6 @@
         <value>
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
-          <option name="FONT_TYPE" value="0"/>
           <option name="EFFECT_COLOR" value="cccccc"/>
           <option name="EFFECT_TYPE" value="2"/>
           <option name="ERROR_STRIPE_COLOR" value="ffffcc" />
@@ -226,7 +208,6 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="ff0000"/>
           <option name="EFFECT_TYPE" value="2"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -236,7 +217,6 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="f6ebbc"/>
           <option name="EFFECT_TYPE" value="1"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -246,7 +226,6 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="ffcccc"/>
           <option name="EFFECT_TYPE" value="2"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -255,7 +234,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="baeeba"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
           <option name="ERROR_STRIPE_COLOR" value="2df32d"/>
         </value>
       </option>
@@ -265,7 +243,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="DAE7C0"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -274,7 +251,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="387EE7"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -293,7 +269,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="fffce4"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -302,7 +277,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="edffed"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -320,7 +294,6 @@
           <option name="FOREGROUND" value="808080"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -329,7 +302,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES">
@@ -337,7 +309,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="REASSIGNED_PARAMETER_ATTRIBUTES">
@@ -345,7 +316,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="CLASS_NAME_ATTRIBUTES">
@@ -353,7 +323,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="TYPE_PARAMETER_NAME_ATTRIBUTES">
@@ -361,7 +330,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="INTERFACE_NAME_ATTRIBUTES">
@@ -369,7 +337,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="ABSTRACT_CLASS_NAME_ATTRIBUTES">
@@ -377,7 +344,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -386,7 +352,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="METHOD_DECLARATION_ATTRIBUTES">
@@ -394,7 +359,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="CONSTRUCTOR_CALL_ATTRIBUTES">
@@ -402,7 +366,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="CONSTRUCTOR_DECLARATION_ATTRIBUTES">
@@ -410,7 +373,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -428,7 +390,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -437,7 +398,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -456,7 +416,6 @@
           <option name="FOREGROUND" value="ff"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -501,7 +460,6 @@
           <option name="FOREGROUND" value="ff"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -510,7 +468,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="f0f0f0"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -519,7 +476,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="cbcbcb"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
           <option name="ERROR_STRIPE_COLOR" value="747474"/>
 
         </value>
@@ -530,7 +486,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="ffc8bd"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
           <option name="ERROR_STRIPE_COLOR" value="ff6647"/>
         </value>
       </option>
@@ -540,7 +495,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -549,7 +503,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="ccccff"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -558,7 +511,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="ffcdff"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -567,7 +519,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="ccffcc"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -584,7 +535,7 @@
         <value>
           <option name="FOREGROUND" value="808000" />
           <option name="BACKGROUND" />
-          <option name="FONT_TYPE" value="0" />
+          <option name="FONT_TYPE" />
           <option name="EFFECT_COLOR" />
           <option name="EFFECT_TYPE" value="1" />
           <option name="ERROR_STRIPE_COLOR" />
@@ -603,10 +554,8 @@
 
       <option name="EXECUTIONPOINT_ATTRIBUTES">
         <value>
-          <option name="FOREGROUND" value="ffffff"/>
           <option name="BACKGROUND" value="ff"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -615,7 +564,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="ffdcdc"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -624,16 +572,12 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="efefef"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
       <option name="TEXT">
         <value>
-          <option name="FOREGROUND" value="0"/>
-          <option name="BACKGROUND" value="ffffff"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -642,7 +586,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="ffc8c8"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -660,7 +603,6 @@
           <option name="FOREGROUND" value="8000"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -669,7 +611,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="99ccff"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -687,7 +628,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="bccff9"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
           <option name="ERROR_STRIPE_COLOR" value="3471ff"/>
         </value>
       </option>
@@ -697,7 +637,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="ffcccc"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -739,7 +678,6 @@
           <option name="FOREGROUND" value="ff"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -791,7 +729,6 @@
         <value>
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
-          <option name="FONT_TYPE" value="0"/>
           <option name="EFFECT_COLOR" value="404040"/>
           <option name="EFFECT_TYPE" value="3"/>
         </value>
@@ -820,7 +757,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="efefef"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -874,7 +810,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="efefef"/>
           <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
 
@@ -912,7 +847,6 @@
           <option name="BACKGROUND" />
           <option name="FONT_TYPE" value="2" />
           <option name="EFFECT_COLOR" />
-          <option name="EFFECT_TYPE" value="0" />
           <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>
@@ -922,7 +856,6 @@
           <option name="BACKGROUND" />
           <option name="FONT_TYPE" value="1" />
           <option name="EFFECT_COLOR" />
-          <option name="EFFECT_TYPE" value="0" />
           <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>
@@ -932,7 +865,6 @@
           <option name="BACKGROUND" />
           <option name="FONT_TYPE" value="1" />
           <option name="EFFECT_COLOR" />
-          <option name="EFFECT_TYPE" value="0" />
           <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>
@@ -950,9 +882,8 @@
         <value>
           <option name="FOREGROUND" value="ff" />
           <option name="BACKGROUND" />
-          <option name="FONT_TYPE" value="0" />
+          <option name="FONT_TYPE" />
           <option name="EFFECT_COLOR" />
-          <option name="EFFECT_TYPE" value="0" />
           <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>
@@ -962,7 +893,7 @@
           <option name="BACKGROUND" />
           <option name="FONT_TYPE" value="1" />
           <option name="EFFECT_COLOR" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>
@@ -972,7 +903,7 @@
           <option name="BACKGROUND" />
           <option name="FONT_TYPE" value="1" />
           <option name="EFFECT_COLOR" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>
@@ -982,7 +913,7 @@
           <option name="BACKGROUND" />
           <option name="FONT_TYPE" value="1" />
           <option name="EFFECT_COLOR" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>
@@ -992,7 +923,7 @@
           <option name="BACKGROUND" />
           <option name="FONT_TYPE" value="1" />
           <option name="EFFECT_COLOR" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>
@@ -1002,7 +933,7 @@
           <option name="BACKGROUND" />
           <option name="FONT_TYPE" value="1" />
           <option name="EFFECT_COLOR" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>
@@ -1012,9 +943,9 @@
         <value>
           <option name="FOREGROUND" value="8000" />
           <option name="BACKGROUND" value="ffcccc" />
-          <option name="FONT_TYPE" value="0" />
+          <option name="FONT_TYPE" />
           <option name="EFFECT_COLOR" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>
@@ -1032,9 +963,9 @@
         <value>
           <option name="FOREGROUND" />
           <option name="BACKGROUND" />
-          <option name="FONT_TYPE" value="0" />
+          <option name="FONT_TYPE" />
           <option name="EFFECT_COLOR" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>
@@ -1044,7 +975,7 @@
           <option name="BACKGROUND" />
           <option name="FONT_TYPE" value="2" />
           <option name="EFFECT_COLOR" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>
@@ -1054,7 +985,7 @@
           <option name="BACKGROUND" />
           <option name="FONT_TYPE" value="1" />
           <option name="EFFECT_COLOR" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>
@@ -1064,7 +995,7 @@
           <option name="BACKGROUND" />
           <option name="FONT_TYPE" value="1" />
           <option name="EFFECT_COLOR" />
-          <option name="EFFECT_TYPE" value="0" />
+          <option name="EFFECT_TYPE" />
           <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>

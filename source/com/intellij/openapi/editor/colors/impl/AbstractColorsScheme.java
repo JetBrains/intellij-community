@@ -214,7 +214,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   private void readAttributes(Element childNode) throws InvalidDataException {
     for (final Object o : childNode.getChildren(OPTION_ELEMENT)) {
       Element e = (Element)o;
-      TextAttributesKey name = TextAttributesKey.find(e.getAttributeValue(NAME_ATTR));
+      String key = e.getAttributeValue(NAME_ATTR);
+      TextAttributesKey name = TextAttributesKey.find(key);
       TextAttributes attr = new TextAttributes();
       Element value = e.getChild(VALUE_ELEMENT);
       attr.readExternal(value);

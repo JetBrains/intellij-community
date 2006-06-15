@@ -44,14 +44,15 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     return attrs;
   }
 
+  public static final int TRANSPARENT = -1;
   private static class Externalizable implements Cloneable, JDOMExternalizable {
     public Color FOREGROUND = null;
     public Color BACKGROUND = null;
 
-    public int FONT_TYPE = Font.PLAIN;
+    public int FONT_TYPE = TRANSPARENT;
 
     public Color EFFECT_COLOR = null;
-    public int EFFECT_TYPE = EFFECT_BORDER;
+    public int EFFECT_TYPE = TRANSPARENT;
     public Color ERROR_STRIPE_COLOR = null;
 
     private static final int EFFECT_BORDER = 0;
@@ -65,7 +66,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
 
     public void readExternal(Element element) throws InvalidDataException {
       DefaultJDOMExternalizer.readExternal(this, element);
-      if (FONT_TYPE < 0 || FONT_TYPE > 3) {
+      if (FONT_TYPE < -1 || FONT_TYPE > 3) {
         LOG.info("Wrong font type: " + FONT_TYPE);
         FONT_TYPE = 0;
       }
@@ -157,11 +158,15 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
   }
 
   public int getFontType() {
+    int type = getRawFontType();
+    return type == TRANSPARENT ? Font.PLAIN : type;
+  }
+  public int getRawFontType() {
     return myExternalizable.FONT_TYPE;
   }
 
   public void setFontType(int type) {
-    if (type < 0 || type > 3) {
+    if (type < -1 || type > 3) {
       LOG.error("Wrong font type: " + type);
       type = 0;
     }

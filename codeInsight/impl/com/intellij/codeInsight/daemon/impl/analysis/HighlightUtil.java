@@ -17,13 +17,15 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
@@ -2045,12 +2047,15 @@ public class HighlightUtil {
   }
 
   public static HighlightInfo convertToHighlightInfo(Annotation annotation) {
-    HighlightInfo info = new HighlightInfo(annotation.getTextAttributes(), convertType(annotation), annotation.getStartOffset(),
+    TextAttributes attributes = annotation.getEnforcedTextAttributes();
+    if (attributes == null) {
+      attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(annotation.getTextAttributes());
+    }
+    HighlightInfo info = new HighlightInfo(attributes, convertType(annotation), annotation.getStartOffset(),
                                            annotation.getEndOffset(), annotation.getMessage(), annotation.getTooltip(),
                                            annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping());
     info.setGutterIconRenderer(annotation.getGutterIconRenderer());
     info.isFileLevelAnnotation = annotation.isFileLevelAnnotation();
-
     List<Annotation.QuickFixInfo> fixes = annotation.getQuickFixes();
     if (fixes != null) {
       for (Annotation.QuickFixInfo quickFixInfo : fixes) {

@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,8 @@ public final class Annotation {
   private final String myMessage;
 
   private ProblemHighlightType myHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-  private TextAttributesKey myEnforcedAttributes = null;
+  private TextAttributesKey myEnforcedAttributesKey;
+  private TextAttributes myEnforcedAttributes;
 
 
   public static class QuickFixInfo {
@@ -187,7 +189,7 @@ public final class Annotation {
    * @return the text attribute key used for highlighting
    */
   public TextAttributesKey getTextAttributes() {
-    if (myEnforcedAttributes != null) return myEnforcedAttributes;
+    if (myEnforcedAttributesKey != null) return myEnforcedAttributesKey;
 
     if (myHighlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
       if (mySeverity == HighlightSeverity.ERROR) return CodeInsightColors.ERRORS_ATTRIBUTES;
@@ -204,6 +206,19 @@ public final class Annotation {
       return CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES;
     }
     return HighlighterColors.TEXT;
+  }
+
+  public TextAttributes getEnforcedTextAttributes() {
+    return myEnforcedAttributes;
+  }
+
+  /**
+   * Sets the text attributes used for highlighting the annotation.
+   *
+   * @param enforcedAttributes the text attributes for highlighting,
+   */
+  public void setEnforcedTextAttributes(final TextAttributes enforcedAttributes) {
+    myEnforcedAttributes = enforcedAttributes;
   }
 
   /**
@@ -260,7 +275,7 @@ public final class Annotation {
    * @param enforcedAttributes the text attributes key for highlighting,
    */
   public void setTextAttributes(final TextAttributesKey enforcedAttributes) {
-    myEnforcedAttributes = enforcedAttributes;
+    myEnforcedAttributesKey = enforcedAttributes;
   }
 
   /**

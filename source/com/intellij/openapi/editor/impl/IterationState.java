@@ -13,8 +13,9 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
-@SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way to many garbage in AbrstractList.iterator() produced otherwize.
+@SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way too many garbage in AbrstractList.iterator() produced otherwise.
 public class IterationState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.IterationState");
   private TextAttributes myMergedAttributes = new TextAttributes();
@@ -68,7 +69,7 @@ public class IterationState {
     int longestViewHighlighterLength = editorList == null ? 0 : editorList.getLongestHighlighterLength();
     myViewHighlighters = editorList == null ? null : editorList.getSortedHighlighters();
 
-    final MarkupModelEx docMarkup = ((MarkupModelEx)editor.getDocument().getMarkupModel(editor.myProject));
+    final MarkupModelEx docMarkup = (MarkupModelEx)editor.getDocument().getMarkupModel(editor.myProject);
 
     final HighlighterList docList = docMarkup.getHighlighterList();
     myDocumentHighlighters = docList != null
@@ -143,7 +144,7 @@ public class IterationState {
     if (search > 0) {
       while (low < high) {
         int mid = (low + high) / 2;
-        while (mid > 0 && !(sortedHighlighters.get(mid)).isValid()) mid--;
+        while (mid > 0 && !sortedHighlighters.get(mid).isValid()) mid--;
         if (mid < low + 1) break;
         RangeHighlighterImpl midHighlighter = sortedHighlighters.get(mid);
         if (midHighlighter.getStartOffset() < search) {
@@ -219,7 +220,7 @@ public class IterationState {
   }
 
   private int getGuardedBlockEnd(int start) {
-    java.util.List<RangeMarker> blocks = myDocument.getGuardedBlocks();
+    List<RangeMarker> blocks = myDocument.getGuardedBlocks();
     int min = myEnd;
     for (int i = 0; i < blocks.size(); i++) {
       RangeMarker block = blocks.get(i);
@@ -294,7 +295,7 @@ public class IterationState {
 
     if (myCurrentHighlighters.size() == 1) {
       //Optimization
-      if ((myCurrentHighlighters.get(0)).getAffectedAreaEndOffset() <= myStartOffset) {
+      if (myCurrentHighlighters.get(0).getAffectedAreaEndOffset() <= myStartOffset) {
         myCurrentHighlighters = new ArrayList<RangeHighlighterImpl>();
       }
     }
@@ -360,8 +361,8 @@ public class IterationState {
       return;
     }
 
-    boolean isInSelection = (hasSelection && myStartOffset >= mySelectionStart && myStartOffset < mySelectionEnd);
-    boolean isInCaretRow = (myStartOffset >= myCaretRowStart && myStartOffset < myCaretRowEnd);
+    boolean isInSelection = hasSelection && myStartOffset >= mySelectionStart && myStartOffset < mySelectionEnd;
+    boolean isInCaretRow = myStartOffset >= myCaretRowStart && myStartOffset < myCaretRowEnd;
     boolean isInGuardedBlock = myDocument.getOffsetGuard(myStartOffset) != null;
 
     TextAttributes syntax = myHighlighterIterator.getTextAttributes();
@@ -375,14 +376,7 @@ public class IterationState {
 
     final int size = myCurrentHighlighters.size();
     if (size > 1) {
-      Collections.sort(myCurrentHighlighters, new Comparator() {
-        public int compare(Object o1, Object o2) {
-          RangeHighlighter h1 = (RangeHighlighter)o1;
-          RangeHighlighter h2 = (RangeHighlighter)o2;
-
-          return h2.getLayer() - h1.getLayer();
-        }
-      });
+      Collections.sort(myCurrentHighlighters, LayerComparator.INSTANCE);
     }
 
     myCachedAttributesList.clear();
@@ -421,29 +415,29 @@ public class IterationState {
     }
 
     if (selection != null) myCachedAttributesList.add(selection);
+    if (caret != null) myCachedAttributesList.add(caret);
     if (fold != null) myCachedAttributesList.add(fold);
     if (guard != null) myCachedAttributesList.add(guard);
     if (syntax != null) myCachedAttributesList.add(syntax);
-    if (caret != null) myCachedAttributesList.add(caret);
 
     Color fore = null;
     Color back = isInGuardedBlock ? myReadOnlyColor : null;
     Color effect = null;
-    EffectType effectType = EffectType.BOXED;
-    int fontType = 0;
+    EffectType effectType = null;
+    int fontType = TextAttributes.TRANSPARENT;
 
     for (int i = 0; i < myCachedAttributesList.size(); i++) {
       TextAttributes attrs = myCachedAttributesList.get(i);
       if (fore == null) {
-        fore = ifDiffers(attrs.getForegroundColor(), myDefaultForeground);
+        fore = attrs.getForegroundColor();
       }
 
       if (back == null) {
-        back = ifDiffers(attrs.getBackgroundColor(), myDefaultBackground);
+        back = attrs.getBackgroundColor();
       }
 
-      if (fontType == 0) {
-        fontType = attrs.getFontType();
+      if (fontType == TextAttributes.TRANSPARENT) {
+        fontType = attrs.getRawFontType();
       }
 
       if (effect == null) {
@@ -451,17 +445,16 @@ public class IterationState {
         effectType = attrs.getEffectType();
       }
     }
+    if (fore == null) fore = myDefaultForeground;
+    if (back == null) back = myDefaultBackground;
+    if (fontType == TextAttributes.TRANSPARENT) fontType = Font.PLAIN;
+    if (effectType == null) effectType = EffectType.BOXED;
 
     myMergedAttributes.setForegroundColor(fore);
     myMergedAttributes.setBackgroundColor(back);
     myMergedAttributes.setFontType(fontType);
     myMergedAttributes.setEffectColor(effect);
     myMergedAttributes.setEffectType(effectType);
-  }
-
-  @Nullable
-  private static Color ifDiffers(final Color c1, final Color c2) {
-    return c1 == c2 ? null : c1;
   }
 
   public boolean atEnd() {
@@ -492,14 +485,7 @@ public class IterationState {
     Color caret = isInCaretRow && myCaretRowAttributes != null ? myCaretRowAttributes.getBackgroundColor() : null;
 
     if (myCurrentHighlighters.size() > 1) {
-      Collections.sort(myCurrentHighlighters, new Comparator() {
-        public int compare(Object o1, Object o2) {
-          RangeHighlighter h1 = (RangeHighlighter)o1;
-          RangeHighlighter h2 = (RangeHighlighter)o2;
-
-          return h2.getLayer() - h1.getLayer();
-        }
-      });
+      Collections.sort(myCurrentHighlighters, LayerComparator.INSTANCE);
     }
 
     for (int i = 0; i < myCurrentHighlighters.size(); i++) {
@@ -521,5 +507,19 @@ public class IterationState {
     }
 
     return caret;
+  }
+
+  private static class LayerComparator implements Comparator<RangeHighlighterImpl> {
+    private static final LayerComparator INSTANCE = new LayerComparator();
+    public int compare(RangeHighlighterImpl o1, RangeHighlighterImpl o2) {
+      int layerDiff = o2.getLayer() - o1.getLayer();
+      if (layerDiff != 0) {
+        return layerDiff;
+      }
+      // prefer more specific region
+      int o1Length = o1.getEndOffset() - o1.getStartOffset();
+      int o2Length = o2.getEndOffset() - o2.getStartOffset();
+      return o1Length - o2Length;
+    }
   }
 }

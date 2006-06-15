@@ -189,7 +189,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
   final VirtualFileManagerEx getManager() {
     if (myManager == null) {
-      myManager = (VirtualFileManagerEx)VirtualFileManagerEx.getInstance();
+      myManager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
     }
 
     return myManager;
@@ -586,7 +586,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
   }
 
-  @SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way too many garbage is produced otherwize in AbstractList.iterator()
+  @SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way too many garbage is produced otherwise in AbstractList.iterator()
   void refresh(VirtualFile file,
                boolean recursive,
                boolean storeStatus,
@@ -870,6 +870,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
   }
 
+  @NotNull
   public String getComponentName() {
     return "LocalFileSystem";
   }
@@ -991,7 +992,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {
-    final VirtualFileImpl file = ((VirtualFileImpl)vFile);
+    final VirtualFileImpl file = (VirtualFileImpl)vFile;
     String name = vFile.getName();
     VirtualFileImpl oldParent = file.getParent();
     final boolean handled = auxMove(vFile, newParent);
@@ -1029,7 +1030,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {
-    final VirtualFileImpl file = ((VirtualFileImpl)vFile);
+    final VirtualFileImpl file = (VirtualFileImpl)vFile;
 
     final boolean handled = auxRename(file, newName);
 
@@ -1053,7 +1054,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
-    final VirtualFileImpl file = ((VirtualFileImpl)vFile);
+    final VirtualFileImpl file = (VirtualFileImpl)vFile;
     PhysicalFile physicalFile = file.getPhysicalFile();
     VirtualFileImpl parent = file.getParent();
     if (parent == null) {
@@ -1097,7 +1098,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException {
-    final VirtualFileImpl dir = ((VirtualFileImpl)vDir);
+    final VirtualFileImpl dir = (VirtualFileImpl)vDir;
 
     VirtualFile existingFile = dir.findChild(dirName);
 
@@ -1125,7 +1126,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException {
-    final VirtualFileImpl dir = ((VirtualFileImpl)vDir);
+    final VirtualFileImpl dir = (VirtualFileImpl)vDir;
     final boolean handled = auxCreateFile(vDir, fileName);
 
     PhysicalFile physicalFile = dir.getPhysicalFile().createChild(fileName);

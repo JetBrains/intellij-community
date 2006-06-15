@@ -191,7 +191,7 @@ public class HighlightInfo {
     LOG.assertTrue(startOffset <= endOffset);
   }
 
-  public HighlightInfo(TextAttributesKey textAttributesKey,
+  public HighlightInfo(TextAttributes textAttributes,
                        HighlightInfoType type,
                        int startOffset,
                        int endOffset,
@@ -200,7 +200,7 @@ public class HighlightInfo {
                        HighlightSeverity severity,
                        boolean afterEndOfLine,
                        boolean needsUpdateOnTyping) {
-    forcedTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(textAttributesKey);
+    forcedTextAttributes = textAttributes;
     this.type = type;
     this.startOffset = startOffset;
     this.endOffset = endOffset;
@@ -254,7 +254,8 @@ public class HighlightInfo {
                                                   final TextAttributes attributes) {
     TextRange textRange = element.getTextRange();
     // do not use HighlightInfoFilter
-    HighlightInfo highlightInfo = new HighlightInfo(type.getAttributesKey(), type, textRange.getStartOffset(), textRange.getEndOffset(), message, htmlEscapeToolTip(message), type.getSeverity(element), false, false);
+    TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(type.getAttributesKey());
+    HighlightInfo highlightInfo = new HighlightInfo(textAttributes, type, textRange.getStartOffset(), textRange.getEndOffset(), message, htmlEscapeToolTip(message), type.getSeverity(element), false, false);
     highlightInfo.forcedTextAttributes = attributes;
     return highlightInfo;
   }
