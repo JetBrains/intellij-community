@@ -19,23 +19,26 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 public class ConfusingElseInspection extends StatementInspection {
 
     public String getID() {
         return "ConfusingElseBranch";
+    }
+
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message("confusing.else.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -59,6 +62,7 @@ public class ConfusingElseInspection extends StatementInspection {
 
     private static class ConfusingElseFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "confusing.else.unwrap.quickfix");
@@ -96,23 +100,13 @@ public class ConfusingElseInspection extends StatementInspection {
                     final PsiElement containingElement =
                             ifStatement.getParent();
                     assert containingElement != null;
-                    final PsiElement added =
-                            containingElement.addRangeAfter(children[1],
-                                    children[children .length - 2],
-                                    ifStatement);
-                    final CodeStyleManager codeStyleManager =
-                            CodeStyleManager.getInstance(project);
-                    codeStyleManager.reformat(added);
+                    containingElement.addRangeAfter(children[1],
+                            children[children.length - 2], ifStatement);
                 }
             } else {
                 final PsiElement containingElement = ifStatement.getParent();
-
                 assert containingElement != null;
-                final PsiElement added =
-                        containingElement.addAfter(elseBranch, ifStatement);
-                final CodeStyleManager codeStyleManager =
-                        CodeStyleManager.getInstance(project);
-                codeStyleManager.reformat(added);
+                containingElement.addAfter(elseBranch, ifStatement);
             }
             replaceStatement(ifStatement, text);
         }
@@ -140,7 +134,6 @@ public class ConfusingElseInspection extends StatementInspection {
             final PsiStatement nextStatement =
                     PsiTreeUtil.getNextSiblingOfType(statement,
                             PsiStatement.class);
-
             if (nextStatement == null) {
                 return;
             }
@@ -150,6 +143,9 @@ public class ConfusingElseInspection extends StatementInspection {
                 // and are followed by a case label
             }
             final PsiElement elseToken = statement.getElseElement();
+            if (elseToken == null) {
+                return;
+            }
             registerError(elseToken);
         }
     }
