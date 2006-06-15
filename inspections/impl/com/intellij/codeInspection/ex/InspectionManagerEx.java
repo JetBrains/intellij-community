@@ -101,8 +101,8 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
                                                    String descriptionTemplate,
                                                    LocalQuickFix fix,
                                                    ProblemHighlightType highlightType) {
-    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fix != null ? new LocalQuickFix[]{fix} : null,
-                                     highlightType, false);
+    LocalQuickFix[] quickFixes = fix != null ? new LocalQuickFix[]{fix} : null;
+    return createProblemDescriptor(psiElement, descriptionTemplate, quickFixes, highlightType);
   }
 
   @NotNull
@@ -110,7 +110,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
                                                    String descriptionTemplate,
                                                    LocalQuickFix[] fixes,
                                                    ProblemHighlightType highlightType) {
-    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false);
+    return createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType, false);
   }
 
   @NotNull
@@ -202,6 +202,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return null;
   }
 
+  @NotNull
   public String getComponentName() {
     return "InspectionManager";
   }

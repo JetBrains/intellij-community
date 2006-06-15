@@ -32,8 +32,8 @@ public class VisualPosition {
   public final int column;
 
   public VisualPosition(int line, int column) {
-    if (line < 0) throw new IllegalArgumentException("line must be non negative");
-    if (column < 0) throw new IllegalArgumentException("column must be non negative");
+    if (line < 0) throw new IllegalArgumentException("line must be non negative: "+line);
+    if (column < 0) throw new IllegalArgumentException("column must be non negative: "+column);
     this.line = line;
     this.column = column;
   }

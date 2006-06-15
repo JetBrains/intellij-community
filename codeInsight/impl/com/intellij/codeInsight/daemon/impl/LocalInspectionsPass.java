@@ -31,9 +31,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedPsiInspectionUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -48,9 +52,10 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   private Document myDocument;
   private int myStartOffset;
   private int myEndOffset;
-  private List<ProblemDescriptor> myDescriptors = Collections.emptyList();
-  private List<HighlightInfoType> myLevels = Collections.emptyList();
-  private List<LocalInspectionTool> myTools = Collections.emptyList();
+  @NotNull private List<ProblemDescriptor> myDescriptors = Collections.emptyList();
+  @NotNull private List<HighlightInfoType> myLevels = Collections.emptyList();
+  @NotNull private List<LocalInspectionTool> myTools = Collections.emptyList();
+  @NotNull private List<InjectedPsiInspectionUtil.InjectedPsiInspectionResult> myInjectedPsiInspectionResults = Collections.emptyList();
 
   public LocalInspectionsPass(Project project,
                               PsiFile file,
@@ -118,97 +123,91 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       if (visitor != null) visitors.add(new Pair<LocalInspectionTool, PsiElementVisitor>(tool, visitor));
     }
 
-    //PsiManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
-    //  public void run() {
-        for (PsiElement element : workSet) {
-          ProgressManager.getInstance().checkCanceled();
-          LocalInspectionTool currentTool = null;
-          try {
-            if (element instanceof PsiMethod) {
-              PsiMethod psiMethod = (PsiMethod)element;
-              for (LocalInspectionTool tool : tools) {
-                currentTool = tool;
-                if (GlobalInspectionContextImpl.isToCheckMember(psiMethod, currentTool.getID())) {
-                  appendDescriptors(currentTool.checkMethod(psiMethod, iManager, true), currentTool);
-                }
-              }
-            }
-            else if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
-              PsiClass psiClass = (PsiClass)element;
-              for (LocalInspectionTool tool : tools) {
-                currentTool = tool;
-                if (GlobalInspectionContextImpl.isToCheckMember(psiClass, currentTool.getID())) {
-                  appendDescriptors(currentTool.checkClass(psiClass, iManager, true), currentTool);
-                }
-              }
-            }
-            else if (element instanceof PsiField) {
-              PsiField psiField = (PsiField)element;
-              for (LocalInspectionTool tool : tools) {
-                currentTool = tool;
-                if (GlobalInspectionContextImpl.isToCheckMember(psiField, currentTool.getID())) {
-                  appendDescriptors(currentTool.checkField(psiField, iManager, true), currentTool);
-                }
-              }
-            }
-            else if (element instanceof PsiFile){
-              PsiFile psiFile = (PsiFile)element;
-              for (LocalInspectionTool tool : tools) {
-                currentTool = tool;
-                appendDescriptors(currentTool.checkFile(psiFile, iManager, true), currentTool);
-              }
-            }
-          }
-          catch (ProcessCanceledException e) {
-            throw e;
-          }
-          catch (Exception e) {
-            if (currentTool != null) {
-              LOG.error("Exception happened in local inspection tool: " + currentTool.getDisplayName(), e);
-            }
-            else {
-              LOG.error(e);
+    for (PsiElement element : workSet) {
+      ProgressManager.getInstance().checkCanceled();
+      LocalInspectionTool currentTool = null;
+      try {
+        if (element instanceof PsiMethod) {
+          PsiMethod psiMethod = (PsiMethod)element;
+          for (LocalInspectionTool tool : tools) {
+            currentTool = tool;
+            if (GlobalInspectionContextImpl.isToCheckMember(psiMethod, currentTool.getID())) {
+              appendDescriptors(currentTool.checkMethod(psiMethod, iManager, true), currentTool);
             }
           }
         }
+        else if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
+          PsiClass psiClass = (PsiClass)element;
+          for (LocalInspectionTool tool : tools) {
+            currentTool = tool;
+            if (GlobalInspectionContextImpl.isToCheckMember(psiClass, currentTool.getID())) {
+              appendDescriptors(currentTool.checkClass(psiClass, iManager, true), currentTool);
+            }
+          }
+        }
+        else if (element instanceof PsiField) {
+          PsiField psiField = (PsiField)element;
+          for (LocalInspectionTool tool : tools) {
+            currentTool = tool;
+            if (GlobalInspectionContextImpl.isToCheckMember(psiField, currentTool.getID())) {
+              appendDescriptors(currentTool.checkField(psiField, iManager, true), currentTool);
+            }
+          }
+        }
+        else if (element instanceof PsiFile) {
+          PsiFile psiFile = (PsiFile)element;
+          for (LocalInspectionTool tool : tools) {
+            currentTool = tool;
+            appendDescriptors(currentTool.checkFile(psiFile, iManager, true), currentTool);
+          }
+        }
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        if (currentTool != null) {
+          LOG.error("Exception happened in local inspection tool: " + currentTool.getDisplayName(), e);
+        }
+        else {
+          LOG.error(e);
+        }
+      }
+    }
 
-        if (!visitors.isEmpty()) {
-          final List<PsiElement> elements = CodeInsightUtil.getElementsIntersectingRange(psiRoot, myStartOffset, myEndOffset);
-          //noinspection ForLoopReplaceableByForEach
-          for (int i = 0; i < elements.size(); i++) {
-            PsiElement element = elements.get(i);
-            //noinspection ForLoopReplaceableByForEach
-            for (int j = 0; j < visitors.size(); j++) {
-              Pair<LocalInspectionTool, PsiElementVisitor> visitor = visitors.get(j);
-              element.accept(visitor.getSecond());
-              appendDescriptors(holder.getResults(), visitor.getFirst());
-            }
-          }
+    final List<PsiElement> elements = CodeInsightUtil.getElementsIntersectingRange(psiRoot, myStartOffset, myEndOffset);
+    if (!visitors.isEmpty()) {
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0; i < elements.size(); i++) {
+        PsiElement element = elements.get(i);
+        //noinspection ForLoopReplaceableByForEach
+        for (int j = 0; j < visitors.size(); j++) {
+          Pair<LocalInspectionTool, PsiElementVisitor> visitor = visitors.get(j);
+          element.accept(visitor.getSecond());
+          appendDescriptors(holder.getResults(), visitor.getFirst());
         }
-      //}
-    //});
+      }
+    }
+    inspectInjectedPsi(elements);
+  }
+
+  private void inspectInjectedPsi(final List<PsiElement> elements) {
+    myInjectedPsiInspectionResults = new SmartList<InjectedPsiInspectionUtil.InjectedPsiInspectionResult>();
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < elements.size(); i++) {
+      PsiElement element = elements.get(i);
+      if (element instanceof PsiLanguageInjectionHost) {
+        PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)element;
+        myInjectedPsiInspectionResults.addAll(InjectedPsiInspectionUtil.inspectInjectedPsi(host));
+      }
+    }
   }
 
   //for tests only
   public Collection<HighlightInfo> getHighlights() {
-    ArrayList<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
-    for (int i = 0; i < myDescriptors.size(); i++) {
-      ProblemDescriptor problemDescriptor = myDescriptors.get(i);
-      String message = renderDescriptionMessage(problemDescriptor);
-      HighlightInfoType highlightInfoType = myLevels.get(i);
-      HighlightInfo highlightInfo = highlightInfoFromDescriptor(problemDescriptor, highlightInfoType, message, message);
-      highlights.add(highlightInfo);
-      LocalInspectionTool tool = myTools.get(i);
-      List<IntentionAction> options = getStandardIntentionOptions(tool, problemDescriptor.getPsiElement());
-      final QuickFix[] fixes = problemDescriptor.getFixes();
-      if (fixes != null && fixes.length > 0) {
-        for (int k = 0; k < fixes.length; k++) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor, k), options, tool.getDisplayName());
-        }
-      } else {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options, tool.getDisplayName());
-      }
-    }
+    ArrayList<HighlightInfo> highlights = new ArrayList<HighlightInfo>(myDescriptors.size());
+    addHighlightsFromDescriptors(highlights);
+    addHighlightsFromInjectedPsiProblems(highlights);
     return highlights;
   }
 
@@ -240,24 +239,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       ProgressManager.getInstance().checkCanceled();
       if (!InspectionManagerEx.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool.getID())) {
         myDescriptors.add(problemDescriptor);
-        ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
-        HighlightInfoType type = null;
-        if (highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
-          type = SeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
-        }
-        else if (highlightType == ProblemHighlightType.LIKE_DEPRECATED) {
-          type = HighlightInfoType.DEPRECATED;
-        }
-        else if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) {
-          if (JavaDocReferenceInspection.SHORT_NAME.equals(tool.getShortName())){
-            type = HighlightInfoType.JAVADOC_WRONG_REF;
-          } else {
-            type = HighlightInfoType.WRONG_REF;
-          }
-        }
-        else if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
-          type = HighlightInfoType.UNUSED_SYMBOL;
-        }
+        HighlightInfoType type = highlightTypeFromDescriptor(problemDescriptor, tool, severity);
 
         myLevels.add(type);
         myTools.add(tool);
@@ -265,45 +247,33 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     }
   }
 
-  public void doApplyInformationToEditor() {
-    List<HighlightInfo> infos = new ArrayList<HighlightInfo>(myDescriptors.size());
-    for (int i = 0; i < myDescriptors.size(); i++) {
-      ProblemDescriptor descriptor = myDescriptors.get(i);
-      LocalInspectionTool tool = myTools.get(i);
-      //TODO
-      PsiElement psiElement = descriptor.getPsiElement();
-      if (psiElement == null) continue;
-      @NonNls String message = renderDescriptionMessage(descriptor);
-      final HighlightInfoType level = myLevels.get(i);
-
-      final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
-      final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
-      if (!inspectionProfile.isToolEnabled(key)) continue;
-
-
-      HighlightInfoType type = new HighlightInfoType() {
-        public HighlightSeverity getSeverity(final PsiElement psiElement) {
-          return inspectionProfile.getErrorLevel(key).getSeverity();
-        }
-
-        public TextAttributesKey getAttributesKey() {
-          return level.getAttributesKey();
-        }
-      };
-      String plainMessage = XmlUtil.unescape(message.replaceAll("<[^>]*>", ""));
-      @NonNls String tooltip = message.startsWith("<html>") ? message : "<html><body>" + XmlUtil.escapeString(message) + "</body></html>";
-      HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);
-      infos.add(highlightInfo);
-      List<IntentionAction> options = getStandardIntentionOptions(tool, psiElement);
-      final QuickFix[] fixes = descriptor.getFixes();
-      if (fixes != null && fixes.length > 0) {
-        for (int k = 0; k < fixes.length; k++) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), options, tool.getDisplayName());
-        }
+  private static HighlightInfoType highlightTypeFromDescriptor(final ProblemDescriptor problemDescriptor, final LocalInspectionTool tool,
+                                                    final HighlightSeverity severity) {
+    ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
+    HighlightInfoType type = null;
+    if (highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
+      type = SeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
+    }
+    else if (highlightType == ProblemHighlightType.LIKE_DEPRECATED) {
+      type = HighlightInfoType.DEPRECATED;
+    }
+    else if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) {
+      if (JavaDocReferenceInspection.SHORT_NAME.equals(tool.getShortName())){
+        type = HighlightInfoType.JAVADOC_WRONG_REF;
       } else {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options, tool.getDisplayName());
+        type = HighlightInfoType.WRONG_REF;
       }
     }
+    else if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
+      type = HighlightInfoType.UNUSED_SYMBOL;
+    }
+    return type;
+  }
+
+  public void doApplyInformationToEditor() {
+    List<HighlightInfo> infos = new ArrayList<HighlightInfo>(myDescriptors.size());
+    addHighlightsFromDescriptors(infos);
+    addHighlightsFromInjectedPsiProblems(infos);
 
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, infos,
                                                    UpdateHighlightersUtil.INSPECTION_HIGHLIGHTERS_GROUP);
@@ -319,6 +289,74 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     for (Editor editor : editors) {
       ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(renderer);
     }
+  }
+
+  private void addHighlightsFromDescriptors(final List<HighlightInfo> infos) {
+    for (int i = 0; i < myDescriptors.size(); i++) {
+      ProblemDescriptor descriptor = myDescriptors.get(i);
+      LocalInspectionTool tool = myTools.get(i);
+      final HighlightInfoType level = myLevels.get(i);
+      HighlightInfo highlightInfo = createHighlightInfo(descriptor, tool, level);
+      infos.add(highlightInfo);
+    }
+  }
+
+  private void addHighlightsFromInjectedPsiProblems(final List<HighlightInfo> infos) {
+    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < myInjectedPsiInspectionResults.size(); i++) {
+      InjectedPsiInspectionUtil.InjectedPsiInspectionResult result = myInjectedPsiInspectionResults.get(i);
+      LocalInspectionTool tool = result.tool;
+      HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())).getSeverity();
+
+      int injectedPsiOffset = result.injectedPsi.getContext().getTextRange().getStartOffset() + result.rangeInsideHost.getStartOffset();
+
+      //noinspection ForLoopReplaceableByForEach
+      for (int j = 0; j < result.foundProblems.size(); j++) {
+        ProblemDescriptor descriptor = result.foundProblems.get(j);
+        HighlightInfoType level = highlightTypeFromDescriptor(descriptor, tool, severity);
+        HighlightInfo info = createHighlightInfo(descriptor, tool, level);
+        if (info == null) continue;
+        HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, info.startOffset + injectedPsiOffset, info.endOffset + injectedPsiOffset, info.description, info.toolTip);
+        infos.add(patched);
+      }
+    }
+  }
+
+  @Nullable
+  private HighlightInfo createHighlightInfo(final ProblemDescriptor descriptor, final LocalInspectionTool tool, final HighlightInfoType level) {
+    //TODO
+    PsiElement psiElement = descriptor.getPsiElement();
+    if (psiElement == null) return null;
+    @NonNls String message = renderDescriptionMessage(descriptor);
+
+    final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
+    if (!inspectionProfile.isToolEnabled(key)) return null;
+
+
+    HighlightInfoType type = new HighlightInfoType() {
+      public HighlightSeverity getSeverity(final PsiElement psiElement) {
+        return inspectionProfile.getErrorLevel(key).getSeverity();
+      }
+
+      public TextAttributesKey getAttributesKey() {
+        return level.getAttributesKey();
+      }
+    };
+    String plainMessage = XmlUtil.unescape(message.replaceAll("<[^>]*>", ""));
+    @NonNls String tooltip = message.startsWith("<html>") ? message : "<html><body>" + XmlUtil.escapeString(message) + "</body></html>";
+    HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);
+    List<IntentionAction> options = getStandardIntentionOptions(tool, psiElement);
+    final QuickFix[] fixes = descriptor.getFixes();
+    if (fixes != null && fixes.length > 0) {
+      for (int k = 0; k < fixes.length; k++) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), options, tool.getDisplayName());
+      }
+    } else {
+      QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options, tool.getDisplayName());
+    }
+    return highlightInfo;
   }
 
   private static List<IntentionAction> getStandardIntentionOptions(final LocalInspectionTool tool, final PsiElement psiElement) {

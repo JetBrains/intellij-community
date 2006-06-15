@@ -17,6 +17,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +44,7 @@ public class ProblemsHolder {
     myProblems.add(myManager.createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType));
   }
 
+  @Nullable
   public List<ProblemDescriptor> getResults() {
     final List<ProblemDescriptor> problems = myProblems;
     myProblems = null;

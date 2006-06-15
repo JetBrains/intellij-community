@@ -149,12 +149,12 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (injected == null) return false;
     for (Pair<PsiElement, TextRange> pair : injected) {
       PsiElement injectedPsi = pair.getFirst();
-      TextRange range = pair.getSecond();
+      TextRange rangeInsideHost = pair.getSecond();
       Language injectedLanguage = injectedPsi.getLanguage();
       VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
       SyntaxHighlighter syntaxHighlighter = injectedLanguage.getSyntaxHighlighter(element.getProject(), virtualFile);
       final Annotator languageAnnotator = injectedLanguage.getAnnotator();
-      final int injectedPsiOffset = injectionHost.getTextRange().getStartOffset() + range.getStartOffset();
+      final int injectedPsiOffset = injectionHost.getTextRange().getStartOffset() + rangeInsideHost.getStartOffset();
       final SyntaxHighlighterAsAnnotator syntaxAnnotator = new SyntaxHighlighterAsAnnotator(syntaxHighlighter);
       PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
         final AnnotationHolderImpl fixingAnnotationHolder = new AnnotationHolderImpl() {

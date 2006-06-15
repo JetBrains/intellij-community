@@ -340,20 +340,16 @@ public class EditorDelegate implements EditorEx {
     return myDelegate.getLastColumnNumber();
   }
 
+
+  // assuming there is no folding in injected documents
   @NotNull
   public VisualPosition logicalToVisualPosition(final LogicalPosition pos) {
-    LogicalPosition windowPosition = myDelegate.offsetToLogicalPosition(myDocument.getTextRange().getStartOffset());
-    LogicalPosition newPosition = new LogicalPosition(pos.line + windowPosition.line, pos.column + windowPosition.column);
-    VisualPosition res = myDelegate.logicalToVisualPosition(newPosition);
-    return new VisualPosition(res.line - windowPosition.line, res.column - windowPosition.column);
+    return new VisualPosition(pos.line, pos.column);
   }
 
   @NotNull
   public LogicalPosition visualToLogicalPosition(final VisualPosition pos) {
-    VisualPosition windowPosition = myDelegate.offsetToVisualPosition(myDocument.getTextRange().getStartOffset());
-    VisualPosition newPosition = new VisualPosition(pos.line + windowPosition.line, pos.column + windowPosition.column);
-    LogicalPosition res = myDelegate.visualToLogicalPosition(newPosition);
-    return new LogicalPosition(res.line - windowPosition.line, res.column - windowPosition.column);
+    return new LogicalPosition(pos.line, pos.column);
   }
 
   public DataContext getDataContext() {

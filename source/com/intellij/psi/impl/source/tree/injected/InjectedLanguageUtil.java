@@ -1,4 +1,4 @@
-package com.intellij.psi.impl.source.tree;
+package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -48,7 +49,7 @@ import java.util.Map;
  * @author cdr
  */
 public class InjectedLanguageUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.InjectedLanguageUtil");
+  private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtill");
   private static final Key<CachedValue<List<Pair<PsiElement, TextRange>>>> INJECTED_PSI = Key.create("injectedPsi");
 
   @Nullable
@@ -127,7 +128,10 @@ public class InjectedLanguageUtil {
     ((FileElement)parsedNode).setPsiElement(repositoryPsiElement);
     repositoryPsiElement.setTreeElement(parsedNode);
     viewProvider.forceCachedPsi(psiFile);
-    psiFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, host);
+    if (host.isPhysical()) {
+      SmartPsiElementPointer pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host);
+      psiFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, pointer);
+    }
 
     return parsedNode.getPsi();
   }
@@ -213,17 +217,24 @@ public class InjectedLanguageUtil {
   }
 
   private static class InjectedPsiProvider<T extends PsiLanguageInjectionHost> implements CachedValueProvider<List<Pair<PsiElement, TextRange>>> {
-    private final T myHost;
+    private final SmartPsiElementPointer myHost;
     private final LiteralTextEscaper<T> myTextEscaper;
 
     public InjectedPsiProvider(final T host, @Nullable LiteralTextEscaper<T> textEscaper) {
-      myHost = host;
+      LOG.assertTrue(host.isValid());
+      myHost = host.isPhysical() ? SmartPointerManager.getInstance(host.getProject()).createSmartPsiElementPointer(host) : new SmartPsiElementPointer() {
+        public PsiElement getElement() {
+          return host;
+        }
+      };
       myTextEscaper = textEscaper;
     }
 
     public Result<List<Pair<PsiElement, TextRange>>> compute() {
-      final TextRange hostRange = myHost.getTextRange();
-      PsiFile hostPsiFile = myHost.getContainingFile();
+      final T host = (T)myHost.getElement();
+      if (host == null) return null;
+      final TextRange hostRange = host.getTextRange();
+      PsiFile hostPsiFile = host.getContainingFile();
       VirtualFile virtualFile = hostPsiFile.getVirtualFile();
       if (virtualFile == null) {
         PsiFile originalFile = hostPsiFile.getOriginalFile();
@@ -232,7 +243,7 @@ public class InjectedLanguageUtil {
       if (virtualFile == null) return null;
       final VirtualFile hostVirtualFile = virtualFile;
       final DocumentEx hostDocument = (DocumentEx)hostPsiFile.getViewProvider().getDocument();
-      final PsiManagerImpl psiManager = (PsiManagerImpl)myHost.getManager();
+      final PsiManagerImpl psiManager = (PsiManagerImpl)host.getManager();
       final List<Pair<PsiElement, TextRange>> result = new SmartList<Pair<PsiElement, TextRange>>();
       InjectedLanguagePlaces placesRegistrar = new InjectedLanguagePlaces() {
         public void addPlace(@NotNull Language language, @NotNull TextRange rangeInsideHost) {
@@ -241,16 +252,16 @@ public class InjectedLanguageUtil {
           String newText = documentRange.getText();
           VirtualFileDelegate virtualFile = new VirtualFileDelegate(hostVirtualFile, documentRange, language, newText);
           FileDocumentManagerImpl.registerDocument(documentRange, virtualFile);
-          PsiElement psi = parseInjectedPsiFile(myHost, rangeInsideHost, language, virtualFile, myTextEscaper);
+          PsiElement psi = parseInjectedPsiFile(host, rangeInsideHost, language, virtualFile, myTextEscaper);
           psi = registerDocumentRange(documentRange, (PsiFile)psi);
 
           result.add(new Pair<PsiElement,TextRange>(psi, rangeInsideHost));
         }
       };
       for (LanguageInjector injector : psiManager.getLanguageInjectors()) {
-        injector.getLanguagesToInject(myHost, placesRegistrar);
+        injector.getLanguagesToInject(host, placesRegistrar);
       }
-      return Result.createSingleDependency(result, myHost);
+      return new Result<List<Pair<PsiElement, TextRange>>>(result, host, host.getContainingFile());
     }
   }
 
@@ -308,12 +319,13 @@ public class InjectedLanguageUtil {
   }
 
 
-  public static final Key<Map<RangeMarker,PsiFile>> INJECTED_DOCUMENTS_KEY = Key.create("INJECTED_DOCUMENTS_KEY");
+  private static final Key<Map<RangeMarker,PsiFile>> INJECTED_DOCUMENTS_KEY = Key.create("INJECTED_DOCUMENTS_KEY");
   public static void commitAllInjectedDocuments(PsiDocumentManager documentManager, Document document) {
     Map<RangeMarker, PsiFile> injected = document.getUserData(INJECTED_DOCUMENTS_KEY);
     if (injected == null) return;
     PsiFile psiFile = documentManager.getPsiFile(document);
-    for (RangeMarker documentRange : new ArrayList<RangeMarker>(injected.keySet())) {
+    ArrayList<RangeMarker> oldInjected = new ArrayList<RangeMarker>(injected.keySet());
+    for (RangeMarker documentRange : oldInjected) {
       final PsiFileImpl oldFile = (PsiFileImpl)injected.get(documentRange);
       if (!documentRange.isValid() || oldFile == null) {
         injected.remove(documentRange);
@@ -332,7 +344,7 @@ public class InjectedLanguageUtil {
     if (injected == null) {
       injected = new THashMap<RangeMarker, PsiFile>(new TObjectHashingStrategy<RangeMarker>() {
         public int computeHashCode(final RangeMarker object) {
-          return object.getStartOffset();
+          return 0; //ranges can grow/shrink
         }
 
         public boolean equals(final RangeMarker o1, final RangeMarker o2) {
