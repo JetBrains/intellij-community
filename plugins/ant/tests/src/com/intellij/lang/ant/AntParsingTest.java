@@ -81,6 +81,10 @@ public class AntParsingTest extends ParsingTestCase {
     doTest(true);
   }
 
+  public void testChecksum1() throws Exception {
+    doTest(true);
+  }
+
   public void testCondition() throws Exception {
     doTest(true);
   }

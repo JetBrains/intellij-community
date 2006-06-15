@@ -101,6 +101,14 @@ public class AntElementFactory {
           return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Property.class.getName()));
         }
       });
+      ourAntTypeToKnownAntElementCreatorMap.put(Checksum.class.getName(), new AntElementCreator() {
+        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+          if (tag.getAttributeValue("totalproperty") != null) {
+            return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Checksum.class.getName()), "totalproperty");
+          }
+          return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Checksum.class.getName()), "property");
+        }
+      });
       for (final String clazz : PROPERTY_CLASSES) {
         addPropertyCreator(clazz);
       }
@@ -152,10 +160,9 @@ public class AntElementFactory {
     });
   }
 
-  private final static String[] PROPERTY_CLASSES = {Available.class.getName(), Checksum.class.getName(), ConditionTask.class.getName(),
-    UpToDate.class.getName(), Dirname.class.getName(), Basename.class.getName(), LoadFile.class.getName(), TempFile.class.getName(),
-    PathConvert.class.getName(), Length.class.getName(), WhichResource.class.getName(), JarLibResolveTask.class.getName(),
-    P4Counter.class.getName()};
+  private final static String[] PROPERTY_CLASSES = {Available.class.getName(), ConditionTask.class.getName(), UpToDate.class.getName(),
+    Dirname.class.getName(), Basename.class.getName(), LoadFile.class.getName(), TempFile.class.getName(), PathConvert.class.getName(),
+    Length.class.getName(), WhichResource.class.getName(), JarLibResolveTask.class.getName(), P4Counter.class.getName()};
 
   private final static String[] ALL_TASKS_CONTAINER_CLASSES =
     {MacroDef.NestedSequential.class.getName(), Sequential.class.getName(), Parallel.class.getName()};
