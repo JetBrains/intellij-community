@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
@@ -271,5 +272,10 @@ public class VcsUtil {
       return mod != null;
     }
     return false;
+  }
+
+  public static FilePath getFilePath( String path )
+  {
+    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn( new File( path ) );
   }
 }
