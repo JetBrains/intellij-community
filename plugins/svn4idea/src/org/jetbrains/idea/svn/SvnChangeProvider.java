@@ -156,7 +156,8 @@ public class SvnChangeProvider implements ChangeProvider {
       }
       else if (statusType == SVNStatusType.STATUS_CONFLICTED ||
                statusType == SVNStatusType.STATUS_MERGED ||
-               statusType == SVNStatusType.STATUS_MODIFIED) {
+               statusType == SVNStatusType.STATUS_MODIFIED ||
+               statusType == SVNStatusType.STATUS_REPLACED) {
         builder.processChange(new Change(new SvnUpToDateRevision(filePath, myVcs, status.getRevision()), new CurrentContentRevision(filePath), fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_ADDED) {
