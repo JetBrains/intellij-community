@@ -114,7 +114,7 @@ public class AsmCodeGenerator {
       return;
     }
 
-    FileInputStream fis = null;
+    FileInputStream fis;
     try {
       byte[] patchedData;
       fis = new FileInputStream(classFile);
@@ -313,8 +313,8 @@ public class AsmCodeGenerator {
                                                final int parentLocal) throws CodeGenerationException {
 
       String className;
-      LwRootContainer nestedFormContainer = null;
       if (lwComponent instanceof LwNestedForm) {
+        LwRootContainer nestedFormContainer;
         LwNestedForm nestedForm = (LwNestedForm) lwComponent;
         try {
           nestedFormContainer = myFormLoader.loadForm(nestedForm.getFormFileName());
@@ -335,7 +335,7 @@ public class AsmCodeGenerator {
         catch (RecursiveFormNestingException e) {
           throw new CodeGenerationException(lwComponent.getId(), "Recursive form nesting is not allowed");
         }
-        className = nestedFormContainer.getClassToBind();
+        className = myFormLoader.getClassToBindName(nestedFormContainer);
       }
       else {
         className = getComponentCodeGenerator(lwComponent.getParent()).mapComponentClass(lwComponent.getComponentClassName());

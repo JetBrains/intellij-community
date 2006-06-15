@@ -260,11 +260,17 @@ public final class Javac2 extends Javac{
   }
 
   private File getClassFile(String className) {
+    final String classOrInnerName = getClassOrInnerName(className);
+    if (classOrInnerName == null) return null;
+    return new File(getDestdir().getAbsolutePath(), classOrInnerName + ".class");
+  }
+
+  private String getClassOrInnerName(String className) {
     File classFile = new File(getDestdir().getAbsolutePath(), className + ".class");
-    if (classFile.exists()) return classFile;
+    if (classFile.exists()) return className;
     int position = className.lastIndexOf('/');
     if (position == -1) return null;
-    return getClassFile(className.substring(0, position) + '$' + className.substring(position + 1));
+    return getClassOrInnerName(className.substring(0, position) + '$' + className.substring(position + 1));
   }
 
   private static URLClassLoader createClassLoader(final String classPath) throws MalformedURLException{
@@ -325,6 +331,10 @@ public final class Javac2 extends Javac{
         return container;
       }
       throw new Exception("Cannot find nested form file " + formFileName);
+    }
+
+    public String getClassToBindName(LwRootContainer container) {
+      return getClassOrInnerName(container.getClassToBind());
     }
   }
 }

@@ -23,4 +23,5 @@ import com.intellij.uiDesigner.lw.LwRootContainer;
  */
 public interface NestedFormLoader {
   LwRootContainer loadForm(String formFileName) throws Exception;
+  String getClassToBindName(LwRootContainer container);
 }

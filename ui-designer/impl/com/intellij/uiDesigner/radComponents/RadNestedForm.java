@@ -7,18 +7,16 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.uiDesigner.LoaderFactory;
-import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.XmlReader;
-import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.BorderLayout;
-import java.awt.Component;
+import java.awt.*;
 
 /**
  * @author yole
@@ -41,6 +39,10 @@ public class RadNestedForm extends RadComponent {
       getDelegee().add(nestedFormDelegee, BorderLayout.CENTER);
 
       setRadComponentRecursive(nestedFormDelegee);
+    }
+
+    if (isCustomCreateRequired()) {
+      setCustomCreate(true);
     }
   }
 
@@ -73,5 +75,18 @@ public class RadNestedForm extends RadComponent {
 
   @Override public boolean hasIntrospectedProperties() {
     return false;
+  }
+
+  @Override
+  public boolean isCustomCreateRequired() {
+    if (super.isCustomCreateRequired()) return true;
+    PsiClass boundClass = FormEditingUtil.findClassToBind(getModule(), myRootContainer.getClassToBind());
+    return isNonStaticInnerClass(boundClass);
+  }
+
+  private static boolean isNonStaticInnerClass(final PsiClass boundClass) {
+    if (boundClass == null) return false;
+    if (PsiUtil.isInnerClass(boundClass)) return true;
+    return isNonStaticInnerClass(boundClass.getContainingClass());
   }
 }

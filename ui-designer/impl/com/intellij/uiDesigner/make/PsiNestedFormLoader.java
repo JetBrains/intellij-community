@@ -11,6 +11,9 @@ import com.intellij.uiDesigner.PsiPropertiesProvider;
 import com.intellij.uiDesigner.compiler.NestedFormLoader;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.refactoring.util.RefactoringUtil;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -37,5 +40,15 @@ public class PsiNestedFormLoader implements NestedFormLoader {
     final LwRootContainer container = Utils.getRootContainer(formFile.getInputStream(), new PsiPropertiesProvider(myModule));
     myFormCache.put(formFileName, container);
     return container;
+  }
+
+  public String getClassToBindName(LwRootContainer container) {
+    PsiClass psiClass = PsiManager.getInstance(myModule.getProject()).findClass(container.getClassToBind(),
+                                                                                myModule.getModuleWithDependenciesScope());
+    if (psiClass != null) {
+      return RefactoringUtil.getInnerClassNameForClassLoader(psiClass);
+    }
+
+    return container.getClassToBind();
   }
 }
