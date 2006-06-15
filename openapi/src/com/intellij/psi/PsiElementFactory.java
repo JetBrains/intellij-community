@@ -33,6 +33,8 @@ import java.util.Map;
 /**
  * Service for creating instances of Java, JavaDoc, AspectJ and XML PSI elements which don't have
  * an underlying source code file.
+ *
+ * @see PsiManager#getElementFactory()
  */
 public interface PsiElementFactory {
   /**
