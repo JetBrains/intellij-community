@@ -334,7 +334,10 @@ public final class Javac2 extends Javac{
     }
 
     public String getClassToBindName(LwRootContainer container) {
-      return getClassOrInnerName(container.getClassToBind());
+      final String className = container.getClassToBind();
+      String result = getClassOrInnerName(className.replace('.', '/'));
+      if (result != null) return result;
+      return className;
     }
   }
 }
