@@ -3,6 +3,7 @@ package com.intellij.lang.ant.psi.impl;
 import com.intellij.lang.ant.misc.PsiElementHashSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
+import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
@@ -175,6 +176,10 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     File file = new File(fileName);
     if (!file.isAbsolute()) {
       file = new File(vFile.getPath(), fileName);
+      if (!file.exists()) {
+        AntProject project = antFile.getAntProject();
+        file = new File(project.getBaseDir(), fileName);
+      }
     }
     vFile = LocalFileSystem.getInstance().findFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));
     if (vFile == null) return null;
