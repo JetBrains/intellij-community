@@ -35,6 +35,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   private String myTargetNamespace;
   @NonNls
   public static final String XSD_PREFIX = "xsd";
+  @NonNls static final String ELEMENT_TAG_NAME = "element";
 
   public XmlNSDescriptorImpl(XmlFile file) {
     init(file.getDocument());
@@ -79,7 +80,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     visited.add( this );
 
     for (final XmlTag tag : tags) {
-      if (equalsToSchemaName(tag, "element")) {
+      if (equalsToSchemaName(tag, ELEMENT_TAG_NAME)) {
         String name = tag.getAttributeValue("name");
 
         if (name != null) {
@@ -525,7 +526,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     }
     
     CollectElementsProcessor processor = new CollectElementsProcessor();
-    processTagsInNamespace(myTag, new String[] {"element"}, processor);
+    processTagsInNamespace(myTag, new String[] {ELEMENT_TAG_NAME}, processor);
 
     return processor.result.toArray(new XmlElementDescriptor[processor.result.size()]);
   }
@@ -667,7 +668,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
       XmlTag[] tags = myTag.getSubTags();
 
       for (XmlTag tag : tags) {
-        if (equalsToSchemaName(tag, "element")) {
+        if (equalsToSchemaName(tag, ELEMENT_TAG_NAME)) {
           final String substAttr = tag.getAttributeValue("substitutionGroup");
           if (substAttr != null) {
             String substLocalName = XmlUtil.findLocalNameByQualifiedName(substAttr);

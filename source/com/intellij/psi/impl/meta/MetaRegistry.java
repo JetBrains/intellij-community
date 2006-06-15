@@ -17,10 +17,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.reference.SoftReference;
-import com.intellij.xml.impl.schema.NamedObjectDescriptor;
-import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
-import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
-import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.impl.schema.*;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -64,7 +61,7 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
               new NamespaceFilter(SCHEMA_URIS),
               new ClassFilter(XmlDocument.class)
           ),
-          XmlNSDescriptorImpl.class
+          SchemaNSDescriptor.class
       );
 
       addMetadataBinding(
@@ -72,7 +69,7 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
               new NamespaceFilter(SCHEMA_URIS),
               new TextFilter("schema")
           ),
-          XmlNSDescriptorImpl.class
+          SchemaNSDescriptor.class
       );
     }
     {
