@@ -54,7 +54,4 @@ public class PluginDescriptorMetaData implements DeploymentDescriptorMetaData {
     return false;
   }
 
-  public boolean isStandard() {
-    return false;
-  }
 }
