@@ -15,11 +15,11 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 
-class SmartPsiElementPointerImpl implements SmartPointerEx {
+class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.psi.impl.smartPointers.SmartPsiElementPointerImpl");
 
-  private PsiElement myElement;
+  private E myElement;
   private ElementInfo myElementInfo;
   private final Project myProject;
 
@@ -31,7 +31,7 @@ class SmartPsiElementPointerImpl implements SmartPointerEx {
     PsiElement restoreElement();
   }
 
-  public SmartPsiElementPointerImpl(Project project, PsiElement element) {
+  public SmartPsiElementPointerImpl(Project project, E element) {
     myProject = project;
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myElement = element;
@@ -62,7 +62,7 @@ class SmartPsiElementPointerImpl implements SmartPointerEx {
     return element != null ? element.hashCode() : 0;
   }
 
-  public PsiElement getElement() {
+  public E getElement() {
     if (myElement != null && !myElement.isValid()) {
       if (myElementInfo == null) {
         myElement = null;
@@ -72,7 +72,8 @@ class SmartPsiElementPointerImpl implements SmartPointerEx {
         if (restored != null && (!areElementKindEqual(restored, myElement) || !restored.isValid())) {
           restored = null;
         }
-        myElement = restored;
+
+        myElement = (E) restored;
       }
     }
 

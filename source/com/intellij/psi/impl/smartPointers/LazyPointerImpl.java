@@ -34,12 +34,14 @@ package com.intellij.psi.impl.smartPointers;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.*;
 
-public class LazyPointerImpl implements SmartPointerEx {
-  private PsiElement myElement = null;
+public class LazyPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
+  private E myElement = null;
   private PsiAnchor myAnchor = null;
   private SmartPsiElementPointer myPointer = null;
+  private Class<? extends PsiElement> myElementClass;
 
-  public LazyPointerImpl(PsiElement element) {
+  public LazyPointerImpl(E element) {
+    myElementClass = element.getClass();
     if (element instanceof PsiCompiledElement) {
       myElement = element;
     }
@@ -51,7 +53,7 @@ public class LazyPointerImpl implements SmartPointerEx {
     }
   }
 
-  private SmartPsiElementPointer setupPointer(PsiElement element) {
+  private static SmartPsiElementPointer setupPointer(PsiElement element) {
     return SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
   }
 
@@ -70,9 +72,14 @@ public class LazyPointerImpl implements SmartPointerEx {
   public void documentAndPsiInSync() {
   }
 
-  public PsiElement getElement() {
+  public E getElement() {
     if (myElement != null) return myElement.isValid() ? myElement : null;
-    if (myPointer != null) return myPointer.getElement();
-    return myAnchor.retrieve();
+    if (myPointer != null) return (E) myPointer.getElement();
+    final PsiElement psiElement = myAnchor.retrieve();
+    if (psiElement != null) {
+      return myElementClass.isAssignableFrom(psiElement.getClass()) ? (E) psiElement : null;
+    }
+
+    return null;
   }
 }

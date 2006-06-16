@@ -16,6 +16,6 @@
 package com.intellij.psi;
 
 
-public interface SmartPsiElementPointer {
-  PsiElement getElement();
+public interface SmartPsiElementPointer<E extends PsiElement> {
+  E getElement();
 }

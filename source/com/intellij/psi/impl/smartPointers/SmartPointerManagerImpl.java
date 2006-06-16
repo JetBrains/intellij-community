@@ -103,18 +103,18 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
   }
 
   @NotNull
-  public SmartPsiElementPointer createSmartPsiElementPointer(PsiElement element) {
+  public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(E element) {
     if (!element.isValid()) {
       LOG.assertTrue(false, "Invalid element:" + element);
     }
 
-    SmartPointerEx pointer = new SmartPsiElementPointerImpl(myProject, element);
+    SmartPointerEx<E> pointer = new SmartPsiElementPointerImpl<E>(myProject, element);
     initPointer(element, pointer);
 
     return pointer;
   }
 
-  private void initPointer(PsiElement element, SmartPointerEx pointer) {
+  private <E extends PsiElement> void initPointer(E element, SmartPointerEx<E> pointer) {
     PsiFile file = element.getContainingFile();
     if (file != null) {
       synchronized (file) {
@@ -148,8 +148,8 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
   }
 
   @NotNull
-  public SmartPsiElementPointer createLazyPointer(PsiElement element) {
-    LazyPointerImpl pointer = new LazyPointerImpl(element);
+  public <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(E element) {
+    LazyPointerImpl<E> pointer = new LazyPointerImpl<E>(element);
     initPointer(element, pointer);
     return pointer;
   }

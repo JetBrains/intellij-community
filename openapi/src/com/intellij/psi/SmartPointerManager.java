@@ -23,7 +23,7 @@ public abstract class SmartPointerManager {
     return project.getComponent(SmartPointerManager.class);
   }
 
-  @NotNull public abstract SmartPsiElementPointer createSmartPsiElementPointer(PsiElement element);
+  @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(E element);
   @NotNull public abstract SmartTypePointer createSmartTypePointer(PsiType type);
-  @NotNull public abstract SmartPsiElementPointer createLazyPointer(PsiElement element);
+  @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(E element);
 }
