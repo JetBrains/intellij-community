@@ -90,7 +90,7 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
 
   public String getJdkName() {
     if (!getRootModel().isWritable() || ApplicationManager.getApplication().isUnitTestMode()){
-      myProjectRootManager.getProjectJdkName();
+      return myProjectRootManager.getProjectJdkName();
     }
     final ProjectJdk projectJdk = getJdk();
     return projectJdk != null ? projectJdk.getName() : null;
