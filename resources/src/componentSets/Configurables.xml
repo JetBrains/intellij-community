@@ -84,6 +84,7 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable</implementation-class>
+      <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
     <component>
