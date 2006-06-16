@@ -75,7 +75,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
   };
   private ModifiableModuleModel myModuleModel;
-  private static final String DIMENSION_KEY = "#com.intellij.openapi.roots.ui.configuration.ModulesConfigurator";
   private JLabel myWarningLabel = new JLabel("");
   private ProjectRootConfigurable myProjectRootConfigurable;
 
@@ -466,16 +465,19 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  public static boolean showDialog(Project project, String moduleToSelect, String tabNameToSelect, final boolean show) {
+  public static boolean showDialog(Project project, final String moduleToSelect, final String tabNameToSelect, final boolean show) {
     final ProjectRootConfigurable projectRootConfigurable = ProjectRootConfigurable.getInstance(project);
-    projectRootConfigurable.selectModuleTab(moduleToSelect, tabNameToSelect);
-    projectRootConfigurable.setStartModuleWizard(show);
-    SwingUtilities.invokeLater(new Runnable() {
+    return ShowSettingsUtil.getInstance().editConfigurable(project, projectRootConfigurable, new Runnable(){
       public void run() {
-        projectRootConfigurable.setStartModuleWizard(false);
+        projectRootConfigurable.selectModuleTab(moduleToSelect, tabNameToSelect);
+        projectRootConfigurable.setStartModuleWizard(show);
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            projectRootConfigurable.setStartModuleWizard(false);
+          }
+        });
       }
     });
-    return ShowSettingsUtil.getInstance().editConfigurable(project, DIMENSION_KEY, projectRootConfigurable);
   }
 
   public void setStartModuleWizardOnShow(final boolean show) {
