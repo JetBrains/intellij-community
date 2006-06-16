@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -374,11 +375,6 @@ public final class GuiEditor extends JPanel implements DataProvider {
     refreshImpl(myRootContainer);
     myRootContainer.getDelegee().revalidate();
     repaintLayeredPane();
-
-    // Collect errors
-    // TODO [yole]: restore
-    //ErrorAnalyzer.analyzeErrors(this, myRootContainer, progress);
-
   }
 
   public void refreshAndSave(final boolean forceSync) {
@@ -967,6 +963,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
     private final Alarm myAlarm;
     private final MyRefreshPropertiesRequest myRefreshPropertiesRequest = new MyRefreshPropertiesRequest();
+    private final MySynchronizeRequest mySynchronizeRequest = new MySynchronizeRequest(myModule, true);
 
     public MyPsiTreeChangeListener() {
       myAlarm = new Alarm();
@@ -1007,10 +1004,23 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
 
     private void handleEvent(final PsiTreeChangeEvent event) {
-      if (event.getParent() != null && event.getParent().getContainingFile() instanceof PropertiesFile) {
-        LOG.debug("Received PSI change event for properties file");
-        myAlarm.cancelRequest(myRefreshPropertiesRequest);
-        myAlarm.addRequest(myRefreshPropertiesRequest, 500, ModalityState.stateForComponent(GuiEditor.this));
+      if (event.getParent() != null) {
+        PsiFile containingFile = event.getParent().getContainingFile();
+        if (containingFile instanceof PropertiesFile) {
+          LOG.debug("Received PSI change event for properties file");
+          myAlarm.cancelRequest(myRefreshPropertiesRequest);
+          myAlarm.addRequest(myRefreshPropertiesRequest, 500, ModalityState.stateForComponent(GuiEditor.this));
+        }
+        else if (containingFile instanceof PsiPlainTextFile && containingFile.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
+          // quick check if relevant
+          String resourceName = FormEditingUtil.buildResourceName(containingFile);
+          if (myDocument.getText().indexOf(resourceName) >= 0) {
+            LOG.debug("Received PSI change event for nested form");
+            // TODO[yole]: handle recursive nesting
+            myAlarm.cancelRequest(mySynchronizeRequest);
+            myAlarm.addRequest(mySynchronizeRequest, 500, ModalityState.stateForComponent(GuiEditor.this));
+          }
+        }
       }
     }
   }
@@ -1025,6 +1035,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
 
     public void run() {
+      LOG.debug("Synchronizing GUI editor " + myFile.getName() + " to document");
       PsiDocumentManager.getInstance(myModule.getProject()).commitDocument(myDocument);
       readFromFile(myKeepSelection);
     }

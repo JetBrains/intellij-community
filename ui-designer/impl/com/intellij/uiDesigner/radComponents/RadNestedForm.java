@@ -4,6 +4,9 @@
 
 package com.intellij.uiDesigner.radComponents;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,16 +25,19 @@ import java.awt.*;
  * @author yole
  */
 public class RadNestedForm extends RadComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadNestedForm");
+
   private String myFormFileName;
   private RadRootContainer myRootContainer;
 
   public RadNestedForm(final Module module, final String formFileName, final String id) throws Exception {
     super(module, JPanel.class, id);
     myFormFileName = formFileName;
+    LOG.debug("Loading nested form " + formFileName);
     VirtualFile formFile = ModuleUtil.findResourceFile(formFileName, module);
+    Document doc = FileDocumentManager.getInstance().getDocument(formFile);
     final ClassLoader classLoader = LoaderFactory.getInstance(module.getProject()).getLoader(formFile);
-
-    final LwRootContainer rootContainer = Utils.getRootContainer(formFile.getInputStream(), new CompiledClassPropertiesProvider(classLoader));
+    final LwRootContainer rootContainer = Utils.getRootContainer(doc.getText(), new CompiledClassPropertiesProvider(classLoader));
     myRootContainer = XmlReader.createRoot(module, rootContainer, classLoader);
     if (myRootContainer.getComponentCount() > 0) {
       getDelegee().setLayout(new BorderLayout());
