@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -30,6 +31,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.JComponent;
 
@@ -92,14 +94,16 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
                 return;
             }
             final String qualifiedName = aClass.getQualifiedName();
-            if (importList.findSingleClassImportStatement(qualifiedName) ==
-                    null) {
-                final PsiManager manager = referenceElement.getManager();
-                final PsiElementFactory elementFactory =
-                        manager.getElementFactory();
-                final PsiImportStatement importStatement =
-                        elementFactory.createImportStatement(aClass);
-                importList.add(importStatement);
+            @NonNls final String packageName =
+                    ClassUtil.extractPackageName(qualifiedName);
+            if (packageName.equals("java.lang")) {
+                if (ImportUtils.hasOnDemandImportConflict(qualifiedName, file)) {
+                    addImport(importList, aClass);
+                }
+            } else if (
+                    importList.findSingleClassImportStatement(qualifiedName) ==
+                            null) {
+                addImport(importList, aClass);
             }
             final PsiElement qualifier = referenceElement.getQualifier();
             if (qualifier == null) {
@@ -107,17 +111,29 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             }
             qualifier.delete();
         }
+
+        private static void addImport(PsiImportList importList, PsiClass aClass)
+                throws IncorrectOperationException {
+            final PsiManager manager = importList.getManager();
+            final PsiElementFactory elementFactory =
+                    manager.getElementFactory();
+            final PsiImportStatement importStatement =
+                    elementFactory.createImportStatement(aClass);
+            importList.add(importStatement);
+        }
     }
 
     private class UnnecessaryFullyQualifiedNameVisitor
             extends BaseInspectionVisitor{
 
-        public void visitReferenceExpression(PsiReferenceExpression reference) {
-            super.visitReferenceExpression(reference);
-            checkReference(reference);
+        public void visitReferenceExpression(
+                PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            checkReference(expression);
         }
 
-        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        public void visitReferenceElement(
+                PsiJavaCodeReferenceElement reference) {
             super.visitReferenceElement(reference);
             checkReference(reference);
         }

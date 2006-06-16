@@ -25,21 +25,10 @@ public class ImportUtils{
         super();
     }
 
-    // doesn't work for the following case:
-    // class UnnecessaryFullQualifiedNameInspection {
-    //     java.util.Vector v;
-    //     class Vector {}
-    // }
     public static boolean nameCanBeImported(String fqName, PsiJavaFile file){
-        //if(hasExactImportMatch(fqName, file)){
-        //    return true;
-        //}
         if(hasExactImportConflict(fqName, file)){
             return false;
         }
-        //if(hasOnDemandImportConflict(fqName, file)){
-        //    return false;
-        //}
         if(containsConflictingClass(fqName, file)){
             return false;
         }
@@ -54,24 +43,6 @@ public class ImportUtils{
         for(PsiClass aClass : classes){
             if(shortName.equals(aClass.getName())){
                 return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean hasExactImportMatch(String fqName, PsiJavaFile file){
-        final PsiImportList imports = file.getImportList();
-        if(imports == null){
-            return false;
-        }
-        final PsiImportStatement[] importStatements =
-                imports.getImportStatements();
-        for(final PsiImportStatement importStatement : importStatements){
-            if(!importStatement.isOnDemand()){
-                final String importName = importStatement.getQualifiedName();
-                if(fqName.equals(importName)){
-                    return true;
-                }
             }
         }
         return false;
@@ -139,7 +110,10 @@ public class ImportUtils{
                 }
             }
         }
-        return hasDefaultImportConflict(fqName, file);
+        if (hasDefaultImportConflict(fqName, file)) {
+            return true;
+        }
+        return hasJavaLangImportConflict(fqName, file);
     }
 
     public static boolean hasDefaultImportConflict(String fqName,
@@ -160,6 +134,14 @@ public class ImportUtils{
                 }
             }
         }
+        return false;
+    }
+
+    public static boolean hasJavaLangImportConflict(String fqName,
+                                                    PsiJavaFile file) {
+        final PsiManager manager = file.getManager();
+        final String shortName = ClassUtil.extractClassName(fqName);
+        final String packageName = ClassUtil.extractPackageName(fqName);
         if(!HardcodedMethodConstants.JAVA_LANG.equals(packageName)){
             final PsiPackage javaLangPackage =
                     manager.findPackage(HardcodedMethodConstants.JAVA_LANG);
@@ -181,21 +163,26 @@ public class ImportUtils{
                                                     PsiJavaFile file){
         final PsiClass[] classes = file.getClasses();
         for(PsiClass aClass : classes){
-            if (containsConflictingClass(fqName, aClass)) {
+            if (containsConflictingInnerClass(fqName, aClass)) {
                 return true;
             }
         }
         //return false;
-        final int lastDotIndex = fqName.lastIndexOf((int) '.');
-        final String shortName = fqName.substring(lastDotIndex + 1);
         final ClassReferenceVisitor visitor =
-                new ClassReferenceVisitor(shortName, fqName);
+                new ClassReferenceVisitor(fqName);
         file.accept(visitor);
         return visitor.isReferenceFound();
     }
 
-    private static boolean containsConflictingClass(String fqName,
-                                                    PsiClass aClass){
+    /**
+     * ImportUtils currently checks all inner classes, even those that are
+     * contained in inner classes themselves, because it doesn't know the
+     * location of the original fully qualified reference. It should really only
+     * check if the containing class of the fully qualified reference has any
+     * conflicting inner classes.
+     */
+    private static boolean containsConflictingInnerClass(String fqName,
+                                                         PsiClass aClass){
         final String shortName = ClassUtil.extractClassName(fqName);
         if(shortName.equals(aClass.getName())){
                 if(!fqName.equals(aClass.getQualifiedName())){
@@ -204,7 +191,7 @@ public class ImportUtils{
         }
         final PsiClass[] classes = aClass.getInnerClasses();
         for (PsiClass innerClass : classes) {
-            if (containsConflictingClass(fqName, innerClass)) {
+            if (containsConflictingInnerClass(fqName, innerClass)) {
                 return true;
             }
         }
@@ -226,32 +213,36 @@ public class ImportUtils{
 
     private static class ClassReferenceVisitor
             extends PsiRecursiveElementVisitor{
+
         private final String m_name;
         private final String fullyQualifiedName;
         private boolean m_referenceFound = false;
 
-        private ClassReferenceVisitor(String className,
-                                      String fullyQualifiedName){
+        private ClassReferenceVisitor(String fullyQualifiedName) {
             super();
-            m_name = className;
+            m_name = ClassUtil.extractClassName(fullyQualifiedName);
             this.fullyQualifiedName = fullyQualifiedName;
         }
 
-        public void visitReferenceElement(PsiJavaCodeReferenceElement ref){
-            final String text = ref.getText();
-            if(text.indexOf((int) '.') >= 0){
+        public void visitReferenceExpression(
+                PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            if (m_referenceFound) {
                 return;
             }
-            final PsiElement element = ref.resolve();
-
+            final String text = expression.getText();
+            if (text.indexOf((int)'.') >= 0 || !m_name.equals(text)) {
+                return;
+            }
+            final PsiElement element = expression.resolve();
             if(element instanceof PsiClass
-               && !(element instanceof PsiTypeParameter)){
+                    && !(element instanceof PsiTypeParameter)){
                 final PsiClass aClass = (PsiClass) element;
                 final String testClassName = aClass.getName();
                 final String testClassQualifiedName = aClass.getQualifiedName();
                 if(testClassQualifiedName != null && testClassName != null
-                   && !testClassQualifiedName.equals(fullyQualifiedName) &&
-                   testClassName.equals(m_name)){
+                        && !testClassQualifiedName.equals(fullyQualifiedName) &&
+                        testClassName.equals(m_name)){
                     m_referenceFound = true;
                 }
             }
