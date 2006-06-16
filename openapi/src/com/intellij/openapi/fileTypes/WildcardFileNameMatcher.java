@@ -21,22 +21,25 @@ import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 /**
  * @author max
  */
 public class WildcardFileNameMatcher implements FileNameMatcher {
-  private String myPattern;
-  private Pattern myMatcher;
+  private final String myPattern;
+  private final Matcher myMatcher;
 
   public WildcardFileNameMatcher(@NotNull @NonNls String pattern) {
     myPattern = pattern;
-    myMatcher = PatternUtil.fromMask(pattern);
+    myMatcher = PatternUtil.fromMask(pattern).matcher("");
   }
 
   public boolean accept(String fileName) {
-    return myMatcher.matcher(fileName).matches();
+    synchronized (myMatcher) {
+      myMatcher.reset(fileName);
+      return myMatcher.matches();
+    }
   }
 
   @NonNls
