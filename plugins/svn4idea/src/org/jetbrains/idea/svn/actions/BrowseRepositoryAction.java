@@ -19,21 +19,30 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserDialog;
 
-/**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 08.07.2005
- * Time: 21:44:21
- * To change this template use File | Settings | File Templates.
- */
+import javax.swing.*;
+import java.awt.*;
+
 public class BrowseRepositoryAction extends AnAction {
+
   public void actionPerformed(AnActionEvent e) {
+
     Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-    RepositoryBrowserDialog dialog = new RepositoryBrowserDialog(project);
-    dialog.show();
+    ToolWindowManager manager = ToolWindowManager.getInstance(project);
+
+
+    ToolWindow w = manager.getToolWindow("SVN Repositories");
+    if (w == null) {
+      JComponent component = createToolWindowComponent(project);
+      w = manager.registerToolWindow("SVN Repositories", component, ToolWindowAnchor.BOTTOM);
+    }
+    w.show(null);
+    w.activate(null);
   }
 
   public void update(AnActionEvent e) {
@@ -42,5 +51,16 @@ public class BrowseRepositoryAction extends AnAction {
     Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
     SvnVcs vcs = project != null ? SvnVcs.getInstance(project) : null;
     e.getPresentation().setEnabled(vcs != null);
+  }
+
+  private JComponent createToolWindowComponent(Project project) {
+    RepositoryBrowserDialog dialog = new RepositoryBrowserDialog(project);
+    JComponent component = dialog.createBrowserComponent(true);
+    JPanel panel = new JPanel(new BorderLayout());
+
+    panel.add(component, BorderLayout.CENTER);
+    panel.add(dialog.createToolbar(false), BorderLayout.WEST);
+
+    return panel;
   }
 }

@@ -10,7 +10,7 @@ public class ImportDialog extends RepositoryBrowserDialog {
     super(project);
   }
 
-  protected void init() {
+  public void init() {
     super.init();
     setTitle("Import into Subversion");
     setOKButtonText("Import");

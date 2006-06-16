@@ -53,7 +53,7 @@ public class CheckoutDialog extends RepositoryBrowserDialog {
     super(project);
   }
 
-  protected void init() {
+  public void init() {
     super.init();
     setTitle("Checkout from Subversion");
     setOKButtonText("Checkout");
