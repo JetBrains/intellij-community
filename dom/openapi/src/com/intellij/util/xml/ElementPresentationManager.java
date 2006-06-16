@@ -94,7 +94,7 @@ public abstract class ElementPresentationManager {
     return DomReflectionUtil.invokeMethod(nameValueMethod, element);
   }
 
-  public static String getTypeName(Object o) {
+  public static String getTypeNameForObject(Object o) {
     final Class<? extends Object> aClass = o.getClass();
     String s = _getTypeName(aClass);
     if (s != null) {

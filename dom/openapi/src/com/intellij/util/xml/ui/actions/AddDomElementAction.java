@@ -92,13 +92,14 @@ public abstract class AddDomElementAction extends AnAction {
     for (DomCollectionChildDescription description : descriptions) {
       final ClassChooser chooser = ClassChooserManager.getClassChooser(description.getType());
       for (Type type : chooser.getChooserClasses()) {
-        String name = ElementPresentationManager.getTypeName(type);
+
+        String name = ElementPresentationManager.getTypeName((Class)type);
         Icon icon = null;
         final Class<?> rawType = DomReflectionUtil.getRawType(type);
         if (!showAsPopup() || descriptions.length == 1) {
-          if (descriptions.length > 1) {
+//          if (descriptions.length > 1) {
             icon = ElementPresentationManager.getIconForClass(rawType);
-          }
+//          }
         }
         actions.add(createAddingAction(e, ApplicationBundle.message("action.add") + " " + name, icon, rawType, description));
       }

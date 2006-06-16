@@ -431,7 +431,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       }
 
       public String getTypeName() {
-        return ElementPresentationManager.getTypeName(getProxy());
+        return ElementPresentationManager.getTypeNameForObject(getProxy());
       }
 
       public Icon getIcon() {
