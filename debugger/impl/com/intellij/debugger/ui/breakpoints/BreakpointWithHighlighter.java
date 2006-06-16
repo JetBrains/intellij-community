@@ -214,7 +214,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       buf.append(DebuggerBundle.message("breakpoint.property.name.log.expression")).append(": ");
       buf.append(XmlUtil.escapeString(getLogMessage().getText()));
     }
-    if (CONDITION_ENABLED && (getCondition() != null && !"".equals(getCondition().getText()))) {
+    if (CONDITION_ENABLED && getCondition() != null && !"".equals(getCondition().getText())) {
       //noinspection HardCodedStringLiteral
       buf.append("&nbsp;<br>&nbsp;");
       buf.append(DebuggerBundle.message("breakpoint.property.name.condition")).append(": ");
@@ -381,7 +381,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     return getPsiClassAt(sourcePosition);
   }
 
-  protected PsiClass getPsiClassAt(final SourcePosition sourcePosition) {
+  protected static PsiClass getPsiClassAt(final SourcePosition sourcePosition) {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
       public PsiClass compute() {
         return JVMNameUtil.getClassAt(sourcePosition);
@@ -499,7 +499,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
 
     RangeHighlighter highlighter = ((MarkupModelEx)document.getMarkupModel(project)).addPersistentLineHighlighter(
-      lineIndex, HighlighterLayer.ADDITIONAL_SYNTAX + 1, attributes);
+      lineIndex, HighlighterLayer.CARET_ROW + 1, attributes); // glow through the caret line
     if (!highlighter.isValid()) {
       return null;
     }
