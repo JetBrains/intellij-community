@@ -93,7 +93,11 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
   }
 
   public boolean isEmpty(){
-    return getForegroundColor() == null && getBackgroundColor() == null && getEffectColor() == null && getFontType() == Font.PLAIN;
+    return getForegroundColor() == null
+           && getBackgroundColor() == null
+           && getEffectColor() == null
+           && getFontType() == Font.PLAIN
+      ;
   }
 
   public Color getForegroundColor() {
