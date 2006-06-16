@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -32,12 +31,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedPsiInspectionUtil;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.util.SmartList;
+import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -335,15 +334,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     if (!inspectionProfile.isToolEnabled(key)) return null;
 
 
-    HighlightInfoType type = new HighlightInfoType() {
-      public HighlightSeverity getSeverity(final PsiElement psiElement) {
-        return inspectionProfile.getErrorLevel(key).getSeverity();
-      }
-
-      public TextAttributesKey getAttributesKey() {
-        return level.getAttributesKey();
-      }
-    };
+    HighlightInfoType type =
+      new HighlightInfoType.HighlightInfoTypeImpl(inspectionProfile.getErrorLevel(key).getSeverity(), level.getAttributesKey());
     String plainMessage = XmlUtil.unescape(message.replaceAll("<[^>]*>", ""));
     @NonNls String tooltip = message.startsWith("<html>") ? message : "<html><body>" + XmlUtil.escapeString(message) + "</body></html>";
     HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);

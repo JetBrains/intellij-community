@@ -84,8 +84,8 @@ public interface HighlightInfoType {
   TextAttributesKey getAttributesKey();
 
   class HighlightInfoTypeImpl implements HighlightInfoType, JDOMExternalizable {
-    private HighlightSeverity mySeverity;
-    private TextAttributesKey myAttributesKey;
+    private final HighlightSeverity mySeverity;
+    private final TextAttributesKey myAttributesKey;
 
 
     //read external only
@@ -155,8 +155,10 @@ public interface HighlightInfoType {
     }
 
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
-      HighlightDisplayLevel level = (psiElement != null ? InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile(psiElement) :
-                                     ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile())).getErrorLevel(myToolKey);
+      InspectionProfile profile = psiElement == null
+                                  ? (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()
+                                  : InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile(psiElement);
+      HighlightDisplayLevel level = profile.getErrorLevel(myToolKey);
       LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
       return level.getSeverity();
     }
@@ -194,8 +196,11 @@ public interface HighlightInfoType {
     public TextAttributesKey getAttributesKey() {
       final HighlightSeverity severity = getSeverity(null);
       final HighlightInfoTypeImpl infoType = SeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
-      return infoType != null ? infoType.getAttributesKey() : (severity == HighlightSeverity.ERROR ? CodeInsightColors.ERRORS_ATTRIBUTES
-                                                               : (severity == HighlightSeverity.WARNING ? CodeInsightColors.WARNINGS_ATTRIBUTES : CodeInsightColors.INFO_ATTRIBUTES));
+      return infoType != null
+             ? infoType.getAttributesKey()
+             : severity == HighlightSeverity.ERROR
+               ? CodeInsightColors.ERRORS_ATTRIBUTES
+               : severity == HighlightSeverity.WARNING ? CodeInsightColors.WARNINGS_ATTRIBUTES : CodeInsightColors.INFO_ATTRIBUTES;
     }
 
     @SuppressWarnings({"HardCodedStringLiteral"})

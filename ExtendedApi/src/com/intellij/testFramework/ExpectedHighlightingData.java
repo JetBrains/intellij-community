@@ -247,7 +247,7 @@ public class ExpectedHighlightingData {
       info.startOffset + (info.isAfterEndOfLine ? 1 : 0) == expectedInfo.startOffset &&
       info.endOffset == expectedInfo.endOffset &&
       info.isAfterEndOfLine == expectedInfo.isAfterEndOfLine &&
-      (expectedInfo.type == null || info.type == expectedInfo.type) &&
+      (expectedInfo.type == null || expectedInfo.type.equals(info.type)) &&
 
       (Comparing.strEqual("*",expectedInfo.description) ? true :
                                                         expectedInfo.description == null || info.description == null ? info.description == expectedInfo.description :
