@@ -437,6 +437,10 @@ public class Messages {
     }
 
     protected JComponent createNorthPanel() {
+      return null;
+    }
+
+    protected JComponent createCenterPanel() {
       JPanel panel = new JPanel(new BorderLayout(15, 0));
       if (myIcon != null) {
         JLabel iconLabel = new JLabel(myIcon);
@@ -472,9 +476,6 @@ public class Messages {
       return panel;
     }
 
-    protected JComponent createCenterPanel() {
-      return null;
-    }
   }
 
   protected static class InputDialog extends MessageDialog {
