@@ -547,6 +547,10 @@ public class Messages {
       return actions;
     }
 
+    protected JComponent createCenterPanel() {
+      return null;
+    }
+
     protected JComponent createNorthPanel() {
       JPanel panel = new JPanel(new BorderLayout(15, 0));
       if (myIcon != null) {
@@ -658,6 +662,10 @@ public class Messages {
         }
       }
       return actions;
+    }
+
+    protected JComponent createCenterPanel() {
+      return null;
     }
 
     protected JComponent createNorthPanel() {
