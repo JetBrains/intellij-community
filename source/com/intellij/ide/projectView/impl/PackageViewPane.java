@@ -4,7 +4,6 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.SelectInManager;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.PackagesPaneSelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
@@ -13,14 +12,13 @@ import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.projectView.impl.nodes.PackageViewProjectNode;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -31,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -39,11 +38,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public final class PackageViewPane extends AbstractProjectViewPSIPane implements ProjectComponent {
+public final class PackageViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "PackagesPane";
   public static final Icon ICON = IconLoader.getIcon("/general/packagesTab.png");
 
-  public PackageViewPane(Project project, SelectInManager selectInManager) {
+  public PackageViewPane(Project project) {
     super(project);
   }
 
@@ -55,6 +54,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane implements
     return ICON;
   }
 
+  @NotNull
   public String getId() {
     return ID;
   }
@@ -140,6 +140,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane implements
     };
   }
 
+  @NotNull
   public String getComponentName() {
     return "PackagesPane";
   }
