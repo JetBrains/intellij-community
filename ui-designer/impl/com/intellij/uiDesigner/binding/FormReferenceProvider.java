@@ -162,18 +162,23 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
         final TextRange nameRange = clsAttribute != null ? getValueRange(clsAttribute) : null;
         processor.execute(new FieldFormReference(file, classReference, getValueRange(bindingAttribute), classNameStr, nameRange, customCreate));
       }
-      final XmlAttribute titleBundleAttribute = tag.getAttribute("title-resource-bundle", Utils.FORM_NAMESPACE);
-      final XmlAttribute titleKeyAttribute = tag.getAttribute("title-key", Utils.FORM_NAMESPACE);
+      final XmlAttribute titleBundleAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE_RESOURCE_BUNDLE, Utils.FORM_NAMESPACE);
+      final XmlAttribute titleKeyAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_TITLE_KEY, Utils.FORM_NAMESPACE);
       if (titleBundleAttribute != null && titleKeyAttribute != null) {
         processor.execute(new ResourceBundleFileReference(file, getValueRange(titleBundleAttribute)));
         processor.execute(new ResourceBundleKeyReference(file, titleBundleAttribute.getValue(), getValueRange(titleKeyAttribute)));
       }
 
-      final XmlAttribute bundleAttribute = tag.getAttribute("resource-bundle", Utils.FORM_NAMESPACE);
-      final XmlAttribute keyAttribute = tag.getAttribute("key", Utils.FORM_NAMESPACE);
+      final XmlAttribute bundleAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_RESOURCE_BUNDLE, Utils.FORM_NAMESPACE);
+      final XmlAttribute keyAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_KEY, Utils.FORM_NAMESPACE);
       if (bundleAttribute != null && keyAttribute != null) {
         processor.execute(new ResourceBundleFileReference(file, getValueRange(bundleAttribute)));
         processor.execute(new ResourceBundleKeyReference(file, bundleAttribute.getValue(), getValueRange(keyAttribute)));
+      }
+
+      final XmlAttribute formFileAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_FORM_FILE, Utils.FORM_NAMESPACE);
+      if (formFileAttribute != null) {
+        processor.execute(new NestedFormFileReference(file, getValueRange(formFileAttribute)));
       }
     }
 
