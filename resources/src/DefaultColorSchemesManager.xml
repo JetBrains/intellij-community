@@ -555,6 +555,7 @@
       <option name="EXECUTIONPOINT_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="ff"/>
+          <option name="FOREGROUND" value="ffffff"/>
           <option name="EFFECT_COLOR"/>
         </value>
       </option>
