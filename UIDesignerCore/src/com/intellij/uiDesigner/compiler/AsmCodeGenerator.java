@@ -55,6 +55,8 @@ public class AsmCodeGenerator {
   public static final String SETUP_METHOD_NAME = "$$$setupUI$$$";
   public static final String GET_ROOT_COMPONENT_METHOD_NAME = "$$$getRootComponent$$$";
   public static final String CREATE_COMPONENTS_METHOD_NAME = "createUIComponents";
+  public static final String LOAD_LABEL_TEXT_METHOD = "$$$loadLabelText$$$";
+  public static final String LOAD_BUTTON_TEXT_METHOD = "$$$loadButtonText$$$";
 
   private static final Type ourButtonGroupType = Type.getType(ButtonGroup.class);
   private static final Type ourBorderFactoryType = Type.getType(BorderFactory.class);

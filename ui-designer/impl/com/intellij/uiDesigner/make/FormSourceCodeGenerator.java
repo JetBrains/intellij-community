@@ -32,6 +32,8 @@ public final class FormSourceCodeGenerator {
   private Stack<Boolean> myIsFirstParameterStack;
   private final Project myProject;
   private final ArrayList<FormErrorInfo> myErrors;
+  private boolean myNeedSetMnemonicLabel;
+  private boolean myNeedSetMnemonicButton;
 
   private static Map<Class, LayoutSourceGenerator> ourComponentLayoutCodeGenerators = new HashMap<Class, LayoutSourceGenerator>();
   private static Map<String, LayoutSourceGenerator> ourContainerLayoutCodeGenerators = new HashMap<String, LayoutSourceGenerator>();
@@ -72,6 +74,9 @@ public final class FormSourceCodeGenerator {
   }
 
   public void generate(final VirtualFile formFile) {
+    myNeedSetMnemonicLabel = false;
+    myNeedSetMnemonicButton = false;
+
     final Module module = VfsUtil.getModuleForFile(myProject, formFile);
     if (module == null) {
       return;
@@ -230,18 +235,30 @@ public final class FormSourceCodeGenerator {
       initializer = aClass.addBefore(fakeClass.getInitializers()[0], method);
     }
 
+    final String grcMethodText = "public javax.swing.JComponent " + AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME + "() { return " +
+                                 topComponent.getBinding() + "; }";
+    generateMethodIfRequired(aClass, method, grcMethodText, topComponent.getBinding() != null);
+
+
+
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(module.getProject());
+    codeStyleManager.shortenClassReferences(method);
+    if (initializer != null) {
+      codeStyleManager.shortenClassReferences(initializer);
+    }
+  }
+
+  private void generateMethodIfRequired(PsiClass aClass, PsiMethod method, String methodText, boolean condition) throws IncorrectOperationException {
+    PsiElementFactory elementFactory = PsiManager.getInstance(myProject).getElementFactory();
     PsiMethod grcMethod = null;
     PsiMethod[] grcMethods = aClass.findMethodsByName(AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME, false);
-    if (topComponent.getBinding() == null) {
+    if (!condition) {
       for(PsiMethod oldGrcMethod: grcMethods) {
         oldGrcMethod.delete();
       }
     }
     else {
-      grcMethod = elementFactory.createMethodFromText(
-            "public javax.swing.JComponent " + AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME +
-            "() { return " + topComponent.getBinding() + "; }",
-            aClass);
+      grcMethod = elementFactory.createMethodFromText(methodText, aClass);
       if (grcMethods.length > 0) {
         grcMethods [0].replace(grcMethod);
       }
@@ -249,17 +266,9 @@ public final class FormSourceCodeGenerator {
         aClass.addAfter(grcMethod, method);
       }
     }
-
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(module.getProject());
-    codeStyleManager.shortenClassReferences(method);
-    codeStyleManager.reformat(method);
-    if (initializer != null) {
-      codeStyleManager.shortenClassReferences(initializer);
-      codeStyleManager.reformat(initializer);
-    }
     if (grcMethod != null) {
-      codeStyleManager.shortenClassReferences(grcMethod);
-      codeStyleManager.reformat(grcMethod);
+      CodeStyleManager csm = CodeStyleManager.getInstance(myProject);
+      csm.shortenClassReferences(grcMethod);
     }
   }
 
@@ -456,24 +465,10 @@ public final class FormSourceCodeGenerator {
       }
 
       if (isAssignableFrom(AbstractButton.class.getName(), componentClass, globalSearchScope)) {
-        startMethodCall(variable, "setMnemonic");
-        push(textWithMnemonic.getMnemonicChar());
-        endMethod();
-
-        startStaticMethodCall(SupportCode.class, "setDisplayedMnemonicIndex");
-        pushVar(variable);
-        push(textWithMnemonic.myMnemonicIndex);
-        endMethod();
+        generateSetMnemonic(variable, textWithMnemonic, module, "setMnemonic", AbstractButton.class);
       }
       else if (isAssignableFrom(JLabel.class.getName(), componentClass, globalSearchScope)) {
-        startMethodCall(variable, "setDisplayedMnemonic");
-        push(textWithMnemonic.getMnemonicChar());
-        endMethod();
-
-        startStaticMethodCall(SupportCode.class, "setDisplayedMnemonicIndex");
-        pushVar(variable);
-        push(textWithMnemonic.myMnemonicIndex);
-        endMethod();
+        generateSetMnemonic(variable, textWithMnemonic, module, "setDisplayedMnemonic", JLabel.class);
       }
     }
 
@@ -499,6 +494,21 @@ public final class FormSourceCodeGenerator {
         generateSetupCodeForComponent((LwComponent)container.getComponent(i), component2TempVariable, class2variableIndex, id2component,
                                       module, aClass);
       }
+    }
+  }
+
+  private void generateSetMnemonic(final String variable, final SupportCode.TextWithMnemonic textWithMnemonic, final Module module,
+                                   @NonNls final String setMethodName, final Class controlClass) {
+    startMethodCall(variable, setMethodName);
+    pushVar("'" + textWithMnemonic.getMnemonicChar() + "'");
+    endMethod();
+
+    PsiClass aClass = PsiManager.getInstance(myProject).findClass(controlClass.getName(), module.getModuleWithLibrariesScope());
+    if (aClass != null && aClass.findMethodsByName("setDisplayedMnemonicIndex", true).length > 0) {
+      // generated code needs to be compatible with jdk 1.3
+      startMethodCall(variable, "setDisplayedMnemonicIndex");
+      push(textWithMnemonic.myMnemonicIndex);
+      endMethod();
     }
   }
 
@@ -698,7 +708,7 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  private LayoutSourceGenerator getComponentLayoutGenerator(final LwContainer container) {
+  private static LayoutSourceGenerator getComponentLayoutGenerator(final LwContainer container) {
     LayoutSourceGenerator generator = ourComponentLayoutCodeGenerators.get(container.getClass());
     if (generator != null) {
       return generator;
@@ -707,7 +717,7 @@ public final class FormSourceCodeGenerator {
     while(parent != null) {
       final String layoutManager = parent.getLayoutManager();
       if (layoutManager != null && layoutManager.length() > 0) {
-        generator = (LayoutSourceGenerator) ourContainerLayoutCodeGenerators.get(layoutManager);
+        generator = ourContainerLayoutCodeGenerators.get(layoutManager);
         if (generator != null) {
           return generator;
         }
@@ -725,8 +735,7 @@ public final class FormSourceCodeGenerator {
       push(descriptor.getValue());
     }
     else {
-      startStaticMethodCall(SupportCode.class, "getResourceString");
-      push(descriptor.getBundleName());
+      startMethodCall("java.util.ResourceBundle.getBundle(\"" + descriptor.getBundleName() + "\")", "getString");
       push(descriptor.getKey());
       endMethod();
     }
@@ -824,7 +833,7 @@ public final class FormSourceCodeGenerator {
     return result;
   }
 
-  private static String generateUniqueVariableName(final String className, final TObjectIntHashMap<String> class2variableIndex,
+  private static String generateUniqueVariableName(@NonNls final String className, final TObjectIntHashMap<String> class2variableIndex,
                                                    final PsiClass aClass) {
     final String shortName;
     if (className.startsWith("javax.swing.J")) {

@@ -1016,7 +1016,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
           String resourceName = FormEditingUtil.buildResourceName(containingFile);
           if (myDocument.getText().indexOf(resourceName) >= 0) {
             LOG.debug("Received PSI change event for nested form");
-            // TODO[yole]: handle recursive nesting
+            // TODO[yole]: handle multiple nesting
             myAlarm.cancelRequest(mySynchronizeRequest);
             myAlarm.addRequest(mySynchronizeRequest, 500, ModalityState.stateForComponent(GuiEditor.this));
           }
