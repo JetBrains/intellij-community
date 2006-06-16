@@ -14,6 +14,7 @@ public class MatchUtils {
   public static final String SPECIAL_CHARS = "*(){}[]^$\\.-|";
 
   public static final boolean compareWithNoDifferenceToPackage(final String typeImage,@NonNls final String typeImage2) {
+    if (typeImage == null || typeImage2 == null) return typeImage == typeImage2;
     return typeImage2.endsWith(typeImage) && (
       typeImage.length() == typeImage2.length() ||
       typeImage2.charAt(typeImage2.length()-typeImage.length()-1)=='.' // package separator
