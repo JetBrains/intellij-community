@@ -465,6 +465,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   private static Library findLibraryModel(final Library library, LibrariesModifiableModel tableModel) {
+    if (tableModel == null) return library;
     if (tableModel.wasLibraryRemoved(library)) return null;
     return tableModel.hasLibraryEditor(library) ? (Library)tableModel.getLibraryEditor(library).getModel() : library;
   }
