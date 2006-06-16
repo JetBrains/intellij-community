@@ -1,6 +1,5 @@
 package com.intellij.uiDesigner.binding;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.Annotation;
@@ -16,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.ui.UIBundle;
-import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +60,7 @@ public class FormClassAnnotator implements ApplicationComponent, Annotator {
   public void annotate(PsiElement psiElement, AnnotationHolder holder) {
     if (psiElement instanceof PsiField) {
       PsiField field = (PsiField) psiElement;
-      final PsiFile boundForm = CodeInsightUtil.getFormFile(field);
+      final PsiFile boundForm = FormReferenceProvider.getFormFile(field);
       if (boundForm != null) {
         annotateFormField(field, boundForm, holder);
       }
@@ -81,13 +79,11 @@ public class FormClassAnnotator implements ApplicationComponent, Annotator {
   }
 
   private static void annotateFormField(final PsiField field, final PsiFile boundForm, final AnnotationHolder holder) {
-
-
     Annotation boundFieldAnnotation = holder.createInfoAnnotation(field, null);
     boundFieldAnnotation.setGutterIconRenderer(new BoundIconRenderer(field));
 
     LOG.assertTrue(boundForm instanceof PsiPlainTextFile);
-    final PsiType guiComponentType = ReferenceUtil.getGUIComponentType((PsiPlainTextFile)boundForm, field.getName());
+    final PsiType guiComponentType = FormReferenceProvider.getGUIComponentType((PsiPlainTextFile)boundForm, field.getName());
     if (guiComponentType != null) {
       final PsiType fieldType = field.getType();
       if (!fieldType.isAssignableFrom(guiComponentType)) {

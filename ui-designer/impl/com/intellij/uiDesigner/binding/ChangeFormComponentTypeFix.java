@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.PsiType;
-import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -49,7 +48,7 @@ public class ChangeFormComponentTypeFix implements IntentionAction {
         final ReadonlyStatusHandler readOnlyHandler = ReadonlyStatusHandler.getInstance(myFormFile.getProject());
         final ReadonlyStatusHandler.OperationStatus status = readOnlyHandler.ensureFilesWritable(myFormFile.getVirtualFile());
         if (!status.hasReadonlyFiles()) {
-          ReferenceUtil.setGUIComponentType(myFormFile, myFieldName, myComponentTypeToSet);
+          FormReferenceProvider.setGUIComponentType(myFormFile, myFieldName, myComponentTypeToSet);
         }
       }
     }, getText(), null);

@@ -15,7 +15,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPlainTextFile;
-import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -63,7 +62,7 @@ public final class ResourceBundleFileReference extends ReferenceInForm {
     }
 
     final PropertiesFile propertyFile = ((PropertiesFile)element);
-    final String bundleName = ReferenceUtil.getBundleName(propertyFile);
+    final String bundleName = FormReferenceProvider.getBundleName(propertyFile);
     LOG.assertTrue(bundleName != null);
     updateRangeText(bundleName);
     return myFile;

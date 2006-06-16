@@ -5,14 +5,14 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.binding.FieldFormReference;
+import com.intellij.uiDesigner.binding.FormReferenceProvider;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
-import com.intellij.codeInsight.CodeInsightUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +55,7 @@ public class BoundFieldAssignmentInspection extends LocalInspectionTool {
           PsiElement lElement = lExpr.resolve();
           if (lElement instanceof PsiField) {
             PsiField field = (PsiField) lElement;
-            PsiReference formReference = CodeInsightUtil.getFormReference(field);
+            PsiReference formReference = FormReferenceProvider.getFormReference(field);
             if (formReference instanceof FieldFormReference) {
               FieldFormReference ref = (FieldFormReference) formReference;
               if (!ref.isCustomCreate()) {

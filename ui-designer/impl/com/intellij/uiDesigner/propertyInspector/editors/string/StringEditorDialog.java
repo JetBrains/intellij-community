@@ -28,9 +28,9 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.uiDesigner.StringDescriptorManager;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.binding.FormReferenceProvider;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -361,7 +361,7 @@ public final class StringEditorDialog extends DialogWrapper{
             if (propertiesFile == null) {
               return;
             }
-            final String bundleName = ReferenceUtil.getBundleName(propertiesFile);
+            final String bundleName = FormReferenceProvider.getBundleName(propertiesFile);
             if (bundleName == null) {
               return;
             }
