@@ -108,6 +108,7 @@ public class XmlUtil {
   public static final @NonNls String[] WEB_XML_URIS = {"http://java.sun.com/xml/ns/j2ee", "http://java.sun.com/xml/ns/javaee",
     "http://java.sun.com/dtd/web-app_2_3.dtd", "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"};
   public static final @NonNls String[] JSF_CORE_URIS = {JSF_CORE_URI};
+  public static final @NonNls String FACELETS_URI = "http://java.sun.com/jsf/facelets";
 
   private XmlUtil() {
   }

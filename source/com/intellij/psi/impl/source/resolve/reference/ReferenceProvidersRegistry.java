@@ -348,6 +348,21 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       ), getProviderByType(DYNAMIC_PATH_REFERENCES_PROVIDER)
     );
 
+    registerXmlAttributeValueReferenceProvider(
+      new String[]{"template", "src"},
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new NamespaceFilter(XmlUtil.FACELETS_URI),
+            new AndFilter(
+              new ClassFilter(XmlTag.class),
+              new TextFilter(new String[] { "decorate","composition","include"})
+            )
+          ), 2
+        )
+      ), getProviderByType(DYNAMIC_PATH_REFERENCES_PROVIDER)
+    );
+
     final PsiReferenceProvider pathReferenceProvider = getProviderByType(PATH_REFERENCES_PROVIDER);
     final CustomizingReferenceProvider webXmlPathReferenceProvider = new CustomizingReferenceProvider(
       (CustomizableReferenceProvider)pathReferenceProvider

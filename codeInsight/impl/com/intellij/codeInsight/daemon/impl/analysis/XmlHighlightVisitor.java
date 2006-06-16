@@ -626,6 +626,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       name = name.toLowerCase();
       text = text.toLowerCase();
     }
+    name = XmlUtil.findLocalNameByQualifiedName(name);
     if (!name.equals(text)) {
       addElementsForTag(tag, XmlErrorMessages.message("wrong.root.element"), HighlightInfoType.WRONG_REF, null);
     }

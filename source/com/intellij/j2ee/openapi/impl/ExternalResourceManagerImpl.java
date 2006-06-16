@@ -108,6 +108,8 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
                         "plugin.dtd");
     addInternalResource("http://plugins.intellij.net/plugin-repository.dtd",
                         "plugin-repository.dtd");
+    addInternalResource(XmlUtil.FACELETS_URI,
+                        "facelets.xsd");
     myPathMacros = pathMacros;
   }
 
