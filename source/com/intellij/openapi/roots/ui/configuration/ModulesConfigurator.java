@@ -194,6 +194,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         model.dispose();
       }
     }
+    myModuleEditors.clear();
   }
 
   private void resetModuleEditors() {

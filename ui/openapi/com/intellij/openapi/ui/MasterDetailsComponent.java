@@ -191,6 +191,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
   }
 
   public void disposeUIResources() {
+    myOptionsPanel.removeAll();
     myInitializedConfigurables.clear();
     TreeUtil.traverseDepth((TreeNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
       public boolean accept(Object node) {

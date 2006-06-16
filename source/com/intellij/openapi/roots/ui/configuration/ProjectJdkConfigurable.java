@@ -86,6 +86,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   }
 
   public void disposeUIResources() {
+    myJdkPanel = null;
     myCbProjectJdk = null;
   }
 

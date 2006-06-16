@@ -51,7 +51,8 @@ public class ModuleConfigurable implements NamedConfigurable<Module> {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return getModuleEditor().getHelpTopic();
+    final ModuleEditor moduleEditor = getModuleEditor();
+    return moduleEditor != null ? moduleEditor.getHelpTopic() : null;
   }
 
   public JComponent createComponent() {

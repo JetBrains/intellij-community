@@ -105,6 +105,7 @@ public class ModuleJdkConfigurable implements UnnamedConfigurable {
   }
 
   public void disposeUIResources() {
+    myCbModuleJdk = null;
     myJdkPanel = null;
   }
 }
