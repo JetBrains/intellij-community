@@ -327,9 +327,7 @@ public class EditorDelegate implements EditorEx {
   }
 
   public int logicalPositionToOffset(final LogicalPosition pos) {
-    LogicalPosition windowPosition = myDelegate.offsetToLogicalPosition(myDocument.getTextRange().getStartOffset());
-    LogicalPosition newPosition = new LogicalPosition(pos.line + windowPosition.line, pos.column + windowPosition.column);
-    return myDelegate.logicalPositionToOffset(newPosition) - myDocument.getTextRange().getStartOffset();
+    return myDocument.getLineStartOffset(pos.line) + pos.column;
   }
 
   public void setLastColumnNumber(final int val) {
