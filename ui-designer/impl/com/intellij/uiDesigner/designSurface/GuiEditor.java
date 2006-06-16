@@ -964,7 +964,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   /**
    * Listens PSI event and update error highlighting in the UI editor
    */
-  private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter implements Runnable {
+  private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
     private final Alarm myAlarm;
     private final MyRefreshPropertiesRequest myRefreshPropertiesRequest = new MyRefreshPropertiesRequest();
 
@@ -1011,25 +1011,6 @@ public final class GuiEditor extends JPanel implements DataProvider {
         LOG.debug("Received PSI change event for properties file");
         myAlarm.cancelRequest(myRefreshPropertiesRequest);
         myAlarm.addRequest(myRefreshPropertiesRequest, 500, ModalityState.stateForComponent(GuiEditor.this));
-      }
-      else {
-        myAlarm.cancelRequest(this);
-        myAlarm.addRequest(this, 2500, ModalityState.stateForComponent(GuiEditor.this));
-      }
-    }
-
-    /**
-     * Restarts error analyzer
-     */
-    public void run() {
-      final String classToBind = myRootContainer.getClassToBind();
-      if (classToBind == null) {
-        return;
-      }
-      final PsiClass aClass = FormEditingUtil.findClassToBind(myModule, classToBind);
-      if (aClass != null) {
-        // TODO[yole]: is it necessary?
-        DaemonCodeAnalyzer.getInstance(getProject()).restart();
       }
     }
   }
