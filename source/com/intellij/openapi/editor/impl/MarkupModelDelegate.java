@@ -1,28 +1,22 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.ex.ErrorStripeListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
 */
-class MarkupModelDelegate extends UserDataHolderBase implements EditorMarkupModel, MarkupModelEx {
+class MarkupModelDelegate extends UserDataHolderBase implements MarkupModelEx {
   private final DocumentRange myDocument;
-  private final EditorDelegate myEditor;
-  private final EditorMarkupModelImpl myDelegateMarkupModel;
+  private final MarkupModelEx myDelegateMarkupModel;
 
-  public MarkupModelDelegate(EditorMarkupModelImpl editorMarkupModel, final DocumentRange document, EditorDelegate editor) {
+  public MarkupModelDelegate(MarkupModelEx editorMarkupModel, final DocumentRange document) {
     myDocument = document;
-    myEditor = editor;
     myDelegateMarkupModel = editorMarkupModel;
   }
 
@@ -73,29 +67,4 @@ class MarkupModelDelegate extends UserDataHolderBase implements EditorMarkupMode
   public boolean containsHighlighter(final RangeHighlighter highlighter) {
     return myDelegateMarkupModel.containsHighlighter(highlighter);
   }
-
-  public void setErrorStripeVisible(final boolean val) {
-    myDelegateMarkupModel.setErrorStripeVisible(val);
-  }
-
-  public Editor getEditor() {
-    return myEditor;
-  }
-
-  public void setErrorStripeRenderer(final ErrorStripeRenderer renderer) {
-    myDelegateMarkupModel.setErrorStripeRenderer(renderer);
-  }
-
-  public ErrorStripeRenderer getErrorStripeRenderer() {
-    return myDelegateMarkupModel.getErrorStripeRenderer();
-  }
-
-  public void addErrorMarkerListener(final ErrorStripeListener listener) {
-    myDelegateMarkupModel.addErrorMarkerListener(listener);
-  }
-
-  public void removeErrorMarkerListener(final ErrorStripeListener listener) {
-    myDelegateMarkupModel.removeErrorMarkerListener(listener);
-  }
-
 }

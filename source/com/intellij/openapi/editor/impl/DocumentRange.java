@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -107,7 +108,7 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
 
   @NotNull
   public MarkupModel getMarkupModel(final Project project) {
-    return myDelegate.getMarkupModel(project);
+    return new MarkupModelDelegate((MarkupModelEx)myDelegate.getMarkupModel(project), this);
   }
 
   public void addPropertyChangeListener(final PropertyChangeListener listener) {

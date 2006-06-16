@@ -88,7 +88,7 @@ public class EditorDelegate implements EditorEx {
 
   @NotNull
   public MarkupModel getMarkupModel() {
-    return new MarkupModelDelegate((EditorMarkupModelImpl)myDelegate.getMarkupModel(), myDocument,this);
+    return new MarkupModelDelegate((EditorMarkupModelImpl)myDelegate.getMarkupModel(), myDocument);
   }
 
   @NotNull
