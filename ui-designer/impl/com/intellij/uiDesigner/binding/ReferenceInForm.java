@@ -2,14 +2,16 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.binding;
 
-import com.intellij.psi.*;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
 
 /**
@@ -49,7 +51,7 @@ public abstract class ReferenceInForm implements PsiReference {
     PsiDocumentManager.getInstance(myFile.getProject()).commitDocument(document);
   }
 
-  protected String getRangeText() {
+  public String getRangeText() {
     return myRangeMarker.getDocument().getCharsSequence().subSequence(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset()).toString();
   }
 

@@ -2,10 +2,10 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.binding;
 
-import com.intellij.psi.*;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,11 +40,13 @@ public final class FieldFormReference extends ReferenceInForm {
     return null;
   }
 
-  @Nullable String getComponentClassName() {
+  @Nullable
+  public String getComponentClassName() {
     return myComponentClassName;
   }
 
-  @Nullable TextRange getComponentClassNameTextRange() {
+  @Nullable
+  public TextRange getComponentClassNameTextRange() {
     return myComponentClassNameRange;
   }
 

@@ -2,31 +2,28 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package com.intellij.uiDesigner;
+package com.intellij.uiDesigner.binding;
 
-import com.intellij.psi.PsiPlainTextFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiPackage;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.util.IncorrectOperationException;
-
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Jul 5, 2005
  */
-final class ResourceBundleFileReference extends ReferenceInForm {
+public final class ResourceBundleFileReference extends ReferenceInForm {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.ResourceBundleFileReference");
 
   @NonNls

@@ -10,7 +10,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.FieldFormReference;
+import com.intellij.uiDesigner.binding.FieldFormReference;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.codeInsight.CodeInsightUtil;
 import org.jetbrains.annotations.NonNls;
