@@ -260,7 +260,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     @NonNls final String leftBrace = "<html>";
     @NonNls final String rightBrace = "</html>";
     String warningMessage = leftBrace + (count > 0 ? ProjectBundle.message("module.circular.dependency.warning", cycles, count) : "") + rightBrace;
-    myWarningLabel.setIcon(warningMessage.length() > 0 ? Messages.getWarningIcon() : null);
+    myWarningLabel.setIcon(count > 0 ? Messages.getWarningIcon() : null);
     myWarningLabel.setText(warningMessage);
     myWarningLabel.repaint();
   }
