@@ -68,7 +68,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
 
     GenericDomValue domValue = (GenericDomValue)domElement;
 
-    PsiReference[] references = createReference(domValue, psiElement);
+    PsiReference[] references = createReferences(domValue, (XmlElement)psiElement);
 
     // creating "declaration" reference
     DomElement parent = domElement.getParent();
@@ -85,7 +85,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  private PsiReference[] createReference(GenericDomValue domValue, PsiElement psiElement) {
+  protected final PsiReference[] createReferences(GenericDomValue domValue, XmlElement psiElement) {
 
     Converter converter = domValue.getConverter();
     if (converter instanceof PsiReferenceConverter) {

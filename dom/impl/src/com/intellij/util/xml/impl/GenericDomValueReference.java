@@ -132,7 +132,7 @@ public class GenericDomValueReference<T> extends GenericReference {
     if (element instanceof XmlTag) {
       DomElement domElement = myGenericValue.getManager().getDomElement((XmlTag) element);
       if (domElement != null) {
-        myGenericValue.setStringValue(domElement.getGenericInfo().getElementName(domElement));
+        myGenericValue.setValue((T)domElement);
       } else {
         myGenericValue.setStringValue(((XmlTag)element).getName());
       }

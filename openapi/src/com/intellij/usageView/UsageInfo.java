@@ -22,9 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
 public class UsageInfo {
@@ -62,6 +60,14 @@ public class UsageInfo {
 
   public UsageInfo(PsiElement element, int startOffset, int endOffset) {
     this(element, startOffset, endOffset, false);
+  }
+
+  public UsageInfo(PsiReference reference) {
+    this(reference.getElement(), reference.getRangeInElement().getStartOffset(), reference.getRangeInElement().getEndOffset());
+  }
+
+  public UsageInfo(PsiJavaCodeReferenceElement reference) {
+    this((PsiElement)reference);
   }
 
   public UsageInfo(PsiElement element) {

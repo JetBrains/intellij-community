@@ -9,13 +9,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceFactory;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.xml.reflect.DomGenericInfo;
-import com.intellij.usages.Usage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +48,7 @@ public abstract class DomManager implements ProjectComponent {
   public abstract <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass);
 
   @Nullable
-  public abstract DomElement getDomElement(final XmlTag tag);
+  public abstract DomElement getDomElement(final XmlElement element);
 
   public abstract Collection<PsiElement> getPsiElements(DomElement element);
 
@@ -81,6 +81,6 @@ public abstract class DomManager implements ProjectComponent {
 
   public abstract DomElement getIdentityScope(DomElement element);
 
-  public abstract void processUsages(Object target, DomElement scope, Processor<Usage> processor);
+  public abstract void processUsages(Object target, DomElement scope, Processor<PsiReference> processor);
 
 }

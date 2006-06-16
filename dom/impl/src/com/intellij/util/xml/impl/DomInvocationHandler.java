@@ -486,9 +486,17 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   @NotNull
   final AttributeChildInvocationHandler getAttributeChild(final JavaMethodSignature method) {
+    myGenericInfo.buildMethodMaps();
+    final String attributeName = myGenericInfo.getAttributeName(method);
+    assert attributeName != null : method.toString();
+    return getAttributeChild(attributeName);
+  }
+
+  @NotNull
+  final AttributeChildInvocationHandler getAttributeChild(final String attributeName) {
     checkInitialized(ATTRIBUTES);
-    final AttributeChildInvocationHandler domElement = myAttributeChildren.get(myGenericInfo.getAttributeName(method));
-    assert domElement != null : method.toString();
+    final AttributeChildInvocationHandler domElement = myAttributeChildren.get(attributeName);
+    assert domElement != null : attributeName;
     return domElement;
   }
 

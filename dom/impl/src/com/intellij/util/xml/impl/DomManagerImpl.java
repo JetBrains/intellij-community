@@ -24,7 +24,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.usages.Usage;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -302,8 +302,13 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     myImplementationClasses.put(domElementClass, implementationClass);
   }
 
-  public DomElement getDomElement(final XmlTag tag) {
-    final DomInvocationHandler handler = _getDomElement(tag);
+  public final DomElement getDomElement(final XmlElement element) {
+    if (element instanceof XmlAttribute) {
+      final XmlAttribute o = (XmlAttribute)element;
+      final DomInvocationHandler handler = _getDomElement(o.getParent());
+      return handler != null ? handler.getAttributeChild(o.getLocalName()).getProxy() : null;
+    }
+    final DomInvocationHandler handler = _getDomElement((XmlTag)element);
     return handler != null ? handler.getProxy() : null;
   }
 
@@ -459,16 +464,20 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return description == null ? element.getParent() : description.getIdentityScope(element);
   }
 
-  public void processUsages(final Object target, DomElement scope, final Processor<Usage> processor) {
+  public void processUsages(final Object target, DomElement scope, final Processor<PsiReference> processor) {
     final Class elementClass = target.getClass();
     final boolean[] stopped = new boolean[]{false};
     scope.accept(new DomElementVisitor() {
       public void visitGenericDomValue(GenericDomValue reference) {
-        if (reference.getXmlTag() == null) return;
+        final XmlElement xmlElement = reference.getXmlElement();
+        if (xmlElement == null) return;
         final Class parameter = DomUtil.getGenericValueParameter(reference.getDomElementType());
         if (parameter != null && ReflectionCache.isAssignable(parameter, elementClass) && target.equals(reference.getValue())) {
-          if (!processor.process(new DomUsage(reference))) {
-            stopped[0] = true;
+          for (final PsiReference psiReference : myGenericValueReferenceProvider.createReferences(reference, xmlElement)) {
+            if (!processor.process(psiReference)) {
+              stopped[0] = true;
+              break;
+            }
           }
           return;
         }
@@ -476,7 +485,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       }
 
       public void visitDomElement(DomElement element) {
-        if (!stopped[0] && element.getXmlTag() != null) {
+        if (!stopped[0] && element.getXmlElement() != null) {
           element.acceptChildren(this);
         }
       }
