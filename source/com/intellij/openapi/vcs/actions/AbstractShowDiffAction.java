@@ -85,9 +85,9 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
 
     VcsRevisionNumber revisionNumber = getRevisionNumber(diffProvider, selectedFile);
 
-    showDiff(diffProvider, revisionNumber, selectedFile, project);
-
-
+    if (revisionNumber != null) {
+      showDiff(diffProvider, revisionNumber, selectedFile, project);
+    }
   }
 
   protected static void showDiff(final DiffProvider diffProvider,
