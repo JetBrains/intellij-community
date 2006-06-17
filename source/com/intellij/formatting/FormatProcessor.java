@@ -701,11 +701,16 @@ class FormatProcessor {
 
   private int getNewChildPosition(final AbstractBlockWrapper parent, final int offset) {
     final List<Block> subBlocks = parent.getBlock().getSubBlocks();
-    for (int i = 0; i < subBlocks.size(); i++) {
-      Block block = subBlocks.get(i);
-      if (myInfos.get(block).getTextRange().getStartOffset() >= offset) return i;
+    if (subBlocks != null) {
+      for (int i = 0; i < subBlocks.size(); i++) {
+        Block block = subBlocks.get(i);
+        if (myInfos.get(block).getTextRange().getStartOffset() >= offset) return i;
+      }
+      return subBlocks.size();
     }
-    return subBlocks.size();
+    else {
+      return 0;
+    }
   }
 
   private static AbstractBlockWrapper getParentFor(final int offset, AbstractBlockWrapper block) {
