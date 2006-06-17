@@ -108,15 +108,21 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   public static final DualViewColumnInfo MESSAGE = new VcsColumnInfo(COMMIT_MESSAGE_TITLE) {
     protected Comparable getDataOf(Object object) {
-      String commitMessage = ((VcsFileRevision)object).getCommitMessage().trim();
-      int index13 = commitMessage.indexOf('\r');
-      int index10 = commitMessage.indexOf('\n');
+      final String originalMessage = ((VcsFileRevision)object).getCommitMessage();
+      if (originalMessage != null) {
+        String commitMessage = originalMessage.trim();
+        int index13 = commitMessage.indexOf('\r');
+        int index10 = commitMessage.indexOf('\n');
 
-      if (index10 < 0 && index13 < 0) {
-        return commitMessage;
+        if (index10 < 0 && index13 < 0) {
+          return commitMessage;
+        }
+        else {
+          return commitMessage.substring(0, getSuitableIndex(index10,  index13)) + "...";
+        }
       }
       else {
-        return commitMessage.substring(0, getSuitableIndex(index10,  index13)) + "...";
+        return "";
       }
     }
 
