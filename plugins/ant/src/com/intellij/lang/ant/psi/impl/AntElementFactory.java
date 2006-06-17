@@ -103,10 +103,11 @@ public class AntElementFactory {
       });
       ourAntTypeToKnownAntElementCreatorMap.put(Checksum.class.getName(), new AntElementCreator() {
         public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+          final AntTypeDefinition checksumDef = parent.getAntFile().getBaseTypeDefinition(Checksum.class.getName());
           if (tag.getAttributeValue("totalproperty") != null) {
-            return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Checksum.class.getName()), "totalproperty");
+            return new AntPropertyImpl(parent, tag, checksumDef, "totalproperty");
           }
-          return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Checksum.class.getName()), "property");
+          return new AntPropertyImpl(parent, tag, checksumDef, "property");
         }
       });
       for (final String clazz : PROPERTY_CLASSES) {
