@@ -2,13 +2,13 @@ package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch;
 
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
-import com.intellij.cvsSupport2.history.CvsRevisionNumber;
-import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
+import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsLog.RlogCommand;
+import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.util.containers.HashSet;
-import org.netbeans.lib.cvsclient.command.Command;
 import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.command.Command;
 
 import java.util.Collection;
 
@@ -44,7 +44,9 @@ public class GetAllBranchesOperation extends LocalPathIndifferentOperation
     if (myIsInBranchesMode) {
       String trimmedMessage = message.trim();
       int lastIndex = trimmedMessage.indexOf(":");
-      myTags.add(trimmedMessage.substring(0, lastIndex));
+      if (lastIndex >= 0) {
+        myTags.add(trimmedMessage.substring(0, lastIndex));
+      }
     }
   }
 
