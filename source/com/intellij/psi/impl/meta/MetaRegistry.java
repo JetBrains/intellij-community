@@ -159,6 +159,14 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
             new TextFilter("taglib")
           )),
         TldDescriptor.class);
+
+      //addMetadataBinding(
+      //  new RootTagFilter(
+      //    new AndFilter(
+      //      new NamespaceFilter(XmlUtil.FACELETS_TAGLIB_URI),
+      //      new TextFilter("facelets-taglib")
+      //    )),
+      //  FaceletsTldDescriptor.class);
     }
 
     {
@@ -168,6 +176,13 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
               new TextFilter("tag")
           ),
           TldTagDescriptorImpl.class);
+
+      //addMetadataBinding(
+      //    new AndFilter(
+      //        new NamespaceFilter(XmlUtil.FACELETS_TAGLIB_URI),
+      //        new TextFilter("tag")
+      //    ),
+      //    FaceletsTagDescriptor.class);
     }
 
     {
@@ -182,7 +197,10 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
     {
       addMetadataBinding(
           new AndFilter(
-              new NamespaceFilter(TAGLIB_URIS),
+              new OrFilter(
+                new NamespaceFilter(TAGLIB_URIS),
+                new NamespaceFilter(XmlUtil.FACELETS_TAGLIB_URI)
+              ),
               new TextFilter("function")
           ),
           FunctionDescriptor.class);
