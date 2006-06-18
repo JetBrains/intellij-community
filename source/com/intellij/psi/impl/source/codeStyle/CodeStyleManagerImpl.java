@@ -397,14 +397,15 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       final CodeStyleSettings settings = getSettings();
       final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
       final TextRange significantRange = getSignificantRange(file, offset);
-      final FormattingModel model = builder.createModel(file, settings);
+      FormattingModel model = builder.createModel(file, settings);
 
-      final DocumentBasedFormattingModel docModel = new DocumentBasedFormattingModel(model.getRootBlock(),
-                                                                                     PsiDocumentManager.getInstance(myProject).
-                                                                                       getDocument(file),
-                                                                                     getProject(), settings, file.getFileType(), file);
+      final Document doc = PsiDocumentManager.getInstance(myProject).getDocument(file);
 
-      return FormatterEx.getInstanceEx().adjustLineIndent(docModel, settings, indentOptions, offset, significantRange);
+      if (doc != null) {
+        model = new DocumentBasedFormattingModel(model.getRootBlock(), doc, getProject(), settings, file.getFileType(), file);
+      }
+
+      return FormatterEx.getInstanceEx().adjustLineIndent(model, settings, indentOptions, offset, significantRange);
     }
     else {
       return offset;
