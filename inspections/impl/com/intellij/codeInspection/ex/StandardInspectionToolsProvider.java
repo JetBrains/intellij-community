@@ -49,6 +49,7 @@ import com.intellij.lang.properties.UnusedMessageFormatParameterInspection;
 import com.intellij.lang.properties.UnusedPropertyInspection;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.xml.util.CheckImageSizeInspection;
+import com.intellij.xml.util.CheckEmptyScriptTagInspection;
 
 /**
  * @author max
@@ -104,6 +105,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       DuplicatePropertyInspection.class,
       UnusedMessageFormatParameterInspection.class,
       CheckImageSizeInspection.class,
+      CheckEmptyScriptTagInspection.class,
       WrongPackageStatementInspection.class,
       DependencyInspection.class,
       SillyAssignmentInspection.class,
