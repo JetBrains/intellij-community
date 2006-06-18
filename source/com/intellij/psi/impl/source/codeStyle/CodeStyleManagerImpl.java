@@ -413,7 +413,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   private static PsiElement findElementInTreeWithFormatterEnabled(final PsiFile file, final int offset) {
     final PsiElement bottomost = file.findElementAt(offset);
-    if (bottomost.getLanguage().getFormattingModelBuilder() != null) {
+    if (bottomost != null && bottomost.getLanguage().getFormattingModelBuilder() != null) {
       return bottomost;
     }
 
