@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JspxCompletionData;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -609,7 +610,8 @@ public class TypedHandler implements TypedActionHandler {
 
     XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     final int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
+    FileViewProvider provider = file.getViewProvider();
+    PsiElement element = provider.findElementAt(offset, StdLanguages.XML);
 
     if (element instanceof XmlToken) {
       final IElementType tokenType = ((XmlToken)element).getTokenType();
@@ -630,8 +632,9 @@ public class TypedHandler implements TypedActionHandler {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    FileViewProvider provider = file.getViewProvider();
     final int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset - 1);
+    PsiElement element = provider.findElementAt(offset - 1, StdLanguages.XML);
     if (element == null) return;
 
     ASTNode prevLeaf = element.getNode();
@@ -646,7 +649,7 @@ public class TypedHandler implements TypedActionHandler {
 
     XmlTag tag = PsiTreeUtil.getParentOfType(prevLeaf.getPsi(), XmlTag.class);
     if(tag == null) { // prevLeaf maybe in one tree and element in another
-      PsiElement element2 = file.findElementAt(prevLeaf.getStartOffset());
+      PsiElement element2 = provider.findElementAt(prevLeaf.getStartOffset(), StdLanguages.XML);
       tag = PsiTreeUtil.getParentOfType(element2, XmlTag.class);
       if (tag == null) return;
     }
@@ -663,12 +666,13 @@ public class TypedHandler implements TypedActionHandler {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    FileViewProvider provider = file.getViewProvider();
     final int offset = editor.getCaretModel().getOffset();
 
     PsiElement element;
 
     if (offset < editor.getDocument().getTextLength()) {
-      element = file.findElementAt(offset);
+      element = provider.findElementAt(offset, StdLanguages.XML);
       if (!(element instanceof PsiWhiteSpace)) {
         if (element instanceof XmlToken) {
           final IElementType tokenType = ((XmlToken)element).getTokenType();
@@ -699,7 +703,7 @@ public class TypedHandler implements TypedActionHandler {
       }
     }
     else {
-      element = file.findElementAt(editor.getDocument().getTextLength() - 1);
+      element = provider.findElementAt(editor.getDocument().getTextLength() - 1, StdLanguages.XML);
       if (element == null) return false;
       element = element.getParent();
     }

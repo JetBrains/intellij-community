@@ -4,6 +4,7 @@ import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,18 +13,18 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
@@ -178,8 +179,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     FileType fileType = file.getFileType();
     Helper helper = new Helper(fileType, myProject);
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), helper);
-    final PsiElement start = file.getContainingFile().findElementAt(startOffset);
-    final PsiElement end = file.getContainingFile().findElementAt(endOffset);
+    final PsiElement start = findElementInTreeWithFormatterEnabled(file.getContainingFile(), startOffset);
+    final PsiElement end = findElementInTreeWithFormatterEnabled(file.getContainingFile(), endOffset);
 
     boolean formatFromStart = startOffset == 0;
     boolean formatToEnd = endOffset == file.getTextLength();
@@ -378,7 +379,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       file = jspFile;
     }
 
-    final PsiElement element = file.findElementAt(offset);
+    final PsiElement element = findElementInTreeWithFormatterEnabled(file, offset);
     if (element == null && offset != file.getTextLength()) {
       return offset;
     }
@@ -398,11 +399,30 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       final TextRange significantRange = getSignificantRange(file, offset);
       final FormattingModel model = builder.createModel(file, settings);
 
-      return FormatterEx.getInstanceEx().adjustLineIndent(model, settings, indentOptions, offset, significantRange);
+      final DocumentBasedFormattingModel docModel = new DocumentBasedFormattingModel(model.getRootBlock(),
+                                                                                     PsiDocumentManager.getInstance(myProject).
+                                                                                       getDocument(file),
+                                                                                     getProject(), settings, file.getFileType(), file);
+
+      return FormatterEx.getInstanceEx().adjustLineIndent(docModel, settings, indentOptions, offset, significantRange);
     }
     else {
       return offset;
     }
+  }
+
+  private static PsiElement findElementInTreeWithFormatterEnabled(final PsiFile file, final int offset) {
+    final PsiElement bottomost = file.findElementAt(offset);
+    if (bottomost.getLanguage().getFormattingModelBuilder() != null) {
+      return bottomost;
+    }
+
+    final Language fileLang = file.getLanguage();
+    if (fileLang instanceof CompositeLanguage) {
+      return file.getViewProvider().findElementAt(offset, fileLang);
+    }
+
+    return bottomost;
   }
 
   public int adjustLineIndent(final Document document, final int offset) {
@@ -428,7 +448,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       file = jspFile;
     }
 
-    final PsiElement element = file.findElementAt(offset);
+    final PsiElement element = findElementInTreeWithFormatterEnabled(file, offset);
     if (element == null && offset != file.getTextLength()) {
       return offset;
     }
@@ -481,7 +501,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   @Nullable
   public String getLineIndent(PsiFile file, int offset) {
-    final PsiElement element = file.findElementAt(offset);
+    final PsiElement element = findElementInTreeWithFormatterEnabled(file, offset);
     if( element == null )
     {
       return null;
@@ -527,7 +547,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   private static TextRange getSignificantRange(final PsiFile file, final int offset) {
-    final ASTNode elementAtOffset = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(offset));
+    final ASTNode elementAtOffset = SourceTreeToPsiMap.psiElementToTree(findElementInTreeWithFormatterEnabled(file, offset));
     if (elementAtOffset == null) {
       return new TextRange(offset, offset);
     }
@@ -591,7 +611,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     if (end >= chars.length) {
       return false;
     }
-    ASTNode element = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(end));
+    ASTNode element = SourceTreeToPsiMap.psiElementToTree(findElementInTreeWithFormatterEnabled(file, end));
     if (element == null) {
       return false;
     }
@@ -620,7 +640,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   public PsiElement insertNewLineIndentMarker(PsiFile file, int offset) throws IncorrectOperationException {
     CheckUtil.checkWritable(file);
     final CharTable charTable = ((FileElement)SourceTreeToPsiMap.psiElementToTree(file)).getCharTable();
-    PsiElement elementAt = file.findElementAt(offset);
+    PsiElement elementAt = findElementInTreeWithFormatterEnabled(file, offset);
     if( elementAt == null )
     {
       return null;
