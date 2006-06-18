@@ -384,6 +384,7 @@ public class BackendCompilerWrapper {
   }
 
   private void doCompile(final ModuleChunk chunk, String outputDir, int sourcesFilter) throws IOException {
+    myCompileContext.getProgressIndicator().checkCanceled();
     chunk.setSourcesFilter(sourcesFilter);
 
     if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
@@ -439,10 +440,10 @@ public class BackendCompilerWrapper {
     }
   }
 
-  private static void joinThread(final Thread errorParsingThread) {
-    if (errorParsingThread != null) {
+  private static void joinThread(final Thread thread) {
+    if (thread != null) {
       try {
-        errorParsingThread.join();
+        thread.join();
       }
       catch (InterruptedException e) {
       }
