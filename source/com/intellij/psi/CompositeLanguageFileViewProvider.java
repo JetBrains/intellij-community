@@ -206,10 +206,12 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     }
   }
 
-  public PsiElement findElementAt(int offset) {
+  public PsiElement findElementAt(int offset, Class<? extends Language> lang) {
     final PsiFile mainRoot = getPsi(getBaseLanguage());
     PsiElement ret = null;
     for (final Language language : getRelevantLanguages()) {
+      if (!lang.isAssignableFrom(language.getClass())) continue;
+
       final PsiFile psiRoot = getPsi(language);
       final PsiElement psiElement;
       psiElement = findElementAt(psiRoot, offset);
@@ -219,6 +221,10 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
       }
     }
     return ret;
+  }
+
+  public PsiElement findElementAt(int offset) {
+    return findElementAt(offset, Language.class);
   }
 
   public PsiReference findReferenceAt(int offset) {

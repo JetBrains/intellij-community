@@ -4,15 +4,13 @@
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
-
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 public interface FileViewProvider extends Cloneable{
   PsiManager getManager();
@@ -40,6 +38,8 @@ public interface FileViewProvider extends Cloneable{
 
   @Nullable
   PsiElement findElementAt(final int offset, final Language language);
+
+  PsiElement findElementAt(int offset, Class<? extends Language> lang);
   PsiReference findReferenceAt(final int offsetInElement, final Language language);
   Lexer createLexer(final Language language);
 

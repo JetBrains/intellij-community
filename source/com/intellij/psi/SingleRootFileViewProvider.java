@@ -352,6 +352,12 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     return findElementAt(getPsi(getBaseLanguage()), offset);
   }
 
+
+  public PsiElement findElementAt(int offset, Class<? extends Language> lang) {
+    if (!lang.isAssignableFrom(getBaseLanguage().getClass())) return null;
+    return findElementAt(offset);
+  }
+
   protected static PsiElement findElementAt(final PsiElement psiFile, final int offset) {
     int offsetInElement = offset;
     PsiElement child = psiFile.getFirstChild();

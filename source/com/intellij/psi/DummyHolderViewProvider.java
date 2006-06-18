@@ -101,6 +101,12 @@ public class DummyHolderViewProvider implements FileViewProvider{
     return language == getBaseLanguage() ? findElementAt(offset) : null;
   }
 
+
+  public PsiElement findElementAt(int offset, Class<? extends Language> lang) {
+    if (!lang.isAssignableFrom(getBaseLanguage().getClass())) return null;
+    return findElementAt(offset);
+  }
+
   public PsiReference findReferenceAt(final int offsetInElement, final Language language) {
     return language == getBaseLanguage() ? findReferenceAt(offsetInElement) : null;
   }

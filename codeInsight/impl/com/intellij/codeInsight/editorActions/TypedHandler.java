@@ -5,7 +5,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JspxCompletionData;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -611,7 +611,7 @@ public class TypedHandler implements TypedActionHandler {
     XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     final int offset = editor.getCaretModel().getOffset();
     FileViewProvider provider = file.getViewProvider();
-    PsiElement element = provider.findElementAt(offset, StdLanguages.XML);
+    PsiElement element = provider.findElementAt(offset, XMLLanguage.class);
 
     if (element instanceof XmlToken) {
       final IElementType tokenType = ((XmlToken)element).getTokenType();
@@ -634,7 +634,7 @@ public class TypedHandler implements TypedActionHandler {
     XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     FileViewProvider provider = file.getViewProvider();
     final int offset = editor.getCaretModel().getOffset();
-    PsiElement element = provider.findElementAt(offset - 1, StdLanguages.XML);
+    PsiElement element = provider.findElementAt(offset - 1, XMLLanguage.class);
     if (element == null) return;
 
     ASTNode prevLeaf = element.getNode();
@@ -649,7 +649,7 @@ public class TypedHandler implements TypedActionHandler {
 
     XmlTag tag = PsiTreeUtil.getParentOfType(prevLeaf.getPsi(), XmlTag.class);
     if(tag == null) { // prevLeaf maybe in one tree and element in another
-      PsiElement element2 = provider.findElementAt(prevLeaf.getStartOffset(), StdLanguages.XML);
+      PsiElement element2 = provider.findElementAt(prevLeaf.getStartOffset(), XMLLanguage.class);
       tag = PsiTreeUtil.getParentOfType(element2, XmlTag.class);
       if (tag == null) return;
     }
@@ -672,7 +672,7 @@ public class TypedHandler implements TypedActionHandler {
     PsiElement element;
 
     if (offset < editor.getDocument().getTextLength()) {
-      element = provider.findElementAt(offset, StdLanguages.XML);
+      element = provider.findElementAt(offset, XMLLanguage.class);
       if (!(element instanceof PsiWhiteSpace)) {
         if (element instanceof XmlToken) {
           final IElementType tokenType = ((XmlToken)element).getTokenType();
@@ -703,7 +703,7 @@ public class TypedHandler implements TypedActionHandler {
       }
     }
     else {
-      element = provider.findElementAt(editor.getDocument().getTextLength() - 1, StdLanguages.XML);
+      element = provider.findElementAt(editor.getDocument().getTextLength() - 1, XMLLanguage.class);
       if (element == null) return false;
       element = element.getParent();
     }
