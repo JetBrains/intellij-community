@@ -449,9 +449,13 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     registerXmlTagReferenceProvider(
       new String[] {
         "function-class", "tag-class", "tei-class", "variable-class", "type", "path",
-        "function-signature", "name", "name-given"
+        "function-signature", "name", "name-given",
+        "handler-class", "library-class", "tag-name", "function-name", "source"
       },
-      new NamespaceFilter(MetaRegistry.TAGLIB_URIS),
+      new OrFilter(
+        new NamespaceFilter(MetaRegistry.TAGLIB_URIS),
+        new NamespaceFilter(XmlUtil.FACELETS_TAGLIB_URI)
+      ),
       true,
       new TaglibReferenceProvider( getProviderByType(CLASS_REFERENCE_PROVIDER) )
     );

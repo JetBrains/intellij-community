@@ -109,6 +109,7 @@ public class XmlUtil {
     "http://java.sun.com/dtd/web-app_2_3.dtd", "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"};
   public static final @NonNls String[] JSF_CORE_URIS = {JSF_CORE_URI};
   public static final @NonNls String FACELETS_URI = "http://java.sun.com/jsf/facelets";
+  public static final @NonNls String FACELETS_TAGLIB_URI = "http://java.sun.com/dtd/facelet-taglib_1_0.dtd";
 
   private XmlUtil() {
   }
