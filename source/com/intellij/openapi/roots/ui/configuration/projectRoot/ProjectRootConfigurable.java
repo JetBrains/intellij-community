@@ -250,6 +250,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
 
   public void apply() throws ConfigurationException {
+    for (int i = 0; i < myJdksNode.getChildCount(); i++) {
+      final NamedConfigurable configurable = ((MyNode)myJdksNode.getChildAt(i)).getConfigurable();
+      if (configurable.isModified()) {
+        configurable.apply();
+      }
+    }
     myJdksTreeModel.apply();
     myJdksTreeModel.setProjectJdk(ProjectRootManager.getInstance(myProject).getProjectJdk());
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -275,6 +281,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       final Library[] libraries = model.getLibraries();
       for (Library library : libraries) {
         if (model.hasLibraryEditor(library) && model.getLibraryEditor(library).hasChanges()) return true;
+      }
+    }
+    for (int i = 0; i < myJdksNode.getChildCount(); i++) {
+      final NamedConfigurable configurable = ((MyNode)myJdksNode.getChildAt(i)).getConfigurable();
+      if (configurable.isModified()) {
+        return true;
       }
     }
     isModified |= myJdksTreeModel.isModified();
