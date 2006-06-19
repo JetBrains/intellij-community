@@ -46,7 +46,9 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   class ElEmbeddmentHandler implements TokenHandler {
     public void handleElement(Lexer lexer) {
       setEmbeddedLexer();
-      embeddedLexer.start(getBuffer(),HtmlHighlightingLexer.super.getTokenStart(),HtmlHighlightingLexer.super.getTokenEnd());
+      if (embeddedLexer != null) {
+        embeddedLexer.start(getBuffer(),HtmlHighlightingLexer.super.getTokenStart(),HtmlHighlightingLexer.super.getTokenEnd());
+      }
     }
   }
 
