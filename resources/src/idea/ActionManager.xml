@@ -1416,7 +1416,7 @@
       <separator/>
       <reference ref="GuiDesigner.Morph"/>
       <reference ref="GuiDesigner.CreateListener"/>
-      <reference ref="GuiDesigner.GoToListener"/>      
+      <reference ref="GuiDesigner.GoToListener"/>
       <separator/>
       <reference ref="GuiDesigner.SurroundPopup"/>
       <reference ref="GuiDesigner.Flatten"/>
@@ -1509,6 +1509,11 @@
             text="Orthogonal">
     </action>
 
+    <action id="Graph.Faces.OpenSelectedPages" class="com.intellij.jsf.yfilesGraph.actions.OpenSelectedPagesActon"
+            text="Open Selected Pages" use-shortcut-of="EditSource" keymap="$default">
+
+    </action>
+
     <group id="Graph.CommonLayoutGroup" text="Layout" popup="true">
       <reference ref="Graph.Layout.CircularLayouter"/>
       <reference ref="Graph.Layout.HierarchicGroupLayouter"/>
@@ -1526,6 +1531,13 @@
 
       <separator/>
       <reference ref="Graph.CommonLayoutGroup"/>
+    </group>
+
+    <group id="Graph.Faces.DefaultGraphPopup">
+      <reference ref="Graph.Faces.OpenSelectedPages"/>
+
+      <separator/>
+      <reference ref="Graph.DefaultGraphPopup"/>
     </group>
     <!-- ***** yFiles actions end*************************************** -->
 
