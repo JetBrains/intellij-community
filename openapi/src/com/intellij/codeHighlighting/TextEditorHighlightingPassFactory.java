@@ -20,11 +20,13 @@ package com.intellij.codeHighlighting;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
  * Date: 19-Apr-2006
  */
 public interface TextEditorHighlightingPassFactory extends ProjectComponent{
+  @Nullable
   TextEditorHighlightingPass createHighlightingPass(PsiFile file, final Editor editor);
 }

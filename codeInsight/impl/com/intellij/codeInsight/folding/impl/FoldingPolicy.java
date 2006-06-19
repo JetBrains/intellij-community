@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
@@ -19,7 +18,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.xml.util.HtmlUtil;
 
 import java.util.*;
@@ -126,18 +124,16 @@ class FoldingPolicy {
         addToFold(map, method, document, true);
         addAnnotationsToFold(method.getModifierList(), map, document);
 
-        if (!AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) {
-          if (foldJavaDocs) {
-            docComment = method.getDocComment();
-            if (docComment != null) {
-              addToFold(map, docComment, document, true);
-            }
+        if (foldJavaDocs) {
+          docComment = method.getDocComment();
+          if (docComment != null) {
+            addToFold(map, docComment, document, true);
           }
+        }
 
-          PsiCodeBlock body = method.getBody();
-          if (body != null) {
-            findClasses(body, map, document);
-          }
+        PsiCodeBlock body = method.getBody();
+        if (body != null) {
+          findClasses(body, map, document);
         }
       }
       else if (child instanceof PsiField) {
@@ -167,22 +163,12 @@ class FoldingPolicy {
 
   public static TextRange getRangeToFold(PsiElement element) {
     if (element instanceof PsiMethod) {
-      if (AsmCodeGenerator.SETUP_METHOD_NAME.equals(((PsiMethod)element).getName())) {
-        return element.getTextRange();
-      }
-      else {
-        PsiCodeBlock body = ((PsiMethod)element).getBody();
-        if (body == null) return null;
-        return body.getTextRange();
-      }
+      PsiCodeBlock body = ((PsiMethod)element).getBody();
+      if (body == null) return null;
+      return body.getTextRange();
     }
     else if (element instanceof PsiClassInitializer) {
-      if (isGeneratedUIInitializer((PsiClassInitializer)element)) {
-        return element.getTextRange();
-      }
-      else {
-        return ((PsiClassInitializer)element).getBody().getTextRange();
-      }
+      return ((PsiClassInitializer)element).getBody().getTextRange();
     }
     else if (element instanceof PsiClass) {
       PsiClass aClass = (PsiClass)element;
@@ -258,10 +244,6 @@ class FoldingPolicy {
     if (element instanceof PsiImportList) {
       return "...";
     }
-    else if (element instanceof PsiMethod && AsmCodeGenerator.SETUP_METHOD_NAME.equals(((PsiMethod)element).getName()) ||
-             (element instanceof PsiClassInitializer && isGeneratedUIInitializer((PsiClassInitializer)element))) {
-      return JavaErrorMessages.message("uidesigner.generated.code.folding.placeholder.text");
-    }
     else if (element instanceof PsiMethod || element instanceof PsiClassInitializer || element instanceof PsiClass) {
       return "{...}";
     }
@@ -296,10 +278,6 @@ class FoldingPolicy {
       if (element instanceof PsiMethod && isSimplePropertyAccessor((PsiMethod)element)) {
         return settings.isCollapseAccessors();
       }
-      if (element instanceof PsiMethod && AsmCodeGenerator.SETUP_METHOD_NAME.equals(((PsiMethod)element).getName()) ||
-          element instanceof PsiClassInitializer && isGeneratedUIInitializer((PsiClassInitializer)element)) {
-        return true;
-      }
       return settings.isCollapseMethods();
     }
     else if (element instanceof PsiAnonymousClass) {
@@ -321,19 +299,6 @@ class FoldingPolicy {
       LOG.error("Unknown element:" + element);
       return false;
     }
-  }
-
-  private static boolean isGeneratedUIInitializer(PsiClassInitializer initializer) {
-    PsiCodeBlock body = initializer.getBody();
-    if (body.getStatements().length != 1) return false;
-    PsiStatement statement = body.getStatements()[0];
-    if (!(statement instanceof PsiExpressionStatement) ||
-        !(((PsiExpressionStatement)statement).getExpression() instanceof PsiMethodCallExpression)) {
-      return false;
-    }
-
-    PsiMethodCallExpression call = (PsiMethodCallExpression)((PsiExpressionStatement)statement).getExpression();
-    return AsmCodeGenerator.SETUP_METHOD_NAME.equals(call.getMethodExpression().getReferenceName());
   }
 
   private static boolean isSimplePropertyAccessor(PsiMethod method) {

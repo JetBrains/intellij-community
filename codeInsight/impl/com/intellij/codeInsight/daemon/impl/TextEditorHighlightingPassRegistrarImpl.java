@@ -42,6 +42,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     List<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(passes);
     for (TextEditorHighlightingPassFactory factory : myRegisteredPasses.keySet()) {
       final TextEditorHighlightingPass editorHighlightingPass = factory.createHighlightingPass(psiFile, editor);
+      if (editorHighlightingPass == null) continue;
       final Pair<Anchor, Integer> location = myRegisteredPasses.get(factory);
       final Anchor anchor = location.first;
       if (anchor == Anchor.FIRST){
