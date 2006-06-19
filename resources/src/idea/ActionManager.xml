@@ -1474,11 +1474,15 @@
               icon="/debugger/console.png"/>
     </group>
 
-    <!-- ***** java server faces actions *************************************** -->
-    <action id="Faces.EnableSupport" class="com.intellij.jsf.actions.AddFacesSupportAction">
+    <group id="AddSupportGroup" popup="true" class="com.intellij.javaee.actions.AddSupportActionGroup">
+      <action id="Faces.EnableSupport" class="com.intellij.jsf.actions.AddFacesSupportAction">
+      </action>
+
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
       <add-to-group group-id="J2EEViewPopupMenu" anchor="last"/>
-    </action>
+    </group>
+
+    <!-- ***** java server faces actions *************************************** -->
 
      <!-- ***** yFiles actions *************************************** -->
     <action id="Graph.ZoomIn" class="com.intellij.javaee.diagram.y.actions.ZoomInAction" text="Zoom In">
