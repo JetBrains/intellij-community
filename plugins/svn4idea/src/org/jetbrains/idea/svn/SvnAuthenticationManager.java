@@ -60,6 +60,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
                     } else if (info.get("password") != null) {
                         return new SVNSSHAuthentication((String) info.get("username"), (String) info.get("password"), port, authMayBeStored);
                     }
+                } if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
+                    return new SVNUserNameAuthentication((String) info.get("username"), authMayBeStored);
                 }
             }
             return null;
