@@ -214,30 +214,30 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
 
     myPassphraseLabel.setLabelFor(myPassphraseText);
 
-      // key file.
-      gb.gridy += 1;
-      gb.weightx = 0;
-      gb.gridx = 0;
-      gb.gridwidth = 1;
-      gb.fill = GridBagConstraints.NONE;
-      gb.gridwidth = 1;
+    // key file.
+    gb.gridy += 1;
+    gb.weightx = 0;
+    gb.gridx = 0;
+    gb.gridwidth = 1;
+    gb.fill = GridBagConstraints.NONE;
+    gb.gridwidth = 1;
 
-      myPortLabel = new JLabel(SvnBundle.message("label.ssh.port"));
-      panel.add(myPortLabel, gb);
+    myPortLabel = new JLabel(SvnBundle.message("label.ssh.port"));
+    panel.add(myPortLabel, gb);
 
-      // key field
-      gb.gridx = 1;
-      gb.weightx = 0;
-      gb.gridwidth = 2;
-      gb.fill = GridBagConstraints.NONE;
+    // key field
+    gb.gridx = 1;
+    gb.weightx = 0;
+    gb.gridwidth = 2;
+    gb.fill = GridBagConstraints.NONE;
 
-      myPortField = new JTextField();
-      myPortField.setColumns(6);
-      myPortField.setMinimumSize(myPortField.getMinimumSize());
-      panel.add(myPortField, gb);
-      myPortLabel.setLabelFor(myPortField);
-      myPortField.setText("22");
-      myPortField.getDocument().addDocumentListener(this);
+    myPortField = new JTextField();
+    myPortField.setColumns(6);
+    panel.add(myPortField, gb);
+    myPortLabel.setLabelFor(myPortField);
+    myPortField.setText("22");
+    myPortField.setMinimumSize(myPortField.getPreferredSize());
+    myPortField.getDocument().addDocumentListener(this);
 
     ButtonGroup group = new ButtonGroup();
     group.add(myPasswordButton);
