@@ -47,6 +47,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
   private boolean myStoppedAlready = false;
   private FocusTrackback myFocusTrackback;
   private boolean myStared = false;
+  private boolean myBackgrounded = false;
 
   public ProgressWindow(boolean shouldShowCancel, Project project) {
     this(shouldShowCancel, false, project);
@@ -188,6 +189,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
   public void background() {
     if (myDialog != null) {
       GeneralSettings.getInstance().setSearchInBackground(true);
+      myBackgrounded = true;
       myDialog.background();
       myDialog = null;
     }
@@ -466,7 +468,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
         .setRequestFocus(true)
         .setCancelCallback(new Computable<Boolean>() {
           public Boolean compute() {
-            return isCanceled() || !isRunning();
+            return isCanceled() || !isRunning() || ProgressWindow.this.myBackgrounded;
           }
         }).createPopup();
       myPopup.showInCenterOf(myParentWindow);
