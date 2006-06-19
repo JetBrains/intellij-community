@@ -412,7 +412,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
     for (final XmlAttribute attribute : attributes) {
       final LeafElement attrNameElement = (LeafElement)XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attribute.getNode());
-      if (attrNameElement.getInternedText() == charTableIndex) return attribute;
+      if (attrNameElement != null && attrNameElement.getInternedText() == charTableIndex) return attribute;
     }
     return null;
   }
