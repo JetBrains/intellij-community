@@ -11,8 +11,9 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceFactory;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.xml.reflect.DomGenericInfo;
@@ -48,7 +49,13 @@ public abstract class DomManager implements ProjectComponent {
   public abstract <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass);
 
   @Nullable
-  public abstract DomElement getDomElement(final XmlElement element);
+  public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file);
+
+  @Nullable
+  public abstract DomElement getDomElement(final XmlTag element);
+
+  @Nullable
+  public abstract GenericAttributeValue getDomElement(final XmlAttribute element);
 
   public abstract Collection<PsiElement> getPsiElements(DomElement element);
 

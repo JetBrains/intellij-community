@@ -302,17 +302,22 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     myImplementationClasses.put(domElementClass, implementationClass);
   }
 
-  public final DomElement getDomElement(final XmlElement element) {
-    if (element instanceof XmlFile) {
-      return getDomFileElement((XmlFile)element).getRoot();
-    }
-    if (element instanceof XmlAttribute) {
-      final XmlAttribute o = (XmlAttribute)element;
-      final DomInvocationHandler handler = _getDomElement(o.getParent());
-      return handler != null ? handler.getAttributeChild(o.getLocalName()).getProxy() : null;
-    }
+  @Nullable
+  public <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file) {
+    return getDomFileElement(file).getRoot();
+  }
+
+  @Nullable
+  public DomElement getDomElement(final XmlTag element) {
     final DomInvocationHandler handler = _getDomElement((XmlTag)element);
     return handler != null ? handler.getProxy() : null;
+  }
+
+  @Nullable
+  public GenericAttributeValue getDomElement(final XmlAttribute element) {
+    final XmlAttribute o = (XmlAttribute)element;
+      final DomInvocationHandler handler = _getDomElement(o.getParent());
+      return handler != null ? (GenericAttributeValue)handler.getAttributeChild(o.getLocalName()).getProxy() : null;
   }
 
   public final Collection<PsiElement> getPsiElements(final DomElement element) {
