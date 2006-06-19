@@ -518,13 +518,16 @@ public class MatchingVisitor extends PsiElementVisitor {
            )
          )
        ) {
-      if (matchContext.getPattern().isTypedVar(reference.getReferenceNameElement())) {
-        result = handleTypedElement(reference.getReferenceNameElement(), reference2.getReferenceNameElement());
+      final PsiElement referenceElement = reference.getReferenceNameElement();
+      final PsiElement referenceElement2 = reference2.getReferenceNameElement();
+
+      if (matchContext.getPattern().isTypedVar(referenceElement)) {
+        result = handleTypedElement(referenceElement, referenceElement2);
       } else {
-        result = reference.getReferenceNameElement().textMatches(reference2.getReferenceNameElement());
+        result = (referenceElement2 != null && referenceElement != null && referenceElement.textMatches(referenceElement2)) ||
+          referenceElement == referenceElement2;
       }
 
-      // @todo fixme here
       if (result &&
           reference.getQualifierExpression()!=null &&
           reference2.getQualifierExpression()!=null
