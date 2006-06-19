@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdksConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
@@ -22,7 +23,10 @@ public class ProjectJdksEditor extends DialogWrapper{
 
   public ProjectJdksEditor(ProjectJdk jdk, Component parent){
     super(parent, true);
-    final Project project = (Project)DataManager.getInstance().getDataContext(parent).getData(DataConstants.PROJECT);
+    Project project = (Project)DataManager.getInstance().getDataContext(parent).getData(DataConstants.PROJECT);
+    if (project == null){
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
     myConfigurable = ProjectRootConfigurable.getInstance(project);
     myConfigurable.selectNodeInTree(jdk != null ? jdk.getName() : JdksConfigurable.JDKS);
     setTitle(ProjectBundle.message("sdk.configure.title"));
