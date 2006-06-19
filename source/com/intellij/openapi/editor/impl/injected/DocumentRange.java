@@ -1,6 +1,7 @@
-package com.intellij.openapi.editor.impl;
+package com.intellij.openapi.editor.impl.injected;
 
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
@@ -10,6 +11,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,35 +21,70 @@ import java.beans.PropertyChangeListener;
  * @author Alexey
  */
 public class DocumentRange extends UserDataHolderBase implements DocumentEx {
+  private static final Logger LOG = Logger.getInstance("com.intellij.openapi.editor.impl.injected.DocumentRangee");
   private final DocumentEx myDelegate;
-  private RangeMarker myRange;
+  private final RangeMarker myHostRange;
+  private final String myPrefix;
+  private final String mySuffix;
+  private final int myPrefixLineCount;
+  private final int mySuffixLineCount;
 
-  public DocumentRange(DocumentEx delegate, TextRange range) {
+
+  public DocumentRange(DocumentEx delegate, TextRange range, String prefix,String suffix) {
     myDelegate = delegate;
-    myRange = delegate.createRangeMarker(range);
-    myRange.setGreedyToLeft(true);
-    myRange.setGreedyToRight(true);
+    myPrefix = prefix;
+    mySuffix = suffix;
+    myHostRange = delegate.createRangeMarker(range);
+    myHostRange.setGreedyToLeft(true);
+    myHostRange.setGreedyToRight(true);
+    myPrefixLineCount = Math.max(1, new DocumentImpl(myPrefix).getLineCount());
+    mySuffixLineCount = Math.max(1, new DocumentImpl(mySuffix).getLineCount());
   }
 
   public int getLineCount() {
-    return myDelegate.getLineNumber(myRange.getEndOffset()) - myDelegate.getLineNumber(myRange.getStartOffset()) + 1;
+    return
+    myPrefixLineCount -1+
+    myDelegate.getLineNumber(myHostRange.getEndOffset()) - myDelegate.getLineNumber(myHostRange.getStartOffset()) + 1 +
+    mySuffixLineCount-1
+      ;
   }
 
   public int getLineStartOffset(int line) {
-    return Math.max(0, myDelegate.getLineStartOffset(myDelegate.getLineNumber(myRange.getStartOffset()) + line) - myRange.getStartOffset());
+    return new DocumentImpl(getText()).getLineStartOffset(line);
+    //if (line < myPrefixLineCount) {
+    //  return new DocumentImpl(myPrefix).getLineStartOffset(line);
+    //}
+    //if (line > getLineCount() - mySuffixLineCount) {
+    //  return new DocumentImpl(mySuffix).getLineStartOffset(line + getLineCount() - mySuffixLineCount) + getTextLength() - mySuffix.length();
+    //}
+    //
+    //int hostLine = myDelegate.getLineNumber(myHostRange.getStartOffset()) + line - (myPrefixLineCount - 1);
+    //int hostOffset = myDelegate.getLineStartOffset(hostLine);
+    //return hostToInjected(hostOffset);
   }
 
   public int getLineEndOffset(int line) {
-    int myLineInParent = myDelegate.getLineNumber(myRange.getStartOffset()) + line;
-    return Math.min(myRange.getEndOffset(), myDelegate.getLineEndOffset(myLineInParent)) - myRange.getStartOffset();
+    if (line==0 && myPrefix.length()==0) return getTextLength();
+    return new DocumentImpl(getText()).getLineEndOffset(line);
+    //if (line < myPrefixLineCount) {
+    //}
+    //if (line > getLineCount()-mySuffixLineCount) {
+    //  return new DocumentImpl(getText()).getLineEndOffset(line+getLineCount()-mySuffixLineCount) + getTextLength() - mySuffix.length();
+    //}
+    //int hostLine = myDelegate.getLineNumber(myHostRange.getStartOffset()) + line - (myPrefixLineCount-1);
+    //int hostOffset = myDelegate.getLineEndOffset(hostLine);
+    //return hostToInjected(hostOffset);
   }
 
   public String getText() {
-    return myDelegate.getText().substring(myRange.getStartOffset(), myRange.getEndOffset());
+    return myPrefix+
+           myDelegate.getText().substring(myHostRange.getStartOffset(), myHostRange.getEndOffset())
+           +mySuffix
+      ;
   }
 
   public CharSequence getCharsSequence() {
-    return myDelegate.getCharsSequence().subSequence(myRange.getStartOffset(), myRange.getEndOffset());
+    return getText();
   }
 
   public char[] getChars() {
@@ -55,23 +92,33 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
   }
 
   public int getTextLength() {
-    return myRange.getEndOffset()-myRange.getStartOffset();
+    return myPrefix.length() + myHostRange.getEndOffset()- myHostRange.getStartOffset() +mySuffix.length();
   }
 
   public int getLineNumber(final int offset) {
-    return myDelegate.getLineNumber(offset+myRange.getStartOffset()) - myDelegate.getLineNumber(myRange.getStartOffset());
+    return hostToInjectedLine(myDelegate.getLineNumber(injectedToHost(offset)));
   }
 
   public void insertString(final int offset, final CharSequence s) {
-    myDelegate.insertString(offset + myRange.getStartOffset(), s);
+    LOG.assertTrue(offset >= myPrefix.length());
+    LOG.assertTrue(offset <= getTextLength() - mySuffix.length());
+    myDelegate.insertString(injectedToHost(offset), s);
   }
 
   public void deleteString(final int startOffset, final int endOffset) {
-    myDelegate.deleteString(startOffset + myRange.getStartOffset(), endOffset + myRange.getStartOffset());
+    LOG.assertTrue(startOffset >= myPrefix.length());
+    LOG.assertTrue(startOffset <= getTextLength() - mySuffix.length());
+    LOG.assertTrue(endOffset >= myPrefix.length());
+    LOG.assertTrue(endOffset <= getTextLength() - mySuffix.length());
+    myDelegate.deleteString(injectedToHost(startOffset), injectedToHost(endOffset));
   }
 
   public void replaceString(final int startOffset, final int endOffset, final CharSequence s) {
-    myDelegate.replaceString(startOffset + myRange.getStartOffset(), endOffset + myRange.getStartOffset(), s);
+    LOG.assertTrue(startOffset >= myPrefix.length());
+    LOG.assertTrue(startOffset <= getTextLength() - mySuffix.length());
+    LOG.assertTrue(endOffset >= myPrefix.length());
+    LOG.assertTrue(endOffset <= getTextLength() - mySuffix.length());
+    myDelegate.replaceString(injectedToHost(startOffset), injectedToHost(endOffset), s);
   }
 
   public boolean isWritable() {
@@ -152,7 +199,9 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
   }
 
   public void setText(final CharSequence text) {
-    myDelegate.replaceString(myRange.getStartOffset(), myRange.getEndOffset(), text);
+    LOG.assertTrue(text.toString().startsWith(myPrefix));
+    LOG.assertTrue(text.toString().endsWith(mySuffix));
+    myDelegate.replaceString(myHostRange.getStartOffset(), myHostRange.getEndOffset(), text.subSequence(myPrefix.length(), text.length()-mySuffix.length()));
   }
 
   public RangeMarker createRangeMarker(final TextRange textRange) {
@@ -208,10 +257,49 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
   }
 
   public RangeMarker getTextRange() {
-    return myRange;
+    return myHostRange;
   }
 
   public DocumentEx getDelegate() {
     return myDelegate;
+  }
+
+  public String getPrefix() {
+    return myPrefix;
+  }
+
+  public String getSuffix() {
+    return mySuffix;
+  }
+
+  public int hostToInjected(int offset) {
+    if (offset < getTextRange().getStartOffset()) return 0;
+    if (offset >= getTextRange().getEndOffset()) return getTextRange().getEndOffset()-getTextRange().getStartOffset();
+    return offset - getTextRange().getStartOffset() + getPrefix().length();
+  }
+
+  public int injectedToHost(int offset) {
+    if (offset < myPrefix.length()) return getTextRange().getStartOffset();
+    if (offset >= getTextLength() - mySuffix.length()) return getTextRange().getEndOffset();
+    return offset + getTextRange().getStartOffset() - getPrefix().length();
+  }
+
+  public int injectedToHostLine(int line) {
+    if (line < myPrefixLineCount) {
+      return 0;
+    }
+    if (line > getLineCount()- mySuffixLineCount) {
+      return getLineCount();
+    }
+    int hostLine = myDelegate.getLineNumber(myHostRange.getStartOffset()) + line - (myPrefixLineCount -1);
+    return hostLine;
+  }
+
+  public int hostToInjectedLine(int hostLine) {
+    return hostLine - myDelegate.getLineNumber(myHostRange.getStartOffset()) + (myPrefixLineCount-1);
+  }
+
+  public boolean isEditable(TextRange rangeToEdit) {
+    return rangeToEdit.getStartOffset() >= myPrefix.length() && rangeToEdit.getEndOffset() <= getTextLength() - mySuffix.length();
   }
 }

@@ -16,6 +16,7 @@
 package com.intellij.openapi.util.text;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
@@ -25,9 +26,11 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.Introspector;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.IOException;
 import java.util.*;
 
 public class StringUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
   @NonNls private static final String VOWELS = "aeiouy";
 
   public static String replace(@NonNls @NotNull String text,@NonNls @NotNull String oldS,@NonNls @Nullable String newS) {
@@ -580,9 +583,14 @@ public class StringUtil {
     return pluralize(base);
   }
 
-  public static void repeatSymbol(StringBuffer buffer, char symbol, int times) {
-    for (int i = 0; i < times; i++) {
-      buffer.append(symbol);
+  public static void repeatSymbol(Appendable buffer, char symbol, int times) {
+    try {
+      for (int i = 0; i < times; i++) {
+        buffer.append(symbol);
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
   }
 

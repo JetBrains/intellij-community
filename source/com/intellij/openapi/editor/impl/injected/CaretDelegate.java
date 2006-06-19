@@ -1,4 +1,4 @@
-package com.intellij.openapi.editor.impl;
+package com.intellij.openapi.editor.impl.injected;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.CaretListener;
@@ -9,13 +9,11 @@ import com.intellij.openapi.editor.ex.EditorEx;
  */
 public class CaretDelegate implements CaretModel {
   private final CaretModel myDelegate;
-  private RangeMarker myRange;
   private final EditorEx myHostEditor;
   private final EditorDelegate myEditorDelegate;
 
-  public CaretDelegate(CaretModel delegate, final RangeMarker range, EditorDelegate editorDelegate) {
+  public CaretDelegate(CaretModel delegate, EditorDelegate editorDelegate) {
     myDelegate = delegate;
-    myRange = range;
     myHostEditor = (EditorEx)editorDelegate.getDelegate();
     myEditorDelegate = editorDelegate;
   }
@@ -39,7 +37,8 @@ public class CaretDelegate implements CaretModel {
   }
 
   public void moveToOffset(final int offset) {
-    myDelegate.moveToOffset(offset+myRange.getStartOffset());
+    int hostOffset = myEditorDelegate.getDocument().injectedToHost(offset);
+    myDelegate.moveToOffset(hostOffset);
   }
 
   public LogicalPosition getLogicalPosition() {
@@ -52,7 +51,7 @@ public class CaretDelegate implements CaretModel {
   }
 
   public int getOffset() {
-    return myDelegate.getOffset() - myRange.getStartOffset();
+    return myEditorDelegate.getDocument().hostToInjected(myDelegate.getOffset());
   }
 
   public void addCaretListener(final CaretListener listener) {

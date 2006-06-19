@@ -1,4 +1,4 @@
-package com.intellij.openapi.editor.impl;
+package com.intellij.openapi.editor.impl.injected;
 
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
@@ -16,6 +16,9 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -36,7 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Alexey
  */
 public class EditorDelegate implements EditorEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorDelegate");
+  private static final Logger LOG = Logger.getInstance("com.intellij.openapi.editor.impl.injected.EditorDelegatete");
   private final DocumentRange myDocument;
   private final EditorImpl myDelegate;
   private final PsiFile myInjectedFile;
@@ -53,15 +56,16 @@ public class EditorDelegate implements EditorEx {
     return myInjectedFile;
   }
   public LogicalPosition parentToInjected(LogicalPosition pos) {
-    int offsetInInjected = myDelegate.logicalPositionToOffset(pos) - myDocument.getTextRange().getStartOffset();
+    int offsetInInjected = myDocument.hostToInjected(myDelegate.logicalPositionToOffset(pos));
     return offsetToLogicalPosition(offsetInInjected);
   }
+
   public VisualPosition parentToInjected(VisualPosition pos) {
     LogicalPosition logical = parentToInjected(myDelegate.visualToLogicalPosition(pos));
     return logicalToVisualPosition(logical);
   }
   public LogicalPosition injectedToParent(LogicalPosition pos) {
-    int offsetInParent = logicalPositionToOffset(pos) + myDocument.getTextRange().getStartOffset();
+    int offsetInParent = myDocument.injectedToHost(logicalPositionToOffset(pos));
     return myDelegate.offsetToLogicalPosition(offsetInParent);
   }
 
@@ -98,7 +102,7 @@ public class EditorDelegate implements EditorEx {
 
   @NotNull
   public CaretModel getCaretModel() {
-    return new CaretDelegate(myDelegate.getCaretModel(), myDocument.getTextRange(), this);
+    return new CaretDelegate(myDelegate.getCaretModel(), this);
   }
 
   @NotNull
@@ -172,22 +176,16 @@ public class EditorDelegate implements EditorEx {
 
   @NotNull
   public LogicalPosition offsetToLogicalPosition(final int offset) {
-    int lineStartOffset = myDocument.getLineStartOffset(myDocument.getLineNumber(offset));
-
-    LogicalPosition windowPosition = myDelegate.offsetToLogicalPosition(myDocument.getTextRange().getStartOffset());
-    LogicalPosition pos = myDelegate.offsetToLogicalPosition(offset + myDocument.getTextRange().getStartOffset());
-    return new LogicalPosition(pos.line - windowPosition.line, offset - lineStartOffset);
+    int lineNumber = myDocument.getLineNumber(offset);
+    int lineStartOffset = myDocument.getLineStartOffset(lineNumber);
+    int column = calcColumnNumber(offset-lineStartOffset, lineNumber);
+    return new LogicalPosition(lineNumber, column);
   }
 
   @NotNull
   public LogicalPosition xyToLogicalPosition(final Point p) {
-    LogicalPosition windowPosition = myDelegate.offsetToLogicalPosition(myDocument.getTextRange().getStartOffset());
-    LogicalPosition pos = myDelegate.xyToLogicalPosition(p);
-    int myOffset = logicalPositionToOffset(parentToInjected(pos));
-
-    int lineStartOffset = myDocument.getLineStartOffset(myDocument.getLineNumber(myOffset));
-
-    return new LogicalPosition(pos.line - windowPosition.line, myOffset - lineStartOffset);
+    LogicalPosition hostPos = myDelegate.xyToLogicalPosition(p);
+    return parentToInjected(hostPos);
   }
 
   @NotNull
@@ -201,11 +199,11 @@ public class EditorDelegate implements EditorEx {
   }
 
   public void repaint(final int startOffset, final int endOffset) {
-    myDelegate.repaint(startOffset+myDocument.getTextRange().getStartOffset(), endOffset + myDocument.getTextRange().getEndOffset());
+    myDelegate.repaint(myDocument.injectedToHost(startOffset), myDocument.injectedToHost(endOffset));
   }
 
   @NotNull
-  public Document getDocument() {
+  public DocumentRange getDocument() {
     return myDocument;
   }
 
@@ -327,8 +325,17 @@ public class EditorDelegate implements EditorEx {
   }
 
   public int logicalPositionToOffset(final LogicalPosition pos) {
-    return myDocument.getLineStartOffset(pos.line) + pos.column;
+    return myDocument.getLineStartOffset(pos.line) + calcColumnNumber(pos.column, pos.line);
   }
+  private int calcColumnNumber(int offset, int lineIndex) {
+    if (myDocument.getTextLength() == 0) return 0;
+
+    CharSequence text = myDocument.getCharsSequence();
+    int start = myDocument.getLineStartOffset(lineIndex);
+    if (offset==0) return 0;
+    return EditorUtil.calcColumnNumber(this, text, start, start+offset, myDelegate.getTabSize());
+  }
+
 
   public void setLastColumnNumber(final int val) {
     myDelegate.setLastColumnNumber(val);

@@ -12,7 +12,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.VirtualFileDelegate;
+import com.intellij.openapi.editor.impl.injected.VirtualFileDelegate;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -657,8 +658,8 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return newComposite;
   }
 
-  public java.util.List<FileEditor> openEditor(@NotNull final OpenFileDescriptor descriptor, final boolean focusEditor, final String fileEditorProviderId) {
-    final java.util.List<FileEditor> list = openEditor(descriptor, focusEditor);
+  public List<FileEditor> openEditor(@NotNull final OpenFileDescriptor descriptor, final boolean focusEditor, final String fileEditorProviderId) {
+    final List<FileEditor> list = openEditor(descriptor, focusEditor);
 
     setSelectedEditor(descriptor.getFile(), fileEditorProviderId);
 
@@ -666,16 +667,16 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   }
 
   @NotNull
-  public java.util.List<FileEditor> openEditor(@NotNull final OpenFileDescriptor descriptor, final boolean focusEditor) {
+  public List<FileEditor> openEditor(@NotNull final OpenFileDescriptor descriptor, final boolean focusEditor) {
     assertThread();
     if (descriptor.getFile() instanceof VirtualFileDelegate) {
       VirtualFileDelegate delegate = (VirtualFileDelegate)descriptor.getFile();
-      int offset = delegate.getTextRange().getStartOffset();
-      OpenFileDescriptor realDescriptor = new OpenFileDescriptor(descriptor.getProject(), delegate.getDelegate(), descriptor.getOffset() + offset);
+      int hostOffset = delegate.getDocumentRange().injectedToHost(descriptor.getOffset());
+      OpenFileDescriptor realDescriptor = new OpenFileDescriptor(descriptor.getProject(), delegate.getDelegate(), hostOffset);
       return openEditor(realDescriptor, focusEditor);
     }
 
-    final java.util.List<FileEditor> result = new ArrayList<FileEditor>();
+    final List<FileEditor> result = new ArrayList<FileEditor>();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         VirtualFile file = descriptor.getFile();

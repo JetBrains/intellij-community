@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.impl.injected.DocumentRange;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -302,13 +303,15 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
   private void addHighlightsFromInjectedPsiProblems(final List<HighlightInfo> infos) {
     InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myInjectedPsiInspectionResults.size(); i++) {
       InjectedPsiInspectionUtil.InjectedPsiInspectionResult result = myInjectedPsiInspectionResults.get(i);
       LocalInspectionTool tool = result.tool;
       HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())).getSeverity();
 
-      int injectedPsiOffset = result.injectedPsi.getContext().getTextRange().getStartOffset() + result.rangeInsideHost.getStartOffset();
+      PsiElement injectedPsi = result.injectedPsi;
+      DocumentRange documentRange = (DocumentRange)documentManager.getDocument((PsiFile)injectedPsi);
 
       //noinspection ForLoopReplaceableByForEach
       for (int j = 0; j < result.foundProblems.size(); j++) {
@@ -316,7 +319,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
         HighlightInfoType level = highlightTypeFromDescriptor(descriptor, tool, severity);
         HighlightInfo info = createHighlightInfo(descriptor, tool, level);
         if (info == null) continue;
-        HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, info.startOffset + injectedPsiOffset, info.endOffset + injectedPsiOffset, info.description, info.toolTip);
+        if (!documentRange.isEditable(new TextRange(info.startOffset, info.endOffset))) continue;
+        HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, documentRange.injectedToHost(info.startOffset), documentRange.injectedToHost(info.endOffset), info.description, info.toolTip);
         infos.add(patched);
       }
     }

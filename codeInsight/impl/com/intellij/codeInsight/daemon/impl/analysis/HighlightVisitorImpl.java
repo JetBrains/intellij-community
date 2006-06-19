@@ -11,6 +11,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.impl.injected.DocumentRange;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -147,19 +148,22 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     PsiLanguageInjectionHost injectionHost = (PsiLanguageInjectionHost)element;
     List<Pair<PsiElement, TextRange>> injected = injectionHost.getInjectedPsi();
     if (injected == null) return false;
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(element.getProject());
     for (Pair<PsiElement, TextRange> pair : injected) {
       PsiElement injectedPsi = pair.getFirst();
-      TextRange rangeInsideHost = pair.getSecond();
+      final DocumentRange documentRange = (DocumentRange)documentManager.getDocument((PsiFile)injectedPsi);
+
       Language injectedLanguage = injectedPsi.getLanguage();
       VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
       SyntaxHighlighter syntaxHighlighter = injectedLanguage.getSyntaxHighlighter(element.getProject(), virtualFile);
       final Annotator languageAnnotator = injectedLanguage.getAnnotator();
-      final int injectedPsiOffset = injectionHost.getTextRange().getStartOffset() + rangeInsideHost.getStartOffset();
       final SyntaxHighlighterAsAnnotator syntaxAnnotator = new SyntaxHighlighterAsAnnotator(syntaxHighlighter);
       PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
         final AnnotationHolderImpl fixingAnnotationHolder = new AnnotationHolderImpl() {
           protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
-            Annotation annotation = super.createAnnotation(range.shiftRight(injectedPsiOffset), severity, message);
+            if (!documentRange.isEditable(range)) return null; //do not highlight generated header/footer
+            TextRange patched = new TextRange(documentRange.injectedToHost(range.getStartOffset()), documentRange.injectedToHost(range.getEndOffset()));
+            Annotation annotation = super.createAnnotation(patched, severity, message);
             myAnnotationHolder.add(annotation);
             return annotation;
           }
@@ -174,8 +178,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
         public void visitErrorElement(PsiErrorElement element) {
           HighlightInfo info = createErrorElementInfo(element);
-          HighlightInfo fixed = new HighlightInfo(HighlightInfoType.ERROR, info.startOffset + injectedPsiOffset,
-                                                  info.endOffset + injectedPsiOffset, info.description, info.toolTip);
+          HighlightInfo fixed = new HighlightInfo(HighlightInfoType.ERROR, documentRange.injectedToHost(info.startOffset),
+                                                  documentRange.injectedToHost(info.endOffset), info.description, info.toolTip);
           myHolder.add(fixed);
         }
       };

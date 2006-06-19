@@ -1,10 +1,10 @@
-package com.intellij.openapi.editor.impl;
+package com.intellij.openapi.editor.impl.injected;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.impl.HighlighterList;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,58 +13,62 @@ import org.jetbrains.annotations.NotNull;
 */
 class MarkupModelDelegate extends UserDataHolderBase implements MarkupModelEx {
   private final DocumentRange myDocument;
-  private final MarkupModelEx myDelegateMarkupModel;
+  private final MarkupModelEx myHostModel;
 
   public MarkupModelDelegate(MarkupModelEx editorMarkupModel, final DocumentRange document) {
     myDocument = document;
-    myDelegateMarkupModel = editorMarkupModel;
+    myHostModel = editorMarkupModel;
   }
 
   @NotNull
-  public Document getDocument() {
+  public DocumentRange getDocument() {
     return myDocument;
   }
 
   @NotNull
-  public RangeHighlighter addRangeHighlighter(final int startOffset, final int endOffset, final int layer, final TextAttributes textAttributes,
+  public RangeHighlighter addRangeHighlighter(final int startOffset,
+                                              final int endOffset,
+                                              final int layer,
+                                              final TextAttributes textAttributes,
                                               final HighlighterTargetArea targetArea) {
-    return myDelegateMarkupModel.addRangeHighlighter(startOffset+myDocument.getTextRange().getStartOffset(), endOffset+myDocument.getTextRange().getStartOffset(), layer, textAttributes, targetArea);
+    return myHostModel.addRangeHighlighter(myDocument.injectedToHost(startOffset), myDocument.injectedToHost(endOffset), layer,
+                                           textAttributes, targetArea);
   }
 
   @NotNull
   public RangeHighlighter addLineHighlighter(final int line, final int layer, final TextAttributes textAttributes) {
-    int offLine = myDocument.getDelegate().getLineNumber(myDocument.getTextRange().getStartOffset());
-    return myDelegateMarkupModel.addLineHighlighter(line + offLine, layer, textAttributes);
+    int hostLine = myDocument.injectedToHostLine(line);
+    return myHostModel.addLineHighlighter(hostLine, layer, textAttributes);
   }
 
   public void removeHighlighter(final RangeHighlighter rangeHighlighter) {
-    myDelegateMarkupModel.removeHighlighter(rangeHighlighter);
+    myHostModel.removeHighlighter(rangeHighlighter);
   }
 
   public void removeAllHighlighters() {
-    myDelegateMarkupModel.removeAllHighlighters();
+    myHostModel.removeAllHighlighters();
   }
 
   @NotNull
   public RangeHighlighter[] getAllHighlighters() {
-    return myDelegateMarkupModel.getAllHighlighters();
+    return myHostModel.getAllHighlighters();
   }
 
   public void dispose() {
-    myDelegateMarkupModel.dispose();
+    myHostModel.dispose();
   }
 
   public HighlighterList getHighlighterList() {
-    return myDelegateMarkupModel.getHighlighterList();
+    return myHostModel.getHighlighterList();
   }
 
   public RangeHighlighter addPersistentLineHighlighter(final int line, final int layer, final TextAttributes textAttributes) {
-    int offLine = myDocument.getDelegate().getLineNumber(myDocument.getTextRange().getStartOffset());
-    return myDelegateMarkupModel.addPersistentLineHighlighter(line+offLine, layer, textAttributes);
+    int hostLine = myDocument.injectedToHostLine(line);
+    return myHostModel.addPersistentLineHighlighter(hostLine, layer, textAttributes);
   }
 
 
   public boolean containsHighlighter(final RangeHighlighter highlighter) {
-    return myDelegateMarkupModel.containsHighlighter(highlighter);
+    return myHostModel.containsHighlighter(highlighter);
   }
 }

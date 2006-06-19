@@ -1,4 +1,4 @@
-package com.intellij.openapi.editor.impl;
+package com.intellij.openapi.editor.impl.injected;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.RangeMarker;

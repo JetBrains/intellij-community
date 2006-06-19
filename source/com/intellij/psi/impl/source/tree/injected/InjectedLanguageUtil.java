@@ -10,11 +10,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.DocumentRange;
-import com.intellij.openapi.editor.impl.EditorDelegate;
+import com.intellij.openapi.editor.impl.injected.DocumentRange;
+import com.intellij.openapi.editor.impl.injected.EditorDelegate;
+import com.intellij.openapi.editor.impl.injected.VirtualFileDelegate;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.VirtualFileDelegate;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -68,7 +69,8 @@ public class InjectedLanguageUtil {
                                                                                       @NotNull final TextRange rangeInsideHost,
                                                                                       @NotNull final Language language,
                                                                                       @NotNull final VirtualFileDelegate virtualFile,
-                                                                                      @Nullable final LiteralTextEscaper<T> textEscaper) {
+                                                                                      @Nullable final LiteralTextEscaper<T> textEscaper,
+                                                                                      @NotNull String prefix, @NotNull String suffix) {
     final ParserDefinition parserDefinition = language.getParserDefinition();
     if (parserDefinition == null) return null;
     PsiManager psiManager = host.getManager();
@@ -79,6 +81,7 @@ public class InjectedLanguageUtil {
 
     final String text = host.getText();
     StringBuilder outChars = new StringBuilder(text.length());
+    outChars.append(prefix);
     if (textEscaper == null) {
       outChars.append(text, rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset());
     }
@@ -86,14 +89,15 @@ public class InjectedLanguageUtil {
       boolean result = textEscaper.decode(host, rangeInsideHost, outChars);
       if (!result) return null;
     }
+    outChars.append(suffix);
     final PsiBuilderImpl builder = new PsiBuilderImpl(language, project, null, outChars);
     final ASTNode parsedNode = parser.parse(root, builder);
     if (!(parsedNode instanceof FileElement)) return null;
     if (textEscaper != null) {
-      patchLeafs(parsedNode, host, rangeInsideHost, textEscaper);
+      patchLeafs(parsedNode, host, rangeInsideHost, textEscaper, prefix, suffix);
     }
     String parsedText = parsedNode.getText();
-    String sourceRawText = host.getText().substring(rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset());
+    String sourceRawText = prefix + host.getText().substring(rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset()) + suffix;
     LOG.assertTrue(parsedText.equals(sourceRawText));
 
     parsedNode.putUserData(TreeElement.MANAGER_KEY, psiManager);
@@ -132,12 +136,15 @@ public class InjectedLanguageUtil {
       SmartPsiElementPointer pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host);
       psiFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, pointer);
     }
-
     return parsedNode.getPsi();
   }
 
-  private static <T extends PsiLanguageInjectionHost> void patchLeafs(final ASTNode parsedNode, final T host, final TextRange rangeInsideHost, final LiteralTextEscaper<T> literalTextEscaper) {
-    final String text = host.getText().substring(rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset());
+  private static <T extends PsiLanguageInjectionHost> void patchLeafs(final ASTNode parsedNode,
+                                                                      final T host,
+                                                                      final TextRange rangeInsideHost,
+                                                                      final LiteralTextEscaper<T> literalTextEscaper, final String prefix,
+                                                                      final String suffix) {
+    final String text = prefix + host.getText().substring(rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset()) + suffix;
     final Map<LeafElement, String> newTexts = new THashMap<LeafElement, String>();
     ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementVisitor(){
       protected boolean visitNode(TreeElement element) {
@@ -146,8 +153,8 @@ public class InjectedLanguageUtil {
 
       public void visitLeaf(LeafElement leaf) {
         TextRange range = leaf.getTextRange();
-        int offsetInSource = literalTextEscaper.getOffsetInSource(range.getStartOffset());
-        int endOffsetInSource = literalTextEscaper.getOffsetInSource(range.getEndOffset());
+        int offsetInSource = literalTextEscaper.getOffsetInSource(range.getStartOffset()) + prefix.length();
+        int endOffsetInSource = literalTextEscaper.getOffsetInSource(range.getEndOffset()) + prefix.length();
         String sourceSubText = text.substring(offsetInSource, endOffsetInSource);
         String leafText = leaf.getText();
         if (!Comparing.strEqual(leafText, sourceSubText)) {
@@ -157,7 +164,7 @@ public class InjectedLanguageUtil {
     });
     for (LeafElement leaf : newTexts.keySet()) {
       String newText = newTexts.get(leaf);
-      leaf.setInternedText(newText);
+      leaf.setText(newText);
     }
     ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementVisitor(){
       protected boolean visitNode(TreeElement element) {
@@ -216,6 +223,18 @@ public class InjectedLanguageUtil {
     return null;
   }
 
+  public static String getPrefix(@NotNull PsiElement injectedPsi) {
+    Document document = FileDocumentManager.getInstance().getCachedDocument(((PsiFile)injectedPsi).getVirtualFile());
+    if (document == null) return null;
+    return ((DocumentRange)document).getPrefix();
+  }
+  public static String getSuffix(@NotNull PsiElement injectedPsi) {
+    Document document = FileDocumentManager.getInstance().getCachedDocument(((PsiFile)injectedPsi).getVirtualFile());
+    if (document == null) return null;
+    return ((DocumentRange)document).getSuffix();
+  }
+
+
   private static class InjectedPsiProvider<T extends PsiLanguageInjectionHost> implements CachedValueProvider<List<Pair<PsiElement, TextRange>>> {
     private final SmartPsiElementPointer myHost;
     private final LiteralTextEscaper<T> myTextEscaper;
@@ -246,13 +265,15 @@ public class InjectedLanguageUtil {
       final PsiManagerImpl psiManager = (PsiManagerImpl)host.getManager();
       final List<Pair<PsiElement, TextRange>> result = new SmartList<Pair<PsiElement, TextRange>>();
       InjectedLanguagePlaces placesRegistrar = new InjectedLanguagePlaces() {
-        public void addPlace(@NotNull Language language, @NotNull TextRange rangeInsideHost) {
+        public void addPlace(@NotNull Language language, @NotNull TextRange rangeInsideHost, @Nullable String prefix, @Nullable String suffix) {
           TextRange documentWindow = hostRange.cutOut(rangeInsideHost);
-          DocumentRange documentRange = new DocumentRange(hostDocument, documentWindow);
+          if (prefix == null) prefix="";
+          if (suffix == null) suffix="";
+          DocumentRange documentRange = new DocumentRange(hostDocument, documentWindow,prefix,suffix);
           String newText = documentRange.getText();
           VirtualFileDelegate virtualFile = new VirtualFileDelegate(hostVirtualFile, documentRange, language, newText);
           FileDocumentManagerImpl.registerDocument(documentRange, virtualFile);
-          PsiElement psi = parseInjectedPsiFile(host, rangeInsideHost, language, virtualFile, myTextEscaper);
+          PsiElement psi = parseInjectedPsiFile(host, rangeInsideHost, language, virtualFile, myTextEscaper, prefix, suffix);
           psi = registerDocumentRange(documentRange, (PsiFile)psi);
 
           result.add(new Pair<PsiElement,TextRange>(psi, rangeInsideHost));

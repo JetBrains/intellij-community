@@ -13,6 +13,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.util.text.StringUtil;
 
 public class DeleteAction extends EditorAction {
   public DeleteAction() {
@@ -92,10 +93,8 @@ public class DeleteAction extends EditorAction {
     int nextLineStart = document.getLineStartOffset(lineNumber + 1);
     int nextLineEnd = document.getLineEndOffset(lineNumber + 1);
     if(nextLineEnd - nextLineStart > 0) {
-      StringBuffer buf = new StringBuffer();
-      for(int i=0; i<afterLineEnd; i++) {
-        buf.append(' ');
-      }
+      StringBuilder buf = new StringBuilder();
+      StringUtil.repeatSymbol(buf, ' ', afterLineEnd);
       document.insertString(getCaretLineStart(editor) + getCaretLineLength(editor), buf.toString());
       nextLineStart = document.getLineStartOffset(lineNumber + 1);
     }

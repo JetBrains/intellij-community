@@ -29,6 +29,7 @@ public abstract class LeafElement extends TreeElement {
     return getInternedText().toString();
   }
 
+  public abstract void setText(String text);
   public abstract int textMatches(CharSequence buffer, int start);
 
   public void registerInCharTable(CharTable table) { }

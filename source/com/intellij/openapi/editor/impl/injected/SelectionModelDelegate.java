@@ -1,106 +1,117 @@
-package com.intellij.openapi.editor.impl;
+package com.intellij.openapi.editor.impl.injected;
 
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
  */
 public class SelectionModelDelegate implements SelectionModel {
-  private final SelectionModel myDelegate;
+  private final SelectionModel myHostModel;
   private final DocumentRange myDocument;
   private final EditorDelegate myInjectedEditor;
 
   public SelectionModelDelegate(final EditorEx delegate, final DocumentRange document, EditorDelegate injectedEditor) {
     myDocument = document;
     myInjectedEditor = injectedEditor;
-    myDelegate = delegate.getSelectionModel();
+    myHostModel = delegate.getSelectionModel();
   }
 
   public int getSelectionStart() {
-    return myDelegate.getSelectionStart() - myDocument.getTextRange().getStartOffset();
+    return myDocument.hostToInjected(myHostModel.getSelectionStart());
   }
 
   public int getSelectionEnd() {
-    return myDelegate.getSelectionEnd() - myDocument.getTextRange().getStartOffset();
+    return myDocument.hostToInjected(myHostModel.getSelectionEnd());
   }
 
   public String getSelectedText() {
-    return myDelegate.getSelectedText();
+    return myHostModel.getSelectedText();
   }
 
   public int getLeadSelectionOffset() {
-    return myDelegate.getLeadSelectionOffset() - myDocument.getTextRange().getStartOffset();
+    return myDocument.hostToInjected(myHostModel.getLeadSelectionOffset());
   }
 
   public boolean hasSelection() {
-    return myDelegate.hasSelection();
+    return myHostModel.hasSelection();
   }
 
   public void setSelection(final int startOffset, final int endOffset) {
-    myDelegate.setSelection(startOffset + myDocument.getTextRange().getStartOffset(), endOffset + myDocument.getTextRange().getStartOffset());
+    myHostModel.setSelection(myDocument.injectedToHost(startOffset), myDocument.injectedToHost(endOffset));
   }
 
   public void removeSelection() {
-    myDelegate.removeSelection();
+    myHostModel.removeSelection();
   }
 
   public void addSelectionListener(final SelectionListener listener) {
-    myDelegate.addSelectionListener(listener);
+    myHostModel.addSelectionListener(listener);
   }
 
   public void removeSelectionListener(final SelectionListener listener) {
-    myDelegate.removeSelectionListener(listener);
+    myHostModel.removeSelectionListener(listener);
   }
 
   public void selectLineAtCaret() {
-    myDelegate.selectLineAtCaret();
+    myHostModel.selectLineAtCaret();
   }
 
   public void selectWordAtCaret(final boolean honorCamelWordsSettings) {
-    myDelegate.selectWordAtCaret(honorCamelWordsSettings);
+    myHostModel.selectWordAtCaret(honorCamelWordsSettings);
   }
 
   public void copySelectionToClipboard() {
-    myDelegate.copySelectionToClipboard();
+    myHostModel.copySelectionToClipboard();
   }
 
   public void setBlockSelection(final LogicalPosition blockStart, final LogicalPosition blockEnd) {
-    myDelegate.setBlockSelection(blockStart, blockEnd);
+    myHostModel.setBlockSelection(myInjectedEditor.injectedToParent(blockStart), myInjectedEditor.injectedToParent(blockEnd));
   }
 
   public void removeBlockSelection() {
-    myDelegate.removeBlockSelection();
+    myHostModel.removeBlockSelection();
   }
 
   public boolean hasBlockSelection() {
-    return myDelegate.hasBlockSelection();
+    return myHostModel.hasBlockSelection();
   }
 
+  @NotNull
   public int[] getBlockSelectionStarts() {
-    return myDelegate.getBlockSelectionStarts();
+    int[] result = myHostModel.getBlockSelectionStarts();
+    for (int i = 0; i < result.length; i++) {
+      result[i] = myDocument.hostToInjected(result[i]);
+    }
+    return result;
   }
 
+  @NotNull
   public int[] getBlockSelectionEnds() {
-    return myDelegate.getBlockSelectionEnds();
+    int[] result = myHostModel.getBlockSelectionEnds();
+    for (int i = 0; i < result.length; i++) {
+      result[i] = myDocument.hostToInjected(result[i]);
+    }
+    return result;
   }
 
   public LogicalPosition getBlockStart() {
-    return myInjectedEditor.parentToInjected(myDelegate.getBlockStart());
+    return myInjectedEditor.parentToInjected(myHostModel.getBlockStart());
   }
 
   public LogicalPosition getBlockEnd() {
-    return myInjectedEditor.parentToInjected(myDelegate.getBlockEnd());
+    return myInjectedEditor.parentToInjected(myHostModel.getBlockEnd());
   }
 
   public boolean isBlockSelectionGuarded() {
-    return myDelegate.isBlockSelectionGuarded();
+    return myHostModel.isBlockSelectionGuarded();
   }
 
   public RangeMarker getBlockSelectionGuard() {
-    return myDelegate.getBlockSelectionGuard();
+    return myHostModel.getBlockSelectionGuard();
   }
 }

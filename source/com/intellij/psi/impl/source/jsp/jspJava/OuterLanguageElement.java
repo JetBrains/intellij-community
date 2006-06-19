@@ -304,6 +304,10 @@ public class OuterLanguageElement extends LeafElement implements PsiElement{
     //throw new RuntimeException("Write operations are not allowed for outer language elements.");
   }
 
+  public void setText(String text) {
+
+  }
+
   public int getTextLength() {
     return myRange.getLength();
   }

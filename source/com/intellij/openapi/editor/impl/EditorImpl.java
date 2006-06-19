@@ -828,7 +828,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   }
 
   public int nextTabStop(int x) {
-    int tabSize = mySettings.getTabSize(myProject);
+    int tabSize = getTabSize();
     if (tabSize <= 0) {
       tabSize = 1;
     }
@@ -1899,7 +1899,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     CharSequence text = myDocument.getCharsNoThreadCheck();
 
     if (pos.column == 0) return start;
-    return EditorUtil.calcOffset(this, text, start, end, pos.column, mySettings.getTabSize(myProject));
+    return EditorUtil.calcOffset(this, text, start, end, pos.column, getTabSize());
   }
 
   public void setLastColumnNumber(int val) {
@@ -2078,7 +2078,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     CharSequence text = myDocument.getCharsSequence();
     int start = myDocument.getLineStartOffset(lineIndex);
     if (start == offset) return 0;
-    return EditorUtil.calcColumnNumber(this, text, start, offset, mySettings.getTabSize(myProject));
+    return EditorUtil.calcColumnNumber(this, text, start, offset, getTabSize());
+  }
+
+  public int getTabSize() {
+    return mySettings.getTabSize(myProject);
   }
 
   private void moveCaretToScreenPos(int x, int y) {
