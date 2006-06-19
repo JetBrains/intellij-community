@@ -29,10 +29,7 @@ import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yole
@@ -231,6 +228,11 @@ public class AsmCodeGenerator {
       super.visit(version, access, name, signature, superName, interfaces);
       myClassName = name;
       mySuperName = superName;
+
+      for (Iterator iterator = myPropertyCodeGenerators.values().iterator(); iterator.hasNext();) {
+        PropertyCodeGenerator propertyCodeGenerator = (PropertyCodeGenerator)iterator.next();
+        propertyCodeGenerator.generateClassStart(this, name);
+      }
     }
 
     public MethodVisitor visitMethod(final int access,
@@ -278,6 +280,12 @@ public class AsmCodeGenerator {
       if (rootBinding != null && myFieldDescMap.containsKey(rootBinding)) {
         buildGetRootComponenMethod();
       }
+
+      for (Iterator iterator = myPropertyCodeGenerators.values().iterator(); iterator.hasNext();) {
+        PropertyCodeGenerator propertyCodeGenerator = (PropertyCodeGenerator)iterator.next();
+        propertyCodeGenerator.generateClassEnd(this);
+      }
+
       super.visitEnd();
     }
 
