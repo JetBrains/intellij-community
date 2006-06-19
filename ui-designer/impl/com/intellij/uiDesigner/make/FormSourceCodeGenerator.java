@@ -32,8 +32,8 @@ public final class FormSourceCodeGenerator {
   private Stack<Boolean> myIsFirstParameterStack;
   private final Project myProject;
   private final ArrayList<FormErrorInfo> myErrors;
-  private boolean myNeedSetMnemonicLabel;
-  private boolean myNeedSetMnemonicButton;
+  private boolean myNeedLoadLabelText;
+  private boolean myNeedLoadButtonText;
 
   private static Map<Class, LayoutSourceGenerator> ourComponentLayoutCodeGenerators = new HashMap<Class, LayoutSourceGenerator>();
   private static Map<String, LayoutSourceGenerator> ourContainerLayoutCodeGenerators = new HashMap<String, LayoutSourceGenerator>();
@@ -74,8 +74,8 @@ public final class FormSourceCodeGenerator {
   }
 
   public void generate(final VirtualFile formFile) {
-    myNeedSetMnemonicLabel = false;
-    myNeedSetMnemonicButton = false;
+    myNeedLoadLabelText = false;
+    myNeedLoadButtonText = false;
 
     final Module module = VfsUtil.getModuleForFile(myProject, formFile);
     if (module == null) {
@@ -237,9 +237,12 @@ public final class FormSourceCodeGenerator {
 
     final String grcMethodText = "public javax.swing.JComponent " + AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME + "() { return " +
                                  topComponent.getBinding() + "; }";
-    generateMethodIfRequired(aClass, method, grcMethodText, topComponent.getBinding() != null);
+    generateMethodIfRequired(aClass, method, AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME, grcMethodText, topComponent.getBinding() != null);
 
-
+    final String loadButtonTextMethodText = getLoadMethodText(AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD, AbstractButton.class, module);
+    generateMethodIfRequired(aClass, method, AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD, loadButtonTextMethodText, myNeedLoadButtonText);
+    final String loadLabelTextMethodText = getLoadMethodText(AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, JLabel.class, module);
+    generateMethodIfRequired(aClass, method, AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, loadLabelTextMethodText, myNeedLoadLabelText);
 
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(module.getProject());
     codeStyleManager.shortenClassReferences(method);
@@ -248,27 +251,55 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  private void generateMethodIfRequired(PsiClass aClass, PsiMethod method, String methodText, boolean condition) throws IncorrectOperationException {
+  private String getLoadMethodText(final String methodName, final Class componentClass, Module module) {
+    final boolean needIndex = haveSetDisplayedMnemonic(componentClass, module);
+    return "private void " + methodName + "(" + componentClass.getName() + " component, java.lang.String text) {" +
+                                        "  StringBuffer result = new StringBuffer(); " +
+                                        "  boolean haveMnemonic = false;    " +
+                                        "  char mnemonic = '\0';" +
+                                        (needIndex ? "int mnemonicIndex = -1;" : "") +
+                                        "  for(int i=0; i<text.length(); i++) {" +
+                                        "    if (text.charAt(i) == '&') {" +
+                                        "      i++;" +
+                                        "      if (i == text.length()) break;" +
+                                        "      if (!haveMnemonic && text.charAt(i) != '&') {" +
+                                        "        haveMnemonic = true;" +
+                                        "        mnemonic = text.charAt(i);" +
+                                        (needIndex ? "mnemonicIndex = result.length();" : "") +
+                                        "      }" +
+                                        "    }" +
+                                        "    result.append(text.charAt(i));" +
+                                        "  }" +
+                                        "  component.setText(result.toString()); " +
+                                        "  if (haveMnemonic) {" +
+                                        (componentClass.equals(AbstractButton.class)
+                                          ? "        component.setMnemonic(mnemonic);"
+                                          : "        component.setDisplayedMnemonic(mnemonic);") +
+                                        (needIndex ? "component.setDisplayedMnemonicIndex(mnemonicIndex);" : "") +
+                                        "} }";
+  }
+
+  private void generateMethodIfRequired(PsiClass aClass, PsiMethod anchor, final String methodName, String methodText, boolean condition) throws IncorrectOperationException {
     PsiElementFactory elementFactory = PsiManager.getInstance(myProject).getElementFactory();
-    PsiMethod grcMethod = null;
-    PsiMethod[] grcMethods = aClass.findMethodsByName(AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME, false);
+    PsiMethod newMethod = null;
+    PsiMethod[] oldMethods = aClass.findMethodsByName(methodName, false);
     if (!condition) {
-      for(PsiMethod oldGrcMethod: grcMethods) {
-        oldGrcMethod.delete();
+      for(PsiMethod oldMethod: oldMethods) {
+        oldMethod.delete();
       }
     }
     else {
-      grcMethod = elementFactory.createMethodFromText(methodText, aClass);
-      if (grcMethods.length > 0) {
-        grcMethods [0].replace(grcMethod);
+      newMethod = elementFactory.createMethodFromText(methodText, aClass);
+      if (oldMethods.length > 0) {
+        oldMethods [0].replace(newMethod);
       }
       else {
-        aClass.addAfter(grcMethod, method);
+        aClass.addAfter(newMethod, anchor);
       }
     }
-    if (grcMethod != null) {
+    if (newMethod != null) {
       CodeStyleManager csm = CodeStyleManager.getInstance(myProject);
-      csm.shortenClassReferences(grcMethod);
+      csm.shortenClassReferences(newMethod);
     }
   }
 
@@ -285,7 +316,13 @@ public final class FormSourceCodeGenerator {
       method.delete();
     }
 
-    final PsiMethod[] grcMethods = aClass.findMethodsByName(AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME, false);
+    deleteMethods(aClass, AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME);
+    deleteMethods(aClass, AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD);
+    deleteMethods(aClass, AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD);
+  }
+
+  private static void deleteMethods(final PsiClass aClass, final String methodName) throws IncorrectOperationException {
+    final PsiMethod[] grcMethods = aClass.findMethodsByName(methodName, false);
     for(final PsiMethod grcMethod: grcMethods) {
       grcMethod.delete();
     }
@@ -377,11 +414,20 @@ public final class FormSourceCodeGenerator {
         final StringDescriptor descriptor = (StringDescriptor)value;
         if (descriptor.getValue() == null) {
           if (isTextWithMnemonicProperty) {
-            startStaticMethodCall(SupportCode.class, "setTextFromBundle");
-            pushVar(variable);
-            push(descriptor.getBundleName());
-            push(descriptor.getKey());
-            endMethod();
+            if (isAssignableFrom(AbstractButton.class.getName(), componentClass, globalSearchScope)) {
+              myNeedLoadButtonText = true;
+              startMethodCall("this", AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD);
+              pushVar(variable);
+              push(descriptor);
+              endMethod();
+            }
+            else {
+              myNeedLoadLabelText = true;
+              startMethodCall("this", AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD);
+              pushVar(variable);
+              push(descriptor);
+              endMethod();
+            }
           }
           else {
             startMethodCall(variable, property.getWriteMethodName());
@@ -503,13 +549,17 @@ public final class FormSourceCodeGenerator {
     pushVar("'" + textWithMnemonic.getMnemonicChar() + "'");
     endMethod();
 
-    PsiClass aClass = PsiManager.getInstance(myProject).findClass(controlClass.getName(), module.getModuleWithLibrariesScope());
-    if (aClass != null && aClass.findMethodsByName("setDisplayedMnemonicIndex", true).length > 0) {
+    if (haveSetDisplayedMnemonic(controlClass, module)) {
       // generated code needs to be compatible with jdk 1.3
       startMethodCall(variable, "setDisplayedMnemonicIndex");
       push(textWithMnemonic.myMnemonicIndex);
       endMethod();
     }
+  }
+
+  private boolean haveSetDisplayedMnemonic(final Class controlClass, final Module module) {
+    PsiClass aClass = PsiManager.getInstance(myProject).findClass(controlClass.getName(), module.getModuleWithLibrariesScope());
+    return aClass != null && aClass.findMethodsByName("setDisplayedMnemonicIndex", true).length > 0;
   }
 
   private void generateListModelProperty(final LwIntrospectedProperty property, final TObjectIntHashMap<String> class2variableIndex,
