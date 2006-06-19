@@ -622,6 +622,15 @@ public class TypedHandler implements TypedActionHandler {
         editor.getCaretModel().moveToOffset(offset + 1);
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         return true;
+      } else if (tokenType == XmlTokenType.XML_TAG_END &&
+                 offset == element.getTextOffset()
+                ) {
+        final ASTNode parentNode = element.getParent().getNode();
+        final ASTNode child = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(parentNode);
+
+        if (child != null && offset + 1 == child.getTextRange().getStartOffset()) {
+          editor.getDocument().replaceString(offset + 1, parentNode.getTextRange().getEndOffset(),"");
+        }
       }
     }
 
