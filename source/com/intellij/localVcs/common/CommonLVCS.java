@@ -628,8 +628,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
       myImplementation._init(myVcsLocation);
       load();
     }
-    catch (Exception e) {
-      LOG.info(e);
+    catch (Throwable t) {
+      LOG.info(t);
       clearAndRecreateLocation();
     }
     if (progress != null) {

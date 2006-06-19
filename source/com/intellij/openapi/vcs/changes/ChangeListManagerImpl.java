@@ -318,8 +318,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   private static class DisposedException extends RuntimeException {}
 
   private void scheduleUpdate(int millis) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-
     cancelUpdates();
     myCurrentUpdate = ourUpdateAlarm.schedule(new Runnable() {
       public void run() {
