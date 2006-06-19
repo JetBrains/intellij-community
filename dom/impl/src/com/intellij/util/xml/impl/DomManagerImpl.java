@@ -304,7 +304,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
   @Nullable
   public <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file) {
-    return getDomFileElement(file).getRoot();
+    final DomRootInvocationHandler element = getDomFileElement(file);
+    return element == null? null : (DomFileElementImpl<T>)element.getRoot();
   }
 
   @Nullable
