@@ -50,7 +50,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
 
   public ProjectJdk findJdk(String name) {
     for (ProjectJdk jdk : myJdks) {
-      if (name.equals(jdk.getName())) {
+      if (Comparing.strEqual(name, jdk.getName())) {
         return jdk;
       }
     }

@@ -544,18 +544,18 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new AnAction(ProjectBundle.message("add.new.global.library.text")) {
       public void actionPerformed(AnActionEvent e) {
-        LibraryTableEditor.editLibraryTable(getGlobalLibrariesProvider()).createAddLibraryAction(true, myWholePanel).actionPerformed(null);
+        LibraryTableEditor.editLibraryTable(getGlobalLibrariesProvider(), myProject).createAddLibraryAction(true, myWholePanel).actionPerformed(null);
       }
     });
     group.add(new AnAction(ProjectBundle.message("add.new.application.server.library.text")) {
       public void actionPerformed(AnActionEvent e) {
-        LibraryTableEditor.editLibraryTable(getApplicationServerLibrariesProvider()).createAddLibraryAction(true, myWholePanel)
+        LibraryTableEditor.editLibraryTable(getApplicationServerLibrariesProvider(), myProject).createAddLibraryAction(true, myWholePanel)
           .actionPerformed(null);
       }
     });
     group.add(new AnAction(ProjectBundle.message("add.new.project.library.text")) {
       public void actionPerformed(AnActionEvent e) {
-        LibraryTableEditor.editLibraryTable(getProjectLibrariesProvider()).createAddLibraryAction(true, myWholePanel).actionPerformed(null);
+        LibraryTableEditor.editLibraryTable(getProjectLibrariesProvider(), myProject).createAddLibraryAction(true, myWholePanel).actionPerformed(null);
       }
     });
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();

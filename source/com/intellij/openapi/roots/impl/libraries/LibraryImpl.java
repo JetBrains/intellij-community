@@ -201,7 +201,7 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
       final String[] orderedRootUrls1 = getUrls(type);
       final String[] orderedRootUrls2 = mySource.getUrls(type);
       if (!Arrays.equals(orderedRootUrls1, orderedRootUrls2)) {
-        return false;
+        return true;
       }
     }
     return false;
