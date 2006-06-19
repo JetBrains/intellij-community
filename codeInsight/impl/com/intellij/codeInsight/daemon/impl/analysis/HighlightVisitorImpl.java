@@ -370,7 +370,11 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       return true;
     }
 
-    final PsiElement prevLeaf = PsiTreeUtil.prevLeaf(element, true);
+    PsiElement prevLeaf = PsiTreeUtil.prevLeaf(element, true);
+    while (prevLeaf instanceof PsiWhiteSpace) {
+      prevLeaf = prevLeaf.getPrevSibling();
+    }
+
     if (prevLeaf instanceof OuterLanguageElement &&
         prevLeaf.getTextRange().getEndOffset() != element.getContainingFile().getTextLength()
        ) {
