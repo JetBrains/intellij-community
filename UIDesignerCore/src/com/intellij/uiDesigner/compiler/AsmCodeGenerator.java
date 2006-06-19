@@ -231,7 +231,7 @@ public class AsmCodeGenerator {
 
       for (Iterator iterator = myPropertyCodeGenerators.values().iterator(); iterator.hasNext();) {
         PropertyCodeGenerator propertyCodeGenerator = (PropertyCodeGenerator)iterator.next();
-        propertyCodeGenerator.generateClassStart(this, name);
+        propertyCodeGenerator.generateClassStart(this, name, myLoader);
       }
     }
 

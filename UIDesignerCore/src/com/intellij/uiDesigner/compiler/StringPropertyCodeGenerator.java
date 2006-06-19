@@ -26,11 +26,21 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
   private boolean myNeedLoadLabelText;
   private boolean myNeedLoadButtonText;
   private String myClassName;
+  private boolean myHaveSetDisplayedMnemonicIndex = false;
 
-  public void generateClassStart(ClassVisitor visitor, final String name) {
+  public void generateClassStart(ClassVisitor visitor, final String name, final ClassLoader loader) {
     myClassName = name;
     myNeedLoadLabelText = false;
     myNeedLoadButtonText = false;
+    try {
+      Class c = loader.loadClass(AbstractButton.class.getName());
+      if (c.getMethod("getDisplayedMnemonicIndex", new Class[0]) != null) {
+        myHaveSetDisplayedMnemonicIndex = true;
+      }
+    }
+    catch (Exception e) {
+      // ignore
+    }
   }
 
   public boolean generateCustomSetValue(final LwComponent lwComponent,
@@ -64,11 +74,13 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
                                   new Method(setMnemonicMethodName,
                                              Type.VOID_TYPE, new Type[] { Type.CHAR_TYPE } ));
 
-          generator.loadLocal(componentLocal);
-          generator.push(textWithMnemonic.myMnemonicIndex);
-          generator.invokeStatic(Type.getType(SupportCode.class),
-                                 new Method("setDisplayedMnemonicIndex",
-                                            Type.VOID_TYPE, new Type[] { Type.getType(JComponent.class), Type.INT_TYPE } ));
+          if (myHaveSetDisplayedMnemonicIndex) {
+            generator.loadLocal(componentLocal);
+            generator.push(textWithMnemonic.myMnemonicIndex);
+            generator.invokeStatic(Type.getType(SupportCode.class),
+                                   new Method("setDisplayedMnemonicIndex",
+                                              Type.VOID_TYPE, new Type[] { Type.getType(JComponent.class), Type.INT_TYPE } ));
+          }
           return true;
         }
       }
@@ -121,7 +133,7 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
     }
   }
 
-  private static void generateLoadTextMethod(final ClassVisitor visitor, final String methodName, final String componentClass,
+  private void generateLoadTextMethod(final ClassVisitor visitor, final String methodName, final String componentClass,
                                       final String setMnemonicMethodName) {
     MethodVisitor mv = visitor.visitMethod(ACC_PRIVATE, methodName, "(L" + componentClass + ";Ljava/lang/String;)V", null, null);
     mv.visitCode();
@@ -194,9 +206,11 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
     mv.visitVarInsn(ALOAD, 1);
     mv.visitVarInsn(ILOAD, 5);
     mv.visitMethodInsn(INVOKEVIRTUAL, componentClass, setMnemonicMethodName, "(C)V");
-    mv.visitVarInsn(ALOAD, 1);
-    mv.visitVarInsn(ILOAD, 6);
-    mv.visitMethodInsn(INVOKEVIRTUAL, componentClass, "setDisplayedMnemonicIndex", "(I)V");
+    if (myHaveSetDisplayedMnemonicIndex) {
+      mv.visitVarInsn(ALOAD, 1);
+      mv.visitVarInsn(ILOAD, 6);
+      mv.visitMethodInsn(INVOKEVIRTUAL, componentClass, "setDisplayedMnemonicIndex", "(I)V");
+    }
     mv.visitLabel(l4);
     mv.visitInsn(RETURN);
     mv.visitMaxs(3, 8);

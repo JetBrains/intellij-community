@@ -18,9 +18,9 @@ public abstract class PropertyCodeGenerator {
     return false;
   }
 
-  public void generateClassStart(ClassVisitor visitor, final String name) {
+  public void generateClassStart(ClassVisitor visitor, final String name, final ClassLoader loader) {
   }
-  
+
   public void generateClassEnd(ClassVisitor visitor) {
   }
 }
