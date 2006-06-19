@@ -879,7 +879,7 @@ class RootModelImpl implements ModifiableRootModel {
       if (orderEntry1 instanceof ModuleJdkOrderEntry && orderEntry2 instanceof ModuleJdkOrderEntry) {
         String name1 = ((ModuleJdkOrderEntry)orderEntry1).getJdkName();
         String name2 = ((ModuleJdkOrderEntry)orderEntry2).getJdkName();
-        if (!name1.equals(name2)) {
+        if (!Comparing.strEqual(name1, name2)) {
           return false;
         }
       }
