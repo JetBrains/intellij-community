@@ -303,6 +303,9 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   public final DomElement getDomElement(final XmlElement element) {
+    if (element instanceof XmlFile) {
+      return getDomFileElement((XmlFile)element).getRoot();
+    }
     if (element instanceof XmlAttribute) {
       final XmlAttribute o = (XmlAttribute)element;
       final DomInvocationHandler handler = _getDomElement(o.getParent());
