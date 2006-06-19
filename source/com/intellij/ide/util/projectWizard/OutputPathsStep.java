@@ -1,11 +1,15 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 
 /**
@@ -19,6 +23,8 @@ public class OutputPathsStep extends ModuleWizardStep{
   private final NameLocationStep myNameLocationStep;
   private JPanel myPanel;
   private NamePathComponent myNamePathComponent;
+  private JRadioButton myRbInheritProjectOutput = new JRadioButton(ProjectBundle.message("project.inherit.compile.output.path"));
+  private JRadioButton myRbPerModuleOutput = new JRadioButton(ProjectBundle.message("project.module.compile.output.path"));
 
   public OutputPathsStep(NameLocationStep nameLocationStep, JavaModuleBuilder descriptor, Icon icon, @NonNls String helpId) {
     myDescriptor = descriptor;
@@ -28,8 +34,21 @@ public class OutputPathsStep extends ModuleWizardStep{
     myNamePathComponent = new NamePathComponent("", IdeBundle.message("label.select.compiler.output.path"), IdeBundle.message("title.select.compiler.output.path"), "", false);
     myNamePathComponent.setNameComponentVisible(false);
     myPanel = new JPanel(new GridBagLayout());
-    myPanel.setBorder(BorderFactory.createEtchedBorder());
-    myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 6, 0, 6), 0, 0));
+    myPanel.setBorder(BorderFactory.createEtchedBorder());    
+    myPanel.add(myRbInheritProjectOutput, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 6, 0, 6), 0, 0));
+    myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 10, 0, 6), 0, 0));
+    myPanel.add(myRbPerModuleOutput, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 6, 0, 6), 0, 0));
+
+    final ButtonGroup group = new ButtonGroup();
+    group.add(myRbInheritProjectOutput);
+    group.add(myRbPerModuleOutput);
+    final ActionListener listener = new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        UIUtil.setEnabled(myNamePathComponent, !myRbInheritProjectOutput.isSelected(), true);
+      }
+    };
+    myRbInheritProjectOutput.addActionListener(listener);
+    myRbPerModuleOutput.addActionListener(listener);
   }
 
   public JComponent getComponent() {
@@ -37,7 +56,11 @@ public class OutputPathsStep extends ModuleWizardStep{
   }
 
   public void updateDataModel() {
-    myDescriptor.setCompilerOutputPath(myNamePathComponent.getPath());
+    if (myRbInheritProjectOutput.isSelected()){
+      myDescriptor.setCompilerOutputPath(null);
+    } else {
+      myDescriptor.setCompilerOutputPath(myNamePathComponent.getPath());
+    }
   }
 
   public void updateStep() {
@@ -52,6 +75,10 @@ public class OutputPathsStep extends ModuleWizardStep{
         myNamePathComponent.getPathComponent().selectAll();
       }
     }
+    boolean inheritCompileOutput = myDescriptor.getPathForOutputPathStep() == null;
+    myRbInheritProjectOutput.setSelected(inheritCompileOutput);
+    myRbPerModuleOutput.setSelected(!inheritCompileOutput);
+    UIUtil.setEnabled(myNamePathComponent, !inheritCompileOutput, true);
   }
 
   public JComponent getPreferredFocusedComponent() {

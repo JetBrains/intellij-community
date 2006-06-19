@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -85,7 +85,7 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
       return myProjectRootManager.getProjectJdk();
     }
     final Project project = getRootModel().getModule().getProject();
-    return ProjectRootConfigurable.getInstance(project).getProjectJdksModel().getProjectJdk();
+    return ProjectJdksModel.getInstance(project).getProjectJdk();
   }
 
   public String getJdkName() {

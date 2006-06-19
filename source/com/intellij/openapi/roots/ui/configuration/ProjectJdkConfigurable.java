@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.util.Comparing;
 
 import javax.swing.*;
@@ -26,24 +26,24 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   private JdkComboBox myCbProjectJdk;
   private JPanel myJdkPanel;
   private Project myProject;
-  private ProjectRootConfigurable myProjectRootConfigurable;
+  private ProjectJdksModel myJdksModel;
 
   private boolean myFreeze = false;
 
-  public ProjectJdkConfigurable(Project project, final ProjectRootConfigurable projectRootConfigurable) {
+  public ProjectJdkConfigurable(Project project, final ProjectJdksModel jdksModel) {
     myProject = project;
-    myProjectRootConfigurable = projectRootConfigurable;
+    myJdksModel = jdksModel;
     init();
   }
 
   public ProjectJdk getSelectedProjectJdk() {
-    return myProjectRootConfigurable.getProjectJdksModel().findSdk(myCbProjectJdk.getSelectedJdk());
+    return myJdksModel.findSdk(myCbProjectJdk.getSelectedJdk());
   }
 
   public JComponent createComponent() {
     myFreeze = true;
     final ProjectJdk projectJdk = myCbProjectJdk.getSelectedJdk();
-    myCbProjectJdk.reloadModel(new JdkComboBox.NoneJdkComboBoxItem(), myProjectRootConfigurable);
+    myCbProjectJdk.reloadModel(new JdkComboBox.NoneJdkComboBoxItem(), myProject);
     myCbProjectJdk.setSelectedJdk(projectJdk); //restore selection
     myFreeze = false;
     return myJdkPanel;
@@ -51,12 +51,12 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
 
   private void init() {
     myJdkPanel = new JPanel(new GridBagLayout());
-    myCbProjectJdk = new JdkComboBox(myProjectRootConfigurable);
+    myCbProjectJdk = new JdkComboBox(myJdksModel);
     myCbProjectJdk.insertItemAt(new JdkComboBox.NoneJdkComboBoxItem(), 0);
     myCbProjectJdk.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myFreeze) return;
-        myProjectRootConfigurable.getProjectJdksModel().setProjectJdk(myCbProjectJdk.getSelectedJdk());
+        myJdksModel.setProjectJdk(myCbProjectJdk.getSelectedJdk());
       }
     });
     final Box horizontalBox = Box.createHorizontalBox();
@@ -79,7 +79,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     final ProjectJdk projectJdk = ProjectRootManager.getInstance(myProject).getProjectJdk();
     if (projectJdk != null) {
       final String sdkName = projectJdk.getName();
-      myCbProjectJdk.setSelectedJdk((ProjectJdk)myProjectRootConfigurable.getProjectJdksModel().findSdk(sdkName));
+      myCbProjectJdk.setSelectedJdk((ProjectJdk)myJdksModel.findSdk(sdkName));
     } else {
       myCbProjectJdk.setSelectedJdk(null);
     }

@@ -32,13 +32,12 @@
 package com.intellij.openapi.module;
 
 import com.intellij.ide.util.projectWizard.*;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.project.ProjectBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   private static final Icon JAVA_MODULE_ICON = IconLoader.getIcon("/modules/javaModule.png");
@@ -82,7 +81,6 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     return new ModuleWizardStep[]{
       nameLocationStep,
       new SourcePathsStep(nameLocationStep, moduleBuilder, WIZARD_ICON, "project.creatingModules.page3"),
-      new OutputPathsStep(nameLocationStep, moduleBuilder, WIZARD_ICON, "project.creatingModules.page4")
     };
   }
 }

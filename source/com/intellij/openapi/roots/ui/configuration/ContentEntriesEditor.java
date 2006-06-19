@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,6 +45,7 @@ import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
@@ -70,6 +72,8 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
   private JPanel myEditorsPanel;
   private final Map<ContentEntry, ContentEntryEditor> myEntryToEditorMap = new HashMap<ContentEntry, ContentEntryEditor>();
   private ContentEntry mySelectedEntry;
+  private JRadioButton myInheritCompilerOutput;
+  private JRadioButton myPerModuleCompilerOutput;
   private FieldPanel myOutputPathPanel;
   private FieldPanel myTestsOutputPathPanel;
   private VirtualFile myLastSelectedDir = null;
@@ -207,6 +211,21 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
   }
 
   private JComponent createOutputPathsBlock() {
+    myInheritCompilerOutput = new JRadioButton(ProjectBundle.message("project.inherit.compile.output.path"));
+    myPerModuleCompilerOutput = new JRadioButton(ProjectBundle.message("project.module.compile.output.path"));
+    ButtonGroup group = new ButtonGroup();
+    group.add(myInheritCompilerOutput);
+    group.add(myPerModuleCompilerOutput);
+
+    final ActionListener listener = new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        enableCompilerSettings(!myInheritCompilerOutput.isSelected());
+      }
+    };
+
+    myInheritCompilerOutput.addActionListener(listener);
+    myPerModuleCompilerOutput.addActionListener(listener);
+
     myOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.output.title"), new CommitPathRunnable() {
       public void saveUrl(String url) {
         myModel.setCompilerOutputPath(url);
@@ -230,23 +249,31 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
 
     final JPanel outputPathsPanel = new JPanel(new GridBagLayout());
 
+
+    outputPathsPanel.add(myInheritCompilerOutput,
+                         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                new Insets(6, 0, 0, 4), 0, 0));
+    outputPathsPanel.add(myPerModuleCompilerOutput,
+                         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                    new Insets(6, 0, 0, 4), 0, 0));
+
     outputPathsPanel.add(new JLabel(ProjectBundle.message("module.paths.output.label")),
                          new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-                                                new Insets(6, 0, 0, 4), 0, 0));
+                                                new Insets(6, 12, 0, 4), 0, 0));
     outputPathsPanel.add(myOutputPathPanel,
                          new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                                 new Insets(6, 4, 0, 0), 0, 0));
 
     outputPathsPanel.add(new JLabel(ProjectBundle.message("module.paths.test.output.label")),
                          new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-                                                new Insets(6, 0, 0, 4), 0, 0));
+                                                new Insets(6, 12, 0, 4), 0, 0));
     outputPathsPanel.add(myTestsOutputPathPanel,
                          new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                                 new Insets(6, 4, 0, 0), 0, 0));
 
     outputPathsPanel.add(myCbExcludeOutput,
-                         new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                                new Insets(6, 0, 0, 0), 0, 0));
+                         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                new Insets(6, 12, 0, 0), 0, 0));
 
     // fill with data
     final VirtualFile compilerOutputPath = myModel.getCompilerOutputPath();
@@ -271,7 +298,23 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
       }
     }
 
+    //compiler settings
+    final boolean outputPathInherited = myModel.isCompilerOutputPathInherited();
+    myInheritCompilerOutput.setSelected(outputPathInherited);
+    myPerModuleCompilerOutput.setSelected(!outputPathInherited);
+    enableCompilerSettings(!outputPathInherited);
+
     return outputPathsPanel;
+  }
+
+  private void enableCompilerSettings(final boolean enabled) {
+    UIUtil.setEnabled(myOutputPathPanel, enabled, true);
+    UIUtil.setEnabled(myTestsOutputPathPanel, enabled, true);
+    myCbExcludeOutput.setEnabled(enabled);
+    myModel.inheritCompilerOutputPath(!enabled);
+    if (myRootTreeEditor != null) {
+      myRootTreeEditor.update(); // need this in order to update appearance of excluded output paths if they are under content root
+    }
   }
 
   private static interface CommitPathRunnable {
@@ -302,7 +345,7 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
           catch (IOException e) {
             canonicalPath = path;
           }
-          commitPathRunnable.saveUrl(VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, canonicalPath.replace(File.separatorChar, '/')));
+          commitPathRunnable.saveUrl(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
         }
         if (myRootTreeEditor != null) {
           myRootTreeEditor.update(); // need this in order to update appearance of excluded output paths if they are under content root

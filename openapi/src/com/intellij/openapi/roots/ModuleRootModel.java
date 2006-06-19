@@ -69,6 +69,13 @@ public interface ModuleRootModel {
    */
   boolean isJdkInherited();
 
+
+  /**
+   * Returns <code>true</code> if compiler output for this module is inherited from a project
+   * @return true if compiler output path is inherited, false otherwise
+   */
+  boolean isCompilerOutputPathInherited();
+
   /**
    * Returns an array of content roots from all content entries. A helper method.
    *

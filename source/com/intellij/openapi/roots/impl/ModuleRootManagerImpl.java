@@ -17,18 +17,18 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
-import com.intellij.pom.java.LanguageLevel;
-import org.jdom.Element;
 import org.jdom.Attribute;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -102,6 +102,10 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   public boolean isJdkInherited() {
     return myRootModel.isJdkInherited();
+  }
+
+  public boolean isCompilerOutputPathInherited() {
+    return myRootModel.isCompilerOutputPathInherited();
   }
 
   public ProjectJdk getJdk() {

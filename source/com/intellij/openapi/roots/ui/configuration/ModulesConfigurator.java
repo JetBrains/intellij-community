@@ -2,12 +2,14 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.Chunk;
 import com.intellij.compiler.ModuleCompilerUtil;
+import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.projectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.javaee.J2EEModuleUtil;
 import com.intellij.javaee.module.J2EEModuleUtilEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -21,14 +23,20 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.ui.FieldPanel;
+import com.intellij.ui.InsertPathAction;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
@@ -39,6 +47,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -60,6 +70,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   @SuppressWarnings({"FieldCanBeLocal"})
   private JRadioButton myRbAbsolutePaths;
+
+  private FieldPanel myProjectCompilerOutput;
 
   private MyJPanel myPanel;
 
@@ -125,13 +137,30 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myPanel.add(horizontalBox, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 0.0, 0.0, GridBagConstraints.WEST,
                                                       GridBagConstraints.NONE, new Insets(2, 0, 0, 0), 0, 0));
 
-    myProjectJdkConfigurable = new ProjectJdkConfigurable(myProject, myProjectRootConfigurable);
+    myProjectJdkConfigurable = new ProjectJdkConfigurable(myProject, myProjectRootConfigurable.getProjectJdksModel());
     myPanel.add(myProjectJdkConfigurable.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 0.0, 0.0, GridBagConstraints.WEST,
                                                                                    GridBagConstraints.NONE, new Insets(2, 0, 0, 0), 0, 0));
 
+    final JTextField textField = new JTextField();
+    final FileChooserDescriptor outputPathsChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+    InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
+    outputPathsChooserDescriptor.setHideIgnored(false);
+    myProjectCompilerOutput = new FieldPanel(textField, null, null, new BrowseFilesListener(textField, ProjectBundle.message("project.compiler.output"), "", outputPathsChooserDescriptor), new Runnable() {//todo description
+      public void run() {
+        //do nothing
+      }
+    });
+
+    final Box compilerBox = Box.createHorizontalBox();
+    compilerBox.add(new JLabel(ProjectBundle.message("project.compiler.output")));
+    compilerBox.add(Box.createHorizontalStrut(5));
+    compilerBox.add(myProjectCompilerOutput);
+    myPanel.add(compilerBox, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 0.0, 0.0, GridBagConstraints.WEST,
+                                                      GridBagConstraints.HORIZONTAL, new Insets(2, 0, 0, 0), 0, 0));
+
 
     myWarningLabel.setUI(new MultiLineLabelUI());
-    myPanel.add(myWarningLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 1.0, GridBagConstraints.WEST,
+    myPanel.add(myWarningLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 0.0, 1.0, GridBagConstraints.WEST,
                                                        GridBagConstraints.BOTH, new Insets(2, 6, 0, 0), 0, 0));
 
 
@@ -184,6 +213,12 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
     resetModuleEditors();
     if (myProjectJdkConfigurable != null) myProjectJdkConfigurable.reset();
+    if (myProjectCompilerOutput != null){
+      final String compilerOutput = ProjectRootManagerEx.getInstance(myProject).getCompilerOutputUrl();
+      if (compilerOutput != null) {
+        myProjectCompilerOutput.setText(VfsUtil.urlToPath(compilerOutput));
+      }
+    }
   }
 
   private void disposeModuleEditors() {
@@ -266,7 +301,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public void apply() throws ConfigurationException {
-    final ProjectRootManagerEx projectRootManagerEx = ProjectRootManagerEx.getInstanceEx(myProject);
+    final ProjectRootManagerImpl projectRootManager = ProjectRootManagerImpl.getInstanceImpl(myProject);
 
     final List<ModifiableRootModel> models = new ArrayList<ModifiableRootModel>(myModuleEditors.size());
     for (final ModuleEditor moduleEditor : myModuleEditors) {
@@ -282,7 +317,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       public void run() {
         try {
           final LanguageLevel newLevel = (LanguageLevel)myLanguageLevelCombo.getSelectedItem();
-          projectRootManagerEx.setLanguageLevel(newLevel);
+          projectRootManager.setLanguageLevel(newLevel);
           ((ProjectEx)myProject).setSavePathsRelative(myRbRelativePaths.isSelected());
           try {
             myProjectJdkConfigurable.apply();
@@ -290,8 +325,21 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
           catch (ConfigurationException e) {
             //cant't be
           }
+          String canonicalPath = myProjectCompilerOutput.getText();
+          if (canonicalPath != null && canonicalPath.length() > 0) {
+            try {
+              canonicalPath = new File(canonicalPath).getCanonicalPath();
+            }
+            catch (IOException e) {
+              //file doesn't exist yet
+            }
+            canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
+            projectRootManager.setCompilerOutputUrl(VfsUtil.pathToUrl(canonicalPath));
+          } else {
+            projectRootManager.setCompilerOutputPointer(null);
+          }
           final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
-          projectRootManagerEx.multiCommit(myModuleModel, rootModels);
+          projectRootManager.multiCommit(myModuleModel, rootModels);
         }
         finally {
           myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
@@ -442,10 +490,16 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         return true;
       }
     }
+    final ProjectRootManagerEx projectRootManagerEx = ProjectRootManagerEx.getInstanceEx(myProject);
     if (myLanguageLevelCombo != null) {
-      if (!ProjectRootManagerEx.getInstanceEx(myProject).getLanguageLevel().equals(myLanguageLevelCombo.getSelectedItem())) {
+      if (!projectRootManagerEx.getLanguageLevel().equals(myLanguageLevelCombo.getSelectedItem())) {
         return true;
       }
+    }
+
+    if (myProjectCompilerOutput != null){
+      final String compilerOutput = projectRootManagerEx.getCompilerOutputUrl();
+      if (!Comparing.strEqual(VfsUtil.urlToPath(compilerOutput), myProjectCompilerOutput.getText())) return true;
     }
 
     if (myProjectJdkConfigurable != null){

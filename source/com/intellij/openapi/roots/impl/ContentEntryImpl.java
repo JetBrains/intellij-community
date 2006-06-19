@@ -15,6 +15,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -109,8 +110,18 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     }
     final ArrayList result = new ArrayList(myExcludeFolders);
     if (myRootModel.isExcludeOutput()) {
-      addExcludeForOutputPath(myRootModel.myCompilerOutputPath, result);
-      addExcludeForOutputPath(myRootModel.myCompilerOutputPathForTests, result);
+      if (!myRootModel.isCompilerOutputPathInherited()) {
+        addExcludeForOutputPath(myRootModel.myCompilerOutputPath, result);
+        addExcludeForOutputPath(myRootModel.myCompilerOutputPathForTests, result);
+      } else {
+        ProjectRootManagerImpl projectRootManager = ProjectRootManagerImpl.getInstanceImpl(myRootModel.getModule().getProject());
+        final String outputUrl = projectRootManager.getCompilerOutputUrl();
+        if (outputUrl != null){
+          if (new File(VfsUtil.urlToPath(outputUrl)).exists()){
+            addExcludeForOutputPath(projectRootManager.getCompilerOutputPointer(), result);
+          }
+        }
+      }
     }
     if (myRootModel.isExcludeExplodedDirectory()) {
       addExcludeForOutputPath(myRootModel.myExplodedDirectory, result);

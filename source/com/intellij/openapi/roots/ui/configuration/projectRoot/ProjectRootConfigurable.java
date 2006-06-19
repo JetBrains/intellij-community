@@ -116,14 +116,14 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   protected void reloadTree() {
 
     myRoot.removeAllChildren();
+    
+    createProjectNodes();
+
+    createProjectJdks();
 
     myGlobalLibrariesNode = createLibrariesNode(LibraryTablesRegistrar.getInstance().getLibraryTable(), myGlobalLibrariesProvider, getGlobalLibrariesProvider());
 
     myApplicationServerLibrariesNode = createLibrariesNode(ApplicationServersManager.getInstance().getLibraryTable(), myApplicationServerLibrariesProvider, getApplicationServerLibrariesProvider());
-
-    createProjectJdks();
-
-    createProjectNodes();
 
     ((DefaultTreeModel)myTree.getModel()).reload();
   }

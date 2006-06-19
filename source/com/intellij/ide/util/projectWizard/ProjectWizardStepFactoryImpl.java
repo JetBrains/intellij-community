@@ -20,6 +20,9 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory imple
     return new NameLocationStep(wizardContext, builder, modulesProvider, icon, helpId);
   }
 
+  /**
+   * @deprecated
+   */
   public ModuleWizardStep createOutputPathPathsStep(ModuleWizardStep nameAndLocationStep, JavaModuleBuilder builder, Icon icon, String helpId) {
     return new OutputPathsStep((NameLocationStep)nameAndLocationStep, builder, icon, helpId);
   }

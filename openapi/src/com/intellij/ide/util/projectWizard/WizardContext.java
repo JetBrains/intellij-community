@@ -29,6 +29,7 @@ public class WizardContext {
   private final Project myProject;
   private String myProjectFileDirectory;
   private String myProjectName;
+  private String myCompilerOutputDirectory;
   private ProjectJdk myProjectJdk;
   private List<Listener> myListeners = new ArrayList<Listener>();
 
@@ -55,6 +56,14 @@ public class WizardContext {
     myProjectFileDirectory = projectFileDirectory;
   }
 
+  public String getCompilerOutputDirectory() {
+    return myCompilerOutputDirectory;
+  }
+
+  public void setCompilerOutputDirectory(final String compilerOutputDirectory) {
+    myCompilerOutputDirectory = compilerOutputDirectory;
+  }
+
   public String getProjectName() {
     return myProjectName;
   }
@@ -69,8 +78,8 @@ public class WizardContext {
 
   public void requestWizardButtonsUpdate() {
     final Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
-    for (int idx = 0; idx < listeners.length; idx++) {
-      listeners[idx].buttonsUpdateRequested();
+    for (Listener listener : listeners) {
+      listener.buttonsUpdateRequested();
     }
   }
 

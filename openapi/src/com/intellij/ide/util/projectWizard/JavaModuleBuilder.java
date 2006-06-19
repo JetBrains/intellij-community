@@ -29,7 +29,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -49,10 +48,6 @@ public class JavaModuleBuilder extends ModuleBuilder {
 
   public final String getContentEntryPath() {
     return myContentEntryPath;
-  }
-
-  public final String getCompilerOutputPath() {
-    return myCompilerOutputPath;
   }
 
   public final void setContentEntryPath(String moduleRootPath) {
@@ -132,10 +127,10 @@ public class JavaModuleBuilder extends ModuleBuilder {
       catch (IOException e) {
         canonicalPath = myCompilerOutputPath;
       }
-      rootModel.setCompilerOutputPath(VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, canonicalPath.replace(File.separatorChar, '/')));
+      rootModel.setCompilerOutputPath(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
     }
     else {
-      rootModel.setCompilerOutputPath((VirtualFile)null);
+      rootModel.inheritCompilerOutputPath(true);
     }
 
     LibraryTable libraryTable = rootModel.getModuleLibraryTable();

@@ -10,7 +10,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.util.Comparing;
 
 import javax.swing.*;
@@ -28,15 +28,15 @@ public class ModuleJdkConfigurable implements UnnamedConfigurable {
   private ModifiableRootModel myRootModel;
   private JPanel myJdkPanel;
   private ModuleEditor myModuleEditor;
-  private ProjectRootConfigurable myProjectRootConfigurable;
+  private ProjectJdksModel myJdksModel;
   private boolean myFreeze = false;
 
   public ModuleJdkConfigurable(ModuleEditor moduleEditor,
                                ModifiableRootModel model,
-                               ProjectRootConfigurable projectRootConfigurable) {
+                               ProjectJdksModel jdksModel) {
     myModuleEditor = moduleEditor;
     myRootModel = model;
-    myProjectRootConfigurable = projectRootConfigurable;
+    myJdksModel = jdksModel;
     init();
   }
 
@@ -44,7 +44,7 @@ public class ModuleJdkConfigurable implements UnnamedConfigurable {
    * @return null if JDK should be inherited
    */
   public ProjectJdk getSelectedModuleJdk() {
-    return myProjectRootConfigurable.getProjectJdksModel().findSdk(mySelectedModuleJdk);
+    return myJdksModel.findSdk(mySelectedModuleJdk);
   }
 
   public boolean isInheritJdk() {
@@ -54,7 +54,7 @@ public class ModuleJdkConfigurable implements UnnamedConfigurable {
   public JComponent createComponent() {
     myFreeze = true;
     final ProjectJdk projectJdk = myCbModuleJdk.getSelectedJdk();
-    myCbModuleJdk.reloadModel(new JdkComboBox.ProjectJdkComboBoxItem(), myProjectRootConfigurable);
+    myCbModuleJdk.reloadModel(new JdkComboBox.ProjectJdkComboBoxItem(), myRootModel.getModule().getProject());
     myCbModuleJdk.setSelectedJdk(projectJdk);    //restore selection
     myFreeze = false;
     return myJdkPanel;
@@ -62,7 +62,7 @@ public class ModuleJdkConfigurable implements UnnamedConfigurable {
 
   private void init() {
     myJdkPanel = new JPanel(new GridBagLayout());
-    myCbModuleJdk = new JdkComboBox(myProjectRootConfigurable);
+    myCbModuleJdk = new JdkComboBox(myJdksModel);
     myCbModuleJdk.insertItemAt(new JdkComboBox.ProjectJdkComboBoxItem(), 0);
     myCbModuleJdk.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -96,7 +96,7 @@ public class ModuleJdkConfigurable implements UnnamedConfigurable {
     myFreeze = true;
     final ProjectJdk projectJdk = myRootModel.getJdk();
     if (projectJdk != null && !myRootModel.isJdkInherited()) {
-      mySelectedModuleJdk = (ProjectJdk)myProjectRootConfigurable.getProjectJdksModel().findSdk(projectJdk.getName());
+      mySelectedModuleJdk = (ProjectJdk)myJdksModel.findSdk(projectJdk.getName());
       myCbModuleJdk.setSelectedJdk(mySelectedModuleJdk);
     } else {
       myCbModuleJdk.setSelectedJdk(null);

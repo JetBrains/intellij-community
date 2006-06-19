@@ -5,10 +5,11 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.util.projectWizard.ProjectJdkListRenderer;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.ui.SimpleTextAttributes;
 
 import javax.swing.*;
@@ -19,8 +20,8 @@ import java.util.Collection;
  *         Date: May 18, 2005
  */
 class JdkComboBox extends JComboBox{
-  public JdkComboBox(final ProjectRootConfigurable projectRootConfigurable) {
-    super(new JdkComboBoxModel(projectRootConfigurable));
+  public JdkComboBox(final ProjectJdksModel jdksModel) {
+    super(new JdkComboBoxModel(jdksModel));
     setRenderer(new ProjectJdkListRenderer() {
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (JdkComboBox.this.isEnabled()) {
@@ -39,27 +40,6 @@ class JdkComboBox extends JComboBox{
       }
     });
   }
-
-  /*public void update(ProjectJdk jdkToSelect) {
-    final ProjectJdk selectedJdk = (jdkToSelect != null)? jdkToSelect : getSelectedJdk();
-    final JdkComboBoxItem selectedItem = getSelectedItem();
-    setModel(new JdkComboBoxModel(project));
-    if (selectedJdk != null) {
-      final int idx = indexOf(selectedJdk);
-      if (idx >= 0) {
-        setSelectedIndex(idx);
-      }
-      else {
-        setSelectedJdk(null);
-      }
-    }
-    else if (selectedItem instanceof InvalidJdkComboBoxItem){
-      setInvalidJdk(selectedItem.toString());
-    }
-    else {
-      setSelectedJdk(null);
-    }
-  }*/
 
   public JdkComboBoxItem getSelectedItem() {
     return (JdkComboBoxItem)super.getSelectedItem();
@@ -116,20 +96,20 @@ class JdkComboBox extends JComboBox{
     }
   }
 
-  public void reloadModel(JdkComboBoxItem firstItem, ProjectRootConfigurable projectRootConfigurable) {
+  public void reloadModel(JdkComboBoxItem firstItem, Project project) {
     final DefaultComboBoxModel model = ((DefaultComboBoxModel)getModel());
     model.removeAllElements();
     model.addElement(firstItem);
-    final Collection<ProjectJdk> projectJdks = projectRootConfigurable.getProjectJdksModel().getProjectJdks().values();
+    final Collection<ProjectJdk> projectJdks = ProjectJdksModel.getInstance(project).getProjectJdks().values();
     for (ProjectJdk projectJdk : projectJdks) {
       model.addElement(new JdkComboBox.JdkComboBoxItem(projectJdk));
     }
   }
 
   private static class JdkComboBoxModel extends DefaultComboBoxModel {
-    public JdkComboBoxModel(final ProjectRootConfigurable projectRootConfigurable) {
+    public JdkComboBoxModel(final ProjectJdksModel jdksModel) {
       super();
-      final Sdk[] jdks = projectRootConfigurable.getProjectJdksModel().getSdks();
+      final Sdk[] jdks = jdksModel.getSdks();
       for (Sdk jdk : jdks) {
         addElement(new JdkComboBoxItem((ProjectJdk)jdk));
       }

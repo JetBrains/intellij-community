@@ -26,6 +26,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -63,6 +65,28 @@ public class ProjectUtil {
               final ProjectRootManagerEx projectRootManager = (ProjectRootManagerEx)ProjectRootManager.getInstance(newProject);
               projectRootManager.setProjectJdk(jdk);
               projectRootManager.setLanguageLevel(getDefaultLanguageLevel(jdk.getVersionString()));
+            }
+          });
+        }
+      }, null, null);
+    }
+
+    final String compileOutput = dialog.getNewCompileOutput();
+    if (compileOutput != null){
+      CommandProcessor.getInstance().executeCommand(newProject, new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              final ProjectRootManagerEx projectRootManager = (ProjectRootManagerEx)ProjectRootManager.getInstance(newProject);
+              String canonicalPath = compileOutput;
+              try {
+                canonicalPath = new File(compileOutput).getCanonicalPath();
+              }
+              catch (IOException e) {
+                //file doesn't exist
+              }
+              canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
+              projectRootManager.setCompilerOutputUrl(VfsUtil.pathToUrl(canonicalPath));
             }
           });
         }

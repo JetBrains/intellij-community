@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -219,6 +220,13 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
     final VirtualFile compilerOutputPathForTests = myRootModel.getCompilerOutputPathForTests();
     if (compilerOutputPathForTests != null) {
       if (compilerOutputPathForTests.equals(file)) {
+        return true;
+      }
+    }
+
+    if (myRootModel.isCompilerOutputPathInherited()){
+      final VirtualFile compilerOutput = ProjectRootManager.getInstance(myRootModel.getModule().getProject()).getCompilerOutput();
+      if (Comparing.equal(compilerOutput, file)){
         return true;
       }
     }

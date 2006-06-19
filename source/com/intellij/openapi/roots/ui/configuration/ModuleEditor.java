@@ -146,7 +146,7 @@ public class ModuleEditor {
     northPanel.add(myLanguageLevelConfigurable.createComponent(), new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0));
     myLanguageLevelConfigurable.reset();
 
-    myJdkConfigurable = new ModuleJdkConfigurable(this, myModifiableRootModel, myProjectRootConfigurable);
+    myJdkConfigurable = new ModuleJdkConfigurable(this, myModifiableRootModel, myProjectRootConfigurable.getProjectJdksModel());
     northPanel.add(myJdkConfigurable.createComponent(), new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,10,0,0), 0,0));
     myJdkConfigurable.reset();
 
@@ -283,7 +283,7 @@ public class ModuleEditor {
     @NonNls private final Set<String> myCheckedNames = new HashSet<String>(
       Arrays.asList(
         new String[]{"addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry",
-                     "removeOrderEntry", "setJdk", "inheritJdk"}
+                     "removeOrderEntry", "setJdk", "inheritJdk", "inheritCompilerOutputPath"}
       ));
 
     ModifiableRootModelInvocationHandler(ModifiableRootModel model) {

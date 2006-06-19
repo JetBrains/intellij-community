@@ -14,6 +14,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,8 @@ class RootModelImpl implements ModifiableRootModel {
   private boolean myExcludeOutput;
   private boolean myExcludeExploded;
 
+  private boolean myInheritedCompilerOutput;
+
   @NonNls private static final String OUTPUT_TAG = "output";
   @NonNls private static final String TEST_OUTPUT_TAG = "output-test";
   @NonNls private static final String EXPLODED_TAG = "exploded";
@@ -52,6 +55,10 @@ class RootModelImpl implements ModifiableRootModel {
   @NonNls private static final String URL_ATTR = ATTRIBUTE_URL;
   @NonNls private static final String EXCLUDE_OUTPUT_TAG = "exclude-output";
   @NonNls private static final String EXCLUDE_EXPLODED_TAG = "exclude-exploded";
+
+  @NonNls private static final String PRODUCTION = "production";
+  @NonNls private static final String TEST = "test";
+
   private boolean myDisposed = false;
   private final OrderEntryProperties myOrderEntryProperties;
   private final VirtualFilePointerContainer myJavadocPointerContainer;
@@ -79,6 +86,7 @@ class RootModelImpl implements ModifiableRootModel {
   @NonNls private static final String JAVADOC_PATHS_NAME = "javadoc-paths";
   @NonNls private static final String JAVADOC_ROOT_ELEMENT = "root";
   private ProjectRootManagerImpl myProjectRootManager;
+  @NonNls private static final String INHERIT_COMPILER_OUTPUT = "inherit-compiler-output";
 
 
   public String getCompilerOutputPathUrl() {
@@ -102,6 +110,7 @@ class RootModelImpl implements ModifiableRootModel {
     myOrderEntryProperties = new OrderEntryProperties();
     myJavadocPointerContainer = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
     myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager, myFilePointerManager);
+    myInheritedCompilerOutput = true;
   }
 
   private void addSourceOrderEntries() {
@@ -149,6 +158,8 @@ class RootModelImpl implements ModifiableRootModel {
     myCompilerOutputPathForTests = getOutputPathValue(element, TEST_OUTPUT_TAG);
     myExplodedDirectory = getOutputPathValue(element, EXPLODED_TAG);
 
+    final String value = element.getAttributeValue(INHERIT_COMPILER_OUTPUT);
+    myInheritedCompilerOutput = value != null && Boolean.parseBoolean(value);
 
     myWritable = false;
     myOrderEntryProperties = new OrderEntryProperties();
@@ -183,6 +194,8 @@ class RootModelImpl implements ModifiableRootModel {
     myWritable = writable;
     LOG.assertTrue(!writable || virtualFilePointerListener == null);
     myVirtualFilePointerListener = virtualFilePointerListener;
+
+    myInheritedCompilerOutput = rootModel.myInheritedCompilerOutput;
 
     if (rootModel.myCompilerOutputPath != null) {
       myCompilerOutputPath = pointerFactory().duplicate(rootModel.myCompilerOutputPath);
@@ -408,7 +421,7 @@ class RootModelImpl implements ModifiableRootModel {
 
   private void assertValidRearrangement(OrderEntry[] newEntries) {
     LOG.assertTrue(newEntries.length == myOrder.size(), "Invalid rearranged order");
-    Set<OrderEntry> set = new com.intellij.util.containers.HashSet<OrderEntry>();
+    Set<OrderEntry> set = new HashSet<OrderEntry>();
     for (OrderEntry newEntry : newEntries) {
       LOG.assertTrue(myOrder.contains(newEntry), "Invalid rearranged order");
       LOG.assertTrue(!set.contains(newEntry), "Invalid rearranged order");
@@ -459,6 +472,8 @@ class RootModelImpl implements ModifiableRootModel {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
+    element.setAttribute(INHERIT_COMPILER_OUTPUT, String.valueOf(myInheritedCompilerOutput));
+
     if (myCompilerOutputPath != null) {
       final Element pathElement = new Element(OUTPUT_TAG);
       pathElement.setAttribute(URL_ATTR, myCompilerOutputPath.getUrl());
@@ -545,6 +560,11 @@ class RootModelImpl implements ModifiableRootModel {
     replaceJdkEntry(new InheritedJdkOrderEntryImpl(this, myProjectRootManager, myFilePointerManager));
   }
 
+  public void inheritCompilerOutputPath(boolean inherit) {
+    assertWritable();
+    myInheritedCompilerOutput = inherit;    
+  }
+
   public ProjectJdk getJdk() {
     for (OrderEntry orderEntry : myOrder) {
       if (orderEntry instanceof JdkOrderEntry) {
@@ -561,6 +581,10 @@ class RootModelImpl implements ModifiableRootModel {
       }
     }
     return false;
+  }
+
+  public boolean isCompilerOutputPathInherited() {
+    return myInheritedCompilerOutput;
   }
 
   public void assertWritable() {
@@ -588,6 +612,11 @@ class RootModelImpl implements ModifiableRootModel {
   }
 
   public VirtualFile getCompilerOutputPath() {
+    if (myInheritedCompilerOutput){
+      final VirtualFile projectOutputPath = myProjectRootManager.getCompilerOutput();
+      if (projectOutputPath == null) return null;
+      return projectOutputPath.findFileByRelativePath(PRODUCTION + "/" + getModule().getName());
+    }
     if (myCompilerOutputPath == null) {
       return null;
     }
@@ -597,6 +626,11 @@ class RootModelImpl implements ModifiableRootModel {
   }
 
   public VirtualFile getCompilerOutputPathForTests() {
+    if (myInheritedCompilerOutput){
+      final VirtualFile projectOutputPath = myProjectRootManager.getCompilerOutput();
+      if (projectOutputPath == null) return null;
+      return projectOutputPath.findFileByRelativePath(TEST + "/" + getModule().getName());
+    }
     if (myCompilerOutputPathForTests == null) {
       return null;
     }
@@ -684,6 +718,11 @@ class RootModelImpl implements ModifiableRootModel {
   }
 
   public String getCompilerOutputUrl() {
+    if (myInheritedCompilerOutput){
+      final String projectOutputPath = myProjectRootManager.getCompilerOutputUrl();
+      if (projectOutputPath == null) return null;
+      return projectOutputPath + "/" + PRODUCTION + "/" + getModule().getName();
+    }
     if (myCompilerOutputPath == null) {
       return null;
     }
@@ -693,6 +732,11 @@ class RootModelImpl implements ModifiableRootModel {
   }
 
   public String getCompilerOutputUrlForTests() {
+    if (myInheritedCompilerOutput){
+      final String projectOutputPath = myProjectRootManager.getCompilerOutputUrl();
+      if (projectOutputPath == null) return null;
+      return projectOutputPath + "/" + TEST + "/" + getModule().getName();
+    }
     if (myCompilerOutputPathForTests == null) {
       return null;
     }
@@ -721,11 +765,17 @@ class RootModelImpl implements ModifiableRootModel {
     if (!myWritable) return false;
 //    if (myJdkChanged) return true;
 
-    if (!vptrEqual(myCompilerOutputPath, getSourceModel().myCompilerOutputPath)) {
+    if (myInheritedCompilerOutput != getSourceModel().myInheritedCompilerOutput) {
       return true;
     }
-    if (!vptrEqual(myCompilerOutputPathForTests, getSourceModel().myCompilerOutputPathForTests)) {
-      return true;
+
+    if (!myInheritedCompilerOutput) {
+      if (!vptrEqual(myCompilerOutputPath, getSourceModel().myCompilerOutputPath)) {
+        return true;
+      }
+      if (!vptrEqual(myCompilerOutputPathForTests, getSourceModel().myCompilerOutputPathForTests)) {
+        return true;
+      }
     }
     if (!vptrEqual(myExplodedDirectory, getSourceModel().myExplodedDirectory)) {
       return true;

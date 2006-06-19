@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
@@ -34,7 +35,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
-import com.intellij.openapi.Disposable;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.EventDispatcher;
@@ -57,6 +58,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   @NonNls private static final String JDK_15_ATTR = "jdk-15";
   @NonNls private static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
   @NonNls private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
+  @NonNls private static final String OUTPUT_TAG = "output";
+  @NonNls private static final String URL = "url";
   private final ProjectEx myProject;
   private ProjectFileIndex myProjectFileIndex;
 
@@ -84,7 +87,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private Map<List<Module>, GlobalSearchScope> myLibraryScopes = new HashMap<List<Module>, GlobalSearchScope>();
   private Map<String, GlobalSearchScope> myJdkScopes = new HashMap<String, GlobalSearchScope>();
 
-  static ProjectRootManagerImpl getInstanceImpl(Project project) {
+  private VirtualFilePointer myCompilerOutput;
+
+  public static ProjectRootManagerImpl getInstanceImpl(Project project) {
     return (ProjectRootManagerImpl)getInstance(project);
   }
 
@@ -227,6 +232,28 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return result.toArray(new VirtualFile[result.size()]);
   }
 
+  public VirtualFile getCompilerOutput() {
+    if (myCompilerOutput == null) return null;
+    return myCompilerOutput.getFile();
+  }
+
+  public String getCompilerOutputUrl() {
+    if (myCompilerOutput == null) return null;
+    return myCompilerOutput.getUrl();
+  }
+
+  public VirtualFilePointer getCompilerOutputPointer() {
+    return myCompilerOutput;
+  }
+
+  public void setCompilerOutputPointer(VirtualFilePointer pointer) {
+    myCompilerOutput = pointer;
+  }
+
+  public void setCompilerOutputUrl(String compilerOutputUrl) {
+    myCompilerOutput = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, null);
+  }
+
   private VirtualFile[] getFilesFromAllModules(OrderRootType type) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     final Module[] modules = getModuleManager().getSortedModules();
@@ -364,6 +391,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     myOriginalLanguageLevel = myLanguageLevel;
     myProjectJdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
     myProjectJdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR);
+    final Element outputPathChild = element.getChild(OUTPUT_TAG);
+    if (outputPathChild != null) {
+      String outputPath = outputPathChild.getAttributeValue(URL);
+      myCompilerOutput = VirtualFilePointerManager.getInstance().create(outputPath, null);
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -377,6 +409,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
     if (myProjectJdkType != null){
       element.setAttribute(PROJECT_JDK_TYPE_ATTR, myProjectJdkType);
+    }
+    if (myCompilerOutput != null) {
+      final Element pathElement = new Element(OUTPUT_TAG);
+      pathElement.setAttribute(URL, myCompilerOutput.getUrl());
+      element.addContent(pathElement);
     }
   }
 

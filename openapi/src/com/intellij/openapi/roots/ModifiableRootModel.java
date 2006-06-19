@@ -122,6 +122,12 @@ public interface ModifiableRootModel extends ModuleRootModel {
   void inheritJdk();
 
   /**
+   * Makes this module inheriting compiler output from its project
+   * @param inherit wether or not compiler output is inherited
+   */
+  void inheritCompilerOutputPath(boolean inherit);
+
+  /**
    * @deprecated Use {@link #getCompilerOutputPathUrl()} instead
    */
   String getCompilerOutputUrl();

@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
@@ -50,6 +51,10 @@ public class ProjectJdksModel implements NotifiableSdkModel {
   private boolean myModified = false;
 
   private ProjectJdk myProjectJdk;
+
+  public static ProjectJdksModel getInstance(Project project){
+    return ProjectRootConfigurable.getInstance(project).getProjectJdksModel();
+  }
 
   public ProjectJdksModel(final ProjectRootConfigurable treeComponent) {
     myProjectRootConfigurable = treeComponent;
@@ -242,7 +247,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
   }
 
   public ProjectJdk getProjectJdk() {
-    return myProjectJdk;//findSdk(myProjectJdk);
+    return myProjectJdk;
   }
 
   public void setProjectJdk(final ProjectJdk projectJdk) {

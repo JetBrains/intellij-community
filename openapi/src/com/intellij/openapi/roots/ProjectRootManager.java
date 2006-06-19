@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,6 +92,22 @@ public abstract class ProjectRootManager implements ModificationTracker {
    * @return the list of content source roots.
    */
   public abstract VirtualFile[] getContentSourceRoots();
+
+  /**
+   * @return compiler output url
+   */
+  public abstract String getCompilerOutputUrl();
+
+  /**
+   * @return compiler output path selected for the project
+   */
+  public abstract VirtualFile getCompilerOutput();
+
+  /**
+   * Sets compiler output url
+   * @param compilerOutputUrl compiler output url
+   */
+  public abstract void setCompilerOutputUrl(String compilerOutputUrl);
 
   /**
    * @deprecated

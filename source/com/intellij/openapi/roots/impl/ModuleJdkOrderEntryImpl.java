@@ -1,12 +1,14 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.roots.ModuleJdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -109,12 +111,18 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   }
 
   public ProjectJdk getJdk() {
+    if (myRootModel.isWritable()) {
+      final Project project = myRootModel.getModule().getProject();
+      return ProjectJdksModel.getInstance(project).getProjectJdks().get(myJdk);
+    }
+
     return myJdk;
   }
 
   public String getJdkName() {
-    if (myJdk != null) {
-      return myJdk.getName();
+    ProjectJdk jdk = getJdk();
+    if (jdk != null) {
+      return jdk.getName();
     }
     else {
       return myJdkName;
@@ -136,7 +144,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   }
 
   public boolean isValid() {
-    return myJdk != null;
+    return getJdk() != null;
   }
 
   public <R> R accept(RootPolicy<R> policy, R initialValue) {
@@ -172,8 +180,14 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
 
   public void writeExternal(Element rootElement) throws WriteExternalException {
     final Element element = OrderEntryFactory.createOrderEntryElement(ENTRY_TYPE);
-    element.setAttribute(JDK_NAME_ATTR, myJdk != null ? myJdk.getName() : getJdkName());
-    element.setAttribute(JDK_TYPE_ATTR, myJdk != null ? myJdk.getSdkType().getName() : getJdkType());
+    final String jdkName = getJdkName();
+    if (jdkName != null) {
+      element.setAttribute(JDK_NAME_ATTR, jdkName);
+    }
+    final String jdkType = getJdkType();
+    if (jdkType != null) {
+      element.setAttribute(JDK_TYPE_ATTR, jdkType);
+    }
     rootElement.addContent(element);
   }
 
