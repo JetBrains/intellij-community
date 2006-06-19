@@ -19,9 +19,11 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -30,8 +32,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
 
@@ -166,12 +168,16 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             if(!(psiElement instanceof PsiClass)){
                 return;
             }
-            final PsiClass aClass = (PsiClass) psiElement;
-            final PsiClass outerClass =
-                    ClassUtils.getOutermostContainingClass(aClass);
-            final String fqName = outerClass.getQualifiedName();
-            final String text = reference.getText();
-            if(!text.startsWith(fqName)){
+            PsiClass aClass = (PsiClass) psiElement;
+            final Project project = aClass.getProject();
+            final CodeStyleSettings styleSettings =
+                    CodeStyleSettingsManager.getSettings(project);
+            if (!styleSettings.INSERT_INNER_CLASS_IMPORTS) {
+                aClass = ClassUtils.getOutermostContainingClass(aClass);
+            }
+            final String fqName = aClass.getQualifiedName();
+            final String text = stripAngleBrackets(reference.getText());
+            if(!text.equals(fqName)){
                 return;
             }
             final PsiJavaFile javaFile =
@@ -180,6 +186,14 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
                 return;
             }
             registerError(reference);
+        }
+
+        private String stripAngleBrackets(String string) {
+            final int index = string.indexOf('<');
+            if (index == -1) {
+                return string;
+            }
+            return string.substring(0, index);
         }
     }
 }

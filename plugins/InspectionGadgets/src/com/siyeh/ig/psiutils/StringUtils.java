@@ -17,7 +17,6 @@ package com.siyeh.ig.psiutils;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -95,27 +94,6 @@ public class StringUtils{
         } else{
             return Character.toUpperCase(startChar) + name.substring(1);
         }
-    }
-
-    @NotNull
-    public static String stripPrefixAndSuffix(@NotNull String name,
-                                              @Nullable String prefix,
-                                              @Nullable String suffix){
-        String strippedName = name;
-        if(prefix != null){
-            final int prefixLength = prefix.length();
-            if(prefixLength != 0 && strippedName.startsWith(prefix)){
-                strippedName = strippedName.substring(prefixLength);
-            }
-        }
-        if(suffix != null){
-            final int suffixLength = suffix.length();
-            if(suffixLength != 0 && strippedName.startsWith(suffix)){
-                final int newNameLength = strippedName.length() - suffixLength;
-                strippedName = strippedName.substring(0, newNameLength);
-            }
-        }
-        return strippedName;
     }
 
     @SuppressWarnings({"HardCodedStringLiteral"})
