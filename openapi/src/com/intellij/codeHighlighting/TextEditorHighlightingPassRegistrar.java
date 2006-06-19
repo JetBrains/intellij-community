@@ -29,16 +29,15 @@ import java.util.List;
  * Date: 20-Apr-2006
  */
 public abstract class TextEditorHighlightingPassRegistrar implements ProjectComponent {
-  public static final int FIRST = 0;
-  public static final int LAST = 1;
-  public static final int BEFORE = 3;
-  public static final int AFTER = 2;
+  public enum Anchor {
+    FIRST, LAST, BEFORE, AFTER
+  }
 
   public static TextEditorHighlightingPassRegistrar getInstance(Project project){
     return project.getComponent(TextEditorHighlightingPassRegistrar.class);
   }
 
-  public abstract void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, int anchor, int anchorPass);
+  public abstract void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, Anchor anchor, int anchorPass);
 
   public abstract TextEditorHighlightingPass[] modifyHighlightingPasses(final List<TextEditorHighlightingPass> passes,
                                                                         final PsiFile psiFile,

@@ -24,11 +24,11 @@ import java.util.Map;
  */
 public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrar {
 
-  private Map<TextEditorHighlightingPassFactory, Pair<Integer, Integer>> myRegisteredPasses = null;
+  private Map<TextEditorHighlightingPassFactory, Pair<Anchor, Integer>> myRegisteredPasses = null;
 
-  public void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, int anchor, int anchorPass) {
+  public void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, Anchor anchor, int anchorPass) {
     if (myRegisteredPasses == null){
-      myRegisteredPasses = new HashMap<TextEditorHighlightingPassFactory, Pair<Integer, Integer>>();
+      myRegisteredPasses = new HashMap<TextEditorHighlightingPassFactory, Pair<Anchor, Integer>>();
     }
     myRegisteredPasses.put(factory, Pair.create(anchor, anchorPass));
   }
@@ -42,11 +42,11 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     List<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(passes);
     for (TextEditorHighlightingPassFactory factory : myRegisteredPasses.keySet()) {
       final TextEditorHighlightingPass editorHighlightingPass = factory.createHighlightingPass(psiFile, editor);
-      final Pair<Integer, Integer> location = myRegisteredPasses.get(factory);
-      final int anchor = location.first.intValue();
-      if (anchor == FIRST){
+      final Pair<Anchor, Integer> location = myRegisteredPasses.get(factory);
+      final Anchor anchor = location.first;
+      if (anchor == Anchor.FIRST){
         result.add(0, editorHighlightingPass);
-      } else if (anchor == LAST){
+      } else if (anchor == Anchor.LAST){
         result.add(editorHighlightingPass);
       } else {
         final int passId = location.second.intValue();
@@ -59,7 +59,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
           }
         }
         if (anchorPassIdx != -1){
-          if (location.second.intValue() == BEFORE){
+          if (anchor == Anchor.BEFORE){
             result.add(Math.max(0, anchorPassIdx - 1), editorHighlightingPass);
           } else {
             result.add(anchorPassIdx +1, editorHighlightingPass);
