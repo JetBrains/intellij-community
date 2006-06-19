@@ -20,10 +20,9 @@ public class FindThrowUsagesDialog extends FindUsagesDialog {
   public FindThrowUsagesDialog(final PsiElement element, 
                                final Project project,
                                final FindUsagesOptions findUsagesOptions, 
-                               final boolean toShowInNewTab,
-                               final boolean isShowInNewTabEnabled, boolean isSingleFile
-                               ){
-    super(element, project, findUsagesOptions, toShowInNewTab, isShowInNewTabEnabled, isSingleFile);
+                               FindUsagesManager manager,
+                               boolean isSingleFile){
+    super(element, project, findUsagesOptions, manager, isSingleFile);
   }
 
   protected void init () {
@@ -34,13 +33,6 @@ public class FindThrowUsagesDialog extends FindUsagesDialog {
 
   public JComponent getPreferredFocusedControl() {
     return myHasFindWhatPanel ? myCbUsages : null;
-  }
-
-  public FindUsagesOptions getShownOptions(){
-    final FindUsagesOptions options = new FindUsagesOptions(myProject);
-    options.clear();
-    options.isUsages = true;
-    return options;
   }
 
   protected JComponent createNorthPanel() {

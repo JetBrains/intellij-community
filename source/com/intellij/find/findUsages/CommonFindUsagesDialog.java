@@ -16,14 +16,9 @@ public class CommonFindUsagesDialog extends FindUsagesDialog {
   public CommonFindUsagesDialog(PsiElement element,
                  Project project,
                  FindUsagesOptions findUsagesOptions,
-                 boolean toShowInNewTab,
-                 boolean isShowInNewTabEnabled,
+                 FindUsagesManager manager,
                  boolean isSingleFile) {
-    super(element, project, findUsagesOptions, toShowInNewTab, isShowInNewTabEnabled, isSingleFile);
-  }
-
-  public FindUsagesOptions getShownOptions() {
-    return new FindUsagesOptions(myProject);
+    super(element, project, findUsagesOptions, manager, isSingleFile);
   }
 
   protected void update() {

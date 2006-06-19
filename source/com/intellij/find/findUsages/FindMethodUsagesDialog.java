@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -14,22 +15,13 @@ public class FindMethodUsagesDialog extends FindUsagesDialog {
   private StateRestoringCheckBox myCbOverridingMethods;
   private boolean myHasFindWhatPanel;
 
-  public FindMethodUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions, boolean toShowInNewTab, boolean isShowInNewTabEnabled, boolean isSingleFile) {
-    super(element, project, findUsagesOptions, toShowInNewTab, isShowInNewTabEnabled, isSingleFile);
+  public FindMethodUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions, FindUsagesManager manager, boolean isSingleFile) {
+    super(element, project, findUsagesOptions, manager, isSingleFile);
   }
 
+  @Nullable
   public JComponent getPreferredFocusedControl() {
     return myHasFindWhatPanel ? myCbUsages : null;
-  }
-
-  public FindUsagesOptions getShownOptions() {
-    FindUsagesOptions options = new FindUsagesOptions(myProject);
-    options.clear();
-    options.isUsages = true;
-    options.isIncludeOverloadUsages = isToChange(myCbIncludeOverloadedMethods);
-    options.isOverridingMethods = isToChange(myCbOverridingMethods);
-    options.isImplementingMethods = isToChange(myCbImplementingMethods);
-    return options;
   }
 
   public void calcFindUsagesOptions(FindUsagesOptions options) {
@@ -68,7 +60,7 @@ public class FindMethodUsagesDialog extends FindUsagesDialog {
       }
     } else {
       myHasFindWhatPanel = false;
-      return null;
+      return null; 
     }
     myHasFindWhatPanel = true;
     return findWhatPanel;
@@ -92,7 +84,6 @@ public class FindMethodUsagesDialog extends FindUsagesDialog {
   protected void update() {
     if (!myHasFindWhatPanel) {
       setOKActionEnabled(true);
-      return;
     } else {
 
       boolean hasSelected = isSelected(myCbUsages) || isSelected(myCbImplementingMethods) || isSelected(myCbOverridingMethods);

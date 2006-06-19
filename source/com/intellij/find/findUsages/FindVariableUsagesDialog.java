@@ -10,21 +10,12 @@ import javax.swing.*;
 public class FindVariableUsagesDialog extends FindUsagesDialog {
 
   public FindVariableUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions,
-                                  boolean toShowInNewTab, boolean isShowInNewTabEnabled, boolean isSingleFile){
-    super(element, project, findUsagesOptions, toShowInNewTab, isShowInNewTabEnabled, isSingleFile);
+                                  FindUsagesManager manager, boolean isSingleFile){
+    super(element, project, findUsagesOptions, manager, isSingleFile);
   }
 
   public JComponent getPreferredFocusedControl() {
     return myCbToSkipResultsWhenOneUsage;
-  }
-
-  public FindUsagesOptions getShownOptions(){
-    FindUsagesOptions options = new FindUsagesOptions(myProject);
-    options.clear();
-    options.isReadAccess = false;
-    options.isWriteAccess = false;
-    options.isUsages = true;
-    return options;
   }
 
   public void calcFindUsagesOptions(FindUsagesOptions options) {

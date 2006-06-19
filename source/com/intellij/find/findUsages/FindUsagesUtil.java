@@ -336,7 +336,7 @@ public class FindUsagesUtil {
     }
   }
 
-  private static void addMethodsUsages(final PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
+  public static void addMethodsUsages(final PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
     if (!options.isIncludeInherited){
       PsiMethod[] methods = aClass.getMethods();
       for (PsiMethod method : methods) {

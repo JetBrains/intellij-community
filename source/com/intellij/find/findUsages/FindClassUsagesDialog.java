@@ -19,25 +19,12 @@ public class FindClassUsagesDialog extends FindUsagesDialog {
   private StateRestoringCheckBox myCbDerivedInterfaces;
   private StateRestoringCheckBox myCbDerivedClasses;
 
-  public FindClassUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions, boolean toShowInNewTab, boolean isShowInNewTabEnabled, boolean isSingleFile){
-    super(element, project, findUsagesOptions, toShowInNewTab, isShowInNewTabEnabled, isSingleFile);
+  public FindClassUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions, FindUsagesManager manager, boolean isSingleFile){
+    super(element, project, findUsagesOptions, manager, isSingleFile);
   }
 
   public JComponent getPreferredFocusedControl() {
     return myCbUsages;
-  }
-
-  public FindUsagesOptions getShownOptions(){
-    FindUsagesOptions options = new FindUsagesOptions(myProject);
-    options.clear();
-    options.isUsages = isToChange(myCbUsages);
-    options.isMethodsUsages = isToChange(myCbMethodsUsages);
-    options.isFieldsUsages = isToChange(myCbFieldsUsages);
-    options.isDerivedClasses = isToChange(myCbDerivedClasses);
-    options.isImplementingClasses = isToChange(myCbImplementingClasses);
-    options.isDerivedInterfaces = isToChange(myCbDerivedInterfaces);
-    options.isSearchForTextOccurences = isToChange(myCbToSearchForTextOccurences);
-    return options;
   }
 
   public void calcFindUsagesOptions(FindUsagesOptions options) {

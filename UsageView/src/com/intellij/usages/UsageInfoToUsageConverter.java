@@ -16,13 +16,15 @@
 package com.intellij.usages;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.Function;
+
+import java.util.List;
+import java.util.Collections;
 
 /**
  * @author Eugene Zhuravlev
@@ -31,8 +33,8 @@ import com.intellij.usageView.UsageInfo;
 public class UsageInfoToUsageConverter {
 
   public static class TargetElementsDescriptor {
-    private final PsiElement[] myPrimarySearchedElements;
-    private final PsiElement[] myAdditionalSearchedElements;
+    private final List<SmartPsiElementPointer> myPrimarySearchedElements;
+    private final List<SmartPsiElementPointer> myAdditionalSearchedElements;
 
     public TargetElementsDescriptor(PsiElement element) {
       this(new PsiElement[]{element});
@@ -43,8 +45,24 @@ public class UsageInfoToUsageConverter {
     }
 
     public TargetElementsDescriptor(PsiElement[] primarySearchedElements, PsiElement[] additionalSearchedElements) {
-      myPrimarySearchedElements = primarySearchedElements != null? primarySearchedElements : PsiElement.EMPTY_ARRAY;
-      myAdditionalSearchedElements = additionalSearchedElements != null? additionalSearchedElements : PsiElement.EMPTY_ARRAY;
+      myPrimarySearchedElements = convertToSmartPointers(primarySearchedElements);
+      myAdditionalSearchedElements = convertToSmartPointers(additionalSearchedElements);
+    }
+
+    private static PsiElement[] convertToPsiElements(final List<SmartPsiElementPointer> primary) {
+      return ContainerUtil.map2Array(primary, PsiElement.class, new Function<SmartPsiElementPointer, PsiElement>() {
+        public PsiElement fun(final SmartPsiElementPointer s) {
+          return s.getElement();
+        }
+      });
+    }
+
+    private static List<SmartPsiElementPointer> convertToSmartPointers(final PsiElement[] primaryElements) {
+      return primaryElements != null ? ContainerUtil.mapNotNull(primaryElements, new Function<PsiElement, SmartPsiElementPointer>() {
+        public SmartPsiElementPointer fun(final PsiElement s) {
+          return SmartPointerManager.getInstance(s.getProject()).createSmartPsiElementPointer(s);
+        }
+      }) : Collections.<SmartPsiElementPointer>emptyList();
     }
 
     /**
@@ -56,12 +74,13 @@ public class UsageInfoToUsageConverter {
      *          for this particular search usages of getter/setter methods are to be considered as a usages of the corresponding field.
      */
     public PsiElement[] getPrimaryElements() {
-      return myPrimarySearchedElements;
+      return convertToPsiElements(myPrimarySearchedElements);
     }
 
     public PsiElement[] getAdditionalElements() {
-      return myAdditionalSearchedElements;
+      return convertToPsiElements(myAdditionalSearchedElements);
     }
+
   }
 
   public static Usage convert(TargetElementsDescriptor descriptor, UsageInfo usageInfo) {

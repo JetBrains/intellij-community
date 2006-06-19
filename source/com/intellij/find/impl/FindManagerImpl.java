@@ -490,5 +490,8 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
     return "FindManager";
   }
 
+  public FindUsagesManager getFindUsagesManager() {
+    return myFindUsagesManager;
+  }
 }
 

@@ -337,11 +337,32 @@ public class ContainerUtil {
     return result;
   }
 
+  public static <T,V> List<V> mapNotNull(T[] array, Function<T, V> mapping) {
+    return mapNotNull(Arrays.asList(array), mapping);
+  }
+  
+  public static <T,V> List<V> mapNotNull(Iterable<? extends T> iterable, Function<T, V> mapping) {
+    List<V> result = new ArrayList<V>();
+    for (T t : iterable) {
+      final V o = mapping.fun(t);
+      if (o != null) {
+        result.add(o);
+      }
+    }
+    return result;
+  }
+
   public static <T,V> List<V> map(T[] arr, Function<T, V> mapping) {
     List<V> result = new ArrayList<V>();
     for (T t : arr) {
       result.add(mapping.fun(t));
     }
     return result;
+  }
+
+  public static <T> void addIfNotNull(final T element, final Collection<T> result) {
+    if (element != null) {
+      result.add(element);
+    }
   }
 }

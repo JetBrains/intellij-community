@@ -16,23 +16,13 @@ public class FindPackageUsagesDialog extends FindUsagesDialog {
   public FindPackageUsagesDialog(PsiElement element,
                                  Project project,
                                  FindUsagesOptions findUsagesOptions,
-                                 boolean toShowInNewTab,
-                                 boolean isShowInNewTabEnabled,
+                                 FindUsagesManager manager,
                                  boolean isSingleFile) {
-    super(element, project, findUsagesOptions, toShowInNewTab, isShowInNewTabEnabled, isSingleFile);
+    super(element, project, findUsagesOptions, manager, isSingleFile);
   }
 
   public JComponent getPreferredFocusedControl() {
     return myCbUsages;
-  }
-
-  public FindUsagesOptions getShownOptions(){
-    FindUsagesOptions options = new FindUsagesOptions(myProject);
-    options.clear();
-    options.isUsages = true;
-    options.isClassesUsages = isToChange(myCbClassesUsages);
-    options.isSearchForTextOccurences = isToChange(myCbToSearchForTextOccurences);
-    return options;
   }
 
   public void calcFindUsagesOptions(FindUsagesOptions options) {
