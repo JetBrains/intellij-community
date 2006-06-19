@@ -2,6 +2,7 @@
   <name>Subversion Integration</name>
   <id>Subversion</id>
   <version>1.0</version>
+
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <idea-version min="5.0" max="5.0"/>
   <resource-bundle>org.jetbrains.idea.svn.SvnBundle</resource-bundle>

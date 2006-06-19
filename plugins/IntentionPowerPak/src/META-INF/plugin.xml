@@ -2,8 +2,9 @@
     <name>Intention Power Pack</name>
     <id>IntentionPowerPack</id>
     <version>0.9</version>
+
     <vendor>InspectionGadgets Software</vendor>
-    <idea-version min="4.0" max="4.1"/>
+    <idea-version min="4.0" max="6.0"/>
     <resource-bundle>com.siyeh.IntentionPowerPakBundle</resource-bundle>
 
     <extensions xmlns="com.intellij">

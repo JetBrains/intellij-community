@@ -1,6 +1,8 @@
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
+
     <vendor>Alexey Efimov</vendor>
+  
     <name>Images</name>
     <version>1.1</version>
     <idea-version since-build="3378"/>

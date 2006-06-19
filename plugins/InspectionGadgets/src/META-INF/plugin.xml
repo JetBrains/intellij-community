@@ -1,10 +1,12 @@
 <idea-plugin version="2">
     <name>Inspection Gadgets</name>
     <id>InspectionGadgets</id>
-    <category>inspection</category>
     <vendor>InspectionGadgets Software</vendor>
+
+    <category>inspection</category>
     <version>1.0</version>
-    <idea-version min="4.0" max="4.1"/>
+    <idea-version min="4.0" max="6.0"/>
+
     <resource-bundle>com.siyeh.InspectionGadgetsBundle</resource-bundle>
 
     <extensions xmlns="com.intellij">
