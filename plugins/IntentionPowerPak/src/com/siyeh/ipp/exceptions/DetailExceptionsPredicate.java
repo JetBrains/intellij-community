@@ -24,15 +24,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 class DetailExceptionsPredicate implements PsiElementPredicate{
-    DetailExceptionsPredicate(){
-        super();
-    }
 
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiJavaToken)){
             return false;
         }
-
         final IElementType tokenType = ((PsiJavaToken) element).getTokenType();
         if(!JavaTokenType.TRY_KEYWORD.equals(tokenType)){
             return false;
@@ -41,14 +37,11 @@ class DetailExceptionsPredicate implements PsiElementPredicate{
         if(!(parent instanceof PsiTryStatement)){
             return false;
         }
-
-        final PsiTryStatement tryStatement =
-                (PsiTryStatement) parent;
+        final PsiTryStatement tryStatement = (PsiTryStatement) parent;
         if(ErrorUtil.containsError(tryStatement)){
             return false;
         }
         final Set<PsiType> exceptionsThrown = new HashSet<PsiType>(10);
-
         final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
         ExceptionUtils.calculateExceptionsThrownForCodeBlock(tryBlock,
                                                              exceptionsThrown);

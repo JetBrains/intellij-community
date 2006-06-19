@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,23 +26,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
 
-
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
-    return new FullyQualifiedNamePredicate();
-  }
-
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    PsiJavaCodeReferenceElement reference =
-      (PsiJavaCodeReferenceElement)element;
-    while (reference != null &&
-           reference.getParent() instanceof PsiJavaCodeReferenceElement) {
-      reference = (PsiJavaCodeReferenceElement)reference.getParent();
+    @NotNull
+    public PsiElementPredicate getElementPredicate() {
+        return new FullyQualifiedNamePredicate();
     }
 
-    final PsiManager mgr = element.getManager();
-    final CodeStyleManager styleManager = mgr.getCodeStyleManager();
-    styleManager.shortenClassReferences(reference);
-  }
+    public void processIntention(@NotNull PsiElement element)
+            throws IncorrectOperationException {
+        PsiJavaCodeReferenceElement reference =
+                (PsiJavaCodeReferenceElement)element;
+        while (reference.getParent() instanceof PsiJavaCodeReferenceElement) {
+            reference = (PsiJavaCodeReferenceElement)reference.getParent();
+        }
+        final PsiManager manager = element.getManager();
+        final CodeStyleManager styleManager = manager.getCodeStyleManager();
+        styleManager.shortenClassReferences(reference);
+    }
 }

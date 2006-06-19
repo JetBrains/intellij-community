@@ -27,6 +27,10 @@ import com.siyeh.ipp.psiutils.TreeUtil;
 class CommentOnLineWithSourcePredicate implements PsiElementPredicate{
 
     public boolean satisfiedBy(PsiElement element){
+        //final PsiFile file = element.getContainingFile();
+        //if (file instanceof JspFile){
+        //    return false;
+        //}
         if(!(element instanceof PsiComment)){
             return false;
         }
@@ -40,24 +44,20 @@ class CommentOnLineWithSourcePredicate implements PsiElementPredicate{
             return false; // can't move JSP comments
         }
         final PsiElement prevSibling = TreeUtil.getPrevLeaf(element);
-
-        if(!(prevSibling instanceof PsiWhiteSpace))
-        {
+        if(!(prevSibling instanceof PsiWhiteSpace)){
             return true;
         }
         final String prevSiblingText = prevSibling.getText();
-        if(prevSiblingText.indexOf((int) '\n')<0 &&
-                prevSiblingText.indexOf((int) '\r') < 0)
-        {
+        if(prevSiblingText.indexOf((int) '\n') < 0 &&
+                prevSiblingText.indexOf((int) '\r') < 0){
             return true;
         }
         final PsiElement nextSibling = TreeUtil.getNextLeaf(element);
-        if(!(nextSibling instanceof PsiWhiteSpace))
-        {
+        if(!(nextSibling instanceof PsiWhiteSpace)){
             return true;
         }
         final String nextSiblingText = nextSibling.getText();
-        return nextSiblingText.indexOf((int) '\n')<0 &&
+        return nextSiblingText.indexOf((int) '\n') < 0 &&
                 nextSiblingText.indexOf((int) '\r') < 0;
     }
 }

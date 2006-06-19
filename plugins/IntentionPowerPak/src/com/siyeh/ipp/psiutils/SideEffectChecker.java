@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 
 public class SideEffectChecker{
+
     private SideEffectChecker(){
         super();
     }
@@ -30,6 +31,7 @@ public class SideEffectChecker{
     }
 
     private static class SideEffectsVisitor extends PsiRecursiveElementVisitor{
+
         private boolean mayHaveSideEffects = false;
 
         public void visitElement(PsiElement element){
@@ -38,7 +40,8 @@ public class SideEffectChecker{
             }
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(
+                PsiMethodCallExpression expression){
             mayHaveSideEffects = true;
         }
 
@@ -46,7 +49,8 @@ public class SideEffectChecker{
             mayHaveSideEffects = true;
         }
 
-        public void visitAssignmentExpression(PsiAssignmentExpression expression){
+        public void visitAssignmentExpression(
+                PsiAssignmentExpression expression){
             mayHaveSideEffects = true;
         }
 
@@ -72,7 +76,7 @@ public class SideEffectChecker{
             }
         }
 
-        private boolean mayHaveSideEffects(){
+        public boolean mayHaveSideEffects(){
             return mayHaveSideEffects;
         }
     }

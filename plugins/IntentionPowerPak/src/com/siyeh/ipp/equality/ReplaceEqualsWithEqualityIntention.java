@@ -24,46 +24,50 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceEqualsWithEqualityIntention extends Intention {
 
-
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
-    return new EqualsPredicate();
-  }
-
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiMethodCallExpression call =
-      (PsiMethodCallExpression)element;
-    assert call != null;
-    final PsiReferenceExpression methodExpression =
-      call.getMethodExpression();
-    final PsiExpression target = methodExpression.getQualifierExpression();
-    final PsiExpressionList argumentList = call.getArgumentList();
-    assert argumentList != null;
-    final PsiExpression arg = argumentList.getExpressions()[0];
-    final PsiExpression strippedTarget =
-      ParenthesesUtils.stripParentheses(target);
-    final PsiExpression strippedArg =
-      ParenthesesUtils.stripParentheses(arg);
-
-    final String strippedArgText;
-    if (ParenthesesUtils.getPrecendence(strippedArg) >
-        ParenthesesUtils.EQUALITY_PRECEDENCE) {
-      strippedArgText = '(' + strippedArg.getText() + ')';
-    }
-    else {
-      strippedArgText = strippedArg.getText();
-    }
-    final String strippedTargetText;
-    if (ParenthesesUtils.getPrecendence(strippedTarget) >
-        ParenthesesUtils.EQUALITY_PRECEDENCE) {
-      strippedTargetText = '(' + strippedTarget.getText() + ')';
-    }
-    else {
-      strippedTargetText = strippedTarget.getText();
+    @NotNull
+    public PsiElementPredicate getElementPredicate() {
+        return new EqualsPredicate();
     }
 
-    replaceExpression(strippedTargetText + "==" + strippedArgText,
-                      call);
-  }
+    public void processIntention(PsiElement element)
+            throws IncorrectOperationException {
+        final PsiMethodCallExpression call =
+                (PsiMethodCallExpression)element;
+        if (call == null) {
+            return;
+        }
+        final PsiReferenceExpression methodExpression =
+                call.getMethodExpression();
+        final PsiExpression target = methodExpression.getQualifierExpression();
+        if (target == null) {
+            return;
+        }
+        final PsiExpressionList argumentList = call.getArgumentList();
+        final PsiExpression arg = argumentList.getExpressions()[0];
+        final PsiExpression strippedTarget =
+                ParenthesesUtils.stripParentheses(target);
+        if (strippedTarget == null) {
+            return;
+        }
+        final PsiExpression strippedArg =
+                ParenthesesUtils.stripParentheses(arg);
+        if (strippedArg == null) {
+            return;
+        }
+        final String strippedArgText;
+        if (ParenthesesUtils.getPrecendence(strippedArg) >
+                ParenthesesUtils.EQUALITY_PRECEDENCE) {
+            strippedArgText = '(' + strippedArg.getText() + ')';
+        } else {
+            strippedArgText = strippedArg.getText();
+        }
+        final String strippedTargetText;
+        if (ParenthesesUtils.getPrecendence(strippedTarget) >
+                ParenthesesUtils.EQUALITY_PRECEDENCE) {
+            strippedTargetText = '(' + strippedTarget.getText() + ')';
+        } else {
+            strippedTargetText = strippedTarget.getText();
+        }
+        replaceExpression(strippedTargetText + "==" + strippedArgText, call);
+    }
 }

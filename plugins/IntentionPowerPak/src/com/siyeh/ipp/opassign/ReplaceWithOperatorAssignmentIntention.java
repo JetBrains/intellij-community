@@ -22,36 +22,39 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceWithOperatorAssignmentIntention extends MutablyNamedIntention {
+public class ReplaceWithOperatorAssignmentIntention
+        extends MutablyNamedIntention {
 
-  public String getTextForElement(PsiElement element) {
-    final PsiAssignmentExpression exp = (PsiAssignmentExpression)element;
-    final PsiBinaryExpression rhs =
-      (PsiBinaryExpression)exp.getRExpression();
-    assert rhs != null;
-    final PsiJavaToken sign = rhs.getOperationSign();
-    final String operator = sign.getText();
-    return IntentionPowerPackBundle.message("replace.assignment.with.operator.assignment.intention.name", operator);
-  }
+    public String getTextForElement(PsiElement element) {
+        final PsiAssignmentExpression exp = (PsiAssignmentExpression)element;
+        final PsiBinaryExpression rhs =
+                (PsiBinaryExpression)exp.getRExpression();
+        assert rhs != null;
+        final PsiJavaToken sign = rhs.getOperationSign();
+        final String operator = sign.getText();
+        return IntentionPowerPackBundle.message(
+                "replace.assignment.with.operator.assignment.intention.name",
+                operator);
+    }
 
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
-    return new AssignmentExpressionReplaceableWithOperatorAssigment();
-  }
+    @NotNull
+    public PsiElementPredicate getElementPredicate() {
+        return new AssignmentExpressionReplaceableWithOperatorAssigment();
+    }
 
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiAssignmentExpression exp = (PsiAssignmentExpression)element;
-    final PsiBinaryExpression rhs =
-      (PsiBinaryExpression)exp.getRExpression();
-    final PsiExpression lhs = exp.getLExpression();
-    assert rhs != null;
-    final PsiJavaToken sign = rhs.getOperationSign();
-    final String operand = sign.getText();
-    final PsiExpression rhsrhs = rhs.getROperand();
-    assert rhsrhs != null;
-    final String expString =
-      lhs.getText() + operand + '=' + rhsrhs.getText();
-    replaceExpression(expString, exp);
-  }
+    public void processIntention(PsiElement element)
+            throws IncorrectOperationException {
+        final PsiAssignmentExpression exp = (PsiAssignmentExpression)element;
+        final PsiBinaryExpression rhs =
+                (PsiBinaryExpression)exp.getRExpression();
+        final PsiExpression lhs = exp.getLExpression();
+        assert rhs != null;
+        final PsiJavaToken sign = rhs.getOperationSign();
+        final String operand = sign.getText();
+        final PsiExpression rhsrhs = rhs.getROperand();
+        assert rhsrhs != null;
+        final String expString =
+                lhs.getText() + operand + '=' + rhsrhs.getText();
+        replaceExpression(expString, exp);
+    }
 }

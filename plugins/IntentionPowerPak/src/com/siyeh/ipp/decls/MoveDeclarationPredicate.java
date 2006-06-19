@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveDeclarationPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiLocalVariable)){
             return false;
@@ -74,9 +75,8 @@ public class MoveDeclarationPredicate implements PsiElementPredicate{
     }
 
     @Nullable
-    public static PsiElement getChildWhichContainsElement(@NotNull PsiCodeBlock ancestor,
-                                                          @NotNull PsiElement descendant)
-    {
+    public static PsiElement getChildWhichContainsElement(
+            @NotNull PsiCodeBlock ancestor, @NotNull PsiElement descendant) {
         PsiElement element = descendant;
         while(!element.equals(ancestor)){
             descendant = element;
@@ -89,14 +89,17 @@ public class MoveDeclarationPredicate implements PsiElementPredicate{
     }
 
     @Nullable
-    public static PsiCodeBlock getTightestBlock(@NotNull PsiReference[] references)
-    {
+    public static PsiCodeBlock getTightestBlock(
+            @NotNull PsiReference[] references) {
         PsiCodeBlock commonParentBlock = null;
         for(PsiReference reference : references){
             final PsiElement referenceElement = reference.getElement();
             final PsiCodeBlock block =
                     PsiTreeUtil.getParentOfType(referenceElement,
                                                 PsiCodeBlock.class);
+            if (block == null) {
+                return commonParentBlock;
+            }
             if(commonParentBlock != null && !commonParentBlock.equals(block)){
                 final PsiElement commonParent =
                         PsiTreeUtil.findCommonParent(commonParentBlock, block);

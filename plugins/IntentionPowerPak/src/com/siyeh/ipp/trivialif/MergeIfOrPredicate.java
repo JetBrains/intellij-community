@@ -23,6 +23,7 @@ import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class MergeIfOrPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         return isMergableExplicitIf(element) || isMergableImplicitIf(element);
     }
@@ -32,15 +33,11 @@ class MergeIfOrPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiJavaToken token = (PsiJavaToken) element;
-
         final PsiElement parent = token.getParent();
         if(!(parent instanceof PsiIfStatement)){
             return false;
         }
         final PsiIfStatement ifStatement = (PsiIfStatement) parent;
-        if(ErrorUtil.containsError(ifStatement)){
-            return false;
-        }
         final PsiStatement thenBranch = ifStatement.getThenBranch();
         final PsiStatement elseBranch = ifStatement.getElseBranch();
         if(thenBranch == null){
@@ -52,8 +49,10 @@ class MergeIfOrPredicate implements PsiElementPredicate{
         if(!(elseBranch instanceof PsiIfStatement)){
             return false;
         }
+        if(ErrorUtil.containsError(ifStatement)){
+            return false;
+        }
         final PsiIfStatement childIfStatement = (PsiIfStatement) elseBranch;
-
         final PsiStatement childThenBranch = childIfStatement.getThenBranch();
         return EquivalenceChecker.statementsAreEquivalent(thenBranch,
                                                           childThenBranch);
@@ -71,21 +70,19 @@ class MergeIfOrPredicate implements PsiElementPredicate{
         }
         final PsiIfStatement ifStatement = (PsiIfStatement) parent;
         final PsiStatement thenBranch = ifStatement.getThenBranch();
-        final PsiStatement elseBranch = ifStatement.getElseBranch();
         if(thenBranch == null){
             return false;
         }
+        final PsiStatement elseBranch = ifStatement.getElseBranch();
         if(elseBranch != null){
             return false;
         }
-
         if(ControlFlowUtils.statementMayCompleteNormally(thenBranch)){
             return false;
         }
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsForward(ifStatement,
-                                                new Class[]{
-                                                    PsiWhiteSpace.class});
+                        PsiWhiteSpace.class);
         if(!(nextStatement instanceof PsiIfStatement)){
             return false;
         }

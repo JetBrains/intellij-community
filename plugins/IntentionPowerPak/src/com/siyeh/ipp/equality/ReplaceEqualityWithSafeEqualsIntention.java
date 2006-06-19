@@ -55,7 +55,7 @@ public class ReplaceEqualityWithSafeEqualsIntention extends Intention {
         final PsiJavaToken operationSign = exp.getOperationSign();
         final IElementType tokenType = operationSign.getTokenType();
         final String signText = operationSign.getText();
-        @NonNls StringBuffer buffer = new StringBuffer(lhsText);
+        @NonNls final StringBuilder buffer = new StringBuilder(lhsText);
         buffer.append("==null?");
         buffer.append(rhsText);
         buffer.append(signText);

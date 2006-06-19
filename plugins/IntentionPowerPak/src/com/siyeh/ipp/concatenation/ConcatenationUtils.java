@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 
 public class ConcatenationUtils{
+
     private ConcatenationUtils(){
         super();
     }
@@ -29,7 +30,6 @@ public class ConcatenationUtils{
         }
         final PsiBinaryExpression expression = (PsiBinaryExpression) element;
         final PsiJavaToken sign = expression.getOperationSign();
-
         final IElementType tokenType = sign.getTokenType();
         if(!tokenType.equals(JavaTokenType.PLUS)){
             return false;

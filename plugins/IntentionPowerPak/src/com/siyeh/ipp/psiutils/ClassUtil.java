@@ -16,6 +16,7 @@
 package com.siyeh.ipp.psiutils;
 
 public class ClassUtil{
+    
     private ClassUtil(){
         super();
     }

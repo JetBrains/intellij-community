@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 class MergeParallelIfsPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiJavaToken)){
             return false;
@@ -37,19 +38,16 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiIfStatement ifStatement = (PsiIfStatement) parent;
-
-        if(ErrorUtil.containsError(ifStatement)){
-            return false;
-        }
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsForward(ifStatement,
-                                                new Class[]{
-                                                    PsiWhiteSpace.class});
+                        PsiWhiteSpace.class);
         if(!(nextStatement instanceof PsiIfStatement)){
             return false;
         }
         final PsiIfStatement nextIfStatement = (PsiIfStatement) nextStatement;
-
+        if(ErrorUtil.containsError(ifStatement)){
+            return false;
+        }
         if(ErrorUtil.containsError(nextIfStatement)){
             return false;
         }
@@ -83,28 +81,32 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
         if(!ControlFlowUtils.statementMayCompleteNormally(statement1)){
             return false;
         }
-        final Set<String> statement1Declarations = calculateTopLevelDeclarations(statement1);
+        final Set<String> statement1Declarations =
+                calculateTopLevelDeclarations(statement1);
         if(containsConflictingDeclarations(statement1Declarations, statement2)){
             return false;
         }
-        final Set<String> statement2Declarations = calculateTopLevelDeclarations(statement2);
+        final Set<String> statement2Declarations =
+                calculateTopLevelDeclarations(statement2);
         return !containsConflictingDeclarations(statement2Declarations,
                                                 statement1);
     }
 
-    private static boolean containsConflictingDeclarations(Set<String> declarations,
-                                                           PsiStatement statement){
+    private static boolean containsConflictingDeclarations(
+            Set<String> declarations, PsiStatement statement) {
         final DeclarationVisitor visitor = new DeclarationVisitor(declarations);
         statement.accept(visitor);
         return visitor.hasConflict();
     }
 
-    private static Set<String> calculateTopLevelDeclarations(PsiStatement statement){
+    private static Set<String> calculateTopLevelDeclarations(
+            PsiStatement statement){
         final Set<String> out = new HashSet<String>();
         if(statement instanceof PsiDeclarationStatement){
             addDeclarations((PsiDeclarationStatement) statement, out);
         } else if(statement instanceof PsiBlockStatement){
-            final PsiBlockStatement blockStatement = (PsiBlockStatement) statement;
+            final PsiBlockStatement blockStatement =
+                    (PsiBlockStatement) statement;
             final PsiCodeBlock block = blockStatement.getCodeBlock();
             final PsiStatement[] statements = block.getStatements();
             for(PsiStatement statement1 : statements){
@@ -129,6 +131,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
     }
 
     private static class DeclarationVisitor extends PsiRecursiveElementVisitor{
+
         private final Set<String> declarations;
         private boolean hasConflict = false;
 
@@ -148,7 +151,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
             }
         }
 
-        private boolean hasConflict(){
+        public boolean hasConflict(){
             return hasConflict;
         }
     }

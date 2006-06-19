@@ -24,13 +24,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.psiutils.BoolUtils;
 import com.siyeh.ipp.psiutils.ComparisonUtils;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
-import com.siyeh.IntentionPowerPackBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 public abstract class Intention implements IntentionAction{
     private final PsiElementPredicate predicate;
@@ -74,8 +74,8 @@ public abstract class Intention implements IntentionAction{
             @NotNull PsiExpression newExpression,
             @NotNull PsiExpression expression)
             throws IncorrectOperationException{
-        final PsiManager mgr = expression.getManager();
-        final PsiElementFactory factory = mgr.getElementFactory();
+        final PsiManager manager = expression.getManager();
+        final PsiElementFactory factory = manager.getElementFactory();
 
         PsiExpression expressionToReplace = expression;
         final String newExpressionText = newExpression.getText();
@@ -87,9 +87,8 @@ public abstract class Intention implements IntentionAction{
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) newExpression;
             final PsiJavaToken sign = binaryExpression.getOperationSign();
-            final String operator = sign.getText();
             final String negatedComparison =
-                    ComparisonUtils.getNegatedComparison(operator);
+                    ComparisonUtils.getNegatedComparison(sign);
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
             assert rhs != null;
@@ -106,7 +105,7 @@ public abstract class Intention implements IntentionAction{
                 factory.createExpressionFromText(expString, null);
         assert expressionToReplace != null;
         final PsiElement insertedElement = expressionToReplace.replace(newCall);
-        final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
+        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
         codeStyleManager.reformat(insertedElement);
     }
 
@@ -199,7 +198,7 @@ public abstract class Intention implements IntentionAction{
     private String getPrefix() {
         final Class<? extends Intention> aClass = getClass();
         final String name = aClass.getSimpleName();
-        final StringBuffer buffer = new StringBuffer(name.length() + 10);
+        final StringBuilder buffer = new StringBuilder(name.length() + 10);
         buffer.append(Character.toLowerCase(name.charAt(0)));
         for (int i = 1; i < name.length(); i++){
             final char c = name.charAt(i);

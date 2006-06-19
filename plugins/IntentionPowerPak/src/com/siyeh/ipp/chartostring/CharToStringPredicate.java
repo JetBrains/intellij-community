@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 
 class CharToStringPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiLiteralExpression)){
             return false;
@@ -34,7 +35,7 @@ class CharToStringPredicate implements PsiElementPredicate{
         return isInConcatenationContext(expression);
     }
 
-    private boolean isInConcatenationContext(PsiElement element){
+    private static boolean isInConcatenationContext(PsiElement element){
         final PsiElement parent = element.getParent();
         if(parent instanceof PsiBinaryExpression){
             final PsiBinaryExpression parentExpression =
@@ -59,30 +60,51 @@ class CharToStringPredicate implements PsiElementPredicate{
             }
             final String parentTypeText = parentType.getCanonicalText();
             return "java.lang.String".equals(parentTypeText);
-        }
-        if(parent instanceof PsiExpressionList &&
-           parent.getParent() instanceof PsiMethodCallExpression){
-            final PsiMethodCallExpression methodCall =
-                    (PsiMethodCallExpression) parent.getParent();
-            if(methodCall == null)
-            {
+        } else if(parent instanceof PsiExpressionList){
+            final PsiElement grandParent = parent.getParent();
+            if(!(grandParent instanceof PsiMethodCallExpression)){
                 return false;
             }
+            final PsiMethodCallExpression methodCall =
+                    (PsiMethodCallExpression) grandParent;
             final PsiReferenceExpression methodExpression =
                     methodCall.getMethodExpression();
-            final PsiType type = methodExpression.getType();
+            final PsiExpression qualifierExpression =
+                    methodExpression.getQualifierExpression();
+            final PsiType type;
+            if(qualifierExpression == null){
+                // to use the intention inside the source of
+                // String and StringBuffer
+                type = methodExpression.getType();
+            } else{
+                type = qualifierExpression.getType();
+            }
             if(type == null){
                 return false;
             }
             final String className = type.getCanonicalText();
-            if(!"java.lang.StringBuffer".equals(className) &&
-               !"java.lang.StringBuilder".equals(className)){
-                return false;
+            if("java.lang.StringBuffer".equals(className) ||
+                    "java.lang.StringBuilder".equals(className)){
+                @NonNls final String methodName =
+                        methodExpression.getReferenceName();
+                if (!"append".equals(methodName) &&
+                        !"insert".equals(methodName)) {
+                    return false;
+                }
+                final PsiElement method = methodExpression.resolve();
+                return method != null;
+            } else if("java.lang.String".equals(className)){
+                @NonNls final String methodName =
+                        methodExpression.getReferenceName();
+                if (!"indexOf".equals(methodName) &&
+                        !"lastIndexOf".equals(methodName) &&
+                        !"replace".equals(methodName)) {
+                    return false;
+                }
+                final PsiElement method = methodExpression.resolve();
+                return method != null;
             }
-            @NonNls final String methodName = methodExpression.getReferenceName();
-            return "append".equals(methodName);
-        } else{
-            return false;
         }
+        return false;
     }
 }

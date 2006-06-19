@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,16 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class AssertStatementPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiAssertStatement)){
             return false;
         }
-        if(ErrorUtil.containsError(element)){
+        final PsiAssertStatement assertStatement =
+                (PsiAssertStatement)element;
+        if (assertStatement.getAssertCondition() == null) {
             return false;
         }
-        return ((PsiAssertStatement) element).getAssertCondition() != null;
+        return !ErrorUtil.containsError(element);
     }
 }

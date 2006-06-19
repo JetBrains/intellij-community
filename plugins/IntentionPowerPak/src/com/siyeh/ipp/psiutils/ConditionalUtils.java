@@ -39,7 +39,8 @@ public class ConditionalUtils{
         }
     }
 
-    public static boolean isReturn(PsiStatement statement, @NonNls String value){
+    public static boolean isReturn(PsiStatement statement,
+                                   @NonNls String value){
         if(statement == null){
             return false;
         }
@@ -52,14 +53,15 @@ public class ConditionalUtils{
             return false;
         }
         final PsiExpression returnValue = returnStatement.getReturnValue();
-	    if (returnValue == null){
-		    return false;
-	    }
+        if(returnValue == null){
+            return false;
+        }
         final String returnValueText = returnValue.getText();
         return value.equals(returnValueText);
     }
 
-    public static boolean isAssignment(PsiStatement statement, @NonNls String value){
+    public static boolean isAssignment(PsiStatement statement,
+                                       @NonNls String value){
         if(statement == null){
             return false;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,35 +24,29 @@ import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 
 class RemoveConditionalPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiConditionalExpression)){
             return false;
         }
-        if(ErrorUtil.containsError(element)){
-            return false;
-        }
         final PsiConditionalExpression condition =
                 (PsiConditionalExpression) element;
-
         PsiExpression thenExpression = condition.getThenExpression();
         PsiExpression elseExpression = condition.getElseExpression();
-        if(thenExpression == null ||
-           elseExpression == null){
+        if(thenExpression == null || elseExpression == null){
             return false;
         }
-
         thenExpression = ParenthesesUtils.stripParentheses(thenExpression);
         elseExpression = ParenthesesUtils.stripParentheses(elseExpression);
-        if(thenExpression == null ||
-           elseExpression == null){
+        if(thenExpression == null || elseExpression == null){
             return false;
         }
         @NonNls final String thenText = thenExpression.getText();
         @NonNls final String elseText = elseExpression.getText();
         if("true".equals(elseText) && "false".equals(thenText)){
-            return true;
+            return !ErrorUtil.containsError(element);
         } else if("true".equals(thenText) && "false".equals(elseText)){
-            return true;
+            return !ErrorUtil.containsError(element);
         }
         return false;
     }

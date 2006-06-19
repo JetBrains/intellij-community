@@ -24,6 +24,7 @@ import com.siyeh.ipp.psiutils.ConditionalUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class MergeIfAndPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiJavaToken)){
             return false;
@@ -52,7 +53,6 @@ class MergeIfAndPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiIfStatement childIfStatement = (PsiIfStatement) thenBranch;
-
         return childIfStatement.getElseBranch() == null;
     }
 }

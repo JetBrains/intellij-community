@@ -20,6 +20,7 @@ import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
 
 public class ControlFlowUtils{
+
     private ControlFlowUtils(){
         super();
     }
@@ -39,7 +40,6 @@ public class ControlFlowUtils{
         } else if(statement instanceof PsiForStatement){
             final PsiForStatement loopStatement = (PsiForStatement) statement;
             final PsiExpression test = loopStatement.getCondition();
-
             return test != null && !isBooleanConstant(test, false) ||
                     statementIsBreakTarget(loopStatement);
         } else if(statement instanceof PsiWhileStatement){
@@ -68,7 +68,6 @@ public class ControlFlowUtils{
             final PsiLabeledStatement labeledStatement =
                     (PsiLabeledStatement) statement;
             final PsiStatement body = labeledStatement.getStatement();
-
             return statementMayCompleteNormally(body)
                     || statementIsBreakTarget(body);
         } else if(statement instanceof PsiIfStatement){
@@ -107,9 +106,13 @@ public class ControlFlowUtils{
                 return true;
             }
             final PsiCodeBlock body = switchStatement.getBody();
+            if (body == null){
+                return true;
+            }
             final PsiStatement[] statements = body.getStatements();
             int lastNonLabelOffset = -1;
-            for(int i = statements.length - 1; i >= 0; i--){
+            final int lastStatementIndex = statements.length - 1;
+            for(int i = lastStatementIndex; i >= 0; i--){
                 if(!(statements[i] instanceof PsiSwitchLabelStatement)){
                     lastNonLabelOffset = i;
                     break;
@@ -117,10 +120,9 @@ public class ControlFlowUtils{
             }
             if(lastNonLabelOffset == -1){
                 return true;    // it's all labels
-            } else if(lastNonLabelOffset == statements.length - 1){
-                return statementMayCompleteNormally(statements[statements
-                        .length -
-                        1]);
+            } else if(lastNonLabelOffset == lastStatementIndex){
+                return statementMayCompleteNormally(
+                        statements[lastStatementIndex]);
             } else{
                 return true;    // the last statement is a label
             }
@@ -130,8 +132,7 @@ public class ControlFlowUtils{
     }
 
     private static boolean codeBlockMayCompleteNormally(PsiCodeBlock block){
-        if(block == null)
-        {
+        if(block == null){
             return true;
         }
         final PsiStatement[] statements = block.getStatements();
@@ -143,14 +144,14 @@ public class ControlFlowUtils{
         return true;
     }
 
-    private static boolean isBooleanConstant(PsiExpression test, boolean val){
+    private static boolean isBooleanConstant(PsiExpression test, boolean value){
         if(!PsiUtil.isConstantExpression(test)){
             return false;
         }
-        final boolean value =
+        final Boolean constantValue =
                 (Boolean) ConstantExpressionUtil.computeCastTo(test,
                                                                PsiType.BOOLEAN);
-        return value == val;
+        return constantValue.booleanValue() == value;
     }
 
     private static boolean statementIsBreakTarget(PsiStatement statement){
@@ -172,6 +173,7 @@ public class ControlFlowUtils{
     }
 
     private static class BreakTargetFinder extends PsiRecursiveElementVisitor{
+
         private boolean m_found = false;
         private final PsiStatement m_target;
 
@@ -180,19 +182,19 @@ public class ControlFlowUtils{
             m_target = target;
         }
 
-        private boolean breakFound(){
+        public  boolean breakFound(){
             return m_found;
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression psiReferenceExpression){
+        public void visitReferenceExpression(
+                PsiReferenceExpression expression){
         }
 
-        public void visitBreakStatement(PsiBreakStatement breakStatement){
-            super.visitBreakStatement(breakStatement);
+        public void visitBreakStatement(PsiBreakStatement statement){
+            super.visitBreakStatement(statement);
             final PsiStatement exitedStatement =
-                    breakStatement.findExitedStatement();
-            if(exitedStatement == null)
-            {
+                    statement.findExitedStatement();
+            if(exitedStatement == null){
                 return;
             }
             if(exitedStatement.equals(m_target)){
@@ -203,21 +205,18 @@ public class ControlFlowUtils{
 
     private static class ExitingBreakFinder
             extends PsiRecursiveElementVisitor{
+
         private boolean m_found = false;
 
-        private ExitingBreakFinder(){
-            super();
-        }
-
-        private boolean breakFound(){
+        public boolean breakFound(){
             return m_found;
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression exp){
+        public void visitReferenceExpression(PsiReferenceExpression expression){
         }
 
-        public void visitBreakStatement(PsiBreakStatement breakStatement){
-            if(breakStatement.getLabelIdentifier() != null){
+        public void visitBreakStatement(PsiBreakStatement statement){
+            if(statement.getLabelIdentifier() != null){
                 return;
             }
             m_found = true;

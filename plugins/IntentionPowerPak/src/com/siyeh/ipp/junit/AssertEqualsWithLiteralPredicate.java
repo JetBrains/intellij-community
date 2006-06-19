@@ -21,19 +21,14 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NonNls;
 
 class AssertEqualsWithLiteralPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiMethodCallExpression)){
-            return false;
-        }
-        if(ErrorUtil.containsError(element)){
             return false;
         }
         final PsiMethodCallExpression expression =
                 (PsiMethodCallExpression) element;
         final PsiExpressionList argumentList = expression.getArgumentList();
-        if(argumentList == null){
-            return false;
-        }
         final PsiExpression[] args = argumentList.getExpressions();
         final int numArgs = args.length;
         if(numArgs < 2 || numArgs > 3){
@@ -41,11 +36,11 @@ class AssertEqualsWithLiteralPredicate implements PsiElementPredicate{
         }
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
-        if(methodExpression == null){
-            return false;
-        }
         @NonNls final String methodName = methodExpression.getReferenceName();
         if(!"assertEquals".equals(methodName)){
+            return false;
+        }
+        if(ErrorUtil.containsError(element)){
             return false;
         }
         if(numArgs == 2){
@@ -55,12 +50,12 @@ class AssertEqualsWithLiteralPredicate implements PsiElementPredicate{
         }
     }
 
-    private static boolean isSpecialLiteral(PsiExpression arg){
-        if(arg == null){
+    private static boolean isSpecialLiteral(PsiExpression expression){
+        if(expression == null){
             return false;
         }
-        @NonNls final String text = arg.getText();
+        @NonNls final String text = expression.getText();
         return "true".equals(text) ||
-               "false".equals(text) || "null".equals(text);
+                "false".equals(text) || "null".equals(text);
     }
 }

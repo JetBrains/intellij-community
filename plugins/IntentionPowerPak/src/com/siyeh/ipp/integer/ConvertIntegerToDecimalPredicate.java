@@ -18,7 +18,6 @@ package com.siyeh.ipp.integer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -47,7 +46,8 @@ class ConvertIntegerToDecimalPredicate implements PsiElementPredicate{
             if(!ClassUtil.classExists("javax.xml.xpath.XPath")){
                 return false;
             }
-            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
+            final LanguageLevel languageLevel =
+                    PsiUtil.getLanguageLevel(expression);
             if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0){
                 return false;
             }

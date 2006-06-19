@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class CaseUtil{
+
     private CaseUtil(){
         super();
     }
@@ -90,20 +91,20 @@ class CaseUtil{
         return false;
     }
 
-    public static boolean isUsedByStatementList(PsiLocalVariable var,
+    public static boolean isUsedByStatementList(PsiLocalVariable variable,
                                                 List<PsiElement> elements){
         for(PsiElement element : elements){
-            if(isUsedByStatement(var, element)){
+            if(isUsedByStatement(variable, element)){
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean isUsedByStatement(PsiLocalVariable var,
+    private static boolean isUsedByStatement(PsiLocalVariable variable,
                                              PsiElement statement){
         final LocalVariableUsageVisitor visitor =
-                new LocalVariableUsageVisitor(var);
+                new LocalVariableUsageVisitor(variable);
         statement.accept(visitor);
         return visitor.isUsed();
     }
@@ -147,18 +148,19 @@ class CaseUtil{
             return null;
         }
         for(Object possibleCaseExpression : possibleCaseExpressions){
-            final PsiExpression caseExp = (PsiExpression) possibleCaseExpression;
-            if(!SideEffectChecker.mayHaveSideEffects(caseExp)){
+            final PsiExpression caseExpression =
+                    (PsiExpression) possibleCaseExpression;
+            if(!SideEffectChecker.mayHaveSideEffects(caseExpression)){
                 PsiIfStatement statementToCheck = statement;
                 while(true){
                     final PsiExpression caseCondition =
                             statementToCheck.getCondition();
-                    if(canBeMadeIntoCase(caseCondition, caseExp)){
+                    if(canBeMadeIntoCase(caseCondition, caseExpression)){
                         final PsiStatement elseBranch =
                                 statementToCheck.getElseBranch();
                         if(elseBranch == null ||
                                 !(elseBranch instanceof PsiIfStatement)){
-                            return caseExp;
+                            return caseExpression;
                         }
                         statementToCheck = (PsiIfStatement) elseBranch;
                     } else{
@@ -170,21 +172,24 @@ class CaseUtil{
         return null;
     }
 
-    private static List<PsiExpression> determinePossibleCaseExpressions(PsiExpression exp){
-        PsiExpression expToCheck = exp;
-        while(expToCheck instanceof PsiParenthesizedExpression){
-            expToCheck = ((PsiParenthesizedExpression) exp).getExpression();
+    private static List<PsiExpression> determinePossibleCaseExpressions(
+            PsiExpression expression){
+        PsiExpression expressionToCheck = expression;
+        while(expressionToCheck instanceof PsiParenthesizedExpression){
+            final PsiParenthesizedExpression parenthesizedExpression =
+                    (PsiParenthesizedExpression)expressionToCheck;
+            expressionToCheck = parenthesizedExpression.getExpression();
         }
         final List<PsiExpression> out=new ArrayList<PsiExpression>(10);
-        if(!(expToCheck instanceof PsiBinaryExpression)){
+        if(!(expressionToCheck instanceof PsiBinaryExpression)){
             return out;
         }
-        final PsiBinaryExpression binaryExp = (PsiBinaryExpression) expToCheck;
-        final PsiJavaToken sign = binaryExp.getOperationSign();
+        final PsiBinaryExpression binaryExpression =
+                (PsiBinaryExpression) expressionToCheck;
+        final PsiJavaToken sign = binaryExpression.getOperationSign();
         final IElementType operation = sign.getTokenType();
-        final PsiExpression lhs = binaryExp.getLOperand();
-
-        final PsiExpression rhs = binaryExp.getROperand();
+        final PsiExpression lhs = binaryExpression.getLOperand();
+        final PsiExpression rhs = binaryExpression.getROperand();
         if(operation.equals(JavaTokenType.OROR)){
             return determinePossibleCaseExpressions(lhs);
         } else if(operation.equals(JavaTokenType.EQEQ)){
@@ -198,20 +203,23 @@ class CaseUtil{
         return out;
     }
 
-    private static boolean canBeMadeIntoCase(PsiExpression exp,
+    private static boolean canBeMadeIntoCase(PsiExpression expression,
                                              PsiExpression caseExpression){
-        PsiExpression expToCheck = exp;
-        while(expToCheck instanceof PsiParenthesizedExpression){
-            expToCheck = ((PsiParenthesizedExpression) exp).getExpression();
+        PsiExpression expressionToCheck = expression;
+        while(expressionToCheck instanceof PsiParenthesizedExpression){
+            final PsiParenthesizedExpression parenthesizedExpression =
+                    (PsiParenthesizedExpression)expressionToCheck;
+            expressionToCheck = parenthesizedExpression.getExpression();
         }
-        if(!(expToCheck instanceof PsiBinaryExpression)){
+        if(!(expressionToCheck instanceof PsiBinaryExpression)){
             return false;
         }
-        final PsiBinaryExpression binaryExp = (PsiBinaryExpression) expToCheck;
-        final PsiJavaToken sign = binaryExp.getOperationSign();
+        final PsiBinaryExpression binaryExpression =
+                (PsiBinaryExpression) expressionToCheck;
+        final PsiJavaToken sign = binaryExpression.getOperationSign();
         final IElementType operation = sign.getTokenType();
-        final PsiExpression lOperand = binaryExp.getLOperand();
-        final PsiExpression rhs = binaryExp.getROperand();
+        final PsiExpression lOperand = binaryExpression.getLOperand();
+        final PsiExpression rhs = binaryExpression.getROperand();
         if(operation.equals(JavaTokenType.OROR)){
             return canBeMadeIntoCase(lOperand, caseExpression) &&
                     canBeMadeIntoCase(rhs, caseExpression);

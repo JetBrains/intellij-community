@@ -21,6 +21,7 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ReplaceConcatenationWithStringBufferPredicate
         implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!ConcatenationUtils.isConcatenation(element)){
             return false;

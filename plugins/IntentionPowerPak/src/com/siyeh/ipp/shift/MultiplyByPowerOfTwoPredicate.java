@@ -20,17 +20,22 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class MultiplyByPowerOfTwoPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(element instanceof PsiBinaryExpression){
-            return binaryExpressionIsMultiplyByPowerOfTwo((PsiBinaryExpression) element);
+            final PsiBinaryExpression expression = (PsiBinaryExpression)element;
+            return binaryExpressionIsMultiplyByPowerOfTwo(expression);
         } else if(element instanceof PsiAssignmentExpression){
-            return assignmentExpressionIsMultiplyByPowerOfTwo((PsiAssignmentExpression) element);
+            final PsiAssignmentExpression expression =
+                    (PsiAssignmentExpression)element;
+            return assignmentExpressionIsMultiplyByPowerOfTwo(expression);
         } else{
             return false;
         }
     }
 
-    private boolean assignmentExpressionIsMultiplyByPowerOfTwo(PsiAssignmentExpression expression){
+    private static boolean assignmentExpressionIsMultiplyByPowerOfTwo(
+            PsiAssignmentExpression expression){
         final PsiJavaToken sign = expression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
         if(!tokenType.equals(JavaTokenType.ASTERISKEQ) &&
@@ -52,7 +57,8 @@ class MultiplyByPowerOfTwoPredicate implements PsiElementPredicate{
         return ShiftUtils.isPowerOfTwo(rhs);
     }
 
-    private boolean binaryExpressionIsMultiplyByPowerOfTwo(PsiBinaryExpression expression){
+    private static boolean binaryExpressionIsMultiplyByPowerOfTwo(
+            PsiBinaryExpression expression){
         final PsiJavaToken sign = expression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
         if(!tokenType.equals(JavaTokenType.ASTERISK) &&

@@ -27,34 +27,32 @@ import java.math.BigInteger;
 
 public class ConvertIntegerToOctalIntention extends Intention {
 
+    @NotNull
+    public PsiElementPredicate getElementPredicate() {
+        return new ConvertIntegerToOctalPredicate();
+    }
 
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
-    return new ConvertIntegerToOctalPredicate();
-  }
-
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiLiteralExpression exp = (PsiLiteralExpression)element;
-    @NonNls String textString = exp.getText();
-    final int textLength = textString.length();
-    final char lastChar = textString.charAt(textLength - 1);
-    final boolean isLong = lastChar == 'l' || lastChar == 'L';
-    if (isLong) {
-      textString = textString.substring(0, textLength - 1);
+    public void processIntention(PsiElement element)
+            throws IncorrectOperationException {
+        final PsiLiteralExpression exp = (PsiLiteralExpression)element;
+        @NonNls String textString = exp.getText();
+        final int textLength = textString.length();
+        final char lastChar = textString.charAt(textLength - 1);
+        final boolean isLong = lastChar == 'l' || lastChar == 'L';
+        if (isLong) {
+            textString = textString.substring(0, textLength - 1);
+        }
+        final BigInteger val;
+        if (textString.startsWith("0x")) {
+            final String rawTextString = textString.substring(2);
+            val = new BigInteger(rawTextString, 16);
+        } else {
+            val = new BigInteger(textString, 10);
+        }
+        String octString = '0' + val.toString(8);
+        if (isLong) {
+            octString += 'L';
+        }
+        replaceExpression(octString, exp);
     }
-    final BigInteger val;
-    if (textString.startsWith("0x")) {
-      final String rawTextString = textString.substring(2);
-      val = new BigInteger(rawTextString, 16);
-    }
-    else {
-      val = new BigInteger(textString, 10);
-    }
-    String octString = '0' + val.toString(8);
-    if (isLong) {
-      octString += 'L';
-    }
-    replaceExpression(octString, exp);
-  }
 }

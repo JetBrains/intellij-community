@@ -25,6 +25,7 @@ import com.siyeh.ipp.psiutils.ClassUtil;
 import org.jetbrains.annotations.NonNls;
 
 class ConvertIntegerToHexPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiLiteralExpression)){
             return false;
@@ -33,7 +34,6 @@ class ConvertIntegerToHexPredicate implements PsiElementPredicate{
         final PsiType type = expression.getType();
         if(PsiType.INT.equals(type) || PsiType.LONG.equals(type)){
             @NonNls final String text = expression.getText();
-
             return !(text.startsWith("0x") || text.startsWith("0X"));
         }
         if(PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)){

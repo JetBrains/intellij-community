@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekekrs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,39 +20,44 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(element instanceof PsiReturnStatement){
-            if(ErrorUtil.containsError(element)){
+            if(!isReturnOfConditional((PsiReturnStatement)element)){
                 return false;
             }
-            return isReturnOfConditional((PsiReturnStatement) element);
+            return !ErrorUtil.containsError(element);
         }
         if(element instanceof PsiExpressionStatement){
-            if(ErrorUtil.containsError(element)){
+            if(!isAssignmentToConditional((PsiExpressionStatement)element)){
                 return false;
             }
-            return isAssignmentToConditional((PsiExpressionStatement) element);
+            return !ErrorUtil.containsError(element);
         }
         if(element instanceof PsiDeclarationStatement){
-            if(ErrorUtil.containsError(element)){
+            final PsiDeclarationStatement declarationStatement =
+                    (PsiDeclarationStatement)element;
+            if(!isDeclarationOfConditional(declarationStatement)){
                 return false;
             }
-            return isDeclarationOfConditional((PsiDeclarationStatement) element);
+            return !ErrorUtil.containsError(element);
         } else{
             return false;
         }
     }
 
-    private static boolean isDeclarationOfConditional(PsiDeclarationStatement declStatement){
-        final PsiElement[] variables = declStatement.getDeclaredElements();
+    private static boolean isDeclarationOfConditional(
+            PsiDeclarationStatement declarationStatement){
+        final PsiElement[] variables =
+                declarationStatement.getDeclaredElements();
         if(variables.length != 1){
             return false;
         }
         if(!(variables[0] instanceof PsiLocalVariable)){
             return false;
         }
-        final PsiLocalVariable var = (PsiLocalVariable) variables[0];
-        final PsiExpression initializer = var.getInitializer();
+        final PsiLocalVariable variable = (PsiLocalVariable) variables[0];
+        final PsiExpression initializer = variable.getInitializer();
         if(initializer == null){
             return false;
         }
@@ -61,19 +66,18 @@ class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
         }
         final PsiConditionalExpression condition =
                 (PsiConditionalExpression) initializer;
-
-        return condition.getCondition() != null &&
-                condition.getThenExpression() != null &&
+        return condition.getThenExpression() != null &&
                 condition.getElseExpression() != null;
     }
 
-    private static boolean isAssignmentToConditional(PsiExpressionStatement expressionStatement){
-        if(!(expressionStatement.getExpression() instanceof PsiAssignmentExpression)){
+    private static boolean isAssignmentToConditional(
+            PsiExpressionStatement expressionStatement){
+        final PsiExpression expression = expressionStatement.getExpression();
+        if(!(expression instanceof PsiAssignmentExpression)){
             return false;
         }
         final PsiAssignmentExpression assignmentExpression =
-                (PsiAssignmentExpression) expressionStatement.getExpression();
-        final PsiExpression lhs = assignmentExpression.getLExpression();
+                (PsiAssignmentExpression) expression;
         final PsiExpression rhs = assignmentExpression.getRExpression();
         if(rhs == null){
             return false;
@@ -83,13 +87,12 @@ class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
         }
         final PsiConditionalExpression condition =
                 (PsiConditionalExpression) rhs;
-
-        return condition.getCondition() != null &&
-                condition.getThenExpression() != null &&
+        return condition.getThenExpression() != null &&
                 condition.getElseExpression() != null;
     }
 
-    private static boolean isReturnOfConditional(PsiReturnStatement returnStatement){
+    private static boolean isReturnOfConditional(
+            PsiReturnStatement returnStatement){
         final PsiExpression returnValue = returnStatement.getReturnValue();
         if(returnValue == null){
             return false;
@@ -99,9 +102,7 @@ class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
         }
         final PsiConditionalExpression condition =
                 (PsiConditionalExpression) returnValue;
-
-        return condition.getCondition() != null &&
-                condition.getThenExpression() != null &&
+        return condition.getThenExpression() != null &&
                 condition.getElseExpression() != null;
     }
 }

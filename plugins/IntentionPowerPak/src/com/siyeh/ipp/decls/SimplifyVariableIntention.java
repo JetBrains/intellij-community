@@ -24,15 +24,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class SimplifyVariableIntention extends Intention {
 
+    @NotNull
+    public PsiElementPredicate getElementPredicate() {
+        return new SimplifyVariablePredicate();
+    }
 
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
-    return new SimplifyVariablePredicate();
-  }
-
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiVariable var = (PsiVariable)element;
-    var.normalizeDeclaration();
-  }
+    public void processIntention(PsiElement element)
+            throws IncorrectOperationException {
+        final PsiVariable var = (PsiVariable)element;
+        var.normalizeDeclaration();
+    }
 }

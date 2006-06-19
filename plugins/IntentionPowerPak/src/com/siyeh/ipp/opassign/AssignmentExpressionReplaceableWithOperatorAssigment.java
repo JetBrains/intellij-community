@@ -24,11 +24,9 @@ import com.siyeh.ipp.psiutils.SideEffectChecker;
 
 class AssignmentExpressionReplaceableWithOperatorAssigment
         implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiAssignmentExpression)){
-            return false;
-        }
-        if(ErrorUtil.containsError(element)){
             return false;
         }
         final PsiAssignmentExpression assignment =
@@ -38,7 +36,6 @@ class AssignmentExpressionReplaceableWithOperatorAssigment
         if(!JavaTokenType.EQ.equals(tokenType)){
             return false;
         }
-        final PsiExpression lhs = assignment.getLExpression();
         final PsiExpression rhs = assignment.getRExpression();
         if(rhs == null){
             return false;
@@ -49,7 +46,6 @@ class AssignmentExpressionReplaceableWithOperatorAssigment
         final PsiBinaryExpression binaryRhs = (PsiBinaryExpression) rhs;
         final PsiExpression rhsRhs = binaryRhs.getROperand();
         final PsiExpression rhsLhs = binaryRhs.getLOperand();
-
         if(rhsRhs == null){
             return false;
         }
@@ -59,9 +55,13 @@ class AssignmentExpressionReplaceableWithOperatorAssigment
                 JavaTokenType.ANDAND.equals(rhsTokenType)){
             return false;
         }
+        final PsiExpression lhs = assignment.getLExpression();
         if(SideEffectChecker.mayHaveSideEffects(lhs)){
             return false;
         }
-        return EquivalenceChecker.expressionsAreEquivalent(lhs, rhsLhs);
+        if(!EquivalenceChecker.expressionsAreEquivalent(lhs, rhsLhs)){
+            return false;
+        }
+        return !ErrorUtil.containsError(element);
     }
 }

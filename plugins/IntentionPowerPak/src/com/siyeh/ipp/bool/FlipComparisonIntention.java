@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,40 +28,42 @@ import org.jetbrains.annotations.NotNull;
 
 public class FlipComparisonIntention extends MutablyNamedIntention {
 
-  public String getTextForElement(PsiElement element) {
-    String operatorText = "";
-    String flippedOperatorText = "";
-    final PsiBinaryExpression exp = (PsiBinaryExpression)element;
-    if (exp != null) {
-      final PsiJavaToken sign = exp.getOperationSign();
-      operatorText = sign.getText();
-      flippedOperatorText = ComparisonUtils.getFlippedComparison(operatorText);
+    public String getTextForElement(PsiElement element) {
+        String operatorText = "";
+        String flippedOperatorText = "";
+        final PsiBinaryExpression expression = (PsiBinaryExpression)element;
+        if (expression != null) {
+            final PsiJavaToken sign = expression.getOperationSign();
+            operatorText = sign.getText();
+            flippedOperatorText =
+                    ComparisonUtils.getFlippedComparison(sign);
+        }
+        if (operatorText.equals(flippedOperatorText)) {
+            return IntentionPowerPackBundle.message("flip.smth.intention.name",
+                    operatorText);
+        } else {
+            return IntentionPowerPackBundle.message(
+                    "flip.comparison.intention.name",
+                    operatorText, flippedOperatorText);
+        }
     }
-    if (operatorText.equals(flippedOperatorText)) {
-      return IntentionPowerPackBundle.message("flip.smth.intention.name", operatorText);
-    }
-    else {
-      return IntentionPowerPackBundle.message("flip.comparison.intention.name", operatorText, flippedOperatorText);
-    }
-  }
 
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
-    return new ComparisonPredicate();
-  }
+    @NotNull
+    public PsiElementPredicate getElementPredicate() {
+        return new ComparisonPredicate();
+    }
 
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiBinaryExpression exp =
-      (PsiBinaryExpression)element;
-    final PsiExpression lhs = exp.getLOperand();
-    final PsiExpression rhs = exp.getROperand();
-    final PsiJavaToken sign = exp.getOperationSign();
-    final String operand = sign.getText();
-    assert rhs != null;
-    final String expString =
-      rhs.getText() + ComparisonUtils.getFlippedComparison(operand) +
-      lhs.getText();
-    replaceExpression(expString, exp);
-  }
+    public void processIntention(PsiElement element)
+            throws IncorrectOperationException {
+        final PsiBinaryExpression expression =
+                (PsiBinaryExpression)element;
+        final PsiExpression lhs = expression.getLOperand();
+        final PsiExpression rhs = expression.getROperand();
+        final PsiJavaToken sign = expression.getOperationSign();
+        assert rhs != null;
+        final String expString =
+                rhs.getText() + ComparisonUtils.getFlippedComparison(sign) +
+                        lhs.getText();
+        replaceExpression(expString, expression);
+    }
 }

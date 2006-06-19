@@ -24,36 +24,26 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NonNls;
 
 class AssertLiteralPredicate implements PsiElementPredicate{
-    AssertLiteralPredicate(){
-        super();
-    }
 
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiMethodCallExpression)){
             return false;
         }
-        if(ErrorUtil.containsError(element)){
-            return false;
-        }
         final PsiMethodCallExpression expression =
                 (PsiMethodCallExpression) element;
         final PsiExpressionList args = expression.getArgumentList();
-        if(args == null){
-            return false;
-        }
         final int numExpressions = args.getExpressions().length;
         if(numExpressions < 1 || numExpressions > 2){
             return false;
         }
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
-        if(methodExpression == null){
+        @NonNls final String methodName = methodExpression.getReferenceName();
+        if (!("assertTrue".equals(methodName) ||
+                "assertFalse".equals(methodName) ||
+                "assertNull".equals(methodName))) {
             return false;
         }
-        @NonNls final String methodName = methodExpression.getReferenceName();
-
-        return "assertTrue".equals(methodName) ||
-               "assertFalse".equals(methodName) ||
-               "assertNull".equals(methodName);
+        return !ErrorUtil.containsError(element);
     }
 }

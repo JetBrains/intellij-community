@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,5 +18,6 @@ package com.siyeh.ipp.base;
 import com.intellij.psi.PsiElement;
 
 public interface PsiElementPredicate{
+
     boolean satisfiedBy(PsiElement element);
 }

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiReferenceExpression;
 
 class LabelSearchVisitor extends PsiRecursiveElementVisitor{
+
     private final String m_labelName;
     private boolean m_used = false;
 

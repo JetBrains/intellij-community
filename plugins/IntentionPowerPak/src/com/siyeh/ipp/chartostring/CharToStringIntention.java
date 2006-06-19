@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,30 +24,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class CharToStringIntention extends Intention {
 
-
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
-    return new CharToStringPredicate();
-  }
-
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiLiteralExpression charLiteral =
-      (PsiLiteralExpression)element;
-
-    assert charLiteral != null;
-    final String charLiteralText = charLiteral.getText();
-    final String stringLiteral = stringForCharLiteral(charLiteralText);
-    replaceExpression(stringLiteral, charLiteral);
-  }
-
-  private static String stringForCharLiteral(String charLiteral) {
-    if ("'\"'".equals(charLiteral)) {
-      return "\"\\\"\"";
+    @NotNull
+    protected PsiElementPredicate getElementPredicate() {
+        return new CharToStringPredicate();
     }
-    else {
-      return '\"' + charLiteral.substring(1, charLiteral.length() - 1) +
-             '\"';
+
+    public void processIntention(PsiElement element)
+            throws IncorrectOperationException {
+        final PsiLiteralExpression charLiteral =
+                (PsiLiteralExpression)element;
+        assert charLiteral != null;
+        final String charLiteralText = charLiteral.getText();
+        final String stringLiteral = stringForCharLiteral(charLiteralText);
+        replaceExpression(stringLiteral, charLiteral);
     }
-  }
+
+    private static String stringForCharLiteral(String charLiteral) {
+        if ("'\"'".equals(charLiteral)) {
+            return "\"\\\"\"";
+        } else {
+            return '\"' + charLiteral.substring(1, charLiteral.length() - 1) +
+                    '\"';
+        }
+    }
 }

@@ -153,8 +153,7 @@ public class CreateAssertIntention extends Intention {
         }
         final PsiExpressionList argList = call.getArgumentList();
         final PsiExpression[] expressions = argList.getExpressions();
-        return expressions.length == 1 &&
-                expressions[0] != null;
+        return expressions.length == 1 && expressions[0] != null;
     }
 
     private static boolean isEqualityComparison(PsiExpression expression) {

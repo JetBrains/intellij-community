@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 public class TreeUtil{
+
     private TreeUtil(){
         super();
     }

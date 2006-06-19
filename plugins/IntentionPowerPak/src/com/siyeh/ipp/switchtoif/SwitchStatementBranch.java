@@ -21,16 +21,17 @@ import com.intellij.psi.PsiLocalVariable;
 import java.util.*;
 
 class SwitchStatementBranch{
-    private final Set<PsiLocalVariable> m_pendingVariableDeclarations = new HashSet<PsiLocalVariable>(5);
-    private final List<String> m_labels = new ArrayList<String>(2);
-    private final List<PsiElement> m_bodyElements = new ArrayList<PsiElement>(5);
-    private final List<PsiElement> m_pendingWhiteSpace = new ArrayList<PsiElement>(2);
+
+    private final Set<PsiLocalVariable> m_pendingVariableDeclarations =
+            new HashSet<PsiLocalVariable>(5);
+    private final List<String> m_labels =
+            new ArrayList<String>(2);
+    private final List<PsiElement> m_bodyElements =
+            new ArrayList<PsiElement>(5);
+    private final List<PsiElement> m_pendingWhiteSpace =
+            new ArrayList<PsiElement>(2);
     private boolean m_default = false;
     private boolean m_hasStatements = false;
-
-    SwitchStatementBranch(){
-        super();
-    }
 
     public void addLabel(String labelString){
         m_labels.add(labelString);
@@ -52,7 +53,7 @@ class SwitchStatementBranch{
     }
 
     public void addWhiteSpace(PsiElement statement){
-        if(m_bodyElements.size() > 0){
+        if(!m_bodyElements.isEmpty()){
             m_pendingWhiteSpace.add(statement);
         }
     }

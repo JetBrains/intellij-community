@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 class EnumSwitchPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiSwitchStatement)){
-            return false;
-        }
-        if(ErrorUtil.containsError(element)){
             return false;
         }
         final PsiSwitchStatement switchStatement = (PsiSwitchStatement) element;
@@ -59,7 +57,8 @@ class EnumSwitchPredicate implements PsiElementPredicate{
         final PsiStatement[] statements = body.getStatements();
         for(PsiStatement statement : statements){
             if(statement instanceof PsiSwitchLabelStatement){
-                final PsiSwitchLabelStatement labelStatement = (PsiSwitchLabelStatement) statement;
+                final PsiSwitchLabelStatement labelStatement =
+                        (PsiSwitchLabelStatement) statement;
                 final PsiExpression value = labelStatement.getCaseValue();
                 if(value != null){
                     final String valueText = value.getText();
@@ -67,6 +66,9 @@ class EnumSwitchPredicate implements PsiElementPredicate{
                 }
             }
         }
-        return enumElements.size() != 0;
+        if (enumElements.isEmpty()) {
+            return false;
+        }
+        return !ErrorUtil.containsError(element);
     }
 }

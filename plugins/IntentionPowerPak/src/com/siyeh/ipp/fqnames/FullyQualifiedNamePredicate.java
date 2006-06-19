@@ -17,26 +17,39 @@ package com.siyeh.ipp.fqnames;
 
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.openapi.project.Project;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class FullyQualifiedNamePredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiJavaCodeReferenceElement) ||
-           !((PsiJavaCodeReferenceElement)element).isQualified()) {
+        if(!(element instanceof PsiJavaCodeReferenceElement)) {
             return false;
         }
-
-        if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class, PsiPackageStatement.class) != null) {
+        final PsiJavaCodeReferenceElement referenceElement =
+                (PsiJavaCodeReferenceElement)element;
+        if(!referenceElement.isQualified()) {
             return false;
         }
-
-        final PsiElement qualifier = ((PsiJavaCodeReferenceElement)element).getQualifier();
+        if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class,
+                PsiPackageStatement.class) != null) {
+            return false;
+        }
+        final PsiElement qualifier = referenceElement.getQualifier();
         if (qualifier instanceof PsiJavaCodeReferenceElement) {
-            final PsiElement resolved = ((PsiJavaCodeReferenceElement)qualifier).resolve();
-            if (resolved instanceof PsiPackage) return true;
+            final PsiJavaCodeReferenceElement qualfierReferenceElement =
+                    (PsiJavaCodeReferenceElement)qualifier;
+            final PsiElement resolved = qualfierReferenceElement.resolve();
+            if (resolved instanceof PsiPackage) {
+                return true;
+            }
             if (resolved instanceof PsiClass) {
-              return CodeStyleSettingsManager.getSettings(element.getProject()).INSERT_INNER_CLASS_IMPORTS;
+                final Project project = element.getProject();
+                final CodeStyleSettings codeStyleSettings =
+                        CodeStyleSettingsManager.getSettings(project);
+                return codeStyleSettings.INSERT_INNER_CLASS_IMPORTS;
             }
         }
         return false;

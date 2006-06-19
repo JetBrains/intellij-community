@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 class ExceptionUtils{
+
     private ExceptionUtils(){
         super();
     }
@@ -54,13 +55,12 @@ class ExceptionUtils{
             }
         } else if(statement instanceof PsiThrowStatement){
             calculateExceptionsThrownForThrowStatement(
-                    (PsiThrowStatement) statement,
-                    exceptionTypes);
+                    (PsiThrowStatement) statement, exceptionTypes);
         } else if(statement instanceof PsiExpressionListStatement){
             final PsiExpressionListStatement listStatement =
                     (PsiExpressionListStatement) statement;
             calculateExceptionsThrownForExpressionListStatement(listStatement,
-                                                                exceptionTypes);
+                    exceptionTypes);
         } else if(statement instanceof PsiExpressionStatement){
             final PsiExpressionStatement expStatement =
                     (PsiExpressionStatement) statement;
@@ -70,12 +70,12 @@ class ExceptionUtils{
             final PsiAssertStatement assertStatement =
                     (PsiAssertStatement) statement;
             calculateExceptionsThrownForAssertStatement(assertStatement,
-                                                        exceptionTypes);
+                    exceptionTypes);
         } else if(statement instanceof PsiDeclarationStatement){
             final PsiDeclarationStatement declStatement =
                     (PsiDeclarationStatement) statement;
             calculateExceptionsThrownForDeclarationStatemt(declStatement,
-                                                           exceptionTypes);
+                    exceptionTypes);
         } else if(statement instanceof PsiForStatement){
             calculateExceptionsThrownForForExpression(
                     (PsiForStatement) statement,
@@ -99,20 +99,20 @@ class ExceptionUtils{
             final PsiLabeledStatement labeledStatement =
                     (PsiLabeledStatement) statement;
             calculateExceptionsThrownForLabeledStatement(labeledStatement,
-                                                         exceptionTypes);
+                    exceptionTypes);
         } else if(statement instanceof PsiIfStatement){
             final PsiIfStatement ifStatement = (PsiIfStatement) statement;
             calculateExceptionsThrownForIfStatement(ifStatement,
-                                                    exceptionTypes);
+                    exceptionTypes);
         } else if(statement instanceof PsiTryStatement){
             final PsiTryStatement tryStatement = (PsiTryStatement) statement;
             calculateExceptionsThrownForTryStatement(tryStatement,
-                                                     exceptionTypes);
+                    exceptionTypes);
         } else if(statement instanceof PsiSwitchStatement){
             final PsiSwitchStatement switchStatement =
                     (PsiSwitchStatement) statement;
             calculateExceptionsThrownForSwitchStatement(switchStatement,
-                                                        exceptionTypes);
+                    exceptionTypes);
         }
     }
 
@@ -163,6 +163,9 @@ class ExceptionUtils{
             PsiThrowStatement throwStatement,
             Set<PsiType> exceptionTypes){
         final PsiExpression exception = throwStatement.getException();
+        if(exception == null){
+            return;
+        }
         final PsiType type = exception.getType();
         exceptionTypes.add(type);
         calculateExceptionsThrown(exception, exceptionTypes);
@@ -184,7 +187,7 @@ class ExceptionUtils{
         final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
         calculateExceptionsThrownForCodeBlock(tryBlock, exceptionThrown);
         final Set<PsiType> exceptionHandled =
-                ExceptionUtils.getExceptionTypesHandled(tryStatement);
+                getExceptionTypesHandled(tryStatement);
         for(PsiType thrownType : exceptionThrown){
             boolean found = false;
             for(PsiType handledType : exceptionHandled){
@@ -205,7 +208,7 @@ class ExceptionUtils{
         final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
         for(PsiCodeBlock catchBlock : catchBlocks){
             calculateExceptionsThrownForCodeBlock(catchBlock,
-                                                  exceptionTypes);
+                    exceptionTypes);
         }
     }
 
@@ -280,7 +283,7 @@ class ExceptionUtils{
                 exp instanceof PsiClassObjectAccessExpression){
         } else if(exp instanceof PsiTypeCastExpression){
             calculateExceptionsThrownForTypeCast((PsiTypeCastExpression) exp,
-                                                 exceptionTypes);
+                    exceptionTypes);
         } else if(exp instanceof PsiInstanceOfExpression){
             calculateExceptionsThrownForInstanceOf(
                     (PsiInstanceOfExpression) exp,
@@ -297,7 +300,7 @@ class ExceptionUtils{
                     exceptionTypes);
         } else if(exp instanceof PsiNewExpression){
             calculateExceptionsThrownForNewExpression((PsiNewExpression) exp,
-                                                      exceptionTypes);
+                    exceptionTypes);
         } else if(exp instanceof PsiArrayInitializerExpression){
             calculateExceptionsThrownForArrayInitializerExpression(
                     (PsiArrayInitializerExpression) exp,
@@ -386,11 +389,9 @@ class ExceptionUtils{
             PsiMethodCallExpression methExp,
             Set<PsiType> exceptionTypes){
         final PsiExpressionList argumentList = methExp.getArgumentList();
-        if(argumentList != null){
-            final PsiExpression[] expressions = argumentList.getExpressions();
-            for(PsiExpression expression : expressions){
-                calculateExceptionsThrown(expression, exceptionTypes);
-            }
+        final PsiExpression[] expressions = argumentList.getExpressions();
+        for(PsiExpression expression : expressions){
+            calculateExceptionsThrown(expression, exceptionTypes);
         }
         final PsiReferenceExpression methodExpression =
                 methExp.getMethodExpression();
@@ -479,8 +480,8 @@ class ExceptionUtils{
         calculateExceptionsThrown(operand, exceptionTypes);
     }
 
-    public static void calculateExceptionsThrownForCodeBlock(PsiCodeBlock block,
-                                                             Set<PsiType> exceptionTypes){
+    public static void calculateExceptionsThrownForCodeBlock(
+            PsiCodeBlock block, Set<PsiType> exceptionTypes){
         if(block == null){
             return;
         }

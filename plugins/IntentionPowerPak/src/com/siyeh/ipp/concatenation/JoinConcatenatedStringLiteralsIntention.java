@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,9 +63,13 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
 		final PsiExpression lhs = expression.getLOperand();
 		final Object lhsConstant =
 				constantEvaluationHelper.computeConstantExpression(lhs);
-		assert lhsConstant != null;
-		final String lhsText = lhsConstant.toString();
-		String result;
+        final String lhsText;
+        if (lhsConstant == null) {
+            lhsText = "";
+        } else {
+            lhsText = lhsConstant.toString();
+        }
+        String result;
 		if (lhsText.length() == 0) {
 			result = "";
 		} else {
@@ -74,8 +78,9 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
 		final PsiExpression rhs = expression.getROperand();
 		final Object rhsConstant =
 				constantEvaluationHelper.computeConstantExpression(rhs);
-		assert rhsConstant != null;
-		result += rhsConstant.toString();
+        if (rhsConstant != null) {
+            result += rhsConstant.toString();
+        }
 		result = StringUtil.escapeStringCharacters(result);
 		return result;
 	}

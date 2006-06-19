@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,33 +21,29 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NonNls;
 
 class EqualsPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiMethodCallExpression)){
-            return false;
-        }
-        if(ErrorUtil.containsError(element)){
             return false;
         }
         final PsiMethodCallExpression expression =
                 (PsiMethodCallExpression) element;
         final PsiExpressionList argumentList = expression.getArgumentList();
-        if(argumentList == null){
-            return false;
-        }
-        final PsiExpression[] args = argumentList.getExpressions();
-        if(args.length != 1){
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        if(arguments.length != 1){
             return false;
         }
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
-        if(methodExpression == null){
-            return false;
-        }
-        final PsiExpression qualifier = methodExpression.getQualifierExpression();
+        final PsiExpression qualifier =
+                methodExpression.getQualifierExpression();
         if(qualifier == null){
             return false;
         }
         @NonNls final String methodName = methodExpression.getReferenceName();
-        return "equals".equals(methodName);
+        if (!"equals".equals(methodName)) {
+            return false;
+        }
+        return !ErrorUtil.containsError(element);
     }
 }

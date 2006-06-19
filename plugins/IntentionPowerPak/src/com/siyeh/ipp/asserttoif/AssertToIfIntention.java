@@ -22,38 +22,35 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
-import com.siyeh.IntentionPowerPackBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class AssertToIfIntention extends Intention {
 
-
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
-    return new AssertStatementPredicate();
-  }
-
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiAssertStatement assertStatement = (PsiAssertStatement)element;
-    assert assertStatement != null;
-    final PsiExpression condition = assertStatement.getAssertCondition();
-    final PsiExpression description =
-      assertStatement.getAssertDescription();
-
-    final String negatedConditionString =
-      BoolUtils.getNegatedExpressionText(condition);
-    @NonNls final String newStatement;
-    if (description == null) {
-      newStatement = "if(" + negatedConditionString +
-                     "){ throw new IllegalArgumentException();}";
+    @NotNull
+    protected PsiElementPredicate getElementPredicate() {
+        return new AssertStatementPredicate();
     }
-    else {
-      newStatement = "if(" + negatedConditionString +
-                     "){ throw new IllegalArgumentException(" +
-                     description.getText() + ");}";
+
+    public void processIntention(PsiElement element)
+            throws IncorrectOperationException {
+        final PsiAssertStatement assertStatement = (PsiAssertStatement)element;
+        assert assertStatement != null;
+        final PsiExpression condition = assertStatement.getAssertCondition();
+        final PsiExpression description =
+                assertStatement.getAssertDescription();
+
+        final String negatedConditionString =
+                BoolUtils.getNegatedExpressionText(condition);
+        @NonNls final String newStatement;
+        if (description == null) {
+            newStatement = "if(" + negatedConditionString +
+                    "){ throw new IllegalArgumentException();}";
+        } else {
+            newStatement = "if(" + negatedConditionString +
+                    "){ throw new IllegalArgumentException(" +
+                    description.getText() + ");}";
+        }
+        replaceStatement(newStatement, assertStatement);
     }
-    replaceStatement(newStatement, assertStatement);
-  }
 }

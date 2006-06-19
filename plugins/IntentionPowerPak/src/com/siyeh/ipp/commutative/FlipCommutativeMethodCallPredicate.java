@@ -20,6 +20,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class FlipCommutativeMethodCallPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiMethodCallExpression)){
             return false;
@@ -29,21 +30,12 @@ class FlipCommutativeMethodCallPredicate implements PsiElementPredicate{
         }
         final PsiMethodCallExpression expression =
                 (PsiMethodCallExpression) element;
-
-        if(expression.getArgumentList() == null){
-            return false;
-        }
-
         // do it only when there is just one argument.
         final PsiExpressionList argumentList = expression.getArgumentList();
-        if(argumentList == null){
-            return false;
-        }
         final PsiExpression[] args = argumentList.getExpressions();
         if(args.length != 1){
             return false;
         }
-
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
         final PsiExpression qualifier =
@@ -52,23 +44,18 @@ class FlipCommutativeMethodCallPredicate implements PsiElementPredicate{
         if(qualifier == null){
             return false;
         }
-
         final String methodName = methodExpression.getReferenceName();
         // the logic is...
-        // if the argument takes a method of the same name with the caller as parameter
-        // then we can switch the argument and the caller.
-
+        // if the argument takes a method of the same name with the caller
+        // as parameter then we can switch the argument and the caller.
         final PsiType callerType = qualifier.getType();
         final PsiType argumentType = args[0].getType();
-
         if(argumentType == null || !(argumentType instanceof PsiClassType)){
             return false;
         }
-
         if(callerType == null || !(callerType instanceof PsiClassType)){
             return false;
         }
-
         final PsiClass argumentClass = ((PsiClassType) argumentType).resolve();
         if(argumentClass == null){
             return false;
@@ -84,7 +71,7 @@ class FlipCommutativeMethodCallPredicate implements PsiElementPredicate{
                 if(parameters.length == 1){
                     final PsiParameter parameter = parameters[0];
                     final PsiType type = parameter.getType();
-                    if(!(type == null || !type.isAssignableFrom(callerType))){
+                    if(type.isAssignableFrom(callerType)){
                         return true;
                     }
                 }

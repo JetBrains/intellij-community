@@ -20,18 +20,21 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ShiftByLiteralPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(element instanceof PsiBinaryExpression){
             return isBinaryShiftByLiteral((PsiBinaryExpression) element);
         }
         if(element instanceof PsiAssignmentExpression){
-            return isAssignmentShiftByLiteral((PsiAssignmentExpression) element);
+            return isAssignmentShiftByLiteral(
+                    (PsiAssignmentExpression) element);
         } else{
             return false;
         }
     }
 
-    private boolean isAssignmentShiftByLiteral(PsiAssignmentExpression expression){
+    private static boolean isAssignmentShiftByLiteral(
+            PsiAssignmentExpression expression){
         final PsiJavaToken sign = expression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
         if(!tokenType.equals(JavaTokenType.LTLTEQ) &&
@@ -53,7 +56,8 @@ class ShiftByLiteralPredicate implements PsiElementPredicate{
         return ShiftUtils.isIntLiteral(rhs);
     }
 
-    private boolean isBinaryShiftByLiteral(PsiBinaryExpression expression){
+    private static boolean isBinaryShiftByLiteral(
+            PsiBinaryExpression expression){
         final PsiJavaToken sign = expression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
         if(!tokenType.equals(JavaTokenType.LTLT) &&

@@ -21,19 +21,14 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NonNls;
 
 class AssertEqualsLiteralPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiMethodCallExpression)){
-            return false;
-        }
-        if(ErrorUtil.containsError(element)){
             return false;
         }
         final PsiMethodCallExpression expression =
                 (PsiMethodCallExpression) element;
         final PsiExpressionList argumentList = expression.getArgumentList();
-        if(argumentList == null){
-            return false;
-        }
         final PsiExpression[] args = argumentList.getExpressions();
         final int numArgs = args.length;
         if(numArgs < 2 || numArgs > 3){
@@ -41,11 +36,11 @@ class AssertEqualsLiteralPredicate implements PsiElementPredicate{
         }
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
-        if(methodExpression == null){
-            return false;
-        }
         @NonNls final String methodName = methodExpression.getReferenceName();
         if(!"assertEquals".equals(methodName)){
+            return false;
+        }
+        if(ErrorUtil.containsError(element)){
             return false;
         }
         if(numArgs == 2){
@@ -61,6 +56,6 @@ class AssertEqualsLiteralPredicate implements PsiElementPredicate{
         }
         @NonNls final String text = exp.getText();
         return "true".equals(text) || "false".equals(text) ||
-               "null".equals(text);
+                "null".equals(text);
     }
 }

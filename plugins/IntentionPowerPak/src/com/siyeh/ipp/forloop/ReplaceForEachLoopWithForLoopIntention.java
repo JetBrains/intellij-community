@@ -26,104 +26,91 @@ import org.jetbrains.annotations.NonNls;
 
 public class ReplaceForEachLoopWithForLoopIntention extends Intention {
 
-
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
-    return new ForEachLoopPredicate();
-  }
-
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiForeachStatement statement = (PsiForeachStatement)element.getParent();
-
-    assert statement != null;
-    @NonNls final StringBuffer newStatement = new StringBuffer();
-    final PsiManager psiManager = statement.getManager();
-    final Project project = psiManager.getProject();
-    final CodeStyleManager codeStyleManager =
-      CodeStyleManager.getInstance(project);
-    final PsiExpression iteratedValue = statement.getIteratedValue();
-    if (iteratedValue.getType() instanceof PsiArrayType) {
-      final String index = codeStyleManager.suggestUniqueVariableName("i",
-                                                                      statement,
-                                                                      true);
-      newStatement.append("for(int ");
-      newStatement.append(index);
-      newStatement.append(" = 0;");
-      newStatement.append(index);
-      newStatement.append('<');
-      newStatement.append(iteratedValue.getText());
-      newStatement.append(".length;");
-      newStatement.append(index);
-      newStatement.append("++)");
-      newStatement.append("{ ");
-      newStatement.append(statement.getIterationParameter().getType()
-        .getPresentableText());
-      newStatement.append(' ');
-      newStatement.append(statement.getIterationParameter().getName());
-      newStatement.append(" = ");
-      newStatement.append(iteratedValue.getText());
-      newStatement.append('[');
-      newStatement.append(index);
-      newStatement.append("];");
-      final PsiStatement body = statement.getBody();
-      if (body instanceof PsiBlockStatement) {
-        final PsiCodeBlock block =
-          ((PsiBlockStatement)body).getCodeBlock();
-        final PsiElement[] children =
-          block.getChildren();
-        for (int i = 1; i < children.length - 1; i++) {
-          //skip the braces
-          newStatement.append(children[i].getText());
-        }
-      }
-      else {
-        newStatement.append(body.getText());
-      }
-      newStatement.append('}');
+    @NotNull
+    public PsiElementPredicate getElementPredicate() {
+        return new ForEachLoopPredicate();
     }
-    else {
 
-      final String iterator =
-        codeStyleManager.suggestUniqueVariableName("it", statement,
-                                                   true);
-      final String typeText = statement.getIterationParameter()
-        .getType()
-        .getPresentableText();
-      newStatement.append("for(java.util.Iterator ");
-      newStatement.append(iterator);
-      newStatement.append(" = ");
-      newStatement.append(iteratedValue.getText());
-      newStatement.append(".iterator();");
-      newStatement.append(iterator);
-      newStatement.append(".hasNext();)");
-      newStatement.append('{');
-      newStatement.append(typeText);
-      newStatement.append(' ');
-      newStatement.append(statement.getIterationParameter().getName());
-      newStatement.append(" = ");
-      newStatement.append('(');
-      newStatement.append(typeText);
-      newStatement.append(')');
-      newStatement.append(iterator);
-      newStatement.append(".next();");
-
-      final PsiStatement body = statement.getBody();
-      if (body instanceof PsiBlockStatement) {
-        final PsiCodeBlock block =
-          ((PsiBlockStatement)body).getCodeBlock();
-        final PsiElement[] children = block.getChildren();
-        for (int i = 1; i < children.length - 1; i++) {
-          //skip the braces
-          newStatement.append(children[i].getText());
+    public void processIntention(PsiElement element)
+            throws IncorrectOperationException {
+        final PsiForeachStatement statement =
+                (PsiForeachStatement)element.getParent();
+        if (statement == null) {
+            return;
         }
-
-      }
-      else {
-        newStatement.append(body.getText());
-      }
-      newStatement.append('}');
+        final PsiManager psiManager = statement.getManager();
+        final Project project = psiManager.getProject();
+        final CodeStyleManager codeStyleManager =
+                CodeStyleManager.getInstance(project);
+        final PsiExpression iteratedValue = statement.getIteratedValue();
+        if (iteratedValue == null) {
+            return;
+        }
+        @NonNls final StringBuilder newStatement = new StringBuilder();
+        final PsiParameter iterationParameter =
+                statement.getIterationParameter();
+        final PsiType type = iterationParameter.getType();
+        if (iteratedValue.getType() instanceof PsiArrayType) {
+            final String index =
+                    codeStyleManager.suggestUniqueVariableName(
+                            "i", statement, true);
+            newStatement.append("for(int ");
+            newStatement.append(index);
+            newStatement.append(" = 0;");
+            newStatement.append(index);
+            newStatement.append('<');
+            newStatement.append(iteratedValue.getText());
+            newStatement.append(".length;");
+            newStatement.append(index);
+            newStatement.append("++)");
+            newStatement.append("{ ");
+            newStatement.append(type.getPresentableText());
+            newStatement.append(' ');
+            newStatement.append(iterationParameter.getName());
+            newStatement.append(" = ");
+            newStatement.append(iteratedValue.getText());
+            newStatement.append('[');
+            newStatement.append(index);
+            newStatement.append("];");
+        } else {
+            final String iterator =
+                    codeStyleManager.suggestUniqueVariableName(
+                            "it", statement, true);
+            final String typeText = type.getPresentableText();
+            newStatement.append("for(java.util.Iterator ");
+            newStatement.append(iterator);
+            newStatement.append(" = ");
+            newStatement.append(iteratedValue.getText());
+            newStatement.append(".iterator();");
+            newStatement.append(iterator);
+            newStatement.append(".hasNext();)");
+            newStatement.append('{');
+            newStatement.append(typeText);
+            newStatement.append(' ');
+            newStatement.append(iterationParameter.getName());
+            newStatement.append(" = ");
+            newStatement.append('(');
+            newStatement.append(typeText);
+            newStatement.append(')');
+            newStatement.append(iterator);
+            newStatement.append(".next();");
+        }
+        final PsiStatement body = statement.getBody();
+        if (body == null) {
+            return;
+        }
+        if (body instanceof PsiBlockStatement) {
+            final PsiCodeBlock block =
+                    ((PsiBlockStatement)body).getCodeBlock();
+            final PsiElement[] children = block.getChildren();
+            for (int i = 1; i < children.length - 1; i++) {
+                //skip the braces
+                newStatement.append(children[i].getText());
+            }
+        } else {
+            newStatement.append(body.getText());
+        }
+        newStatement.append('}');
+        replaceStatement(newStatement.toString(), statement);
     }
-    replaceStatement(newStatement.toString(), statement);
-  }
 }

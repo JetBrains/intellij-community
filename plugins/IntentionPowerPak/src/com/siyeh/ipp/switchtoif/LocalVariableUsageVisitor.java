@@ -21,6 +21,7 @@ import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiReferenceExpression;
 
 class LocalVariableUsageVisitor extends PsiRecursiveElementVisitor{
+
     private final PsiLocalVariable m_var;
     private boolean m_used = false;
 

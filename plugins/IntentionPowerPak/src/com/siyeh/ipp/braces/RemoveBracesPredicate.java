@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,20 +30,24 @@ public class RemoveBracesPredicate implements PsiElementPredicate
 		}
 		final PsiBlockStatement blockStatement = (PsiBlockStatement)element;
 		final PsiElement parent = blockStatement.getParent();
-		if(!(parent instanceof PsiIfStatement || parent instanceof PsiWhileStatement ||
-			parent instanceof PsiDoWhileStatement || parent instanceof PsiForStatement ||
-			parent instanceof PsiForeachStatement))
+		if(!(parent instanceof PsiIfStatement ||
+                parent instanceof PsiWhileStatement ||
+                parent instanceof PsiDoWhileStatement ||
+                parent instanceof PsiForStatement ||
+                parent instanceof PsiForeachStatement))
 		{
 			return false;
 		}
 		final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
 		final PsiStatement[] statements = codeBlock.getStatements();
-        if(statements.length != 1 || statements[0] instanceof PsiDeclarationStatement){
+        if(statements.length != 1 ||
+                statements[0] instanceof PsiDeclarationStatement)
+        {
             return false;
         }
         final PsiFile file = element.getContainingFile();
         //this intention doesn't work in JSP files, as it can't tell about tags
         // inside the braeces
-        return !(PsiUtil.isInJspFile(file));
+        return !PsiUtil.isInJspFile(file);
     }
 }

@@ -24,19 +24,20 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 
 public class SplitDeclarationAndInitializationPredicate
         implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiField)){
             return false;
         }
         final PsiField field = (PsiField) element;
-        if(ErrorUtil.containsError(field)){
-            return false;
-        }
         final PsiClass aClass = field.getContainingClass();
         if (aClass == null || aClass.isInterface()){
             return false;
         }
         final PsiExpression initializer = field.getInitializer();
-        return initializer != null;
+        if (initializer == null) {
+            return false;
+        }
+        return !ErrorUtil.containsError(field);
     }
 }

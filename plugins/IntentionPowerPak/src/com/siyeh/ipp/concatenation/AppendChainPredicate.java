@@ -25,12 +25,15 @@ class AppendChainPredicate implements PsiElementPredicate{
             return false;
         }
 	    final PsiMethodCallExpression call = (PsiMethodCallExpression) element;
-        final PsiReferenceExpression methodExpression = call.getMethodExpression();
-        final PsiExpression qualifier = methodExpression.getQualifierExpression();
+        final PsiReferenceExpression methodExpression =
+                call.getMethodExpression();
+        final PsiExpression qualifier =
+                methodExpression.getQualifierExpression();
         if(!(qualifier instanceof PsiMethodCallExpression)){
             return false;
         }
-        final PsiMethodCallExpression qualifierCall = (PsiMethodCallExpression) element;
+        final PsiMethodCallExpression qualifierCall =
+                (PsiMethodCallExpression) element;
         if(!AppendUtil.isAppendCall(qualifierCall)){
             return false;
         }
@@ -39,7 +42,8 @@ class AppendChainPredicate implements PsiElementPredicate{
             return true;
         }
 	    final PsiElement grandParent = parent.getParent();
-	    if (parent instanceof PsiLocalVariable && grandParent instanceof PsiDeclarationStatement) {
+	    if (parent instanceof PsiLocalVariable &&
+                grandParent instanceof PsiDeclarationStatement) {
 		    final PsiDeclarationStatement declarationStatement =
 				    (PsiDeclarationStatement)grandParent;
 		    if (declarationStatement.getDeclaredElements().length == 1) {

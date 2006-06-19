@@ -24,6 +24,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ForEachLoopPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiJavaToken)){
             return false;
@@ -34,7 +35,6 @@ class ForEachLoopPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiElement parent = element.getParent();
-
         if(!(parent instanceof PsiForeachStatement)){
             return false;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
 package com.siyeh.ipp.psiutils;
 
 import com.intellij.psi.*;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public class BoolUtils{
+
     private BoolUtils(){
         super();
     }
@@ -33,7 +35,8 @@ public class BoolUtils{
             final PsiPrefixExpression prefixAncestor =
                     (PsiPrefixExpression) ancestor.getParent();
             final PsiJavaToken sign = prefixAncestor.getOperationSign();
-            if(sign.getTokenType().equals(JavaTokenType.EXCL)){
+            final IElementType tokenType = sign.getTokenType();
+            if(tokenType.equals(JavaTokenType.EXCL)){
                 return true;
             }
         }
@@ -63,12 +66,17 @@ public class BoolUtils{
         }
         final PsiPrefixExpression prefixExp = (PsiPrefixExpression) exp;
         final PsiJavaToken sign = prefixExp.getOperationSign();
-        return sign.getTokenType().equals(JavaTokenType.EXCL);
+        final IElementType tokenType = sign.getTokenType();
+        return tokenType.equals(JavaTokenType.EXCL);
     }
 
+    @Nullable
     public static PsiExpression getNegated(PsiExpression exp){
         final PsiPrefixExpression prefixExp = (PsiPrefixExpression) exp;
         final PsiExpression operand = prefixExp.getOperand();
+        if (operand == null) {
+            return null;
+        }
         return ParenthesesUtils.stripParentheses(operand);
     }
 
@@ -76,28 +84,32 @@ public class BoolUtils{
         if(exp instanceof PsiLiteralExpression){
             final PsiLiteralExpression expression = (PsiLiteralExpression) exp;
             @NonNls final String text = expression.getText();
-            return "true".equals(text) || "false".equals(text);
+            return PsiKeyword.TRUE.equals(text) ||
+                    PsiKeyword.FALSE.equals(text);
         }
         return false;
     }
 
+    @Nullable
     public static String getNegatedExpressionText(PsiExpression condition){
-        if(BoolUtils.isNegation(condition)){
+        if(isNegation(condition)){
             final PsiExpression negated = getNegated(condition);
+            if (negated == null) {
+                return null;
+            }
             return negated.getText();
         } else if(ComparisonUtils.isComparison(condition)){
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) condition;
             final PsiJavaToken sign = binaryExpression.getOperationSign();
-            final String operator = sign.getText();
             final String negatedComparison =
-                    ComparisonUtils.getNegatedComparison(operator);
+                    ComparisonUtils.getNegatedComparison(sign);
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
             assert rhs != null;
             return lhs.getText() + negatedComparison + rhs.getText();
         } else if(ParenthesesUtils.getPrecendence(condition) >
-                  ParenthesesUtils.PREFIX_PRECEDENCE){
+                ParenthesesUtils.PREFIX_PRECEDENCE){
             return "!(" + condition.getText() + ')';
         } else{
             return '!' + condition.getText();

@@ -20,15 +20,12 @@ import com.intellij.psi.PsiStatement;
 import java.util.*;
 
 class IfStatementBranch{
+
     private Set<String> m_topLevelVariables = new HashSet<String>(3);
     private Set<String> m_innerVariables = new HashSet<String>(3);
     private final List<String> m_conditions = new ArrayList<String>(3);
     private PsiStatement m_statement = null;
     private boolean m_else = false;
-
-    IfStatementBranch(){
-        super();
-    }
 
     public void addCondition(String conditionString){
         m_conditions.add(conditionString);
@@ -70,7 +67,8 @@ class IfStatementBranch{
         return Collections.unmodifiableSet(m_innerVariables);
     }
 
-    public boolean topLevelDeclarationsConfictWith(IfStatementBranch testBranch){
+    public boolean topLevelDeclarationsConfictWith(
+            IfStatementBranch testBranch){
         final Set<String> innerVariables = testBranch.getInnerVariables();
         final Set<String> topLevel = testBranch.getTopLevelVariables();
         return hasNonEmptyIntersection(m_topLevelVariables, topLevel) ||

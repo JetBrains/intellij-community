@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,20 +26,24 @@ import org.jetbrains.annotations.NotNull;
 
 public class SplitElseIfIntention extends Intention {
 
+    @NotNull
+    public PsiElementPredicate getElementPredicate() {
+        return new SplitElseIfPredicate();
+    }
 
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
-    return new SplitElseIfPredicate();
-  }
-
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiJavaToken token = (PsiJavaToken)element;
-    final PsiIfStatement parentStatement =
-      (PsiIfStatement)token.getParent();
-    assert parentStatement != null;
-    final PsiStatement elseBranch = parentStatement.getElseBranch();
-    final String newStatement = '{' + elseBranch.getText() + '}';
-    replaceStatement(newStatement, elseBranch);
-  }
+    public void processIntention(PsiElement element)
+            throws IncorrectOperationException {
+        final PsiJavaToken token = (PsiJavaToken)element;
+        final PsiIfStatement parentStatement =
+                (PsiIfStatement)token.getParent();
+        if (parentStatement == null) {
+            return;
+        }
+        final PsiStatement elseBranch = parentStatement.getElseBranch();
+        if (elseBranch == null) {
+            return;
+        }
+        final String newStatement = '{' + elseBranch.getText() + '}';
+        replaceStatement(newStatement, elseBranch);
+    }
 }

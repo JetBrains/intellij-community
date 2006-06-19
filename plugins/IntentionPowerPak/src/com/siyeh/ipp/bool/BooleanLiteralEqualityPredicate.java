@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ class BooleanLiteralEqualityPredicate implements PsiElementPredicate{
 		final PsiJavaToken sign = expression.getOperationSign();
 		final IElementType tokenType = sign.getTokenType();
 		if(!tokenType.equals(JavaTokenType.EQEQ) &&
-                   !tokenType.equals(JavaTokenType.NE)){
+				!tokenType.equals(JavaTokenType.NE)){
 			return false;
 		}
 		final PsiExpression lhs = expression.getLOperand();
@@ -40,15 +40,13 @@ class BooleanLiteralEqualityPredicate implements PsiElementPredicate{
 			return false;
 		}
 		if (!BoolUtils.isBooleanLiteral(lhs) &&
-                    !BoolUtils.isBooleanLiteral(rhs)) {
+				!BoolUtils.isBooleanLiteral(rhs)) {
 			return false;
 		}
-
-                final PsiType type = expression.getType();
-                if (!PsiType.BOOLEAN.equals(type)){
-                        return false;
-                }
-
-                return !ErrorUtil.containsError(element);
+        final PsiType type = expression.getType();
+        if (!PsiType.BOOLEAN.equals(type)){
+            return false;
+        }
+        return !ErrorUtil.containsError(element);
 	}
 }

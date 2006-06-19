@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ipp.braces;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiStatement;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
@@ -39,9 +40,9 @@ public class AddBracesIntention extends MutablyNamedIntention {
 			final PsiIfStatement ifStatement = (PsiIfStatement)parent;
 			final PsiStatement elseBranch = ifStatement.getElseBranch();
 			if (element.equals(elseBranch)) {
-				keyword = "else";
+				keyword = PsiKeyword.ELSE;
 			} else {
-				keyword = "if";
+				keyword = PsiKeyword.IF;
 			}
 		} else {
 			final PsiElement firstChild = parent.getFirstChild();
@@ -54,7 +55,7 @@ public class AddBracesIntention extends MutablyNamedIntention {
 	protected void processIntention(@NotNull PsiElement element)
 			throws IncorrectOperationException {
 		final PsiStatement statement = (PsiStatement)element;
-		final String text = element.getText();
-		replaceStatement("{\n" + text + "\n}", statement);
+		final String newStatement = "{\n" + element.getText() + "\n}";
+		replaceStatement(newStatement, statement);
 	}
 }

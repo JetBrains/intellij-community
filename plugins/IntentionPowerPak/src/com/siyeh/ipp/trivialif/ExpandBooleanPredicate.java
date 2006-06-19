@@ -18,8 +18,10 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ExpandBooleanPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiJavaToken)){
             return false;
@@ -34,7 +36,10 @@ class ExpandBooleanPredicate implements PsiElementPredicate{
         if(isBooleanReturn(containingStatement)){
             return true;
         }
-        return isBooleanAssignment(containingStatement);
+        if (!isBooleanAssignment(containingStatement)) {
+            return false;
+        }
+        return !ErrorUtil.containsError(containingStatement);
     }
 
     public static boolean isBooleanReturn(PsiStatement containingStatement){
@@ -64,9 +69,6 @@ class ExpandBooleanPredicate implements PsiElementPredicate{
         final PsiExpressionStatement expressionStatement =
                 (PsiExpressionStatement) containingStatement;
         final PsiExpression expression = expressionStatement.getExpression();
-        if(expression == null){
-            return false;
-        }
         if(!(expression instanceof PsiAssignmentExpression)){
             return false;
         }

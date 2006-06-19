@@ -18,6 +18,7 @@ package com.siyeh.ipp.psiutils;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.util.PsiUtil;
 
 public class ErrorUtil{
 
@@ -26,9 +27,11 @@ public class ErrorUtil{
     }
 
     public static boolean containsError(PsiElement element){
-        final ErrorElementVisitor visitor = new ErrorElementVisitor();
-        element.accept(visitor);
-        return visitor.containsErrorElement();
+        // check only immediate children, full tree traveral is too expensive
+        return PsiUtil.hasErrorElementChild(element);
+        //final ErrorElementVisitor visitor = new ErrorElementVisitor();
+        //element.accept(visitor);
+        //return visitor.containsErrorElement();
     }
 
     private static class ErrorElementVisitor extends PsiRecursiveElementVisitor{

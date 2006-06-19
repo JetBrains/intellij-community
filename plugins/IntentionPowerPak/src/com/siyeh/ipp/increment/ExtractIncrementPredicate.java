@@ -21,14 +21,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
-class ExtractIncrementPredicate
-        implements PsiElementPredicate{
+class ExtractIncrementPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiPrefixExpression) &&
                 !(element instanceof PsiPostfixExpression)){
-            return false;
-        }
-        if(ErrorUtil.containsError(element)){
             return false;
         }
         final PsiJavaToken sign;
@@ -37,7 +34,6 @@ class ExtractIncrementPredicate
         } else{
             sign = ((PsiPrefixExpression) element).getOperationSign();
         }
-
         final IElementType tokenType = sign.getTokenType();
         if(!JavaTokenType.PLUSPLUS.equals(tokenType) &&
                 !JavaTokenType.MINUSMINUS.equals(tokenType)){
@@ -47,15 +43,16 @@ class ExtractIncrementPredicate
         if(parent instanceof PsiExpressionStatement){
             return false;
         }
-
-        final PsiStatement containingStatement = PsiTreeUtil
-                .getParentOfType(element, PsiStatement.class);
+        final PsiStatement containingStatement =
+                PsiTreeUtil.getParentOfType(element, PsiStatement.class);
         if((containingStatement instanceof PsiReturnStatement ||
                 containingStatement instanceof PsiThrowStatement) &&
-                element instanceof PsiPostfixExpression)
-        {
+                element instanceof PsiPostfixExpression){
             return false;
         }
-        return containingStatement != null;
+        if (containingStatement == null) {
+            return false;
+        }
+        return !ErrorUtil.containsError(element);
     }
 }

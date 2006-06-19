@@ -20,6 +20,7 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
 
 class ShiftUtils{
+
     private ShiftUtils(){
         super();
     }

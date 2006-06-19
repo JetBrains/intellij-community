@@ -30,7 +30,6 @@ class CreateAssertPredicate implements PsiElementPredicate{
         if(!(element instanceof PsiExpressionStatement)){
             return false;
         }
-
         final PsiExpressionStatement statement =
                 (PsiExpressionStatement) element;
         final PsiExpression expression = statement.getExpression();
@@ -42,8 +41,8 @@ class CreateAssertPredicate implements PsiElementPredicate{
         if(!PsiType.BOOLEAN.equals(type)){
             return false;
         }
-        final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(
-                expression, PsiMethod.class);
+        final PsiMethod containingMethod =
+                PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
         return isTestMethod(containingMethod);
     }
 

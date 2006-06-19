@@ -22,14 +22,14 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 
 class ConvertIntegerToOctalPredicate implements PsiElementPredicate{
+
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiLiteralExpression)){
             return false;
         }
         final PsiLiteralExpression expression = (PsiLiteralExpression) element;
         final PsiType type = expression.getType();
-        if(!(type.equals(PsiType.INT) ||
-             type.equals(PsiType.LONG))){
+        if(!(PsiType.INT.equals(type) || PsiType.LONG.equals(type))){
             return false;
         }
         @NonNls final String text = expression.getText();
