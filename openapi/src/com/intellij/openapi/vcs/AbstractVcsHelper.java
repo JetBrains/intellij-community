@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -153,4 +154,6 @@ public abstract class AbstractVcsHelper {
    * @since 5.1
    */
   public abstract void showCodeSmellErrors(final List<CodeSmellInfo> smells);
+    
+  public abstract void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path);
 }

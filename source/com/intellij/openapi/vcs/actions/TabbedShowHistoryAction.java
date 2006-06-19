@@ -1,25 +1,15 @@
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
-import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.peer.PeerFactory;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.util.ContentsUtil;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 
 
 public class TabbedShowHistoryAction extends AbstractVcsAction {
@@ -79,32 +69,10 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
     VirtualFile someVFile = path.getVirtualFile() != null ? path.getVirtualFile() : path.getVirtualFileParent();
     AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(someVFile);
     VcsHistoryProvider vcsHistoryProvider = getProvider(activeVcs);
-    try {
-      VcsHistorySession session = vcsHistoryProvider.createSessionFor(path);
-      List<VcsFileRevision> revisionsList = session.getRevisionList();
-      if (revisionsList.isEmpty()) return;
-
-      String actionName = VcsBundle.message("action.name.file.history", path.getName());
-
-      ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).getContentManager();
-
-      FileHistoryPanelImpl fileHistoryPanel = new FileHistoryPanelImpl(project,
-                                                                       path, session, activeVcs, contentManager);
-      Content content = PeerFactory.getInstance().getContentFactory().createContent(fileHistoryPanel, actionName, true);
-      ContentsUtil.addOrReplaceContent(contentManager, content, true);
-
-      ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
-      toolWindow.activate(null);
-    }
-    catch (Exception exception) {
-      reportError(exception);
-    }
+    AbstractVcsHelper.getInstance(project).showFileHistory(vcsHistoryProvider, path);
   }
 
-  protected void reportError(Exception exception) {
-    exception.printStackTrace();
-    Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"), Messages.getErrorIcon());
-  }
+
 
   protected boolean forceSyncUpdate(final AnActionEvent e) {
     return true;

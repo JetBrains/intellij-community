@@ -67,7 +67,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private final DefaultActionGroup myPopupActions;
 
   private final Project myProject;
-  private final AbstractVcs myVcs;
+  private final VcsHistoryProvider myProvider;
   private VcsHistorySession myHistorySession;
   private final FilePath myFilePath;
   private final DualView myDualView;
@@ -151,15 +151,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   public FileHistoryPanelImpl(Project project,
                               FilePath filePath,
                               VcsHistorySession session,
-                              AbstractVcs vcs,
+                              VcsHistoryProvider provider,
                               ContentManager contentManager) {
-    super(contentManager, vcs.getVcsHistoryProvider().getHelpId());
-    myVcs = vcs;
+    super(contentManager, provider.getHelpId());
+    myProvider = provider;
     myProject = project;
     myHistorySession = session;
     myFilePath = filePath;
 
-    VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
     COLUMNS = createColumnList(provider);
 
     myComments = new JTextArea();
@@ -506,7 +505,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   private VcsHistoryProvider getHistoryProvider() {
-    return myVcs.getVcsHistoryProvider();
+    return myProvider;
   }
 
   private class MyShowAsTreeAction extends ToggleAction {

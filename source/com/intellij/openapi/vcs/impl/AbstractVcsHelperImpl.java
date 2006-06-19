@@ -41,9 +41,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.DifferenceType;
 import com.intellij.openapi.vcs.checkin.VcsOperation;
-import com.intellij.openapi.vcs.history.CurrentRevision;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.impl.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.merge.AbstractMergeAction;
 import com.intellij.openapi.vcs.merge.MergeProvider;
@@ -55,6 +54,7 @@ import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.vcs.versions.VersionRevisions;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
@@ -63,10 +63,8 @@ import com.intellij.psi.PsiImportList;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.ui.content.ContentManagerListener;
-import com.intellij.ui.content.MessageView;
+import com.intellij.ui.content.*;
+import com.intellij.util.ContentsUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.ErrorTreeView;
@@ -146,8 +144,36 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   }
 
+    public void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path) {
+        try {
+          VcsHistorySession session = vcsHistoryProvider.createSessionFor(path);
+          List<VcsFileRevision> revisionsList = session.getRevisionList();
+          if (revisionsList.isEmpty()) return;
+    
+          String actionName = VcsBundle.message("action.name.file.history", path.getName());
+    
+          ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject).getContentManager();
+    
+          FileHistoryPanelImpl fileHistoryPanel = new FileHistoryPanelImpl(myProject,
+                                                                           path, session, vcsHistoryProvider, contentManager);
+          Content content = PeerFactory.getInstance().getContentFactory().createContent(fileHistoryPanel, actionName, true);
+          ContentsUtil.addOrReplaceContent(contentManager, content, true);
+    
+          ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
+          toolWindow.activate(null);
+        }
+        catch (Exception exception) {
+          reportError(exception);
+        }
+        
+    }
 
-  public List<Change> createChangeFromAbstractRevisions(final List<AbstractRevisions> revisions) {
+    protected void reportError(Exception exception) {
+        exception.printStackTrace();
+        Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"), Messages.getErrorIcon());
+    }
+
+    public List<Change> createChangeFromAbstractRevisions(final List<AbstractRevisions> revisions) {
     List<Change> result = new ArrayList<Change>();
     for (AbstractRevisions revision : revisions) {
       final DifferenceType type = revision.getDifference();
