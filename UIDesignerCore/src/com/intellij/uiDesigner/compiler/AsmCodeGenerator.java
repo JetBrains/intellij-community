@@ -390,7 +390,7 @@ public class AsmCodeGenerator {
                                             "Only components bound to fields can have custom creation code");
         }
         generator.loadThis();
-        generator.getField(Type.getType("L" + myClassName + ";"), binding,
+        generator.getField(getMainClassType(), binding,
                            Type.getType((String)myFieldDescMap.get(binding)));
         generator.storeLocal(componentLocal);
       }
@@ -612,8 +612,8 @@ public class AsmCodeGenerator {
       }
     }
 
-    private void generateButtonGroups(final LwRootContainer rootContainer, final GeneratorAdapter generator) {
-      LwButtonGroup[] groups = rootContainer.getButtonGroups();
+    private void generateButtonGroups(final LwRootContainer rootContainer, final GeneratorAdapter generator) throws CodeGenerationException {
+      IButtonGroup[] groups = rootContainer.getButtonGroups();
       if (groups.length > 0) {
         int groupLocal = generator.newLocal(ourButtonGroupType);
         for(int groupIndex=0; groupIndex<groups.length; groupIndex++) {
@@ -624,6 +624,13 @@ public class AsmCodeGenerator {
             generator.dup();
             generator.invokeConstructor(ourButtonGroupType, Method.getMethod("void <init>()"));
             generator.storeLocal(groupLocal);
+
+            if (groups [groupIndex].isBound()) {
+              validateFieldClass(groups [groupIndex].getName(), ButtonGroup.class, null);
+              generator.loadThis();
+              generator.loadLocal(groupLocal);
+              generator.putField(getMainClassType(), groups [groupIndex].getName(), ourButtonGroupType);
+            }
 
             for(int i = 0; i<ids.length; i++) {
               Integer localInt = (Integer) myIdToLocalMap.get(ids [i]);
@@ -653,22 +660,30 @@ public class AsmCodeGenerator {
 
         generator.loadThis();
         generator.loadLocal(componentLocal);
-        generator.putField(Type.getType("L" + myClassName + ";"), binding,
+        generator.putField(getMainClassType(), binding,
                            Type.getType((String)myFieldDescMap.get(binding)));
       }
+    }
+
+    private Type getMainClassType() {
+      return Type.getType("L" + myClassName + ";");
     }
 
     private void validateFieldBinding(LwComponent component, final Class componentClass) throws CodeGenerationException {
       String binding = component.getBinding();
       if (binding == null) return;
 
+      validateFieldClass(binding, componentClass, component.getId());
+    }
+
+    private void validateFieldClass(String binding, Class componentClass, String componentId) throws CodeGenerationException {
       if (!myFieldDescMap.containsKey(binding)) {
-        throw new CodeGenerationException(component.getId(), "Cannot bind: field does not exist: " + myClassToBind + "." + binding);
+        throw new CodeGenerationException(componentId, "Cannot bind: field does not exist: " + myClassToBind + "." + binding);
       }
 
       final Type fieldType = Type.getType((String)myFieldDescMap.get(binding));
       if (fieldType.getSort() != Type.OBJECT) {
-        throw new CodeGenerationException(component.getId(), "Cannot bind: field is of primitive type: " + myClassToBind + "." + binding);
+        throw new CodeGenerationException(componentId, "Cannot bind: field is of primitive type: " + myClassToBind + "." + binding);
       }
 
       Class fieldClass;
@@ -676,10 +691,10 @@ public class AsmCodeGenerator {
         fieldClass = myLoader.loadClass(fieldType.getClassName());
       }
       catch (ClassNotFoundException e) {
-        throw new CodeGenerationException(component.getId(), "Class not found: " + fieldType.getClassName());
+        throw new CodeGenerationException(componentId, "Class not found: " + fieldType.getClassName());
       }
       if (!fieldClass.isAssignableFrom(componentClass)) {
-        throw new CodeGenerationException(component.getId(), "Cannot bind: Incompatible types. Cannot assign " + componentClass.getName() + " to field " + myClassToBind + "." + binding);
+        throw new CodeGenerationException(componentId, "Cannot bind: Incompatible types. Cannot assign " + componentClass.getName() + " to field " + myClassToBind + "." + binding);
       }
     }
 

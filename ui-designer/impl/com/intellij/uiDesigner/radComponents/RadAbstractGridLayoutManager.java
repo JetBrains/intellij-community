@@ -32,7 +32,7 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
   public abstract int[] getGridCellSizes(RadContainer container, boolean isRow);
 
   @Nullable
-  public RowColumnPropertiesPanel getRowColumnPropertiesPanel(RadContainer container, boolean isRow, int[] selectedIndices) {
+  public CustomPropertiesPanel getRowColumnPropertiesPanel(RadContainer container, boolean isRow, int[] selectedIndices) {
     return null;
   }
 

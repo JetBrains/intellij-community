@@ -55,7 +55,7 @@ class PassiveDecorationLayer extends JComponent{
             0,
             rootContainer.getDelegee()
           );
-          RadButtonGroup group = rootContainer.findGroupForComponent(component);
+          RadButtonGroup group = (RadButtonGroup)FormEditingUtil.findGroupForComponent(rootContainer, component);
           if (group != null && !paintedGroups.contains(group) && (component.isSelected() || selectedGroups.contains(group))) {
             paintedGroups.add(group);
             Painter.paintButtonGroupLines(rootContainer, group, g);

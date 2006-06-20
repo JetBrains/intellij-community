@@ -106,7 +106,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
     }
   }
 
-  public LwButtonGroup[] getButtonGroups() {
+  public IButtonGroup[] getButtonGroups() {
     return (LwButtonGroup[])myButtonGroups.toArray(new LwButtonGroup[myButtonGroups.size()]);
   }
 

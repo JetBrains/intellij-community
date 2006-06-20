@@ -5,25 +5,28 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
 import com.intellij.uiDesigner.lw.IRootContainer;
+import com.intellij.uiDesigner.lw.IButtonGroup;
 import com.intellij.uiDesigner.quickFixes.*;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -82,7 +85,7 @@ public final class ErrorAnalyzer {
     // 2. Validate bindings to fields
     // field name -> error message
     final ArrayList<String> usedBindings = new ArrayList<String>(); // for performance reasons
-    final HashMap<String, PsiType> className2Type = new HashMap<String,PsiType>(); // for performance reasons
+    final Set<IButtonGroup> processedGroups = new HashSet<IButtonGroup>();
     FormEditingUtil.iterate(
       rootContainer,
       new FormEditingUtil.ComponentVisitor<IComponent>() {
@@ -93,39 +96,20 @@ public final class ErrorAnalyzer {
           component.putClientProperty(CLIENT_PROP_BINDING_ERROR, null);
 
           final String binding = component.getBinding();
-          if(binding == null){
-            return true;
-          }
 
           // a. Check that field exists and field is not static
-          if(psiClass != null){
-            final PsiField[] fields = psiClass.getFields();
-            PsiField field = null;
-            for(int i = fields.length - 1; i >=0 ; i--){
-              if(binding.equals(fields[i].getName())){
-                field = fields[i];
-                break;
-              }
-            }
-            if(field == null){
-              final QuickFix[] fixes = editor != null ? new QuickFix[]{
-                new CreateFieldFix(editor, psiClass, component.getComponentClassName(), binding)} :
-                                                                                                  QuickFix.EMPTY_ARRAY;
-              component.putClientProperty(
-               CLIENT_PROP_BINDING_ERROR,
-               new ErrorInfo(
-                 null, UIDesignerBundle.message("error.no.field.in.class", binding, classToBind),
-                 HighlightDisplayLevel.ERROR,
-                 fixes
-               )
-              );
-              return true;
-            }
-            else if(field.hasModifierProperty(PsiModifier.STATIC)){
+          if(psiClass != null && binding != null) {
+            if (validateFieldInClass(component, binding, component.getComponentClassName(), psiClass, editor, module)) return true;
+          }
+
+          // b. Check that binding is unique
+          if (binding != null) {
+            if(usedBindings.contains(binding)){
+              // TODO[vova] implement
               component.putClientProperty(
                 CLIENT_PROP_BINDING_ERROR,
                 new ErrorInfo(
-                  null, UIDesignerBundle.message("error.cant.bind.to.static", binding),
+                  null, UIDesignerBundle.message("error.binding.already.exists", binding),
                   HighlightDisplayLevel.ERROR,
                   QuickFix.EMPTY_ARRAY
                 )
@@ -133,67 +117,16 @@ public final class ErrorAnalyzer {
               return true;
             }
 
-            // Check that field has correct fieldType
-            try {
-              final PsiType componentType;
-              final String className = component.getComponentClassName().replace('$', '.'); // workaround for PSI
-              if(className2Type.containsKey(className)){
-                componentType = className2Type.get(className);
-              }
-              else{
-                componentType = PsiManager.getInstance(module.getProject()).getElementFactory().createTypeFromText(
-                  className,
-                  null
-                );
-              }
-              final PsiType fieldType = field.getType();
-              if(componentType != null && !fieldType.isAssignableFrom(componentType)){
-                final QuickFix[] fixes = editor != null ? new QuickFix[]{
-                  new ChangeFieldTypeFix(editor, field, componentType)
-                } : QuickFix.EMPTY_ARRAY;
-                component.putClientProperty(
-                  CLIENT_PROP_BINDING_ERROR,
-                  new ErrorInfo(
-                    null, UIDesignerBundle.message("error.bind.incompatible.types", fieldType.getPresentableText(), className),
-                    HighlightDisplayLevel.ERROR,
-                    fixes
-                  )
-                );
-                return true;
-              }
-            }
-            catch (IncorrectOperationException e) {
-            }
-
-            if (component.isCustomCreate() && FormEditingUtil.findCreateComponentsMethod(psiClass) == null) {
-              final QuickFix[] fixes = editor != null ? new QuickFix[]{
-                new GenerateCreateComponentsFix(editor, psiClass)
-              } : QuickFix.EMPTY_ARRAY;
-              component.putClientProperty(
-                CLIENT_PROP_BINDING_ERROR,
-                new ErrorInfo(
-                  "Custom Create",
-                  UIDesignerBundle.message("error.no.custom.create.method"), HighlightDisplayLevel.ERROR,
-                  fixes));
-              return true;
-            }
+            usedBindings.add(binding);
           }
 
-          // b. Check that binding is unique
-          if(usedBindings.contains(binding)){
-            // TODO[vova] implement
-            component.putClientProperty(
-              CLIENT_PROP_BINDING_ERROR,
-              new ErrorInfo(
-                null, UIDesignerBundle.message("error.binding.already.exists", binding),
-                HighlightDisplayLevel.ERROR,
-                QuickFix.EMPTY_ARRAY
-              )
-            );
-            return true;
+          IButtonGroup group = FormEditingUtil.findGroupForComponent(rootContainer, component);
+          if (group != null && !processedGroups.contains(group)) {
+            processedGroups.add(group);
+            if (group.isBound()) {
+              validateFieldInClass(component, group.getName(), ButtonGroup.class.getName(), psiClass, editor, module);
+            }
           }
-
-          usedBindings.add(binding);
 
           return true;
         }
@@ -268,7 +201,7 @@ public final class ErrorAnalyzer {
                   if (rootContainer.isInspectionSuppressed(tool.getShortName(), component.getId())) continue;
                   ErrorInfo[] errorInfos = tool.checkComponent(editor, component);
                   if (errorInfos != null) {
-                    ArrayList<ErrorInfo> errorList = (ArrayList<ErrorInfo>)component.getClientProperty(CLIENT_PROP_ERROR_ARRAY);
+                    ArrayList<ErrorInfo> errorList = getErrorInfos(component);
                     if (errorList == null) {
                       errorList = new ArrayList<ErrorInfo>();
                       component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, errorList);
@@ -291,8 +224,85 @@ public final class ErrorAnalyzer {
     }
   }
 
+  private static boolean validateFieldInClass(final IComponent component, final String fieldName, final String fieldClassName,
+                                              final PsiClass psiClass, final GuiEditor editor, final Module module) {
+    final PsiField[] fields = psiClass.getFields();
+    PsiField field = null;
+    for(int i = fields.length - 1; i >=0 ; i--){
+      if(fieldName.equals(fields[i].getName())){
+        field = fields[i];
+        break;
+      }
+    }
+    if(field == null){
+      final QuickFix[] fixes = editor != null
+                               ? new QuickFix[]{ new CreateFieldFix(editor, psiClass, fieldClassName, fieldName) }
+                               : QuickFix.EMPTY_ARRAY;
+      component.putClientProperty(
+       CLIENT_PROP_BINDING_ERROR,
+       new ErrorInfo(
+         null, UIDesignerBundle.message("error.no.field.in.class", fieldName, psiClass.getQualifiedName()),
+         HighlightDisplayLevel.ERROR,
+         fixes
+       )
+      );
+      return true;
+    }
+    else if(field.hasModifierProperty(PsiModifier.STATIC)){
+      component.putClientProperty(
+        CLIENT_PROP_BINDING_ERROR,
+        new ErrorInfo(
+          null, UIDesignerBundle.message("error.cant.bind.to.static", fieldName),
+          HighlightDisplayLevel.ERROR,
+          QuickFix.EMPTY_ARRAY
+        )
+      );
+      return true;
+    }
+
+    // Check that field has correct fieldType
+    try {
+      final String className = fieldClassName.replace('$', '.'); // workaround for PSI
+      final PsiType componentType = PsiManager.getInstance(module.getProject()).getElementFactory().createTypeFromText(
+        className,
+        null
+      );
+      final PsiType fieldType = field.getType();
+      if(!fieldType.isAssignableFrom(componentType)){
+        final QuickFix[] fixes = editor != null ? new QuickFix[]{
+          new ChangeFieldTypeFix(editor, field, componentType)
+        } : QuickFix.EMPTY_ARRAY;
+        component.putClientProperty(
+          CLIENT_PROP_BINDING_ERROR,
+          new ErrorInfo(
+            null, UIDesignerBundle.message("error.bind.incompatible.types", fieldType.getPresentableText(), className),
+            HighlightDisplayLevel.ERROR,
+            fixes
+          )
+        );
+        return true;
+      }
+    }
+    catch (IncorrectOperationException e) {
+    }
+
+    if (component.isCustomCreate() && FormEditingUtil.findCreateComponentsMethod(psiClass) == null) {
+      final QuickFix[] fixes = editor != null ? new QuickFix[]{
+        new GenerateCreateComponentsFix(editor, psiClass)
+      } : QuickFix.EMPTY_ARRAY;
+      component.putClientProperty(
+        CLIENT_PROP_BINDING_ERROR,
+        new ErrorInfo(
+          "Custom Create",
+          UIDesignerBundle.message("error.no.custom.create.method"), HighlightDisplayLevel.ERROR,
+          fixes));
+      return true;
+    }
+    return false;
+  }
+
   private static void putError(final IComponent component, final ErrorInfo errorInfo) {
-    ArrayList<ErrorInfo> errorList = (ArrayList<ErrorInfo>)component.getClientProperty(CLIENT_PROP_ERROR_ARRAY);
+    ArrayList<ErrorInfo> errorList = getErrorInfos(component);
     if (errorList == null) {
       errorList = new ArrayList<ErrorInfo>();
       component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, errorList);
@@ -325,7 +335,7 @@ public final class ErrorAnalyzer {
 
     // General error
     {
-      final ArrayList<ErrorInfo> errorInfo = (ArrayList<ErrorInfo>)component.getClientProperty(CLIENT_PROP_ERROR_ARRAY);
+      final ArrayList<ErrorInfo> errorInfo = getErrorInfos(component);
       if(errorInfo != null && errorInfo.size() > 0){
         return errorInfo.get(0);
       }
@@ -344,11 +354,16 @@ public final class ErrorAnalyzer {
     if (errorInfo != null) {
       result.add(errorInfo);
     }
-    final ArrayList<ErrorInfo> errorInfos = (ArrayList<ErrorInfo>)component.getClientProperty(CLIENT_PROP_ERROR_ARRAY);
+    final ArrayList<ErrorInfo> errorInfos = getErrorInfos(component);
     if (errorInfos != null) {
       result.addAll(errorInfos);
     }
     return result.toArray(new ErrorInfo[result.size()]);
+  }
+
+  private static ArrayList<ErrorInfo> getErrorInfos(final IComponent component) {
+    //noinspection unchecked
+    return (ArrayList<ErrorInfo>)component.getClientProperty(CLIENT_PROP_ERROR_ARRAY);
   }
 
   @Nullable public static HighlightDisplayLevel getHighlightDisplayLevel(final RadComponent component) {

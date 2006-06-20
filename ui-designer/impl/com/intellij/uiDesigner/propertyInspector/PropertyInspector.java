@@ -4,8 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;import com.intellij.uiDesigner.radComponents.RowColumnPropertiesPanel;
+import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
@@ -16,9 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;import javax.swing.event.ChangeListener;import javax.swing.event.ChangeEvent;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.*;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -32,9 +32,9 @@ public final class PropertyInspector extends JPanel{
   private PropertyInspector.MyComponentSelectionListener myComponentSelectionListener;
   @NonNls private static final String INSPECTOR_CARD = "inspector";
   @NonNls private static final String EMPTY_CARD = "empty";
-  @NonNls private static final String COLUMN_CARD = "column";
-  private RowColumnPropertiesPanel myColumnPropertiesPanel;
-  private ChangeListener myColumnPropertiesChangeListener;
+  @NonNls private static final String CUSTOM_CARD = "column";
+  private CustomPropertiesPanel myCustomPropertiesPanel;
+  private ChangeListener myCustomPropertiesChangeListener;
   private RadContainer myPropertiesPanelContainer;
 
   public PropertyInspector(Project project, @NotNull final ComponentTree componentTree) {
@@ -80,9 +80,11 @@ public final class PropertyInspector extends JPanel{
     // Install light bulb
     myQuickFixManager = new QuickFixManagerImpl(null, myInspectorTable);
 
-    myColumnPropertiesChangeListener = new ChangeListener() {
+    myCustomPropertiesChangeListener = new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
-        myPropertiesPanelContainer.revalidate();
+        if (myPropertiesPanelContainer != null) {
+          myPropertiesPanelContainer.revalidate();
+        }
         myEditor.refreshAndSave(true);
       }
     };
@@ -115,13 +117,25 @@ public final class PropertyInspector extends JPanel{
         myInspectorTable.synchWithTree(forceSynch);
       }
       else{
-        cardLayout.show(this, EMPTY_CARD);
+        List<RadButtonGroup> buttonGroups = myComponentTree.getSelectedElements(RadButtonGroup.class);
+        if (buttonGroups.size() > 0) {
+          showButtonGroupProperties(buttonGroups.get(0));
+        }
+        else {
+          cardLayout.show(this, EMPTY_CARD);
+        }
       }
     }
   }
 
+  private void showButtonGroupProperties(final RadButtonGroup group) {
+    ButtonGroupPropertiesPanel props = new ButtonGroupPropertiesPanel(myEditor.getRootContainer(), group);
+    myPropertiesPanelContainer = null;
+    showCustomPropertiesPanel(props);
+  }
+
   private boolean showSelectedColumnProperties() {
-    if (myColumnPropertiesPanel != null && IJSwingUtilities.hasFocus(myColumnPropertiesPanel.getComponent())) {
+    if (myCustomPropertiesPanel != null && IJSwingUtilities.hasFocus(myCustomPropertiesPanel.getComponent())) {
       return true;
     }
     if (myEditor == null) return false;
@@ -131,20 +145,24 @@ public final class PropertyInspector extends JPanel{
     if (container == null) return false;
     final int[] selection = panel.getSelectedCells(null);
     myPropertiesPanelContainer = container;
-    final RowColumnPropertiesPanel propertiesPanel = container.getGridLayoutManager().getRowColumnPropertiesPanel(container, panel.isRow(), selection);
+    final CustomPropertiesPanel propertiesPanel = container.getGridLayoutManager().getRowColumnPropertiesPanel(container, panel.isRow(), selection);
     if (propertiesPanel == null) return false;
-    if (!Comparing.equal(propertiesPanel, myColumnPropertiesPanel)) {
-      if (myColumnPropertiesPanel != null) {
-        remove(myColumnPropertiesPanel.getComponent());
-        myColumnPropertiesPanel.removeChangeListener(myColumnPropertiesChangeListener);
+    showCustomPropertiesPanel(propertiesPanel);
+    return true;
+  }
+
+  private void showCustomPropertiesPanel(final CustomPropertiesPanel propertiesPanel) {
+    if (!Comparing.equal(propertiesPanel, myCustomPropertiesPanel)) {
+      if (myCustomPropertiesPanel != null) {
+        remove(myCustomPropertiesPanel.getComponent());
+        myCustomPropertiesPanel.removeChangeListener(myCustomPropertiesChangeListener);
       }
-      myColumnPropertiesPanel = propertiesPanel;
-      myColumnPropertiesPanel.addChangeListener(myColumnPropertiesChangeListener);
-      add(myColumnPropertiesPanel.getComponent(), COLUMN_CARD);
+      myCustomPropertiesPanel = propertiesPanel;
+      myCustomPropertiesPanel.addChangeListener(myCustomPropertiesChangeListener);
+      add(myCustomPropertiesPanel.getComponent(), CUSTOM_CARD);
     }
     final CardLayout cardLayout = (CardLayout)getLayout();
-    cardLayout.show(this, COLUMN_CARD);
-    return true;
+    cardLayout.show(this, CUSTOM_CARD);
   }
 
   public boolean isEditing(){

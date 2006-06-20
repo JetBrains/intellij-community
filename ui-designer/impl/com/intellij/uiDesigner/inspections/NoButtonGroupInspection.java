@@ -152,7 +152,7 @@ public class NoButtonGroupInspection extends BaseFormInspection {
     public void run() {
       RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(myComponent);
       if (root == null) return;
-      for(RadButtonGroup group: root.getAllGroups()) {
+      for(RadButtonGroup group: root.getButtonGroups()) {
         if (group.getName().equals(myGroupName)) {
           root.setGroupForComponent(myComponent, group);
           break;

@@ -737,22 +737,32 @@ public final class FormSourceCodeGenerator {
                                     final TObjectIntHashMap<String> class2variableIndex,
                                     final HashMap<String, LwComponent> id2component,
                                     final PsiClass aClass) {
-    LwButtonGroup[] groups = rootContainer.getButtonGroups();
-    if (groups.length > 0) {
-      append("javax.swing.ButtonGroup buttonGroup;");
-      for(LwButtonGroup group: groups) {
-        String[] ids = group.getComponentIds();
-        if (ids.length > 0) {
-          append("buttonGroup = new javax.swing.ButtonGroup();");
-          for(String id: ids) {
-            LwComponent target = id2component.get(id);
-            if (target != null) {
-              String targetVariable = getVariable(target, component2variable, class2variableIndex, aClass);
-              startMethodCall("buttonGroup", "add");
-              pushVar(targetVariable);
-              endMethod();
+    IButtonGroup[] groups = rootContainer.getButtonGroups();
+    boolean haveGroupDeclaration = false;
+    for(IButtonGroup group: groups) {
+      boolean haveGroupConstructor = false;
+      String[] ids = group.getComponentIds();
+      for(String id: ids) {
+        LwComponent target = id2component.get(id);
+        if (target != null) {
+          if (!haveGroupConstructor) {
+            if (group.isBound()) {
+              append(group.getName());
             }
+            else {
+              if (!haveGroupDeclaration) {
+                append("javax.swing.ButtonGroup buttonGroup;");
+                haveGroupDeclaration = true;
+              }
+              append("buttonGroup");
+            }
+            append("= new javax.swing.ButtonGroup();");
+            haveGroupConstructor = true;
           }
+          String targetVariable = getVariable(target, component2variable, class2variableIndex, aClass);
+          startMethodCall(group.isBound() ? group.getName() : "buttonGroup", "add");
+          pushVar(targetVariable);
+          endMethod();
         }
       }
     }

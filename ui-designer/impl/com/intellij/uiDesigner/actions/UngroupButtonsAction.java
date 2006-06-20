@@ -1,10 +1,11 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.uiDesigner.radComponents.RadButtonGroup;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.lw.IButtonGroup;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,12 +36,12 @@ public class UngroupButtonsAction extends AbstractGuiEditorAction {
 
   public static boolean isSameGroup(final GuiEditor editor, final ArrayList<RadComponent> selectedComponents) {
     final RadRootContainer rootContainer = editor.getRootContainer();
-    RadButtonGroup group = rootContainer.findGroupForComponent(selectedComponents.get(0));
+    IButtonGroup group = FormEditingUtil.findGroupForComponent(rootContainer, selectedComponents.get(0));
     if (group == null) {
       return false;
     }
     for(int i=1; i<selectedComponents.size(); i++) {
-      if (rootContainer.findGroupForComponent(selectedComponents.get(i)) != group) {
+      if (FormEditingUtil.findGroupForComponent(rootContainer, selectedComponents.get(i)) != group) {
         return false;
       }
     }

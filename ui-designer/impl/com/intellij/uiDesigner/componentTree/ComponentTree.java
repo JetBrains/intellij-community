@@ -47,6 +47,7 @@ import java.awt.dnd.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -259,7 +260,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     return null;
   }
 
-  public <T> Collection<T> getSelectedElements(Class<? extends T> elementClass) {
+  public <T> List<T> getSelectedElements(Class<? extends T> elementClass) {
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) {
       return Collections.emptyList();

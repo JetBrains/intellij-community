@@ -65,6 +65,7 @@ public class UIFormXmlConstants {
   public static final String ATTRIBUTE_DEFAULTALIGN_HORZ = "defaultalign-horz";
   public static final String ATTRIBUTE_DEFAULTALIGN_VERT = "defaultalign-vert";
   public static final String ATTRIBUTE_INSPECTION = "inspection";
+  public static final String ATTRIBUTE_BOUND = "bound";
 
   public static final String ELEMENT_BUTTON_GROUPS = "buttonGroups";
   public static final String ELEMENT_GROUP = "group";

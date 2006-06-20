@@ -309,7 +309,7 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
   }
 
   @Override
-  public RowColumnPropertiesPanel getRowColumnPropertiesPanel(RadContainer container, boolean isRow, int[] selectedIndices) {
+  public CustomPropertiesPanel getRowColumnPropertiesPanel(RadContainer container, boolean isRow, int[] selectedIndices) {
     if (myPropertiesPanel == null) {
       myPropertiesPanel = new GridLayoutColumnProperties();
     }

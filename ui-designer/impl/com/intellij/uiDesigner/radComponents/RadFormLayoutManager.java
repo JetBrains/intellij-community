@@ -354,7 +354,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   }
 
   @Override
-  public RowColumnPropertiesPanel getRowColumnPropertiesPanel(RadContainer container, boolean isRow, int[] selectedIndices) {
+  public CustomPropertiesPanel getRowColumnPropertiesPanel(RadContainer container, boolean isRow, int[] selectedIndices) {
     if (myPropertiesPanel == null) {
       myPropertiesPanel = new FormLayoutColumnProperties();
     }

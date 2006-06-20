@@ -176,10 +176,8 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
         processor.execute(new ResourceBundleKeyReference(file, bundleAttribute.getValue(), getValueRange(keyAttribute)));
       }
 
-      final XmlAttribute formFileAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_FORM_FILE, Utils.FORM_NAMESPACE);
-      if (formFileAttribute != null) {
-        processor.execute(new NestedFormFileReference(file, getValueRange(formFileAttribute)));
-      }
+      processNestedFormReference(tag, processor, file);
+      processButtonGroupReference(tag, processor, file, classReference);
     }
 
     // component class
@@ -200,6 +198,22 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
     final XmlTag[] subtags = tag.getSubTags();
     for (XmlTag subtag : subtags) {
       processReferences(subtag, classReference, file, processor);
+    }
+  }
+
+  private static void processNestedFormReference(final XmlTag tag, final PsiReferenceProcessor processor, final PsiPlainTextFile file) {
+    final XmlAttribute formFileAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_FORM_FILE, Utils.FORM_NAMESPACE);
+    if (formFileAttribute != null) {
+      processor.execute(new NestedFormFileReference(file, getValueRange(formFileAttribute)));
+    }
+  }
+
+  private static void processButtonGroupReference(final XmlTag tag, final PsiReferenceProcessor processor, final PsiPlainTextFile file,
+                                                  final PsiReference classReference) {
+    final XmlAttribute boundAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_BOUND, Utils.FORM_NAMESPACE);
+    final XmlAttribute nameAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_NAME, Utils.FORM_NAMESPACE);
+    if (boundAttribute != null && Boolean.parseBoolean(boundAttribute.getValue()) && nameAttribute != null) {
+      processor.execute(new FieldFormReference(file, classReference, getValueRange(nameAttribute), null, null, false));
     }
   }
 

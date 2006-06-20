@@ -44,7 +44,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
       if (suppressions.length > 0) {
         elements.add(suppressions);
       }
-      RadButtonGroup[] buttonGroups = rootContainer.getAllGroups();
+      RadButtonGroup[] buttonGroups = rootContainer.getButtonGroups();
       if (buttonGroups.length > 0) {
         elements.add(buttonGroups);
       }

@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class FormLayoutColumnProperties implements RowColumnPropertiesPanel {
+public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   private JPanel myRootPanel;
   private JRadioButton myDefaultRadioButton;
   private JRadioButton myPreferredRadioButton;

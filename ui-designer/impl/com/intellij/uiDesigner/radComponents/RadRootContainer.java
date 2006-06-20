@@ -6,10 +6,7 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.lw.IRootContainer;
-import com.intellij.uiDesigner.lw.LwButtonGroup;
-import com.intellij.uiDesigner.lw.LwInspectionSuppression;
+import com.intellij.uiDesigner.lw.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,15 +123,6 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     return RadXYLayoutManager.INSTANCE;
   }
 
-  @Nullable public RadButtonGroup findGroupForComponent(@NotNull final RadComponent component) {
-    for(RadButtonGroup group: myButtonGroups) {
-      if (group.contains(component)) {
-        return group;
-      }
-    }
-    return null;
-  }
-
   public void setGroupForComponent(@NotNull RadComponent component, @Nullable RadButtonGroup value) {
     for(RadButtonGroup group: myButtonGroups) {
       if (group == value) {
@@ -146,7 +134,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     }
   }
 
-  public RadButtonGroup[] getAllGroups() {
+  public RadButtonGroup[] getButtonGroups() {
     return myButtonGroups.toArray(new RadButtonGroup[myButtonGroups.size()]);
   }
 
@@ -170,12 +158,13 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     return group;
   }
 
-  public void setButtonGroups(final LwButtonGroup[] buttonGroups) {
+  public void setButtonGroups(final IButtonGroup[] buttonGroups) {
     myButtonGroups.clear();
-    for(LwButtonGroup lwGroup: buttonGroups) {
+    for(IButtonGroup lwGroup: buttonGroups) {
       final String[] componentIds = lwGroup.getComponentIds();
       if (componentIds.length > 0) {
         RadButtonGroup group = createGroup(lwGroup.getName());
+        group.setBound(lwGroup.isBound());
         group.addComponentIds(componentIds);
       }
     }

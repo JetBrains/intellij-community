@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class GridLayoutColumnProperties implements RowColumnPropertiesPanel {
+public class GridLayoutColumnProperties implements CustomPropertiesPanel {
   private JPanel myRootPanel;
   private JCheckBox myWantGrowCheckBox;
   private JLabel myTitleLabel;

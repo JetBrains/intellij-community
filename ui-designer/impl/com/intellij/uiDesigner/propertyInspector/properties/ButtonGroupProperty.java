@@ -36,7 +36,7 @@ public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> 
 
   public RadButtonGroup getValue(RadComponent component) {
     final RadRootContainer rootContainer = (RadRootContainer) FormEditingUtil.getRoot(component);
-    return rootContainer == null ? null : rootContainer.findGroupForComponent(component);
+    return rootContainer == null ? null : (RadButtonGroup) FormEditingUtil.findGroupForComponent(rootContainer, component);
   }
 
   protected void setValueImpl(RadComponent component, RadButtonGroup value) throws Exception {
@@ -108,12 +108,12 @@ public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> 
     }
 
     private void updateModel() {
-      RadButtonGroup[] groups = myRootContainer.getAllGroups();
+      RadButtonGroup[] groups = myRootContainer.getButtonGroups();
       RadButtonGroup[] allGroups = new RadButtonGroup[groups.length+2];
       System.arraycopy(groups, 0, allGroups, 1, groups.length);
       allGroups [allGroups.length-1] = RadButtonGroup.NEW_GROUP;
       myCbx.setModel(new DefaultComboBoxModel(allGroups));
-      myCbx.setSelectedItem(myRootContainer.findGroupForComponent(myComponent));
+      myCbx.setSelectedItem(FormEditingUtil.findGroupForComponent(myRootContainer, myComponent));
     }
   }
 }

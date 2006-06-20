@@ -85,71 +85,74 @@ public final class BindingProperty extends Property<RadComponent, String> {
       return;
     }
 
-    if (value.length() == 0) {
-      if (component.isCustomCreateRequired()) {
-        throw new Exception(UIDesignerBundle.message("error.custom.create.binding.required"));
-      }
-      checkRemoveUnusedField(component, component.getBinding(), FormEditingUtil.getNextSaveUndoGroupId(myProject));
-      component.setBinding(null);
-      component.setCustomCreate(false);
-      return;
-    }
-
     //TODO[anton,vova]: check identifier!!!
+
+    final RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
+    final String oldBinding = getValue(component);
 
     // Check that binding remains unique
 
-    final RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
-    if (
-      !FormEditingUtil.isBindingUnique(component, value, root)
-    ) {
-      //noinspection HardCodedStringLiteral
-      throw new Exception("binding is not unique");
+    if (value.length() > 0) {
+      if (!FormEditingUtil.isBindingUnique(component, value, root)) {
+        throw new Exception(UIDesignerBundle.message("error.binding.not.unique"));
+      }
+
+      component.setBinding(value);
+      component.setDefaultBinding(false);
+    }
+    else {
+      if (component.isCustomCreateRequired()) {
+        throw new Exception(UIDesignerBundle.message("error.custom.create.binding.required"));
+      }
+      component.setBinding(null);
+      component.setCustomCreate(false);
     }
 
     // Set new value or rename old one. It means that previous binding exists
     // and the new one doesn't exist we need to ask user to create new field
     // or rename old one.
 
-    final String oldBinding = getValue(component);
+    updateBoundFieldName(root, oldBinding, value, component.getComponentClassName());
+  }
 
-    component.setBinding(value);
-    component.setDefaultBinding(false);
-
+  public static void updateBoundFieldName(final RadRootContainer root, final String oldName, final String newName, final String fieldClassName) {
     final String classToBind = root.getClassToBind();
-    if(classToBind == null){
+    if (classToBind == null) return;
+
+    final Project project = root.getProject();
+    if (newName.length() == 0) {
+      checkRemoveUnusedField(root, oldName, FormEditingUtil.getNextSaveUndoGroupId(project));
       return;
     }
 
-    final PsiClass aClass = PsiManager.getInstance(myProject).findClass(classToBind, GlobalSearchScope.allScope(myProject));
+    final PsiClass aClass = PsiManager.getInstance(project).findClass(classToBind, GlobalSearchScope.allScope(project));
     if(aClass == null){
       return;
     }
 
-    if(oldBinding == null) {
-      if (aClass.findFieldByName(value, true) == null) {
-        CreateFieldFix.runImpl(myProject, root, aClass, component.getComponentClassName(), value, false,
-                               FormEditingUtil.getNextSaveUndoGroupId(myProject));
+    if(oldName == null) {
+      if (aClass.findFieldByName(newName, true) == null) {
+        CreateFieldFix.runImpl(project, root, aClass, fieldClassName, newName, false,
+                               FormEditingUtil.getNextSaveUndoGroupId(project));
       }
       return;
     }
 
-    final PsiField oldField = aClass.findFieldByName(oldBinding, true);
+    final PsiField oldField = aClass.findFieldByName(oldName, true);
     if(oldField == null){
       return;
     }
 
-    if(aClass.findFieldByName(value, true) != null) {
-      checkRemoveUnusedField(component, oldBinding, FormEditingUtil.getNextSaveUndoGroupId(myProject));
+    if(aClass.findFieldByName(newName, true) != null) {
+      checkRemoveUnusedField(root, oldName, FormEditingUtil.getNextSaveUndoGroupId(project));
       return;
     }
 
     // Show question to the user
 
     if (!isFieldUnreferenced(oldField)) {
-      final int option = Messages.showYesNoDialog(
-        myProject,
-        MessageFormat.format(UIDesignerBundle.message("message.rename.field"), oldBinding, value),
+      final int option = Messages.showYesNoDialog(project,
+        MessageFormat.format(UIDesignerBundle.message("message.rename.field"), oldName, newName),
         UIDesignerBundle.message("title.rename"),
         Messages.getQuestionIcon()
       );
@@ -160,17 +163,17 @@ public final class BindingProperty extends Property<RadComponent, String> {
     }
 
     // Commit document before refactoring starts
-    GuiEditor editor = UIDesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
+    GuiEditor editor = UIDesignerToolWindowManager.getInstance(project).getActiveFormEditor();
     if (editor != null) {
       editor.refreshAndSave(false);
     }
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, aClass)) {
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) {
       return;
     }
 
-    final RenameProcessor processor = new RenameProcessor(myProject, oldField, value, true, true);
+    final RenameProcessor processor = new RenameProcessor(project, oldField, newName, true, true);
     processor.run();
   }
 
@@ -208,8 +211,8 @@ public final class BindingProperty extends Property<RadComponent, String> {
     return null;
   }
 
-  public static void checkRemoveUnusedField(final RadComponent component, final String fieldName, final Object undoGroupId) {
-    final PsiField oldBindingField = findBoundField(component, fieldName);
+  public static void checkRemoveUnusedField(final RadRootContainer rootContainer, final String fieldName, final Object undoGroupId) {
+    final PsiField oldBindingField = findBoundField(rootContainer, fieldName);
     if (oldBindingField == null) {
       return;
     }

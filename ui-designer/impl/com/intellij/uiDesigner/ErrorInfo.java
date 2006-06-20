@@ -3,6 +3,7 @@ package com.intellij.uiDesigner;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Anton Katilin
@@ -17,7 +18,7 @@ public final class ErrorInfo {
   private final HighlightDisplayLevel myHighlightDisplayLevel;
   private String myInspectionId;
 
-  public ErrorInfo(final String propertyName, @NotNull final String description,
+  public ErrorInfo(@NonNls final String propertyName, @NotNull final String description,
                    @NotNull HighlightDisplayLevel highlightDisplayLevel, @NotNull final QuickFix[] fixes) {
     myHighlightDisplayLevel = highlightDisplayLevel;
     myPropertyName = propertyName;

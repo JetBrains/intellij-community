@@ -78,7 +78,7 @@ public final class FormEditingUtil {
     if (selection.size() == 0) {
       return;
     }
-    RadRootContainer rootContainer = (RadRootContainer) getRoot(selection.get(0));
+    final RadRootContainer rootContainer = (RadRootContainer) getRoot(selection.get(0));
     final Set<String> deletedComponentIds = new HashSet<String>();
     for (final RadComponent component : selection) {
       boolean wasSelected = component.isSelected();
@@ -95,7 +95,7 @@ public final class FormEditingUtil {
       FormEditingUtil.iterate(component, new ComponentVisitor() {
         public boolean visit(final IComponent c) {
           RadComponent rc = (RadComponent) c;
-          BindingProperty.checkRemoveUnusedField(rc, rc.getBinding(), undoGroupId);
+          BindingProperty.checkRemoveUnusedField(rootContainer, rc.getBinding(), undoGroupId);
           deletedComponentIds.add(rc.getId());
           return true;
         }
@@ -689,6 +689,17 @@ public final class FormEditingUtil {
 
   public static int nextCol(final RadContainer container, final int col) {
     return adjustForGap(container, col+1, false, 1);
+  }
+
+  @Nullable public static IButtonGroup findGroupForComponent(final IRootContainer radRootContainer, @NotNull final IComponent component) {
+    for(IButtonGroup group: radRootContainer.getButtonGroups()) {
+      for(String id: group.getComponentIds()) {
+        if (component.getId().equals(id)) {
+          return group;
+        }
+      }
+    }
+    return null;
   }
 
   public static interface StringDescriptorVisitor<T extends IComponent> {
