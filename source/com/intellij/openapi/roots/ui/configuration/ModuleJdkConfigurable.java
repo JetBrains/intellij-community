@@ -85,7 +85,7 @@ public class ModuleJdkConfigurable implements UnnamedConfigurable {
   public boolean isModified() {
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(myRootModel.getModule());
     if (rootManager.isJdkInherited() != myRootModel.isJdkInherited()) return true;
-    return !myRootModel.isJdkInherited() && !Comparing.equal(rootManager.getJdk(), myRootModel.getJdk());
+    return !myRootModel.isJdkInherited() && !Comparing.equal(rootManager.getJdk(), myJdksModel.findSdk(myRootModel.getJdk()));
   }
 
   public void apply() throws ConfigurationException {
