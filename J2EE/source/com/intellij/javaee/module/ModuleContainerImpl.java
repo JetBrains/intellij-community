@@ -12,8 +12,10 @@ import com.intellij.openapi.roots.watcher.ModuleRootsWatcher;
 import com.intellij.openapi.roots.watcher.ModuleRootsWatcherFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ExternalizableString;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -208,6 +210,15 @@ public class ModuleContainerImpl implements ModuleContainer {
     }
 
     return moduleLinks.toArray(new ModuleLink[moduleLinks.size()]);
+  }
+
+  @Nullable
+  public ModuleLink findModuleLink(final Module module) {
+    return ContainerUtil.find(getContainingModules(), new Condition<ModuleLink>() {
+      public boolean value(final ModuleLink object) {
+        return object.getModule() == module;
+      }
+    });
   }
 
   public LibraryLink[] getContainingLibraries() {

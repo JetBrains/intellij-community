@@ -20,9 +20,13 @@ package com.intellij.javaee.module;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMExternalizable;
+import org.jetbrains.annotations.Nullable;
 
 public interface ModuleContainer extends TransactionalEditable, JDOMExternalizable {
   ModuleLink[] getContainingModules();
+
+  @Nullable
+  ModuleLink findModuleLink(Module module);
 
   LibraryLink[] getContainingLibraries();
 

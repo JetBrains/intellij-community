@@ -423,4 +423,8 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     assertNotNull("file " + fullPath + " not found", vFile);
     return vFile;
   }
+
+  protected String getTestRoot(){
+    return FileUtil.toSystemIndependentName(getTestDataPath());
+  }
 }
