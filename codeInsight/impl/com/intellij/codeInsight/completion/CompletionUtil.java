@@ -468,6 +468,7 @@ public class CompletionUtil {
 
   public static boolean isInExcludedPackage(final PsiClass psiClass) {
     final String name = psiClass.getQualifiedName();
+    if (name == null) return false;
     CodeInsightSettings cis = CodeInsightSettings.getInstance();
     boolean isExcluded = false;
     //noinspection ForLoopReplaceableByForEach
