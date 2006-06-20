@@ -869,6 +869,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
     return null;
   }
 
+  private boolean isActiveEditor() {
+    return UIDesignerToolWindowManager.getInstance(getProject()).getActiveFormEditor() == this;
+  }
+
   private final class MyLayeredPane extends JLayeredPane implements Scrollable {
     /**
      * All components allocate whole pane's area.
@@ -1051,7 +1055,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private class MyPaletteKeyListener extends KeyAdapter {
     @Override public void keyPressed(KeyEvent e) {
       PaletteManager paletteManager = PaletteManager.getInstance(getProject());
-      if (e.getKeyCode() == KeyEvent.VK_SHIFT && paletteManager.getActiveItem(ComponentItem.class) != null) {
+      if (e.getKeyCode() == KeyEvent.VK_SHIFT && paletteManager.getActiveItem(ComponentItem.class) != null && isActiveEditor()) {
         setDesignTimeInsets(12);
       }
     }
@@ -1065,7 +1069,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   private class MyPaletteDragListener implements PaletteDragEventListener {
     public void dropActionChanged(int gestureModifiers) {
-      if ((gestureModifiers & InputEvent.SHIFT_MASK) != 0) {
+      if ((gestureModifiers & InputEvent.SHIFT_MASK) != 0 && isActiveEditor()) {
         setDesignTimeInsets(12);
       }
       else {
