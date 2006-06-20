@@ -247,7 +247,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   public final XmlElement getXmlElement() {
-    return getXmlTag();
+    return getFile();
   }
 
   public final XmlElement ensureXmlElementExists() {

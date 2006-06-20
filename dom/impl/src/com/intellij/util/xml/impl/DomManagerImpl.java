@@ -473,7 +473,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return description == null ? element.getParent() : description.getIdentityScope(element);
   }
 
-  public void processUsages(final Object target, DomElement scope, final Processor<PsiReference> processor) {
+  public boolean processUsages(final Object target, DomElement scope, final Processor<PsiReference> processor) {
     final Class elementClass = target.getClass();
     final boolean[] stopped = new boolean[]{false};
     scope.accept(new DomElementVisitor() {
@@ -499,6 +499,12 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
         }
       }
     });
+    return !stopped[0];
+  }
+
+  public boolean processUsages(Object target, XmlFile scope, Processor<PsiReference> processor) {
+    final DomFileElementImpl<DomElement> element = getFileElement(scope);
+    return element == null || processUsages(target, element, processor);
   }
 
   public final void clearCaches() {
