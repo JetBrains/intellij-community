@@ -50,10 +50,7 @@ public class RadXYLayoutManager extends RadLayoutManager {
     final Insets margin = layout.getMargin();
     writer.startElement("margin");
     try {
-      writer.addAttribute("top", margin.top);
-      writer.addAttribute("left", margin.left);
-      writer.addAttribute("bottom", margin.bottom);
-      writer.addAttribute("right", margin.right);
+      writer.writeInsets(margin);
     }
     finally {
       writer.endElement(); // margin
@@ -74,8 +71,8 @@ public class RadXYLayoutManager extends RadLayoutManager {
   }
 
   @NotNull @Override
-  public DropLocation getDropLocation(RadContainer container, final Point location) {
-    return new MyDropLocation(container, location);
+  public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+    return new MyDropLocation(container, location != null ? location : new Point(5, 5));
   }
 
   public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
@@ -86,7 +83,7 @@ public class RadXYLayoutManager extends RadLayoutManager {
     private final RadContainer myContainer;
     private final Point myLocation;
 
-    public MyDropLocation(final RadContainer container, final Point location) {
+    public MyDropLocation(final RadContainer container, @NotNull final Point location) {
       myContainer = container;
       myLocation = location;
     }
