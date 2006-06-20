@@ -145,7 +145,8 @@ public interface IdeActions {
   String GROUP_SERVLET_MAPPING_VIEW_POPUP = "ServletMappingViewPopupMenu";
   String GROUP_EJB_RESOURCE_REFERENCES_VIEW_POPUP = "EjbResourceReferencesViewPopupMenu";
   String GROUP_EJB_RESOURCE_ENVIRONMENT_REFERENCES_VIEW_POPUP = "EjbResourceEnvironmentReferencesViewPopupMenu";
-
+  String GROUP_ADD_SUPPORT = "AddSupportGroup";
+  
   String GROUP_STRUCTURE_VIEW_POPUP = "StructureViewPopupMenu";
   String GROUP_TYPE_HIERARCHY_POPUP = "TypeHierarchyPopupMenu";
   String GROUP_METHOD_HIERARCHY_POPUP = "MethodHierarchyPopupMenu";
