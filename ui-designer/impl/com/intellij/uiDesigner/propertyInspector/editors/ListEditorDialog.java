@@ -43,4 +43,9 @@ public class ListEditorDialog extends DialogWrapper {
   public void setValue(final String[] value) {
     myLinesTextArea.setText(StringUtil.join(value, "\n"));
   }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myLinesTextArea;
+  }
 }
