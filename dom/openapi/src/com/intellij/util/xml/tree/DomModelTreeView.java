@@ -125,7 +125,6 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
 
   public void dispose() {
     myBuilder.dispose();
-    Disposer.dispose(this);
   }
 
   public SimpleTree getTree() {
