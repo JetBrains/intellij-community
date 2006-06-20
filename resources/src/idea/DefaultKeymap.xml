@@ -548,6 +548,9 @@
     <action id="WordCompletion">
       <keyboard-shortcut first-keystroke="control shift alt SPACE"/>
     </action>
+    <action id="WordCompletion">
+      <keyboard-shortcut first-keystroke="alt SLASH"/>
+    </action>
     <action id="TogglePopupHints"/>
     <action id="EditorNextWordWithSelection">
       <keyboard-shortcut first-keystroke="control shift RIGHT"/>

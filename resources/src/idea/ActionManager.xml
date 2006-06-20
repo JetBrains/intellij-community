@@ -453,6 +453,7 @@
         <group id="CodeCompletionGroup" class="com.intellij.codeInsight.completion.actions.CodeCompletionGroup" popup="true">
           <action id="CodeCompletion" class="com.intellij.codeInsight.completion.actions.CodeCompletionAction"/>
           <action id="WordCompletion" class="com.intellij.codeInsight.completion.actions.WordCompletionAction"/>
+          <action id="FastWordCompletion" class="com.intellij.codeInsight.completion.actions.FastWordCompletionAction"/>
           <action id="SmartTypeCompletion" class="com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction"/>
           <action id="ClassNameCompletion" class="com.intellij.codeInsight.completion.actions.ClassNameCompletionAction"/>
         </group>
