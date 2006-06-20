@@ -62,4 +62,6 @@ public abstract class JBPopupFactory {
   public abstract RelativePoint guessBestPopupLocation(DataContext dataContext);
 
   public abstract RelativePoint guessBestPopupLocation(Editor editor);
+
+  public abstract Point getCenterOf(JComponent container, JComponent content);
 }

@@ -157,9 +157,21 @@ public class HorizontalList extends JPanel {
     if (!myList.isEmpty()){
       clearBorder();
       mySelectedIndex = myModel.size() - 1;
+      while (getWidth() < getChainWidth()){        
+        scrollToVisible(1);
+      }
       paintBorder();
       requestFocusInWindow();
     }
+  }
+
+  private int getChainWidth() {
+    int result = 0;
+    for (int i = myFirstIndex; i <= mySelectedIndex; i++){
+      result += myList.get(i).getWidth();
+    }
+    result += 2 * getDotsLabel().getWidth();
+    return result;
   }
 
   private void shiftFocusToVisible(int direction){
@@ -390,18 +402,14 @@ public class HorizontalList extends JPanel {
     GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0);
     int width = 0;
     int widthToTheRight = 0;
-    final MyCompositeLabel toBeContLabel = new MyCompositeLabel();
-    toBeContLabel.getColoredComponent().setFont(UIUtil.getLabelFont());
-    toBeContLabel.getColoredComponent().append("...", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    final MyCompositeLabel toBeContLabel = getDotsLabel();
     clearBorder(toBeContLabel.getColoredComponent());
     final int additionalWidth = toBeContLabel.getPreferredSize().width;
     int wholeWidth = getWidth() - 2 * myLeftButton.getWidth();
     if (mySelectedIndex != -1) {
       myScrollablePanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
       if (myFirstIndex > 0){
-        final MyCompositeLabel preList = new MyCompositeLabel();
-        preList.getColoredComponent().setFont(UIUtil.getLabelFont());
-        preList.getColoredComponent().append("...", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        final MyCompositeLabel preList = getDotsLabel();
         clearBorder(preList.getColoredComponent());
         myScrollablePanel.add(preList, gc);
         wholeWidth -= additionalWidth;
@@ -456,6 +464,14 @@ public class HorizontalList extends JPanel {
     myRightButton.setEnabled(myFirstIndex > 0);
     myScrollablePanel.revalidate();
     myScrollablePanel.repaint();
+  }
+
+  private static MyCompositeLabel getDotsLabel() {
+    final MyCompositeLabel dotsLabel = new MyCompositeLabel();
+    dotsLabel.getColoredComponent().setFont(UIUtil.getLabelFont());
+    dotsLabel.getColoredComponent().append("...", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    dotsLabel.setBackground(UIUtil.getListBackground());
+    return dotsLabel;
   }
 
   public Dimension getPreferredSize() {

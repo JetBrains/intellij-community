@@ -214,6 +214,10 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
     return new RelativePoint(editor.getContentComponent(), p);
   }
 
+  public Point getCenterOf(JComponent container, JComponent content) {
+    return JBPopupImpl.getCenterOf(container, content);
+  }
+
   private static int fillModel(List<ActionItem> listModel,
                                ActionGroup actionGroup,
                                DataContext dataContext,
