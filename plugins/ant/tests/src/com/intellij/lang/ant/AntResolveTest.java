@@ -103,6 +103,14 @@ public class AntResolveTest extends ResolveTestCase {
     doPropertyTest();
   }
 
+  public void testFailProperty() throws Exception {
+    doPropertyTest();
+  }
+
+  public void testFailProperty1() throws Exception {
+    doPropertyTest();
+  }
+
   public void testNonExistingEnvProperty() throws Exception {
     boolean isNull = false;
     try {

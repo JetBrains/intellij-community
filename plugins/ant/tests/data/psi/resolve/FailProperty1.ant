@@ -1,0 +1,6 @@
+<project default="main">
+  <target name="main">
+    <fail if="my.prop" message="my.prop must not be set"/>
+    <echo message="Property my.prop is not set: ${<ref>my.prop}"/>
+  </target>
+</project>

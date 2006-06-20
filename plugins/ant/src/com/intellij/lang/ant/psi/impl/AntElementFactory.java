@@ -117,6 +117,15 @@ public class AntElementFactory {
           return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(ExecTask.class.getName()), "outputproperty");
         }
       });
+      ourAntTypeToKnownAntElementCreatorMap.put(Exit.class.getName(), new AntElementCreator() {
+        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+          final AntTypeDefinition failTaskDefinition = parent.getAntFile().getBaseTypeDefinition(Exit.class.getName());
+          if (tag.getAttributeValue("if") != null) {
+            return new AntPropertyImpl(parent, tag, failTaskDefinition, "if");
+          }
+          return new AntPropertyImpl(parent, tag, failTaskDefinition, "unless");
+        }
+      });
       for (final String clazz : PROPERTY_CLASSES) {
         addPropertyCreator(clazz);
       }
