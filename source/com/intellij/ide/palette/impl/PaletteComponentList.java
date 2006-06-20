@@ -208,6 +208,8 @@ public class PaletteComponentList extends JList {
   }
 
   class ComponentListUI extends BasicListUI {
+    private ComponentListListener myListener;
+
     @Override protected void updateLayoutState() {
       super.updateLayoutState();
 
@@ -222,12 +224,23 @@ public class PaletteComponentList extends JList {
     }
 
     @Override protected void installListeners() {
-      addMouseListener(new MouseAdapter() {
-        @Override public void mousePressed(MouseEvent e) {
-          myBeforeClickSelectedRow = list.getSelectedIndex();
-        }
-      });
+      myListener = new ComponentListListener();
+      addMouseListener(myListener);
       super.installListeners();
+    }
+
+    @Override
+    protected void uninstallListeners() {
+      if (myListener != null) {
+        removeMouseListener(myListener);
+      }
+      super.uninstallListeners();
+    }
+
+    private class ComponentListListener extends MouseAdapter {
+      @Override public void mousePressed(MouseEvent e) {
+        myBeforeClickSelectedRow = list.getSelectedIndex();
+      }
     }
   }
 
