@@ -222,18 +222,19 @@ public class ModuleContainerImpl implements ModuleContainer {
   }
 
   public ContainerElement[] getElements() {
-    return getElements(myDefaultModulesProvider, true, false);
+    return getElements(myDefaultModulesProvider, true, false, false);
   }
 
   public ContainerElement[] getAllElements() {
-    return getElements(myDefaultModulesProvider, true, true);
+    return getElements(myDefaultModulesProvider, true, true, true);
   }
 
-  public ContainerElement[] getElements(ModulesProvider provider, final boolean includeResolved, final boolean includeUnresolved) {
+  public ContainerElement[] getElements(ModulesProvider provider, final boolean includeResolved, final boolean includeUnresolved, final boolean includeNonPackaged) {
     ArrayList<ContainerElement> result = new ArrayList<ContainerElement>();
     for (final ContainerElement containerElement : myContents) {
       final boolean resolved = containerElement.resolveElement(provider);
-      if (resolved && includeResolved || !resolved && includeUnresolved) {
+      if ((resolved && includeResolved || !resolved && includeUnresolved)
+        && (includeNonPackaged || containerElement.getPackagingMethod() != J2EEPackagingMethod.DO_NOT_PACKAGE)) {
         result.add(containerElement);
       }
     }
