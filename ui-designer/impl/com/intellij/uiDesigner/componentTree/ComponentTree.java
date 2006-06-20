@@ -46,9 +46,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Anton Katilin
@@ -218,7 +216,8 @@ public final class ComponentTree extends Tree implements DataProvider {
     }
 
     if (LwInspectionSuppression.class.getName().equals(dataId)) {
-      return getSelectedSuppressions();
+      Collection<LwInspectionSuppression> elements = getSelectedElements(LwInspectionSuppression.class);
+      return elements.size() == 0 ? null : elements.toArray(new LwInspectionSuppression[elements.size()]);
     }
 
     if (!DataConstants.NAVIGATABLE.equals(dataId)) {
@@ -260,22 +259,21 @@ public final class ComponentTree extends Tree implements DataProvider {
     return null;
   }
 
-  private LwInspectionSuppression[] getSelectedSuppressions() {
+  public <T> Collection<T> getSelectedElements(Class<? extends T> elementClass) {
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) {
-      return LwInspectionSuppression.EMPTY_ARRAY;
+      return Collections.emptyList();
     }
-    final ArrayList<LwInspectionSuppression> result = new ArrayList<LwInspectionSuppression>(paths.length);
+    final ArrayList<T> result = new ArrayList<T>(paths.length);
     for (TreePath path : paths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      if (node.getUserObject() instanceof SuppressionDescriptor) {
-        result.add(((SuppressionDescriptor) node.getUserObject()).getSuppression());
+      Object userObject = node.getUserObject();
+      if (userObject instanceof NodeDescriptor && elementClass.isInstance(((NodeDescriptor) userObject).getElement())) {
+        //noinspection unchecked
+        result.add((T)((NodeDescriptor) node.getUserObject()).getElement());
       }
     }
-    if (result.size() == 0) {
-      return null;
-    }
-    return result.toArray(new LwInspectionSuppression[result.size()]);
+    return result;
   }
 
   private SimpleTextAttributes getAttribute(@NotNull final SimpleTextAttributes attrs,

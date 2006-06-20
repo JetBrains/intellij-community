@@ -3,6 +3,8 @@ package com.intellij.uiDesigner.designSurface;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.containers.HashSet;
@@ -11,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
+import java.util.Collection;
 
 /**
  * Decoration layer is over COMPONENT_LAYER (layer where all components are located).
@@ -38,6 +41,8 @@ class PassiveDecorationLayer extends JComponent{
 
     final Set<RadButtonGroup> paintedGroups = new HashSet<RadButtonGroup>();
     final RadRootContainer rootContainer = myEditor.getRootContainer();
+    final ComponentTree componentTree = UIDesignerToolWindowManager.getInstance(component.getProject()).getComponentTree();
+    final Collection<RadButtonGroup> selectedGroups = componentTree.getSelectedElements(RadButtonGroup.class);
 
     // Paint selection and dragger
     FormEditingUtil.iterate(
@@ -50,12 +55,10 @@ class PassiveDecorationLayer extends JComponent{
             0,
             rootContainer.getDelegee()
           );
-          if (component.isSelected()) {
-            RadButtonGroup group = rootContainer.findGroupForComponent(component);
-            if (group != null && !paintedGroups.contains(group)) {
-              paintedGroups.add(group);
-              Painter.paintButtonGroupLines(rootContainer, group, g);
-            }
+          RadButtonGroup group = rootContainer.findGroupForComponent(component);
+          if (group != null && !paintedGroups.contains(group) && (component.isSelected() || selectedGroups.contains(group))) {
+            paintedGroups.add(group);
+            Painter.paintButtonGroupLines(rootContainer, group, g);
           }
           g.translate(point.x, point.y);
           try{

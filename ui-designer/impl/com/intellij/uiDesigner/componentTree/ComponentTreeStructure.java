@@ -7,6 +7,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.lw.LwInspectionSuppression;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.util.ArrayUtil;
@@ -36,13 +37,18 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
 
   public Object[] getChildElements(final Object element){
     if(element==myRootElement){
+      ArrayList<Object> elements = new ArrayList<Object>();
       final RadRootContainer rootContainer=myEditor.getRootContainer();
-      final ComponentPtr rootPtr = new ComponentPtr(myEditor, rootContainer);
+      elements.add(new ComponentPtr(myEditor, rootContainer));
       final LwInspectionSuppression[] suppressions = rootContainer.getInspectionSuppressions();
       if (suppressions.length > 0) {
-        return new Object[] { rootPtr, suppressions };
+        elements.add(suppressions);
       }
-      return new Object[] {rootPtr };
+      RadButtonGroup[] buttonGroups = rootContainer.getAllGroups();
+      if (buttonGroups.length > 0) {
+        elements.add(buttonGroups);
+      }
+      return elements.toArray();
     }
     else if(element instanceof ComponentPtr){
       final ComponentPtr ptr=(ComponentPtr)element;
@@ -69,7 +75,10 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
       }
       return result.toArray(new Object[result.size()]);
     }
-    else if (element instanceof LwInspectionSuppression) {
+    else if (element instanceof RadButtonGroup[]) {
+      return (RadButtonGroup[]) element;
+    }
+    else if (element instanceof LwInspectionSuppression || element instanceof RadButtonGroup) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
     else{
@@ -81,7 +90,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
     if(element==myRootElement){
       return null;
     }
-    else if (element instanceof LwInspectionSuppression[]) {
+    else if (element instanceof LwInspectionSuppression[] || element instanceof RadButtonGroup[]) {
       return myRootElement;
     }
     else if(element instanceof ComponentPtr){ // RadContainer is also RadComponent
@@ -116,6 +125,12 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
                                            ? null
                                            : FormEditingUtil.findComponent(myEditor.getRootContainer(), suppression.getComponentId()));
       return new SuppressionDescriptor(parentDescriptor, target, suppression);
+    }
+    else if (element instanceof RadButtonGroup[]) {
+      return new ButtonGroupListDescriptor(parentDescriptor, (RadButtonGroup[]) element);
+    }
+    else if (element instanceof RadButtonGroup) {
+      return new ButtonGroupDescriptor(parentDescriptor, (RadButtonGroup) element);
     }
     else{
       throw new IllegalArgumentException("unknown element: "+element);

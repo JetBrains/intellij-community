@@ -6,6 +6,7 @@ package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.uiDesigner.lw.LwInspectionSuppression;
+import com.intellij.uiDesigner.UIDesignerBundle;
 
 /**
  * @author yole
@@ -27,6 +28,6 @@ public class SuppressionGroupDescriptor extends NodeDescriptor {
   }
 
   @Override public String toString() {
-    return "Suppressed Inspections";
+    return UIDesignerBundle.message("node.suppressed.inspections");
   }
 }
