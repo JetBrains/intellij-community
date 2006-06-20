@@ -299,7 +299,7 @@ public class IterationState {
         myCurrentHighlighters = new ArrayList<RangeHighlighterImpl>();
       }
     }
-    else if (myCurrentHighlighters.size() > 0) {
+    else if (!myCurrentHighlighters.isEmpty()) {
       ArrayList<RangeHighlighterImpl> copy = new ArrayList<RangeHighlighterImpl>(myCurrentHighlighters.size());
       for (int i = 0; i < myCurrentHighlighters.size(); i++) {
         highlighter = myCurrentHighlighters.get(i);
@@ -415,10 +415,10 @@ public class IterationState {
     }
 
     if (selection != null) myCachedAttributesList.add(selection);
+    if (caret != null) myCachedAttributesList.add(caret);
     if (fold != null) myCachedAttributesList.add(fold);
     if (guard != null) myCachedAttributesList.add(guard);
     if (syntax != null) myCachedAttributesList.add(syntax);
-    if (caret != null) myCachedAttributesList.add(caret);
 
     Color fore = null;
     Color back = isInGuardedBlock ? myReadOnlyColor : null;

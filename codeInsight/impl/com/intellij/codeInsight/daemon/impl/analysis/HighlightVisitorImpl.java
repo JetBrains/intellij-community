@@ -152,6 +152,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     for (Pair<PsiElement, TextRange> pair : injected) {
       PsiElement injectedPsi = pair.getFirst();
       final DocumentRange documentRange = (DocumentRange)documentManager.getDocument((PsiFile)injectedPsi);
+      LOG.assertTrue(documentRange.getText().equals(injectedPsi.getText()));
 
       Language injectedLanguage = injectedPsi.getLanguage();
       VirtualFile virtualFile = element.getContainingFile().getVirtualFile();

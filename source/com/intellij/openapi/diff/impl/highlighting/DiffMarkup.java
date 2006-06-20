@@ -20,12 +20,11 @@ import com.intellij.util.containers.HashSet;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 public abstract class DiffMarkup implements EditorSource {
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.openapi.diff.impl.highlighting.EditorTextAppender");
-  private static final int LAYER = HighlighterLayer.SELECTION - 1;
+  private static final int LAYER = HighlighterLayer.FIRST + 1;
 
   private final ArrayList<RangeHighlighter> myHighLighters = new ArrayList<RangeHighlighter>();
   private final HashSet<RangeHighlighter> myActionHighlighters = new HashSet<RangeHighlighter>();
@@ -47,13 +46,11 @@ public abstract class DiffMarkup implements EditorSource {
     if (type == null) return;
     TextRange range = fragment.getRange(getSide());
     TextAttributes attributes = type.getTextAttributes(getEditor());
-    RangeHighlighter rangeMarker;
     if (!drawBorder && range.getLength() == 0) return;
+    RangeHighlighter rangeMarker;
     if (drawBorder && range.getLength() == 0) {
-      rangeMarker = getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getStartOffset(), LAYER,
-                                                         new TextAttributes(null, null, attributes.getBackgroundColor(),
-                                                                            EffectType.BOXED, 0),
-                                                         HighlighterTargetArea.EXACT_RANGE);
+      TextAttributes textAttributes = new TextAttributes(null, null, attributes.getBackgroundColor(), EffectType.BOXED, TextAttributes.TRANSPARENT);
+      rangeMarker = getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getStartOffset(), LAYER, textAttributes, HighlighterTargetArea.EXACT_RANGE);
     }
     else {
       rangeMarker = getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), LAYER,
@@ -72,7 +69,6 @@ public abstract class DiffMarkup implements EditorSource {
   }
 
   private RangeHighlighter createLineMarker(TextAttributesKey type, int line) {
-    RangeHighlighter marker;
     Color color = getLineSeparatorColorForType(type);
     RangeHighlighter lastHighlighter = getLastHighlighter();
     if (lastHighlighter != null &&
@@ -90,7 +86,7 @@ public abstract class DiffMarkup implements EditorSource {
         }
       }
     }
-    marker = getMarkupModel().addLineHighlighter(line, LAYER, null);
+    RangeHighlighter marker = getMarkupModel().addLineHighlighter(line, LAYER, null);
 //    saveHighlighter(marker);
     marker.setLineSeparatorColor(color);
     marker.setLineSeparatorPlacement(SeparatorPlacement.BOTTOM);
@@ -137,7 +133,7 @@ public abstract class DiffMarkup implements EditorSource {
     RangeHighlighter highlighter =
       getMarkupModel().addRangeHighlighter(lineStartOffset, lineStartOffset,
                                            HighlighterLayer.ADDITIONAL_SYNTAX,
-                                           new TextAttributes(null, null, null, null, 0),
+                                           new TextAttributes(null, null, null, null, TextAttributes.TRANSPARENT),
                                            HighlighterTargetArea.LINES_IN_RANGE);
     final MergeActionGroup.OperationAction action = new MergeActionGroup.OperationAction(operation);
     highlighter.setGutterIconRenderer(new GutterActionRenderer(action));
@@ -152,8 +148,7 @@ public abstract class DiffMarkup implements EditorSource {
   private void removeHighlighters(Collection<RangeHighlighter> highlighters) {
     MarkupModel markupModel = getMarkupModel();
     if (markupModel != null) {
-      for (Iterator<RangeHighlighter> iterator = highlighters.iterator(); iterator.hasNext();) {
-        RangeHighlighter highlighter = iterator.next();
+      for (RangeHighlighter highlighter : highlighters) {
         markupModel.removeHighlighter(highlighter);
       }
     }
@@ -166,8 +161,7 @@ public abstract class DiffMarkup implements EditorSource {
 
   protected void disposeEditor() {
     resetHighlighters();
-    for (Iterator<Disposable> iterator = myDisposables.iterator(); iterator.hasNext();) {
-      Disposable disposable = iterator.next();
+    for (Disposable disposable : myDisposables) {
       disposable.dispose();
     }
     myDisposables.clear();

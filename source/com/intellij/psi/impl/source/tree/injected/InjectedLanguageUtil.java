@@ -275,6 +275,7 @@ public class InjectedLanguageUtil {
           FileDocumentManagerImpl.registerDocument(documentRange, virtualFile);
           PsiElement psi = parseInjectedPsiFile(host, rangeInsideHost, language, virtualFile, myTextEscaper, prefix, suffix);
           psi = registerDocumentRange(documentRange, (PsiFile)psi);
+          LOG.assertTrue(psi.getText().equals(documentRange.getText()));
 
           result.add(new Pair<PsiElement,TextRange>(psi, rangeInsideHost));
         }

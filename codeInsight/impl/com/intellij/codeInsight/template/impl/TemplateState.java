@@ -855,7 +855,7 @@ public class TemplateState implements Disposable {
 
   private RangeHighlighter getSegmentHighlighter(int segmentNumber, boolean isSelected, boolean isEnd) {
     TextAttributes attributes = isSelected
-                                ? new TextAttributes(null, null, Color.red, EffectType.BOXED, 0)
+                                ? new TextAttributes(null, null, Color.red, EffectType.BOXED, TextAttributes.TRANSPARENT)
                                 : new TextAttributes();
     TextAttributes endAttributes = new TextAttributes();
 
