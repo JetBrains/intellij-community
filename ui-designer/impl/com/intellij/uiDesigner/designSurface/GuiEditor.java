@@ -281,6 +281,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     gbc.weightx = 1.0;
     gbc.weighty = 1.0;
     final JScrollPane scrollPane = new JScrollPane(myLayeredPane);
+    scrollPane.setBackground(Color.WHITE);
     panel.add(scrollPane, gbc);
     myHorzCaptionPanel.attachToScrollPane(scrollPane);
     myVertCaptionPanel.attachToScrollPane(scrollPane);
