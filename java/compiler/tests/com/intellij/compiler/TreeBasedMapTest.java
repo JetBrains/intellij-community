@@ -1,0 +1,116 @@
+/*
+ * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
+ * Use is subject to license terms.
+ */
+package com.intellij.compiler;
+
+import com.intellij.compiler.impl.TreeBasedMap;
+import com.intellij.util.containers.StringInterner;
+import junit.framework.TestCase;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * @author Eugene Zhuravlev
+ *         Date: Jun 19, 2006
+ */
+public class TreeBasedMapTest extends TestCase {
+
+  public void testAdd() {
+    final TreeBasedMap<String> map = new TreeBasedMap<String>(new StringInterner(), '/');
+    map.put("", "ValueEmpty");
+
+    map.put("aaa/bbb/ccc", "ValueAAABBBCCC");
+    map.put("aaa/bbb/ddd", "ValueAAABBBDDD");
+    map.put("aaa/bbb", "ValueAAABBB");
+    map.put("aaa/bb/cc", "ValueAAABBCC");
+    map.put("aaa/bb/dd", "ValueAAABBDD");
+    map.put("aaa/b/c", "ValueAAABC");
+
+    assertEquals(7, map.size());
+    assertEquals("ValueEmpty", map.get(""));
+    assertEquals("ValueAAABBBCCC", map.get("aaa/bbb/ccc"));
+    assertEquals("ValueAAABBBDDD", map.get("aaa/bbb/ddd"));
+    assertEquals("ValueAAABBB", map.get("aaa/bbb"));
+    assertEquals("ValueAAABBCC", map.get("aaa/bb/cc"));
+    assertEquals("ValueAAABBDD", map.get("aaa/bb/dd"));
+    assertEquals("ValueAAABC", map.get("aaa/b/c"));
+  }
+
+  public void testRemove() {
+    final TreeBasedMap<String> map = new TreeBasedMap<String>(new StringInterner(), '/');
+    map.put("", "ValueEmpty");
+
+    map.put("aaa/bbb/ccc", "ValueAAABBBCCC");
+    map.put("aaa/bbb/ddd", "ValueAAABBBDDD");
+    map.put("aaa/bbb", "ValueAAABBB");
+    map.put("aaa/bb/cc", "ValueAAABBCC");
+    map.put("aaa/bb/dd", "ValueAAABBDD");
+    map.put("aaa/b/c", "ValueAAABC");
+
+    assertEquals(7, map.size());
+
+    map.remove("");
+    assertEquals(6, map.size());
+    assertEquals(null, map.get(""));
+    assertEquals("ValueAAABBBCCC", map.get("aaa/bbb/ccc"));
+    assertEquals("ValueAAABBBDDD", map.get("aaa/bbb/ddd"));
+    assertEquals("ValueAAABBB", map.get("aaa/bbb"));
+    assertEquals("ValueAAABBCC", map.get("aaa/bb/cc"));
+    assertEquals("ValueAAABBDD", map.get("aaa/bb/dd"));
+    assertEquals("ValueAAABC", map.get("aaa/b/c"));
+
+    map.remove("aaa/bbb");
+    assertEquals(5, map.size());
+    assertEquals(null, map.get(""));
+    assertEquals("ValueAAABBBCCC", map.get("aaa/bbb/ccc"));
+    assertEquals("ValueAAABBBDDD", map.get("aaa/bbb/ddd"));
+    assertEquals(null, map.get("aaa/bbb"));
+    assertEquals("ValueAAABBCC", map.get("aaa/bb/cc"));
+    assertEquals("ValueAAABBDD", map.get("aaa/bb/dd"));
+    assertEquals("ValueAAABC", map.get("aaa/b/c"));
+  }
+
+  public void testIterate() {
+    final TreeBasedMap<String> map = new TreeBasedMap<String>(new StringInterner(), '/');
+    map.put("", "ValueEmpty");
+    map.put("aaa/bbb/ccc", "ValueAAABBBCCC");
+    map.put("aaa/bbb/ddd", "ValueAAABBBDDD");
+    map.put("aaa/bbb", "ValueAAABBB");
+    map.put("aaa/bb/cc", "ValueAAABBCC");
+    map.put("aaa/bb/dd", "ValueAAABBDD");
+    map.put("aaa/b/c", "ValueAAABC");
+
+    final Iterator<String> iterator = map.getKeysIterator();
+    Map<String, String> checkMap = new HashMap<String, String>();
+
+    while (iterator.hasNext()) {
+      final String key = iterator.next();
+      checkMap.put(key, map.get(key));
+    }
+
+    assertEquals(7, checkMap.size());
+
+    final Set<String> checkMapKeys = checkMap.keySet();
+    assertTrue(checkMapKeys.contains(""));
+    assertTrue(checkMapKeys.contains("aaa/bbb/ccc"));
+    assertTrue(checkMapKeys.contains("aaa/bbb/ddd"));
+    assertTrue(checkMapKeys.contains("aaa/bbb"));
+    assertTrue(checkMapKeys.contains("aaa/bb/cc"));
+    assertTrue(checkMapKeys.contains("aaa/bb/dd"));
+    assertTrue(checkMapKeys.contains("aaa/b/c"));
+    assertFalse(checkMapKeys.contains("aaa/B/c"));
+    assertFalse(checkMapKeys.contains("aa/b/c"));
+
+    assertEquals("ValueEmpty", checkMap.get(""));
+    assertEquals("ValueAAABBBCCC", checkMap.get("aaa/bbb/ccc"));
+    assertEquals("ValueAAABBBDDD", checkMap.get("aaa/bbb/ddd"));
+    assertEquals("ValueAAABBB", checkMap.get("aaa/bbb"));
+    assertEquals("ValueAAABBCC", checkMap.get("aaa/bb/cc"));
+    assertEquals("ValueAAABBDD", checkMap.get("aaa/bb/dd"));
+    assertEquals("ValueAAABC", checkMap.get("aaa/b/c"));
+  }
+}
