@@ -99,21 +99,22 @@ public class CreateHtmlAction extends CreateElementActionBase {
     Presentation presentation = e.getPresentation();
     if (presentation.isEnabled()) {
       Module module = (Module)dataContext.getData(DataConstantsEx.MODULE);
-      assert module != null;
-
-      if (module.getModuleType() == ModuleType.WEB) {
-        IdeView view = (IdeView)dataContext.getData(DataConstantsEx.IDE_VIEW);
-        ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-        PsiDirectory[] dirs = view.getDirectories();
-        boolean inSourceRoot = false;
-        for (PsiDirectory dir : dirs) {
-          if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && dir.getPackage() != null) {
-            inSourceRoot = true;
-            break;
+      if (module != null) {
+        if (module.getModuleType() == ModuleType.WEB) {
+          IdeView view = (IdeView)dataContext.getData(DataConstantsEx.IDE_VIEW);
+          if (view != null) {
+            ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+            PsiDirectory[] dirs = view.getDirectories();
+            boolean inSourceRoot = false;
+            for (PsiDirectory dir : dirs) {
+              if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && dir.getPackage() != null) {
+                inSourceRoot = true;
+                break;
+              }
+            }
+            if (!inSourceRoot) return;
           }
         }
-
-        if (!inSourceRoot) return;
       }
 
       presentation.setEnabled(false);
