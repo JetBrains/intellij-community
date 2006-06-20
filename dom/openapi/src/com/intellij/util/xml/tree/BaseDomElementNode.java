@@ -6,6 +6,7 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.ui.TooltipUtils;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
+import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -121,8 +122,9 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     setUniformIcon(getNodeIcon());
     clearColoredText();
 
-    final List<DomElementProblemDescriptor> problems = DomElementAnnotationsManager.getInstance(myDomElement.getManager().getProject())
-      .getCachedProblemHolder(myDomElement).getProblems(myDomElement, true, highlightIfChildrenHasProblems(), HighlightSeverity.ERROR);
+    final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(myDomElement.getManager().getProject());
+    final DomElementsProblemsHolder holder = manager.getProblemHolder(myDomElement);
+    final List<DomElementProblemDescriptor> problems = holder.getProblems(myDomElement, true, highlightIfChildrenHasProblems(), HighlightSeverity.ERROR);
 
     if (problems.size() > 0) {
       addColoredFragment(getNodeName(), TooltipUtils.getTooltipText(problems), SimpleTextAttributes.ERROR_ATTRIBUTES);

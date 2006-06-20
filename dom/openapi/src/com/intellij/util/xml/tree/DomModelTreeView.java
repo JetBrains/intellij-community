@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
@@ -13,8 +15,8 @@ import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xml.DomChangeAdapter;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomEventAdapter;
 import com.intellij.util.xml.DomManager;
+import com.intellij.problems.WolfTheProblemSolver;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +28,7 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
 
 public class DomModelTreeView extends Wrapper implements DataProvider, Disposable {
 
@@ -35,7 +38,6 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
   private final SimpleTree myTree;
   private final LazySimpleTreeBuilder myBuilder;
   private DomManager myDomManager;
-  private DomEventAdapter myDomEventListener;
   @Nullable private DomElement myRootElement;
 
   public DomModelTreeView(Project project) {
@@ -90,24 +92,9 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
       }
     });
 
-    myDomEventListener = new DomChangeAdapter() {
-      protected void elementChanged(DomElement element) {
-        if (myTree.isShowing()) {
-/*
-          BaseDomElementNode object = new BaseDomElementNode(element);
-          final DefaultMutableTreeNode node = myBuilder.getNodeForElement(object);
-          if (node != null) {
-            myBuilder.updateSubtree(node);
-          }
-          else {
-*/
-          myBuilder.queueUpdate();
-//          }
-        }
-      }
-    };
-
-    myDomManager.addDomEventListener(myDomEventListener);
+    final ChangeListener changeListener = new ChangeListener();
+    myDomManager.addDomEventListener(changeListener, this);
+    WolfTheProblemSolver.getInstance(myDomManager.getProject()).addProblemListener(changeListener, this);
 
     myTree.setPopupGroup(getPopupActions(), DOM_MODEL_TREE_VIEW_POPUP);
   }
@@ -138,7 +125,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
 
   public void dispose() {
     myBuilder.dispose();
-    myDomManager.removeDomEventListener(myDomEventListener);
+    Disposer.dispose(this);
   }
 
   public SimpleTree getTree() {
@@ -203,6 +190,23 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
       currParent = currParent.getParent();
     }
     return false;
+  }
+
+  private class ChangeListener extends DomChangeAdapter implements WolfTheProblemSolver.ProblemListener {
+
+    protected void elementChanged(DomElement element) {
+      update();
+    }
+
+    public void problemsChanged(Collection<VirtualFile> added, Collection<VirtualFile> removed) {
+      update();
+    }
+
+    private void update() {
+      if (myTree.isShowing()) {
+        myBuilder.queueUpdate();
+      }
+    }
   }
 }
 
