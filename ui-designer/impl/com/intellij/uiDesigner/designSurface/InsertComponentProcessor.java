@@ -307,6 +307,10 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   private boolean checkAddDependencyOnInsert(final ComponentItem item) {
+    if (item.getClassName().equals(HSpacer.class.getName()) || item.getClassName().equals(VSpacer.class.getName())) {
+      // this is mostly required for IDEA developers, so that developers don't receive prompt to offer ui-designer-impl dependency
+      return true;
+    }
     PsiManager manager = PsiManager.getInstance(myEditor.getProject());
     final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myEditor.getProject());
     final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myEditor.getModule());
