@@ -48,8 +48,7 @@ public class NoButtonGroupInspection extends BaseFormInspection {
               FormInspectionUtil.isComponentClass(module, child, JRadioButton.class)) {
             final GridConstraints c1 = component.getConstraints();
             final GridConstraints c2 = child.getConstraints();
-            if ((c1.getRow() == c2.getRow() && Math.abs(c1.getColumn() - c2.getColumn()) == 1) ||
-                (c1.getColumn() == c2.getColumn() && Math.abs(c1.getRow() - c2.getRow()) == 1)) {
+            if (areCellsAdjacent(parent, c1, c2)) {
               final String groupName = root.getButtonGroupName(child);
               if (groupName == null) {
                 quickFixProvider = new EditorQuickFixProvider() {
@@ -72,6 +71,22 @@ public class NoButtonGroupInspection extends BaseFormInspection {
         collector.addError(getID(), null, UIDesignerBundle.message("inspection.no.button.group.error"), quickFixProvider);
       }
     }
+  }
+
+  private static boolean areCellsAdjacent(final IContainer parent, final GridConstraints c1, final GridConstraints c2) {
+    if (parent instanceof RadContainer) {
+      final RadContainer container = (RadContainer)parent;
+      if (c1.getRow() == c2.getRow()) {
+        return FormEditingUtil.prevCol(container, c1.getColumn()) == c2.getColumn() ||
+               FormEditingUtil.nextCol(container, c1.getColumn()) == c2.getColumn();
+      }
+      if (c1.getColumn() == c2.getColumn()) {
+        return FormEditingUtil.prevRow(container, c1.getRow()) == c2.getRow() ||
+               FormEditingUtil.nextRow(container, c1.getRow()) == c2.getRow();
+      }
+    }
+    return (c1.getRow() == c2.getRow() && Math.abs(c1.getColumn() - c2.getColumn()) == 1) ||
+        (c1.getColumn() == c2.getColumn() && Math.abs(c1.getRow() - c2.getRow()) == 1);
   }
 
   private static class CreateGroupQuickFix extends QuickFix {

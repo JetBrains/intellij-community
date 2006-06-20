@@ -675,6 +675,22 @@ public final class FormEditingUtil {
     return cellIndex;
   }
 
+  public static int prevRow(final RadContainer container, final int row) {
+    return adjustForGap(container, row-1, true, -1);
+  }
+
+  public static int nextRow(final RadContainer container, final int row) {
+    return adjustForGap(container, row+1, true, 1);
+  }
+
+  public static int prevCol(final RadContainer container, final int col) {
+    return adjustForGap(container, col-1, false, -1);
+  }
+
+  public static int nextCol(final RadContainer container, final int col) {
+    return adjustForGap(container, col+1, false, 1);
+  }
+
   public static interface StringDescriptorVisitor<T extends IComponent> {
     boolean visit(T component, StringDescriptor descriptor);
   }
