@@ -62,7 +62,7 @@ class PassiveDecorationLayer extends JComponent{
           }
           g.translate(point.x, point.y);
           try{
-            if (myEditor.isShowComponentTags()) {
+            if (myEditor.isShowComponentTags() && FormEditingUtil.isComponentSwitchedInView(component)) {
               Painter.paintComponentTag(component, g);
             }
             Painter.paintSelectionDecoration(component, g,myEditor.getGlassLayer().isFocusOwner());
