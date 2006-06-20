@@ -1,16 +1,15 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.StringInterner;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Set;
-
-import org.jetbrains.annotations.NonNls;
 
 public abstract class StateCache<T> extends MapCache<T> {
-  public StateCache(@NonNls String storePath) {
-    super(storePath);
+  public StateCache(@NonNls String storePath, final StringInterner interner) {
+    super(interner, storePath);
   }
 
   public void update(@NonNls String url, T state){
@@ -45,15 +44,19 @@ public abstract class StateCache<T> extends MapCache<T> {
     if (!load()) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
-    final Set<String> keys = myMap.keySet();
-    return keys.toArray(new String[keys.size()]);
+    String[] urls = new String[myMap.size()];
+    int idx = 0;
+    for(Iterator<String> iterator = myMap.getKeysIterator(); iterator.hasNext();) {
+      urls[idx++] = iterator.next();
+    }
+    return urls;
   }
 
   public Iterator<String> getUrlsIterator() {
     if (!load()) {
       return Arrays.asList(ArrayUtil.EMPTY_STRING_ARRAY).iterator();
     }
-    return myMap.keySet().iterator();
+    return myMap.getKeysIterator();
   }
 
 }

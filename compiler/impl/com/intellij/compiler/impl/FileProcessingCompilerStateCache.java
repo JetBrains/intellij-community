@@ -9,6 +9,7 @@ import com.intellij.openapi.compiler.ValidityState;
 import com.intellij.openapi.compiler.ValidityStateFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.StringInterner;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -17,8 +18,8 @@ public class FileProcessingCompilerStateCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.FileProcessingCompilerStateCache");
   private final StateCache<MyState> myCache;
 
-  public FileProcessingCompilerStateCache(String storeDirectory, String idPrefix, final ValidityStateFactory stateFactory) {
-    myCache = new StateCache<MyState>(storeDirectory + File.separator + idPrefix + "_timestamp.dat") {
+  public FileProcessingCompilerStateCache(String storeDirectory, String idPrefix, final ValidityStateFactory stateFactory, final StringInterner interner) {
+    myCache = new StateCache<MyState>(storeDirectory + File.separator + idPrefix + "_timestamp.dat", interner) {
       public MyState read(DataInputStream stream) throws IOException {
         return new MyState(stream.readLong(), stateFactory.createValidityState(stream));
       }

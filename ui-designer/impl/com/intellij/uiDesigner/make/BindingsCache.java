@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.util.containers.StringInterner;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
@@ -24,7 +25,7 @@ final class BindingsCache {
 
   public BindingsCache(final Project project) {
     final File cacheStoreDirectory = CompilerPaths.getCacheStoreDirectory(project);
-    myCache = cacheStoreDirectory != null ? new StateCache<MyState>(cacheStoreDirectory + File.separator + BINDINGS_FILE_NAME) {
+    myCache = cacheStoreDirectory != null ? new StateCache<MyState>(cacheStoreDirectory + File.separator + BINDINGS_FILE_NAME, new StringInterner()) {
       public MyState read(final DataInputStream stream) throws IOException {
         return new MyState(stream.readLong(), stream.readUTF());
       }
@@ -67,7 +68,7 @@ final class BindingsCache {
     }
     return null;
   }
-
+    
   private void updateCache(final VirtualFile formFile, final String classToBind) {
     if (myCache != null) {
       myCache.update(formFile.getUrl(), new MyState(formFile.getTimeStamp(), classToBind));

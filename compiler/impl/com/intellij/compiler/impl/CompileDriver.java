@@ -39,10 +39,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.packageDependencies.DependenciesBuilder;
@@ -52,6 +49,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ProfilingUtil;
+import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectProcedure;
@@ -66,8 +64,9 @@ public class CompileDriver {
   private final Project myProject;
   private final Map<Compiler,Object> myCompilerToCacheMap = new THashMap<Compiler, Object>();
   private Map<Pair<Compiler, Module>, VirtualFile> myGenerationCompilerModuleToOutputDirMap;
+  private final StringInterner myStringInterner = new StringInterner();
   private String myCachesDirectoryPath;
-  private Set<String> myOutputFilesOnDisk = null;
+  private TreeBasedPathsSet myOutputFilesOnDisk = null;
   private boolean myShouldClearOutputDirectory;
 
   private Map<Module, String> myModuleOutputPaths = new HashMap<Module, String>();
@@ -425,7 +424,14 @@ public class CompileDriver {
       if (!isRebuild) {
         // compile tasks may change the contents of the output dirs so it is more safe to gather output files here
         context.getProgressIndicator().setText(CompilerBundle.message("progress.scanning.output"));
-        myOutputFilesOnDisk = CompilerPathsEx.getOutputFiles(myProject);
+        myOutputFilesOnDisk = new TreeBasedPathsSet(myStringInterner, '/');
+        CompilerPathsEx.visitFiles(context.getAllOutputDirectories(), new CompilerPathsEx.FileVisitor() {
+          protected void acceptFile(VirtualFile file, String fileRoot, String filePath) {
+            if (!(file.getFileSystem() instanceof JarFileSystem)){
+              myOutputFilesOnDisk.add(filePath);
+            }
+          }
+        });
       }
 
       boolean didSomething = false;
@@ -1318,7 +1324,7 @@ public class CompileDriver {
   public TranslatingCompilerStateCache getTranslatingCompilerCache(TranslatingCompiler compiler) {
     Object cache = myCompilerToCacheMap.get(compiler);
     if (cache == null) {
-      cache = new TranslatingCompilerStateCache(myCachesDirectoryPath, getIdPrefix(compiler));
+      cache = new TranslatingCompilerStateCache(myCachesDirectoryPath, getIdPrefix(compiler), myStringInterner);
       myCompilerToCacheMap.put(compiler, cache);
     }
     else {
@@ -1330,7 +1336,7 @@ public class CompileDriver {
   private FileProcessingCompilerStateCache getFileProcessingCompilerCache(FileProcessingCompiler compiler) {
     Object cache = myCompilerToCacheMap.get(compiler);
     if (cache == null) {
-      cache = new FileProcessingCompilerStateCache(myCachesDirectoryPath, getIdPrefix(compiler), compiler);
+      cache = new FileProcessingCompilerStateCache(myCachesDirectoryPath, getIdPrefix(compiler), compiler, myStringInterner);
       myCompilerToCacheMap.put(compiler, cache);
     }
     else {
@@ -1342,7 +1348,7 @@ public class CompileDriver {
   private StateCache<ValidityState> getGeneratingCompilerCache(final GeneratingCompiler compiler) {
     Object cache = myCompilerToCacheMap.get(compiler);
     if (cache == null) {
-      cache = new StateCache<ValidityState>(myCachesDirectoryPath + File.separator + getIdPrefix(compiler) + "_timestamp.dat") {
+      cache = new StateCache<ValidityState>(myCachesDirectoryPath + File.separator + getIdPrefix(compiler) + "_timestamp.dat", myStringInterner) {
         public ValidityState read(DataInputStream stream) throws IOException {
           return compiler.createValidityState(stream);
         }

@@ -3,14 +3,10 @@ package com.intellij.openapi.compiler.ex;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
@@ -18,7 +14,6 @@ import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 
 import java.io.File;
-import java.util.HashSet;
 import java.util.Set;
 
 public class CompilerPathsEx extends CompilerPaths {
@@ -56,23 +51,6 @@ public class CompilerPathsEx extends CompilerPaths {
         }
       });
     }
-  }
-
-  public static Set<String> getOutputFiles(final Project project) {
-    final Set<String> result = new HashSet<String>();
-    final VirtualFile[] outputDirectories = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
-      public VirtualFile[] compute() {
-        return CompilerPathsEx.getOutputDirectories(ModuleManager.getInstance(project).getModules());
-      }
-    });
-    visitFiles(outputDirectories, new FileVisitor() {
-      protected void acceptFile(VirtualFile file, String fileRoot, String filePath) {
-        if (!(file.getFileSystem() instanceof JarFileSystem)){
-          result.add(filePath);
-        }
-      }
-    });
-    return result;
   }
 
   public static String getCompilationClasspath(Module module) {
