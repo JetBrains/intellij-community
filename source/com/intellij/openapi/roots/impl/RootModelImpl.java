@@ -110,7 +110,7 @@ class RootModelImpl implements ModifiableRootModel {
     myOrderEntryProperties = new OrderEntryProperties();
     myJavadocPointerContainer = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
     myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager, myFilePointerManager);
-    myInheritedCompilerOutput = true;
+    myInheritedCompilerOutput = false;
   }
 
   private void addSourceOrderEntries() {
