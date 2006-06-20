@@ -11,6 +11,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -20,10 +22,12 @@ public class ButtonGroupPropertiesPanel implements CustomPropertiesPanel {
   private JTextField myNameTextField;
   private JCheckBox myBindToFieldCheckBox;
   private JPanel myPanel;
+  private final RadRootContainer myRootContainer;
   private final RadButtonGroup myGroup;
   private CopyOnWriteArrayList<ChangeListener> myListeners = new CopyOnWriteArrayList<ChangeListener>();
 
   public ButtonGroupPropertiesPanel(final RadRootContainer rootContainer, final RadButtonGroup group) {
+    myRootContainer = rootContainer;
     myGroup = group;
     myNameTextField.setText(group.getName());
     myBindToFieldCheckBox.setSelected(group.isBound());
@@ -35,17 +39,26 @@ public class ButtonGroupPropertiesPanel implements CustomPropertiesPanel {
     });
     myNameTextField.addFocusListener(new FocusAdapter() {
       public void focusLost(FocusEvent e) {
-        String oldName = myGroup.getName();
-        String newName = myNameTextField.getText();
-        if (!oldName.equals(newName)) {
-          myGroup.setName(newName);
-          notifyListeners(new ChangeEvent(myGroup));
-          if (myGroup.isBound()) {
-            BindingProperty.updateBoundFieldName(rootContainer, oldName, newName, ButtonGroup.class.getName());
-          }
-        }
+        saveButtonGroupName();
       }
     });
+    myNameTextField.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        saveButtonGroupName();
+      }
+    });
+  }
+
+  private void saveButtonGroupName() {
+    String oldName = myGroup.getName();
+    String newName = myNameTextField.getText();
+    if (!oldName.equals(newName)) {
+      myGroup.setName(newName);
+      notifyListeners(new ChangeEvent(myGroup));
+      if (myGroup.isBound()) {
+        BindingProperty.updateBoundFieldName(myRootContainer, oldName, newName, ButtonGroup.class.getName());
+      }
+    }
   }
 
   public JComponent getComponent() {
