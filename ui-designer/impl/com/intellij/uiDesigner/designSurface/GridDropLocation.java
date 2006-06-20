@@ -7,6 +7,7 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.Rectangle;
@@ -18,16 +19,12 @@ import java.awt.LayoutManager;
 public class GridDropLocation implements DropLocation {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridDropLocation");
 
-  protected RadContainer myContainer;
+  protected final RadContainer myContainer;
   protected int myRow;
   protected int myColumn;
   private boolean myDropAllowed;
 
-  public GridDropLocation(final boolean dropAllowed) {
-    myDropAllowed = dropAllowed;
-  }
-
-  public GridDropLocation(final RadContainer container, final int row, final int column) {
+  public GridDropLocation(@NotNull final RadContainer container, final int row, final int column) {
     myContainer = container;
     myRow = row;
     myColumn = column;

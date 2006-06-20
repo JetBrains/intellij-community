@@ -27,7 +27,7 @@ public class FirstComponentInsertLocation extends GridDropLocation {
   protected final int myXPart;
   protected final int myYPart;
 
-  public FirstComponentInsertLocation(final RadContainer container,
+  public FirstComponentInsertLocation(@NotNull final RadContainer container,
                                       final int row,
                                       final int column,
                                       final Point targetPoint,
@@ -58,7 +58,7 @@ public class FirstComponentInsertLocation extends GridDropLocation {
     }
   }
 
-  public FirstComponentInsertLocation(final RadContainer container,
+  public FirstComponentInsertLocation(@NotNull final RadContainer container,
                                       final int row,
                                       final int column,
                                       final Rectangle cellRect,

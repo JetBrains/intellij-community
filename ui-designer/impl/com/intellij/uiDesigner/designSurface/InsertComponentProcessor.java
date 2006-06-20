@@ -237,9 +237,14 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   // either point or targetContainer is null
   public void processComponentInsert(@Nullable final Point point, @Nullable final RadContainer targetContainer, final ComponentItem item) {
-    final DropLocation location = (point != null)
-                                  ? GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), point)
-                                  : new GridDropLocation(targetContainer, 0, 0);
+    final DropLocation location;
+    if (point != null) {
+      location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), point);
+    }
+    else {
+      LOG.assertTrue(targetContainer != null);
+      location = new GridDropLocation(targetContainer, 0, 0);
+    }
 
     processComponentInsert(item, location);
   }

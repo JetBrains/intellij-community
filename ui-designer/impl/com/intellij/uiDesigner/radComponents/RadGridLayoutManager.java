@@ -133,7 +133,7 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
   }
 
   @NotNull @Override
-  public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+  public DropLocation getDropLocation(@NotNull RadContainer container, @Nullable final Point location) {
     if (container.getGridRowCount() == 1 && container.getGridColumnCount() == 1 &&
         getComponentAtGrid(container, 0, 0) == null) {
       final Rectangle rc = getGridCellRangeRect(container, 0, 0, 0, 0);

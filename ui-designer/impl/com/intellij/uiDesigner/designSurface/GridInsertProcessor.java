@@ -32,7 +32,7 @@ public class GridInsertProcessor {
     RadContainer container = getDropTargetContainer(rootContainer, aPoint);
 
     if (container == null) {
-      return new GridDropLocation(false);
+      return NoDropLocation.INSTANCE;
     }
 
     final Point targetPoint = SwingUtilities.convertPoint(rootContainer.getDelegee(), aPoint, container.getDelegee());
