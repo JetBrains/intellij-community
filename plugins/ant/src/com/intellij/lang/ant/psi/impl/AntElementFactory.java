@@ -96,6 +96,8 @@ public class AntElementFactory {
       };
       ourAntTypeToKnownAntElementCreatorMap.put(Target.class.getName(), targetCreator);
       ourAntTypeToKnownAntElementCreatorMap.put(Ant.TargetElement.class.getName(), targetCreator);
+
+      // properties
       ourAntTypeToKnownAntElementCreatorMap.put(Property.class.getName(), new AntElementCreator() {
         public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
           return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Property.class.getName()));
@@ -110,9 +112,16 @@ public class AntElementFactory {
           return new AntPropertyImpl(parent, tag, checksumDef, "property");
         }
       });
+      ourAntTypeToKnownAntElementCreatorMap.put(ExecTask.class.getName(), new AntElementCreator() {
+        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+          return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(ExecTask.class.getName()), "outputproperty");
+        }
+      });
       for (final String clazz : PROPERTY_CLASSES) {
         addPropertyCreator(clazz);
       }
+
+      // sequential and parallel tasks can contain all other tasks
       for (final String clazz : ALL_TASKS_CONTAINER_CLASSES) {
         addAllTasksContainerCreator(clazz);
       }
