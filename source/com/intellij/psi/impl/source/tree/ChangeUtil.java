@@ -17,16 +17,15 @@ import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.light.LightTypeElement;
-import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.*;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.parsing.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.CharTable;
@@ -40,7 +39,7 @@ public class ChangeUtil implements Constants {
   private ChangeUtil() { }
 
   public static void addChild(final CompositeElement parent, TreeElement child, final TreeElement anchorBefore) {
-    LOG.assertTrue(anchorBefore == null || anchorBefore.getTreeParent() == parent);
+    LOG.assertTrue(anchorBefore == null || anchorBefore.getTreeParent() == parent, "anchorBefore == null || anchorBefore.getTreeParent() == parent");
     transformAll(parent.getFirstChildNode());
     final TreeElement last = child.getTreeNext();
     final TreeElement first = transformAll(child);
