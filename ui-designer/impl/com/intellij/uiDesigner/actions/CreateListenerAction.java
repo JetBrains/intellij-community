@@ -26,6 +26,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +58,8 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
   }
 
   private DefaultActionGroup prepareActionGroup(final RadComponent component) {
-    final PsiField boundField = BindingProperty.findBoundField(component, component.getBinding());
+    RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
+    final PsiField boundField = BindingProperty.findBoundField(root, component.getBinding());
     if (boundField != null) {
       final DefaultActionGroup actionGroup = new DefaultActionGroup();
       final EventSetDescriptor[] eventSetDescriptors;

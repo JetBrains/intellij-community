@@ -50,8 +50,6 @@ import java.util.List;
 public final class BindingProperty extends Property<RadComponent, String> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.properties.BindingProperty");
 
-  private final Project myProject;
-
   private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>() {
     protected void customize(final String value) {
       setText(value);
@@ -63,7 +61,6 @@ public final class BindingProperty extends Property<RadComponent, String> {
 
   public BindingProperty(final Project project){
     super(null, "field name");
-    myProject = project;
     myEditor = new BindingEditor(project);
   }
 
@@ -194,9 +191,8 @@ public final class BindingProperty extends Property<RadComponent, String> {
   }
 
   @Nullable
-  public static PsiField findBoundField(final RadComponent component, final String fieldName) {
-    final Project project = component.getModule().getProject();
-    final RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
+  public static PsiField findBoundField(final RadRootContainer root, final String fieldName) {
+    final Project project = root.getProject();
     final String classToBind = root.getClassToBind();
     if (classToBind != null) {
       final PsiManager manager = PsiManager.getInstance(project);
@@ -267,7 +263,8 @@ public final class BindingProperty extends Property<RadComponent, String> {
     if (!component.isDefaultBinding()) {
       return;
     }
-    PsiField boundField = findBoundField(component, component.getBinding());
+    RadRootContainer root = (RadRootContainer)FormEditingUtil.getRoot(component);
+    PsiField boundField = findBoundField(root, component.getBinding());
     if (boundField == null || !isFieldUnreferenced(boundField)) {
       return;
     }
@@ -301,7 +298,12 @@ public final class BindingProperty extends Property<RadComponent, String> {
       for(int i=1; i<words.size() && i < 4; i++) {
         nameBuilder.append(StringUtil.capitalize(words.get(i)));
       }
-      nameBuilder.append(StringUtil.capitalize(InsertComponentProcessor.getShortClassName(component.getComponentClassName())));
+      final String shortClassName = StringUtil.capitalize(InsertComponentProcessor.getShortClassName(component.getComponentClassName()));
+      if (shortClassName.equalsIgnoreCase(nameBuilder.toString())) {
+        // avoid "buttonButton" case
+        return null;
+      }
+      nameBuilder.append(shortClassName);
 
       RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
       Project project = root.getModule().getProject();

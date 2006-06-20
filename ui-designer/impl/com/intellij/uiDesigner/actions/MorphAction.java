@@ -101,7 +101,7 @@ public class MorphAction extends AbstractGuiEditorAction {
   }
 
   private static void updateBoundFieldType(final GuiEditor editor, final RadComponent oldComponent, final ComponentItem targetItem) {
-    PsiField oldBoundField = BindingProperty.findBoundField(oldComponent, oldComponent.getBinding());
+    PsiField oldBoundField = BindingProperty.findBoundField(editor.getRootContainer(), oldComponent.getBinding());
     if (oldBoundField != null) {
       final PsiElementFactory factory = PsiManager.getInstance(editor.getProject()).getElementFactory();
       try {
