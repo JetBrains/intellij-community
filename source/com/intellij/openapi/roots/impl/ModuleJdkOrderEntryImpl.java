@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
@@ -111,7 +112,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   }
 
   public ProjectJdk getJdk() {
-    if (myRootModel.isWritable()) {
+    if (myRootModel.isWritable() && !ApplicationManager.getApplication().isUnitTestMode()) {
       final Project project = myRootModel.getModule().getProject();
       return ProjectJdksModel.getInstance(project).getProjectJdks().get(myJdk);
     }
