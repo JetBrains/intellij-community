@@ -16,11 +16,13 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -29,27 +31,17 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.vfs.VcsFileSystem;
+import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.diff.SimpleContent;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.browser.*;
+import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -57,13 +49,12 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.*;
+import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -510,38 +501,14 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
     public void actionPerformed(AnActionEvent e) {
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
+      SVNDirEntry entry = node.getSVNDirEntry();
       SVNURL url = node.getURL();
       Project p = (Project) e.getDataContext().getData(DataConstants.PROJECT);
-      final SvnFileRevision revision = new SvnFileRevision(myVCS, SVNRevision.UNDEFINED, SVNRevision.HEAD, url.toString(),
-              null, null, null);
-      try {
-        revision.loadContent();
-      } catch (VcsException e1) {
-        Messages.showErrorDialog("Cannot load file contents: " + e1.getMessage(), "Open File Error");
-        return;
-      }
-      try {
-        File tmpDir = new File(System.getProperty("java.io.tmpdir"));
-        String name = node.getSVNDirEntry().getName().substring(0, node.getSVNDirEntry().getName().lastIndexOf('.'));
-        String extension = node.getSVNDirEntry().getName().substring(node.getSVNDirEntry().getName().lastIndexOf('.') + 1);
-        File f1 = new File(tmpDir,  name + " (r" + node.getSVNDirEntry().getRevision() + ")." + extension);
-        if (!f1.exists()) {
-          f1.createNewFile();
-        }
-        final VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl("file://" + f1.getAbsolutePath().replace(File.separatorChar, '/'));
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            try {
-              vf.setBinaryContent(revision.getContent());
-            } catch (IOException e1) {
-              //
-            }
-          }
-        });
-        FileEditorManager.getInstance(p).openFile(vf, true);
-      } catch (IOException e1) {
-        //
-      }
+      SVNRevision rev = SVNRevision.create(entry.getRevision());
+      final SvnFileRevision revision = new SvnFileRevision(myVCS, SVNRevision.UNDEFINED, rev, url.toString(),
+              entry.getAuthor(), entry.getDate(), null);
+      VirtualFile vcsVF = new VcsVirtualFile(node.getSVNDirEntry().getName(), revision, VcsFileSystem.getInstance());
+      FileEditorManager.getInstance(p).openFile(vcsVF, true);
     }
   }
 
