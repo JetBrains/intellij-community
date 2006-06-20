@@ -800,7 +800,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     final RefCountHolder refCountHolder = myRefCountHolder;  // To make sure it doesn't get null in multi-threaded envir.
     if (refCountHolder != null &&
         attributeDescriptor.hasIdType() &&
-        tag.getParent().getUserData(DO_NOT_VALIDATE_KEY) == null
+        tag.getUserData(DO_NOT_VALIDATE_KEY) == null
       ) {
       final String unquotedValue = getUnquotedValue(value, tag);
 
@@ -816,14 +816,16 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           final XmlAttributeValue valueElement = attributeById.getValueElement();
 
           if (valueElement != null && getUnquotedValue(valueElement, tag).equals(unquotedValue)) {
-            addToResults(HighlightInfo.createHighlightInfo(
-              HighlightInfoType.WRONG_REF,
-              value,
-              XmlErrorMessages.message("duplicate.id.reference")));
-            addToResults(HighlightInfo.createHighlightInfo(
-              HighlightInfoType.WRONG_REF,
-              valueElement,
-              XmlErrorMessages.message("duplicate.id.reference")));
+            if (tag.getParent().getUserData(DO_NOT_VALIDATE_KEY) == null) {
+              addToResults(HighlightInfo.createHighlightInfo(
+                HighlightInfoType.WRONG_REF,
+                value,
+                XmlErrorMessages.message("duplicate.id.reference")));
+              addToResults(HighlightInfo.createHighlightInfo(
+                HighlightInfoType.WRONG_REF,
+                valueElement,
+                XmlErrorMessages.message("duplicate.id.reference")));
+            }
             return;
           } else {
             // attributeById previously has that id so reregister new one
