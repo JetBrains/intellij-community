@@ -24,16 +24,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.Introspector;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.IOException;
 import java.util.*;
 
 public class StringUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
   @NonNls private static final String VOWELS = "aeiouy";
 
-  public static String replace(@NonNls @NotNull String text,@NonNls @NotNull String oldS,@NonNls @Nullable String newS) {
+  public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @Nullable String newS) {
     return replace(text, oldS, newS, false);
   }
 
@@ -61,7 +61,7 @@ public class StringUtil {
       int i1 = text1.indexOf(oldS1, i);
       if (i1 < 0) {
         if (i == 0) return text;
-        newText.append(text,i,text.length());
+        newText.append(text, i, text.length());
         break;
       }
       else {
@@ -69,14 +69,14 @@ public class StringUtil {
         if (newText == null) {
           newText = new StringBuffer();
         }
-        newText.append(text,i, i1);
+        newText.append(text, i, i1);
         newText.append(newS);
         i = i1 + oldS.length();
       }
     }
     return newText != null ? newText.toString() : "";
   }
-  
+
   public static String getShortName(String fqName) {
     return getShortName(fqName, '.');
   }
@@ -87,6 +87,7 @@ public class StringUtil {
 
   /**
    * Implementation copied from {@link String.indexOf()} except character comparisons made case insensitive
+   *
    * @param where
    * @param what
    * @param fromIndex
@@ -275,9 +276,7 @@ public class StringUtil {
     for (int i = 1; i < s1.length(); i++) {
       for (int j = 1; j < s2.length(); j++) {
 
-        a[i][j] = Math.min(Math.min(a[i - 1][j - 1] + (s1.charAt(i) == s2.charAt(j) ? 0 : 1),
-                                    a[i - 1][j] + 1),
-                           a[i][j - 1] + 1);
+        a[i][j] = Math.min(Math.min(a[i - 1][j - 1] + (s1.charAt(i) == s2.charAt(j) ? 0 : 1), a[i - 1][j] + 1), a[i][j - 1] + 1);
       }
     }
 
@@ -316,9 +315,8 @@ public class StringUtil {
     }
   }
 
-  @NonNls private static final String[] ourPrepositions = new String[]{
-    "at", "the", "and", "not", "if", "a", "or", "to", "in", "on", "into"
-  };
+  @NonNls private static final String[] ourPrepositions =
+    new String[]{"at", "the", "and", "not", "if", "a", "or", "to", "in", "on", "into"};
 
 
   public static boolean isPreposition(@NotNull String s, int firstChar, int lastChar) {
@@ -344,31 +342,31 @@ public class StringUtil {
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
       switch (ch) {
-        case '\b':
+        case'\b':
           buffer.append("\\b");
           break;
 
-        case '\t':
+        case'\t':
           buffer.append("\\t");
           break;
 
-        case '\n':
+        case'\n':
           buffer.append("\\n");
           break;
 
-        case '\f':
+        case'\f':
           buffer.append("\\f");
           break;
 
-        case '\r':
+        case'\r':
           buffer.append("\\r");
           break;
 
-        case '\"':
+        case'\"':
           buffer.append("\\\"");
           break;
 
-        case '\\':
+        case'\\':
           buffer.append("\\\\");
           break;
 
@@ -416,39 +414,39 @@ public class StringUtil {
       }
       else {
         switch (ch) {
-          case 'n':
+          case'n':
             buffer.append('\n');
             break;
 
-          case 'r':
+          case'r':
             buffer.append('\r');
             break;
 
-          case 'b':
+          case'b':
             buffer.append('\b');
             break;
 
-          case 't':
+          case't':
             buffer.append('\t');
             break;
 
-          case 'f':
+          case'f':
             buffer.append('\f');
             break;
 
-          case '\'':
+          case'\'':
             buffer.append('\'');
             break;
 
-          case '\"':
+          case'\"':
             buffer.append('\"');
             break;
 
-          case '\\':
+          case'\\':
             buffer.append('\\');
             break;
 
-          case 'u':
+          case'u':
             int sum = 0;
             int i;
             for (i = idx + 1; i < idx + 5 && i < length; i++) {
@@ -475,8 +473,7 @@ public class StringUtil {
       return suggestion + "ren";
     }
 
-    if (StringUtil.endsWithChar(suggestion, 's') || StringUtil.endsWithChar(suggestion, 'x') ||
-        suggestion.endsWith("ch")) {
+    if (StringUtil.endsWithChar(suggestion, 's') || StringUtil.endsWithChar(suggestion, 'x') || suggestion.endsWith("ch")) {
       return suggestion + "es";
     }
 
@@ -524,8 +521,8 @@ public class StringUtil {
     if (chars instanceof CharSequenceWithStringHash) return chars.hashCode();
     int h = 0;
     int to = chars.length();
-    for( int off = 0; off < to; off++) {
-      h = 31*h + chars.charAt(off);
+    for (int off = 0; off < to; off++) {
+      h = 31 * h + chars.charAt(off);
     }
     return h;
   }
@@ -533,8 +530,8 @@ public class StringUtil {
   public static int stringHashCode(char[] chars, int from, int len) {
     int h = 0;
     int to = from + len;
-    for( int off = from; off < to; off++) {
-      h = 31*h + chars[off];
+    for (int off = from; off < to; off++) {
+      h = 31 * h + chars[off];
     }
     return h;
   }
@@ -542,8 +539,8 @@ public class StringUtil {
   public static int stringHashCodeInsensitive(char[] chars, int from, int len) {
     int h = 0;
     int to = from + len;
-    for( int off = from; off < to; off++) {
-      h = 31*h + Character.toLowerCase(chars[off]);
+    for (int off = from; off < to; off++) {
+      h = 31 * h + Character.toLowerCase(chars[off]);
     }
     return h;
   }
@@ -551,8 +548,8 @@ public class StringUtil {
   public static int stringHashCodeInsensitive(@NotNull CharSequence chars) {
     int h = 0;
     final int len = chars.length();
-    for( int i = 0; i < len; i++) {
-      h = 31*h + Character.toLowerCase(chars.charAt(i));
+    for (int i = 0; i < len; i++) {
+      h = 31 * h + Character.toLowerCase(chars.charAt(i));
     }
     return h;
   }
@@ -567,8 +564,9 @@ public class StringUtil {
   public static boolean startsWithChar(@Nullable CharSequence s, char prefix) {
     return s != null && s.length() != 0 && s.charAt(0) == prefix;
   }
+
   public static boolean endsWithChar(@Nullable CharSequence s, char suffix) {
-    return s != null && s.length() != 0 && s.charAt(s.length()-1) == suffix;
+    return s != null && s.length() != 0 && s.charAt(s.length() - 1) == suffix;
   }
 
   public static String trimStart(@NotNull String s, @NotNull String prefix) {
@@ -620,7 +618,7 @@ public class StringUtil {
     final String exceptionPattern = "Exception: ";
     final String errorPattern = "Error: ";
 
-    while ( (result.indexOf(exceptionPattern) >=0 || result.indexOf(errorPattern) >=0 ) && e.getCause() != null) {
+    while ((result.indexOf(exceptionPattern) >= 0 || result.indexOf(errorPattern) >= 0) && e.getCause() != null) {
       e = e.getCause();
       result = e.getMessage();
     }
@@ -632,7 +630,7 @@ public class StringUtil {
   }
 
   private static String extractMessage(@NotNull String result, @NotNull final String errorPattern) {
-    if (result.lastIndexOf(errorPattern) >= 0 ) {
+    if (result.lastIndexOf(errorPattern) >= 0) {
       result = result.substring(result.lastIndexOf(errorPattern) + errorPattern.length());
     }
     return result;
@@ -640,7 +638,7 @@ public class StringUtil {
 
   public static String repeatSymbol(final char aChar, final int count) {
     final StringBuffer buffer = new StringBuffer();
-    repeatSymbol(buffer,aChar, count);
+    repeatSymbol(buffer, aChar, count);
     return buffer.toString();
   }
 
@@ -658,7 +656,7 @@ public class StringUtil {
         continue;
       }
 
-      if (c == '"' && !(i > 0 && s.charAt(i-1) == '\\')) {
+      if (c == '"' && !(i > 0 && s.charAt(i - 1) == '\\')) {
         inQuotes = !inQuotes;
       }
       builder.append(c);
@@ -692,7 +690,8 @@ public class StringUtil {
     return result;
   }
 
-  @NotNull public static Iterable<String> tokenize(@NotNull String s, @NotNull String separators) {
+  @NotNull
+  public static Iterable<String> tokenize(@NotNull String s, @NotNull String separators) {
     final com.intellij.util.text.StringTokenizer tokenizer = new com.intellij.util.text.StringTokenizer(s, separators);
     return new Iterable<String>() {
       public Iterator<String> iterator() {
@@ -716,14 +715,14 @@ public class StringUtil {
   public static List<String> getWordsIn(@NotNull String text) {
     List<String> result = new SmartList<String>();
     int start = -1;
-    for (int i=0;i<text.length();i++) {
+    for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
       boolean isIdentifierPart = Character.isJavaIdentifierPart(c);
       if (isIdentifierPart && start == -1) {
         start = i;
       }
-      if (isIdentifierPart && i == text.length()-1 && start != -1) {
-        result.add(text.substring(start, i+1));
+      if (isIdentifierPart && i == text.length() - 1 && start != -1) {
+        result.add(text.substring(start, i + 1));
       }
       else if (!isIdentifierPart && start != -1) {
         result.add(text.substring(start, i));
@@ -740,6 +739,17 @@ public class StringUtil {
       result.append(strings[i]);
     }
     return result.toString();
+  }
+
+  public static String[] zip(String[] strings1, String[] strings2, String separator) {
+    if (strings1.length != strings2.length) throw new IllegalArgumentException();
+
+    String[] result = new String[strings1.length];
+    for (int i = 0; i < result.length; i++) {
+      result[i] = strings1[i] + separator + strings2[i];
+    }
+
+    return result;
   }
 
   public static <T> String join(@NotNull Collection<T> items, @NotNull Function<T, String> f, @NotNull @NonNls String separator) {
@@ -790,10 +800,10 @@ public class StringUtil {
 
   public static String formatFileSize(final long fileSize) {
     if (fileSize < 0x400) {
-        return CommonBundle.message("file.size.format.bytes", fileSize);
+      return CommonBundle.message("file.size.format.bytes", fileSize);
     }
     if (fileSize < 0x100000) {
-        long kbytes = fileSize * 100 / 1024;
+      long kbytes = fileSize * 100 / 1024;
       final String kbs = kbytes / 100 + "." + kbytes % 100;
       return CommonBundle.message("file.size.format.kbytes", kbs);
     }
@@ -805,6 +815,7 @@ public class StringUtil {
   /**
    * Returns unpluralized variant using English based heuristics like proprties -> property, names -> name, children -> child.
    * Returns <code>null</code> if failed to match appropriate heuristic.
+   *
    * @param name english word in plural form
    * @return name in singular form or <code>null</code> if failed to find one.
    */
@@ -849,11 +860,11 @@ public class StringUtil {
     if (displayString == null || displayString.length() == 0) return displayString;
     char firstChar = displayString.charAt(0);
     char uppedFirstChar = Character.toUpperCase(firstChar);
-    
+
     if (uppedFirstChar == firstChar) return displayString;
-    
+
     StringBuilder builder = new StringBuilder(displayString);
-    builder.setCharAt( 0, uppedFirstChar );
+    builder.setCharAt(0, uppedFirstChar);
     return builder.toString();
   }
 }

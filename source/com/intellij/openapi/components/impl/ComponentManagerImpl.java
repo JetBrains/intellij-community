@@ -219,7 +219,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       }
       component.initComponent();
     }
-    catch(Throwable ex) {
+    catch (Throwable ex) {
       handleInitComponentError(component, componentClass, ex);
     }
   }
@@ -408,11 +408,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         try {
           final String implementation = headless ? descriptor.getHeadlessImplementation() : descriptor.getImplementation();
           if (!StringUtil.isEmpty(implementation)) {
-            registerComponent(Class.forName(descriptor.getInterface(), true, loader),
-                              Class.forName(implementation, true, loader),
-                              options,
-                              true,
-                              isTrue(options, "lazy"));
+            registerComponent(Class.forName(descriptor.getInterface(), true, loader), Class.forName(implementation, true, loader), options,
+                              true, isTrue(options, "lazy"));
           }
         }
         catch (Exception e) {
@@ -522,59 +519,61 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     if (element == null) return;
     final boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
     for (final Object o : element.getChildren(COMPONENT_ELEMENT)) {
+      Element child = (Element)o;
+      boolean skipForDummyProject = child.getChild("skipForDummyProject") != null;
+      if (!loadDummies && skipForDummyProject) {
+        continue;
+      }
+      String interfaceClass = child.getChildText(INTERFACE_CLASS_ELEMENT);
+      String implClass = child.getChildText(IMPLEMENTATION_CLASS_ELEMENT);
+      if (headless) {
+        String headlessImplClass = child.getChildText(HEADLESS_IMPLEMENTATION_CLASS_ELEMENT);
+        if (headlessImplClass != null) {
+          if (headlessImplClass.trim().length() == 0) continue;
+          implClass = headlessImplClass;
+        }
+      }
+
+      if (interfaceClass == null) interfaceClass = implClass;
+
+      Map<String, String> options = null;
+
+      final List optionElements = child.getChildren(OPTION_ELEMENT);
+      if (optionElements.size() != 0) {
+        options = new HashMap<String, String>();
+        for (final Object optionElement : optionElements) {
+          Element e = (Element)optionElement;
+          String name = e.getAttributeValue(NAME_ATTR);
+          String value = e.getAttributeValue(VALUE_ATTR);
+          options.put(name, value);
+        }
+      }
+
+      if (!isComponentSuitable(options)) continue;
+
+      ClassLoader loader = null;
+      if (descriptor != null) {
+        loader = descriptor.getPluginClassLoader();
+      }
+      if (loader == null) {
+        loader = getClass().getClassLoader();
+      }
+
+      interfaceClass = interfaceClass.trim();
+      implClass = implClass.trim();
+
       try {
-        Element child = (Element)o;
-        boolean skipForDummyProject = child.getChild("skipForDummyProject") != null;
-        if (!loadDummies && skipForDummyProject) {
-          continue;
-        }
-        String interfaceClass = child.getChildText(INTERFACE_CLASS_ELEMENT);
-        String implClass = child.getChildText(IMPLEMENTATION_CLASS_ELEMENT);
-        if (headless) {
-          String headlessImplClass = child.getChildText(HEADLESS_IMPLEMENTATION_CLASS_ELEMENT);
-          if (headlessImplClass != null) {
-            if (headlessImplClass.trim().length() == 0) continue;
-            implClass = headlessImplClass;
-          }
-        }
-
-        if (interfaceClass == null) interfaceClass = implClass;
-
-        Map<String, String> options = null;
-
-        final List optionElements = child.getChildren(OPTION_ELEMENT);
-        if (optionElements.size() != 0) {
-          options = new HashMap<String, String>();
-          for (final Object optionElement : optionElements) {
-            Element e = (Element)optionElement;
-            String name = e.getAttributeValue(NAME_ATTR);
-            String value = e.getAttributeValue(VALUE_ATTR);
-            options.put(name, value);
-          }
-        }
-
-        if (!isComponentSuitable(options)) continue;
-
-        ClassLoader loader = null;
-        if (descriptor != null) {
-          loader = descriptor.getPluginClassLoader();
-        }
-        if (loader == null) {
-          loader = getClass().getClassLoader();
-        }
-
-        interfaceClass = interfaceClass.trim();
-        implClass = implClass.trim();
-
         registerComponent(Class.forName(interfaceClass, true, loader), Class.forName(implClass, true, loader), options, true,
                           isTrue(options, "lazy"));
       }
       catch (Exception e) {
+        final String message = "Error while initializing component: " + interfaceClass + ":" + implClass;
+
         if (descriptor != null) {
-          LOG.error(new PluginException(e, descriptor.getPluginId()));
+          LOG.error(message, new PluginException(e, descriptor.getPluginId()));
         }
         else {
-          LOG.error(e);
+          LOG.error(message, e);
         }
       }
       catch (Error e) {
@@ -610,19 +609,18 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     public ComponentAdapter createComponentAdapter(final Object componentKey, Class componentImplementation, Parameter[] parameters)
-      throws PicoIntrospectionException,
-             AssignabilityRegistrationException,
-             NotConcreteRegistrationException {
+      throws PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
 
-      DecoratingComponentAdapter initializingAdapter = new DecoratingComponentAdapter(new ConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters, true)) {
-        public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException {
-          Object componentInstance = super.getComponentInstance(picoContainer);
-          if (componentInstance instanceof BaseComponent) {
-            initComponent((BaseComponent)componentInstance, (Class)componentKey);
+      DecoratingComponentAdapter initializingAdapter =
+        new DecoratingComponentAdapter(new ConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters, true)) {
+          public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException {
+            Object componentInstance = super.getComponentInstance(picoContainer);
+            if (componentInstance instanceof BaseComponent) {
+              initComponent((BaseComponent)componentInstance, (Class)componentKey);
+            }
+            return componentInstance;
           }
-          return componentInstance;
-        }
-      };
+        };
 
       return new CachingComponentAdapter(initializingAdapter);
     }
