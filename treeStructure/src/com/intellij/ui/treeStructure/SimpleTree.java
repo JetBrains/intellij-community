@@ -534,4 +534,13 @@ public class SimpleTree extends JTree implements CellEditorListener {
     double rowHeight = getRowBounds(0).getHeight();
     return new Dimension(superSize.width, (int) (rowHeight * myMinHeightInRows));
   }
+
+  public final int getToggleClickCount() {
+    SimpleNode node = getSelectedNode();
+    if (node != null) {
+        if (!node.expandOnDoubleClick()) return -1;
+    }
+    return super.getToggleClickCount();
+  }
+
 }

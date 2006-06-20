@@ -185,4 +185,8 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   public boolean isAutoExpandNode() {
     return getParent() == null;
   }
+
+  public boolean expandOnDoubleClick() {
+    return false;
+  }
 }
