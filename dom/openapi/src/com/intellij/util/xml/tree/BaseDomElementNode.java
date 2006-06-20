@@ -11,12 +11,15 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 
 import java.util.*;
 import java.util.List;
 import java.lang.reflect.Type;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +47,17 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
   public SimpleNode[] getChildren() {
     return doGetChildren(myDomElement);
+  }
+
+  public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
+    if (inputEvent instanceof MouseEvent) {
+      ((MouseEvent)inputEvent).consume();
+    }
+    final DomElement domElement = getDomElement();
+    final DomElementNavigationProvider provider =
+      DomElementsNavigationManager.getManager(domElement.getManager().getProject()).getDomElementsNavigateProvider(DomElementsNavigationManager.DEFAULT_PROVIDER_NAME);
+
+    provider.navigate(domElement, true);
   }
 
   protected final SimpleNode[] doGetChildren(final DomElement element) {
@@ -123,7 +137,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     clearColoredText();
 
     final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(myDomElement.getManager().getProject());
-    final DomElementsProblemsHolder holder = manager.getProblemHolder(myDomElement);
+    final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(myDomElement);
     final List<DomElementProblemDescriptor> problems = holder.getProblems(myDomElement, true, highlightIfChildrenHasProblems(), HighlightSeverity.ERROR);
 
     if (problems.size() > 0) {
