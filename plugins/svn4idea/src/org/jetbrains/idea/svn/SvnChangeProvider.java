@@ -136,9 +136,7 @@ public class SvnChangeProvider implements ChangeProvider {
         }
       });
     }
-    else {
-      processFile(path, stClient, builder);
-    }
+    processFile(path, stClient, builder);
   }
 
   private void processFile(FilePath filePath, SVNStatusClient stClient, ChangelistBuilder builder) throws SVNException {
