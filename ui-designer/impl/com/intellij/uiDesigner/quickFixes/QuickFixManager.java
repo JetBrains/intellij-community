@@ -255,7 +255,6 @@ public abstract class QuickFixManager <T extends JComponent>{
 
   private static class QuickFixPopupStep extends BaseListPopupStep<ErrorWithFix> {
     private final boolean myShowSuppresses;
-    private boolean myQuickFixAlreadyRan = false;
 
     public QuickFixPopupStep(final ArrayList<ErrorWithFix> fixList, boolean showSuppresses) {
       super(null, fixList);
@@ -269,10 +268,11 @@ public abstract class QuickFixManager <T extends JComponent>{
 
     public PopupStep onChosen(final ErrorWithFix selectedValue, final boolean finalChoice) {
       if (finalChoice || !myShowSuppresses) {
-        if (!myQuickFixAlreadyRan) {
-          myQuickFixAlreadyRan = true;
-          selectedValue.second.run();
-        }
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            selectedValue.second.run();
+          }
+        });
         return FINAL_CHOICE;
       }
       if (selectedValue.first.getInspectionId() != null && selectedValue.second.getComponent() != null) {
