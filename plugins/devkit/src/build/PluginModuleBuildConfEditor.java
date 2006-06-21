@@ -116,7 +116,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
         !plugin.getPath().equals(newPluginPath) &&
         Messages.showYesNoDialog(myModule.getProject(),
                                  DevKitBundle.message("deployment.view.delete", plugin.getPath()),
-                                 DevKitBundle.message("deployment.cleanup"), null) == DialogWrapper.OK_EXIT_CODE) {
+                                 DevKitBundle.message("deployment.cleanup", META_INF), null) == DialogWrapper.OK_EXIT_CODE) {
 
       CommandProcessor.getInstance().executeCommand(myModule.getProject(),
                                                     new Runnable() {
