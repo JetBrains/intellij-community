@@ -199,7 +199,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   public static DomInvocationHandler getDomInvocationHandler(DomElement proxy) {
     final InvocationHandler handler = AdvancedProxy.getInvocationHandler(proxy);
     if (handler instanceof StableInvocationHandler) {
-      return getDomInvocationHandler(((StableInvocationHandler)handler).getWrappedElement());
+      final DomElement element = ((StableInvocationHandler)handler).getWrappedElement();
+      return element == null ? null : getDomInvocationHandler(element);
     }
     if (handler instanceof DomInvocationHandler) {
       return (DomInvocationHandler)handler;
