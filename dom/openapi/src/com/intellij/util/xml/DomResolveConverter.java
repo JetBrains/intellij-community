@@ -50,7 +50,7 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
             public void visitDomElement(DomElement element) {
               if (myClass.isInstance(element)) {
                 final String name = element.getGenericInfo().getElementName(element);
-                if (!map.containsKey(name)) {
+                if (name != null && !map.containsKey(name)) {
                   map.put(name, element);
                 }
               } else {
