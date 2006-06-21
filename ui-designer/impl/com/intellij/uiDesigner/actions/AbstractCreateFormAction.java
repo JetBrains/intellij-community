@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +56,7 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase {
   }
 
   protected String createFormBody(Project project, @Nullable final String fullQualifiedClassName,
-                                  @NonNls final String formName) throws IncorrectOperationException {
+                                  @NonNls final String formName, final String layoutManager) throws IncorrectOperationException {
 
     final InputStream inputStream = getClass().getResourceAsStream(formName);
 
@@ -80,7 +79,7 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase {
       s = StringUtil.replace(s, "bind-to-class=\"$CLASS$\"", "");
     }
 
-    s = StringUtil.replace(s, "$LAYOUT$", GuiDesignerConfiguration.getInstance(project).DEFAULT_LAYOUT_MANAGER);
+    s = StringUtil.replace(s, "$LAYOUT$", layoutManager);
 
     return s;
   }

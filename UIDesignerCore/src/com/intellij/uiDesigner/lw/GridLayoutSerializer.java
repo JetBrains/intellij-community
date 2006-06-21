@@ -36,8 +36,8 @@ public class GridLayoutSerializer extends LayoutSerializer {
     final int rowCount = LwXmlReader.getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_ROW_COUNT);
     final int columnCount = LwXmlReader.getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_COLUMN_COUNT);
 
-    final int hGap = LwXmlReader.getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_HGAP);
-    final int vGap = LwXmlReader.getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_VGAP);
+    final int hGap = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_HGAP, -1);
+    final int vGap = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_VGAP, -1);
 
     // attribute is optional for compatibility with IDEA 4.0 forms
     final boolean sameSizeHorizontally = LwXmlReader.getOptionalBoolean(element, UIFormXmlConstants.ATTRIBUTE_SAME_SIZE_HORIZONTALLY, false);

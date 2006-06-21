@@ -31,9 +31,9 @@ public class FlowLayoutSerializer extends LayoutSerializer {
   }
 
   void readLayout(Element element, LwContainer container) {
-    final int hGap = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_HGAP, 0);
-    final int vGap = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_VGAP, 0);
-    final int flowAlign = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_FLOW_ALIGN, 0);
+    final int hGap = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_HGAP, 5);
+    final int vGap = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_VGAP, 5);
+    final int flowAlign = LwXmlReader.getOptionalInt(element, UIFormXmlConstants.ATTRIBUTE_FLOW_ALIGN, FlowLayout.CENTER);
     container.setLayout(new FlowLayout(flowAlign, hGap, vGap));
   }
 

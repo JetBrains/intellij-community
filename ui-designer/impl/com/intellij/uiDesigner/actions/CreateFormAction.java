@@ -11,7 +11,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.GuiDesignerConfiguration;
+import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +32,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.CreateFormAction");
 
   private String myLastClassName = null;
+  private String myLastLayoutManager = null;
 
   public CreateFormAction() {
     super(UIDesignerBundle.message("action.gui.form.text"),
@@ -72,7 +77,8 @@ public class CreateFormAction extends AbstractCreateFormAction {
         fqClassName = packageName.length() == 0 ? newName : packageName + "." + myLastClassName;
       }
 
-      final String formBody = createFormBody(directory.getProject(), fqClassName, "/com/intellij/uiDesigner/NewForm.xml");
+      final String formBody = createFormBody(directory.getProject(), fqClassName, "/com/intellij/uiDesigner/NewForm.xml",
+                                             myLastLayoutManager);
       final PsiFile formFile = directory.getManager().getElementFactory().createFileFromText(newName + ".form", formBody);
       createdFile = directory.add(formFile);
 
@@ -107,14 +113,17 @@ public class CreateFormAction extends AbstractCreateFormAction {
     private JTextField myFormNameTextField;
     private JCheckBox myCreateBoundClassCheckbox;
     private JTextField myClassNameTextField;
+    private JComboBox myBaseLayoutManagerCombo;
     private boolean myAdjusting = false;
     private boolean myNeedAdjust = true;
 
+    private final Project myProject;
     private final MyInputValidator myValidator;
 
     public MyDialog(final Project project,
                     final MyInputValidator validator) {
       super(project, true);
+      myProject = project;
       myValidator = validator;
       init();
       setTitle(UIDesignerBundle.message("title.new.gui.form"));
@@ -144,6 +153,14 @@ public class CreateFormAction extends AbstractCreateFormAction {
           }
         }
       });
+
+      myBaseLayoutManagerCombo.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getLayoutManagerNames()));
+      myBaseLayoutManagerCombo.setRenderer(new ColoredListCellRenderer() {
+        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          append(LayoutManagerRegistry.getLayoutManagerDisplayName((String) value), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+      });
+      myBaseLayoutManagerCombo.setSelectedItem(GuiDesignerConfiguration.getInstance(project).DEFAULT_LAYOUT_MANAGER);
     }
 
     protected JComponent createCenterPanel() {
@@ -157,6 +174,8 @@ public class CreateFormAction extends AbstractCreateFormAction {
       else {
         myLastClassName = null;
       }
+      myLastLayoutManager = (String)myBaseLayoutManagerCombo.getSelectedItem();
+      GuiDesignerConfiguration.getInstance(myProject).DEFAULT_LAYOUT_MANAGER = myLastLayoutManager;
       final String inputString = myFormNameTextField.getText().trim();
       if (
         myValidator.checkInput(inputString) &&
