@@ -199,7 +199,7 @@ public final class ResizeProcessor extends EventProcessor {
     if (rcGrid != null) {
       Rectangle rc = myOriginalParent.getGridLayoutManager().getGridCellRangeRect(myOriginalParent, rcGrid.y, rcGrid.x,
                                                                                   rcGrid.y+rcGrid.height-1, rcGrid.x+rcGrid.width-1);
-      String tooltip = UIDesignerBundle.message("resize.feedback", rcGrid.height, rcGrid.width);
+      String tooltip = UIDesignerBundle.message("resize.feedback", myComponent.getDisplayName(), rcGrid.height, rcGrid.width);
       myEditor.getActiveDecorationLayer().putFeedback(myOriginalParent.getDelegee(), rc, tooltip);
       setCursor(isGridSpanDropAllowed(rcGrid) ? getResizeCursor() : FormEditingUtil.getMoveNoDropCursor());
     }
