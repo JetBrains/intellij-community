@@ -6,7 +6,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
@@ -22,8 +21,8 @@ import java.util.Map;
  * User: anna
  * Date: 19-Apr-2006
  */
-public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrar {
-
+public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlitingPassRegistrarEx {
+  private boolean myNeedAdditionalIntentionsPass = false;
   private Map<TextEditorHighlightingPassFactory, Pair<Anchor, Integer>> myRegisteredPasses = null;
 
   public void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, int anchor, int anchorPass) {
@@ -38,14 +37,17 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       case AFTER : anc = Anchor.AFTER;
         break;
     }
-    registerTextEditorHighlightingPass(factory, anc, anchorPass);
+    registerTextEditorHighlightingPass(factory, anc, anchorPass, true);
   }
 
-  public void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, Anchor anchor, int anchorPass) {
+  public void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, Anchor anchor, int anchorPass, boolean needAdditionalPass) {
     if (myRegisteredPasses == null){
       myRegisteredPasses = new HashMap<TextEditorHighlightingPassFactory, Pair<Anchor, Integer>>();
     }
     myRegisteredPasses.put(factory, Pair.create(anchor, anchorPass));
+    if (needAdditionalPass) {
+      myNeedAdditionalIntentionsPass = true;
+    }
   }
 
   public TextEditorHighlightingPass[] modifyHighlightingPasses(final List<TextEditorHighlightingPass> passes,
@@ -86,6 +88,10 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       }
     }
     return result.toArray(new TextEditorHighlightingPass[result.size()]);
+  }
+
+  public boolean needAdditionalIntentionsPass() {
+    return myNeedAdditionalIntentionsPass;
   }
 
   @NotNull

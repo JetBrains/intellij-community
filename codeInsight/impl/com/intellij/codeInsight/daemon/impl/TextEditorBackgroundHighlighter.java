@@ -43,7 +43,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -107,7 +111,16 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
         appendPass(passes, aPassesToPerform);
       }
     }
-    return TextEditorHighlightingPassRegistrar.getInstance(myProject).modifyHighlightingPasses(passes, myFile, myEditor);
+    final TextEditorHighlitingPassRegistrarEx passRegistrar = ((TextEditorHighlitingPassRegistrarEx)TextEditorHighlightingPassRegistrar.getInstance(myProject));
+    TextEditorHighlightingPass[] highlightingPasses =
+      passRegistrar.modifyHighlightingPasses(passes, myFile, myEditor);
+    if (passRegistrar.needAdditionalIntentionsPass()){
+      TextRange range = calculateRangeToProcess(myEditor, Pass.POPUP_HINTS2);
+      int startOffset = range.getStartOffset();
+      int endOffset = range.getEndOffset();
+      highlightingPasses = ArrayUtil.append(highlightingPasses, createDaemonPass(startOffset, endOffset, Pass.POPUP_HINTS2));
+    }
+    return highlightingPasses;
   }
 
   private void appendPass(ArrayList<TextEditorHighlightingPass> passes, int currentPass) {

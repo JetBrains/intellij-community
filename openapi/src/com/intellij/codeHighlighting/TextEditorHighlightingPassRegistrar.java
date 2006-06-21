@@ -18,11 +18,7 @@
 package com.intellij.codeHighlighting;
 
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
-
-import java.util.List;
 
 /**
  * User: anna
@@ -59,9 +55,9 @@ public abstract class TextEditorHighlightingPassRegistrar implements ProjectComp
    */
   public abstract void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, int anchor, int anchorPass);
 
-  public abstract void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, Anchor anchor, int anchorPass);
+  public abstract void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory,
+                                                          Anchor anchor,
+                                                          int anchorPass,
+                                                          boolean needAdditionalIntentionsPass);
 
-  public abstract TextEditorHighlightingPass[] modifyHighlightingPasses(final List<TextEditorHighlightingPass> passes,
-                                                                        final PsiFile psiFile,
-                                                                        final Editor editor);
 }
