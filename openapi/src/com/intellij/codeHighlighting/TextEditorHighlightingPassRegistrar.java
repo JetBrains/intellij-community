@@ -29,6 +29,23 @@ import java.util.List;
  * Date: 20-Apr-2006
  */
 public abstract class TextEditorHighlightingPassRegistrar implements ProjectComponent {
+  /**
+   * @deprecated
+   */
+  public static final int FIRST = 0;
+  /**
+   * @deprecated
+   */
+  public static final int LAST = 1;
+  /**
+   * @deprecated
+   */
+  public static final int BEFORE = 3;
+  /**
+   * @deprecated
+   */
+  public static final int AFTER = 2;
+
   public enum Anchor {
     FIRST, LAST, BEFORE, AFTER
   }
@@ -36,6 +53,11 @@ public abstract class TextEditorHighlightingPassRegistrar implements ProjectComp
   public static TextEditorHighlightingPassRegistrar getInstance(Project project){
     return project.getComponent(TextEditorHighlightingPassRegistrar.class);
   }
+
+  /**
+   * @deprecated
+   */
+  public abstract void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, int anchor, int anchorPass);
 
   public abstract void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, Anchor anchor, int anchorPass);
 

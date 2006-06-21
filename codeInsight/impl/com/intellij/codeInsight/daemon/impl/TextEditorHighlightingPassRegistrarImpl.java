@@ -26,6 +26,21 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
 
   private Map<TextEditorHighlightingPassFactory, Pair<Anchor, Integer>> myRegisteredPasses = null;
 
+  public void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, int anchor, int anchorPass) {
+    Anchor anc = Anchor.FIRST;
+    switch (anchor) {
+      case FIRST : anc = Anchor.FIRST;
+        break;
+      case LAST : anc = Anchor.LAST;
+        break;
+      case BEFORE : anc = Anchor.BEFORE;
+        break;
+      case AFTER : anc = Anchor.AFTER;
+        break;
+    }
+    registerTextEditorHighlightingPass(factory, anc, anchorPass);
+  }
+
   public void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, Anchor anchor, int anchorPass) {
     if (myRegisteredPasses == null){
       myRegisteredPasses = new HashMap<TextEditorHighlightingPassFactory, Pair<Anchor, Integer>>();
