@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  */
 public interface ConverterManager {
+
   void addConverter(Class clazz, Converter converter);
 
   @NotNull
@@ -31,4 +32,6 @@ public interface ConverterManager {
 
   @Nullable
   Converter getConverterByClass(Class<?> convertingClass);
+
+  void registerConverterImplementation(Class<? extends Converter> converterInterface, Converter converterImpl);
 }

@@ -45,4 +45,7 @@ public abstract class FactoryMap<T,V> {
     return myMap.containsKey(getKey(key));
   }
 
+  public void put(T key, V value) {
+    myMap.put(key, value);
+  }
 }
