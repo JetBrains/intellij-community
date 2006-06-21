@@ -22,13 +22,11 @@ public class GridDropLocation implements DropLocation {
   protected final RadContainer myContainer;
   protected int myRow;
   protected int myColumn;
-  private boolean myDropAllowed;
 
   public GridDropLocation(@NotNull final RadContainer container, final int row, final int column) {
     myContainer = container;
     myRow = row;
     myColumn = column;
-    myDropAllowed = true;
   }
 
   public int getRow() {
@@ -43,16 +41,7 @@ public class GridDropLocation implements DropLocation {
     return myContainer;
   }
 
-  public void rejectDrop() {
-    myDropAllowed = false;
-  }
-
   public boolean canDrop(final ComponentDragObject dragObject) {
-    if (!myDropAllowed) {
-      LOG.debug("drop not allowed");
-      return false;
-    }
-
     // If target point doesn't belong to any cell and column then do not allow drop.
     if (myRow == -1 || myColumn == -1) {
       LOG.debug("RadContainer.canDrop=false because no cell at mouse position");

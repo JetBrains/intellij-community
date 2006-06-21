@@ -89,10 +89,6 @@ public final class ResizeProcessor extends EventProcessor {
         return;
       }
 
-      if ((Math.abs(e.getX() - myPressPoint.getX()) > DragSelectionProcessor.TREMOR ||
-           Math.abs(e.getY() - myPressPoint.getY()) > DragSelectionProcessor.TREMOR)) {
-      }
-
       final GridConstraints constraints = myComponent.getConstraints();
 
       if ((myResizeMask & Painter.WEST_MASK) != 0) {
