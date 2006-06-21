@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.Disposable;
 
 import javax.swing.*;
 
@@ -37,6 +38,8 @@ public abstract class ToolWindowManager {
    * of the parameters is <code>null</code>.
    */
   public abstract ToolWindow registerToolWindow(String id,JComponent component,ToolWindowAnchor anchor);
+
+  public abstract ToolWindow registerToolWindow(String id,JComponent component,ToolWindowAnchor anchor, Disposable parentDisposable);
 
   /**
    * @exception java.lang.IllegalArgumentException if tool window with specified isn't

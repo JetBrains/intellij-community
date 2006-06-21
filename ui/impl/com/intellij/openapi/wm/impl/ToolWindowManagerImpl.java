@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ToolWindow;
@@ -20,6 +21,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.commands.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -555,6 +557,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     execute(commandsList);
     fireToolWindowRegistered(id);
     return toolWindow;
+  }
+
+  public ToolWindow registerToolWindow(final String id, JComponent component, ToolWindowAnchor anchor, Disposable parentDisposable) {
+    final ToolWindow window = registerToolWindow(id, component, anchor);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        unregisterToolWindow(id);
+      }
+    });
+    return window;
   }
 
   public void unregisterToolWindow(final String id) {
