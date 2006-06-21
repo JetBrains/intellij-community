@@ -17,11 +17,37 @@ import com.intellij.j2ee.ClassUtil;
  * @author nik
  */
 public class RequiredLibrariesInfo {
-  private List<LibraryInfo> myLibraryInfos = new ArrayList<LibraryInfo>();
 
-  public void addLibraryInfo(@NonNls String expectedJarName, @Nullable @NonNls String downloadingUrl, @Nullable String presentableUrl, 
+  private List<LibraryInfo> myLibraryInfos = new ArrayList<LibraryInfo>();
+  private final String myServerUrl;
+
+  public RequiredLibrariesInfo(@NonNls String serverUrl) {
+    myServerUrl = serverUrl;
+  }
+
+  public RequiredLibrariesInfo() {
+    this(null);
+  }
+
+  public void addLibraryInfoForRepository(@NonNls String expectedJarName,
+                             @Nullable @NonNls String downloadingUrl,
+                             @Nullable String repositoryUrl,
                              @NonNls String... requiredClasses) {
-    myLibraryInfos.add(new LibraryInfo(expectedJarName, downloadingUrl, presentableUrl, requiredClasses));
+
+    myLibraryInfos.add(new LibraryInfo(expectedJarName, downloadingUrl, repositoryUrl, requiredClasses));
+  }
+
+  public void addLibraryInfo(@NonNls String expectedJarName,
+                             @Nullable @NonNls String jarName,
+                             @NonNls String... requiredClasses) {
+
+    addLibraryInfoForRepository(expectedJarName, myServerUrl + jarName, myServerUrl, requiredClasses);
+  }
+
+  public void addSimpleLibraryInfo(@NonNls String expectedJarName,
+                             @NonNls String... requiredClasses) {
+
+    addLibraryInfoForRepository(expectedJarName, expectedJarName, myServerUrl, requiredClasses);
   }
 
   public @Nullable RequiredClassesNotFoundInfo checkLibraries(VirtualFile[] libraryFiles) {
