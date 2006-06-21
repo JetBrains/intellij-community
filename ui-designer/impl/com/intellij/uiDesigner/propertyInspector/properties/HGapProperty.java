@@ -4,9 +4,7 @@ import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.openapi.project.Project;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.CardLayout;
+import java.awt.*;
 
 /**
  * @author Anton Katilin
@@ -56,5 +54,19 @@ public final class HGapProperty extends AbstractIntProperty<RadContainer> {
       final AbstractLayout layoutManager=(AbstractLayout)component.getLayout();
       layoutManager.setHGap(value.intValue());
     }
+  }
+
+  @Override protected int getDefaultValue(final RadContainer radContainer) {
+    return getDefaultGap(radContainer.getLayout());
+  }
+
+  static int getDefaultGap(final LayoutManager layout) {
+    if (layout instanceof FlowLayout) {
+      return 5;
+    }
+    if (layout instanceof BorderLayout || layout instanceof CardLayout) {
+      return 0;
+    }
+    return -1;
   }
 }

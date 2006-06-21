@@ -34,10 +34,14 @@ public abstract class AbstractIntProperty<T extends RadComponent> extends Proper
 
   @Override public boolean isModified(final T component) {
     Integer intValue = getValue(component);
-    return intValue != null && intValue.intValue() != myDefaultValue;
+    return intValue != null && intValue.intValue() != getDefaultValue(component);
   }
 
   @Override public void resetValue(T component) throws Exception {
-    setValue(component, myDefaultValue);
+    setValue(component, getDefaultValue(component));
+  }
+
+  protected int getDefaultValue(final T component) {
+    return myDefaultValue;
   }
 }

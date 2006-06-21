@@ -57,4 +57,8 @@ public final class VGapProperty extends AbstractIntProperty<RadContainer> {
       layoutManager.setVGap(value.intValue());
     }
   }
+
+  @Override protected int getDefaultValue(final RadContainer radContainer) {
+    return HGapProperty.getDefaultGap(radContainer.getLayout());
+  }
 }
