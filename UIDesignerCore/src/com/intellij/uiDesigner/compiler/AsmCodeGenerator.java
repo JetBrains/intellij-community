@@ -241,7 +241,8 @@ public class AsmCodeGenerator {
                                      final String signature,
                                      final String[] exceptions) {
 
-      if (name.equals(SETUP_METHOD_NAME) || name.equals(GET_ROOT_COMPONENT_METHOD_NAME)) {
+      if (name.equals(SETUP_METHOD_NAME) || name.equals(GET_ROOT_COMPONENT_METHOD_NAME) ||
+          name.equals(LOAD_BUTTON_TEXT_METHOD) || name.equals(LOAD_LABEL_TEXT_METHOD)) {
         return null;
       }
       if (name.equals(CREATE_COMPONENTS_METHOD_NAME) && desc.equals("()V")) {

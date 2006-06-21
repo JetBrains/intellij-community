@@ -126,10 +126,10 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
 
   public void generateClassEnd(ClassVisitor visitor) {
     if (myNeedLoadLabelText) {
-      generateLoadTextMethod(visitor, "$$$loadLabelText$$$", "javax/swing/JLabel", "setDisplayedMnemonic");
+      generateLoadTextMethod(visitor, AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, "javax/swing/JLabel", "setDisplayedMnemonic");
     }
     if (myNeedLoadButtonText) {
-      generateLoadTextMethod(visitor, "$$$loadButtonText$$$", "javax/swing/AbstractButton", "setMnemonic");
+      generateLoadTextMethod(visitor, AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD, "javax/swing/AbstractButton", "setMnemonic");
     }
   }
 
