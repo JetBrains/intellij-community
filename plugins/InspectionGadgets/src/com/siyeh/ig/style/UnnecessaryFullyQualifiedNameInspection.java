@@ -87,6 +87,9 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
                     (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
             final PsiJavaFile file =
                     (PsiJavaFile)referenceElement.getContainingFile();
+            if (file == null) {
+                return;
+            }
             final PsiImportList importList = file.getImportList();
             if (importList == null) {
                 return;
@@ -96,6 +99,9 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
                 return;
             }
             final String qualifiedName = aClass.getQualifiedName();
+            if (qualifiedName == null) {
+                return;
+            }
             @NonNls final String packageName =
                     ClassUtil.extractPackageName(qualifiedName);
             if (packageName.equals("java.lang")) {
@@ -176,12 +182,18 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
                 aClass = ClassUtils.getOutermostContainingClass(aClass);
             }
             final String fqName = aClass.getQualifiedName();
+            if (fqName == null) {
+                return;
+            }
             final String text = stripAngleBrackets(reference.getText());
             if(!text.equals(fqName)){
                 return;
             }
             final PsiJavaFile javaFile =
                     PsiTreeUtil.getParentOfType(reference, PsiJavaFile.class);
+            if (javaFile == null) {
+                return;
+            }
             if (!ImportUtils.nameCanBeImported(fqName, javaFile)) {
                 return;
             }

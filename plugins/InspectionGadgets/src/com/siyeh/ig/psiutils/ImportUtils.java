@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.siyeh.HardcodedMethodConstants;
+import org.jetbrains.annotations.NotNull;
 
 public class ImportUtils{
 
@@ -25,7 +26,8 @@ public class ImportUtils{
         super();
     }
 
-    public static boolean nameCanBeImported(String fqName, PsiJavaFile file){
+    public static boolean nameCanBeImported(@NotNull String fqName,
+                                            @NotNull PsiJavaFile file){
         if(hasExactImportConflict(fqName, file)){
             return false;
         }
@@ -75,8 +77,8 @@ public class ImportUtils{
         return false;
     }
 
-    public static boolean hasOnDemandImportConflict(String fqName,
-                                                    PsiJavaFile file){
+    public static boolean hasOnDemandImportConflict(@NotNull String fqName,
+                                                    @NotNull PsiJavaFile file){
         final PsiImportList imports = file.getImportList();
         if(imports == null){
             return false;

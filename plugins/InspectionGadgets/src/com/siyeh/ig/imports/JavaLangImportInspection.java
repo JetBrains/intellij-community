@@ -27,7 +27,7 @@ import com.siyeh.ig.fixes.DeleteImportFix;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaLangImportInspection extends ClassInspection{
+public class JavaLangImportInspection extends ClassInspection {
 
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
@@ -44,7 +44,7 @@ public class JavaLangImportInspection extends ClassInspection{
                 "java.lang.import.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(PsiElement location) {
         return new DeleteImportFix();
     }
 
@@ -52,11 +52,11 @@ public class JavaLangImportInspection extends ClassInspection{
         return new JavaLangImportVisitor();
     }
 
-    private static class JavaLangImportVisitor extends BaseInspectionVisitor{
+    private static class JavaLangImportVisitor extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so it doesn't drill down
-            if(!(aClass.getParent() instanceof PsiJavaFile)){
+            if(!(aClass.getParent() instanceof PsiJavaFile)) {
                 return;
             }
             if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
@@ -72,7 +72,7 @@ public class JavaLangImportInspection extends ClassInspection{
             }
             final PsiImportStatement[] importStatements =
                     importList.getImportStatements();
-            for(PsiImportStatement importStatement : importStatements){
+            for(PsiImportStatement importStatement : importStatements) {
                 checkImportStatment(importStatement, file);
             }
         }
@@ -81,29 +81,31 @@ public class JavaLangImportInspection extends ClassInspection{
                                          PsiJavaFile file){
             final PsiJavaCodeReferenceElement reference =
                     importStatement.getImportReference();
-            if(reference != null){
-                final String text = importStatement.getQualifiedName();
-                if(text != null){
-                    if(importStatement.isOnDemand()){
-                        if(HardcodedMethodConstants.JAVA_LANG.equals(text)){
-                            registerError(importStatement);
-                        }
-                    } else{
-                        final int classNameIndex = text.lastIndexOf((int) '.');
-                        if(classNameIndex < 0){
-                            return;
-                        }
-                        final String parentName =
-                                text.substring(0, classNameIndex);
-                        if(HardcodedMethodConstants.JAVA_LANG.equals(
-                                parentName)){
-                            if(!ImportUtils.hasOnDemandImportConflict(text,
-                                    file)){
-                                registerError(importStatement);
-                            }
-                        }
-                    }
+            if (reference == null) {
+                return;
+            }
+            final String text = importStatement.getQualifiedName();
+            if (text == null) {
+                return;
+            }
+            if(importStatement.isOnDemand()){
+                if(HardcodedMethodConstants.JAVA_LANG.equals(text)){
+                    registerError(importStatement);
                 }
+            } else {
+                final int classNameIndex = text.lastIndexOf((int) '.');
+                if(classNameIndex < 0){
+                    return;
+                }
+                final String parentName =
+                        text.substring(0, classNameIndex);
+                if (!HardcodedMethodConstants.JAVA_LANG.equals(parentName)) {
+                    return;
+                }
+                if (ImportUtils.hasOnDemandImportConflict(text, file)) {
+                    return;
+                }
+                registerError(importStatement);
             }
         }
     }
