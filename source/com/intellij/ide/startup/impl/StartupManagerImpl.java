@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,7 @@ public class StartupManagerImpl extends StartupManagerEx implements ProjectCompo
   public void projectOpened() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "StartupManager";
   }
@@ -101,7 +103,7 @@ public class StartupManagerImpl extends StartupManagerEx implements ProjectCompo
         try {
           runnable.run();
         }
-        catch (Exception ex) {
+        catch (Throwable ex) {
           LOG.error(ex);
         }
       }
