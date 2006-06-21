@@ -5,16 +5,16 @@ import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 
-public class HtmlPolicy extends XmlFormattingPolicy{
+public class HtmlPolicy extends XmlFormattingPolicy {
   private CodeStyleSettings mySettings;
 
   public HtmlPolicy(final CodeStyleSettings settings, final FormattingDocumentModel documentModel) {
@@ -29,17 +29,16 @@ public class HtmlPolicy extends XmlFormattingPolicy{
     }
     final PsiElement firstChild = findFirstNonEmptyChild(parentTag);
 
-    if( firstChild == null )
-    {
+    if (firstChild == null) {
       return false;
     }
 
-    if( firstChild.getNode().getElementType() != ElementType.XML_START_TAG_START )
-    {
+    if (firstChild.getNode().getElementType() != ElementType.XML_START_TAG_START) {
       return false;
     }
 
-    if (mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES > 0 && getLines(parentTag) > mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES) {
+    if (mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES > 0 && getLines(parentTag) > mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES)
+    {
       return false;
     }
     else {
@@ -68,7 +67,7 @@ public class HtmlPolicy extends XmlFormattingPolicy{
       prevNode = prevNode.getTreePrev();
     }
     if (prevNode == null) return false;
-    if (!(SourceTreeToPsiMap.treeElementToPsi(prevNode) instanceof XmlTag)) return false;
+    if (!(SourceTreeToPsiMap.treeElementToPsi(prevNode)instanceof XmlTag)) return false;
     return checkName(xmlTag, mySettings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE);
   }
 
@@ -103,15 +102,39 @@ public class HtmlPolicy extends XmlFormattingPolicy{
   }
 
   public WrapType getWrappingTypeForTagEnd(final XmlTag xmlTag) {
-    return shouldBeWrapped(xmlTag)? WrapType.ALWAYS : WrapType.NORMAL;
+    return shouldBeWrapped(xmlTag) ? WrapType.ALWAYS : WrapType.NORMAL;
   }
 
   public WrapType getWrappingTypeForTagBegin(final XmlTag tag) {
-    if (shouldBeWrapped(tag) || checkName(tag, mySettings.HTML_PLACE_ON_NEW_LINE)) {
+    if (shouldBeWrapped(tag)) {
       return WrapType.ALWAYS;
-    } else {
-      return WrapType.NORMAL;
     }
+
+    if (!isInlineTag(tag)) {
+
+      if (checkName(tag, mySettings.HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT)) {
+        if (hasInlineContentOnly(tag)) return WrapType.NORMAL;
+      }
+
+      return WrapType.ALWAYS;
+    }
+
+    return WrapType.NORMAL;
+  }
+
+  private boolean hasInlineContentOnly(final XmlTag tag) {
+    final XmlTag[] tags = tag.getSubTags();
+    for (int i = 0; i < tags.length; i++) {
+      XmlTag xmlTag = tags[i];
+      if (!isInlineTag(xmlTag)) return false;
+      if (!hasInlineContentOnly(xmlTag)) return false;
+    }
+
+    return true;
+  }
+
+  private boolean isInlineTag(final XmlTag tag) {
+    return checkName(tag, mySettings.HTML_INLINE_ELEMENTS);
   }
 
   private boolean shouldBeWrapped(final XmlTag tag) {
@@ -126,7 +149,7 @@ public class HtmlPolicy extends XmlFormattingPolicy{
   }
 
   public boolean isTextElement(XmlTag tag) {
-    return checkName(tag, mySettings.HTML_TEXT_ELEMENTS);
+    return isInlineTag(tag);
   }
 
   public int getTextWrap() {

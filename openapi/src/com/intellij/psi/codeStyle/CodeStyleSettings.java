@@ -101,10 +101,12 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   public boolean KEEP_LINE_BREAKS = true;
 
-  /** Controls END_OF_LINE_COMMENT's and C_STYLE_COMMENT's */
+  /**
+   * Controls END_OF_LINE_COMMENT's and C_STYLE_COMMENT's
+   */
   public boolean KEEP_FIRST_COLUMN_COMMENT = true;
   public boolean INSERT_FIRST_SPACE_IN_LINE = true;
-  
+
   public boolean USE_SAME_INDENTS = true;
 
   public static class IndentOptions implements JDOMExternalizable, Cloneable {
@@ -156,7 +158,9 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   private static final String ourSystemLineSeparator = SystemProperties.getLineSeparator();
 
-  /** Line separator. It can be null if choosen line separator is "System-dependent"! */
+  /**
+   * Line separator. It can be null if choosen line separator is "System-dependent"!
+   */
   public String LINE_SEPARATOR;
 
   /**
@@ -183,26 +187,26 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
    * 2.
    * if (..)
    * {
-   *   body;
+   * body;
    * }
    * 3.
    * if (..)
-   *   {
-   *   body;
-   *   }
+   * {
+   * body;
+   * }
    * 4.
    * if (..)
-   *   {
-   *     body;
-   *   }
+   * {
+   * body;
+   * }
    * 5.
    * if (long-condition-1 &&
-   *     long-condition-2)
+   * long-condition-2)
    * {
-   *   body;
+   * body;
    * }
    * if (short-condition) {
-   *   body;
+   * body;
    * }
    * </PRE>
    */
@@ -282,10 +286,14 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
 //----------------- BLANK LINES --------------------
 
-  /** Keep up to this amount of blank lines between declarations */
+  /**
+   * Keep up to this amount of blank lines between declarations
+   */
   public int KEEP_BLANK_LINES_IN_DECLARATIONS = 2;
 
-  /** Keep up to this amount of blank lines in code */
+  /**
+   * Keep up to this amount of blank lines in code
+   */
   public int KEEP_BLANK_LINES_IN_CODE = 2;
 
   public int KEEP_BLANK_LINES_BEFORE_RBRACE = 2;
@@ -304,28 +312,44 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
 //----------------- SPACES --------------------
 
-  /** Controls =, +=, -=, etc */
+  /**
+   * Controls =, +=, -=, etc
+   */
   public boolean SPACE_AROUND_ASSIGNMENT_OPERATORS = true;
 
-  /** Controls &&, || */
+  /**
+   * Controls &&, ||
+   */
   public boolean SPACE_AROUND_LOGICAL_OPERATORS = true;
 
-  /** Controls ==, != */
+  /**
+   * Controls ==, !=
+   */
   public boolean SPACE_AROUND_EQUALITY_OPERATORS = true;
 
-  /** Controls <, >, <=, >= */
+  /**
+   * Controls <, >, <=, >=
+   */
   public boolean SPACE_AROUND_RELATIONAL_OPERATORS = true;
 
-  /** Controls &, |, ^ */
+  /**
+   * Controls &, |, ^
+   */
   public boolean SPACE_AROUND_BITWISE_OPERATORS = true;
 
-  /** Controls +, - */
+  /**
+   * Controls +, -
+   */
   public boolean SPACE_AROUND_ADDITIVE_OPERATORS = true;
 
-  /** Controls *, /, % */
+  /**
+   * Controls *, /, %
+   */
   public boolean SPACE_AROUND_MULTIPLICATIVE_OPERATORS = true;
 
-  /** Controls <<. >>, >>> */
+  /**
+   * Controls <<. >>, >>>
+   */
   public boolean SPACE_AROUND_SHIFT_OPERATORS = true;
 
   public boolean SPACE_AFTER_COMMA = true;
@@ -735,12 +759,16 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   // ---------------------------------- Javadoc formatting options -------------------------
   public boolean ENABLE_JAVADOC_FORMATTING = true;
 
-  /** Align parameter comments to longest parameter name */
+  /**
+   * Align parameter comments to longest parameter name
+   */
   public boolean JD_ALIGN_PARAM_COMMENTS = true;
   public int JD_MIN_PARM_NAME_LENGTH = 0;
   public int JD_MAX_PARM_NAME_LENGTH = 30;
 
-  /** Align exception comments to longest exception name */
+  /**
+   * Align exception comments to longest exception name
+   */
   public boolean JD_ALIGN_EXCEPTION_COMMENTS = true;
   public int JD_MIN_EXCEPTION_NAME_LENGTH = 0;
   public int JD_MAX_EXCEPTION_NAME_LENGTH = 30;
@@ -763,7 +791,6 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean JD_LEADING_ASTERISKS_ARE_ENABLED = true;
 
   // ---------------------------------------------------------------------------------------
-
 
 
   // ---------------------------------- XML formatting options -------------------------
@@ -804,10 +831,11 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   @NonNls public String HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = "br";
   @NonNls public String HTML_DO_NOT_INDENT_CHILDREN_OF = "html,body";
   public int HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES = 100;
-  @NonNls public String HTML_TEXT_ELEMENTS = "a,b,img,span,i,em";
-  @NonNls public String HTML_KEEP_WHITESPACES_INSIDE = "span";
-  @NonNls public String HTML_PLACE_ON_NEW_LINE = "html,table,form,frame,iframe";
 
+  @NonNls public String HTML_KEEP_WHITESPACES_INSIDE = "span,pre";
+  @NonNls public String HTML_INLINE_ELEMENTS =
+    "a,abbr,acronym,b,basefont,bdo,big,br,cite,cite,code,dfn,em,font,i,img,input,kbd,label,q,s,samp,select,span,strike,strong,sub,sup,textarea,tt,u,var";
+  @NonNls public String HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT = "title,h1,h2,h3,h4,h5,h6,p";
 
   // ---------------------------------------------------------------------------------------
 
@@ -819,25 +847,24 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   //----------------------------------------------------------------------------------------
 
-  
   //-------------- Annotation formatting settings-------------------------------------------
-  
-  public int METHOD_ANNOTATION_WRAP = WRAP_ALWAYS;  
-  public int CLASS_ANNOTATION_WRAP = WRAP_ALWAYS;  
-  public int FIELD_ANNOTATION_WRAP = WRAP_ALWAYS;  
-  public int PARAMETER_ANNOTATION_WRAP = DO_NOT_WRAP;  
-  public int VARIABLE_ANNOTATION_WRAP = DO_NOT_WRAP;  
-  
+
+  public int METHOD_ANNOTATION_WRAP = WRAP_ALWAYS;
+  public int CLASS_ANNOTATION_WRAP = WRAP_ALWAYS;
+  public int FIELD_ANNOTATION_WRAP = WRAP_ALWAYS;
+  public int PARAMETER_ANNOTATION_WRAP = DO_NOT_WRAP;
+  public int VARIABLE_ANNOTATION_WRAP = DO_NOT_WRAP;
+
   public boolean SPACE_BEFORE_ANOTATION_PARAMETER_LIST = false;
   public boolean SPACE_WITHIN_ANNOTATION_PARENTHESES = false;
-  
+
   //----------------------------------------------------------------------------------------
-  
-  
+
+
   //-------------------------Enums----------------------------------------------------------
   public int ENUM_CONSTANTS_WRAP = CodeStyleSettings.DO_NOT_WRAP;
   //----------------------------------------------------------------------------------------
-  
+
   private CodeStyleSettings myParentSettings;
 
   public void readExternal(Element element) throws InvalidDataException {
