@@ -45,8 +45,8 @@ public final class PropertyInspector extends JPanel{
 
     // Card with property inspector
     final JPanel inspectorCard = new JPanel(new GridBagLayout());
-    inspectorCard.add(
-      ScrollPaneFactory.createScrollPane(myInspectorTable),
+    final JScrollPane inspectorScrollPane = ScrollPaneFactory.createScrollPane(myInspectorTable);
+    inspectorCard.add(inspectorScrollPane,
       new GridBagConstraints(0, 0, 0, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0)
     );
     final JCheckBox chkShowExpertProperties = new JCheckBox(UIDesignerBundle.message("chk.show.expert.properties"));
@@ -78,7 +78,7 @@ public final class PropertyInspector extends JPanel{
     synchWithTree(false);
 
     // Install light bulb
-    myQuickFixManager = new QuickFixManagerImpl(null, myInspectorTable);
+    myQuickFixManager = new QuickFixManagerImpl(null, myInspectorTable, inspectorScrollPane.getViewport());
 
     myCustomPropertiesChangeListener = new ChangeListener() {
       public void stateChanged(ChangeEvent e) {

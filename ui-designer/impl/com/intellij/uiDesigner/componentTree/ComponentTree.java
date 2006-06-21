@@ -65,7 +65,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   private Map<HighlightSeverity, Map<SimpleTextAttributes, SimpleTextAttributes>> myHighlightAttributes;
 
   private GuiEditor myEditor;
-  private final QuickFixManager myQuickFixManager;
+  private QuickFixManager myQuickFixManager;
   private RadComponent myDropTargetComponent = null;
   private StartInplaceEditingAction myStartInplaceEditingAction;
   private MyDeleteProvider myDeleteProvider = new MyDeleteProvider();
@@ -85,9 +85,6 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     // Install advanced tooltips
     TreeToolTipHandler.install(this);
-
-    // Install light bulb
-    myQuickFixManager = new QuickFixManagerImpl(null, this);
 
     // Popup menu
     PopupHandler.installPopupHandler(
@@ -115,6 +112,10 @@ public final class ComponentTree extends Tree implements DataProvider {
       });
       setDropTarget(new DropTarget(this, new MyDropTargetListener()));
     }
+  }
+
+  public void initQuickFixManager(JViewport viewPort) {
+    myQuickFixManager = new QuickFixManagerImpl(null, this, viewPort);
   }
 
   public void setEditor(final GuiEditor editor) {

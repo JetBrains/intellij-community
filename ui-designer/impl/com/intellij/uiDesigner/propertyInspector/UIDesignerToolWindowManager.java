@@ -58,6 +58,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
         myComponentTree = new ComponentTree();
         final JScrollPane scrollPane = new JScrollPane(myComponentTree);
         scrollPane.setPreferredSize(new Dimension(250, -1));
+        myComponentTree.initQuickFixManager(scrollPane.getViewport());
         myPropertyInspector= new PropertyInspector(myProject, myComponentTree);
         myToolWindowPanel.setFirstComponent(scrollPane);
         myToolWindowPanel.setSecondComponent(myPropertyInspector);

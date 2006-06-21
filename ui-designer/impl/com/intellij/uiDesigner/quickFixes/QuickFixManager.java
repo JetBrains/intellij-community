@@ -1,22 +1,26 @@
 package com.intellij.uiDesigner.quickFixes;
 
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.HeavyweightHint;
+import com.intellij.ui.LightweightHint;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -42,11 +46,11 @@ public abstract class QuickFixManager <T extends JComponent>{
   /**
    * My currently visible hint. May be null if there is no visible hint
    */
-  private HeavyweightHint myHint;
+  private LightweightHint myHint;
   private Icon myIcon = IconLoader.getIcon("/actions/intentionBulb.png");
   private Rectangle myLastHintBounds;
 
-  public QuickFixManager(@Nullable final GuiEditor editor, @NotNull final T component) {
+  public QuickFixManager(@Nullable final GuiEditor editor, @NotNull final T component, @NotNull final JViewport viewPort) {
     myEditor = editor;
     myComponent = component;
     myAlarm = new Alarm();
@@ -57,6 +61,12 @@ public abstract class QuickFixManager <T extends JComponent>{
 
     // Alt+Enter
     new ShowHintAction(this, component);
+
+    viewPort.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        updateIntentionHintPosition(viewPort);
+      }
+    });
   }
 
   public final GuiEditor getEditor(){
@@ -65,10 +75,6 @@ public abstract class QuickFixManager <T extends JComponent>{
 
   public void setEditor(final GuiEditor editor) {
     myEditor = editor;
-  }
-
-  final void setHint(@NotNull HeavyweightHint hint){
-    myHint = hint;
   }
 
   /**
@@ -167,10 +173,35 @@ public abstract class QuickFixManager <T extends JComponent>{
       return;
     }
 
-    final HeavyweightHint hint = new HeavyweightHint(lightBulbComponent, false);
-    setHint(hint);
+    myHint = new LightweightHint(lightBulbComponent);
     myLastHintBounds = bounds;
-    hint.show(myComponent, bounds.x - width, bounds.y, myComponent);
+    myHint.show(myComponent, bounds.x - myIcon.getIconWidth() - 4, bounds.y, myComponent);
+  }
+
+  private void updateIntentionHintPosition(final JViewport viewPort) {
+    if (myHint != null && myHint.isVisible()) {
+      Rectangle rc = getErrorBounds();
+      if (rc != null) {
+        myLastHintBounds = rc;
+        Rectangle hintRect = new Rectangle(rc.x - myIcon.getIconWidth() - 4, rc.y, myIcon.getIconWidth() + 4, myIcon.getIconHeight() + 4);
+        LOG.debug("hintRect=" + hintRect);
+        if (getHintClipRect(viewPort).contains(hintRect)) {
+          Point location = SwingUtilities.convertPoint(
+            myComponent,
+            hintRect.getLocation(),
+            myComponent.getRootPane().getLayeredPane()
+          );
+          myHint.setLocation(location.x, location.y);
+        }
+        else {
+          myHint.hide();
+        }
+      }
+    }
+  }
+
+  protected Rectangle getHintClipRect(final JViewport viewPort) {
+    return viewPort.getViewRect();
   }
 
   private static boolean haveFixes(final ErrorInfo[] errorInfos) {

@@ -19,8 +19,8 @@ import java.util.ArrayList;
  * @author yole
  */
 public class QuickFixManagerImpl extends QuickFixManager<GlassLayer> {
-  public QuickFixManagerImpl(final GuiEditor editor, final GlassLayer component) {
-    super(editor, component);
+  public QuickFixManagerImpl(final GuiEditor editor, final GlassLayer component, final JViewport viewPort) {
+    super(editor, component, viewPort);
     final ComponentTree tree = UIDesignerToolWindowManager.getInstance(editor.getProject()).getComponentTree();
     tree.addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
@@ -47,5 +47,13 @@ public class QuickFixManagerImpl extends QuickFixManager<GlassLayer> {
     return SwingUtilities.convertRectangle(c.getDelegee().getParent(),
                                            c.getBounds(),
                                            getEditor().getGlassLayer());
+  }
+
+  @Override
+  protected Rectangle getHintClipRect(final JViewport viewPort) {
+    // allow some overlap with editor bounds
+    Rectangle rc = viewPort.getViewRect();
+    rc.grow(4, 4);
+    return rc;
   }
 }

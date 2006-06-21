@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -22,8 +23,8 @@ import java.awt.*;
 public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.componentTree.QuickFixManagerImpl");
 
-  public QuickFixManagerImpl(final GuiEditor editor, final ComponentTree componentTree) {
-    super(editor, componentTree);
+  public QuickFixManagerImpl(final GuiEditor editor, final ComponentTree componentTree, final JViewport viewPort) {
+    super(editor, componentTree, viewPort);
     myComponent.addTreeSelectionListener(new MyTreeSelectionListener());
   }
 

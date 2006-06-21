@@ -297,7 +297,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
     PsiManager.getInstance(module.getProject()).addPsiTreeChangeListener(myPsiTreeChangeListener);
 
-    myQuickFixManager = new QuickFixManagerImpl(this, myGlassLayer);
+    myQuickFixManager = new QuickFixManagerImpl(this, myGlassLayer, scrollPane.getViewport());
 
     myDropTargetListener = new DesignDropTargetListener(this);
     if (!GraphicsEnvironment.isHeadless()) {
