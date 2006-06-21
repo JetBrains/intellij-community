@@ -82,13 +82,14 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
       }
     }
     else {
+      String oldText = myToolTip.getTipText();
+      myToolTip.setTipText(text);
+
       pnt = SwingUtilities.convertPoint(relativeTo, pnt, this);
       Dimension prefSize = myToolTip.getPreferredSize();
       pnt.x = Math.min(pnt.x, getBounds().width - prefSize.width);
       pnt.y = Math.min(pnt.y, getBounds().height - prefSize.height);
       myToolTip.setBounds(pnt.x, pnt.y, prefSize.width, prefSize.height);
-      String oldText = myToolTip.getTipText();
-      myToolTip.setTipText(text);
       if (myToolTip.getParent() != this) {
         add(myToolTip);
         repaint();
