@@ -684,8 +684,10 @@ public abstract class AbstractTreeBuilder {
     }
     if (node instanceof LoadingNode) return;
     NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
-    final Object element = descriptor.getElement();
-    removeMapping(element, node);
+    if (descriptor != null) {
+      final Object element = descriptor.getElement();
+      removeMapping(element, node);
+    }
     node.setUserObject(null);
     node.removeAllChildren();
   }
