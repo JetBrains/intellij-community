@@ -26,7 +26,7 @@ public class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer
     myStaticText = staticText;
   }
 
-  public final JLabel getComponent(final RadRootContainer rootContainer, final V value, final boolean selected, final boolean hasFocus){
+  public JLabel getComponent(final RadRootContainer rootContainer, final V value, final boolean selected, final boolean hasFocus){
     // Reset text and icon
     setText(null);
     setIcon(null);
