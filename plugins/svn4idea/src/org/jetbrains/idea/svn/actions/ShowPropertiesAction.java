@@ -43,8 +43,8 @@ public class ShowPropertiesAction extends BasicAction {
     batchPerform(project, activeVcs, new VirtualFile[]{file}, context, helper);
   }
 
-  protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] file, DataContext context, AbstractVcsHelper helper) throws VcsException {
-    File[] ioFiles = new File[file.length];
+  protected void batchPerform(Project project, final SvnVcs activeVcs, VirtualFile[] file, DataContext context, AbstractVcsHelper helper) throws VcsException {
+    final File[] ioFiles = new File[file.length];
     for (int i = 0; i < ioFiles.length; i++) {
       ioFiles[i] = new File(file[i].getPath());
     }
@@ -58,9 +58,13 @@ public class ShowPropertiesAction extends BasicAction {
         component = ((PropertiesComponent) w.getComponent());
       }
       w.setTitle(ioFiles[0].getName());
-      component.setFile(activeVcs, ioFiles[0]);
       w.show(null);
-      w.activate(null);
+      final PropertiesComponent comp = component;
+      w.activate(new Runnable() {
+        public void run() {
+          comp.setFile(activeVcs, ioFiles[0]);
+        }
+      });
     }
 
   }
