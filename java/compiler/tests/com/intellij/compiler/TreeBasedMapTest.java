@@ -38,6 +38,10 @@ public class TreeBasedMapTest extends TestCase {
     assertEquals("ValueAAABBCC", map.get("aaa/bb/cc"));
     assertEquals("ValueAAABBDD", map.get("aaa/bb/dd"));
     assertEquals("ValueAAABC", map.get("aaa/b/c"));
+
+    map.put("/a/b/c/", "ABC");
+    assertEquals("ABC", map.get("/a/b/c/"));
+    assertEquals(null, map.get("/a/b/c"));
   }
 
   public void testRemove() {
@@ -112,5 +116,27 @@ public class TreeBasedMapTest extends TestCase {
     assertEquals("ValueAAABBCC", checkMap.get("aaa/bb/cc"));
     assertEquals("ValueAAABBDD", checkMap.get("aaa/bb/dd"));
     assertEquals("ValueAAABC", checkMap.get("aaa/b/c"));
+  }
+
+  public void testIterate1() {
+    final TreeBasedMap<String> map = new TreeBasedMap<String>(new StringInterner(), '/');
+    map.put("/a/b/c", "ABC");
+    map.put("/a/b/c/", "ABC1");
+
+    final Iterator<String> iterator = map.getKeysIterator();
+    Map<String, String> checkMap = new HashMap<String, String>();
+
+    while (iterator.hasNext()) {
+      final String key = iterator.next();
+      checkMap.put(key, map.get(key));
+    }
+
+    assertEquals(2, checkMap.size());
+
+    final Set<String> checkMapKeys = checkMap.keySet();
+    assertTrue(checkMapKeys.contains("/a/b/c"));
+    assertTrue(checkMapKeys.contains("/a/b/c/"));
+    assertEquals("ABC", checkMap.get("/a/b/c"));
+    assertEquals("ABC1", checkMap.get("/a/b/c/"));
   }
 }
