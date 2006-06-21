@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 
@@ -35,9 +36,16 @@ public class CompilerPathsEx extends CompilerPaths {
       final VirtualFile[] children = file.getChildren();
       for (final VirtualFile child : children) {
         final String name = child.getName();
-        final StringBuffer buf = new StringBuffer(filePath.length() + "/".length() + name.length());
-        buf.append(filePath).append("/").append(name);
-        accept(child, fileRoot, buf.toString());
+        final String _filePath;
+        final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+        try {
+          buf.append(filePath).append("/").append(name);
+          _filePath = buf.toString();
+        }
+        finally {
+          StringBuilderSpinAllocator.dispose(buf);
+        }
+        accept(child, fileRoot, _filePath);
       }
     }
   }

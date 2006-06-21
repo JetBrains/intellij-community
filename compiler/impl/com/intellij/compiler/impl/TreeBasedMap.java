@@ -125,7 +125,7 @@ public class TreeBasedMap<T> {
 
   public T get(String key) {
     final Node<T> node = myRoot.findRelative(key, false, myInterner);
-    return node != null ? node.getValue() : null;
+    return (node != null && node.mappingExists()) ? node.getValue() : null;
   }
 
   public boolean containsKey(String key) {
@@ -171,7 +171,7 @@ public class TreeBasedMap<T> {
       if ((childrenMap != null && childrenMap.size() > 0) || node.mappingExists()) {
         final Set<String> keys = childrenMap != null? childrenMap.keySet() : Collections.<String>emptySet();
         myCurrentNodePath.push(new PathElement<T>(node, keys.size() > 0? keys.iterator() : EMPTY_ITERATOR));
-        if (myCurrentName.length() > 0) {
+        if (node != myRoot && myCurrentNodePath.size() > 2) {
           myCurrentName.append(mySeparator);
         }
         myCurrentName.append(name);
