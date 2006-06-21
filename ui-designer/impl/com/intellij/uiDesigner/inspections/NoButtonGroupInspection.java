@@ -1,12 +1,8 @@
 package com.intellij.uiDesigner.inspections;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.actions.GroupButtonsAction;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -15,6 +11,10 @@ import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
+import com.intellij.uiDesigner.radComponents.RadButtonGroup;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -121,23 +121,29 @@ public class NoButtonGroupInspection extends BaseFormInspection {
       LOG.assertTrue(index >= 0);
       int expectCell = myComponent.getConstraints().getCell(myVerticalGroup);
       for(int i=index-1; i >= 0; i--) {
-        expectCell--;
+        expectCell = FormEditingUtil.adjustForGap(parent, expectCell-1, myVerticalGroup, -1);
         if (buttonsToGroup.get(i).getConstraints().getCell(myVerticalGroup) != expectCell) {
-          buttonsToGroup.removeAll(buttonsToGroup.subList(0, i));
+          removeRange(buttonsToGroup, 0, i);
           break;
         }
       }
       expectCell = myComponent.getConstraints().getCell(myVerticalGroup);
       for(int i=index+1; i<buttonsToGroup.size(); i++) {
-        expectCell++;
+        expectCell = FormEditingUtil.adjustForGap(parent, expectCell+1, myVerticalGroup, 1);
         if (buttonsToGroup.get(i).getConstraints().getCell(myVerticalGroup) != expectCell) {
-          buttonsToGroup.removeAll(buttonsToGroup.subList(i, buttonsToGroup.size()-1));
+          removeRange(buttonsToGroup, i, buttonsToGroup.size()-1);
           break;
         }
       }
 
       LOG.assertTrue(buttonsToGroup.size() > 1);
       GroupButtonsAction.groupButtons(myEditor, buttonsToGroup);
+    }
+
+    private static void removeRange(final ArrayList<RadComponent> buttonsToGroup, final int minIndex, final int maxIndex) {
+      for(int index=maxIndex; index >= minIndex; index--) {
+        buttonsToGroup.remove(index);
+      }
     }
   }
 
