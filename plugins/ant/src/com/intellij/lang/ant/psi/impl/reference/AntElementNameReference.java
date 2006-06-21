@@ -2,6 +2,7 @@ package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.psi.AntMacroDef;
+import com.intellij.lang.ant.psi.AntPresetDef;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
@@ -31,19 +32,19 @@ public class AntElementNameReference extends AntGenericReference {
     if (typeDef == null) return element;
 
     if (!(element instanceof AntTask)) {
-      final AntStructuredElement definingElement = (AntStructuredElement)typeDef.getDefiningElement();
-      if (definingElement != null && definingElement.getParent()instanceof AntMacroDef &&
-          "element".equals(definingElement.getSourceElement().getName())) {
+      final AntStructuredElement defElement = (AntStructuredElement)typeDef.getDefiningElement();
+      if (defElement != null && (defElement instanceof AntPresetDef || (defElement.getParent()instanceof AntMacroDef &&
+                                                                        "element".equals(defElement.getSourceElement().getName())))) {
         // renaming macrodef's nested element
         element.getSourceElement().setName(newElementName);
       }
     }
     else {
       AntTask task = (AntTask)element;
-      if (task.isMacroDefined()) {
+      if (task.isMacroDefined() || task.isPresetDefined()) {
         final XmlAttribute attr = getAttribute();
         if (attr == null) {
-          // renaming macrodef itself
+          // renaming macrodef or presetdef itself
           task.getSourceElement().setName(newElementName);
         }
         else {
@@ -71,17 +72,17 @@ public class AntElementNameReference extends AntGenericReference {
         return (nestedMacroElement == null) ? findClass(elementDef, element) : nestedMacroElement;
       }
       AntTask task = (AntTask)element;
-      if (task.isMacroDefined()) {
-        final PsiElement macrodef = elementDef.getDefiningElement();
+      if (task.isMacroDefined() || task.isPresetDefined()) {
+        final PsiElement definingElement = elementDef.getDefiningElement();
         final XmlAttribute attr = getAttribute();
-        if (macrodef != null && attr != null) {
-          for (PsiElement child : macrodef.getChildren()) {
+        if (definingElement != null && attr != null) {
+          for (PsiElement child : definingElement.getChildren()) {
             if (child instanceof AntStructuredElement && attr.getName().equals(((AntStructuredElement)child).getName())) {
               return child;
             }
           }
         }
-        return macrodef;
+        return definingElement;
       }
       return findClass(elementDef, element);
     }

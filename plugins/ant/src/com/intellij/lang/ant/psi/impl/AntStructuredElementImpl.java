@@ -255,6 +255,10 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     return false;
   }
 
+  public boolean isPresetDefined() {
+    return myDefinition != null && myDefinition.getClassName().startsWith(AntPresetDefImpl.ANT_PRESETDEF_NAME);
+  }
+
   public void clearCaches() {
     super.clearCaches();
     myReferencedElements = null;

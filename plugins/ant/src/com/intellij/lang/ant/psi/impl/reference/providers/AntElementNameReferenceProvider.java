@@ -21,28 +21,30 @@ public class AntElementNameReferenceProvider extends GenericReferenceProvider {
     if (!(element instanceof AntStructuredElement)) {
       return PsiReference.EMPTY_ARRAY;
     }
-    final AntElementNameReference nameReference =
-      new AntElementNameReference(this, (AntStructuredElement)element);
+    final AntStructuredElement se = (AntStructuredElement)element;
+    final AntElementNameReference nameReference = new AntElementNameReference(this, se);
     if (element instanceof AntTask) {
       final AntTask task = (AntTask)element;
-      if (!task.isMacroDefined()) {
-        return PsiReference.EMPTY_ARRAY;
+      if (task.isMacroDefined()) {
+        final XmlAttribute[] attrs = task.getSourceElement().getAttributes();
+        if (attrs.length == 0) {
+          return new PsiReference[]{nameReference};
+        }
+        List<PsiReference> result = new ArrayList<PsiReference>(attrs.length + 1);
+        result.add(nameReference);
+        for (XmlAttribute attr : attrs) {
+          result.add(new AntElementNameReference(this, task, attr));
+        }
+        return result.toArray(new PsiReference[result.size()]);
       }
-      final XmlAttribute[] attrs = task.getSourceElement().getAttributes();
-      if (attrs.length == 0) {
-        return new PsiReference[]{nameReference};
-      }
-      List<PsiReference> result = new ArrayList<PsiReference>(attrs.length + 1);
-      result.add(nameReference);
-      for (XmlAttribute attr : attrs) {
-        result.add(new AntElementNameReference(this, task, attr));
-      }
-      return result.toArray(new PsiReference[result.size()]);
+    }
+    else if (se.isPresetDefined()) {
+      return new PsiReference[]{nameReference};
     }
     final AntTask task = PsiTreeUtil.getParentOfType(element, AntTask.class);
-    return (task == null || !task.isMacroDefined())
-           ? PsiReference.EMPTY_ARRAY
-           : new PsiReference[]{nameReference};
+    return (task != null && (task.isMacroDefined() || task.isPresetDefined()))
+           ? new PsiReference[]{nameReference}
+           : PsiReference.EMPTY_ARRAY;
   }
 
   @NotNull
@@ -51,10 +53,7 @@ public class AntElementNameReferenceProvider extends GenericReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByString(String str,
-                                              PsiElement position,
-                                              ReferenceType type,
-                                              int offsetInPosition) {
+  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
     return getReferencesByElement(position);
   }
 }

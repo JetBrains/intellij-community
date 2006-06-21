@@ -155,6 +155,12 @@ public class AntElementFactory {
                                      parent.getAntFile().getBaseTypeDefinition(MacroDef.class.getName()));
         }
       });
+      ourAntTypeToKnownAntElementCreatorMap.put(PreSetDef.class.getName(), new AntElementCreator() {
+        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+          return new AntPresetDefImpl((AntStructuredElement)parent, tag,
+                                      parent.getAntFile().getBaseTypeDefinition(PreSetDef.class.getName()));
+        }
+      });
       ourAntTypeToKnownAntElementCreatorMap.put(ImportTask.class.getName(), new AntElementCreator() {
         public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
           return new AntImportImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(ImportTask.class.getName()));

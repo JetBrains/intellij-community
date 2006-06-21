@@ -1,0 +1,8 @@
+<project default="t">
+  <target name="t">
+    <
+    <ref>
+    mytask/>
+  </target>
+  <presetdef name="mytask"/>
+</project>

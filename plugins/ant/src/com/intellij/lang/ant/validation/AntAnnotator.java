@@ -11,6 +11,7 @@ import com.intellij.lang.ant.psi.impl.reference.AntGenericReference;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.quickfix.AntCreateMacroDefAction;
+import com.intellij.lang.ant.quickfix.AntCreatePresetDefAction;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -30,16 +31,16 @@ public class AntAnnotator implements Annotator {
       final String name = se.getSourceElement().getName();
       if (def == null) {
         final Annotation annotation = holder.createErrorAnnotation(se, AntBundle.getMessage("undefined.element", name));
-        boolean macroDefined = false;
+        boolean defined = false;
         while (!(parent instanceof AntFile)) {
           if (parent instanceof AntTask && ((AntTask)parent).isMacroDefined()) {
-            macroDefined = true;
+            defined = true;
             break;
           }
           parent = parent.getAntParent();
         }
-        if (!macroDefined) {
-          addMacrodefQuickFixes(annotation, se);
+        if (!defined) {
+          addDefinitionQuickFixes(annotation, se);
         }
       }
       else {
@@ -59,11 +60,13 @@ public class AntAnnotator implements Annotator {
     checkReferences(element, holder);
   }
 
-  private static void addMacrodefQuickFixes(final Annotation annotation, final AntStructuredElement se) {
+  private static void addDefinitionQuickFixes(final Annotation annotation, final AntStructuredElement se) {
     final AntProject project = se.getAntProject();
     annotation.registerFix(new AntCreateMacroDefAction(se));
+    annotation.registerFix(new AntCreatePresetDefAction(se));
     for (AntFile antFile : AntPsiUtil.getImportedFiles(project)) {
       annotation.registerFix(new AntCreateMacroDefAction(se, antFile));
+      annotation.registerFix(new AntCreatePresetDefAction(se, antFile));
     }
   }
 

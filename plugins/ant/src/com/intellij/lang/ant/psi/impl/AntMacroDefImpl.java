@@ -26,6 +26,42 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
     invalidateMacroDefinition();
   }
 
+  public String toString() {
+    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append(ANT_MACRODEF_NAME);
+      builder.append("[");
+      builder.append(getName());
+      builder.append("]");
+      return builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
+  }
+
+  public AntStructuredElement getAntParent() {
+    return (AntStructuredElement)super.getAntParent();
+  }
+
+  public AntTypeDefinition getMacroDefinition() {
+    return myMacroDefinition;
+  }
+
+  public void clearCaches() {
+    super.clearCaches();
+    if (myMacroDefinition != null) {
+      final AntFile file = getAntFile();
+      for (AntTypeId id : myMacroDefinition.getNestedElements()) {
+        final AntTypeDefinition nestedDef = file.getBaseTypeDefinition(myMacroDefinition.getNestedClassName(id));
+        file.unregisterCustomType(nestedDef);
+      }
+      getAntParent().unregisterCustomType(myMacroDefinition);
+      myMacroDefinition = null;
+      file.clearCaches();
+    }
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   private void invalidateMacroDefinition() {
     if (!hasNameElement()) {
@@ -76,41 +112,5 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
       myMacroDefinition.setDefiningElement(this);
     }
     getAntParent().registerCustomType(myMacroDefinition);
-  }
-
-  public String toString() {
-    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append(ANT_MACRODEF_NAME);
-      builder.append("[");
-      builder.append(getName());
-      builder.append("]");
-      return builder.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
-  }
-
-  public AntStructuredElement getAntParent() {
-    return (AntStructuredElement)super.getAntParent();
-  }
-
-  public AntTypeDefinition getMacroDefinition() {
-    return myMacroDefinition;
-  }
-
-  public void clearCaches() {
-    super.clearCaches();
-    if (myMacroDefinition != null) {
-      final AntFile file = getAntFile();
-      for (AntTypeId id : myMacroDefinition.getNestedElements()) {
-        final AntTypeDefinition nestedDef = file.getBaseTypeDefinition(myMacroDefinition.getNestedClassName(id));
-        file.unregisterCustomType(nestedDef);
-      }
-      getAntParent().unregisterCustomType(myMacroDefinition);
-      myMacroDefinition = null;
-      file.clearCaches();
-    }
   }
 }

@@ -4,6 +4,7 @@ import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntMacroDef;
+import com.intellij.lang.ant.psi.AntPresetDef;
 import com.intellij.lang.ant.psi.impl.AntOuterProjectElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.xml.XmlChangeVisitor;
@@ -66,6 +67,10 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     AntMacroDef macrodef = PsiTreeUtil.getParentOfType(antElement, AntMacroDef.class);
     if (macrodef != null) {
       macrodef.clearCaches();
+    }
+    AntPresetDef presetdef = PsiTreeUtil.getParentOfType(antElement, AntPresetDef.class);
+    if (presetdef != null) {
+      presetdef.clearCaches();
     }
   }
 }

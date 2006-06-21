@@ -151,6 +151,11 @@ public class AntResolveTest extends ResolveTestCase {
     doTaskTest();
   }
 
+  public void testPresetDef() throws Exception {
+    PsiReference ref = configure();
+    assertNotNull(ref.resolve());
+  }
+
   private void doTargetTest() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ref.resolve();

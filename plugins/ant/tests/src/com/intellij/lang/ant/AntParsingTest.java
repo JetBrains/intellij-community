@@ -65,6 +65,10 @@ public class AntParsingTest extends ParsingTestCase {
     doTest(true);
   }
 
+  public void testPresetDef() throws Exception {
+    doTest(true);
+  }
+
   public void testForwardMacroDef() throws Exception {
     doTest(true);
   }
