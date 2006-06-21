@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -63,6 +62,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
 
     private static class ManualArrayCopyFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "manual.array.copy.replace.quickfix");
@@ -137,7 +137,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             final PsiExpression lhsIndexExpression = lhs.getIndexExpression();
             final String toOffsetText =
                     getOffsetText(lhsIndexExpression, variable);
-            @NonNls final StringBuffer buffer = new StringBuffer(60);
+            @NonNls final StringBuilder buffer = new StringBuilder(60);
             buffer.append("System.arraycopy(");
             buffer.append(fromArrayText);
             buffer.append(", ");
