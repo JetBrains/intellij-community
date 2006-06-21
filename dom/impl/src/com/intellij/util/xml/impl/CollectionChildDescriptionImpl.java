@@ -3,8 +3,8 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
@@ -13,7 +13,6 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -94,22 +93,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   public List<? extends DomElement> getValues(final DomElement element) {
-    try {
-      return (List<DomElement>)myGetterMethod.invoke(element);
-    }
-    catch (InvocationTargetException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)cause;
-      }
-      throw new RuntimeException(cause);
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    return (List<? extends DomElement>)DomReflectionUtil.invokeMethod(myGetterMethod, element, ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
   public String getCommonPresentableName(DomNameStrategy strategy) {

@@ -200,7 +200,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   @NotNull
-  public T getRootElement() {
+  public final T getRootElement() {
     return (T)getRootHandler().getProxy();
   }
 

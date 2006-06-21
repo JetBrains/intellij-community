@@ -20,4 +20,5 @@ public interface DomFileElement<T extends DomElement> extends DomElement, UserDa
 
   @NotNull
   T getRootElement();
+
 }
