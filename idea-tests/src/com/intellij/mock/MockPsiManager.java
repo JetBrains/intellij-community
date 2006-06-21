@@ -214,6 +214,9 @@ public class MockPsiManager extends PsiManager {
   public void registerLanguageInjector(LanguageInjector injector) {
   }
 
+  public void registerLanguageInjector(@NotNull LanguageInjector injector, Disposable parentDisposable) {
+  }
+
   public void unregisterLanguageInjector(@NotNull LanguageInjector injector) {
 
   }
