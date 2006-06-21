@@ -151,6 +151,10 @@ public class AntResolveTest extends ResolveTestCase {
     doTaskTest();
   }
 
+  public void testNestedMacroDef() throws Exception {
+    doTaskTest();
+  }
+
   public void testPresetDef() throws Exception {
     PsiReference ref = configure();
     assertNotNull(ref.resolve());
