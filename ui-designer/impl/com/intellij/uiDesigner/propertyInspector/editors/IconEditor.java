@@ -62,7 +62,9 @@ public class IconEditor extends PropertyEditor<IconDescriptor> {
     if (myTextField.getText().length() == 0) {
       return null;
     }
-    return new IconDescriptor(myTextField.getText());
+    final IconDescriptor descriptor = new IconDescriptor(myTextField.getText());
+    IntroIconProperty.ensureIconLoaded(myModule, descriptor);
+    return descriptor;
   }
 
   public JComponent getComponent(RadComponent component, IconDescriptor value, boolean inplace) {

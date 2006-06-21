@@ -5,21 +5,20 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.*;
-import com.intellij.uiDesigner.propertyInspector.properties.IntroIconProperty;
-import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.editors.IconEditor;
-import com.intellij.uiDesigner.propertyInspector.editors.BooleanEditor;
-import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
-import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
+import com.intellij.uiDesigner.propertyInspector.properties.AbstractBooleanProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroIconProperty;
 import com.intellij.uiDesigner.propertyInspector.renderers.IconRenderer;
-import com.intellij.uiDesigner.propertyInspector.renderers.BooleanRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.TabbedPaneUI;
-import java.awt.Component;
-import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 
 /**
@@ -309,7 +306,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       myIndex = index;
     }
 
-    protected MyTitleProperty(final Property parent, final String name, final int index) {
+    protected MyTitleProperty(final Property parent, @NonNls final String name, final int index) {
       super(parent, name);
       myIndex = index;
     }
@@ -405,15 +402,16 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
 
     protected void setValueImpl(final RadComponent component, final IconDescriptor value) throws Exception {
+      Icon icon = (value != null) ? value.getIcon() : null;
       LwTabbedPane.Constraints constraints = getConstraintsForComponent(component);
       if (myDisabledIcon) {
         constraints.myDisabledIcon = value;
-        getTabbedPane().setDisabledIconAt(myIndex, value.getIcon());
+        getTabbedPane().setDisabledIconAt(myIndex, icon);
       }
       else
       {
         constraints.myIcon = value;
-        getTabbedPane().setIconAt(myIndex, value.getIcon());
+        getTabbedPane().setIconAt(myIndex, icon);
       }
     }
 
@@ -425,15 +423,21 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     public PropertyEditor<IconDescriptor> getEditor() {
       return myEditor;
     }
+
+    @Override public boolean isModified(final RadComponent radComponent) {
+      return getValue(radComponent) != null;
+    }
+
+    @Override public void resetValue(final RadComponent radComponent) throws Exception {
+      setValue(radComponent, null);
+    }
   }
 
-  private class MyEnabledProperty extends Property<RadComponent, Boolean> {
+  private class MyEnabledProperty extends AbstractBooleanProperty<RadComponent> {
     private final int myIndex;
-    private BooleanRenderer myRenderer = new BooleanRenderer();
-    private BooleanEditor myEditor = new BooleanEditor();
 
     public MyEnabledProperty(final Property parent, final int index) {
-      super(parent, "Tab Enabled");
+      super(parent, "Tab Enabled", true);
       myIndex = index;
     }
 
@@ -446,15 +450,6 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       LwTabbedPane.Constraints constraints = getConstraintsForComponent(component);
       constraints.myEnabled = value.booleanValue();
       getTabbedPane().setEnabledAt(myIndex, value.booleanValue());
-    }
-
-    @NotNull
-    public PropertyRenderer<Boolean> getRenderer() {
-      return myRenderer;
-    }
-
-    public PropertyEditor<Boolean> getEditor() {
-      return myEditor;
     }
   }
 
