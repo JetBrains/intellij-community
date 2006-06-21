@@ -17,8 +17,14 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     if (myActivePopup != null) {
       final Component component = myActivePopup.getComponent();
       if (component == null || !component.isShowing()) {
+        IdePopup activePopup = myActivePopup;
         myActivePopup = null;
-        LOG.error("Popup is set up as active but not showing");
+        if (component == null) {
+          LOG.error("Popup " + activePopup + " is set up as active but not showing (component=null)");
+        }
+        else {
+          LOG.error("Popup " + component + " is set up as active but not showing");
+        }
       }
     }
     return myActivePopup != null;
