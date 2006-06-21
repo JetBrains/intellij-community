@@ -221,6 +221,10 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
     if (mode != null) {
       return new GridInsertLocation(container, row, col, mode).normalize();
     }
+    if (getComponentAtGrid(container, row, col) instanceof RadVSpacer ||
+        getComponentAtGrid(container, row, col) instanceof RadHSpacer) {
+      return new GridReplaceDropLocation(container, row, col);
+    }
     return new GridDropLocation(container, row, col);
   }
 

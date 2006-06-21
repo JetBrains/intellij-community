@@ -65,7 +65,7 @@ public class GridDropLocation implements DropLocation {
         return false;
       }
 
-      final RadComponent componentInRect = myContainer.findComponentInRect(myRow + relativeRow, myColumn + relativeCol, rowSpan, colSpan);
+      final RadComponent componentInRect = findOverlappingComponent(myRow + relativeRow, myColumn + relativeCol, rowSpan, colSpan);
       if (componentInRect != null) {
         LOG.debug("GridDropLocation.canDrop=false because found component " + componentInRect.getId() +
                   " in rect (row=" + (myRow +relativeRow) + ", col=" + (myColumn +relativeCol) +
@@ -75,6 +75,10 @@ public class GridDropLocation implements DropLocation {
     }
     LOG.debug("canDrop=true");
     return true;
+  }
+
+  protected RadComponent findOverlappingComponent(final int startRow, final int startCol, final int rowSpan, final int colSpan) {
+    return myContainer.findComponentInRect(startRow, startCol, rowSpan, colSpan);
   }
 
   public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
