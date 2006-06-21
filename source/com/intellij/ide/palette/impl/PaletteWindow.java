@@ -32,6 +32,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
   private JTabbedPane myTabbedPane = new JTabbedPane();
   private JScrollPane myScrollPane = new JScrollPane();
   private MyListSelectionListener myListSelectionListener = new MyListSelectionListener();
+  private PaletteGroupHeader myLastFocusedGroup;
 
   public PaletteWindow(Project project) {
     myProject = project;
@@ -170,7 +171,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
       if (data != null) return data;
     }
     for(PaletteGroupHeader groupHeader: myGroupHeaders) {
-      if (groupHeader.isSelected() && groupHeader.getComponentList().getSelectedValue() != null) {
+      if ((groupHeader.isSelected() && groupHeader.getComponentList().getSelectedValue() != null) || groupHeader == myLastFocusedGroup) {
         return groupHeader.getGroup().getData(myProject, dataId);
       }
     }
@@ -194,6 +195,10 @@ public class PaletteWindow extends JPanel implements DataProvider {
 
   public Project getProject() {
     return myProject;
+  }
+
+  void setLastFocusedGroup(final PaletteGroupHeader focusedGroup) {
+    myLastFocusedGroup = focusedGroup;
   }
 
   private class MyListSelectionListener implements ListSelectionListener {

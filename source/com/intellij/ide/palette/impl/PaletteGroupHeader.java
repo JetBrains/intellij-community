@@ -15,9 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 
 /**
  * @author yole
@@ -47,6 +45,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
 
     addMouseListener(new PopupHandler() {
       public void invokePopup(Component comp, int x, int y) {
+        myPaletteWindow.setLastFocusedGroup(PaletteGroupHeader.this);
         showGroupPopupMenu(comp, x, y);
       }
     });
@@ -83,6 +82,12 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
       public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
       }
     }, this);
+
+    addFocusListener(new FocusAdapter() {
+      @Override public void focusGained(FocusEvent e) {
+        myPaletteWindow.setLastFocusedGroup(PaletteGroupHeader.this);
+      }
+    });
 
     initActions();
   }
