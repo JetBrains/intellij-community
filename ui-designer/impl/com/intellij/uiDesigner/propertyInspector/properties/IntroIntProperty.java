@@ -1,12 +1,10 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
-import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEditor;
+import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
@@ -47,9 +45,5 @@ public final class IntroIntProperty extends IntrospectedProperty<Integer> {
       myEditor = new IntEditor(Integer.MIN_VALUE);
     }
     return myEditor;
-  }
-
-  public void write(final Integer value, final XmlWriter writer){
-    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, value.intValue());
   }
 }

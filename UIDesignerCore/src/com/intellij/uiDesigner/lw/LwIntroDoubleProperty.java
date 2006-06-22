@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 
 public final class LwIntroDoubleProperty extends LwIntrospectedProperty {
   public LwIntroDoubleProperty(final String name){
@@ -23,6 +24,6 @@ public final class LwIntroDoubleProperty extends LwIntrospectedProperty {
   }
 
   public Object read(final Element element) throws Exception{
-    return new Double(LwXmlReader.getRequiredDouble(element, "value"));
+    return new Double(LwXmlReader.getRequiredDouble(element, UIFormXmlConstants.ATTRIBUTE_VALUE));
   }
 }

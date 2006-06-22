@@ -111,6 +111,9 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
     else if (double.class.equals(propertyType)) { // double
       property = new LwIntroDoubleProperty(name);
     }
+    else if (float.class.equals(propertyType)) { // double
+      property = new LwIntroFloatProperty(name);
+    }
     else if (String.class.equals(propertyType)) { // java.lang.String
       property = new LwRbIntroStringProperty(name);
     }

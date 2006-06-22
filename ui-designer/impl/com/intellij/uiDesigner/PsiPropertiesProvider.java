@@ -84,6 +84,9 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
       else if (double.class.getName().equals(propertyClassName)) { // double
         property = new LwIntroDoubleProperty(name);
       }
+      else if (float.class.getName().equals(propertyClassName)) {
+        property = new LwIntroFloatProperty(name);
+      }
       else if (String.class.getName().equals(propertyClassName)) { // java.lang.String
         property = new LwRbIntroStringProperty(name);
       }

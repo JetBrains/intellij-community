@@ -106,6 +106,16 @@ public final class LwXmlReader {
     }
   }
 
+  public static float getRequiredFloat(final Element element, final String attributeName) {
+    final String str = getRequiredString(element, attributeName);
+    try {
+      return Float.parseFloat(str);
+    }
+    catch (NumberFormatException e) {
+      throw new IllegalArgumentException("attribute '" + attributeName + "' is not a proper float: " + str);
+    }
+  }
+
   public static StringDescriptor getStringDescriptor(final Element element, final String valueAttr,
                                                      final String bundleAttr, final String keyAttr) {
     final String title = element.getAttributeValue(valueAttr);

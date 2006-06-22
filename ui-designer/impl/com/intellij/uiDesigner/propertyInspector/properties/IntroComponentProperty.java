@@ -54,10 +54,6 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
     return myEditor;
   }
 
-  public void write(@NotNull String value, XmlWriter writer) {
-    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, value);
-  }
-
   @Override public String getValue(final RadComponent component) {
     return (String) component.getDelegee().getClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName());
   }

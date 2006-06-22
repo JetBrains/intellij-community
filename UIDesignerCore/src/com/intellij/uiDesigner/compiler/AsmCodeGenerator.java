@@ -488,6 +488,9 @@ public class AsmCodeGenerator {
             else if (propertyClass.equals(Double.class.getName())) {
               setterClass = double.class;
             }
+            else if (propertyClass.equals(Float.class.getName())) {
+              setterClass = float.class;
+            }
             else {
               setterClass = Class.forName(propertyClass);
             }
@@ -519,6 +522,10 @@ public class AsmCodeGenerator {
         else if (propertyClass.equals(Double.class.getName())) {
           generator.push(((Double) value).doubleValue());
           setterArgType = Type.DOUBLE_TYPE;
+        }
+        else if (propertyClass.equals(Float.class.getName())) {
+          generator.push(((Float) value).floatValue());
+          setterArgType = Type.FLOAT_TYPE;
         }
         else {
           if (propGen == null) {

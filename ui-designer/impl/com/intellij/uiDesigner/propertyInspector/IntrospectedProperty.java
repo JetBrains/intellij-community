@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.ArrayUtil;
@@ -88,7 +89,9 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
    * that corresponds to this property. You can just append some attributes
    * here or add some subtags.
    */
-  public abstract void write(@NotNull V value, XmlWriter writer);
+  public void write(@NotNull V value, XmlWriter writer) {
+    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, value.toString());
+  }
 
   @Override public boolean isModified(final RadComponent component) {
     return component.isMarkedAsModified(this);

@@ -30,10 +30,6 @@ public final class IntroBooleanProperty extends IntrospectedProperty<Boolean> {
     return myEditor;
   }
 
-  public void write(final Boolean value, final XmlWriter writer){
-    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, value.toString());
-  }
-
   @NotNull
   public PropertyRenderer<Boolean> getRenderer() {
     if (myRenderer == null) {

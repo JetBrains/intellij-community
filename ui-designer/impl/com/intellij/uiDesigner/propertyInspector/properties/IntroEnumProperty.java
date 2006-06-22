@@ -5,12 +5,10 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.EnumEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
-import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
@@ -27,10 +25,6 @@ public class IntroEnumProperty extends IntrospectedProperty<Enum> {
                            Class enumClass) {
     super(name, readMethod, writeMethod, storeAsClient);
     myEnumClass = enumClass;
-  }
-
-  public void write(final Enum value, final XmlWriter writer) {
-    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, value.toString());
   }
 
   @NotNull

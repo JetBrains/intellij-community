@@ -470,6 +470,9 @@ public final class FormSourceCodeGenerator {
       else if (propertyClass.equals(Double.class.getName())) {
         push(((Double)value).doubleValue());
       }
+      else if (propertyClass.equals(Float.class.getName())) {
+        push(((Float)value).floatValue());
+      }
       else if (propertyClass.equals(Boolean.class.getName())) {
         push(((Boolean)value).booleanValue());
       }
@@ -1029,6 +1032,15 @@ public final class FormSourceCodeGenerator {
 
   public void append(final double value) {
     myBuffer.append(value);
+  }
+
+  private void push(final float value) {
+    checkParameter();
+    append(value);
+  }
+
+  public void append(final float value) {
+    myBuffer.append(value).append("f");
   }
 
   void push(final boolean value) {
