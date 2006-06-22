@@ -1583,11 +1583,11 @@
             text="Circle Layout">
     </action>
 
-    <action id="Faces.Navigation.Graph.PageTree.GotoSourceAction" class="com.intellij.jsf.graph.ui.renderers.actions.GotoSourceAction"
+    <action id="Faces.Navigation.Graph.PageTree.GotoSourceAction" class="com.intellij.jsf.yfilesGraph.actions.GotoSourceAction"
             text="_Jump to source">
     </action>
     <action id="Faces.Navigation.Graph.PageTree.GotoDeclarationAction"
-            class="com.intellij.jsf.graph.ui.renderers.actions.GotoDeclarationAction"
+            class="com.intellij.jsf.yfilesGraph.actions.GotoDeclarationAction"
             text="_Goto declaration">
     </action>
 
