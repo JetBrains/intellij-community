@@ -20,9 +20,14 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.ArrayList;
 
 public class StringCompareToInspection extends ExpressionInspection {
 
@@ -45,6 +50,28 @@ public class StringCompareToInspection extends ExpressionInspection {
                 "string.compareto.call.problem.descriptor");
     }
 
+    @Nullable
+    protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
+        final List<InspectionGadgetsFix> result = new ArrayList();
+        final PsiReferenceExpression methodExpression =
+                (PsiReferenceExpression)location.getParent();
+        final PsiModifierListOwner annotatableQualifier =
+                AnnotateQualifierFix.extractAnnotatableQualifier(
+                        methodExpression);
+        if (annotatableQualifier != null) {
+            result.add(new AnnotateQualifierFix(annotatableQualifier));
+        }
+        final PsiMethodCallExpression methodCallExpression =
+                (PsiMethodCallExpression)methodExpression.getParent();
+        final PsiModifierListOwner annotatableArgument =
+                AnnotateArgumentFix.extractAnnotatableArgument(
+                        methodCallExpression);
+        if (annotatableArgument != null) {
+            result.add(new AnnotateArgumentFix(annotatableArgument));
+        }
+        return result.toArray(new InspectionGadgetsFix[result.size()]);
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new StringCompareToVisitor();
     }
@@ -55,6 +82,21 @@ public class StringCompareToInspection extends ExpressionInspection {
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!isStringCompareTo(expression)) {
+                return;
+            }
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (InternationalizationUtil.isNonNlsAnnotated(qualifier)) {
+                return;
+            }
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length != 1) {
+                return;
+            }
+            if (InternationalizationUtil.isNonNlsAnnotated(arguments[0])) {
                 return;
             }
             registerMethodCallError(expression);

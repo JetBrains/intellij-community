@@ -19,9 +19,11 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class StringToUpperWithoutLocaleInspection extends ExpressionInspection {
 
@@ -42,6 +44,19 @@ public class StringToUpperWithoutLocaleInspection extends ExpressionInspection {
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "string.touppercase.tolowercase.without.locale.problem.descriptor");
+    }
+
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        final PsiReferenceExpression methodExpression =
+                (PsiReferenceExpression)location.getParent();
+        final PsiModifierListOwner annotatableQualifier =
+                AnnotateQualifierFix.extractAnnotatableQualifier(
+                        methodExpression);
+        if (annotatableQualifier == null) {
+            return null;
+        }
+        return new AnnotateQualifierFix(annotatableQualifier);
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -76,6 +91,11 @@ public class StringToUpperWithoutLocaleInspection extends ExpressionInspection {
             }
             final String className = containingClass.getQualifiedName();
             if(!"java.lang.String".equals(className)) {
+                return;
+            }
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (InternationalizationUtil.isNonNlsAnnotated(qualifier)) {
                 return;
             }
             registerMethodCallError(expression);

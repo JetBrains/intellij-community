@@ -2,12 +2,13 @@
 <body><table><tr><td valign="top" height="150">
     <font face="verdana" size="-1">
         This inspection reports any instances of String concatenation used as
-        the argument to <b><font color="#000080">StringBuffer.append()</font></b>
-        or <b><font color="#000080">StringBuilder.append()</font></b>. Such calls
+        the argument to <b><font color="#000080">StringBuffer.append()</font></b>,
+        <b><font color="#000080">StringBuilder.append()</font></b> or
+      <b><font color="#000080">Appendable.append()</font></b>. Such calls
         may profitably be turned into chained append calls on the existing
-        <b><font color="#000080">StringBuffer/Builder</font></b>, saving the
+        <b><font color="#000080">StringBuffer/Builder/Appendable</font></b>, saving the
         cost of an extra <b><font color="#000080">StringBuffer/Builder</font></b>
-        allocation. This inspection ignores compile time evaluated String
+        allocation. <br>This inspection ignores compile time evaluated String
         concatenations, which when converted to chained append calls would only
         worsen performance.
     </font></td></tr>

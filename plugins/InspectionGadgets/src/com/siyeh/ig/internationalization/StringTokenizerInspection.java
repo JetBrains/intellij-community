@@ -61,6 +61,9 @@ public class StringTokenizerInspection extends VariableInspection {
                 return;
             }
             final PsiTypeElement typeElement = variable.getTypeElement();
+            if (typeElement == null) {
+                return;
+            }
             registerError(typeElement);
         }
     }

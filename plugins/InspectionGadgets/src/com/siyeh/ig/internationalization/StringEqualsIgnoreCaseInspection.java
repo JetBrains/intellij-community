@@ -19,10 +19,15 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.ArrayList;
 
 public class StringEqualsIgnoreCaseInspection extends ExpressionInspection {
 
@@ -43,6 +48,28 @@ public class StringEqualsIgnoreCaseInspection extends ExpressionInspection {
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "string.equalsignorecase.call.problem.descriptor");
+    }
+
+    @Nullable
+    protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
+        final List<InspectionGadgetsFix> result = new ArrayList();
+        final PsiReferenceExpression methodExpression =
+                (PsiReferenceExpression)location.getParent();
+        final PsiModifierListOwner annotatableQualifier =
+                AnnotateQualifierFix.extractAnnotatableQualifier(
+                        methodExpression);
+        if (annotatableQualifier != null) {
+            result.add(new AnnotateQualifierFix(annotatableQualifier));
+        }
+        final PsiMethodCallExpression methodCallExpression =
+                (PsiMethodCallExpression)methodExpression.getParent();
+        final PsiModifierListOwner annotatableArgument =
+                AnnotateArgumentFix.extractAnnotatableArgument(
+                        methodCallExpression);
+        if (annotatableArgument != null) {
+            result.add(new AnnotateArgumentFix(annotatableArgument));
+        }
+        return result.toArray(new InspectionGadgetsFix[result.size()]);
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -81,6 +108,19 @@ public class StringEqualsIgnoreCaseInspection extends ExpressionInspection {
             }
             final String className = aClass.getQualifiedName();
             if (!"java.lang.String".equals(className)) {
+                return;
+            }
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (InternationalizationUtil.isNonNlsAnnotated(qualifier)) {
+                return;
+            }
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length != 1) {
+                return;
+            }
+            if (InternationalizationUtil.isNonNlsAnnotated(arguments[0])) {
                 return;
             }
             registerMethodCallError(expression);
