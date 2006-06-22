@@ -129,10 +129,7 @@ public class SvnChangeProvider implements ChangeProvider {
     if (path.isDirectory()) {
       stClient.doStatus(path.getIOFile(), recursively, false, false, false, new ISVNStatusHandler() {
         public void handleStatus(SVNStatus status) throws SVNException {
-          final SVNNodeKind kind = status.getKind();
-          if (kind == SVNNodeKind.FILE || kind == SVNNodeKind.NONE) {
-            processStatus(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(status.getFile()), status, builder);
-          }
+          processStatus(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(status.getFile()), status, builder);
         }
       });
     }
@@ -140,7 +137,7 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   private void processFile(FilePath filePath, SVNStatusClient stClient, ChangelistBuilder builder) throws SVNException {
-    SVNStatus status = stClient.doStatus(filePath.getIOFile(), false, true);
+    SVNStatus status = stClient.doStatus(filePath.getIOFile(), false, false);
     processStatus(filePath, status, builder);
   }
 
@@ -149,13 +146,15 @@ public class SvnChangeProvider implements ChangeProvider {
       FileStatus fStatus = SvnFileStatusProvider.convertStatus(status, filePath.getIOFile());
 
       final SVNStatusType statusType = status.getContentsStatus();
+      final SVNStatusType propStatus = status.getPropertiesStatus();
       if (statusType == SVNStatusType.STATUS_UNVERSIONED || statusType == SVNStatusType.UNKNOWN) {
         builder.processUnversionedFile(filePath.getVirtualFile());
       }
       else if (statusType == SVNStatusType.STATUS_CONFLICTED ||
                statusType == SVNStatusType.STATUS_MERGED ||
                statusType == SVNStatusType.STATUS_MODIFIED ||
-               statusType == SVNStatusType.STATUS_REPLACED) {
+               statusType == SVNStatusType.STATUS_REPLACED ||
+               propStatus == SVNStatusType.STATUS_MODIFIED) {
         builder.processChange(new Change(new SvnUpToDateRevision(filePath, myVcs, status.getRevision()), new CurrentContentRevision(filePath), fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_ADDED) {
