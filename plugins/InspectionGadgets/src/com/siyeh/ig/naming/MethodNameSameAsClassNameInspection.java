@@ -19,12 +19,17 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MethodNameSameAsClassNameInspection extends MethodInspection {
 
@@ -32,9 +37,23 @@ public class MethodNameSameAsClassNameInspection extends MethodInspection {
         return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return new RenameFix();
-    }
+  @Nullable
+  protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
+    return new InspectionGadgetsFix[]{new RenameFix(), new InspectionGadgetsFix() {
+      protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+        PsiElement element = descriptor.getPsiElement().getParent();
+        if (!(element instanceof PsiMethod)) return;
+        PsiTypeElement returnTypeElement = ((PsiMethod)element).getReturnTypeElement();
+        if (returnTypeElement != null) returnTypeElement.delete();
+      }
+
+      @NotNull
+      public String getName() {
+        return InspectionGadgetsBundle.message("make.method.ctr.quickfix");
+      }
+    }};
+  }
+
 
     @NotNull
     protected String buildErrorString(Object... infos) {
