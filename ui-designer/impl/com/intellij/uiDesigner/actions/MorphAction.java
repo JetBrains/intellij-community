@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
@@ -52,10 +53,15 @@ public class MorphAction extends AbstractGuiEditorAction {
       public boolean process(final ComponentItem selectedValue) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            for(RadComponent c: selection) {
-              if (!morphComponent(editor, c, selectedValue)) break;
-            }
-            editor.refreshAndSave(true);
+            Runnable runnable = new Runnable() {
+              public void run() {
+                for(RadComponent c: selection) {
+                  if (!morphComponent(editor, c, selectedValue)) break;
+                }
+                editor.refreshAndSave(true);
+              }
+            };
+            CommandProcessor.getInstance().executeCommand(editor.getProject(), runnable, UIDesignerBundle.message("morph.component.command"), null);
             editor.getGlassLayer().requestFocus();
           }
         });
