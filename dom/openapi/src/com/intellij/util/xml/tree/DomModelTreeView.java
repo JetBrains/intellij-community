@@ -21,6 +21,7 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +55,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     myTree = new SimpleTree(new DefaultTreeModel(new DefaultMutableTreeNode()));
     myTree.setRootVisible(isRootVisible);
     myTree.setShowsRootHandles(true);
+    myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
     ToolTipManager.sharedInstance().registerComponent(myTree);
     TreeUtil.installActions(myTree);
