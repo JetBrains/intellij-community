@@ -6,6 +6,7 @@
 package com.intellij.compiler;
 
 import com.intellij.compiler.classParsing.*;
+import com.intellij.compiler.impl.InternedPath;
 import com.intellij.compiler.impl.SourceUrlClassNamePair;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.HashMap;
@@ -13,6 +14,20 @@ import com.intellij.util.containers.StringInterner;
 import junit.framework.TestCase;
 
 public class MakeDataStructuresTest extends TestCase{
+
+  public void testInternedPath() {
+    final StringInterner interner = new StringInterner();
+    final String path1 = "/a/b/c/";
+    final InternedPath interned1 = new InternedPath(interner, path1, '/');
+    final String path2 = "/a/b/c";
+    final InternedPath interned2 = new InternedPath(interner, path2, '/');
+    final String path3 = "a/b/c";
+    final InternedPath interned3 = new InternedPath(interner, path3, '/');
+
+    assertEquals(path1, interned1.toString());
+    assertEquals(path2, interned2.toString());
+    assertEquals(path3, interned3.toString());
+  }
 
   public void testUrlNamePair() {
     final String url = "file://C:/work/classes/com/intellij/somePackage/SomeClass.java";
