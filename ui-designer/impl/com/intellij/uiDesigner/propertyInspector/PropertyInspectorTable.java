@@ -480,7 +480,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
           Palette.getInstance(myEditor.getProject()).getIntrospectedProperties(component);
         final Properties properties = Properties.getInstance();
         for (final Property property: introspectedProperties) {
-          if (!myShowExpertProperties && properties.isExpertProperty(componentClass, property.getName())) {
+          if (!myShowExpertProperties && properties.isExpertProperty(component.getModule(), componentClass, property.getName())) {
             continue;
           }
           addProperty(result, property);
@@ -974,8 +974,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       if (!selected) {
         myPropertyNameRenderer.setForeground(PropertyInspectorTable.this.getForeground());
         if(property instanceof IntrospectedProperty){
-          final Class componentClass = mySelection.get(0).getComponentClass();
-          if (Properties.getInstance().isExpertProperty(componentClass, property.getName())) {
+          final RadComponent component = mySelection.get(0);
+          final Class componentClass = component.getComponentClass();
+          if (Properties.getInstance().isExpertProperty(component.getModule(), componentClass, property.getName())) {
             myPropertyNameRenderer.setForeground(Color.LIGHT_GRAY);
           }
         }
@@ -988,23 +989,33 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       // 1. Text
       ErrorInfo errInfo = getErrorInfoForRow(row);
 
+      SimpleTextAttributes result;
       boolean modified = isModifiedForSelection(property);
       if (errInfo == null) {
-        return modified ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        result = modified ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+      }
+      else {
+        final HighlightSeverity severity = errInfo.getHighlightDisplayLevel().getSeverity();
+        Map<HighlightSeverity, SimpleTextAttributes> cache = modified ? myModifiedHighlightAttributes : myHighlightAttributes;
+        result = cache.get(severity);
+        if (result == null) {
+          final TextAttributesKey attrKey = SeverityRegistrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+          TextAttributes textAttrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attrKey);
+          if (modified) {
+            textAttrs = textAttrs.clone();
+            textAttrs.setFontType(textAttrs.getFontType() | Font.BOLD);
+          }
+          result = SimpleTextAttributes.fromTextAttributes(textAttrs);
+          cache.put(severity, result);
+        }
       }
 
-      final HighlightSeverity severity = errInfo.getHighlightDisplayLevel().getSeverity();
-      Map<HighlightSeverity, SimpleTextAttributes> cache = modified ? myModifiedHighlightAttributes : myHighlightAttributes;
-      SimpleTextAttributes result = cache.get(severity);
-      if (result == null) {
-        final TextAttributesKey attrKey = SeverityRegistrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
-        TextAttributes textAttrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attrKey);
-        if (modified) {
-          textAttrs = textAttrs.clone();
-          textAttrs.setFontType(textAttrs.getFontType() | Font.BOLD);
+      if (property instanceof IntrospectedProperty) {
+        final RadComponent c = mySelection.get(0);
+        if (Properties.getInstance().isPropertyDeprecated(c.getModule(), c.getComponentClass(), property.getName())) {
+          return new SimpleTextAttributes(result.getBgColor(), result.getFgColor(), result.getWaveColor(),
+                                          result.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT);
         }
-        result = SimpleTextAttributes.fromTextAttributes(textAttrs);
-        cache.put(severity, result);
       }
 
       return result;

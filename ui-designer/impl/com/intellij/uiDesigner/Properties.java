@@ -2,17 +2,20 @@ package com.intellij.uiDesigner;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.uiDesigner.lw.LwXmlReader;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Anton Katilin
@@ -22,6 +25,7 @@ public final class Properties implements ApplicationComponent, JDOMExternalizabl
   private final HashMap<String,String> myClass2InplaceProperty;
   private final HashMap<String,HashSet<String>> myClass2ExpertProperties;
   private Map<String, Map<String, IntEnumEditor.Pair[]>> myClass2EnumProperties;
+  private Map<String, Set<String>> myClass2DeprecatedProperties;
 
   public static Properties getInstance() {
     return ApplicationManager.getApplication().getComponent(Properties.class);
@@ -31,19 +35,39 @@ public final class Properties implements ApplicationComponent, JDOMExternalizabl
     myClass2InplaceProperty = new HashMap<String,String>();
     myClass2ExpertProperties = new HashMap<String,HashSet<String>>();
     myClass2EnumProperties = new HashMap<String, Map<String, IntEnumEditor.Pair[]>>();
+    myClass2DeprecatedProperties = new HashMap<String, Set<String>>();
   }
 
   /**
    * @return it is possible that properties do not exist in class; returned values are ones specified in config. Never null
    */
-  public boolean isExpertProperty(final Class aClass, final String propertyName) {
+  public boolean isExpertProperty(final Module module, @NotNull final Class aClass, final String propertyName) {
     for (Class c = aClass; c != null; c = c.getSuperclass()){
       final HashSet<String> properties = myClass2ExpertProperties.get(c.getName());
       if (properties != null && properties.contains(propertyName)){
         return true;
       }
     }
-    return false;
+    return isPropertyDeprecated(module, aClass, propertyName);
+  }
+
+  public boolean isPropertyDeprecated(final Module module, final Class aClass, final String propertyName) {
+    // TODO[yole]: correct module-dependent caching
+    Set<String> deprecated = myClass2DeprecatedProperties.get(aClass.getName());
+    if (deprecated == null) {
+      deprecated = new HashSet<String>();
+      PsiClass componentClass = PsiManager.getInstance(module.getProject()).findClass(aClass.getName(), module.getModuleWithDependenciesAndLibrariesScope(true));
+      if (componentClass != null) {
+        PsiMethod[] methods = componentClass.getAllMethods();
+        for(PsiMethod method: methods) {
+          if (method.isDeprecated() && PropertyUtil.isSimplePropertySetter(method)) {
+            deprecated.add(PropertyUtil.getPropertyNameBySetter(method));
+          }
+        }
+      }
+    }
+
+    return deprecated.contains(propertyName);
   }
 
   /**
@@ -71,6 +95,7 @@ public final class Properties implements ApplicationComponent, JDOMExternalizabl
     return null;
   }
 
+  @NotNull
   public String getComponentName(){
     return "gui-designer-properties";
   }
