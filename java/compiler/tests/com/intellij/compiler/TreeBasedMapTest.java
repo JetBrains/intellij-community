@@ -139,4 +139,28 @@ public class TreeBasedMapTest extends TestCase {
     assertEquals("ABC", checkMap.get("/a/b/c"));
     assertEquals("ABC1", checkMap.get("/a/b/c/"));
   }
+
+  public void testIterateAfterRemoved() {
+    final TreeBasedMap<String> map = new TreeBasedMap<String>(new StringInterner(), '/');
+    map.put("/a/b/c", "ABC");
+    map.put("/a/b/c/", "ABC1");
+
+    map.remove("/a/b/c/");
+
+    final Iterator<String> iterator = map.getKeysIterator();
+    Map<String, String> checkMap = new HashMap<String, String>();
+
+    while (iterator.hasNext()) {
+      final String key = iterator.next();
+      checkMap.put(key, map.get(key));
+    }
+
+    assertEquals(1, checkMap.size());
+
+    final Set<String> checkMapKeys = checkMap.keySet();
+    assertTrue(checkMapKeys.contains("/a/b/c"));
+    assertFalse(checkMapKeys.contains("/a/b/c/"));
+    assertEquals("ABC", checkMap.get("/a/b/c"));
+    assertEquals(null, checkMap.get("/a/b/c/"));
+  }
 }
