@@ -1,7 +1,7 @@
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -20,8 +21,6 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -67,9 +66,9 @@ public class NameLocationStep extends ModuleWizardStep {
 
     myNamePathComponent = new NamePathComponent(IdeBundle.message("label.module.name"), IdeBundle.message("label.module.content.root"), 'M', 'r',
                                                 IdeBundle.message("title.select.module.content.root"), "");
-    if (ModuleType.J2EE_APPLICATION.equals(moduleType)) {
-      myNamePathComponent.setPathComponentVisible(false);
-    }
+    //if (ModuleType.J2EE_APPLICATION.equals(moduleType)) {
+    //  myNamePathComponent.setPathComponentVisible(false);
+    //}
 
     myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 0, 10), 0, 0));
 
