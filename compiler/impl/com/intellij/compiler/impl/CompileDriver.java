@@ -530,7 +530,7 @@ public class CompileDriver {
     final TranslatingCompiler[] translators = compilerManager.getCompilers(TranslatingCompiler.class);
     final VfsSnapshot snapshot = ApplicationManager.getApplication().runReadAction(new Computable<VfsSnapshot>() {
       public VfsSnapshot compute() {
-        return new VfsSnapshot(context.getCompileScope().getFiles(null, true));
+        return new VfsSnapshot(myStringInterner, context.getCompileScope().getFiles(null, true));
       }
     });
 
@@ -1188,7 +1188,7 @@ public class CompileDriver {
           continue;
         }
         final VirtualFile vFile = dependentFile.getVirtualFile();
-        if (toCompile.contains(vFile)) {
+        if (vFile == null || toCompile.contains(vFile)) {
           continue;
         }
         String url = snapshot.getUrlByFile(vFile);
