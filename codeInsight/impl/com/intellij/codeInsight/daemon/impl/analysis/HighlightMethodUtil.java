@@ -5,7 +5,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -424,7 +425,7 @@ public class HighlightMethodUtil {
       else {
         String methodName = referenceToMethod.getReferenceName() + HighlightUtil.buildArgTypesList(list);
         description = JavaErrorMessages.message("cannot.resolve.method", methodName);
-        if (candidateList.size() == 0) {
+        if (candidateList.isEmpty()) {
           elementToHighlight = referenceToMethod.getReferenceNameElement();
           highlightInfoType = HighlightInfoType.WRONG_REF;
         }
@@ -950,7 +951,7 @@ public class HighlightMethodUtil {
 
     if (errorDescription != null) {
       // show error info at the class level
-      TextRange textRange = com.intellij.codeInsight.ClassUtil.getClassDeclarationTextRange(aClass);
+      TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                textRange,
                                                errorDescription);
@@ -980,25 +981,6 @@ public class HighlightMethodUtil {
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createMethodThrowsFix(method, exception, true, false));
     }
     return highlightInfo;
-  }
-
-  //@top
-  public static HighlightInfo checkMethodSameNameAsConstructor(PsiMethod method) {
-    PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return null;
-    if (Comparing.equal(aClass.getName(), method.getName(), true)
-        && method.getReturnTypeElement() != null
-        && method.getReturnType() != null
-        && !method.hasModifierProperty(PsiModifier.STATIC)
-        && !TypeConversionUtil.isNullType(method.getReturnType())) {
-      TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(method);
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING,
-                                                                      textRange,
-                                                                      JavaErrorMessages.message("method.has.same.name.as.class"));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new MakeMethodConstructorFix(method));
-      return highlightInfo;
-    }
-    return null;
   }
 
   //@top
