@@ -93,9 +93,9 @@ public abstract class AddDomElementAction extends AnAction {
       final ClassChooser chooser = ClassChooserManager.getClassChooser(description.getType());
       for (Type type : chooser.getChooserClasses()) {
 
-        String name = ElementPresentationManager.getTypeName((Class)type);
-        Icon icon = null;
         final Class<?> rawType = DomReflectionUtil.getRawType(type);
+        String name = ElementPresentationManager.getTypeName(rawType);
+        Icon icon = null;
         if (!showAsPopup() || descriptions.length == 1) {
 //          if (descriptions.length > 1) {
             icon = ElementPresentationManager.getIconForClass(rawType);
