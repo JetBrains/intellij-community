@@ -46,6 +46,11 @@ public abstract class DomManager implements ProjectComponent {
 
   public abstract DomGenericInfo getGenericInfo(Type type);
 
+  /**
+   * This should be done at some project component loading and before file description registering
+   * @param domElementClass
+   * @param implementationClass
+   */
   public abstract <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass);
 
   @Nullable
@@ -76,6 +81,10 @@ public abstract class DomManager implements ProjectComponent {
    */
   public abstract <T extends DomElement> T createStableValue(Factory<T> provider);
 
+  /**
+   * all implementations should be registered before calling this method
+   * @param description
+   */
   public abstract void registerFileDescription(DomFileDescription description);
 
   public abstract ConverterManager getConverterManager();

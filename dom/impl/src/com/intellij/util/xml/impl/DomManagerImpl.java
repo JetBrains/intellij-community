@@ -301,6 +301,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   public <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
     assert domElementClass.isAssignableFrom(implementationClass);
     myImplementationClasses.put(domElementClass, implementationClass);
+    myCachedImplementationClasses.clear();
   }
 
   @Nullable
