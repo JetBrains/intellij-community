@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,9 @@ import com.intellij.psi.PsiType;
 
 import java.util.Comparator;
 
-class HeirarchicalTypeComparator implements Comparator{
+class HeirarchicalTypeComparator implements Comparator<PsiType>{
     
-    public int compare(Object o1, Object o2){
-        final PsiType type1 = (PsiType) o1;
-        final PsiType type2 = (PsiType) o2;
+    public int compare(PsiType type1, PsiType type2){
         if(type1.isAssignableFrom(type2)){
             return 1;
         }
