@@ -171,7 +171,8 @@ public class TreeBasedMap<T> {
       if ((childrenMap != null && childrenMap.size() > 0) || node.mappingExists()) {
         final Set<String> keys = childrenMap != null? childrenMap.keySet() : Collections.<String>emptySet();
         myCurrentNodePath.push(new PathElement<T>(node, keys.size() > 0? keys.iterator() : EMPTY_ITERATOR));
-        if (node != myRoot && myCurrentNodePath.size() > 2) {
+        if (myCurrentNodePath.size() > 2) {
+          // do not add separator before the Root and its direct child nodes 
           myCurrentName.append(mySeparator);
         }
         myCurrentName.append(name);
