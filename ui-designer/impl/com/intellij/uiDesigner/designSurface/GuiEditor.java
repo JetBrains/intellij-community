@@ -482,7 +482,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   }
 
   @NotNull
-  GlassLayer getGlassLayer() {
+  public GlassLayer getGlassLayer() {
     return myGlassLayer;
   }
 

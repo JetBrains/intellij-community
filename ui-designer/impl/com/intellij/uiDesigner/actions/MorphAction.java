@@ -5,32 +5,33 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
-import com.intellij.uiDesigner.radComponents.RadAtomicComponent;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.palette.ComponentItem;
-import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.quickFixes.ChangeFieldTypeFix;
-import com.intellij.uiDesigner.lw.IProperty;
-import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
-import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
-import com.intellij.util.Processor;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiElementFactory;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.palette.ComponentItem;
+import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
+import com.intellij.uiDesigner.quickFixes.ChangeFieldTypeFix;
+import com.intellij.uiDesigner.radComponents.RadAtomicComponent;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,10 +50,15 @@ public class MorphAction extends AbstractGuiEditorAction {
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
     Processor<ComponentItem> processor = new Processor<ComponentItem>() {
       public boolean process(final ComponentItem selectedValue) {
-        for(RadComponent c: selection) {
-          if (!morphComponent(editor, c, selectedValue)) break;
-        }
-        editor.refreshAndSave(true);
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            for(RadComponent c: selection) {
+              if (!morphComponent(editor, c, selectedValue)) break;
+            }
+            editor.refreshAndSave(true);
+            editor.getGlassLayer().requestFocus();
+          }
+        });
         return true;
       }
     };
@@ -96,6 +102,7 @@ public class MorphAction extends AbstractGuiEditorAction {
     int index = parent.indexOfComponent(oldComponent);
     parent.removeComponent(oldComponent);
     parent.addComponent(newComponent, index);
+    newComponent.setSelected(true);
 
     return true;
   }

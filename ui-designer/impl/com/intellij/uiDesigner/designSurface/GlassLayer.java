@@ -16,7 +16,7 @@ import java.awt.event.MouseEvent;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class GlassLayer extends JComponent implements DataProvider{
+public final class GlassLayer extends JComponent implements DataProvider{
   private final GuiEditor myEditor;
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GlassLayer");
   private Point myLastMousePosition;
