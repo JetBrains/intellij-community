@@ -12,6 +12,7 @@ import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.problems.WolfTheProblemSolverImpl;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.todo.TodoConfiguration;
+import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -686,7 +687,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   static boolean canChangeFileSilently(PsiFile file) {
     VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return false;
     Project project = file.getProject();
+    if (!PackageUtil.projectContainsFile(project, virtualFile, false)) return false;
     AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(virtualFile);
     if (activeVcs == null) return true;
     FileStatus status = FileStatusManager.getInstance(project).getStatus(virtualFile);
