@@ -24,8 +24,8 @@ import org.jdom.filter.Filter;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -65,6 +65,39 @@ public class JDOMUtil {
   }
 
   private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
+
+  public static int getTreeHash(final Element root) {
+    return addToHash(0, root);
+  }
+
+  private static int addToHash(int i, final Element element) {
+    i = addToHash(i, element.getName());
+    i = addToHash(i, element.getText());
+
+    final List list = element.getAttributes();
+    for (int j = 0; j < list.size(); j++) {
+      Attribute attribute = (Attribute)list.get(j);
+      i = addToHash(i, attribute);
+    }
+
+    final List children = element.getChildren();
+    for (int j = 0; j < children.size(); j++) {
+      Element child = (Element)children.get(j);
+      i = addToHash(i, child);
+    }
+
+    return i;
+  }
+
+  private static int addToHash(int i, final Attribute attribute) {
+    i = addToHash(i, attribute.getName());
+    i = addToHash(i, attribute.getValue());
+    return i;
+  }
+
+  private static int addToHash(final int i, final String s) {
+    return i * 31 + s.hashCode();
+  }
 
   private static class EmptyTextFilter implements Filter {
     public boolean matches(Object obj) {
