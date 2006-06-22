@@ -64,6 +64,7 @@ public final class ComponentItemDialog extends DialogWrapper {
   private JPanel myVSizePolicyPanel;
   private JComboBox myGroupComboBox;
   private JLabel myGroupLabel;
+  private JCheckBox myIsContainerCheckBox;
   private EditorTextField myEditorTextField;
   private Document myDocument;
 
@@ -137,6 +138,7 @@ public final class ComponentItemDialog extends DialogWrapper {
       myChkVerWantGrow.setSelected((vSizePolicy & GridConstraints.SIZEPOLICY_WANT_GROW) != 0);
     }
 
+    myIsContainerCheckBox.setSelected(itemToBeEdited.isContainer());
     myAutoCreateBindingCheckbox.setSelected(itemToBeEdited.isAutoCreateBinding());
     myCanAttachLabelCheckbox.setSelected(itemToBeEdited.isCanAttachLabel());
 
@@ -224,6 +226,7 @@ public final class ComponentItemDialog extends DialogWrapper {
       );
     }
 
+    myItemToBeEdited.setIsContainer(myIsContainerCheckBox.isSelected());
     myItemToBeEdited.setAutoCreateBinding(myAutoCreateBindingCheckbox.isSelected());
     myItemToBeEdited.setCanAttachLabel(myCanAttachLabelCheckbox.isSelected());
 

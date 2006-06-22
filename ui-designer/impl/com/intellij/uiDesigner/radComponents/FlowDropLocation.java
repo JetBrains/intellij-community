@@ -27,10 +27,10 @@ public class FlowDropLocation implements DropLocation {
     myAlignment = alignment;
     myHGap = hGap;
     myVGap = vGap;
-    myInsertIndex = myContainer.getDelegee().getComponentCount();
+    myInsertIndex = myContainer.getComponentCount();
     if (location != null) {
-      for(int i=0; i<myContainer.getDelegee().getComponentCount(); i++) {
-        Rectangle bounds = myContainer.getDelegee().getComponent(i).getBounds();
+      for(int i=0; i<myContainer.getComponentCount(); i++) {
+        Rectangle bounds = myContainer.getComponent(i).getBounds();
         bounds.grow(myHGap, vGap);
         if (bounds.contains(location)) {
           if (location.x < bounds.getCenterX()) {
@@ -47,7 +47,7 @@ public class FlowDropLocation implements DropLocation {
       }
     }
     myInsertBeforeId = null;
-    if (myInsertIndex < myContainer.getDelegee().getComponentCount()) {
+    if (myInsertIndex < myContainer.getComponentCount()) {
       myInsertBeforeId = myContainer.getComponent(myInsertIndex).getId();
     }
   }
@@ -61,7 +61,7 @@ public class FlowDropLocation implements DropLocation {
   }
 
   public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
-    if (myContainer.getDelegee().getComponentCount() == 0) {
+    if (myContainer.getComponentCount() == 0) {
       Dimension initialSize = dragObject.getInitialSize(myContainer.getDelegee());
       int originX;
       if (myAlignment == FlowLayout.CENTER) {
@@ -77,7 +77,7 @@ public class FlowDropLocation implements DropLocation {
       Rectangle rc = new Rectangle(originX, 2 * myVGap, initialSize.width, height);
       feedbackLayer.putFeedback(myContainer.getDelegee(), rc, myContainer.getDisplayName());
     }
-    else if ((myInsertIndex == myContainer.getDelegee().getComponentCount() && !isRightAlign()) ||
+    else if ((myInsertIndex == myContainer.getComponentCount() && !isRightAlign()) ||
         (myInsertIndex == 0 && !isLeftAlign())) {
       Dimension initialSize = dragObject.getInitialSize(myContainer.getDelegee());
       JComponent component = myContainer.getDelegee();
@@ -103,7 +103,7 @@ public class FlowDropLocation implements DropLocation {
       feedbackLayer.putFeedback(myContainer.getDelegee(), rc, myContainer.getDisplayName());
     }
     else {
-      Rectangle bounds = myContainer.getDelegee().getComponent(myInsertIndex).getBounds();
+      Rectangle bounds = myContainer.getComponent(myInsertIndex).getBounds();
       Rectangle rc = new Rectangle(bounds.x-4-myHGap, bounds.y, 8, bounds.height);
       feedbackLayer.putFeedback(myContainer.getDelegee(), rc, VertInsertFeedbackPainter.INSTANCE, myContainer.getDisplayName());
     }

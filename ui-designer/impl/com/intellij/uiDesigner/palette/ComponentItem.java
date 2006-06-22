@@ -63,6 +63,7 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
 
   private boolean myAutoCreateBinding;
   private boolean myCanAttachLabel;
+  private boolean myIsContainer;
   private boolean myAnyComponent;
   private Dimension myInitialSize;
 
@@ -122,6 +123,7 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
       myAutoCreateBinding,
       myCanAttachLabel
     );
+    result.setIsContainer(myIsContainer);
     return result;
   }
 
@@ -278,6 +280,14 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
 
   public void setCanAttachLabel(final boolean canAttachLabel) {
     myCanAttachLabel = canAttachLabel;
+  }
+
+  public boolean isContainer() {
+    return myIsContainer;
+  }
+
+  public void setIsContainer(final boolean isContainer) {
+    myIsContainer = isContainer;
   }
 
   public boolean equals(final Object o) {

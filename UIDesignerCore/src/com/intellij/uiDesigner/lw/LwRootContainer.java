@@ -67,7 +67,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
 
     setId("root");
 
-    myClassToBind = element.getAttributeValue("bind-to-class");
+    myClassToBind = element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_BIND_TO_CLASS);
 
     // Constraints and properties
     for(Iterator i=element.getChildren().iterator(); i.hasNext();){

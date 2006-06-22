@@ -459,7 +459,13 @@ public final class InsertComponentProcessor extends EventProcessor {
         final ClassLoader loader = LoaderFactory.getInstance(editor.getProject()).getLoader(editor.getFile());
         try {
           final Class aClass = Class.forName(item.getClassName(), true, loader);
-          result = new RadAtomicComponent(editor.getModule(), aClass, id);
+          if (item.isContainer()) {
+            LOG.debug("Creating custom container instance");
+            result = new RadContainer(editor.getModule(), aClass, id);
+          }
+          else {
+            result = new RadAtomicComponent(editor.getModule(), aClass, id);
+          }
         }
         catch (final Exception exc) {
           //noinspection NonConstantStringShouldBeStringBuffer

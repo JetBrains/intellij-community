@@ -267,7 +267,7 @@ public class LwContainer extends LwComponent implements IContainer{
     final String name = child.getName();
     final LwComponent component;
     if("component".equals(name)){
-      final String className = LwXmlReader.getRequiredString(child, "class");
+      final String className = LwXmlReader.getRequiredString(child, UIFormXmlConstants.ATTRIBUTE_CLASS);
       component = new LwAtomicComponent(className);
     }
     else if (UIFormXmlConstants.ELEMENT_NESTED_FORM.equals(name)) {
@@ -280,7 +280,11 @@ public class LwContainer extends LwComponent implements IContainer{
       component = new LwHSpacer();
     }
     else if("xy".equals(name) || "grid".equals(name)){
-      component = new LwContainer(JPanel.class.getName());
+      String className = LwXmlReader.getString(child, UIFormXmlConstants.ATTRIBUTE_CLASS);
+      if (className == null) {
+        className = JPanel.class.getName();
+      }
+      component = new LwContainer(className);
     }
     else if("scrollpane".equals(name)){
       component = new LwScrollPane();

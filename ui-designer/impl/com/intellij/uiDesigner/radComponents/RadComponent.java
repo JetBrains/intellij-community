@@ -528,7 +528,7 @@ public abstract class RadComponent implements IComponent {
    * Serializes component's class
    */
   protected final void writeClass(final XmlWriter writer){
-    writer.addAttribute("class", getComponentClass().getName());
+    writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_CLASS, getComponentClass().getName());
   }
 
   protected final void writeBinding(final XmlWriter writer){

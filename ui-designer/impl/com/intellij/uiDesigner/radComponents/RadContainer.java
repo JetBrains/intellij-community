@@ -57,6 +57,7 @@ public class RadContainer extends RadComponent implements IContainer {
   private ColorDescriptor myBorderColor;
 
   protected RadLayoutManager myLayoutManager;
+  private LayoutManager myDelegeeLayout;
 
   public RadContainer(final Module module, final String id){
     this(module, JPanel.class, id);
@@ -144,10 +145,17 @@ public class RadContainer extends RadComponent implements IContainer {
   }
 
   public final LayoutManager getLayout(){
+    if (myDelegeeLayout != null) {
+      return myDelegeeLayout;
+    }
     return getDelegee().getLayout();
   }
 
   public final void setLayout(final LayoutManager layout) {
+    // some components (for example, JXCollapsiblePanel from SwingX) have asymmetrical getLayout/setLayout - a different
+    // layout is returned compared to what was passed to setLayout(). to avoid crashes, we store the layout we passed to
+    // the component.
+    myDelegeeLayout = layout;
     getDelegee().setLayout(layout);
 
     if (layout instanceof AbstractLayout) {
@@ -516,10 +524,13 @@ public class RadContainer extends RadComponent implements IContainer {
     }
     try{
       writeId(writer);
+      if (!getComponentClass().equals(JPanel.class)) {
+        writeClass(writer);
+      }
       writeBinding(writer);
 
       if (myLayoutManager != null) {
-        writer.addAttribute("layout-manager", myLayoutManager.getName());
+        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_LAYOUT_MANAGER, myLayoutManager.getName());
       }
 
       getLayoutManager().writeLayout(writer, this);

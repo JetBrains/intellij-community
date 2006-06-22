@@ -88,6 +88,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
   @NonNls private static final String ATTRIBUTE_SINCE_VERSION = "since-version";
   @NonNls private static final String ATTRIBUTE_AUTO_CREATE_BINDING = "auto-create-binding";
   @NonNls private static final String ATTRIBUTE_CAN_ATTACH_LABEL = "can-attach-label";
+  @NonNls private static final String ATTRIBUTE_IS_CONTAINER = "is-container";
 
   public static Palette getInstance(@NotNull final Project project) {
     return project.getComponent(Palette.class);
@@ -127,6 +128,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     }
   }
 
+  @NotNull
   public String getComponentName(){
     return "Palette2";
   }
@@ -344,6 +346,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
 
     boolean autoCreateBinding = LwXmlReader.getOptionalBoolean(itemElement, ATTRIBUTE_AUTO_CREATE_BINDING, false);
     boolean canAttachLabel = LwXmlReader.getOptionalBoolean(itemElement, ATTRIBUTE_CAN_ATTACH_LABEL, false);
+    boolean isContainer = LwXmlReader.getOptionalBoolean(itemElement, ATTRIBUTE_IS_CONTAINER, false);
 
     // Default constraint
     final GridConstraints constraints;
@@ -382,6 +385,7 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
       autoCreateBinding,
       canAttachLabel
     );
+    item.setIsContainer(isContainer);
     addItem(group, item);
   }
 
@@ -501,6 +505,9 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     itemElement.setAttribute(ATTRIBUTE_REMOVABLE, Boolean.toString(item.isRemovable()));
     itemElement.setAttribute(ATTRIBUTE_AUTO_CREATE_BINDING, Boolean.toString(item.isAutoCreateBinding()));
     itemElement.setAttribute(ATTRIBUTE_CAN_ATTACH_LABEL, Boolean.toString(item.isCanAttachLabel()));
+    if (item.isContainer()) {
+      itemElement.setAttribute(ATTRIBUTE_IS_CONTAINER, Boolean.toString(item.isContainer()));
+    }
 
     // Default constraints
     writeDefaultConstraintsElement(itemElement, item.getDefaultConstraints());
