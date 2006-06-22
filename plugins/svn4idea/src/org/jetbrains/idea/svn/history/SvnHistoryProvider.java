@@ -40,10 +40,19 @@ import java.util.Date;
 import java.util.List;
 
 public class SvnHistoryProvider implements VcsHistoryProvider {
+
   private final SvnVcs myVcs;
+  private SVNURL myURL;
+  private SVNRevision myRevision;
 
   public SvnHistoryProvider(SvnVcs vcs) {
+    this(vcs, null, null);
+  }
+
+  public SvnHistoryProvider(SvnVcs vcs, SVNURL url, SVNRevision revision) {
     myVcs = vcs;
+    myURL = url;
+    myRevision = revision;
   }
 
   public HistoryAsTreeProvider getTreeHistoryProvider() {
@@ -74,31 +83,11 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
           indicator.setText(SvnBundle.message("progress.text2.collecting.history", file.getName()));
         }
         try {
-          SVNWCClient wcClient = myVcs.createWCClient();
-          SVNInfo info = wcClient.doInfo(new File(file.getIOFile().getAbsolutePath()), SVNRevision.WORKING);
-          if (info == null) {
-              exception[0] = new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "File ''{0}'' is not under version control", file.getIOFile()));
-              return;
+          if (myURL == null) {
+            collectLogEntries(indicator, file, exception, result);
+          } else {
+            collectLogEntries2(indicator, result);
           }
-          final String url = info.getURL() == null ? null : info.getURL().toString();
-          if (indicator != null) {
-            indicator.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", url));
-          }
-          final SVNRevision pegRevision = info.getRevision();
-          SVNLogClient client = myVcs.createLogClient();
-          client.doLog(new File[]{new File(file.getIOFile().getAbsolutePath())}, SVNRevision.HEAD, SVNRevision.create(1), false, false, 0,
-                       new ISVNLogEntryHandler() {
-                         public void handleLogEntry(SVNLogEntry logEntry) {
-                           if (indicator != null) {
-                             indicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
-                           }
-                           Date date = logEntry.getDate();
-                           String author = logEntry.getAuthor();
-                           String message = logEntry.getMessage();
-                           SVNRevision rev = SVNRevision.create(logEntry.getRevision());
-                           result.add(new SvnFileRevision(myVcs, pegRevision, rev, url, author, date, message));
-                         }
-                       });
         }
         catch (SVNException e) {
           exception[0] = e;
@@ -120,11 +109,62 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     return result;
   }
 
+  private void collectLogEntries(final ProgressIndicator indicator, FilePath file, SVNException[] exception, final ArrayList<VcsFileRevision> result) throws SVNException {
+    SVNWCClient wcClient = myVcs.createWCClient();
+    SVNInfo info = wcClient.doInfo(new File(file.getIOFile().getAbsolutePath()), SVNRevision.WORKING);
+    if (info == null) {
+        exception[0] = new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "File ''{0}'' is not under version control", file.getIOFile()));
+        return;
+    }
+    final String url = info.getURL() == null ? null : info.getURL().toString();
+    if (indicator != null) {
+      indicator.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", url));
+    }
+    final SVNRevision pegRevision = info.getRevision();
+    SVNLogClient client = myVcs.createLogClient();
+    client.doLog(new File[]{new File(file.getIOFile().getAbsolutePath())}, SVNRevision.HEAD, SVNRevision.create(1), false, false, 0,
+                 new ISVNLogEntryHandler() {
+                   public void handleLogEntry(SVNLogEntry logEntry) {
+                     if (indicator != null) {
+                       indicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
+                     }
+                     Date date = logEntry.getDate();
+                     String author = logEntry.getAuthor();
+                     String message = logEntry.getMessage();
+                     SVNRevision rev = SVNRevision.create(logEntry.getRevision());
+                     result.add(new SvnFileRevision(myVcs, pegRevision, rev, url, author, date, message));
+                   }
+                 });
+  }
+
+  private void collectLogEntries2(final ProgressIndicator indicator, final ArrayList<VcsFileRevision> result) throws SVNException {
+    if (indicator != null) {
+      indicator.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myURL.toString()));
+    }
+    SVNLogClient client = myVcs.createLogClient();
+    client.doLog(myURL, new String[] {}, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNRevision.create(1), false, false, 0,
+                 new ISVNLogEntryHandler() {
+                   public void handleLogEntry(SVNLogEntry logEntry) {
+                     if (indicator != null) {
+                       indicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
+                     }
+                     Date date = logEntry.getDate();
+                     String author = logEntry.getAuthor();
+                     String message = logEntry.getMessage();
+                     SVNRevision rev = SVNRevision.create(logEntry.getRevision());
+                     result.add(new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, rev, myURL.toString(), author, date, message));
+                   }
+                 });
+  }
+
   public String getHelpId() {
     return null;
   }
 
   public VcsRevisionNumber getCurrentRevision(FilePath file) {
+    if (myRevision != null) {
+      return new SvnRevisionNumber(myRevision);
+    }
     try {
       SVNWCClient wcClient = myVcs.createWCClient();
       SVNInfo info = wcClient.doInfo(new File(file.getPath()).getAbsoluteFile(), SVNRevision.WORKING);

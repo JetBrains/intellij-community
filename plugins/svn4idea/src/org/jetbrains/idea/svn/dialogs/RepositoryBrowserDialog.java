@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.CommonBundle;
+import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.openapi.actionSystem.*;
@@ -33,6 +34,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NonNls;
@@ -42,6 +45,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.browser.*;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
+import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -146,6 +150,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     group.addSeparator();
     if (toolWindow) {
       group.add(new OpenAction());
+      group.add(new HistoryAction());
     }
     group.add(new CheckoutAction());
     group.addSeparator();
@@ -265,6 +270,21 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   public String getSelectedURL() {
     return getRepositoryBrowser().getSelectedURL();
+  }
+
+  protected class HistoryAction extends AnAction {
+    public void update(AnActionEvent e) {
+      e.getPresentation().setText("Show History");
+      e.getPresentation().setDescription("Show history");
+      e.getPresentation().setEnabled(getRepositoryBrowser().getSelectedNode() != null && getRepositoryBrowser().getSelectedNode().getURL() != null);
+    }
+    public void actionPerformed(AnActionEvent e) {
+      Project p = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+      AbstractVcsHelper.getInstance(p).showFileHistory(
+              new SvnHistoryProvider(myVCS, getRepositoryBrowser().getSelectedNode().getURL(), SVNRevision.HEAD),
+              VcsUtil.getFilePath(getRepositoryBrowser().getSelectedNode().getURL().toString()));
+      getRepositoryBrowser().getSelectedNode().reload();
+    }
   }
 
   protected class RefreshAction extends AnAction {
