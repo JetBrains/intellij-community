@@ -1,35 +1,33 @@
 package com.intellij.psi.impl.source;
 
-import com.intellij.pom.PomModelAspect;
-import com.intellij.pom.tree.TreeAspect;
-import com.intellij.pom.tree.events.TreeChangeEvent;
-import com.intellij.pom.tree.events.TreeChange;
-import com.intellij.pom.tree.events.ChangeInfo;
-import com.intellij.pom.event.PomModelEvent;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.PomModelAspect;
+import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.tree.TreeAspect;
+import com.intellij.pom.tree.events.ChangeInfo;
+import com.intellij.pom.tree.events.TreeChange;
+import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.codeStyle.Helper;
-import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
+import com.intellij.psi.impl.source.codeStyle.Helper;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.HashMap;
-import java.util.HashSet;
 
 public class PostprocessReformattingAspect implements PomModelAspect {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PostprocessReformatingAspect");
@@ -171,7 +169,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   private void postponeFormatting(final FileViewProvider viewProvider, final ASTNode child) {
     if (!CodeEditUtil.isNodeGenerated(child) && child.getElementType() != ElementType.WHITE_SPACE) {
       final int oldIndent = CodeEditUtil.getOldIndentation(child);
-      LOG.assertTrue(oldIndent >= 0, "for not generated items old indentation must be defined");
+      LOG.assertTrue(oldIndent >= 0, "for not generated items old indentation must be defined: element=" + child + ", text=" + child.getText());
     }
     List<ASTNode> list = myReformatElements.get(viewProvider);
     if(list == null)

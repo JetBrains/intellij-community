@@ -17,6 +17,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.meta.PsiMetaData;
@@ -831,6 +832,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
         childText.setValue(value.substring(0, displayOffset));
         rightText.setValue(value.substring(displayOffset));
+
+        CodeEditUtil.setNodeGenerated(rightText, true);
 
         myRight = rightText;
         return null;
