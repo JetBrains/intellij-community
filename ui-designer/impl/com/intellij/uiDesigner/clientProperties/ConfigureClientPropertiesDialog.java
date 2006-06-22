@@ -199,12 +199,19 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
       if (dlg.getExitCode() == OK_EXIT_CODE) {
         String className = dlg.getClassName();
         if (className.length() == 0) return;
+        final Class aClass;
         try {
-          Class.forName(className);
+          aClass = Class.forName(className);
         }
         catch(ClassNotFoundException ex) {
           Messages.showErrorDialog(myRootPanel,
                                    UIDesignerBundle.message("client.properties.class.not.found", className),
+                                   UIDesignerBundle.message("client.properties.title"));
+          return;
+        }
+        if (!JComponent.class.isAssignableFrom(aClass)) {
+          Messages.showErrorDialog(myRootPanel,
+                                   UIDesignerBundle.message("client.properties.class.not.component", className),
                                    UIDesignerBundle.message("client.properties.title"));
           return;
         }

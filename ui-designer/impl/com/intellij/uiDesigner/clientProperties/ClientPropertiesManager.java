@@ -14,6 +14,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -76,7 +77,7 @@ public class ClientPropertiesManager implements ProjectComponent, JDOMExternaliz
   public void projectClosed() {
   }
 
-  @NonNls
+  @NotNull @NonNls
   public String getComponentName() {
     return COMPONENT_NAME;
   }
@@ -208,6 +209,7 @@ public class ClientPropertiesManager implements ProjectComponent, JDOMExternaliz
 
   public ClientProperty[] getConfiguredProperties(Class componentClass) {
     final List<ClientProperty> list = myPropertyMap.get(componentClass.getName());
+    if (list == null) return new ClientProperty[0]; 
     return list.toArray(new ClientProperty[list.size()]);
   }
 
