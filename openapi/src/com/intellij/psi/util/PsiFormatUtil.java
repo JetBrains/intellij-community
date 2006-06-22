@@ -16,6 +16,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -222,8 +223,8 @@ public class PsiFormatUtil {
     return buffer.toString();
   }
 
-  public static String formatClass(PsiClass aClass, int options){
-    StringBuffer buffer = new StringBuffer();
+  @NotNull public static String formatClass(@NotNull PsiClass aClass, int options){
+    StringBuilder buffer = new StringBuilder();
     if ((options & SHOW_MODIFIERS) != 0 && (options & MODIFIERS_AFTER) == 0){
       buffer.append(formatModifiers(aClass, options));
     }

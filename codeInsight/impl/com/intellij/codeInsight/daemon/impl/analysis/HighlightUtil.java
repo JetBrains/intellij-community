@@ -44,6 +44,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -616,21 +617,23 @@ public class HighlightUtil {
     return null;
   }
 
-  public static String formatClass(PsiClass aClass) {
+  @NotNull
+  public static String formatClass(@NotNull PsiClass aClass) {
     return formatClass(aClass, true);
   }
 
-  public static String formatClass(PsiClass aClass, boolean fqn) {
-    return PsiFormatUtil
-      .formatClass(aClass, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_ANONYMOUS_CLASS_VERBOSE | (fqn ? PsiFormatUtil.SHOW_FQ_NAME : 0));
+  @NotNull
+  public static String formatClass(@NotNull PsiClass aClass, boolean fqn) {
+    return PsiFormatUtil.formatClass(aClass, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_ANONYMOUS_CLASS_VERBOSE | (fqn ? PsiFormatUtil.SHOW_FQ_NAME : 0));
   }
 
-  public static String formatMethod(PsiMethod method) {
-    return PsiFormatUtil
-      .formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS, PsiFormatUtil.SHOW_TYPE);
+  @NotNull
+  public static String formatMethod(@NotNull PsiMethod method) {
+    return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS, PsiFormatUtil.SHOW_TYPE);
   }
 
-  public static String formatType(PsiType type) {
+  @NotNull
+  public static String formatType(@Nullable PsiType type) {
     if (type == null) return PsiKeyword.NULL;
     return type.getInternalCanonicalText();
   }

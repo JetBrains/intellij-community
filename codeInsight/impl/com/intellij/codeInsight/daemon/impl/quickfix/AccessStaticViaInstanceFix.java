@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class AccessStaticViaInstanceFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AccessStaticViaInstanceFix");
@@ -25,20 +26,25 @@ public class AccessStaticViaInstanceFix implements LocalQuickFix {
     myResult = result;
   }
 
+  @NotNull
   public String getName() {
     PsiClass aClass = myMember.getContainingClass();
+    if (aClass == null) return "";
     return QuickFixBundle.message("access.static.via.class.reference.text",
                                   HighlightMessageUtil.getSymbolName(myMember, myResult.getSubstitutor()),
                                   HighlightUtil.formatClass(aClass),
                                   HighlightUtil.formatClass(aClass,false));
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("access.static.via.class.reference.family");
   }
 
   public void applyFix(Project project, ProblemDescriptor descriptor) {
     if (!CodeInsightUtil.prepareFileForWrite(myExpression.getContainingFile())) return;
+    PsiClass containingClass = myMember.getContainingClass();
+    if (containingClass == null) return;
     try {
       PsiExpression qualifierExpression = myExpression.getQualifierExpression();
       PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
@@ -48,13 +54,13 @@ public class AccessStaticViaInstanceFix implements LocalQuickFix {
         qualifierExpression.delete();
         if (myExpression.resolve() != myMember) {
           PsiReferenceExpression expr = (PsiReferenceExpression) factory.createExpressionFromText("A.foo", myExpression);
-          expr.getQualifierExpression().replace(factory.createReferenceExpression(myMember.getContainingClass()));
+          expr.getQualifierExpression().replace(factory.createReferenceExpression(containingClass));
           expr.getReferenceNameElement().replace(myExpression);
           myExpression.replace(expr);
         }
       }
       else {
-        qualifierExpression.replace(factory.createReferenceExpression(myMember.getContainingClass()));
+        qualifierExpression.replace(factory.createReferenceExpression(containingClass));
       }
 
       UndoManager.getInstance(project).markDocumentForUndo(myMember.getContainingFile());
@@ -63,9 +69,4 @@ public class AccessStaticViaInstanceFix implements LocalQuickFix {
       LOG.error(e);
     }
   }
-
-  public boolean startInWriteAction() {
-    return true;
-  }
-
 }

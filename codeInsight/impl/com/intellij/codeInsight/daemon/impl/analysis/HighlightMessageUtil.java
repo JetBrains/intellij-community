@@ -1,13 +1,13 @@
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.lang.LangBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.lang.LangBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class HighlightMessageUtil {
-  public static String getSymbolName(PsiElement symbol, PsiSubstitutor substitutor) {
+  public static String getSymbolName(@NotNull PsiElement symbol, PsiSubstitutor substitutor) {
     String symbolName = null;
     if (symbol instanceof PsiClass) {
       if (symbol instanceof PsiAnonymousClass){
