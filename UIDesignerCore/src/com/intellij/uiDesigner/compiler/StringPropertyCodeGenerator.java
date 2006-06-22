@@ -124,7 +124,7 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
     }
   }
 
-  public void generateClassEnd(ClassVisitor visitor) {
+  public void generateClassEnd(AsmCodeGenerator.FormClassVisitor visitor) {
     if (myNeedLoadLabelText) {
       generateLoadTextMethod(visitor, AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, "javax/swing/JLabel", "setDisplayedMnemonic");
     }
@@ -133,9 +133,9 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
     }
   }
 
-  private void generateLoadTextMethod(final ClassVisitor visitor, final String methodName, final String componentClass,
+  private void generateLoadTextMethod(final AsmCodeGenerator.FormClassVisitor visitor, final String methodName, final String componentClass,
                                       final String setMnemonicMethodName) {
-    MethodVisitor mv = visitor.visitMethod(ACC_PRIVATE, methodName, "(L" + componentClass + ";Ljava/lang/String;)V", null, null);
+    MethodVisitor mv = visitor.visitNewMethod(ACC_PRIVATE, methodName, "(L" + componentClass + ";Ljava/lang/String;)V", null, null);
     mv.visitCode();
     mv.visitTypeInsn(NEW, "java/lang/StringBuffer");
     mv.visitInsn(DUP);

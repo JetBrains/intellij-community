@@ -206,7 +206,7 @@ public class AsmCodeGenerator {
     }
   }
 
-  private class FormClassVisitor extends ClassAdapter {
+  class FormClassVisitor extends ClassAdapter {
     private String myClassName;
     private String mySuperName;
     private Map myFieldDescMap = new HashMap();
@@ -254,6 +254,14 @@ public class AsmCodeGenerator {
         return new FormConstructorVisitor(methodVisitor, myClassName, mySuperName);
       }
       return methodVisitor;
+    }
+
+    MethodVisitor visitNewMethod(final int access,
+                                 final String name,
+                                 final String desc,
+                                 final String signature,
+                                 final String[] exceptions) {
+      return super.visitMethod(access, name, desc, signature, exceptions);
     }
 
     public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {

@@ -21,6 +21,6 @@ public abstract class PropertyCodeGenerator {
   public void generateClassStart(ClassVisitor visitor, final String name, final ClassLoader loader) {
   }
 
-  public void generateClassEnd(ClassVisitor visitor) {
+  public void generateClassEnd(AsmCodeGenerator.FormClassVisitor visitor) {
   }
 }
