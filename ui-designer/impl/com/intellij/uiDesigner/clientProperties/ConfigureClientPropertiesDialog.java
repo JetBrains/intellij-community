@@ -242,6 +242,15 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
       AddClientPropertyDialog dlg = new AddClientPropertyDialog(myProject);
       dlg.show();
       if (dlg.getExitCode() == OK_EXIT_CODE) {
+        ClientPropertiesManager.ClientProperty[] props = myManager.getClientProperties(mySelectedClass);
+        for(ClientPropertiesManager.ClientProperty prop: props) {
+          if (prop.getName().equalsIgnoreCase(dlg.getEnteredProperty().getName())) {
+            Messages.showErrorDialog(myRootPanel,
+                                     UIDesignerBundle.message("client.properties.already.defined", prop.getName()),
+                                     UIDesignerBundle.message("client.properties.title"));
+            return;
+          }
+        }
         myManager.addConfiguredProperty(mySelectedClass, dlg.getEnteredProperty());
         updateSelectedProperties();
       }
