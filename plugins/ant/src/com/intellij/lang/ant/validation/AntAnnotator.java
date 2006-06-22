@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 public class AntAnnotator implements Annotator {
 
   public void annotate(PsiElement psiElement, AnnotationHolder holder) {
+    if (!(psiElement instanceof AntElement)) return;
     AntElement element = (AntElement)psiElement;
     if (element instanceof AntStructuredElement) {
       final AntStructuredElement se = (AntStructuredElement)element;
