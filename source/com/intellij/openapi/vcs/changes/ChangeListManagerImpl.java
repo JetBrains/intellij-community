@@ -98,6 +98,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public ChangeListManagerImpl(final Project project) {
     myProject = project;
     myView = new ChangesListView(project);
+    Disposer.register(project, myView);
     myUnversionedFilesHolder = new UnversionedFilesHolder(project);
   }
 
@@ -129,7 +130,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     myRepaintAlarm.cancelAllRequests();
 
     ToolWindowManager.getInstance(myProject).unregisterToolWindow(TOOLWINDOW_ID);
-    myView.dispose();
   }
 
   private void cancelUpdates() {

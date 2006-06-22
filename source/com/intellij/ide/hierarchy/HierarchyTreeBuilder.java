@@ -4,19 +4,19 @@ import com.intellij.ide.hierarchy.call.CallerMethodsTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeBuilderUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.PsiTreeChangeListener;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -29,8 +29,6 @@ import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-import org.jetbrains.annotations.NotNull;
-
 public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
   private final Project myProject;
 
@@ -38,7 +36,6 @@ public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
   private final MyTreeExpansionListener myTreeExpansionListener;
   private final PsiTreeChangeListener myPsiTreeChangeListener;
   private final MyFileStatusListener myFileStatusListener;
-  private final MyProjectManagerListener myProjectManagerListener;
 
   public HierarchyTreeBuilder(final Project project,
                               final JTree tree,
@@ -53,7 +50,6 @@ public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
     myTreeExpansionListener = new MyTreeExpansionListener();
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
     myFileStatusListener = new MyFileStatusListener();
-    myProjectManagerListener = new MyProjectManagerListener();
 
     initRootNode();
     tree.addTreeSelectionListener(mySelectionListener);
@@ -61,7 +57,7 @@ public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
 
-    ProjectManager.getInstance().addProjectManagerListener(myProject, myProjectManagerListener);
+    Disposer.register(myProject, this);
   }
 
   public final Object storeExpandedAndSelectedInfo() {
@@ -102,7 +98,6 @@ public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
       myTree.removeTreeExpansionListener(myTreeExpansionListener);
       PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
       FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
-      ProjectManager.getInstance().removeProjectManagerListener(myProject, myProjectManagerListener);
     }
   }
 
@@ -170,11 +165,4 @@ public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
       myUpdater.addSubtreeToUpdate(myRootNode);
     }
   }
-
-  private final class MyProjectManagerListener extends ProjectManagerAdapter{
-    public void projectClosed(final Project project){
-      dispose();
-    }
-  }
-
 }

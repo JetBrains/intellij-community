@@ -410,6 +410,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       fireApplicationExiting();
       disposeComponents();
     }
+
+    Disposer.assertIsEmpty();
   }
 
   public boolean runProcessWithProgressSynchronously(final Runnable process, String progressTitle, boolean canBeCanceled, Project project) {

@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiFile;
@@ -289,7 +290,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
 
   protected void dispose() {
     if (myBuilder != null) {
-      myBuilder.dispose();
+      Disposer.dispose(myBuilder);
       myBuilder = null;
     }
     super.dispose();

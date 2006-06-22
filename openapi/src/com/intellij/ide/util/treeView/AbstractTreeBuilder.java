@@ -3,11 +3,13 @@ package com.intellij.ide.util.treeView;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.WorkerThread;
 import com.intellij.util.containers.HashMap;
@@ -25,7 +27,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public abstract class AbstractTreeBuilder {
+public abstract class AbstractTreeBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeBuilder");
 
   protected final JTree myTree;
@@ -76,6 +78,7 @@ public abstract class AbstractTreeBuilder {
 
     myUpdater = createUpdater();
     myProgress = createProgressIndicator();
+    Disposer.register(this, myUpdater);
   }
 
   @Nullable

@@ -1,9 +1,14 @@
 package com.intellij.util.xml.tree;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
@@ -12,7 +17,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xml.DomChangeAdapter;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
-import com.intellij.problems.WolfTheProblemSolver;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +29,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 public class DomModelTreeView extends Wrapper implements DataProvider, Disposable {
 
@@ -112,7 +116,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
   }
 
   public void dispose() {
-    myBuilder.dispose();
+    Disposer.dispose(myBuilder);
   }
 
   public SimpleTree getTree() {

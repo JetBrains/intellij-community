@@ -4,10 +4,12 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.objectTree.ObjectTree;
 import com.intellij.openapi.util.objectTree.ObjectTreeAction;
-import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 public class Disposer {
 
@@ -46,5 +48,24 @@ public class Disposer {
 
   static ObjectTree getTree() {
     return ourTree;
+  }
+
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
+  public static void assertIsEmpty() {
+    final Set objects = ourTree.getRootObjects();
+    if (!objects.isEmpty()) {
+      System.err.println("***********************************************************************************************");
+      System.err.println("***                        M E M O R Y    L E A K S   D E T E C T E D                       ***");
+      System.err.println("***********************************************************************************************");
+      System.err.println("***                                                                                         ***");
+      System.err.println("***   The following objects were not disposed: ");
+
+      for (Object object : objects) {
+        System.err.println("***   " + object + " of class " + object.getClass());
+      }
+
+      System.err.println("***                                                                                         ***");
+      System.err.println("***********************************************************************************************");
+    }
   }
 }

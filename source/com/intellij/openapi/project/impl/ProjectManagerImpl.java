@@ -152,8 +152,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private ProjectImpl createProject(String filePath, boolean isDefault, boolean isDummy, boolean isOptimiseTestLoadSpeed) {
-    final ProjectImpl project = new ProjectImpl(this, filePath, isDefault, isOptimiseTestLoadSpeed, myPathMacros, myFilePointerManager);
-    project.setDummy(isDummy);
+    final ProjectImpl project;
+    if (isDummy) {
+      project = new DummyProject(filePath, isDefault, isOptimiseTestLoadSpeed);
+      project.setDummy(isDummy);
+    }
+    else {
+      project = new ProjectImpl(this, filePath, isDefault, isOptimiseTestLoadSpeed, myPathMacros, myFilePointerManager);
+    }
     project.loadProjectComponents();
     return project;
   }
@@ -696,4 +702,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public String getPresentableName() {
     return ProjectBundle.message("project.default.settings");
   }
+
+  private class DummyProject extends ProjectImpl {
+    public DummyProject(final String filePath, final boolean aDefault, final boolean optimiseTestLoadSpeed) {
+      super(ProjectManagerImpl.this, filePath, aDefault, optimiseTestLoadSpeed, ProjectManagerImpl.this.myPathMacros, ProjectManagerImpl.this.myFilePointerManager);
+    }
+  }
+
 }

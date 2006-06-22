@@ -3,6 +3,7 @@ package com.intellij.ide.util.treeView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
@@ -13,7 +14,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-public class AbstractTreeUpdater {
+public class AbstractTreeUpdater implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeUpdater");
 
   private LinkedList<DefaultMutableTreeNode> myNodesToUpdate = new LinkedList<DefaultMutableTreeNode>();
@@ -21,14 +22,14 @@ public class AbstractTreeUpdater {
   private Runnable myRunAfterUpdate;
   private Runnable myRunBeforeUpdate;
   private MergingUpdateQueue myUpdateQueue;
-  private Disposable myDisposable;
 
   public AbstractTreeUpdater(AbstractTreeBuilder treeBuilder) {
     myTreeBuilder = treeBuilder;
     final JTree tree = myTreeBuilder.getTree();
     myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 300, tree.isShowing(), tree);
-    myDisposable = new UiNotifyConnector(tree, myUpdateQueue);
-    //TODO
+    final UiNotifyConnector uiNotifyConnector = new UiNotifyConnector(tree, myUpdateQueue);
+    Disposer.register(this, myUpdateQueue);
+    Disposer.register(this, uiNotifyConnector);
   }
 
   /**
@@ -39,8 +40,6 @@ public class AbstractTreeUpdater {
   }
 
   public void dispose() {
-    myDisposable.dispose();
-    myUpdateQueue.dispose();
   }
 
   public void addSubtreeToUpdate(@NotNull DefaultMutableTreeNode rootNode) {

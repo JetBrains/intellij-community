@@ -15,6 +15,7 @@ import com.intellij.openapi.fileChooser.impl.FileComparator;
 import com.intellij.openapi.fileChooser.impl.FileTreeBuilder;
 import com.intellij.openapi.fileChooser.impl.FileTreeStructure;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -167,8 +168,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
   public void dispose() {
     if (myTreeBuilder != null) {
-      myTreeStructure.dispose();
-      myTreeBuilder.dispose();
+      Disposer.dispose(myTreeBuilder);
     }
   }
 

@@ -17,6 +17,7 @@
 
 package com.intellij.ide.dnd;
 
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,7 +27,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author spleaner
  */
-public interface AdvancedDnDSource extends DnDSource {
+public interface AdvancedDnDSource extends DnDSource, Disposable {
 
   void processMouseEvent(final MouseEvent e);
 

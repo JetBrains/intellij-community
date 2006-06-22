@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -29,8 +30,8 @@ import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -475,7 +476,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
   public final void dispose() {
     final Collection<HierarchyTreeBuilder> builders = myBuilders.values();
     for (final HierarchyTreeBuilder builder : builders) {
-      builder.dispose();
+      Disposer.dispose(builder);
     }
     for (final Runnable aMyRunOnDisposeList : myRunOnDisposeList) {
       aMyRunOnDisposeList.run();
@@ -624,7 +625,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
                 final PsiMethod base = (PsiMethod)mySmartPsiElementPointer.getElement();
                 final String[] name = new String[]{myCurrentViewType};
 
-                builder.dispose();
+                Disposer.dispose(builder);
                 myBuilders.remove(myCurrentViewType);
 
                 setHierarchyBase(base);

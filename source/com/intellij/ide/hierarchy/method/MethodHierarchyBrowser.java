@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -467,7 +468,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
   public final void dispose() {
     final Collection<HierarchyTreeBuilder> builders = myBuilders.values();
     for (final HierarchyTreeBuilder builder : builders) {
-      builder.dispose();
+      Disposer.dispose(builder);
     }
     for (final Runnable aRunOnDisposeList : myRunOnDisposeList) {
       aRunOnDisposeList.run();

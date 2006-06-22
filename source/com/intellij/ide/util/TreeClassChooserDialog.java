@@ -1,5 +1,6 @@
 package com.intellij.ide.util;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.PsiClassChildrenSource;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
@@ -9,13 +10,13 @@ import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.ide.IdeBundle;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
@@ -329,7 +330,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
 
   protected void dispose() {
     if (myBuilder != null) {
-      myBuilder.dispose();
+      Disposer.dispose(myBuilder);
       myBuilder = null;
     }
     super.dispose();

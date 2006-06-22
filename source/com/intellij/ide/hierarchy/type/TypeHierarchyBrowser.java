@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -427,7 +428,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
   public final void dispose() {
     final Collection<HierarchyTreeBuilder> builders = myBuilders.values();
     for (final HierarchyTreeBuilder builder : builders) {
-      builder.dispose();
+      Disposer.dispose(builder);
     }
     for (final Runnable aMyRunOnDisposeList : myRunOnDisposeList) {
       aMyRunOnDisposeList.run();

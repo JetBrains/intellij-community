@@ -55,6 +55,7 @@ public class DnDEnabler implements Activatable, Disposable {
 
     final UiNotifyConnector connector = new UiNotifyConnector(component, this);// todo: disposable???
     Disposer.register(this, connector);
+    Disposer.register(source, this);
 
     onSetUI();
   }

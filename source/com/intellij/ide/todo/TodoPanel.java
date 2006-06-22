@@ -19,6 +19,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -182,7 +183,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
   }
 
   void dispose() {
-    myTodoTreeBuilder.dispose();
+    Disposer.dispose(myTodoTreeBuilder);
     myVisibilityWatcher.deinstall(this);
     myVisibilityWatcher = null;
     myProject = null;

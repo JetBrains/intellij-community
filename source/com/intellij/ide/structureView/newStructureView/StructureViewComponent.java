@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -31,16 +32,16 @@ import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 public class StructureViewComponent extends JPanel implements TreeActionsOwner, DataProvider, StructureView {
   private static Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
@@ -480,7 +481,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     LOG.assertTrue(EventQueue.isDispatchThread(), Thread.currentThread().getName());
     storeState();
     if (myAbstractTreeBuilder != null) {
-      myAbstractTreeBuilder.dispose();
+      Disposer.dispose(myAbstractTreeBuilder);
       myAbstractTreeBuilder = null;
     }
     // this will also dispose wrapped TreeModel
