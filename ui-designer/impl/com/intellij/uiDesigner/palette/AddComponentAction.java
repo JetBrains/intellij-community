@@ -7,14 +7,23 @@ package com.intellij.uiDesigner.palette;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import com.intellij.uiDesigner.UIDesignerBundle;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
 
 /**
  * @author yole
@@ -22,13 +31,28 @@ import java.awt.*;
 public class AddComponentAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    if (project == null) return;
     GroupItem groupItem = (GroupItem)e.getDataContext().getData(GroupItem.class.getName());
-    if (project == null || groupItem == null) return;
+    PsiFile psiFile = (PsiFile)e.getDataContext().getData(DataConstants.PSI_FILE);
+    PsiElement elementToAdd = (psiFile != null) ? findElementToAdd(psiFile) : null;
+    String className = "";
+    if (elementToAdd instanceof PsiClass) {
+      className = ((PsiClass) elementToAdd).getQualifiedName();
+      assert className != null;
+    }
+    else if (elementToAdd instanceof PsiFile) {
+      try {
+        className = Utils.getBoundClassName(elementToAdd.getText());
+      }
+      catch (Exception e1) {
+        className = "";
+      }
+    }
 
     // Show dialog
     final ComponentItem itemToBeAdded = new ComponentItem(
       project,
-      "",
+      className,
       null,
       null,
       new GridConstraints(),
@@ -40,11 +64,13 @@ public class AddComponentAction extends AnAction {
     Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
     final ComponentItemDialog dialog = new ComponentItemDialog(project, parentWindow, itemToBeAdded, false);
     dialog.setTitle(UIDesignerBundle.message("title.add.component"));
+    dialog.showGroupChooser(groupItem);
     dialog.show();
     if(!dialog.isOK()){
       return;
     }
 
+    groupItem = dialog.getSelectedGroup();
     // If the itemToBeAdded is already in palette do nothing
     if(groupItem.containsItemClass(itemToBeAdded.getClassName())){
       return;
@@ -58,8 +84,32 @@ public class AddComponentAction extends AnAction {
   }
 
   @Override public void update(AnActionEvent e) {
-    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-    GroupItem groupItem = (GroupItem) e.getDataContext().getData(GroupItem.class.getName());
-    e.getPresentation().setEnabled(project != null && groupItem != null && !groupItem.isReadOnly());
+    Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+    PsiFile psiFile = (PsiFile)e.getDataContext().getData(DataConstants.PSI_FILE);
+    if (psiFile != null && project != null) {
+      e.getPresentation().setVisible(findElementToAdd(psiFile) != null);
+    }
+    else {
+      // invoked from palette
+      e.getPresentation().setVisible(true);
+      GroupItem groupItem = (GroupItem) e.getDataContext().getData(GroupItem.class.getName());
+      e.getPresentation().setEnabled(project != null && (groupItem == null || !groupItem.isReadOnly()));
+    }
+  }
+
+  @Nullable
+  private static PsiElement findElementToAdd(final PsiFile psiFile) {
+    if (psiFile.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
+      return psiFile;
+    }
+    else if (psiFile.getFileType().equals(StdFileTypes.JAVA)) {
+      final PsiClass psiClass = PsiTreeUtil.getChildOfType(psiFile, PsiClass.class);
+      Project project = psiFile.getProject();
+      final PsiClass componentClass = PsiManager.getInstance(project).findClass(JComponent.class.getName(), project.getAllScope());
+      if (psiClass != null && componentClass != null && psiClass.isInheritor(componentClass, true) && psiClass.getQualifiedName() != null) {
+        return psiClass;
+      }
+    }
+    return null;
   }
 }

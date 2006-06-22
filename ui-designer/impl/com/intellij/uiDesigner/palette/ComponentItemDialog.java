@@ -33,6 +33,9 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemListener;
+import java.awt.event.ItemEvent;
+import java.util.ArrayList;
 
 /**
  * @author Vladimir Kondratyev
@@ -59,6 +62,8 @@ public final class ComponentItemDialog extends DialogWrapper {
   private JCheckBox myCanAttachLabelCheckbox;
   private JPanel myHSizePolicyPanel;
   private JPanel myVSizePolicyPanel;
+  private JComboBox myGroupComboBox;
+  private JLabel myGroupLabel;
   private EditorTextField myEditorTextField;
   private Document myDocument;
 
@@ -150,6 +155,24 @@ public final class ComponentItemDialog extends DialogWrapper {
     updateOKAction();
 
     init();
+  }
+
+  void showGroupChooser(GroupItem defaultGroup) {
+    myGroupLabel.setVisible(true);
+    myGroupComboBox.setVisible(true);
+    final ArrayList<GroupItem> groups = Palette.getInstance(myProject).getGroups();
+    myGroupComboBox.setModel(new DefaultComboBoxModel(groups.toArray()));
+    myGroupComboBox.setSelectedItem(defaultGroup);
+    myGroupComboBox.addItemListener(new ItemListener() {
+      public void itemStateChanged(ItemEvent e) {
+        updateOKAction();
+      }
+    });
+    updateOKAction();
+  }
+
+  GroupItem getSelectedGroup() {
+    return (GroupItem) myGroupComboBox.getSelectedItem();
   }
 
   private void setEditorText(final String className) {
@@ -263,12 +286,15 @@ public final class ComponentItemDialog extends DialogWrapper {
   }
 
   private void updateOKAction() {
+    boolean enabled;
     if (myClassRadioButton.isSelected()) {
-      setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isQualifiedName(myDocument.getText()));
+      enabled = PsiManager.getInstance(myProject).getNameHelper().isQualifiedName(myDocument.getText());
     }
     else {
-      setOKActionEnabled(myTfNestedForm.getText().length() > 0);
+      enabled = myTfNestedForm.getText().length() > 0;
     }
+    enabled = enabled && (!myGroupComboBox.isVisible() || myGroupComboBox.getSelectedItem() != null);
+    setOKActionEnabled(enabled);
   }
 
   private static String getClassOrInnerName(final PsiClass aClass) {
@@ -326,8 +352,7 @@ public final class ComponentItemDialog extends DialogWrapper {
           formFile = PsiManager.getInstance(myProject).findFile(formVFile);
         }
       }
-      TreeFileChooser fileChooser = factory.createFileChooser(myTitle, formFile,
-                                                              null, myFilter, true, true);
+      TreeFileChooser fileChooser = factory.createFileChooser(myTitle, formFile, null, myFilter, true, true);
       fileChooser.showDialog();
       PsiFile file = fileChooser.getSelectedFile();
       if (file != null) {

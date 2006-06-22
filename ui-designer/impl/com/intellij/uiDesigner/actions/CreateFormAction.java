@@ -177,10 +177,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
       myLastLayoutManager = (String)myBaseLayoutManagerCombo.getSelectedItem();
       GuiDesignerConfiguration.getInstance(myProject).DEFAULT_LAYOUT_MANAGER = myLastLayoutManager;
       final String inputString = myFormNameTextField.getText().trim();
-      if (
-        myValidator.checkInput(inputString) &&
-        myValidator.canClose(inputString)
-      ) {
+      if (myValidator.checkInput(inputString) && myValidator.canClose(inputString)) {
         close(OK_EXIT_CODE);
       }
       close(OK_EXIT_CODE);

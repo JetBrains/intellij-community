@@ -156,4 +156,9 @@ public final class GroupItem implements Cloneable, PaletteGroup {
       palette.fireGroupsChanged();
     }
   }
+
+
+  @Override public String toString() {
+    return myName;
+  }
 }

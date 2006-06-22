@@ -1431,7 +1431,7 @@
 
     <group id="GuiDesigner.PaletteComponentPopupMenu">
       <action id="GuiDesigner.AddComponent" class="com.intellij.uiDesigner.palette.AddComponentAction">
-        <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
+        <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="AddToFavorites"/>
       </action>
       <action id="GuiDesigner.EditComponent" class="com.intellij.uiDesigner.palette.EditComponentAction">
         <keyboard-shortcut first-keystroke="F2" keymap="$default"/>
