@@ -4,14 +4,12 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -35,6 +33,7 @@ import com.intellij.util.containers.WeakFactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
+import com.intellij.problems.WolfTheProblemSolver;
 import gnu.trove.THashMap;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
@@ -136,7 +135,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
                         final Project project,
                         final ReferenceProvidersRegistry registry,
                         final PsiManager psiManager,
-                        final XmlAspect xmlAspect) {
+                        final XmlAspect xmlAspect,
+                        final WolfTheProblemSolver solver) {
     myProject = project;
     pomModel.addModelListener(new PomModelListener() {
       public synchronized void modelChanged(PomModelEvent event) {
@@ -153,6 +153,12 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     });
     myReferenceProvidersRegistry = registry;
     myElementFactory = psiManager.getElementFactory();
+    solver.registerFileHighlightFilter(new Condition<VirtualFile>() {
+      public boolean value(final VirtualFile object) {
+        final PsiFile psiFile = psiManager.findFile(object);
+        return psiFile instanceof XmlFile && getDomFileElement((XmlFile)psiFile) != null;
+      }
+    }, project);
   }
 
   public static DomManagerImpl getDomManager(Project project) {

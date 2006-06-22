@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
@@ -53,6 +54,9 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
 
   public void removeProblemListener(ProblemListener listener) {
     if (myDelegate != null) myDelegate.removeProblemListener(listener);
+  }
+
+  public void registerFileHighlightFilter(Condition<VirtualFile> filter, Disposable parentDisposable) {
   }
 
   public void projectOpened() {

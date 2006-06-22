@@ -49,6 +49,11 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   private final Project myProject;
   private final List<ProblemListener> myProblemListeners = new CopyOnWriteArrayList<ProblemListener>();
+  private final List<Condition<VirtualFile>> myFilters = new CopyOnWriteArrayList<Condition<VirtualFile>>(Arrays.asList(new Condition<VirtualFile>() {
+    public boolean value(final VirtualFile object) {
+      return ProjectRootManager.getInstance(myProject).getFileIndex().isJavaSourceFile(object);
+    }
+  }));
   private final ProblemListener fireProblemListeners = new ProblemListener() {
     public void problemsChanged(Collection<VirtualFile> added, Collection<VirtualFile> removed) {
       for (ProblemListener problemListener : myProblemListeners) {
@@ -289,15 +294,36 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     myProblemListeners.remove(listener);
   }
 
+  public void registerFileHighlightFilter(final Condition<VirtualFile> filter, Disposable parentDisposable) {
+    myFilters.add(filter);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        myFilters.remove(filter);
+      }
+    });
+  }
+
   public boolean isProblemFile(VirtualFile virtualFile) {
     synchronized (myProblems) {
       return myProblems.containsKey(virtualFile);
     }
   }
 
+  private boolean isToBeHighlighted(VirtualFile virtualFile) {
+    if (virtualFile == null) return false;
+
+    for (final Condition<VirtualFile> filter : myFilters) {
+      if (filter.value(virtualFile)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public void weHaveGotProblem(Problem problem) {
     VirtualFile virtualFile = problem == null ? null : problem.getVirtualFile();
-    if (virtualFile == null || !ProjectRootManager.getInstance(myProject).getFileIndex().isJavaSourceFile(virtualFile)) return;
+    if (!isToBeHighlighted(virtualFile)) return;
 
     synchronized (myProblems) {
       ProblemFileInfo storedProblems = myProblems.get(virtualFile);
@@ -354,7 +380,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       clearProblems(file);
       return;
     }
-    if (file == null || !ProjectRootManager.getInstance(myProject).getFileIndex().isJavaSourceFile(file)) return;
+    if (!isToBeHighlighted(file)) return;
     synchronized (myProblems) {
       boolean hasProblemsBefore = myProblems.remove(file) != null;
       ProblemFileInfo storedProblems = new ProblemFileInfo();
