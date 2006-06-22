@@ -15,6 +15,7 @@ import com.intellij.util.xml.DomManager;
 import com.intellij.problems.WolfTheProblemSolver;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -37,37 +38,30 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
   private DomManager myDomManager;
   @Nullable private DomElement myRootElement;
 
-  public DomModelTreeView(Project project) {
-    this(null, DomManager.getDomManager(project), false);
+  public DomModelTreeView(@NotNull DomElement rootElement) {
+    this(rootElement, rootElement.getManager(), new DomModelTreeStructure(rootElement));
   }
 
-  public DomModelTreeView(DomElement rootElement) {
-    this(rootElement, false);
+  public DomModelTreeView(@NotNull DomElement rootElement, boolean isRootVisible) {
+    this(rootElement, rootElement.getManager(), new DomModelTreeStructure(rootElement));
   }
 
-  public DomModelTreeView(DomElement rootElement, boolean isRootVisible) {
-    this(rootElement, rootElement.getManager(), isRootVisible);
-  }
-
-  private DomModelTreeView(DomElement rootElement, DomManager manager, boolean isRootVisible) {
+  protected DomModelTreeView(DomElement rootElement, DomManager manager, SimpleTreeStructure treeStructure) {
     myDomManager = manager;
     myRootElement = rootElement;
     myTree = new SimpleTree(new DefaultTreeModel(new DefaultMutableTreeNode()));
-    myTree.setRootVisible(isRootVisible);
+    myTree.setRootVisible(isRootVisible());
     myTree.setShowsRootHandles(true);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
     ToolTipManager.sharedInstance().registerComponent(myTree);
     TreeUtil.installActions(myTree);
 
-    final SimpleTreeStructure treeStructure = rootElement != null ? new DomModelTreeStructure(rootElement) : getTreeStructure();
     myBuilder = new LazySimpleTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE);
 
     myBuilder.setNodeDescriptorComparator(null);
 
-    if (rootElement != null) {
-      myBuilder.initRoot();
-    }
+    myBuilder.initRoot();
 
     add(myTree, BorderLayout.CENTER);
 
@@ -97,6 +91,10 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     myTree.setPopupGroup(getPopupActions(), DOM_MODEL_TREE_VIEW_POPUP);
   }
 
+  protected boolean isRootVisible() {
+    return true;
+  }
+
   public final void updateTree() {
     myBuilder.updateFromRoot();
   }
@@ -107,14 +105,6 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
 
   protected final Project getProject() {
     return myDomManager.getProject();
-  }
-
-  protected SimpleTreeStructure getTreeStructure() {
-    return new SimpleTreeStructure() {
-      public Object getRootElement() {
-        return null;
-      }
-    };
   }
 
   public LazySimpleTreeBuilder getBuilder() {

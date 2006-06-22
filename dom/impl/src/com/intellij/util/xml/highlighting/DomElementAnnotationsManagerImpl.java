@@ -11,8 +11,9 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.WeakValueHashMap;
-import com.intellij.util.xml.*;
-import com.intellij.util.SmartList;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +27,11 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   private static final DomElementsProblemsHolderImpl EMPTY_PROBLEMS_HOLDER = new DomElementsProblemsHolderImpl() {
     public void addProblem(final DomElementProblemDescriptor problemDescriptor) {
       throw new UnsupportedOperationException("This holder is immutable");
+    }
+
+    @NotNull
+    public synchronized List<DomElementProblemDescriptor> getProblems(DomElement domElement) {
+      return Collections.emptyList();
     }
 
     public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, boolean includeXmlProblems) {

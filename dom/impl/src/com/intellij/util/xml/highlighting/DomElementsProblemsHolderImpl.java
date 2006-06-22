@@ -53,7 +53,7 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
   }
 
   @NotNull
-  public final synchronized List<DomElementProblemDescriptor> getProblems(DomElement domElement) {
+  public synchronized List<DomElementProblemDescriptor> getProblems(DomElement domElement) {
     if (domElement == null || !domElement.isValid()) return Collections.emptyList();
 
     final List<DomElementProblemDescriptor> list = myCachedErrors.get(domElement);
