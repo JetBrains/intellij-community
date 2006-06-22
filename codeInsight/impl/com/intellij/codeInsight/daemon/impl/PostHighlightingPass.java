@@ -42,11 +42,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -535,16 +530,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
     if (errors.length != 0) return false;
 
-    return !fileHasUnchangedStatus();
-  }
-
-  private boolean fileHasUnchangedStatus() {
-    VirtualFile virtualFile = myFile.getVirtualFile();
-    AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
-    if (activeVcs == null) return false;
-    FileStatus status = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
-
-    return status == FileStatus.NOT_CHANGED;
+    return DaemonCodeAnalyzerImpl.canChangeFileSilently(myFile);
   }
 
   private static boolean isMainMethod(PsiMethod method) {

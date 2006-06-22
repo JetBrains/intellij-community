@@ -16,6 +16,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.PsiDirectory;
+import org.jetbrains.annotations.NotNull;
 
 public class ClassUtil {
   private ClassUtil() {}
@@ -29,7 +30,7 @@ public class ClassUtil {
     return null;
   }
 
-  public static String extractClassName(String fqName) {
+  public static String extractClassName(@NotNull String fqName) {
     int i = fqName.lastIndexOf('.');
     return i == -1 ? fqName : fqName.substring(i + 1);
   }

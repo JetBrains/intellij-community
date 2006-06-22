@@ -37,6 +37,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -44,6 +46,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -248,10 +251,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     return false;
   }
 
-  /*
-   * @fabrique
-   */
-  public static boolean showAddImportHint(Editor editor, PsiJavaCodeReferenceElement ref) {
+  private static boolean showAddImportHint(Editor editor, PsiJavaCodeReferenceElement ref) {
     if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) return false;
 
     PsiManager manager = ref.getManager();
@@ -293,11 +293,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       if (CompletionUtil.isInExcludedPackage(aClass)) continue;
       availableClasses.add(aClass);
     }
-    if (availableClasses.size() == 0) return false;
+    if (availableClasses.isEmpty()) return false;
 
     PsiReferenceParameterList parameterList = ref.getParameterList();
     int refTypeArgsLength = parameterList == null ? 0 : parameterList.getTypeArguments().length;
-    if (availableClasses.size() > 0 && refTypeArgsLength != 0) {
+    if (refTypeArgsLength != 0) {
       List<PsiClass> typeArgMatched = new ArrayList<PsiClass>(availableClasses);
       // try to reduce suggestions based on type argument list
       for (int i = typeArgMatched.size() - 1; i >= 0; i--) {
@@ -307,12 +307,13 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
           typeArgMatched.remove(i);
         }
       }
-      if (typeArgMatched.size() != 0) {
+      if (!typeArgMatched.isEmpty()) {
         availableClasses = typeArgMatched;
       }
     }
+    PsiFile psiFile = ref.getContainingFile();
     if (availableClasses.size() > 1) {
-      reduceSuggestedClassesBasedOnDependencyRuleViolation(ref.getContainingFile(), availableClasses);
+      reduceSuggestedClassesBasedOnDependencyRuleViolation(psiFile, availableClasses);
     }
     classes = availableClasses.toArray(new PsiClass[availableClasses.size()]);
     CodeInsightUtil.sortIdenticalShortNameClasses(classes);
@@ -329,13 +330,39 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (classes.length == 1
         && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
         && !isCaretNearRef(editor,ref)
-        && !PsiUtil.isInJspFile(ref.getContainingFile())) {
+        && !PsiUtil.isInJspFile(psiFile)
+        && DaemonCodeAnalyzerImpl.canChangeFileSilently(psiFile)
+        && !hasUnresolvedImportWhichCanImport(psiFile, classes[0].getName())
+      ) {
       action.execute();
       return false;
     }
     HintManager hintManager = HintManager.getInstance();
     hintManager.showQuestionHint(editor, hintText, offset1, offset2, action);
     return true;
+  }
+
+  private static boolean hasUnresolvedImportWhichCanImport(final PsiFile psiFile, final String name) {
+    if (!(psiFile instanceof PsiJavaFile)) return false;
+    PsiImportList importList = ((PsiJavaFile)psiFile).getImportList();
+    if (importList == null) return false;
+    PsiImportStatement[] importStatements = importList.getImportStatements();
+    for (PsiImportStatement importStatement : importStatements) {
+      if (importStatement.resolve() != null) continue;
+      if (importStatement.isOnDemand()) return true;
+      String qualifiedName = importStatement.getQualifiedName();
+      String className = qualifiedName == null ? null : ClassUtil.extractClassName(qualifiedName);
+      if (Comparing.strEqual(className, name)) return true;
+    }
+    PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
+    for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
+      if (importStaticStatement.resolve() != null) continue;
+      if (importStaticStatement.isOnDemand()) return true;
+      String qualifiedName = importStaticStatement.getReferenceName();
+      // rough heuristic, since there is no API to get class name refrence from static import
+      if (qualifiedName != null && StringUtil.split(qualifiedName,".").contains(name)) return true;
+    }
+    return false;
   }
 
   private static void reduceSuggestedClassesBasedOnDependencyRuleViolation(PsiFile file, List<PsiClass> availableClasses) {

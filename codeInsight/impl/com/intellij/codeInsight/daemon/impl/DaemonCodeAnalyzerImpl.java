@@ -62,6 +62,10 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
@@ -678,6 +682,16 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         }
       }
     }
+  }
+
+  static boolean canChangeFileSilently(PsiFile file) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    Project project = file.getProject();
+    AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(virtualFile);
+    if (activeVcs == null) return true;
+    FileStatus status = FileStatusManager.getInstance(project).getStatus(virtualFile);
+
+    return status != FileStatus.NOT_CHANGED;
   }
 
   private class MyApplicationListener extends ApplicationAdapter {
