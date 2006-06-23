@@ -425,10 +425,14 @@ public class FileManagerImpl implements FileManager {
       ArrayList<PsiClass> result = new ArrayList<PsiClass>();
       for (long classId : classIds) {
         PsiClass aClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(classId);
+
+        final String qualifiedName = aClass.getQualifiedName();
+        if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
+
         VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
-        if (fileIsInScope(scope, vFile)) {
-          result.add(aClass);
-        }
+        if (!fileIsInScope(scope, vFile)) continue;
+
+        result.add(aClass);
       }
       return result.toArray(new PsiClass[result.size()]);
     }
@@ -580,6 +584,10 @@ public class FileManagerImpl implements FileManager {
       PsiClass aClass = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(classId);
       LOG.assertTrue(aClass != null);
       LOG.assertTrue(aClass.isValid());
+
+      final String qualifiedName = aClass.getQualifiedName();
+      if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
+
       PsiFile file = aClass.getContainingFile();
       if (file == null) {
         LOG.error("aClass=" + aClass);
