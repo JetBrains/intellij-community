@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
@@ -70,11 +71,11 @@ public final class FormEditingUtil {
    */
   public static void deleteSelection(final GuiEditor editor){
     final List<RadComponent> selection = getSelectedComponents(editor);
-    deleteComponents(selection, true, editor.getNextSaveGroupId());
+    deleteComponents(selection, true);
     editor.refreshAndSave(true);
   }
 
-  public static void deleteComponents(final List<? extends RadComponent> selection, boolean deleteEmptyCells, final Object undoGroupId) {
+  public static void deleteComponents(final List<? extends RadComponent> selection, boolean deleteEmptyCells) {
     if (selection.size() == 0) {
       return;
     }
@@ -95,7 +96,7 @@ public final class FormEditingUtil {
       FormEditingUtil.iterate(component, new ComponentVisitor() {
         public boolean visit(final IComponent c) {
           RadComponent rc = (RadComponent) c;
-          BindingProperty.checkRemoveUnusedField(rootContainer, rc.getBinding(), undoGroupId);
+          BindingProperty.checkRemoveUnusedField(rootContainer, rc.getBinding(), null);
           deletedComponentIds.add(rc.getId());
           return true;
         }
@@ -383,8 +384,7 @@ public final class FormEditingUtil {
     final Palette palette = Palette.getInstance(component.getModule().getProject());
     final ComponentItem item = palette.getItem(component.getComponentClassName());
     if (item != null) {
-      final GridConstraints defaultConstraints = item.getDefaultConstraints();
-      return defaultConstraints;
+      return item.getDefaultConstraints();
     }
     return new GridConstraints();
   }
@@ -465,33 +465,40 @@ public final class FormEditingUtil {
       return;
     }
 
-    if (!GridChangeUtil.canDeleteCell(container, cell, isRow, false)) {
-      ArrayList<RadComponent> componentsInColumn = new ArrayList<RadComponent>();
-      for(RadComponent component: container.getComponents()) {
-        GridConstraints c = component.getConstraints();
-        if (c.contains(isRow, cell)) {
-          componentsInColumn.add(component);
+    Runnable runnable = new Runnable() {
+      public void run() {
+        if (!GridChangeUtil.canDeleteCell(container, cell, isRow, false)) {
+          ArrayList<RadComponent> componentsInColumn = new ArrayList<RadComponent>();
+          for(RadComponent component: container.getComponents()) {
+            GridConstraints c = component.getConstraints();
+            if (c.contains(isRow, cell)) {
+              componentsInColumn.add(component);
+            }
+          }
+
+          if (componentsInColumn.size() > 0) {
+            String message = isRow
+                             ? UIDesignerBundle.message("delete.row.nonempty", componentsInColumn.size())
+                             : UIDesignerBundle.message("delete.column.nonempty", componentsInColumn.size());
+
+            final int rc = Messages.showYesNoDialog(editor, message,
+                                                    isRow ? UIDesignerBundle.message("delete.row.title")
+                                                    : UIDesignerBundle.message("delete.column.title"), Messages.getQuestionIcon());
+            if (rc != DialogWrapper.OK_EXIT_CODE) {
+              return;
+            }
+
+            deleteComponents(componentsInColumn, false);
+          }
         }
+
+        container.getGridLayoutManager().deleteGridCells(container, cell, isRow);
+        editor.refreshAndSave(true);
       }
-
-      if (componentsInColumn.size() > 0) {
-        String message = isRow
-                         ? UIDesignerBundle.message("delete.row.nonempty", componentsInColumn.size())
-                         : UIDesignerBundle.message("delete.column.nonempty", componentsInColumn.size());
-
-        final int rc = Messages.showYesNoDialog(editor, message,
-                                                isRow ? UIDesignerBundle.message("delete.row.title")
-                                                : UIDesignerBundle.message("delete.column.title"), Messages.getQuestionIcon());
-        if (rc != DialogWrapper.OK_EXIT_CODE) {
-          return;
-        }
-
-        deleteComponents(componentsInColumn, false, null);
-      }
-    }
-
-    container.getGridLayoutManager().deleteGridCells(container, cell, isRow);
-    editor.refreshAndSave(true);
+    };
+    CommandProcessor.getInstance().executeCommand(editor.getProject(), runnable,
+                                                  isRow ? UIDesignerBundle.message("command.delete.row")
+                                                        : UIDesignerBundle.message("command.delete.column"), null);
   }
 
   /**

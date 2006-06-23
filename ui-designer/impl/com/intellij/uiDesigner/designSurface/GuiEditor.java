@@ -950,7 +950,11 @@ public final class GuiEditor extends JPanel implements DataProvider {
       if (!GuiEditor.this.ensureEditable()) {
         return;
       }
-      FormEditingUtil.deleteSelection(GuiEditor.this);
+      CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+        public void run() {
+          FormEditingUtil.deleteSelection(GuiEditor.this);
+        }
+      }, UIDesignerBundle.message("command.delete.selection"), null);
     }
 
     public boolean canDeleteElement(final DataContext dataContext) {

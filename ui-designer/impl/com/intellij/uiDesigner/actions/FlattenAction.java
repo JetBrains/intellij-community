@@ -7,11 +7,13 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GridChangeUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,7 +58,7 @@ public class FlattenAction extends AbstractGuiEditorAction {
       container.removeComponent(container.getComponent(i));
     }
 
-    FormEditingUtil.deleteComponents(Collections.singletonList(container), false, null);
+    FormEditingUtil.deleteComponents(Collections.singletonList(container), false);
     for(RadComponent child: contents) {
       final GridConstraints childConstraints = child.getConstraints();
       childConstraints.setRow(childConstraints.getRow() + containerConstraints.getRow());
@@ -75,7 +77,7 @@ public class FlattenAction extends AbstractGuiEditorAction {
       child.getConstraints().restore(container.getConstraints());
     }
     int childIndex = parent.indexOfComponent(container);
-    FormEditingUtil.deleteComponents(Collections.singletonList(container), false, null);
+    FormEditingUtil.deleteComponents(Collections.singletonList(container), false);
     if (child != null) {
       parent.addComponent(child, childIndex);
       child.revalidate();
@@ -104,5 +106,10 @@ public class FlattenAction extends AbstractGuiEditorAction {
       return true;
     }
     return false;
+  }
+
+  @Override @Nullable
+  protected String getCommandName() {
+    return UIDesignerBundle.message("command.flatten");
   }
 }

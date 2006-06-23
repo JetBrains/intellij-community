@@ -6,6 +6,7 @@ import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.LwComponent;
@@ -73,8 +74,12 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   }
 
   public void performCut(final DataContext dataContext) {
-    if (doCopy()) {
-      FormEditingUtil.deleteSelection(myEditor);
+    if (doCopy() && myEditor.ensureEditable()) {
+      CommandProcessor.getInstance().executeCommand(myEditor.getProject(), new Runnable() {
+        public void run() {
+          FormEditingUtil.deleteSelection(myEditor);
+        }
+      }, UIDesignerBundle.message("command.cut"), null);
     }
   }
 

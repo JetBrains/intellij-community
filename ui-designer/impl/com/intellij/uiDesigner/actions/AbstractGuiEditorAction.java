@@ -6,10 +6,12 @@ package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,16 +30,26 @@ public abstract class AbstractGuiEditorAction extends AnAction {
     myModifying = modifying;
   }
 
-  public final void actionPerformed(AnActionEvent e) {
-    GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
+  public final void actionPerformed(final AnActionEvent e) {
+    final GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     if (editor != null) {
       final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(editor);
       if (myModifying) {
         if (!editor.ensureEditable()) return;
       }
-      actionPerformed(editor, selection, e);
-      if (myModifying) {
-        editor.refreshAndSave(true);
+      Runnable runnable = new Runnable() {
+        public void run() {
+          actionPerformed(editor, selection, e);
+          if (myModifying) {
+            editor.refreshAndSave(true);
+          }
+        }
+      };
+      if (getCommandName() != null) {
+        CommandProcessor.getInstance().executeCommand(editor.getProject(), runnable, getCommandName(), null);
+      }
+      else {
+        runnable.run();
       }
     }
   }
@@ -59,5 +71,10 @@ public abstract class AbstractGuiEditorAction extends AnAction {
   }
 
   protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  }
+
+  @Nullable
+  protected String getCommandName() {
+    return null;
   }
 }

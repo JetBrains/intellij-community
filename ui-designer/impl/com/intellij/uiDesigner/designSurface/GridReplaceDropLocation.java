@@ -41,7 +41,7 @@ public class GridReplaceDropLocation extends GridDropLocation {
                           final ComponentDragObject dragObject) {
     RadComponent c = myContainer.getComponentAtGrid(myRow, myColumn);
     if (c != null) {
-      FormEditingUtil.deleteComponents(Collections.singletonList(c), false, editor.getNextSaveGroupId());
+      FormEditingUtil.deleteComponents(Collections.singletonList(c), false);
     }
     super.processDrop(editor, components, constraintsToAdjust, dragObject);
   }

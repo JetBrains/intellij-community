@@ -3,9 +3,11 @@ package com.intellij.uiDesigner.designSurface;
 import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.uiDesigner.CutCopyPasteSupport;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.SimpleTransferable;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -173,16 +175,21 @@ class DesignDropTargetListener implements DropTargetListener {
     }
   }
 
-  public void drop(DropTargetDropEvent dtde) {
+  public void drop(final DropTargetDropEvent dtde) {
     try {
       myComponentTree.setDropTargetComponent(null);
 
 
-      DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
+      final DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
       if (dcl != null) {
-        if (processDrop(dcl, dtde.getLocation(), dtde.getDropAction())) {
-          myEditor.refreshAndSave(true);
-        }
+        CommandProcessor.getInstance().executeCommand(myEditor.getProject(),
+                                                      new Runnable() {
+                                                        public void run() {
+                                                          if (processDrop(dcl, dtde.getLocation(), dtde.getDropAction())) {
+                                                            myEditor.refreshAndSave(true);
+                                                          }
+                                                        }
+                                                      }, UIDesignerBundle.message("command.drop.components"), null);
       }
       else {
         ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);

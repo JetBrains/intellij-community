@@ -303,10 +303,7 @@ public final class InsertComponentProcessor extends EventProcessor {
             myEditor.refreshAndSave(false);
           }
 
-        },
-        null,
-        null
-      );
+        }, UIDesignerBundle.message("command.insert.component"), null);
     }
     myComponentToInsert = null;
   }

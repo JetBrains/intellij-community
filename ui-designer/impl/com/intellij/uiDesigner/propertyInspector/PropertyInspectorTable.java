@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
@@ -823,9 +824,13 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       if (!myEditor.ensureEditable()) {
         return;
       }
-      setSelectionValue(property, newValue);
+      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+        public void run() {
+          setSelectionValue(property, newValue);
 
-      myEditor.refreshAndSave(false);
+          myEditor.refreshAndSave(false);
+        }
+      }, UIDesignerBundle.message("command.set.property.value"), null);
     }
   }
 
