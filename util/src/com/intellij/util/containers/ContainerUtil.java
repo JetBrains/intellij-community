@@ -209,6 +209,10 @@ public class ContainerUtil {
     return map2List(collection, mapper).toArray(to);
   }
 
+  public static <T> List<T> findAll(T[] collection, Condition<? super T> condition) {
+    return findAll(Arrays.asList(collection), condition);
+  }
+
   public static <T> List<T> findAll(Collection<? extends T> collection, Condition<? super T> condition) {
     final ArrayList<T> result = new ArrayList<T>();
     for (final T t : collection) {
