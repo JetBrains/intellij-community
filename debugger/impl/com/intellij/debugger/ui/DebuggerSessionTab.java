@@ -38,6 +38,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -57,7 +58,7 @@ import java.util.Set;
  * Use is subject to license terms.
  */
 
-public class DebuggerSessionTab implements LogConsoleManager {
+public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerSessionTab");
 
   private static final Icon DEBUG_AGAIN_ICON = IconLoader.getIcon("/actions/startDebugger.png");
@@ -426,7 +427,10 @@ public class DebuggerSessionTab implements LogConsoleManager {
 
       configurationBase.clearAdditionalTabs();
     }
-    myConsole = null;
+    if (myConsole != null) {
+      myConsole.dispose();
+      myConsole = null;
+    }
   }
 
   private void disposeSession() {
