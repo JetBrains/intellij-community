@@ -28,29 +28,13 @@ import java.text.MessageFormat;
 public final class DataBindingWizardAction extends AnAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.DataBindingWizardAction");
 
-  private final GuiEditor myEditor;
-
-  public DataBindingWizardAction() {
-    myEditor = null;
-  }
-
-  public DataBindingWizardAction(final GuiEditor editor) {
-    copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_DATA_BINDING_WIZARD));
-    myEditor = editor;
-  }
-
   public void actionPerformed(final AnActionEvent e) {
     final Project project;
     final VirtualFile formFile;
-    if (myEditor == null) {
-      GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
-      project = editor.getProject();
-      formFile = editor.getFile();
-    }
-    else {
-      project = myEditor.getProject();
-      formFile = myEditor.getFile();
-    }
+    GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
+    assert editor != null;
+    project = editor.getProject();
+    formFile = editor.getFile();
 
     try {
       final WizardData wizardData = new WizardData(project, formFile);
@@ -128,12 +112,7 @@ public final class DataBindingWizardAction extends AnAction{
   }
 
   public void update(final AnActionEvent e) {
-    if (myEditor != null) {
-      e.getPresentation().setEnabled(true);
-      return;
-    }
-
-    e.getPresentation().setVisible(FormEditingUtil.getEditorFromContext(e.getDataContext()) != null);
+    e.getPresentation().setVisible(FormEditingUtil.getActiveEditor(e.getDataContext()) != null);
   }
 
 

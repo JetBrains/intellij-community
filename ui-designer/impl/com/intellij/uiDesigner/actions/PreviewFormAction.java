@@ -13,10 +13,14 @@ import com.intellij.execution.runners.RunStrategy;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -29,12 +33,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
-import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
+import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.make.CopyResourcesUtil;
@@ -44,7 +47,6 @@ import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -59,7 +61,6 @@ import java.util.Locale;
 public final class PreviewFormAction extends AnAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.PreviewFormAction");
 
-  private final GuiEditor myEditor;
   /**
    * The problem is that this class is in a default package so it's not
    * import this class to refer
@@ -69,28 +70,15 @@ public final class PreviewFormAction extends AnAction{
   @NonNls private static final String RUNTIME_BUNDLE_EXTENSION = ".properties";
   @NonNls public static final String PREVIEW_BINDING_FIELD = "myComponent";
 
-  public PreviewFormAction() {
-    myEditor = null;
-  }
-
-  public PreviewFormAction(final GuiEditor editor) {
-    copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIEW_FORM));
-    myEditor = editor;
-  }
-
-  @Nullable private GuiEditor getEditor(final DataContext context){
-    return myEditor != null ? myEditor : FormEditingUtil.getEditorFromContext(context);
-  }
-
   public void actionPerformed(final AnActionEvent e) {
-    final GuiEditor editor = getEditor(e.getDataContext());
+    final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
     if (editor != null) {
       showPreviewFrame(editor.getModule(), editor.getFile(), e.getDataContext());
     }
   }
 
   public void update(final AnActionEvent e) {
-    final GuiEditor editor = getEditor(e.getDataContext());
+    final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
 
     if(editor == null){
       e.getPresentation().setVisible(false);

@@ -59,7 +59,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
   }
 
   @Nullable private GuiEditor getEditor(final AnActionEvent e) {
-    myLastEditor = FormEditingUtil.getEditorFromContext(e.getDataContext());
+    myLastEditor = FormEditingUtil.getActiveEditor(e.getDataContext());
     return myLastEditor;
   }
 

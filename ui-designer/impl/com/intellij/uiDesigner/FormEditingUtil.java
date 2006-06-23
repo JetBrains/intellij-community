@@ -528,6 +528,11 @@ public final class FormEditingUtil {
     }
   }
 
+  @Nullable public static GuiEditor getActiveEditor(final DataContext context){
+    Project project = (Project) context.getData(DataConstants.PROJECT);
+    return project == null ? null : UIDesignerToolWindowManager.getInstance(project).getActiveFormEditor();
+  }
+
   /**
    *
    * @param componentToAssignBinding
