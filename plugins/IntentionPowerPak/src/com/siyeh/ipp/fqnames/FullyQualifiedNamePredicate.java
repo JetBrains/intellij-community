@@ -15,11 +15,11 @@
  */
 package com.siyeh.ipp.fqnames;
 
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class FullyQualifiedNamePredicate implements PsiElementPredicate{
@@ -34,7 +34,7 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate{
             return false;
         }
         if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class,
-                PsiPackageStatement.class) != null) {
+                PsiPackageStatement.class, PsiCodeFragment.class) != null) {
             return false;
         }
         final PsiElement qualifier = referenceElement.getQualifier();

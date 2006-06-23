@@ -15,13 +15,14 @@
  */
 package com.siyeh.ipp.fqnames;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ImportUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
@@ -38,8 +39,53 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
         while (reference.getParent() instanceof PsiJavaCodeReferenceElement) {
             reference = (PsiJavaCodeReferenceElement)reference.getParent();
         }
-        final PsiManager manager = element.getManager();
-        final CodeStyleManager styleManager = manager.getCodeStyleManager();
-        styleManager.shortenClassReferences(reference);
+        final PsiJavaFile javaFile =
+                PsiTreeUtil.getParentOfType(reference, PsiJavaFile.class);
+        if (javaFile == null) {
+            return;
+        }
+        final PsiElement target = reference.resolve();
+        if(!(target instanceof PsiClass)){
+            return;
+        }
+        final PsiClass aClass = (PsiClass)target;
+        final String qualifiedName = aClass.getQualifiedName();
+        if (qualifiedName == null) {
+            return;
+        }
+        if (!ImportUtils.nameCanBeImported(qualifiedName, javaFile)) {
+            return;
+        }
+        final PsiImportList importList = javaFile.getImportList();
+        if (importList == null) {
+            return;
+        }
+        @NonNls final String packageName =
+                ClassUtil.extractPackageName(qualifiedName);
+        if (packageName.equals("java.lang")) {
+            if (ImportUtils.hasOnDemandImportConflict(qualifiedName,
+                    javaFile)) {
+                addImport(importList, aClass);
+            }
+        } else if (
+                importList.findSingleClassImportStatement(qualifiedName) ==
+                        null) {
+            addImport(importList, aClass);
+        }
+        final PsiElement qualifier = reference.getQualifier();
+        if (qualifier == null) {
+            return;
+        }
+        qualifier.delete();
+    }
+
+    private static void addImport(PsiImportList importList, PsiClass aClass)
+            throws IncorrectOperationException {
+        final PsiManager manager = importList.getManager();
+        final PsiElementFactory elementFactory =
+                manager.getElementFactory();
+        final PsiImportStatement importStatement =
+                elementFactory.createImportStatement(aClass);
+        importList.add(importStatement);
     }
 }
