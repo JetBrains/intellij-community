@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.Disposable;
+
 import java.util.EventListener;
 
 /**
@@ -29,5 +31,6 @@ public interface RootProvider {
   }
 
   void addRootSetChangedListener(RootSetChangedListener listener);
+  void addRootSetChangedListener(RootSetChangedListener listener, Disposable parentDisposable);
   void removeRootSetChangedListener(RootSetChangedListener listener);
 }

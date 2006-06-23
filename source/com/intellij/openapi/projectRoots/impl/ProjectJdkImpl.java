@@ -11,9 +11,11 @@ import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -245,6 +247,15 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
         myListeners.add(listener);
       }
       super.addRootSetChangedListener(listener);
+    }
+
+    public void addRootSetChangedListener(final RootSetChangedListener listener, Disposable parentDisposable) {
+      addRootSetChangedListener(listener, parentDisposable);
+      Disposer.register(parentDisposable, new Disposable() {
+        public void dispose() {
+          removeRootSetChangedListener(listener);
+        }
+      });
     }
 
     public void removeRootSetChangedListener(RootSetChangedListener listener) {
