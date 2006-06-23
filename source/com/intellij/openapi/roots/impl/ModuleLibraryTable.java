@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
@@ -11,11 +12,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FilteringIterator;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  *  @author dsl
@@ -90,6 +90,10 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
 
   public void addListener(Listener listener) {
     throw new UnsupportedOperationException();
+  }
+
+  public void addListener(Listener listener, Disposable parentDisposable) {
+    throw new UnsupportedOperationException("Method addListener is not yet implemented in " + getClass().getName());
   }
 
   public void removeListener(Listener listener) {

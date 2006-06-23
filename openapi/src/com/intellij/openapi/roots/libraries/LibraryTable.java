@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.libraries;
 
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
@@ -42,6 +43,8 @@ public interface LibraryTable {
   ModifiableModel getModifiableModel();
 
   void addListener(Listener listener);
+  
+  void addListener(Listener listener, Disposable parentDisposable);
 
   void removeListener(Listener listener);
 

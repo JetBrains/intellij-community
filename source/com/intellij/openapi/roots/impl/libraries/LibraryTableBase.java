@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.EventDispatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -50,6 +51,10 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
 
   public void addListener(Listener listener) {
     myDispatcher.addListener(listener);
+  }
+
+  public void addListener(Listener listener, Disposable parentDisposable) {
+    myDispatcher.addListener(listener, parentDisposable);
   }
 
   public void removeListener(Listener listener) {
