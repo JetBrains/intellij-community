@@ -16,8 +16,6 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -46,52 +44,12 @@ public class DollarSignInNameInspection extends BaseInspection {
         return true;
     }
 
-    public ProblemDescriptor[] doCheckClass(PsiClass aClass,
-                                            InspectionManager manager,
-                                            boolean isOnTheFly) {
-        final BaseInspectionVisitor visitor = createVisitor(manager,
-                isOnTheFly);
-        aClass.accept(visitor);
-        return visitor.getErrors();
-    }
-
-    public ProblemDescriptor[] doCheckMethod(PsiMethod method,
-                                             InspectionManager manager,
-                                             boolean isOnTheFly) {
-        final PsiClass containingClass = method.getContainingClass();
-        if (containingClass == null) {
-            return super.doCheckMethod(method, manager, isOnTheFly);
-        }
-        if (!containingClass.isPhysical()) {
-            return super.doCheckMethod(method, manager, isOnTheFly);
-        }
-        final BaseInspectionVisitor visitor = createVisitor(manager,
-                isOnTheFly);
-        method.accept(visitor);
-        return visitor.getErrors();
-    }
-
-    public ProblemDescriptor[] doCheckField(PsiField field,
-                                            InspectionManager manager,
-                                            boolean isOnTheFly) {
-        final PsiClass containingClass = field.getContainingClass();
-        if (containingClass == null) {
-            return super.doCheckField(field, manager, isOnTheFly);
-        }
-        if (!containingClass.isPhysical()) {
-            return super.doCheckField(field, manager, isOnTheFly);
-        }
-        final BaseInspectionVisitor visitor = createVisitor(manager,
-                isOnTheFly);
-        field.accept(visitor);
-        return visitor.getErrors();
-    }
-
     public BaseInspectionVisitor buildVisitor() {
         return new DollarSignInNameVisitor();
     }
 
     private static class DollarSignInNameVisitor extends BaseInspectionVisitor {
+
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final String name = variable.getName();

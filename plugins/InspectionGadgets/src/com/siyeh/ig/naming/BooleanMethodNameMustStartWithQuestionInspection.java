@@ -34,14 +34,17 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.EventQueue;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInspection{
+public class BooleanMethodNameMustStartWithQuestionInspection
+        extends MethodInspection{
 
     /** @noinspection PublicField*/
     @NonNls public String nameCheckString =
@@ -77,7 +80,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
     }
 
     private void formatNameCheckString(){
-        final StringBuffer buffer = new StringBuffer();
+        final StringBuilder buffer = new StringBuilder();
         synchronized(lock) {
             boolean first = true;
             for(Object aNameList : nameList){
@@ -126,14 +129,13 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
     }
 
     private class QuestionableNameVisitor extends BaseInspectionVisitor{
+
         public void visitMethod(@NotNull PsiMethod method){
             final PsiType returnType = method.getReturnType();
-            if(returnType== null)
-            {
+            if(returnType== null){
                 return;
             }
-            if(!returnType.equals(PsiType.BOOLEAN))
-            {
+            if(!returnType.equals(PsiType.BOOLEAN)){
                 return;
             }
             final String name = method.getName();
@@ -153,6 +155,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
     }
 
     private class Form{
+
         JPanel contentPanel;
         JButton addButton;
         JButton deleteButton;
@@ -224,6 +227,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
     }
 
     private class NameListTableModel extends AbstractTableModel{
+
         public int getRowCount(){
             synchronized (lock) {
                 return nameList.size();

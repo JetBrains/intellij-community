@@ -16,15 +16,13 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiIdentifier;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class TypeParameterNamingConventionInspection
@@ -61,7 +59,7 @@ public class TypeParameterNamingConventionInspection
     }
 
     protected String getDefaultRegex() {
-        return "[A-Z]";
+        return "[A-Z\\d]";
     }
 
     protected int getDefaultMinLength() {
@@ -76,18 +74,8 @@ public class TypeParameterNamingConventionInspection
         return new NamingConventionsVisitor();
     }
 
-    public ProblemDescriptor[] doCheckClass(
-            PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
-        if (!aClass.isPhysical()) {
-            return super.doCheckClass(aClass, manager, isOnTheFly);
-        }
-        final BaseInspectionVisitor visitor = createVisitor(manager,
-                isOnTheFly);
-        aClass.accept(visitor);
-        return visitor.getErrors();
-    }
-
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
+
         public void visitTypeParameter(PsiTypeParameter parameter) {
             super.visitTypeParameter(parameter);
             final String name = parameter.getName();
@@ -97,7 +85,11 @@ public class TypeParameterNamingConventionInspection
             if (isValid(name)) {
                 return;
             }
-            registerError(parameter.getNameIdentifier(), name);
+            final PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
+            if (nameIdentifier == null) {
+                return;
+            }
+            registerError(nameIdentifier, name);
         }
     }
 }

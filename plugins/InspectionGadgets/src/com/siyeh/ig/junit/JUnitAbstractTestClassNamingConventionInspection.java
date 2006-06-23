@@ -16,15 +16,16 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiTypeParameter;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.naming.ConventionInspection;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.ig.naming.ConventionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class JUnitAbstractTestClassNamingConventionInspection
@@ -32,7 +33,6 @@ public class JUnitAbstractTestClassNamingConventionInspection
 
     private static final int DEFAULT_MIN_LENGTH = 12;
     private static final int DEFAULT_MAX_LENGTH = 64;
-    private final RenameFix fix = new RenameFix();
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -44,7 +44,7 @@ public class JUnitAbstractTestClassNamingConventionInspection
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new RenameFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
@@ -67,7 +67,7 @@ public class JUnitAbstractTestClassNamingConventionInspection
     }
 
     protected String getDefaultRegex() {
-        return "[A-Z][A-Za-z]*TestCase";
+        return "[A-Z][A-Za-z\\d]*TestCase";
     }
 
     protected int getDefaultMinLength() {
@@ -80,17 +80,6 @@ public class JUnitAbstractTestClassNamingConventionInspection
 
     public BaseInspectionVisitor buildVisitor() {
         return new NamingConventionsVisitor();
-    }
-
-    public ProblemDescriptor[] doCheckClass(PsiClass aClass,
-                                            InspectionManager manager,
-                                            boolean isOnTheFly) {
-        if (!aClass.isPhysical()) {
-            return super.doCheckClass(aClass, manager, isOnTheFly);
-        }
-        final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
-        aClass.accept(visitor);
-        return visitor.getErrors();
     }
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {

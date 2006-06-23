@@ -16,16 +16,14 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.RegExFormatter;
 import com.siyeh.ig.RegExInputVerifier;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,7 +33,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 import javax.swing.text.InternationalFormatter;
-import java.awt.*;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.text.NumberFormat;
 import java.util.regex.Pattern;
 
@@ -84,7 +84,7 @@ public class LocalVariableNamingConventionInspection
     }
 
     protected String getDefaultRegex() {
-        return "[a-z][A-Za-z]*";
+        return "[a-z][A-Za-z\\d]*";
     }
 
     protected int getDefaultMinLength() {
@@ -97,22 +97,6 @@ public class LocalVariableNamingConventionInspection
 
     public BaseInspectionVisitor buildVisitor() {
         return new NamingConventionsVisitor();
-    }
-
-    public ProblemDescriptor[] doCheckMethod(PsiMethod method,
-                                             InspectionManager manager,
-                                             boolean isOnTheFly) {
-        final PsiClass containingClass = method.getContainingClass();
-        if (containingClass == null) {
-            return super.doCheckMethod(method, manager, isOnTheFly);
-        }
-        if (!containingClass.isPhysical()) {
-            return super.doCheckMethod(method, manager, isOnTheFly);
-        }
-        final BaseInspectionVisitor visitor = createVisitor(manager,
-                                                            isOnTheFly);
-        method.accept(visitor);
-        return visitor.getErrors();
     }
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {

@@ -16,10 +16,8 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -68,7 +66,7 @@ public class InstanceMethodNamingConventionInspection
     }
 
     protected String getDefaultRegex() {
-        return "[a-z][A-Za-z]*";
+        return "[a-z][A-Za-z\\d]*";
     }
 
     protected int getDefaultMinLength() {
@@ -83,22 +81,6 @@ public class InstanceMethodNamingConventionInspection
         return new NamingConventionsVisitor();
     }
 
-    public ProblemDescriptor[] doCheckMethod(PsiMethod method,
-                                             InspectionManager manager,
-                                             boolean isOnTheFly) {
-        final PsiClass containingClass = method.getContainingClass();
-        if (containingClass == null) {
-            return super.doCheckMethod(method, manager, isOnTheFly);
-        }
-        if (!containingClass.isPhysical()) {
-            return super.doCheckMethod(method, manager, isOnTheFly);
-        }
-        final BaseInspectionVisitor visitor =
-                createVisitor(manager, isOnTheFly);
-        method.accept(visitor);
-        return visitor.getErrors();
-    }
-
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
@@ -107,6 +89,10 @@ public class InstanceMethodNamingConventionInspection
                 return;
             }
             if (method.hasModifierProperty(PsiModifier.STATIC)) {
+                return;
+            }
+            final PsiIdentifier nameIdentifier = method.getNameIdentifier();
+            if (nameIdentifier == null) {
                 return;
             }
             final String name = method.getName();

@@ -16,14 +16,15 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticVariableNamingConventionInspection
@@ -61,7 +62,7 @@ public class StaticVariableNamingConventionInspection
     }
 
     protected String getDefaultRegex() {
-        return "s_[a-z][A-Za-z]*";
+        return "s_[a-z][A-Za-z\\d]*";
     }
 
     protected int getDefaultMinLength() {
@@ -74,20 +75,6 @@ public class StaticVariableNamingConventionInspection
 
     public BaseInspectionVisitor buildVisitor() {
         return new NamingConventionsVisitor();
-    }
-
-    public ProblemDescriptor[] doCheckField(
-            PsiField field, InspectionManager mgr, boolean isOnTheFly) {
-        final PsiClass containingClass = field.getContainingClass();
-        if (containingClass == null) {
-            return super.doCheckField(field, mgr, isOnTheFly);
-        }
-        if (!containingClass.isPhysical()) {
-            return super.doCheckField(field, mgr, isOnTheFly);
-        }
-        final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
-        field.accept(visitor);
-        return visitor.getErrors();
     }
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {

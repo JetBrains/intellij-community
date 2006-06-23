@@ -16,14 +16,12 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class InterfaceNamingConventionInspection extends ConventionInspection {
@@ -60,7 +58,7 @@ public class InterfaceNamingConventionInspection extends ConventionInspection {
     }
 
     protected String getDefaultRegex() {
-        return "[A-Z][A-Za-z]*";
+        return "[A-Z][A-Za-z\\d]*";
     }
 
     protected int getDefaultMinLength() {
@@ -73,17 +71,6 @@ public class InterfaceNamingConventionInspection extends ConventionInspection {
 
     public BaseInspectionVisitor buildVisitor() {
         return new NamingConventionsVisitor();
-    }
-
-    public ProblemDescriptor[] doCheckClass(PsiClass aClass,
-                                            InspectionManager manager,
-                                            boolean isOnTheFly) {
-        if (!aClass.isPhysical()) {
-            return super.doCheckClass(aClass, manager, isOnTheFly);
-        }
-        final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
-        aClass.accept(visitor);
-        return visitor.getErrors();
     }
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {

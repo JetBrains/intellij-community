@@ -54,6 +54,7 @@ public class ClassNameSameAsAncestorNameInspection extends ClassInspection {
 
     private static class ClassNameSameAsAncestorNameVisitor
             extends BaseInspectionVisitor {
+
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down into inner classes
             final String className = aClass.getName();

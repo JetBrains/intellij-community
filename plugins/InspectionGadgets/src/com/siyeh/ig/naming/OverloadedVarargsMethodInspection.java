@@ -53,7 +53,7 @@ public class OverloadedVarargsMethodInspection extends MethodInspection {
             extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
-            if (!hasVarargParameter(method)) {
+            if (!method.isVarArgs()) {
                 return;
             }
             final PsiClass aClass = method.getContainingClass();
@@ -68,17 +68,6 @@ public class OverloadedVarargsMethodInspection extends MethodInspection {
                     registerMethodError(method, method);
                 }
             }
-        }
-
-        private static boolean hasVarargParameter(PsiMethod method) {
-            final PsiParameterList parameterList = method.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters.length == 0) {
-                return false;
-            }
-            final PsiParameter lastParameter =
-                    parameters[parameters.length - 1];
-            return lastParameter.isVarArgs();
         }
     }
 }

@@ -16,8 +16,6 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeParameter;
@@ -61,7 +59,7 @@ public class ClassNamingConventionInspection extends ConventionInspection {
     }
 
     protected String getDefaultRegex() {
-        return "[A-Z][A-Za-z]*";
+        return "[A-Z][A-Za-z\\d]*";
     }
 
     protected int getDefaultMinLength() {
@@ -76,22 +74,11 @@ public class ClassNamingConventionInspection extends ConventionInspection {
         return new NamingConventionsVisitor();
     }
 
-    public ProblemDescriptor[] doCheckClass(PsiClass aClass,
-                                            InspectionManager manager,
-                                            boolean isOnTheFly) {
-        if (!aClass.isPhysical()) {
-            return super.doCheckClass(aClass, manager, isOnTheFly);
-        }
-        final BaseInspectionVisitor visitor = createVisitor(manager,
-                isOnTheFly);
-        aClass.accept(visitor);
-        return visitor.getErrors();
-    }
-
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
+
         public void visitClass(@NotNull PsiClass aClass) {
-            if (aClass.isInterface() || aClass.isAnnotationType() || aClass
-                    .isEnum()) {
+            if (aClass.isInterface() || aClass.isAnnotationType() ||
+                    aClass.isEnum()) {
                 return;
             }
             if (aClass instanceof PsiTypeParameter) {
