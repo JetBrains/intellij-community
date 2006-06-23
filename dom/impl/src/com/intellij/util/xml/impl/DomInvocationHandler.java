@@ -145,21 +145,21 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       return;
     }
 
-    final boolean b = myManager.setChanging(true);
-    try {
-      final XmlTag tag = ensureTagExists();
-      detach(false);
-      synchronized (PsiLock.LOCK) {
-        copyTags(fromTag, tag);
-      }
-      attach(tag);
+    final XmlTag tag = ensureTagExists();
+    detach(false);
+    synchronized (PsiLock.LOCK) {
+      myManager.runChange(new Runnable() {
+        public void run() {
+          try {
+            copyTags(fromTag, tag);
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        }
+      });
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-    finally {
-      myManager.setChanging(b);
-    }
+    attach(tag);
   }
 
   private void copyTags(final XmlTag fromTag, final XmlTag toTag) throws IncorrectOperationException {
