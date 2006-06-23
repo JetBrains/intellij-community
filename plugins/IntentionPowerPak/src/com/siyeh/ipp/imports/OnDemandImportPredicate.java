@@ -21,10 +21,12 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 public class OnDemandImportPredicate implements PsiElementPredicate {
 
     public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiImportStatement)) { // doesn't work for import static yet.
+        // doesn't work for import static yet.
+        if (!(element instanceof PsiImportStatement)) {
             return false;
         }
-        final PsiImportStatementBase importStatementBase = (PsiImportStatementBase)element;
+        final PsiImportStatementBase importStatementBase =
+                (PsiImportStatementBase)element;
         if (!importStatementBase.isOnDemand()) {
             return false;
         }

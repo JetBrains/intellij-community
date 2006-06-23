@@ -36,10 +36,13 @@ public class ReplaceOnDemandImportIntention extends Intention {
 
     protected void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        final PsiImportStatementBase importStatementBase = (PsiImportStatementBase)element;
+        final PsiImportStatementBase importStatementBase =
+                (PsiImportStatementBase)element;
         if (importStatementBase instanceof PsiImportStatement) {
-            final PsiImportStatement importStatement = (PsiImportStatement)importStatementBase;
-            final PsiJavaFile javaFile = (PsiJavaFile)importStatement.getContainingFile();
+            final PsiImportStatement importStatement =
+                    (PsiImportStatement)importStatementBase;
+            final PsiJavaFile javaFile =
+                    (PsiJavaFile)importStatement.getContainingFile();
             final PsiClass[] classes = javaFile.getClasses();
             final String qualifiedName = importStatement.getQualifiedName();
             final ClassCollector visitor = new ClassCollector(qualifiedName);
@@ -71,15 +74,20 @@ public class ReplaceOnDemandImportIntention extends Intention {
             this.importedPackageName = importedPackageName;
         }
 
-        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        public void visitReferenceElement(
+                PsiJavaCodeReferenceElement reference) {
             super.visitReferenceElement(reference);
+            if (reference.isQualified()) {
+                return;
+            }
             final PsiElement element = reference.resolve();
             if (!(element instanceof PsiClass)) {
                 return;
             }
             final PsiClass aClass = (PsiClass)element;
             final String qualifiedName = aClass.getQualifiedName();
-            final String packageName = ClassUtil.extractPackageName(qualifiedName);
+            final String packageName =
+                    ClassUtil.extractPackageName(qualifiedName);
             if (!importedPackageName.equals(packageName)) {
                 return;
             }
@@ -91,7 +99,8 @@ public class ReplaceOnDemandImportIntention extends Intention {
         }
     }
 
-    private static final class PsiClassComparator implements Comparator<PsiClass> {
+    private static final class PsiClassComparator
+            implements Comparator<PsiClass> {
 
         public int compare(PsiClass class1, PsiClass class2) {
             final String qualifiedName1 = class1.getQualifiedName();
