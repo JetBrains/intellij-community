@@ -156,6 +156,7 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="808080"/>
+          <option name="EFFECT_TYPE" value="0"/>
         </value>
       </option>
       <option name="HYPERLINK_ATTRIBUTES">
