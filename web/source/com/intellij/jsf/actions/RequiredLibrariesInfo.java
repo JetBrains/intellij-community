@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.j2ee.ClassUtil;
@@ -19,14 +20,15 @@ import com.intellij.j2ee.ClassUtil;
 public class RequiredLibrariesInfo {
 
   private List<LibraryInfo> myLibraryInfos = new ArrayList<LibraryInfo>();
-  private final String myServerUrl;
 
-  public RequiredLibrariesInfo(@NonNls String serverUrl) {
-    myServerUrl = serverUrl;
+  public RequiredLibrariesInfo() {}
+
+  public RequiredLibrariesInfo(LibraryInfo... libs) {
+    myLibraryInfos.addAll(new ArrayList<LibraryInfo>(Arrays.asList(libs)));
   }
 
-  public RequiredLibrariesInfo() {
-    this(null);
+  public void addLibraryInfo(LibraryInfo lib) {
+    myLibraryInfos.add(lib);
   }
 
   public void addLibraryInfoForRepository(@NonNls String expectedJarName,
@@ -34,20 +36,7 @@ public class RequiredLibrariesInfo {
                              @Nullable String repositoryUrl,
                              @NonNls String... requiredClasses) {
 
-    myLibraryInfos.add(new LibraryInfo(expectedJarName, downloadingUrl, repositoryUrl, requiredClasses));
-  }
-
-  public void addLibraryInfo(@NonNls String expectedJarName,
-                             @Nullable @NonNls String jarName,
-                             @NonNls String... requiredClasses) {
-
-    addLibraryInfoForRepository(expectedJarName, myServerUrl + jarName, myServerUrl, requiredClasses);
-  }
-
-  public void addSimpleLibraryInfo(@NonNls String expectedJarName,
-                             @NonNls String... requiredClasses) {
-
-    addLibraryInfoForRepository(expectedJarName, expectedJarName, myServerUrl, requiredClasses);
+    myLibraryInfos.add(new LibraryInfoImpl(expectedJarName, downloadingUrl, repositoryUrl, requiredClasses));
   }
 
   public @Nullable RequiredClassesNotFoundInfo checkLibraries(VirtualFile[] libraryFiles) {
