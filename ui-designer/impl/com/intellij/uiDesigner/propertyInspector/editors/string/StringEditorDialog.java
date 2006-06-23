@@ -102,7 +102,7 @@ public final class StringEditorDialog extends DialogWrapper{
         final String value = myForm.myTfRbValue.getText();
         final PropertiesFile propFile = getPropertiesFile(descriptor);
         if (propFile != null && propFile.findPropertyByKey(descriptor.getKey()) == null) {
-          saveCreatedProperty(propFile, descriptor.getKey(), value, myEditor);
+          saveCreatedProperty(propFile, descriptor.getKey(), value, myEditor.getPsiFile());
         }
         else {
           final String newKeyName = saveModifiedPropertyValue(myEditor.getModule(), descriptor, myLocale, value, myEditor.getPsiFile());
@@ -175,7 +175,10 @@ public final class StringEditorDialog extends DialogWrapper{
                       propFile.addProperty(PropertiesElementFactory.createProperty(module.getProject(), newKeyName1, editedValue));
                     }
                     else {
-                      propFile.findPropertyByKey(descriptor.getKey()).setValue(editedValue);
+                      final Property propertyByKey = propFile.findPropertyByKey(descriptor.getKey());
+                      if (propertyByKey != null) {
+                        propertyByKey.setValue(editedValue);
+                      }
                     }
                   }
                   catch (IncorrectOperationException e) {
@@ -184,7 +187,7 @@ public final class StringEditorDialog extends DialogWrapper{
                 }
               });
             }
-          }, UIDesignerBundle.message("command.update.property"), FormEditingUtil.getNextSaveUndoGroupId(module.getProject()));
+          }, UIDesignerBundle.message("command.update.property"), null);
         return newKeyName;
       }
     }
@@ -214,19 +217,18 @@ public final class StringEditorDialog extends DialogWrapper{
   }
 
   public static boolean saveCreatedProperty(final PropertiesFile bundle, final String name, final String value,
-                                            final GuiEditor editor) {
+                                            final PsiFile formFile) {
     final Property property = PropertiesElementFactory.createProperty(bundle.getProject(), name, value);
     final ReadonlyStatusHandler.OperationStatus operationStatus =
       ReadonlyStatusHandler.getInstance(bundle.getProject()).ensureFilesWritable(bundle.getVirtualFile());
     if (operationStatus.hasReadonlyFiles()) {
       return false;
     }
-    final Object groupId = FormEditingUtil.getNextSaveUndoGroupId(bundle.getProject());
-    LOG.debug("StringEditorDialog.saveCreatedProperty(): group ID=" + groupId);
     CommandProcessor.getInstance().executeCommand(
       bundle.getProject(),
       new Runnable() {
         public void run() {
+          UndoManager.getInstance(bundle.getProject()).markDocumentForUndo(formFile);
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               try {
@@ -238,7 +240,7 @@ public final class StringEditorDialog extends DialogWrapper{
             }
           });
         }
-      }, UIDesignerBundle.message("command.create.property"), groupId);
+      }, UIDesignerBundle.message("command.create.property"), null);
     return true;
   }
 

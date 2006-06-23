@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.ui.LightweightHint;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -253,7 +254,7 @@ public abstract class QuickFixManager <T extends JComponent>{
     }
   }
 
-  private static class QuickFixPopupStep extends BaseListPopupStep<ErrorWithFix> {
+  private class QuickFixPopupStep extends BaseListPopupStep<ErrorWithFix> {
     private final boolean myShowSuppresses;
 
     public QuickFixPopupStep(final ArrayList<ErrorWithFix> fixList, boolean showSuppresses) {
@@ -270,7 +271,11 @@ public abstract class QuickFixManager <T extends JComponent>{
       if (finalChoice || !myShowSuppresses) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            selectedValue.second.run();
+            CommandProcessor.getInstance().executeCommand(myEditor.getProject(), new Runnable() {
+              public void run() {
+                selectedValue.second.run();
+              }
+            }, selectedValue.second.getName(), null);
           }
         });
         return FINAL_CHOICE;

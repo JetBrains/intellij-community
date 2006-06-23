@@ -4,20 +4,21 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.Dimension;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -137,7 +138,6 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
 
       final GuiEditor guiEditor = UIDesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
       LOG.assertTrue(guiEditor != null);
-      final Module module = guiEditor.getModule();
 
       final StringEditorDialog dialog = new StringEditorDialog(
         myTfWithButton.getTextField(),
@@ -145,18 +145,25 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
         guiEditor.getStringDescriptorLocale(),
         guiEditor
       );
-      dialog.show();
-      if(!dialog.isOK()){
-        return;
-      }
 
-      // 2. Apply new value
-      final StringDescriptor descriptor = dialog.getDescriptor();
-      if(descriptor == null){
-        return;
-      }
-      setValue(descriptor);
-      fireValueCommited(true);
+      CommandProcessor.getInstance().executeCommand(
+        myProject,
+        new Runnable() {
+          public void run() {
+            dialog.show();
+            if(!dialog.isOK()){
+              return;
+            }
+
+            // 2. Apply new value
+            final StringDescriptor descriptor = dialog.getDescriptor();
+            if(descriptor == null){
+              return;
+            }
+            setValue(descriptor);
+            fireValueCommited(true);
+          }
+        }, UIDesignerBundle.message("command.edit.string.property"), null); 
     }
   }
 }

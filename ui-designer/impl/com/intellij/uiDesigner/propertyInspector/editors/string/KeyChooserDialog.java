@@ -19,8 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
-import java.awt.Component;
-import java.awt.FontMetrics;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -253,6 +252,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     }
 
     public String getElementText(final Object element) {
+      //noinspection unchecked
       return ((Pair<String, String>)element).getFirst();
     }
 
@@ -271,7 +271,7 @@ public final class KeyChooserDialog extends DialogWrapper{
       NewKeyDialog dlg = new NewKeyDialog(getWindow());
       dlg.show();
       if (dlg.isOK()) {
-        if (!StringEditorDialog.saveCreatedProperty(myBundle, dlg.getName(), dlg.getValue(), myEditor)) return;
+        if (!StringEditorDialog.saveCreatedProperty(myBundle, dlg.getName(), dlg.getValue(), myEditor.getPsiFile())) return;
 
         fillPropertyList();
         myModel.update();
