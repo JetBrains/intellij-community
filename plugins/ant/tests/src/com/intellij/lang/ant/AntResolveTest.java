@@ -103,6 +103,10 @@ public class AntResolveTest extends ResolveTestCase {
     doPropertyTest();
   }
 
+  public void testExecProperty1() throws Exception {
+    doPropertyTest();
+  }
+
   public void testFailProperty() throws Exception {
     doPropertyTest();
   }
