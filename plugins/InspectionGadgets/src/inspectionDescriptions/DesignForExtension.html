@@ -1,12 +1,12 @@
 <html>
 <body><table> <tr> <td valign="top" height="150">
 <font face="verdana" size="-1">
-This inspection reports any methods which are neither <b><font color="#000080">static</font></b>,
-    <b><font color="#000080">private</font></b>,<b><font color="#000080">final</font></b> or<b><font color="#000080">abstract</font></b>,
+This inspection reports any methods which are not <b><font color="#000080">static</font></b>,
+    <b><font color="#000080">private</font></b>, <b><font color="#000080">final</font></b> or <b><font color="#000080">abstract</font></b>,
     and whose bodies are not empty.  Coding in a style that avoids such methods protects
-    superclasses against being broken by subclasses.  The cost of this style is that subclasses are limited
+    the contracts of classes from being broken by their subclasses.  The cost of this style is that subclasses are limited
     in their flexibility, in particular they cannot prevent execution of code in the
-    superclass.   The benefit of svoiding such methods is subclasses cannot
+    superclass. The benefit of svoiding such methods is subclasses cannot
     corrupt the state of the superclass by forgetting to call the super method.
 <p>
     This inspection is intended for code to be used in secure environments, and is probably not
