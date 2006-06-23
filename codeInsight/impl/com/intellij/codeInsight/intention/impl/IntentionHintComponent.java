@@ -2,6 +2,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.hint.QuestionAction;
@@ -19,7 +20,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
@@ -81,30 +81,30 @@ public class IntentionHintComponent extends JPanel {
     private IntentionManagerSettings mySettings;
     private List<IntentionAction> myQuickFixes;
 
-    public IntentionListStep(List<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> quickFixes,
-                             List<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> intentions) {
+    public IntentionListStep(List<HighlightInfo.IntentionActionDescriptor> quickFixes,
+                             List<HighlightInfo.IntentionActionDescriptor> intentions) {
       mySettings = IntentionManagerSettings.getInstance();
-      ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> allActions = new ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>>(quickFixes);
+      ArrayList<HighlightInfo.IntentionActionDescriptor> allActions = new ArrayList<HighlightInfo.IntentionActionDescriptor>(quickFixes);
       allActions.addAll(intentions);
       List<IntentionAction> actions = new ArrayList<IntentionAction>();
-      for (Pair<Pair<IntentionAction,String>,List<IntentionAction>> pair : quickFixes) {
-        actions.add(pair.first.first);
-        if (pair.second != null) {
-          actions.addAll(pair.second);
+      for (HighlightInfo.IntentionActionDescriptor pair : quickFixes) {
+        actions.add(pair.getAction());
+        if (pair.getOptions() != null) {
+          actions.addAll(pair.getOptions());
         }
       }
       myQuickFixes = actions;
       myActions = Arrays.asList(wrapActions(allActions));
     }
 
-    private IntentionActionWithTextCaching[] wrapActions(ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> actions) {
+    private IntentionActionWithTextCaching[] wrapActions(ArrayList<HighlightInfo.IntentionActionDescriptor> actions) {
       IntentionActionWithTextCaching [] compositeActions = new IntentionActionWithTextCaching[actions.size()];
       int index = 0;
-      for (Pair<Pair<IntentionAction,String>,List<IntentionAction>> pair : actions) {
-        if (pair.first != null) {
-          IntentionActionWithTextCaching action = new IntentionActionWithTextCaching(pair.first.first, pair.first.second);
-          if (pair.second != null) {
-            for (IntentionAction intentionAction : pair.second) {
+      for (HighlightInfo.IntentionActionDescriptor pair : actions) {
+        if (pair.getAction() != null) {
+          IntentionActionWithTextCaching action = new IntentionActionWithTextCaching(pair.getAction(), pair.getDisplayName());
+          if (pair.getOptions() != null) {
+            for (IntentionAction intentionAction : pair.getOptions()) {
               action.addAction(intentionAction, myQuickFixes.contains(intentionAction));
             }
           }
@@ -136,15 +136,15 @@ public class IntentionHintComponent extends JPanel {
     }
 
     private PopupStep getSubStep(final IntentionActionWithTextCaching action) {
-      final ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> intentions = new ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>>();
+      final ArrayList<HighlightInfo.IntentionActionDescriptor> intentions = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
       final List<IntentionAction> optionIntentions = action.getOptionIntentions();
       for (final IntentionAction optionIntention : optionIntentions) {
-        intentions.add(new Pair<Pair<IntentionAction, String>, List<IntentionAction>>(Pair.create(optionIntention, action.getToolName()), null));
+        intentions.add(new HighlightInfo.IntentionActionDescriptor(optionIntention, null, action.getToolName()));
       }
-      final ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> quickFixes = new ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>>();
+      final ArrayList<HighlightInfo.IntentionActionDescriptor> quickFixes = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
       final List<IntentionAction> optionFixes = action.getOptionFixes();
       for (final IntentionAction optionFix : optionFixes) {
-        quickFixes.add(new Pair<Pair<IntentionAction, String>, List<IntentionAction>>(Pair.create(optionFix, action.getToolName()), null));
+        quickFixes.add(new HighlightInfo.IntentionActionDescriptor(optionFix, null, action.getToolName()));
       }
 
       return new IntentionListStep(quickFixes, intentions){
@@ -252,8 +252,8 @@ public class IntentionHintComponent extends JPanel {
 
   public static IntentionHintComponent showIntentionHint(Project project,
                                                          Editor view,
-                                                         List<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> intentions,
-                                                         List<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> quickFixes,
+                                                         ArrayList<HighlightInfo.IntentionActionDescriptor> intentions,
+                                                         ArrayList<HighlightInfo.IntentionActionDescriptor> quickFixes,
                                                          boolean showExpanded) {
     final IntentionHintComponent component = new IntentionHintComponent(project, view, intentions, quickFixes);
 
@@ -272,8 +272,8 @@ public class IntentionHintComponent extends JPanel {
     return component;
   }
 
-  public void updateIfNotShowingPopup(List<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> quickfixes,
-                                      List<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> intentions) {
+  public void updateIfNotShowingPopup(List<HighlightInfo.IntentionActionDescriptor> quickfixes,
+                                      List<HighlightInfo.IntentionActionDescriptor> intentions) {
     if (!myPopupShown) {
       myPopup = JBPopupFactory.getInstance().createWizardStep(new IntentionListStep(quickfixes, intentions));
     }
@@ -318,8 +318,8 @@ public class IntentionHintComponent extends JPanel {
 
   public IntentionHintComponent(Project project,
                                 Editor editor,
-                                List<Pair<Pair<IntentionAction, String>,  List<IntentionAction>>> intentions,
-                                List<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> quickFixes) {
+                                ArrayList<HighlightInfo.IntentionActionDescriptor> intentions,
+                                ArrayList<HighlightInfo.IntentionActionDescriptor> quickFixes) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myProject = project;
     myEditor = editor;
@@ -328,8 +328,8 @@ public class IntentionHintComponent extends JPanel {
     setOpaque(false);
 
     boolean showFix = false;
-    for (final Pair<Pair<IntentionAction,String>,List<IntentionAction>> pairs : quickFixes) {
-      IntentionAction fix = pairs.first.first;
+    for (final HighlightInfo.IntentionActionDescriptor pairs : quickFixes) {
+      IntentionAction fix = pairs.getAction();
       if (IntentionManagerSettings.getInstance().isShowLightBulb(fix)) {
         showFix = true;
         break;

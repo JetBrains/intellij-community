@@ -4,7 +4,7 @@
 
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -27,27 +27,23 @@ public class FileLevelIntentionComponent extends JPanel {
   private static final Icon ourIntentionIcon = IconLoader.getIcon("/actions/intentionBulb.png");
   private static final Icon ourQuickFixIcon = IconLoader.getIcon("/actions/quickfixBulb.png");
 
-  private String myDescription;
-  private HighlightSeverity mySeverity;
-  private List<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> myIntentions;
+  private ArrayList<HighlightInfo.IntentionActionDescriptor> myIntentions;
   private Project myProject;
   private Editor myEditor;
 
   public FileLevelIntentionComponent(final String description,
                                      final HighlightSeverity severity,
-                                     List<Pair<Pair<Pair<IntentionAction, String>, List<IntentionAction>>, TextRange>> intentions,
+                                     List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> intentions,
                                      final Project project,
                                      final Editor editor) {
     super(new BorderLayout());
     myEditor = editor;
     myProject = project;
 
-    myDescription = description;
-    mySeverity = severity;
-    myIntentions = new ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>>();
+    myIntentions = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
 
     if (intentions != null) {
-      for (Pair<Pair<Pair<IntentionAction, String>, List<IntentionAction>>, TextRange> intention : intentions) {
+      for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> intention : intentions) {
         myIntentions.add(intention.getFirst());
       }
     }
@@ -61,7 +57,7 @@ public class FileLevelIntentionComponent extends JPanel {
     content.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         IntentionHintComponent.showIntentionHint(myProject, myEditor,
-                                                 new ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>>(),
+                                                 new ArrayList<HighlightInfo.IntentionActionDescriptor>(),
                                                  myIntentions,
                                                  true);
       }

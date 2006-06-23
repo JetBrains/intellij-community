@@ -3,6 +3,8 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -10,8 +12,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
@@ -43,7 +43,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
               configureFromFileText(ioFile.getName(), contents);
               final Pair<String, Boolean> pair = parseActionHint(getFile());
               final String text = pair.getFirst();
-              final boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
+              final boolean actionShouldBeAvailable = pair.getSecond();
 
               beforeActionStarted(testName, contents);
 
@@ -151,14 +151,14 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         if (startOffset <= offset && offset <= endOffset
             && info.quickFixActionRanges != null
         ) {
-          for (Pair<Pair<Pair<IntentionAction,String>,List<IntentionAction>>,TextRange> pair : info.quickFixActionRanges) {
-            IntentionAction action = pair.first.first.first;
+          for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
+            IntentionAction action = pair.first.getAction();
             TextRange range = pair.second;
             if (range.getStartOffset() <= offset && offset <= range.getEndOffset() &&
                 action.isAvailable(getProject(), editor, file)) {
               availableActions.add(action);
-              if (pair.first.second != null) {
-                for (IntentionAction intentionAction : pair.first.second) {
+              if (pair.first.getOptions() != null) {
+                for (IntentionAction intentionAction : pair.first.getOptions()) {
                   if (intentionAction.isAvailable(getProject(), editor, file)) {
                     availableActions.add(intentionAction);
                   }

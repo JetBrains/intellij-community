@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -109,7 +108,7 @@ public class UpdateHighlightersUtil {
       if (infoStartOffset < startOffset || infoEndOffset > endOffset) continue;
       HighlightSeverity severity = info.getSeverity();
       int layer;
-      if (severity == HighlightSeverity.INFORMATION || severity == HighlightSeverity.INFO) {
+      if (severity == HighlightSeverity.INFORMATION || severity == HighlightSeverity.INFO || severity == HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) {
         layer = HighlighterLayer.ADDITIONAL_SYNTAX;
       }
       else if (severity == HighlightSeverity.WARNING) {
@@ -175,8 +174,8 @@ public class UpdateHighlightersUtil {
       HashMap<TextRange, RangeMarker> ranges2markers = new HashMap<TextRange, RangeMarker>();
       ranges2markers.put(new TextRange(infoStartOffset, infoEndOffset), info.highlighter);
       if (info.quickFixActionRanges != null) {
-        info.quickFixActionMarkers = new ArrayList<Pair<Pair<Pair<IntentionAction,String>, List<IntentionAction>>, RangeMarker>>();
-        for (Pair<Pair<Pair<IntentionAction,String>,List<IntentionAction>>,TextRange> pair : info.quickFixActionRanges) {
+        info.quickFixActionMarkers = new ArrayList<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>>();
+        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
           TextRange range = pair.second;
           RangeMarker marker = ranges2markers.get(range);
           if (marker == null) {

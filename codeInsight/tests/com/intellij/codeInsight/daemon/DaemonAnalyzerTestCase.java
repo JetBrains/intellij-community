@@ -53,8 +53,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       }
 
       public boolean isToolEnabled(HighlightDisplayKey key) {
-        if (key == null) return false;
-        return myAvailableTools.containsKey(key.toString());
+        return key != null && myAvailableTools.containsKey(key.toString());
       }
 
       public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key) {
@@ -209,8 +208,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     for (HighlightInfo info :infos) {
       if (info.quickFixActionRanges != null) {
-        for (Pair<Pair<Pair<IntentionAction,String>,List<IntentionAction>>,TextRange> pair : info.quickFixActionRanges) {
-          IntentionAction action = pair.first.first.first;
+        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
+          IntentionAction action = pair.first.getAction();
           availableActions.add(action);
         }
       }

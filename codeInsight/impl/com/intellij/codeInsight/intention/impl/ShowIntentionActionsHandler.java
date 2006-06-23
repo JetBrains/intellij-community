@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -9,7 +10,6 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -34,8 +34,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     final IntentionAction[] intentionActions = IntentionManager.getInstance(project).getIntentionActions();
 
-    ArrayList<Pair<Pair<IntentionAction,String>, List<IntentionAction>>> intentionsToShow = new ArrayList<Pair<Pair<IntentionAction,String>, List<IntentionAction>>>();
-    ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> fixesToShow = new ArrayList<Pair<Pair<IntentionAction,String>, List<IntentionAction>>>();
+    ArrayList<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    ArrayList<HighlightInfo.IntentionActionDescriptor> fixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     for (IntentionAction action : intentionActions) {
       if (action instanceof IntentionActionComposite) {
 
@@ -49,7 +49,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       else if (action.isAvailable(project, editor, file)) {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
         enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
-        intentionsToShow.add(new Pair<Pair<IntentionAction,String>,  List<IntentionAction>>(Pair.create(action,(String)null), enableDisableIntentionAction));
+        intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action,enableDisableIntentionAction, null));
       }
     }
 

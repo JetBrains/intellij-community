@@ -35,9 +35,8 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -45,8 +44,8 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -150,13 +149,13 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     Point xy = myEditor.logicalPositionToXY(caretPos);
     if (!visibleArea.contains(xy)) return;
 
-    ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> intentionsToShow = new ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>>();
-    ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> fixesToShow = new ArrayList<Pair<Pair<IntentionAction, String>, List<IntentionAction>>>();
+    ArrayList<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    ArrayList<HighlightInfo.IntentionActionDescriptor> fixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     for (IntentionAction action : myIntentionActions) {
       if (action instanceof IntentionActionComposite) {
         if (action instanceof QuickFixAction ||
             action instanceof PostIntentionsQuickFixAction && codeAnalyzer.showPostIntentions()) {
-          List<Pair<Pair<IntentionAction, String>, List<IntentionAction>>> availableActions = ((IntentionActionComposite)action).getAvailableActions(myEditor, myFile);
+          List<HighlightInfo.IntentionActionDescriptor> availableActions = ((IntentionActionComposite)action).getAvailableActions(myEditor, myFile);
 
           int offset = myEditor.getCaretModel().getOffset();
           HighlightInfo info = codeAnalyzer.findHighlightByOffset(myEditor.getDocument(), offset, true);
@@ -171,21 +170,21 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       else if (action.isAvailable(myProject, myEditor, myFile)) {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
         enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
-        intentionsToShow.add(new Pair<Pair<IntentionAction, String>, List<IntentionAction>>(Pair.create(action, (String)null), enableDisableIntentionAction));
+        intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
       }
     }
 
     if (!intentionsToShow.isEmpty() || !fixesToShow.isEmpty()) {
       boolean showBulb = false;
-      for (Pair<Pair<IntentionAction,String>,List<IntentionAction>> action : fixesToShow) {
-        if (IntentionManagerSettings.getInstance().isShowLightBulb(action.first.first)) {
+      for (HighlightInfo.IntentionActionDescriptor action : fixesToShow) {
+        if (IntentionManagerSettings.getInstance().isShowLightBulb(action.getAction())) {
           showBulb = true;
           break;
         }
       }
       if (!showBulb) {
-        for (Pair<Pair<IntentionAction,String>,List<IntentionAction>> action : intentionsToShow) {
-          if (IntentionManagerSettings.getInstance().isShowLightBulb(action.first.first)) {
+        for (HighlightInfo.IntentionActionDescriptor action : intentionsToShow) {
+          if (IntentionManagerSettings.getInstance().isShowLightBulb(action.getAction())) {
             showBulb = true;
             break;
           }

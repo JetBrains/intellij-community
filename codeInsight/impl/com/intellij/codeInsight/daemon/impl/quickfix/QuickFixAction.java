@@ -16,7 +16,7 @@ import java.util.List;
  * @author Alexey Kudravtsev
  */
 public final class QuickFixAction extends IntentionActionComposite {
-  protected void addAvailableActions(HighlightInfo info, Editor editor, PsiFile file, ArrayList<Pair<Pair<IntentionAction,String>,List<IntentionAction>>> list) {
+  protected void addAvailableActions(HighlightInfo info, Editor editor, PsiFile file, ArrayList<HighlightInfo.IntentionActionDescriptor> list) {
     addAvailableActionsForGroups(info, editor, file, list, UpdateHighlightersUtil.NORMAL_HIGHLIGHT_GROUPS );
   }
 
@@ -33,9 +33,9 @@ public final class QuickFixAction extends IntentionActionComposite {
     if (info == null || action == null) return;
     if (fixRange == null) fixRange = new TextRange(info.startOffset, info.endOffset);
     if (info.quickFixActionRanges == null) {
-      info.quickFixActionRanges = new ArrayList<Pair<Pair<Pair<IntentionAction, String>, List<IntentionAction>>, TextRange>>();
+      info.quickFixActionRanges = new ArrayList<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>>();
     }
-    info.quickFixActionRanges.add(Pair.create(Pair.create(Pair.create(action,displayName), options), fixRange));
+    info.quickFixActionRanges.add(Pair.create(new HighlightInfo.IntentionActionDescriptor(action, options, displayName), fixRange));
     info.fixStartOffset = Math.min (info.fixStartOffset, fixRange.getStartOffset());
     info.fixEndOffset = Math.max (info.fixEndOffset, fixRange.getEndOffset());
   }

@@ -53,7 +53,6 @@ public class HighlightInfo {
     if (forcedTextAttributes != null && forcedTextAttributes.getErrorStripeColor() != null) {
       return forcedTextAttributes.getErrorStripeColor();
     }
-    HighlightSeverity severity = getSeverity();
     if (severity == HighlightSeverity.ERROR) {
       return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES).getErrorStripeColor();
     }
@@ -173,8 +172,8 @@ public class HighlightInfo {
   public RangeHighlighter highlighter;
   public String text;
 
-  public List<Pair<Pair<Pair<IntentionAction,String>,  List<IntentionAction>>, TextRange>> quickFixActionRanges;
-  public List<Pair<Pair<Pair<IntentionAction,String>, List<IntentionAction>>, RangeMarker>> quickFixActionMarkers;
+  public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
+  public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
 
   private GutterIconRenderer gutterIconRenderer;
 
@@ -258,5 +257,31 @@ public class HighlightInfo {
     HighlightInfo highlightInfo = new HighlightInfo(textAttributes, type, textRange.getStartOffset(), textRange.getEndOffset(), message, htmlEscapeToolTip(message), type.getSeverity(element), false, false);
     highlightInfo.forcedTextAttributes = attributes;
     return highlightInfo;
+  }
+
+  public static class IntentionActionDescriptor {
+    private IntentionAction myAction;
+    private List<IntentionAction> myOptions;
+    private String myDisplayName;
+
+
+    public IntentionActionDescriptor(final IntentionAction action, final List<IntentionAction> options, final String displayName) {
+      myAction = action;
+      myOptions = options;
+      myDisplayName = displayName;
+    }
+
+
+    public IntentionAction getAction() {
+      return myAction;
+    }
+
+    public List<IntentionAction> getOptions() {
+      return myOptions;
+    }
+
+    public String getDisplayName() {
+      return myDisplayName;
+    }
   }
 }
