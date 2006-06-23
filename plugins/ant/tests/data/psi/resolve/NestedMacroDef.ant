@@ -4,9 +4,7 @@
   </target>
   <macrodef name="mytask">
     <sequential>
-      <
-      <ref>
-      mytask/>
+      <<ref>mytask/>
     </sequential>
   </macrodef>
 </project>
