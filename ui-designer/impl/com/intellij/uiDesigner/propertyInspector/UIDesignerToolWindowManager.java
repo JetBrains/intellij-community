@@ -75,6 +75,9 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
     if (myToolWindowPanel != null) {
       ToolWindowManager.getInstance(myProject).unregisterToolWindow(UIDesignerBundle.message("toolwindow.ui.designer"));
       myFileEditorManager.removeFileEditorManagerListener(myListener);
+      if (myComponentTreeBuilder != null) {
+        Disposer.dispose(myComponentTreeBuilder);
+      }
       myToolWindowPanel = null;
       myToolWindow = null;
     }
