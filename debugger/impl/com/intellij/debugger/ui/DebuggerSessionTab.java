@@ -38,7 +38,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -58,7 +57,7 @@ import java.util.Set;
  * Use is subject to license terms.
  */
 
-public class DebuggerSessionTab implements LogConsoleManager, Disposable {
+public class DebuggerSessionTab implements LogConsoleManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerSessionTab");
 
   private static final Icon DEBUG_AGAIN_ICON = IconLoader.getIcon("/actions/startDebugger.png");
@@ -427,10 +426,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
       configurationBase.clearAdditionalTabs();
     }
-    if (myConsole != null) {
-      myConsole.dispose();
-      myConsole = null;
-    }
+    myConsole = null;
   }
 
   private void disposeSession() {
@@ -459,20 +455,8 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     }
   }
 
-  public RunContentDescriptor getRunContentDescriptor() {
-    return myRunContentDescriptor;
-  }
-
-  public ExecutionConsole getConsole() {
-    return myConsole;
-  }
-
   public String getSessionName() {
     return myConfiguration.getName();
-  }
-
-  public ContentManager getViewsContentManager() {
-    return myViewsContentManager;
   }
 
   public DebuggerStateManager getContextManager() {
