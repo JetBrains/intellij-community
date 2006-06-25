@@ -10,8 +10,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -62,6 +62,9 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     codeFragment.accept(this);
 
     myPass2Flow.setFields(myFields.toArray(new DfaVariableValue[myFields.size()]));
+
+    LOG.assertTrue(myPass1Flow.getInstructionCount() == myPass2Flow.getInstructionCount());
+
     return myPass2Flow;
   }
 
@@ -1029,7 +1032,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       PsiExpression[] params = argList.getExpressions();
       PsiClass owner = resolved.getContainingClass();
       final int exitPoint = getEndOffset(expression) - 1;
-      if (owner != null && exitPoint >= 0) {
+      if (owner != null) {
         final String className = owner.getQualifiedName();
         if ("java.lang.System".equals(className)) {
           if ("exit".equals(methodName)) {

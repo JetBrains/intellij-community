@@ -201,4 +201,6 @@ public class DataFlowTest extends InspectionTestCase {
   public void testCompileTimeConst() throws Exception { doTest15(); }
   public void testAutoboxing() throws Exception { doTest15(); }
   public void testUnboxingNPE() throws Exception { doTest15(); }
+
+  public void testStrangeArrayIndexOutOfBounds() throws Exception { doTest15(); }
 }
