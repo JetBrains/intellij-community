@@ -2,8 +2,9 @@
 <module version="4" relativePaths="true" type="JAVA_MODULE">
   <component name="ModuleRootManager" />
   <component name="NewModuleRootManager" inherit-compiler-output="false">
-    <output url="file://$MODULE_DIR$/../classes/main" />
+    <output url="file://$MODULE_DIR$/../out/classes/production/idea" />
     <exclude-output />
+    <output-test url="file://$MODULE_DIR$/../out/classes/test/idea" />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>

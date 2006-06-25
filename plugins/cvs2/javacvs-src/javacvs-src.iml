@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module version="4" relativePaths="true" type="JAVA_MODULE">
   <component name="ModuleRootManager" />
-  <component name="NewModuleRootManager" inherit-compiler-output="false">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
     <output url="file://$MODULE_DIR$/../javacvsClasses" />
     <exclude-output />
     <exclude-exploded />
