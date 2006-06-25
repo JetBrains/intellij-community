@@ -92,7 +92,12 @@ public class BoolUtils{
 
     @Nullable
     public static String getNegatedExpressionText(PsiExpression condition){
-        if(isNegation(condition)){
+        if (condition instanceof PsiParenthesizedExpression) {
+            final PsiParenthesizedExpression parenthesizedExpression =
+                    (PsiParenthesizedExpression)condition;
+            final PsiExpression expression = parenthesizedExpression.getExpression();
+            return '(' + getNegatedExpressionText(expression) + ')';
+        } else if (isNegation(condition)){
             final PsiExpression negated = getNegated(condition);
             if (negated == null) {
                 return null;
