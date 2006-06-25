@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -519,6 +520,7 @@ public class StringUtil {
   public static int stringHashCode(CharSequence chars) {
     if (chars instanceof String) return chars.hashCode();
     if (chars instanceof CharSequenceWithStringHash) return chars.hashCode();
+    if (chars instanceof CharArrayCharSequence) return chars.hashCode();
     int h = 0;
     int to = chars.length();
     for (int off = 0; off < to; off++) {

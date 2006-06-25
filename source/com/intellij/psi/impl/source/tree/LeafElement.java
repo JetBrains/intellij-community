@@ -62,60 +62,13 @@ public abstract class LeafElement extends TreeElement {
     }
   }
 
-  public synchronized TreeElement getTreeNext() {
-    if (!isLast()) return next;
-    return null;
-  }
-
-  public synchronized CompositeElement getTreeParent() {
-    if (isLast()) return (CompositeElement)next;
-
-    TreeElement next = this.next;
-    while (next instanceof LeafElement && !((LeafElement)next).isLast()) next = next.next;
-    if (next != null) return next.getTreeParent();
-    return null;
-  }
-
-  public synchronized TreeElement getTreePrev() {
-    final CompositeElement parent = getTreeParent();
-    if (parent == null) return null;
-    TreeElement firstChild = parent.firstChild;
-    if (firstChild == this) return null;
-    while (firstChild != null && firstChild.next != this) firstChild = firstChild.next;
-    return firstChild;
-  }
-
-  public synchronized void setTreeParent(CompositeElement parent) {
-    if (next == null || isLast()) {
-      next = parent;
-      setLast(true);
-    }
-  }
-
   public void acceptTree(TreeElementVisitor visitor) {
     visitor.visitLeaf(this);
-  }
-
-  public synchronized void setTreeNext(TreeElement next) {
-    if (next != null) {
-      setLast(false);
-      this.next = next;
-    }
-    else {
-      if (!isLast()) {
-        this.next = getTreeParent();
-        setLast(true);
-      }
-    }
-  }
-
-  public void setTreePrev(TreeElement prev) {
   }
 
   public Object clone() {
     LeafElement clone = (LeafElement)super.clone();
     clone.setState(-1);
-    clone.setLast(false);
     return clone;
   }
 

@@ -24,25 +24,25 @@ import java.util.Map;
 public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
   private static final TextAttributesKey[] EMPTY = new TextAttributesKey[0];
 
-  protected static TextAttributesKey[] pack(TextAttributesKey key) {
+  public static TextAttributesKey[] pack(TextAttributesKey key) {
     if (key == null) return EMPTY;
     return new TextAttributesKey[] {key};
   }
 
-  protected static TextAttributesKey[] pack(TextAttributesKey key1, TextAttributesKey key2) {
+  public static TextAttributesKey[] pack(TextAttributesKey key1, TextAttributesKey key2) {
     if (key1 == null) return pack(key2);
     if (key2 == null) return pack(key1);
     return new TextAttributesKey[] {key1, key2};
   }
 
-  protected static TextAttributesKey[] pack(TextAttributesKey[] base, TextAttributesKey key) {
+  public static TextAttributesKey[] pack(TextAttributesKey[] base, TextAttributesKey key) {
     if (key == null) return base;
     TextAttributesKey[] result = new TextAttributesKey[base.length + 1];
     System.arraycopy(base, 0, result, 0, base.length);
     result[base.length] = key;
     return result;
   }
-  protected static TextAttributesKey[] pack(TextAttributesKey key, TextAttributesKey[] base) {
+  public static TextAttributesKey[] pack(TextAttributesKey key, TextAttributesKey[] base) {
     if (key == null) return base;
     TextAttributesKey[] result = new TextAttributesKey[base.length + 1];
     System.arraycopy(base, 0, result, 1, base.length);
@@ -57,7 +57,7 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     }
   }
 
-  protected static TextAttributesKey[] pack(TextAttributesKey[] base, TextAttributesKey t1, TextAttributesKey t2) {
+  public static TextAttributesKey[] pack(TextAttributesKey[] base, TextAttributesKey t1, TextAttributesKey t2) {
     int add = 0;
     if (t1 != null) add++;
     if (t2 != null) add++;

@@ -27,6 +27,11 @@ public class SegmentArray {
     myEnds[i] = endOffset;
   }
 
+  public void replace(int startOffset, SegmentArray data, int len) {
+    System.arraycopy(data.myStarts, 0, myStarts, startOffset, len);
+    System.arraycopy(data.myEnds, 0, myEnds, startOffset, len);
+  }
+
   protected static int[] relocateArray(int[] array, int index) {
     if(index < array.length)
       return array;
@@ -42,6 +47,26 @@ public class SegmentArray {
     System.arraycopy(array, 0, newArray, 0, array.length);
     return newArray;
   }
+
+  @SuppressWarnings({"unchecked", "UnnecessaryFullyQualifiedName"})
+  protected static <T> T[] relocateArray(T[] array, int index) {
+    if(index < array.length)
+      return array;
+
+    int newArraySize = array.length;
+    if(newArraySize == 0) {
+      newArraySize = 16;
+    }
+    while(newArraySize <= index) {
+      newArraySize = (newArraySize * 120) / 100;
+    }
+
+    T[] newArray = (T[])java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), newArraySize);
+
+    System.arraycopy(array, 0, newArray, 0, array.length);
+    return newArray;
+  }
+
   protected static short[] relocateArray(short[] array, int index) {
     if(index < array.length)
       return array;
@@ -122,12 +147,22 @@ public class SegmentArray {
     }
     return array;
   }
+
+  protected <T> T[] remove(T[] array, int startIndex, int endIndex) {
+    if(endIndex < mySegmentCount) {
+      System.arraycopy(array, endIndex, array, startIndex, mySegmentCount-endIndex);
+    }
+    return array;
+  }
+
+
   protected short[] remove(short[] array, int startIndex, int endIndex) {
     if(endIndex < mySegmentCount) {
       System.arraycopy(array, endIndex, array, startIndex, mySegmentCount-endIndex);
     }
     return array;
   }
+
   protected long[] remove(long[] array, int startIndex, int endIndex) {
     if(endIndex < mySegmentCount) {
       System.arraycopy(array, endIndex, array, startIndex, mySegmentCount-endIndex);
@@ -143,6 +178,15 @@ public class SegmentArray {
 
   protected int[] insert(int[] array, int[] insertArray, int startIndex, int insertLength) {
     int[] newArray = relocateArray(array, mySegmentCount + insertLength);
+    if(startIndex < mySegmentCount) {
+      System.arraycopy(newArray, startIndex, newArray, startIndex+insertLength, mySegmentCount-startIndex);
+    }
+    System.arraycopy(insertArray, 0, newArray, startIndex, insertLength);
+    return newArray;
+  }
+
+  protected <T> T[] insert(T[] array, T[] insertArray, int startIndex, int insertLength) {
+    T[] newArray = relocateArray(array, mySegmentCount + insertLength);
     if(startIndex < mySegmentCount) {
       System.arraycopy(newArray, startIndex, newArray, startIndex+insertLength, mySegmentCount-startIndex);
     }

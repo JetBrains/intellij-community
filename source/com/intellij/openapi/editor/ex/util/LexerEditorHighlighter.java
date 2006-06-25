@@ -1,26 +1,18 @@
 package com.intellij.openapi.editor.ex.util;
 
-import com.intellij.codeHighlighting.CopyCreatorLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.impl.source.parsing.jsp.JspHighlightLexer;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 
@@ -32,10 +24,10 @@ import java.util.Map;
  */
 public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.LexerEditorHighlighter");
-  private Editor myEditor;
+  private HighlighterClient myEditor;
   private Lexer myLexer;
   private Map<IElementType, TextAttributes> myAttributesMap;
-  private SegmentArrayWithData mySegments = new SegmentArrayWithData();
+  private SegmentArrayWithData mySegments;
   private SyntaxHighlighter myHighlighter;
   private EditorColorsScheme myScheme;
   private int myInitialState;
@@ -48,13 +40,26 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     myInitialState = myLexer.getState();
     myAttributesMap = new HashMap<IElementType, TextAttributes>();
     myHighlighter = highlighter;
+    mySegments = new SegmentArrayWithData();
+  }
+
+  protected final Document getDocument() {
+    return myEditor != null ? myEditor.getDocument() : null;
+  }
+
+  public EditorColorsScheme getScheme() {
+    return myScheme;
+  }
+
+  protected final void setSegmentStorage(SegmentArrayWithData storage) {
+    mySegments = storage;
   }
 
   public Lexer getLexer() {
     return myLexer;
   }
 
-  public void setEditor(Editor editor) {
+  public void setEditor(HighlighterClient editor) {
     LOG.assertTrue(myEditor == null, "Highlighters cannot be reused with different editors");
     myEditor = editor;
   }
@@ -77,22 +82,18 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return data >= 0;
   }
 
-  private static IElementType unpackToken(int data) {
+  protected static IElementType unpackToken(int data) {
     return IElementType.find((short)Math.abs(data));
   }
 
   public synchronized void documentChanged(DocumentEvent e) {
     Document document = e.getDocument();
 
-    if(myLexer instanceof JspHighlightLexer && myEditor != null && myEditor.getProject() != null){
-      final PsiDocumentManager instance = PsiDocumentManager.getInstance(myEditor.getProject());
-      final PsiFile psiFile = instance.getPsiFile(document);
-      if (PsiUtil.isInJspFile(psiFile)) ((JspHighlightLexer)myLexer).setBaseFile(PsiUtil.getJspFile(psiFile));
-    }
     if(mySegments.getSegmentCount() == 0) {
       setText(document.getCharsSequence());
       return;
     }
+
     CharSequence text = document.getCharsSequence();
     int oldStartOffset = e.getOffset();
 
@@ -193,8 +194,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     }
     int changedIndex = changedOffsetIndex(startIndex, oldEndIndex, insertSegments);
     mySegments.shiftSegments(oldEndIndex, shift);
-    mySegments.remove(startIndex, oldEndIndex);
-    mySegments.insert(insertSegments, startIndex);
+    mySegments.replace(startIndex, oldEndIndex, insertSegments);
+
     synchronized (document) {
       int tokenStartOffset;
       if (changedIndex == -1) {
@@ -218,7 +219,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       return;
     }
 
-    ((EditorEx) myEditor).repaint(startOffset, repaintEnd);
+    myEditor.repaint(startOffset, repaintEnd);
   }
 
   // -1 means data has been changed
@@ -260,15 +261,15 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     */
   }
 
+
+  public HighlighterClient getClient() {
+    return myEditor;
+  }
+
   public void setText(CharSequence text) {
     char[] chars = CharArrayUtil.fromSequence(text);
-    if(myLexer instanceof JspHighlightLexer && myEditor != null && myEditor.getProject() != null){
-      final PsiDocumentManager instance = PsiDocumentManager.getInstance(myEditor.getProject());
-      final PsiFile psiFile = instance.getPsiFile(myEditor.getDocument());
-      if (PsiUtil.isInJspFile(psiFile)) ((JspHighlightLexer)myLexer).setBaseFile(PsiUtil.getJspFile(psiFile));
-    }
-    int startOffset = 0;
-    myLexer.start(chars, startOffset, text.length());
+
+    myLexer.start(chars, 0, text.length());
     mySegments.removeAll();
     int i = 0;
     while(myLexer.getTokenType() != null) {
@@ -281,7 +282,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     checkUpdateCorrect(text.length());
 
     if(myEditor != null) {
-      ((EditorEx) myEditor).repaint(0, text.length());
+      myEditor.repaint(0, text.length());
     }
   }
 
@@ -294,7 +295,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return attrs;
   }
 
-  private TextAttributes convertAttributes(TextAttributesKey[] keys) {
+  protected TextAttributes convertAttributes(TextAttributesKey[] keys) {
     EditorColorsScheme scheme = myScheme;
     TextAttributes attrs = scheme.getAttributes(HighlighterColors.TEXT);
     for (TextAttributesKey key : keys) {
@@ -316,9 +317,12 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       mySegmentIndex = mySegments.findSegmentIndex(startOffset);
     }
 
+    public int currentIndex() {
+      return mySegmentIndex;
+    }
+
     public TextAttributes getTextAttributes() {
-      IElementType tokenType = getRawToken();
-      return getAttributes(tokenType);
+      return getAttributes(getTokenType());
     }
 
     public int getStart() {
@@ -330,15 +334,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     }
 
     public IElementType getTokenType(){
-      IElementType token = getRawToken();
-      if (token instanceof CopyCreatorLexer.HighlightingCopyElementType) {
-        token = ((CopyCreatorLexer.HighlightingCopyElementType)token).getBase();
-      }
-      return token;
-    }
-
-    public IElementType getRawToken() {
-        return unpackToken(mySegments.getSegmentData(mySegmentIndex));
+      return unpackToken(mySegments.getSegmentData(mySegmentIndex));
     }
 
     public void advance() {

@@ -11,7 +11,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.FoldRegion;
 import org.jetbrains.annotations.NotNull;
 
-public class FoldRegionImpl extends PersistentRangeMarker implements FoldRegion {
+public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   private boolean myIsExpanded;
   private EditorImpl myEditor;
   private String myPlaceholderText;

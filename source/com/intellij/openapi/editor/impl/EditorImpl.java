@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
+import com.intellij.openapi.editor.ex.util.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelEvent;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.*;
@@ -67,7 +68,7 @@ import java.util.Arrays;
 import java.util.TooManyListenersException;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public final class EditorImpl extends UserDataHolderBase implements EditorEx {
+public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
   private final DocumentImpl myDocument;

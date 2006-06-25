@@ -19,6 +19,32 @@ public class SegmentArrayWithData extends SegmentArray {
     super.remove(startIndex, endIndex);
   }
 
+  public void replace(int startIndex, int endIndex, SegmentArrayWithData newData) {
+    int oldLen = endIndex - startIndex;
+    int newLen = newData.getSegmentCount();
+
+    int delta = newLen - oldLen;
+    if (delta < 0) {
+      remove(endIndex + delta, endIndex);
+    }
+    else if (delta > 0) {
+      SegmentArrayWithData deltaData = new SegmentArrayWithData();
+      for (int i = oldLen; i < newLen; i++) {
+        deltaData.setElementAt(i - oldLen, newData.getSegmentStart(i), newData.getSegmentEnd(i), newData.getSegmentData(i));
+      }
+      insert(deltaData, startIndex + oldLen);
+    }
+
+    int common = Math.min(newLen, oldLen);
+    replace(startIndex, newData, common);
+  }
+
+
+  public void replace(int startOffset, SegmentArrayWithData data, int len) {
+    System.arraycopy(data.myData, 0, myData, startOffset, len);
+    super.replace(startOffset, data, len);
+  }
+
   public void insert(SegmentArrayWithData segmentArray, int startIndex) {
     myData = insert(myData, segmentArray.myData, startIndex, segmentArray.getSegmentCount());
     super.insert(segmentArray, startIndex);

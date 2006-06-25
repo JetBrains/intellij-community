@@ -64,21 +64,25 @@ public abstract class BaseFilterLexer extends LexerBase {
       start = Math.max(start, myTodoScannedBound);
       if (start >= end) return; // this prevents scanning of the same comment twice
 
-      IndexPattern[] patterns = IdCacheUtil.getIndexPatterns();
-      for(int index = 0; index < patterns.length; index++){
-        Pattern pattern = patterns[index].getPattern();
-        if (pattern != null){
-          CharSequence input = new CharArrayCharSequence(chars, start, end);
-          Matcher matcher = pattern.matcher(input);
-          while(matcher.find()){
-            if (matcher.start() != matcher.end()){
-              myTodoCounts[index]++;
-            }
+      CharSequence input = new CharArrayCharSequence(chars, start, end);
+      advanceTodoItemsCount(input, myTodoCounts);
+
+      myTodoScannedBound = end;
+    }
+  }
+
+  public static void advanceTodoItemsCount(final CharSequence input, final int[] todoCounts) {
+    IndexPattern[] patterns = IdCacheUtil.getIndexPatterns();
+    for(int index = 0; index < patterns.length; index++){
+      Pattern pattern = patterns[index].getPattern();
+      if (pattern != null){
+        Matcher matcher = pattern.matcher(input);
+        while(matcher.find()){
+          if (matcher.start() != matcher.end()){
+            todoCounts[index]++;
           }
         }
       }
-
-      myTodoScannedBound = end;
     }
   }
 

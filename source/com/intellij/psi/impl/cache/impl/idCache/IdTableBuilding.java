@@ -1,11 +1,10 @@
 package com.intellij.psi.impl.cache.impl.idCache;
 
-import com.intellij.codeHighlighting.CopyCreatorLexer;
+import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
@@ -14,6 +13,8 @@ import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
@@ -237,11 +238,10 @@ public class IdTableBuilding {
 
     final WordsScanner customWordsScanner = CacheBuilderRegistry.getInstance().getCacheBuilder(fileType);
     if (customWordsScanner != null) {
-      return new WordsScannerIdCacheBuilderAdapter(customWordsScanner, null, null);
+      return new WordsScannerIdCacheBuilderAdapter(customWordsScanner, null, null, virtualFile);
     }
 
     final SyntaxHighlighter highlighter = fileType.getHighlighter(project, virtualFile);
-    final Lexer highlightingLexer = highlighter != null ? highlighter.getHighlightingLexer() : null;
     if (fileType instanceof LanguageFileType) {
       final Language lang = ((LanguageFileType)fileType).getLanguage();
       final FindUsagesProvider findUsagesProvider = lang.getFindUsagesProvider();
@@ -250,7 +250,7 @@ public class IdTableBuilding {
       if (scanner != null) {
         final ParserDefinition parserDef = lang.getParserDefinition();
         final TokenSet commentTokens = parserDef != null ? parserDef.getCommentTokens() : null;
-        return new WordsScannerIdCacheBuilderAdapter(scanner, highlightingLexer, commentTokens);
+        return new WordsScannerIdCacheBuilderAdapter(scanner, highlighter, commentTokens, virtualFile);
       }
     }
 
@@ -259,7 +259,7 @@ public class IdTableBuilding {
                                                      CustomHighlighterTokenType.MULTI_LINE_COMMENT);
 
       return new WordsScannerIdCacheBuilderAdapter(((CustomFileType)fileType).getWordsScanner(),
-                                                   highlightingLexer, commentTokens);
+                                                   highlighter, commentTokens, virtualFile);
     }
 
     return null;
@@ -267,15 +267,18 @@ public class IdTableBuilding {
 
   private static class WordsScannerIdCacheBuilderAdapter implements IdCacheBuilder {
     private WordsScanner myScanner;
-    @Nullable private final Lexer myHighlightingLexer;
+    @Nullable private final SyntaxHighlighter myHighlighter;
     @Nullable private final TokenSet myCommentTokens;
+    private final VirtualFile myFile;
 
     public WordsScannerIdCacheBuilderAdapter(@NotNull final WordsScanner scanner,
-                                             @Nullable final Lexer highlightingLexer,
-                                             @Nullable final TokenSet commentTokens) {
+                                             @Nullable final SyntaxHighlighter highlighter,
+                                             @Nullable final TokenSet commentTokens,
+                                             @NotNull final VirtualFile file) {
       myScanner = scanner;
-      myHighlightingLexer = highlightingLexer;
+      myHighlighter = highlighter;
       myCommentTokens = commentTokens;
+      myFile = file;
     }
 
     public void build(char[] chars,
@@ -284,7 +287,8 @@ public class IdTableBuilding {
                       final IndexPattern[] todoPatterns,
                       final int[] todoCounts,
                       final PsiManager manager) {
-      myScanner.processWords(new CharArrayCharSequence(chars, 0, length), new Processor<WordOccurrence>() {
+      final CharArrayCharSequence text = new CharArrayCharSequence(chars, 0, length);
+      myScanner.processWords(text, new Processor<WordOccurrence>() {
         public boolean process(final WordOccurrence t) {
           IdCacheUtil.addOccurrence(wordsTable, t.getText(), convertToMask(t.getKind()));
           return true;
@@ -300,36 +304,19 @@ public class IdTableBuilding {
         }
       });
 
-      if (myHighlightingLexer != null && myCommentTokens != null && todoCounts != null) {
-        BaseFilterLexer filterLexer = new BaseFilterLexer(myHighlightingLexer, wordsTable, todoCounts) {
-          private Language myJavaLanguage = StdLanguages.JAVA;
-          private Language myXmlLanguage = StdLanguages.XML;
-          private Language myELLanguage = StdLanguages.EL;
-          private Language myAnyLanguage = Language.ANY;
+      if (myHighlighter != null && myCommentTokens != null && todoCounts != null) {
+        final LexerEditorHighlighter highlighter = HighlighterFactory.createHighlighter(manager.getProject(), myFile);
+        highlighter.setText(text);
 
-          public void advance() {
-            IElementType tokenType = myOriginalLexer.getTokenType();
-            if(tokenType instanceof CopyCreatorLexer.HighlightingCopyElementType){
-              final CopyCreatorLexer.HighlightingCopyElementType scriptletJavaElementTypeToken = (CopyCreatorLexer.HighlightingCopyElementType)tokenType;
-              tokenType = scriptletJavaElementTypeToken.getBase();
-            }
-
-            if (myCommentTokens.contains(tokenType)) {
-              advanceTodoItemCounts(getBuffer(), getTokenStart(), getTokenEnd());
-            } else if (tokenType.getLanguage() != myXmlLanguage &&
-                       tokenType.getLanguage() != myJavaLanguage &&
-                       tokenType.getLanguage() != myELLanguage &&
-                       tokenType.getLanguage() != myAnyLanguage
-                      ) {
-              if (IdCacheUtil.isInComments(tokenType)) {
-                advanceTodoItemCounts(getBuffer(), getTokenStart(), getTokenEnd());
-              }
-            }
-            myOriginalLexer.advance();
+        final HighlighterIterator iterator = highlighter.createIterator(0);
+        while (!iterator.atEnd()) {
+          final IElementType token = iterator.getTokenType();
+          if (IdCacheUtil.isInComments(token)) {
+            BaseFilterLexer.advanceTodoItemsCount(text.subSequence(iterator.getStart(), iterator.getEnd()), todoCounts);
           }
-        };
-        filterLexer.start(chars);
-        while (filterLexer.getTokenType() != null) filterLexer.advance();
+
+          iterator.advance();
+        }
       }
     }
   }

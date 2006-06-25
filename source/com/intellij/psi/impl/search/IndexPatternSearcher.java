@@ -1,16 +1,14 @@
 package com.intellij.psi.impl.search;
 
-import com.intellij.codeHighlighting.CopyCreatorLexer;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lexer.Lexer;
 import com.intellij.lexer.JavaLexer;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -23,6 +21,7 @@ import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Processor;
@@ -145,9 +144,6 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
                                    final TIntArrayList commentStarts, final TIntArrayList commentEnds) {
     for (lexer.start(chars); ; lexer.advance()) {
       IElementType tokenType = lexer.getTokenType();
-      if (tokenType instanceof CopyCreatorLexer.HighlightingCopyElementType) {
-        tokenType = ((CopyCreatorLexer.HighlightingCopyElementType)tokenType).getBase();
-      }
       if (tokenType == null) break;
 
       if (range != null) {

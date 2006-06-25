@@ -19,8 +19,6 @@ import org.jetbrains.annotations.NotNull;
 public class CompositeElement extends TreeElement implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositeElement");
 
-  public TreeElement prev = null;
-  public CompositeElement parent = null;
   public TreeElement firstChild = null; // might be modified by transforming chameleons
   public TreeElement lastChild = null; // might be modified by transforming chameleons
   private final IElementType type;
@@ -114,8 +112,6 @@ public class CompositeElement extends TreeElement implements Cloneable {
 
     synchronized (PsiLock.LOCK) {
       clone.clearCaches();
-      clone.parent = null;
-      clone.prev = null;
       clone.firstChild = null;
       clone.lastChild = null;
       clone.myModificationsCount = 0;
@@ -146,22 +142,6 @@ public class CompositeElement extends TreeElement implements Cloneable {
 
   public IElementType getElementType() {
     return type;
-  }
-
-  public CompositeElement getTreeParent() {
-    return parent;
-  }
-
-  public TreeElement getTreePrev() {
-    return prev;
-  }
-
-  public void setTreePrev(TreeElement prev) {
-    this.prev = prev;
-  }
-
-  public void setTreeParent(CompositeElement parent) {
-    this.parent = parent;
   }
 
   public LeafElement findLeafElementAt(int offset) {

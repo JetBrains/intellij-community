@@ -24,12 +24,13 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.editor.ex.util.HighlighterClient;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -618,7 +619,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     public void setText(final CharSequence text) {
     }
 
-    public void setEditor(final Editor editor) {
+    public void setEditor(final HighlighterClient editor) {
       LOG.assertTrue(!myHasEditor, "Highlighters cannot be reused with different editors");
       myHasEditor = true;
     }

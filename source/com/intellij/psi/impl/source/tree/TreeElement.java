@@ -15,8 +15,9 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class TreeElement extends ElementBase implements ASTNode, Constants, Cloneable {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
-  protected TreeElement next = null; // this var could be not only next element pointer in ChildElements
-  // use it _VERY_ carefuly!! If you are not sure use apropariate getter (getTreeNext()).
+  public TreeElement next = null;
+  public TreeElement prev = null;
+  public CompositeElement parent = null;
 
   public static final Key<PsiManager> MANAGER_KEY = Key.create("Element.MANAGER_KEY");
   public static final Key<PsiElement> PSI_ELEMENT_KEY = Key.create("Element.PsiElement");
@@ -24,7 +25,11 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   public Object clone() {
     TreeElement clone = (TreeElement)super.clone();
     clone.clearCaches();
+
     clone.next = null;
+    clone.prev = null;
+    clone.parent = null;
+
     return clone;
   }
 
@@ -74,15 +79,14 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   }
 
   public int getStartOffset() {
-  synchronized (PsiLock.LOCK) {
-    final CompositeElement parent = getTreeParent();
-    if (parent == null) return 0;
-    int offset = parent.getStartOffset();
-    for (TreeElement element1 = parent.firstChild; element1 != this; element1 = element1.getTreeNext()) {
-      offset += element1.getTextLength();
+    synchronized (PsiLock.LOCK) {
+      if (parent == null) return 0;
+      int offset = parent.getStartOffset();
+      for (TreeElement element1 = parent.firstChild; element1 != this; element1 = element1.getTreeNext()) {
+        offset += element1.getTextLength();
+      }
+      return offset;
     }
-    return offset;
-  }
   }
 
   public final int getStartOffsetInParent() {
@@ -134,21 +138,51 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
 
   public abstract IElementType getElementType();
 
-  public abstract CompositeElement getTreeParent();
+  public final CompositeElement getTreeParent() {
+    return parent;
+    /*
+    if (isLast()) return (CompositeElement)next;
 
-  public TreeElement getTreeNext() {
+    TreeElement next = this.next;
+    while (next instanceof LeafElement && !((LeafElement)next).isLast()) next = next.next;
+    if (next != null) return next.getTreeParent();
+    return null;
+    */
+  }
+
+  public final TreeElement getTreePrev() {
+    return prev;
+    /*
+    final CompositeElement parent = getTreeParent();
+    if (parent == null) return null;
+    TreeElement firstChild = parent.firstChild;
+    if (firstChild == this) return null;
+    while (firstChild != null && firstChild.next != this) firstChild = firstChild.next;
+    return firstChild;
+    */
+  }
+
+  public final void setTreeParent(CompositeElement parent) {
+    this.parent = parent;
+    /*
+    if (next == null || isLast()) {
+      next = parent;
+      setLast(true);
+    }
+    */
+  }
+
+  public final void setTreePrev(TreeElement prev) {
+    this.prev = prev;
+  }
+
+  public final TreeElement getTreeNext() {
     return next;
   }
 
-  public abstract TreeElement getTreePrev();
-
-  public abstract void setTreePrev(TreeElement prev);
-
-  public void setTreeNext(TreeElement next) {
+  public final void setTreeNext(TreeElement next) {
     this.next = next;
   }
-
-  public abstract void setTreeParent(CompositeElement parent);
 
   public void clearCaches() { }
 

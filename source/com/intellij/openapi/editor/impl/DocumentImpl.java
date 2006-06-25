@@ -2,7 +2,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -59,6 +58,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private int myCheckGuardedBlocks = 0;
   private boolean myGuardsSuppressed = false;
   private boolean myEventsHandling = false;
+  private boolean myAssertWriteAccess = true;
 
   private DocumentImpl() {
     setCyclicBufferSize(0);
@@ -76,6 +76,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public DocumentImpl(CharSequence chars) {
     this();
     setChars(chars);
+  }
+
+  public void dontAssertWriteAccess() {
+    myAssertWriteAccess = false;
   }
 
   public char[] getRawChars() {
@@ -258,7 +262,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public void insertString(int offset, CharSequence s) {
     if (offset < 0 || offset > getTextLength()) throw new IndexOutOfBoundsException("Wrong offset: " + offset);
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assertWriteAccess();
     assertValidSeparators(s);
 
     if (!isWritable()) throw new ReadOnlyModificationException(this);
@@ -283,7 +287,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throw new IllegalArgumentException("endOffset < startOffset: " + endOffset + " < " + startOffset);
     }
 
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assertWriteAccess();
     if (!isWritable()) throw new ReadOnlyModificationException(this);
     if (startOffset == endOffset) return;
     CharSequence sToDelete = myText.substring(startOffset, endOffset);
@@ -311,10 +315,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       throw new IllegalArgumentException("endOffset < startOffset: " + endOffset + " < " + startOffset);
     }
 
-    final Application application = ApplicationManager.getApplication();
-    if (application != null) {
-      application.assertWriteAccessAllowed();
-    }
+    assertWriteAccess();
     assertValidSeparators(s);
 
     if (!isWritable()) {
@@ -350,6 +351,15 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
 
     myText.replace(startOffset, endOffset, sToDelete, s,newModificationStamp);
+  }
+
+  private void assertWriteAccess() {
+    if (myAssertWriteAccess) {
+      final Application application = ApplicationManager.getApplication();
+      if (application != null) {
+        application.assertWriteAccessAllowed();
+      }
+    }
   }
 
   private static void assertValidSeparators(final CharSequence s) {
@@ -456,10 +466,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private static void assertReadAccessToDocumentsAllowed() {
+    /*
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     if (application != null) {
       application.assertReadAccessToDocumentsAllowed();
     }
+    */
   }
 
 /*

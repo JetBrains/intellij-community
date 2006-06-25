@@ -58,6 +58,15 @@ public class CharArrayCharSequence implements CharSequence {
     return chars;
   }
 
+  public int hashCode() {
+    int h = 0;
+    int to = myEnd;
+    for (int off = myStart; off < to; off++) {
+      h = 31 * h + myChars[off];
+    }
+    return h;
+  }
+  
   public void getChars(char[] dst, int dstOffset) {
     System.arraycopy(myChars, myStart, dst, dstOffset, length());
   }

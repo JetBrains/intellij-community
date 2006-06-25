@@ -1,7 +1,6 @@
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -30,7 +29,7 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     myTextLength = text.length();
   }
 
-  public void setEditor(Editor editor) {
+  public void setEditor(HighlighterClient editor) {
     LOG.assertTrue(!myHasEditor, "Highlighters cannot be reused with different editors");
     myHasEditor = true;
   }

@@ -2,6 +2,7 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.ide.highlighter.custom.CustomFileHighlighter;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
+import com.intellij.lang.jsp.JspEditorHighlighter;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
@@ -28,8 +29,8 @@ public class HighlighterFactory {
     return createHighlighter(new XmlFileHighlighter(), settings);
   }
 
-  public static LexerEditorHighlighter createJSPHighlighter(EditorColorsScheme settings, Project project, VirtualFile virtualFile){
-    return createHighlighter(StdFileTypes.JSP.getHighlighter(project, virtualFile), settings);
+  public static LexerEditorHighlighter createJSPHighlighter(EditorColorsScheme settings, Project project, VirtualFile virtualFile) {
+    return new JspEditorHighlighter(settings, project, virtualFile);
   }
 
   public static LexerEditorHighlighter createCustomHighlighter(SyntaxTable syntaxTable, EditorColorsScheme settings){
@@ -54,12 +55,21 @@ public class HighlighterFactory {
   }
 
   public static LexerEditorHighlighter createHighlighter(FileType fileType, EditorColorsScheme settings, Project project) {
+    if (fileType == StdFileTypes.JSP) {
+      return createJSPHighlighter(settings, project, null);
+    }
+
     SyntaxHighlighter highlighter = fileType.getHighlighter(project, null);
     return createHighlighter(highlighter != null ? highlighter : new PlainSyntaxHighlighter(), settings);
   }
 
   public static LexerEditorHighlighter createHighlighter(VirtualFile vFile, EditorColorsScheme settings, Project project) {
-    SyntaxHighlighter highlighter = vFile.getFileType().getHighlighter(project, vFile);
+    final FileType fileType = vFile.getFileType();
+    if (fileType == StdFileTypes.JSP) {
+      return createJSPHighlighter(settings, project, vFile);
+    }
+
+    SyntaxHighlighter highlighter = fileType.getHighlighter(project, vFile);
     return createHighlighter(highlighter != null ? highlighter : new PlainSyntaxHighlighter(), settings);
   }
 }
