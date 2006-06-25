@@ -860,6 +860,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         public void run(){
           CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
             public void run() {
+              if (myProject.isDisposed()) return;
+
               PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
               PsiElement element = pointer.getElement();
               if (element == null) return;
