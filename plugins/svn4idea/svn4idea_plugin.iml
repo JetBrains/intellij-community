@@ -2,7 +2,7 @@
 <module version="4" relativePaths="true" type="PLUGIN_MODULE">
   <component name="DevKit.ModuleBuildProperties" url="file://$MODULE_DIR$/src/META-INF/plugin.xml" />
   <component name="ModuleRootManager" />
-  <component name="NewModuleRootManager" inherit-compiler-output="false">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
     <output url="file://$MODULE_DIR$/plugin_classes" />
     <exclude-output />
     <content url="file://$MODULE_DIR$">
