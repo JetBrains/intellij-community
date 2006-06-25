@@ -27,6 +27,7 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -106,13 +107,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     if (!myInlineThisOnly) {
       final PsiMethod[] superMethods = myMethod.findSuperMethods();
-        for (PsiMethod method : superMethods) {
-          final String message = method.hasModifierProperty(PsiModifier.ABSTRACT) ?
-                                 RefactoringBundle.message("inlined.method.implements.method.from.0", method.getContainingClass().getQualifiedName()) :
-                                 RefactoringBundle.message("inlined.method.overrides.method.from.0", method.getContainingClass().getQualifiedName())
-            ;
-          conflicts.add(message);
-        }
+      for (PsiMethod method : superMethods) {
+        final String message = method.hasModifierProperty(PsiModifier.ABSTRACT)
+                               ? RefactoringBundle
+          .message("inlined.method.implements.method.from.0", method.getContainingClass().getQualifiedName())
+                               : RefactoringBundle
+                                 .message("inlined.method.overrides.method.from.0", method.getContainingClass().getQualifiedName());
+        conflicts.add(message);
+      }
     }
 
     final ReferencedElementsCollector collector = new ReferencedElementsCollector();
@@ -135,6 +137,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       if (!dialog.isOK()) {
         return false;
       }
+    }
+
+    if (!myInlineThisOnly) {
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myMethod)) return false;
     }
 
     prepareSuccessful();
@@ -217,7 +223,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
               }
             }
           }
-          if (myMethod.isWritable()) myMethod.delete();
+          myMethod.delete();
         } else {
           List<PsiReferenceExpression> refExprList = new ArrayList<PsiReferenceExpression>();
           for (final UsageInfo usage : usages) {
@@ -232,7 +238,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           for (PsiReferenceExpression ref : refs) {
             inlineMethodCall(ref);
           }
-          if (myMethod.isWritable()) myMethod.delete();
+          myMethod.delete();
         }
       }
       removeAddedBracesWhenPossible();
