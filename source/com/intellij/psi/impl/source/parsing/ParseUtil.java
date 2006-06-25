@@ -359,21 +359,22 @@ public class ParseUtil implements Constants {
         }
       }
 
-      // bind "preceding comments" (like "// comment \n void f();")
-      if (child.getElementType() == END_OF_LINE_COMMENT || child.getElementType() == C_STYLE_COMMENT) {
-        if (bindPrecedingComment(child)) {
-          child = child.getTreeParent();
-          if (child.getTreePrev() != null) {
-            child = child.getTreePrev();
-          }
-          continue;
-        }
-      }
-
       if (child instanceof CompositeElement) {
         bindComments(child);
       }
       child = child.getTreeNext();
+    }
+
+    //pass 2: bind preceding comments (like "// comment \n void f();")
+    child = (TreeElement)root.getFirstChildNode();
+    while(child != null) {
+      if (child.getElementType() == END_OF_LINE_COMMENT || child.getElementType() == C_STYLE_COMMENT) {
+        TreeElement next = (TreeElement)TreeUtil.skipElements(child, PRECEDING_COMMENT_OR_SPACE_BIT_SET);
+        bindPrecedingComment(child, next);
+        child = next;
+      } else {
+        child = child.getTreeNext();
+      }
     }
   }
 
@@ -446,46 +447,38 @@ public class ParseUtil implements Constants {
 
   private static final TokenSet PRECEDING_COMMENT_OR_SPACE_BIT_SET = TokenSet.create(C_STYLE_COMMENT, END_OF_LINE_COMMENT, WHITE_SPACE);
 
-  private static boolean bindPrecedingComment(TreeElement comment) {
-    ASTNode element = TreeUtil.skipElements(comment, PRECEDING_COMMENT_OR_SPACE_BIT_SET);
-    if (element == null) return false;
+  private static void bindPrecedingComment(TreeElement comment, ASTNode bindTo) {
+    if (bindTo == null || bindTo.getFirstChildNode() != null &&
+                           bindTo.getFirstChildNode().getElementType() == JavaTokenType.DOC_COMMENT) return;
 
-    if (element.getElementType() == IMPORT_LIST && element.getTextLength() == 0) {
-      element = element.getTreeNext();
+    if (bindTo.getElementType() == IMPORT_LIST && bindTo.getTextLength() == 0) {
+      bindTo = bindTo.getTreeNext();
     }
 
-    if (element != null && BIND_PRECEDING_COMMENT_BIT_SET.contains(element.getElementType())) {
-      for (ASTNode child = comment; child != element; child = child.getTreeNext()) {
+    ASTNode toStart = isBindingComment(comment) ? comment : null;
+    if (bindTo != null && BIND_PRECEDING_COMMENT_BIT_SET.contains(bindTo.getElementType())) {
+      for (ASTNode child = comment; child != bindTo; child = child.getTreeNext()) {
         if (child.getElementType() == WHITE_SPACE) {
           int count = StringUtil.getLineBreakCount(child.getText());
-          if (count > 1) return false;
+          if (count > 1) toStart = null;
         }
         else {
-          if (comment.getTreePrev() != null && comment.getTreePrev().getElementType() == ElementType.WHITE_SPACE) {
-            LeafElement prev = (LeafElement)comment.getTreePrev();
+          if (child.getTreePrev() != null && child.getTreePrev().getElementType() == ElementType.WHITE_SPACE) {
+            LeafElement prev = (LeafElement)child.getTreePrev();
             char lastC = prev.charAt(prev.getTextLength() - 1);
-            if (lastC == '\n' || lastC == '\r') return false;
+            if (lastC == '\n' || lastC == '\r') toStart = isBindingComment(child) ? child : null;
           }
           else {
-            return false;
+            return;
           }
         }
       }
 
-      // check if the comment is on separate line
-      if (comment.getTreePrev() != null) {
-        ASTNode prev = comment.getTreePrev();
-        if (prev.getElementType() != ElementType.WHITE_SPACE) {
-          return false;
-        }
-        else {
-          if (!prev.textContains('\n')) return false;
-        }
-      }
+      if (toStart == null) return;
 
-      TreeElement first = (TreeElement)element.getFirstChildNode();
-      TreeElement child = comment;
-      while (child != element) {
+      TreeElement first = (TreeElement)bindTo.getFirstChildNode();
+      TreeElement child = (TreeElement)toStart;
+      while (child != bindTo) {
         TreeElement next = child.getTreeNext();
         if (child.getElementType() != IMPORT_LIST) {
           TreeUtil.remove(child);
@@ -493,8 +486,20 @@ public class ParseUtil implements Constants {
         }
         child = next;
       }
-      return true;
     }
-    return false;
+  }
+
+  private static boolean isBindingComment(final ASTNode node) {
+    ASTNode prev = node.getTreePrev();
+    if (prev != null) {
+      if (prev.getElementType() != ElementType.WHITE_SPACE) {
+        return false;
+      }
+      else {
+        if (!prev.textContains('\n')) return false;
+      }
+    }
+
+    return true;
   }
 }
