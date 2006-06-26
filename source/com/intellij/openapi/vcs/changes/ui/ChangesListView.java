@@ -89,7 +89,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
 
 
   public static String getRelativePath(FilePath parent, FilePath child) {
-    if (parent == null) return child.getPath();
+    if (parent == null) return child.getPath().replace('/', File.separatorChar);
     return child.getPath().substring(parent.getPath().length() + 1).replace('/', File.separatorChar);
   }
 
