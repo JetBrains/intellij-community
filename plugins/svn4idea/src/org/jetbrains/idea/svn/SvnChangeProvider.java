@@ -12,7 +12,6 @@ import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -170,12 +169,12 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   private static class SvnUpToDateRevision implements ContentRevision {
-    private FilePath myFile;
+    private final FilePath myFile;
     private String myContent = null;
     private SvnVcs myVcs;
     private VcsRevisionNumber myRevNumber;
 
-    public SvnUpToDateRevision(final FilePath file, final SvnVcs vcs, final SVNRevision revision) {
+    public SvnUpToDateRevision(@NotNull final FilePath file, final SvnVcs vcs, final SVNRevision revision) {
       myVcs = vcs;
       myFile = file;
       myRevNumber = new SvnRevisionNumber(revision);
@@ -201,6 +200,7 @@ public class SvnChangeProvider implements ChangeProvider {
       return myFile;
     }
 
+    @NotNull
     public VcsRevisionNumber getRevisionNumber() {
       return myRevNumber;
     }
