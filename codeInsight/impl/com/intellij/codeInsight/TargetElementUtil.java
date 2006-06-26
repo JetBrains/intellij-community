@@ -35,6 +35,10 @@ public class TargetElementUtil {
     return findTargetElement(editor, flags, offset);
   }
 
+  public static PsiReference findReference(Editor editor) {
+    return findReference(editor, editor.getCaretModel().getOffset());
+  }
+
   public static PsiReference findReference(Editor editor, int offset) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -104,8 +108,7 @@ public class TargetElementUtil {
       else if (parent instanceof PsiNamedElement) { // A bit hacky depends on navigation offset correctly overriden
         if (parent.getTextOffset() == element.getTextOffset() &&
             Comparing.equal(((PsiNamedElement)parent).getName(), element.getText()) &&
-            !(parent instanceof XmlAttribute)
-           ) {
+            !(parent instanceof XmlAttribute)) {
           return parent;
         }
       }

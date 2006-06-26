@@ -24,6 +24,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.WeakFactoryMap;
+import com.intellij.codeInsight.CodeInsightBundle;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -91,6 +92,10 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
   private static DomElement getResolvingScope(final ConvertContext context) {
     final DomElement invocationElement = context.getInvocationElement();
     return invocationElement.getManager().getResolvingScope((GenericDomValue)invocationElement);
+  }
+
+  public String getErrorMessage(final String s, final ConvertContext context) {
+    return CodeInsightBundle.message("error.cannot.resolve.0.1", ElementPresentationManager.getTypeName(myClass), s);
   }
 
   public final String toString(final T t, final ConvertContext context) {

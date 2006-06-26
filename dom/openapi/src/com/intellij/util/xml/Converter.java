@@ -6,6 +6,8 @@ package com.intellij.util.xml;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.IdeBundle;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -14,6 +16,10 @@ import org.jetbrains.annotations.Nullable;
 public abstract class Converter<T> {
   public abstract @Nullable T fromString(@Nullable String s, final ConvertContext context);
   public abstract @Nullable String toString(@Nullable T t, final ConvertContext context);
+
+  public String getErrorMessage(@Nullable String s, final ConvertContext context) {
+    return CodeInsightBundle.message("error.cannot.resolve.default.message", s);
+  }
 
   public static final Converter<Integer> INTEGER_CONVERTER = new Converter<Integer>() {
     public Integer fromString(final String s, final ConvertContext context) {
@@ -30,6 +36,9 @@ public abstract class Converter<T> {
       return t == null? null: t.toString();
     }
 
+    public String getErrorMessage(final String s, final ConvertContext context) {
+      return IdeBundle.message("value.should.be.integer");
+    }
   };
 
   public static final Converter<String> EMPTY_CONVERTER = new Converter<String>() {

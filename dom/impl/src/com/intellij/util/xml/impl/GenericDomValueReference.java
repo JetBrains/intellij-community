@@ -128,6 +128,14 @@ public class GenericDomValueReference<T> extends GenericReference {
     return myGenericValue.getXmlTag();
   }
 
+  public String getUnresolvedMessagePattern() {
+    return myGenericValue.getConverter().getErrorMessage(myGenericValue.getStringValue(), createConvertContext());
+  }
+
+  private ConvertContextImpl createConvertContext() {
+    return new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(myGenericValue));
+  }
+
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
     if (element instanceof XmlTag) {
       DomElement domElement = myGenericValue.getManager().getDomElement((XmlTag) element);
@@ -145,7 +153,7 @@ public class GenericDomValueReference<T> extends GenericReference {
     final Converter<T> converter = myGenericValue.getConverter();
     if (converter instanceof ResolvingConverter) {
       final ResolvingConverter<T> resolvingConverter = (ResolvingConverter<T>)converter;
-      final ConvertContext convertContext = new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(myGenericValue));
+      final ConvertContext convertContext = createConvertContext();
       final Collection<T> variants = resolvingConverter.getVariants(convertContext);
       ArrayList<Object> result = new ArrayList<Object>(variants.size());
       for (T variant: variants) {

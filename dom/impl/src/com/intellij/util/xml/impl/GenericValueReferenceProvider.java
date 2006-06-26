@@ -12,13 +12,13 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.XmlReferenc
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -102,7 +102,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
       return provider.getReferencesByElement(psiElement);
     }
     if (Integer.class.isAssignableFrom(clazz)) {
-      return new PsiReference[]{new GenericDomValueReference(this, domValue) {
+      return new PsiReference[]{new GenericDomValueReference<Integer>(this, (GenericDomValue<Integer>)domValue) {
         public Object[] getVariants() {
           return new Object[]{"239", "42"};
         }

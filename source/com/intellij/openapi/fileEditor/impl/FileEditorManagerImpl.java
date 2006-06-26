@@ -50,10 +50,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -108,6 +105,8 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   final EditorsSplitters mySplitters;
   private boolean myDoNotTransferFocus = false;
+
+  private List<EditorDataProvider> myDataProviders = new ArrayList<EditorDataProvider>();
 
 
   FileEditorManagerImpl(final Project project) {
@@ -732,6 +731,24 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   @NotNull
   public Project getProject() {
     return myProject;
+  }
+
+  public void registerExtraEditorDataProvider(final EditorDataProvider provider, Disposable parentDisposable) {
+    myDataProviders.add(provider);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        myDataProviders.remove(provider);
+      }
+    });
+  }
+
+  @Nullable
+  public final Object getData(String dataId, Editor editor) {
+    for (final EditorDataProvider dataProvider : myDataProviders) {
+      final Object o = dataProvider.getData(dataId, editor);
+      if (o != null) return o;
+    }
+    return null;
   }
 
   @Nullable

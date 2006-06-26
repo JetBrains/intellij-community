@@ -324,6 +324,9 @@ import java.util.Map;
     return myProject;
   }
 
+  public void registerExtraEditorDataProvider(EditorDataProvider provider, Disposable parentDisposable) {
+  }
+
   public JComponent getPreferredFocusedComponent() {
     throw new UnsupportedOperationException();
   }

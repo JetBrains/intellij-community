@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.fileEditor;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,4 +132,7 @@ public abstract class FileEditorManager {
    */
   @NotNull
   public abstract Project getProject();
+
+  public abstract void registerExtraEditorDataProvider(EditorDataProvider provider, Disposable parentDisposable);
+
 }
