@@ -848,7 +848,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     private RootSetChangedMulticaster(RootProvider provider) {
       myProvider = provider;
-      provider.addRootSetChangedListener(this, myProject);
+      provider.addRootSetChangedListener(this);
       myRegisteredRootProviderListeners.put(myProvider, this);
     }
 
