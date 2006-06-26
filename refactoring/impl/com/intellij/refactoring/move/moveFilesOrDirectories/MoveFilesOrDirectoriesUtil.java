@@ -8,20 +8,21 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.HashSet;
 import java.util.Arrays;
+import java.util.HashSet;
 
 public class MoveFilesOrDirectoriesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil");
+
+  private MoveFilesOrDirectoriesUtil() {}
 
   // Does not process non-code usages!
   public static PsiDirectory doMoveDirectory(PsiDirectory aDirectory, PsiDirectory destDirectory) throws IncorrectOperationException{
@@ -64,8 +65,7 @@ public class MoveFilesOrDirectoriesUtil {
 
         PsiManager manager = PsiManager.getInstance(project);
         try {
-          for (int idx = 0; idx < elements.length; idx++) {
-            PsiElement psiElement = elements[idx];
+          for (PsiElement psiElement : elements) {
             manager.checkMove(psiElement, targetDirectory);
           }
 
@@ -85,7 +85,6 @@ public class MoveFilesOrDirectoriesUtil {
         catch (IncorrectOperationException e) {
           String helpId = HelpID.getMoveHelpID(elements[0]);
           CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(), helpId, project);
-          return;
         }
       }
     };
