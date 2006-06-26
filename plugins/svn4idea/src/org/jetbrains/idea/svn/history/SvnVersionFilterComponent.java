@@ -62,6 +62,7 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent {
 
   protected void installCheckBoxListener(final ActionListener filterListener) {
     super.installCheckBoxListener(filterListener);
+    myUseAuthorFilter.addActionListener(filterListener);
     myAuthorField.addActionListener(filterListener);
   }
 
