@@ -64,14 +64,14 @@ public abstract class PsiType {
   /**
    * Checks whether values of type <code>type</code> can be assigned to rvalues of this type.
    */
-  public boolean isAssignableFrom(PsiType type) {
+  public boolean isAssignableFrom(@NotNull PsiType type) {
     return TypeConversionUtil.isAssignable(this, type);
   }
 
   /**
    * Checks whether values of type <code>type</code> can be casted to this type.
    */
-  public boolean isConvertibleFrom(PsiType type) {
+  public boolean isConvertibleFrom(@NotNull PsiType type) {
     return TypeConversionUtil.areTypesConvertible(type, this);
   }
 

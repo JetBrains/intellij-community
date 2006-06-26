@@ -70,7 +70,7 @@ public class TypeConversionUtil {
   /**
    * @return true iff fromType can be casted to toType
    */
-  public static boolean areTypesConvertible(PsiType fromType, PsiType toType) {
+  public static boolean areTypesConvertible(@NotNull PsiType fromType, @NotNull PsiType toType) {
     if (isPrimitiveAndNotNull(fromType) || isPrimitiveAndNotNull(toType)) {
       final int fromTypeRank = getTypeRank(fromType);
       final int toTypeRank = getTypeRank(toType);
