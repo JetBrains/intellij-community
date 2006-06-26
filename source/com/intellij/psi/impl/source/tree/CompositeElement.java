@@ -27,7 +27,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
   private int myModificationsCount = 0;
   private PsiElement myWrapper = null;
 
-  public CompositeElement(IElementType type) {
+  public CompositeElement(@NotNull IElementType type) {
     this.type = type;
   }
 
