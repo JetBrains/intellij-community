@@ -23,6 +23,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class CopyOptionsDialog extends DialogWrapper {
 
@@ -182,6 +183,9 @@ public class CopyOptionsDialog extends DialogWrapper {
     gc.gridy += 1;
 
     ArrayList<String> messages = VcsConfiguration.getInstance(myProject).getRecentMessages();
+    if (messages != null) {
+      Collections.reverse(messages);
+    }
     Object[] model = messages != null ? messages.toArray() : new Object[] {""};
     final JComboBox messagesBox = new JComboBox(model);
     panel.add(messagesBox, gc);

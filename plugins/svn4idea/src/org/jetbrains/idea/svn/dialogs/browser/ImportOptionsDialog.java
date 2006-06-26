@@ -13,6 +13,7 @@ import java.awt.event.ActionEvent;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.tmatesoft.svn.core.SVNURL;
 import org.jetbrains.annotations.NonNls;
@@ -138,6 +139,9 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     gc.gridy += 1;
 
     ArrayList<String> messages = VcsConfiguration.getInstance(myProject).getRecentMessages();
+    if (messages != null) {
+      Collections.reverse(messages);
+    }
     Object[] model = messages != null ? messages.toArray() : new Object[] {""};
     final JComboBox messagesBox = new JComboBox(model);
     panel.add(messagesBox, gc);

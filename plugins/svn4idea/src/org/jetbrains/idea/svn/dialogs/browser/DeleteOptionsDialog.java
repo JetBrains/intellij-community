@@ -1,20 +1,18 @@
 package org.jetbrains.idea.svn.dialogs.browser;
 
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 
 public class DeleteOptionsDialog extends DialogWrapper {
 
@@ -76,6 +74,9 @@ public class DeleteOptionsDialog extends DialogWrapper {
     gc.gridy += 1;
 
     ArrayList<String> messages = VcsConfiguration.getInstance(myProject).getRecentMessages();
+    if (messages != null) {
+      Collections.reverse(messages);
+    }
     Object[] model = messages != null ? messages.toArray() : new Object[] {""};
     final JComboBox messagesBox = new JComboBox(model);
     panel.add(messagesBox, gc);
