@@ -12,6 +12,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.lang.ASTNode;
 
 class MoveStatementHandler extends EditorWriteActionHandler {
   private final boolean isDown;
@@ -55,7 +56,9 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     if (file == null || editor == null) return null;
     PsiElement leafElement = file.findElementAt(editor.getCaretModel().getOffset());
     if (leafElement == null) return null;
-    return (PsiFile)PsiUtil.getRoot(leafElement.getNode()).getPsi();
+    ASTNode node = leafElement.getNode();
+    if (node == null) return null;
+    return (PsiFile)PsiUtil.getRoot(node).getPsi();
   }
 
   private Mover getSuitableMover(final Editor editor, final PsiFile file) {
