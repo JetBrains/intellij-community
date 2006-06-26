@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,13 +37,7 @@ public class AntElementNameReferenceProvider extends GenericReferenceProvider {
         return result.toArray(new PsiReference[result.size()]);
       }
     }
-    else if (se.isPresetDefined()) {
-      return new PsiReference[]{nameReference};
-    }
-    final AntTask task = PsiTreeUtil.getParentOfType(element, AntTask.class);
-    return (task != null && (task.isMacroDefined() || task.isPresetDefined()))
-           ? new PsiReference[]{nameReference}
-           : PsiReference.EMPTY_ARRAY;
+    return new PsiReference[]{nameReference};
   }
 
   @NotNull

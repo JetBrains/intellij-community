@@ -1,4 +1,3 @@
-
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -19,7 +18,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,13 +33,14 @@ import java.util.Set;
  */
 abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
-  private static final Key<Class<? extends CodeCompletionHandlerBase>> COMPLETION_HANDLER_CLASS_KEY = Key.create("COMPLETION_HANDLER_CLASS_KEY");
+  private static final Key<Class<? extends CodeCompletionHandlerBase>> COMPLETION_HANDLER_CLASS_KEY =
+    Key.create("COMPLETION_HANDLER_CLASS_KEY");
 
   private LookupItemPreferencePolicy myPreferencePolicy = null;
 
   public final void invoke(final Project project, final Editor editor, PsiFile file) {
-    if (!file.isWritable()){
-      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)){
+    if (!file.isWritable()) {
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)) {
         return;
       }
     }
@@ -46,34 +48,32 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
     Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
-    if (activeLookup != null){
+    if (activeLookup != null) {
       Class<? extends CodeCompletionHandlerBase> handlerClass = activeLookup.getUserData(COMPLETION_HANDLER_CLASS_KEY);
-      if (handlerClass == null){
+      if (handlerClass == null) {
         handlerClass = CodeCompletionHandler.class;
       }
-      if (handlerClass.equals(getClass())){
+      if (handlerClass.equals(getClass())) {
         if (!isAutocompleteCommonPrefixOnInvocation() || activeLookup.fillInCommonPrefix(true)) {
           return;
         }
       }
     }
 
-    EditorUtil.fillVirtualSpaceUntil(editor, editor.getCaretModel().getLogicalPosition().column, editor.getCaretModel().getLogicalPosition().line);
+    EditorUtil
+      .fillVirtualSpaceUntil(editor, editor.getCaretModel().getLogicalPosition().column, editor.getCaretModel().getLogicalPosition().line);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    int offset1 = editor.getSelectionModel().hasSelection()
-      ? editor.getSelectionModel().getSelectionStart()
-      : editor.getCaretModel().getOffset();
-    int offset2 = editor.getSelectionModel().hasSelection()
-      ? editor.getSelectionModel().getSelectionEnd()
-      : offset1;
+    int offset1 =
+      editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionStart() : editor.getCaretModel().getOffset();
+    int offset2 = editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionEnd() : offset1;
     final CompletionContext context = new CompletionContext(project, editor, file, offset1, offset2);
 
     final LookupData data = getLookupData(context);
     final LookupItem[] items = data.items;
     String prefix = data.prefix;
     context.prefix = data.prefix;
-    if (items.length == 0){
+    if (items.length == 0) {
       handleEmptyLookup(context, data);
       return;
     }
@@ -103,7 +103,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           item = null;
           break;
         }
-        if (item.getObject() instanceof PsiMethod && item1.getObject() instanceof PsiMethod) {
+        if (item.getObject()instanceof PsiMethod && item1.getObject()instanceof PsiMethod) {
           if (!signatureSencetive) {
             final PsiParameter[] parms = ((PsiMethod)item1.getObject()).getParameterList().getParameters();
             if (parms.length > 0) {
@@ -122,20 +122,20 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
     }
 
-    if (item != null){
-      if (!isAutocompleteOnInvocation() && item.getAttribute(LookupItem.DO_AUTOCOMPLETE_ATTR) == null){
+    if (item != null) {
+      if (!isAutocompleteOnInvocation() && item.getAttribute(LookupItem.DO_AUTOCOMPLETE_ATTR) == null) {
         item = null;
       }
     }
-    if (item != null && context.identifierEndOffset != context.selectionEndOffset){ // give a chance to use Tab
-      if (item.getAttribute(LookupItem.DO_AUTOCOMPLETE_ATTR) == null){
+    if (item != null && context.identifierEndOffset != context.selectionEndOffset) { // give a chance to use Tab
+      if (item.getAttribute(LookupItem.DO_AUTOCOMPLETE_ATTR) == null) {
         item = null;
       }
     }
 
     if (item != null) {
-      if(item.getObject() instanceof DeferredUserLookupValue) {
-        if(!((DeferredUserLookupValue)item.getObject()).handleUserSelection(item,context.project)) {
+      if (item.getObject()instanceof DeferredUserLookupValue) {
+        if (!((DeferredUserLookupValue)item.getObject()).handleUserSelection(item, context.project)) {
           return;
         }
 
@@ -158,8 +158,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
       lookupItemSelected(context, startOffset, data, item, false, (char)0);
     }
-    else{
-      if (isAutocompleteCommonPrefixOnInvocation() && !doNotAutocomplete){
+    else {
+      if (isAutocompleteCommonPrefixOnInvocation() && !doNotAutocomplete) {
         final String newPrefix = fillInCommonPrefix(items, prefix, editor);
 
         if (!newPrefix.equals(prefix)) {
@@ -180,26 +180,19 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       if (lookup != null) {
         lookup.putUserData(COMPLETION_HANDLER_CLASS_KEY, getClass());
 
-        lookup.addLookupListener(
-          new LookupAdapter() {
-            public void itemSelected(LookupEvent event) {
-              int shift = startOffsetMarker.getStartOffset() - startOffset;
-              context.shiftOffsets(shift);
-              context.startOffset += shift;
-              LookupItem item = event.getItem();
-              if (item != null) {
-                lookupItemSelected(
-                    context,
-                    startOffsetMarker.getStartOffset(),
-                    data,
-                    item,
-                    settings.SHOW_SIGNATURES_IN_LOOKUPS || item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null,
-                    event.getCompletionChar()
-                );
-              }
+        lookup.addLookupListener(new LookupAdapter() {
+          public void itemSelected(LookupEvent event) {
+            int shift = startOffsetMarker.getStartOffset() - startOffset;
+            context.shiftOffsets(shift);
+            context.startOffset += shift;
+            LookupItem item = event.getItem();
+            if (item != null) {
+              lookupItemSelected(context, startOffsetMarker.getStartOffset(), data, item,
+                                 settings.SHOW_SIGNATURES_IN_LOOKUPS || item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null,
+                                 event.getCompletionChar());
             }
           }
-        );
+        });
       }
     }
   }
@@ -236,9 +229,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     if (!isStrict) return prefix;
 
-    int offset = editor.getSelectionModel().hasSelection()
-      ? editor.getSelectionModel().getSelectionStart()
-      : editor.getCaretModel().getOffset();
+    int offset =
+      editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionStart() : editor.getCaretModel().getOffset();
     int lookupStart = offset - prefix.length();
 
     editor.getDocument().replaceString(lookupStart, lookupStart + prefix.length(), commonPrefix);
@@ -248,9 +240,26 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   protected abstract CompletionData getCompletionData(CompletionContext context, PsiElement element);
 
-  private void complete(CompletionContext context, PsiElement lastElement,
-                              CompletionData completionData, Set<LookupItem> lookupSet){
-    if(lastElement == null) return;
+  private void complete(final CompletionContext context,
+                        final PsiElement lastElement,
+                        final CompletionData completionData,
+                        final Set<LookupItem> lookupSet) {
+    if (lastElement == null) return;
+    if (context.file instanceof XmlFileImpl) {
+      final XmlFileImpl xmlFile = (XmlFileImpl)context.file;
+      final XmlDocument document = xmlFile.getDocument();
+      if (document != null) {
+        final XmlTag tag = document.getRootTag();
+        if (tag != null && "project".equals(tag.getName()) && tag.getContext()instanceof XmlDocument &&
+            tag.getAttributeValue("default") != null) {
+          final PsiReference ref = xmlFile.findReferenceAt(context.offset);
+          if (ref != null) {
+            completionData.completeReference(ref, lookupSet, context, lastElement);
+            return;
+          }
+        }
+      }
+    }
     final PsiReference ref = lastElement.getContainingFile().findReferenceAt(context.offset);
     if (ref != null) {
       completionData.completeReference(ref, lookupSet, context, lastElement);
@@ -279,7 +288,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         final PsiVariable variable = (PsiVariable)parent;
         if (lastElement.equals(variable.getNameIdentifier())) {
           myPreferencePolicy = completionData.completeFieldName(lookupSet, context, variable);
-          if(parent.getLastChild() instanceof PsiErrorElement) return;
+          if (parent.getLastChild()instanceof PsiErrorElement) return;
           myPreferencePolicy = completionData.completeMethodName(lookupSet, context, variable);
         }
       }
@@ -298,8 +307,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final PsiManager manager = file.getManager();
     final PsiElement lastElement = file.findElementAt(_context.startOffset - 1);
 
-    final Pair<CompletionContext, PsiElement> insertedInfo = ApplicationManager.getApplication().runWriteAction(
-      new Computable<Pair<CompletionContext, PsiElement>>() {
+    final Pair<CompletionContext, PsiElement> insertedInfo =
+      ApplicationManager.getApplication().runWriteAction(new Computable<Pair<CompletionContext, PsiElement>>() {
         public Pair<CompletionContext, PsiElement> compute() {
           return insertDummyIdentifier(_context);
         }
@@ -314,9 +323,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (completionData == null) {
       // some completion data may depend on prefix
       completionData = getCompletionData(context, lastElement);
-    } 
+    }
 
-    if(completionData == null) return new LookupData(new LookupItem[0], context.prefix);
+    if (completionData == null) return new LookupData(new LookupItem[0], context.prefix);
 
     final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
     complete(context, insertedElement, completionData, lookupSet);
@@ -328,7 +337,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
     final LookupData data = new LookupData(items, context.prefix);
-    if (myPreferencePolicy == null){
+    if (myPreferencePolicy == null) {
       myPreferencePolicy = new CompletionPreferencePolicy(manager, items, null, context.prefix);
     }
     data.itemPreferencePolicy = myPreferencePolicy;
@@ -336,7 +345,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return data;
   }
 
-  private static Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context){
+  private static Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context) {
     final PsiFile fileCopy = createFileCopy(context.file);
     Document oldDoc = fileCopy.getViewProvider().getDocument();
     oldDoc.insertString(context.startOffset, CompletionUtil.DUMMY_IDENTIFIER);
@@ -348,8 +357,10 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (injectedEditor != oldEditor) {
       // newly inserted identifier can well end up in the injected language region
       final EditorDelegate editorDelegate = (EditorDelegate)injectedEditor;
-      int newOffset1 = editorDelegate.logicalPositionToOffset(editorDelegate.parentToInjected(oldEditor.offsetToLogicalPosition(context.startOffset)));
-      int newOffset2 = editorDelegate.logicalPositionToOffset(editorDelegate.parentToInjected(oldEditor.offsetToLogicalPosition(context.selectionEndOffset)));
+      int newOffset1 =
+        editorDelegate.logicalPositionToOffset(editorDelegate.parentToInjected(oldEditor.offsetToLogicalPosition(context.startOffset)));
+      int newOffset2 = editorDelegate
+        .logicalPositionToOffset(editorDelegate.parentToInjected(oldEditor.offsetToLogicalPosition(context.selectionEndOffset)));
       PsiFile injectedFile = editorDelegate.getInjectedFile();
       CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, newOffset1, newOffset2);
       newContext.offset = newContext.startOffset;
@@ -367,24 +378,19 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                               String prefix,
                               final LookupData data,
                               PsiFile file) {
-    return LookupManager.getInstance(project).showLookup(
-      editor,
-      items,
-      prefix,
-      data.itemPreferencePolicy,
-      new DefaultCharFilter(file, editor.getCaretModel().getOffset()){
-        public int accept(char c){
-          switch (c){
-            case '<':
-            case '>':
-            case '[':
+    return LookupManager.getInstance(project)
+      .showLookup(editor, items, prefix, data.itemPreferencePolicy, new DefaultCharFilter(file, editor.getCaretModel().getOffset()) {
+        public int accept(char c) {
+          switch (c) {
+            case'<':
+            case'>':
+            case'[':
               return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
             default:
               return super.accept(c);
           }
         }
-      }
-    );
+      });
   }
 
   protected abstract boolean isAutocompleteOnInvocation();
@@ -401,7 +407,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     LOG.assertTrue(lookupData.items.length == 0);
     if (lookupData.prefix == null) {
 //      Toolkit.getDefaultToolkit().beep();
-    } else {
+    }
+    else {
       HintManager.getInstance().showErrorHint(editor, CompletionBundle.message("completion.no.suggestions"));
     }
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
@@ -418,20 +425,21 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                   final char completionChar) {
     final InsertHandler handler = item.getInsertHandler() != null ? item.getInsertHandler() : new DefaultInsertHandler();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          PsiDocumentManager.getInstance(context.project).commitAllDocuments();
-          context.prefix = data.prefix;
-          final PsiElement position = context.file.findElementAt(context.startOffset - context.prefix.length() + item.getLookupString().length() - 1);
-          analyseItem(item, position, context);
-          handler.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
-        }
-      });
+      public void run() {
+        PsiDocumentManager.getInstance(context.project).commitAllDocuments();
+        context.prefix = data.prefix;
+        final PsiElement position =
+          context.file.findElementAt(context.startOffset - context.prefix.length() + item.getLookupString().length() - 1);
+        analyseItem(item, position, context);
+        handler.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+      }
+    });
   }
 
-  static String findPrefix(PsiElement insertedElement, int offset, String dummyIdentifier, CompletionData completionData){
-    final String result = completionData == null ?
-                          CompletionData.findPrefixStatic(insertedElement, offset) :
-                          completionData.findPrefix(insertedElement, offset);
+  static String findPrefix(PsiElement insertedElement, int offset, String dummyIdentifier, CompletionData completionData) {
+    final String result = completionData == null
+                          ? CompletionData.findPrefixStatic(insertedElement, offset)
+                          : completionData.findPrefix(insertedElement, offset);
 
     return result.endsWith(dummyIdentifier) ? result.substring(0, result.length() - dummyIdentifier.length()) : result;
   }
@@ -473,7 +481,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
       public void visitClass(PsiClass aClass) {
         final PsiElement originalElement = aClass.getCopyableUserData(PsiUtil.ORIGINAL_KEY);
-        if (originalElement != null){
+        if (originalElement != null) {
           originalElement.putCopyableUserData(PsiUtil.ORIGINAL_KEY, null);
           originalElement.putUserData(CompletionUtil.COPY_KEY, aClass);
           aClass.putCopyableUserData(PsiUtil.ORIGINAL_KEY, null);

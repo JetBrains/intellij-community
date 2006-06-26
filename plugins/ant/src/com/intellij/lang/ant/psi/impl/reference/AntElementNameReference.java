@@ -6,11 +6,14 @@ import com.intellij.lang.ant.psi.AntPresetDef;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
+import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
 
 public class AntElementNameReference extends AntGenericReference {
 
@@ -67,12 +70,15 @@ public class AntElementNameReference extends AntGenericReference {
     final AntStructuredElement element = getElement();
     final AntTypeDefinition elementDef = element.getTypeDefinition();
     if (elementDef != null) {
+      if (element.isPresetDefined()) {
+        return elementDef.getDefiningElement();
+      }
       if (!(element instanceof AntTask)) {
         final PsiElement nestedMacroElement = elementDef.getDefiningElement();
         return (nestedMacroElement == null) ? findClass(elementDef, element) : nestedMacroElement;
       }
       AntTask task = (AntTask)element;
-      if (task.isMacroDefined() || task.isPresetDefined()) {
+      if (task.isMacroDefined()) {
         final PsiElement definingElement = elementDef.getDefiningElement();
         final XmlAttribute attr = getAttribute();
         if (definingElement != null && attr != null) {
@@ -87,6 +93,22 @@ public class AntElementNameReference extends AntGenericReference {
       return findClass(elementDef, element);
     }
     return null;
+  }
+
+  public Object[] getVariants() {
+    AntStructuredElement parent = (AntStructuredElement)getElement().getAntParent();
+    AntTypeDefinition def = parent.getTypeDefinition();
+    if (def == null) {
+      def = parent.getAntProject().getTypeDefinition();
+      if (def == null) {
+        return ourEmptyIntentions;
+      }
+    }
+    final ArrayList<String> ids = new ArrayList<String>();
+    for (AntTypeId id : def.getNestedElements()) {
+      ids.add(id.getName());
+    }
+    return ids.toArray(new Object[ids.size()]);
   }
 
   @NotNull
