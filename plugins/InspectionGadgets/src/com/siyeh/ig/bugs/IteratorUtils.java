@@ -74,6 +74,12 @@ class IteratorUtils {
             if(!isIterator(containingClass)){
                 return;
             }
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if(qualifier != null && !(qualifier instanceof PsiThisExpression)
+                    && !(qualifier instanceof PsiSuperExpression)){
+                return;
+            }
             doesCallIteratorNext = true;
         }
 
