@@ -5,26 +5,30 @@ import sun.misc.Resource;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
 public class UrlClassLoader extends ClassLoader {
   private final ClassPath myClassPath;
+  private final List<URL> myURLs;
   @NonNls private static final String CLASS_EXTENSION = ".class";
 
   public UrlClassLoader(List<URL> urls, ClassLoader parent) {
     super(parent);
 
     myClassPath = new ClassPath(urls.toArray(new URL[urls.size()]));
+    myURLs = new ArrayList<URL>(urls);
   }
 
   public void addURL(URL url) {
     myClassPath.addURL(url);
-    //myUrls.add(url);
+    myURLs.add(url);
   }
 
   public List<URL> getUrls() {
-    return myClassPath.getUrls();
+    return Collections.unmodifiableList(myURLs);
   }
 
   protected Class findClass(final String name) throws ClassNotFoundException {
