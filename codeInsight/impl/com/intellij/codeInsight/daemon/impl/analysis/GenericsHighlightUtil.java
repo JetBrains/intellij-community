@@ -210,7 +210,7 @@ public class GenericsHighlightUtil {
     final PsiClassType[] types = aClass.getSuperTypes();
     if (types.length < 2) return null;
     Map<PsiClass, PsiSubstitutor> inheritedClasses = new HashMap<PsiClass, PsiSubstitutor>();
-    final TextRange textRange = com.intellij.codeInsight.ClassUtil.getClassDeclarationTextRange(aClass);
+    final TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
     return checkInterfaceMultipleInheritance(aClass,
                                              PsiSubstitutor.EMPTY, inheritedClasses,
                                              new HashSet<PsiClass>(), textRange);
@@ -344,10 +344,10 @@ public class GenericsHighlightUtil {
     }
     if (classReference == null) return null;
     final JavaResolveResult result = classReference.advancedResolve(false);
-    if (result.getElement() instanceof PsiTypeParameter) {
-      final PsiTypeParameter typeParameter = (PsiTypeParameter)result.getElement();
+    final PsiElement element = result.getElement();
+    if (element instanceof PsiTypeParameter) {
       String description = JavaErrorMessages.message("generics.type.parameter.cannot.be.instantiated",
-                                                     HighlightUtil.formatClass(typeParameter));
+                                                     HighlightUtil.formatClass((PsiTypeParameter)element));
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, classReference, description);
     }
     return null;
@@ -1031,7 +1031,7 @@ public class GenericsHighlightUtil {
     PsiElement parent = aClass.getParent();
     if (!(parent instanceof PsiClass || parent instanceof PsiFile)) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                               com.intellij.codeInsight.ClassUtil.getClassDeclarationTextRange(aClass),
+                                               ClassUtil.getClassDeclarationTextRange(aClass),
                                                JavaErrorMessages.message("local.enum"));
     }
     return null;
