@@ -206,7 +206,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   protected final DomRootInvocationHandler getRootHandler() {
     synchronized (PsiLock.LOCK) {
-      if (myRootHandler == null || !myRootHandler.isValid()) {
+      if (myRootHandler == null/* || !myRootHandler.isValid()*/) {
         final XmlTag tag = getRootTag();
         myRootHandler = new DomRootInvocationHandler(myRootElementClass, tag, this, myRootTagName);
       }
