@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -8,11 +9,12 @@ import com.intellij.codeInsight.intention.IntentionAction;
 public abstract class BaseIntentionAction implements IntentionAction {
   private String myText = "";
 
+  @NotNull
   public String getText() {
     return myText;
   }
 
-  protected void setText(String text) {
+  protected void setText(@NotNull String text) {
     myText = text;
   }
 

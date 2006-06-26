@@ -11,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,12 +21,14 @@ import java.util.List;
  * @author cdr
  */
 public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction {
+  @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @NotNull
   public String getText() {
-    return CodeInsightBundle.message("intention.move.field.assignment.to.initializer");
+    return CodeInsightBundle.message("intention.move.field.assignment.to.declaration");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -111,7 +114,7 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
       }
     });
     // the only assignment is OK
-    if (totalUsages.size() == 1 && initializingAssignments.size()==0) {
+    if (totalUsages.size() == 1 && initializingAssignments.isEmpty()) {
       initializingAssignments.addAll(totalUsages);
       return true;
     }
@@ -123,16 +126,14 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     if (!(lExpression instanceof PsiReferenceExpression)) return null;
     PsiElement resolved = ((PsiReferenceExpression)lExpression).resolve();
     if (!(resolved instanceof PsiField)) return null;
-    PsiField field = (PsiField)resolved;
-    return field;
+    return (PsiField)resolved;
   }
 
   private static PsiAssignmentExpression getAssignmentUnderCaret(final Editor editor, final PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null || element instanceof PsiCompiledElement) return null;
-    final PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(element, PsiAssignmentExpression.class, false, PsiMember.class);
-    return assignment;
+    return PsiTreeUtil.getParentOfType(element, PsiAssignmentExpression.class, false, PsiMember.class);
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
