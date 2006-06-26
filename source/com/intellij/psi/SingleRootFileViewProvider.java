@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
@@ -228,8 +229,8 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   private static long fileSize(final VirtualFile vFile) {
-    if (vFile instanceof com.intellij.openapi.vfs.impl.local.VirtualFileImpl) {
-      return ((com.intellij.openapi.vfs.impl.local.VirtualFileImpl)vFile).getPhysicalFileLength();
+    if (vFile instanceof VirtualFileImpl) {
+      return ((VirtualFileImpl)vFile).getPhysicalFileLength();
     }
     return vFile.getLength();
   }
@@ -412,7 +413,9 @@ public class SingleRootFileViewProvider implements FileViewProvider {
 
   private class DocumentContent implements Content {
     public CharSequence getText() {
-      return getDocument().getCharsSequence();
+      final Document document = getDocument();
+      assert document != null;
+      return document.getCharsSequence().subSequence(0, document.getTextLength());
     }
 
     public long getModificationStamp() {
