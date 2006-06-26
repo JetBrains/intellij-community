@@ -79,15 +79,12 @@
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
-
-    <group id="UpdateActionGroup">
-      <reference id="$Delete"/>
-      <action id="Cvs.GetFromRepository" class="com.intellij.cvsSupport2.actions.GetFileFromRepositoryAction"/>
-      <separator/>
-    </group>
-    <group id="AddOptionDialogActionGroup" test=""
-      >
-      <action id="Cvs.Ignore" class="com.intellij.cvsSupport2.actions.IgnoreFileAction">
+    <action id="Cvs.GetFromRepository" class="com.intellij.cvsSupport2.actions.GetFileFromRepositoryAction">
+      <add-to-group group-id="UpdateActionGroup" anchor="last"/>
+    </action>
+    
+    <group id="AddOptionDialogActionGroup" test="">
+    <action id="Cvs.Ignore" class="com.intellij.cvsSupport2.actions.IgnoreFileAction">
         <add-to-group group-id="Vcs.CheckinProjectPopup" anchor="last"/>
       </action>
     </group>
