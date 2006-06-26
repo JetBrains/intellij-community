@@ -640,6 +640,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   public PsiFile[] findFormsBoundToClass(String className) {
+    if (className == null) return PsiFile.EMPTY_ARRAY;
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myManager.getProject());
     PsiFile[] files = myManager.getCacheManager().getFilesWithWord(className, UsageSearchContext.IN_FOREIGN_LANGUAGES,
                                                                    projectScope, true);
