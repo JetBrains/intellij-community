@@ -245,7 +245,7 @@ outer:
         type1 = TypeConversionUtil.erasure(type1);
         PsiType type2 = params2[i].getType();
         type2 = TypeConversionUtil.erasure(type2);
-        PsiType argType = args[i].getType();
+        PsiType argType = i < args.length ? args[i].getType() : null;
 
         final Specifics specifics = checkSubtyping(type1, type2, argType);
         if (specifics == null) continue;
