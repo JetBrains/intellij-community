@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -19,9 +18,11 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspDeclaration;
 import com.intellij.psi.impl.source.jsp.jspJava.JspScriptlet;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -448,11 +449,15 @@ private boolean canBeAnotherTreeTagStart(final ASTNode child) {
   }
 
   private ASTNode findChildAfter(@NotNull final ASTNode child, final int endOffset) {
+    TreeElement fileNode = TreeUtil.getFileElement((TreeElement)child);
+    return fileNode.findLeafElementAt(endOffset);
+    /*
     ASTNode result = child;
     while (result != null && result.getTextRange().getEndOffset() < endOffset) {
       result = TreeUtil.nextLeaf(result);
     }
     return result;
+    */
   }
 
 }
