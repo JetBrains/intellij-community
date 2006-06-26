@@ -19,8 +19,13 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModifiableRootModel;
 
 public interface TransactionalEditable {
+
   void startEdit(ModifiableRootModel rootModel);
 
+  /**
+   *
+   * @return null if #startEdit has not been called
+   */
   ModuleContainer getModifiableModel();
 
   void commit(ModifiableRootModel model) throws ConfigurationException;
