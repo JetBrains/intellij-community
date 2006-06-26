@@ -9,9 +9,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.Stack;
 
 /**
@@ -168,9 +166,9 @@ public class TreeBasedMap<T> {
 
     private boolean pushNode(final @NotNull String name, @NotNull Node<T> node) {
       final THashMap<String, Node<T>> childrenMap = node.myChildren;
-      if ((childrenMap != null && childrenMap.size() > 0) || node.mappingExists()) {
-        final Set<String> keys = childrenMap != null? childrenMap.keySet() : Collections.<String>emptySet();
-        myCurrentNodePath.push(new PathElement<T>(node, keys.size() > 0? keys.iterator() : EMPTY_ITERATOR));
+      final boolean hasChildren = childrenMap != null && childrenMap.size() > 0;
+      if (hasChildren || node.mappingExists()) {
+        myCurrentNodePath.push(new PathElement<T>(node, hasChildren? childrenMap.keySet().iterator() : EMPTY_ITERATOR));
         if (myCurrentNodePath.size() > 2) {
           // do not add separator before the Root and its direct child nodes 
           myCurrentName.append(mySeparator);
@@ -193,21 +191,23 @@ public class TreeBasedMap<T> {
     }
 
     private void findNextNode() {
-      if (myCurrentNodePath.size() == 0) {
-        return;
-      }
-      final PathElement<T> element = myCurrentNodePath.peek();
-      while (element.iterator.hasNext()) {
-        final String name = element.iterator.next();
-        final Node<T> childNode = element.node.myChildren.get(name);
-        if (pushNode(name, childNode)) {
-          findNextNode();
-          return;
+      MAIN_LOOP: while (!myCurrentNodePath.isEmpty()) {
+        final PathElement<T> element = myCurrentNodePath.peek();
+        final Iterator<String> childrenIterator = element.iterator;
+        final Node<T> currentNode = element.node;
+        while (childrenIterator.hasNext()) {
+          final String name = childrenIterator.next();
+          final Node<T> childNode = currentNode.myChildren.get(name);
+          if (pushNode(name, childNode)) {
+            continue MAIN_LOOP;
+          }
         }
-      }
-      if (!element.node.mappingExists()) {
-        popNode();
-        findNextNode();
+        if (!currentNode.mappingExists()) {
+          popNode();
+        }
+        else {
+          break;
+        }
       }
     }
   }
