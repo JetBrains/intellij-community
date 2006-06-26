@@ -16,22 +16,40 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
+import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NonNls;
+
+import java.util.Set;
 
 public class PsiSuperMethodUtil {
+  private PsiSuperMethodUtil() {}
+
   public static PsiMethod findConstructorInSuper(PsiMethod constructor) {
+    return findConstructorInSuper(constructor, new HashSet<PsiMethod>());
+  }
+
+  public static PsiMethod findConstructorInSuper(PsiMethod constructor, Set<PsiMethod> visited) {
+    if (visited.contains(constructor)) return null;
+    visited.add(constructor);
     final PsiCodeBlock body = constructor.getBody();
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
       if (statements.length > 0) {
         PsiElement firstChild = statements[0].getFirstChild();
         if (firstChild instanceof PsiMethodCallExpression) {
-          PsiReferenceExpression superExpr = ((PsiMethodCallExpression)firstChild).getMethodExpression();
-          //noinspection HardCodedStringLiteral
-          if (superExpr.getText().equals("super")) {
-            PsiElement superConstructor = superExpr.resolve();
+          PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)firstChild).getMethodExpression();
+          final @NonNls String text = methodExpr.getText();
+          if (text.equals("super")) {
+            PsiElement superConstructor = methodExpr.resolve();
             if (superConstructor instanceof PsiMethod) {
               return (PsiMethod)superConstructor;
             }
+          } else if (text.equals("this")) {
+            final PsiElement resolved = methodExpr.resolve();
+            if (resolved instanceof PsiMethod) {
+              return findConstructorInSuper((PsiMethod)resolved, visited);
+            }
+            return null;
           }
         }
       }
