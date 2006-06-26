@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -92,8 +93,9 @@ public class BuildJarDialog extends DialogWrapper {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     ArrayList<Module> result = new ArrayList<Module>();
     for (Module module : modules) {
-      if (module.getModuleType().isJ2EE()) continue;
-      result.add(module);
+      if (module.getModuleType() == ModuleType.JAVA) {
+        result.add(module);
+      }
     }
     Collections.sort(result, new Comparator<Module>() {
       public int compare(final Module o1, final Module o2) {
