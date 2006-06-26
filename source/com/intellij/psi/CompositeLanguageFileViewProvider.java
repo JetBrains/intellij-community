@@ -25,14 +25,14 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 
-import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 import java.util.*;
 
 public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.CompositeLanguageFileViewProvider");
   private final Map<Language, PsiFile> myRoots = new HashMap<Language, PsiFile>();
-  private final Map<PsiFile, Set<WeakReference<OuterLanguageElement>>> myOuterLanguageElements =
-    new HashMap<PsiFile, Set<WeakReference<OuterLanguageElement>>>();
+  private final Map<PsiFile, SoftReference<Set<OuterLanguageElement>>> myOuterLanguageElements =
+    new HashMap<PsiFile, SoftReference<Set<OuterLanguageElement>>>();
   private Set<PsiFile> myRootsInUpdate = new HashSet<PsiFile>(4);
 
   public CompositeLanguageFileViewProvider(final PsiManager manager, final VirtualFile file) {
@@ -98,23 +98,19 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   }
 
   public void registerOuterLanguageElement(OuterLanguageElement element, PsiFile root) {
-    Set<WeakReference<OuterLanguageElement>> outerLanguageElements = myOuterLanguageElements.get(root);
+    final SoftReference<Set<OuterLanguageElement>> weakOuterElements = myOuterLanguageElements.get(root);
+    Set<OuterLanguageElement> outerLanguageElements = weakOuterElements != null ? weakOuterElements.get() : null;
     if (outerLanguageElements == null) {
-      outerLanguageElements = new TreeSet<WeakReference<OuterLanguageElement>>(new Comparator<WeakReference<OuterLanguageElement>>() {
-        public int compare(final WeakReference<OuterLanguageElement> o1, final WeakReference<OuterLanguageElement> o2) {
-          final OuterLanguageElement languageElement1 = o1.get();
-          final OuterLanguageElement languageElement2 = o2.get();
-          if (languageElement1 == null && languageElement2 == null) return 0;
-          if (languageElement1 == null) return -1;
-          if (languageElement1.equals(languageElement2)) return 0;
-          if (languageElement2 == null) return 1;
-          final int result = languageElement1.getTextRange().getStartOffset() - languageElement2.getTextRange().getStartOffset();
+      outerLanguageElements = new TreeSet<OuterLanguageElement>(new Comparator<OuterLanguageElement>() {
+        public int compare(final OuterLanguageElement languageElement, final OuterLanguageElement languageElement2) {
+          if (languageElement.equals(languageElement2)) return 0;
+          final int result = languageElement.getTextRange().getStartOffset() - languageElement2.getTextRange().getStartOffset();
           return result != 0 ? result : 1;
         }
       });
-      myOuterLanguageElements.put(root, outerLanguageElements);
+      myOuterLanguageElements.put(root, new SoftReference<Set<OuterLanguageElement>>(outerLanguageElements));
     }
-    outerLanguageElements.add(new WeakReference<OuterLanguageElement>(element));
+    outerLanguageElements.add(element);
   }
 
   public void reparseRoots(final Set<Language> rootsToReparse) {
@@ -169,18 +165,32 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
       final PsiFile psiFile = entry.getValue();
       final Language updatedLanguage = entry.getKey();
       if (reparsedRoots.contains(updatedLanguage)) continue;
-      final Set<WeakReference<OuterLanguageElement>> list = myOuterLanguageElements.get(psiFile);
-      if (list == null) // not parsed yet
+      SoftReference<Set<OuterLanguageElement>> outerSet = myOuterLanguageElements.get(psiFile);
+      if (outerSet == null) // not parsed yet
       {
         continue;
       }
       try {
         myRootsInUpdate.add(psiFile);
-        final Iterator<WeakReference<OuterLanguageElement>> iterator = list.iterator();
+        Set<OuterLanguageElement> languageElements = outerSet.get();
+        if (languageElements == null) {
+          psiFile.accept(new PsiElementVisitor() {
+            public void visitReferenceExpression(PsiReferenceExpression expression) {}
+            public void visitElement(PsiElement element) {
+              if (element instanceof OuterLanguageElement) {
+                registerOuterLanguageElement((OuterLanguageElement)element, psiFile);
+              }
+              else element.acceptChildren(this);
+            }
+          });
+          outerSet = myOuterLanguageElements.get(psiFile);
+          languageElements = outerSet.get();
+        }
+
+        final Iterator<OuterLanguageElement> iterator = languageElements.iterator();
         XmlText prevText = null;
         while (iterator.hasNext()) {
-          WeakReference<OuterLanguageElement> reference = iterator.next();
-          final OuterLanguageElement outerElement = reference.get();
+          final OuterLanguageElement outerElement = iterator.next();
           if (outerElement == null) {
             iterator.remove();
             continue;
@@ -320,14 +330,13 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   }
 
   private void normalizeOuterLanguageElementsInner(final PsiFile lang) {
-    final Set<WeakReference<OuterLanguageElement>> outerElements = myOuterLanguageElements.get(lang);
-    if (outerElements == null) return;
-    final Iterator<WeakReference<OuterLanguageElement>> iterator = outerElements.iterator();
+    final SoftReference<Set<OuterLanguageElement>> outerElements = myOuterLanguageElements.get(lang);
+    if (outerElements == null || outerElements.get() == null) return;
+    final Iterator<OuterLanguageElement> iterator = outerElements.get().iterator();
     OuterLanguageElement prev = null;
     while (iterator.hasNext()) {
-      final WeakReference<OuterLanguageElement> outerElement = iterator.next();
+      final OuterLanguageElement outer = iterator.next();
 
-      final OuterLanguageElement outer = outerElement.get();
       if (outer == null) {
         iterator.remove();
         continue;
