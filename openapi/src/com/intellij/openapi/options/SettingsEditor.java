@@ -15,21 +15,22 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * This class presents an abstraction of user interface transactional editor provider of some abstract data type.
  * {@link #getComponent()} should be called before {@link #resetFrom(Object)}
  */
-public abstract class SettingsEditor<Settings> {
+public abstract class SettingsEditor<Settings> implements Disposable {
   private List<SettingsEditorListener<Settings>> myListeners;
   private UserActivityWatcher myWatcher;
   private UserActivityListener myUserActivityListener;
@@ -51,6 +52,11 @@ public abstract class SettingsEditor<Settings> {
 
   public SettingsEditor(Factory<Settings> settingsFactory) {
     mySettingsFactory = settingsFactory;
+    //just to test, that this editor is always disposed
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+      }
+    });
   }
 
   public Settings getSnapshot() throws ConfigurationException {
@@ -100,6 +106,7 @@ public abstract class SettingsEditor<Settings> {
   public final void dispose() {
     uninstallWatcher();
     disposeEditor();
+    Disposer.dispose(this);
   }
 
   protected void uninstallWatcher() {
