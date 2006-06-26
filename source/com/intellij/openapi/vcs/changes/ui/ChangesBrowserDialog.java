@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.util.List;
@@ -24,7 +25,7 @@ public class ChangesBrowserDialog extends DialogWrapper {
     myProject = project;
     myChanges = changes;
     setTitle(VcsBundle.message("dialog.title.changes.browser"));
-    setCancelButtonText("Close");
+    setCancelButtonText(CommonBundle.getCloseButtonText());
     setModal(false);
 
     init();
@@ -36,5 +37,10 @@ public class ChangesBrowserDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     return new CommittedChangesBrowser(myProject, myChanges);
+  }
+
+  @Override
+  protected Action[] createActions() {
+    return new Action[] { getCancelAction() };
   }
 }
