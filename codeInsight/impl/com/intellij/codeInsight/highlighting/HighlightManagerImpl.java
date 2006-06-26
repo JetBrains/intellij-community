@@ -264,7 +264,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     }
 
     private void requestHideHighlights(final DataContext dataContext) {
-      final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR_NO_COMMIT);
+      final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
       if (editor == null) return;
       ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {

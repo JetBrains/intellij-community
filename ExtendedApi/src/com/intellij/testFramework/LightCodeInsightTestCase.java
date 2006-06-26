@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.injected.EditorDelegate;
+import com.intellij.openapi.editor.impl.injected.DocumentRange;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -375,5 +376,13 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
 
   protected VirtualFile getVFile() {
     return myVFile;
+  }
+
+  protected void bringRealEditorBack() {
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    DocumentEx document = ((DocumentRange)myEditor.getDocument()).getDelegate();
+    myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+    myEditor = ((EditorDelegate)myEditor).getDelegate();
+    myVFile = myFile.getVirtualFile();
   }
 }

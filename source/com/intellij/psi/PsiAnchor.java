@@ -1,8 +1,8 @@
 package com.intellij.psi;
 
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.util.PsiTreeUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -38,7 +38,7 @@ public class PsiAnchor {
       final PsiFile[] psiRoots = myFile.getPsiRoots();
       for (int i = 0; i < psiRoots.length; i++) {
         PsiFile root = psiRoots[i];
-        if (PsiUtil.isUnderPsiRoot(root, element)) {
+        if (PsiTreeUtil.isAncestor(root, element,false)) {
           myRootIndex = i;
           break;
         }

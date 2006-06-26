@@ -43,7 +43,7 @@ import java.util.Set;
 public class SingleRootFileViewProvider implements FileViewProvider {
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
   private final PsiManager myManager;
-  private final VirtualFile myFile;
+  private VirtualFile myFile;
   private final boolean myPhysical;
   private PsiFile myPsiFile = null;
   private Content myContent;
@@ -282,6 +282,13 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   @NotNull
   public VirtualFile getVirtualFile() {
     return myFile;
+  }
+
+  public void setVirtualFile(final VirtualFile file) {
+    myFile = file;
+    myDocument.clear();
+    myPsiFile = null;
+    myBaseLanguage = calcBaseLanguage(file);
   }
 
   private Document getCachedDocument() {

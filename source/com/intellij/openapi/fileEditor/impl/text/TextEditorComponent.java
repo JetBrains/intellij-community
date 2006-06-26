@@ -31,7 +31,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.EditorPopupHandler;
@@ -271,16 +270,13 @@ final class TextEditorComponent extends JPanel implements DataProvider{
     final Object o = ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).getData(dataId, myEditor);
     if (o != null) return o;
 
-    if (dataId.equals(DataConstants.EDITOR_NO_COMMIT)) {
-      return myEditor;
-    }
     if (dataId.equals(DataConstants.EDITOR)) {
-      return getOutsideVisibleEditor();
+      return myEditor;
     }
     if (DataConstants.PSI_ELEMENT.equals(dataId)){
       final PsiFile psiFile = getPsiFile();
       if (psiFile == null) return null;
-      final Editor editor = getOutsideVisibleEditor();
+      final Editor editor = myEditor;
 
       return TargetElementUtil.findTargetElement(editor,
                                             TargetElementUtil.THROW_STATEMENT_ACCEPTED |
@@ -291,7 +287,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
                                             TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
     }
     if (DataConstants.LANGUAGE.equals(dataId)) {
-      final Editor editor = getOutsideVisibleEditor();
+      final Editor editor = myEditor;
       final PsiFile psiFile = getPsiFile();
       if (psiFile == null) return null;
       return PsiUtil.getLanguageAtOffset(psiFile, editor.getCaretModel().getOffset());
@@ -326,11 +322,6 @@ final class TextEditorComponent extends JPanel implements DataProvider{
       return null;
     }
     return null;
-  }
-
-  private Editor getOutsideVisibleEditor() {
-    PsiFile psiFile = getPsiFile();
-    return InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, psiFile);
   }
 
   private PsiFile getPsiFile() {

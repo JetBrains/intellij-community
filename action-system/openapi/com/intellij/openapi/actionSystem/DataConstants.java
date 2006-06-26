@@ -49,15 +49,10 @@ public interface DataConstants {
    */
   String EDITOR = "editor";
 
-
-  String EDITOR_NO_COMMIT = "editorNoCommit";
-
   /**
    * Returns {@link com.intellij.openapi.fileEditor.FileEditor}
    */
   String FILE_EDITOR = "fileEditor";
-
-  String FILE_EDITOR_NO_COMMIT = "fileEditorNoCommit";
 
   /**
    * Returns {@link com.intellij.openapi.fileEditor.OpenFileDescriptor}

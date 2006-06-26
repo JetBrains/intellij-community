@@ -38,10 +38,12 @@ public class PsiTreeUtil {
    */
   public static boolean isAncestor(@Nullable PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
     if (ancestor == null) return false;
+    boolean stopAtFileLevel = !(element instanceof PsiFile || element instanceof PsiDirectory);
     PsiElement parent = strict ? element.getParent() : element;
     while (true) {
       if (parent == null) return false;
       if (parent.equals(ancestor)) return true;
+      if (stopAtFileLevel && parent instanceof PsiFile) return false;
       parent = parent.getParent();
     }
   }

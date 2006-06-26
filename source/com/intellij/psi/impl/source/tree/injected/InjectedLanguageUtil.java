@@ -10,12 +10,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.injected.DocumentRange;
 import com.intellij.openapi.editor.impl.injected.EditorDelegate;
 import com.intellij.openapi.editor.impl.injected.VirtualFileDelegate;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -28,8 +28,8 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -69,8 +69,10 @@ public class InjectedLanguageUtil {
                                                                                       @NotNull final TextRange rangeInsideHost,
                                                                                       @NotNull final Language language,
                                                                                       @NotNull final VirtualFileDelegate virtualFile,
+                                                                                      @NotNull DocumentRange documentRange,
                                                                                       @Nullable final LiteralTextEscaper<T> textEscaper,
-                                                                                      @NotNull String prefix, @NotNull String suffix) {
+                                                                                      @NotNull String prefix,
+                                                                                      @NotNull String suffix) {
     final ParserDefinition parserDefinition = language.getParserDefinition();
     if (parserDefinition == null) return null;
     PsiManager psiManager = host.getManager();
@@ -101,7 +103,22 @@ public class InjectedLanguageUtil {
     LOG.assertTrue(parsedText.equals(sourceRawText));
 
     parsedNode.putUserData(TreeElement.MANAGER_KEY, psiManager);
-    SingleRootFileViewProvider viewProvider = new SingleRootFileViewProvider(psiManager, virtualFile) {
+    SingleRootFileViewProvider viewProvider = createViewProvider(project, virtualFile);
+    PsiFile psiFile = parserDefinition.createFile(viewProvider);
+    psiFile = (PsiFile)registerDocumentRange(documentRange, psiFile);
+    SrcRepositoryPsiElement repositoryPsiElement = (SrcRepositoryPsiElement)psiFile;
+    ((FileElement)parsedNode).setPsiElement(repositoryPsiElement);
+    repositoryPsiElement.setTreeElement(parsedNode);
+    ((SingleRootFileViewProvider)psiFile.getViewProvider()).forceCachedPsi(psiFile);
+    if (host.isPhysical()) {
+      SmartPsiElementPointer pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host);
+      psiFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, pointer);
+    }
+    return parsedNode.getPsi();
+  }
+
+  private static <T extends PsiLanguageInjectionHost> SingleRootFileViewProvider createViewProvider(final Project project, final VirtualFileDelegate virtualFile) {
+    return new SingleRootFileViewProvider(PsiManager.getInstance(project), virtualFile) {
       public FileViewProvider clone() {
         DocumentRange oldDocumentRange = ((VirtualFileDelegate)getVirtualFile()).getDocumentRange();
         RangeMarker documentWindow = oldDocumentRange.getTextRange();
@@ -127,16 +144,6 @@ public class InjectedLanguageUtil {
         return null;
       }
     };
-    PsiFile psiFile = parserDefinition.createFile(viewProvider);
-    SrcRepositoryPsiElement repositoryPsiElement = (SrcRepositoryPsiElement)psiFile;
-    ((FileElement)parsedNode).setPsiElement(repositoryPsiElement);
-    repositoryPsiElement.setTreeElement(parsedNode);
-    viewProvider.forceCachedPsi(psiFile);
-    if (host.isPhysical()) {
-      SmartPsiElementPointer pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host);
-      psiFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, pointer);
-    }
-    return parsedNode.getPsi();
   }
 
   private static <T extends PsiLanguageInjectionHost> void patchLeafs(final ASTNode parsedNode,
@@ -273,8 +280,7 @@ public class InjectedLanguageUtil {
           String newText = documentRange.getText();
           VirtualFileDelegate virtualFile = new VirtualFileDelegate(hostVirtualFile, documentRange, language, newText);
           FileDocumentManagerImpl.registerDocument(documentRange, virtualFile);
-          PsiElement psi = parseInjectedPsiFile(host, rangeInsideHost, language, virtualFile, myTextEscaper, prefix, suffix);
-          psi = registerDocumentRange(documentRange, (PsiFile)psi);
+          PsiElement psi = parseInjectedPsiFile(host, rangeInsideHost, language, virtualFile, documentRange, myTextEscaper, prefix, suffix);
           LOG.assertTrue(psi.getText().equals(documentRange.getText()));
 
           result.add(new Pair<PsiElement,TextRange>(psi, rangeInsideHost));
@@ -383,11 +389,11 @@ public class InjectedLanguageUtil {
       return injectedPsi;
     }
 
-    // replace psi
-    FileElement newFileElement = (FileElement)injectedPsi.getNode().copyElement();
-    FileElement oldFileElement = oldFile.getTreeElement();
+    if (!injectedPsi.getText().equals(oldFile.getText())) {
+      // replace psi
+      FileElement newFileElement = (FileElement)injectedPsi.getNode().copyElement();
+      FileElement oldFileElement = oldFile.getTreeElement();
 
-    if (!newFileElement.getText().equals(oldFileElement.getText())) {
       if (oldFileElement.getFirstChildNode() != null) {
         TreeUtil.removeRange(oldFileElement.getFirstChildNode(), null);
       }
@@ -399,6 +405,8 @@ public class InjectedLanguageUtil {
       oldFile.subtreeChanged();
 
       PsiDocumentManagerImpl.checkConsistency(oldFile, documentRange);
+      SingleRootFileViewProvider viewProvider = (SingleRootFileViewProvider)oldFile.getViewProvider();
+      viewProvider.setVirtualFile(injectedPsi.getVirtualFile());
     }
 
     return oldFile;

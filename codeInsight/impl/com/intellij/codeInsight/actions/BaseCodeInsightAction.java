@@ -9,13 +9,25 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 
 public abstract class BaseCodeInsightAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Editor injectedEditor = getEditor(dataContext, project);
+
+    actionPerformedImpl(project, injectedEditor);
+  }
+
+  private static Editor getEditor(final DataContext dataContext, final Project project) {
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    actionPerformedImpl(project, editor);
+    Editor injectedEditor = editor;
+    if (editor != null) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument());
+      injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile);
+    }
+    return injectedEditor;
   }
 
   public void actionPerformedImpl(final Project project, final Editor editor) {
@@ -54,7 +66,7 @@ public abstract class BaseCodeInsightAction extends AnAction {
       return;
     }
 
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = getEditor(dataContext, project);
     if (editor == null){
       presentation.setEnabled(false);
       return;

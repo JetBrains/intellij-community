@@ -9,6 +9,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
  */
 class FocusBasedCurrentEditorProvider implements CurrentEditorProvider {
   public FileEditor getCurrentEditor() {
-    return (FileEditor)DataManager.getInstance().getDataContext().getData(DataConstants.FILE_EDITOR_NO_COMMIT);
+    return (FileEditor)DataManager.getInstance().getDataContext().getData(DataConstants.FILE_EDITOR);
   }
 }

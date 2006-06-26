@@ -67,7 +67,8 @@ public abstract class EditorAction extends AnAction {
     Editor editor = (Editor) dataContext.getData(DataConstants.EDITOR);
     if (editor == null) {
       presentation.setEnabled(false);
-    } else {
+    }
+    else {
       update(editor, presentation, dataContext);
     }
   }
