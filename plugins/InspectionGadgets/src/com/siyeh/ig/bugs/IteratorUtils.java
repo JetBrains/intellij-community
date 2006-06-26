@@ -25,9 +25,10 @@ class IteratorUtils {
 
     private IteratorUtils() {}
 
-    public static boolean callsIteratorNext(PsiMethod method) {
+    public static boolean callsIteratorNext(PsiMethod method,
+                                            boolean onlyOnThisObject) {
         final CallsIteratorNextVisitor visitor =
-                new CallsIteratorNextVisitor();
+                new CallsIteratorNextVisitor(onlyOnThisObject);
         method.accept(visitor);
         return visitor.callsIteratorNext();
     }
@@ -40,6 +41,11 @@ class IteratorUtils {
             extends PsiRecursiveElementVisitor {
 
         private boolean doesCallIteratorNext = false;
+        private boolean onlyOnThisObject;
+
+        public CallsIteratorNextVisitor(boolean onlyOnThisObject) {
+            this.onlyOnThisObject = onlyOnThisObject;
+        }
 
         public void visitElement(@NotNull PsiElement element){
             if (doesCallIteratorNext) {
@@ -74,11 +80,14 @@ class IteratorUtils {
             if(!isIterator(containingClass)){
                 return;
             }
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if(qualifier != null && !(qualifier instanceof PsiThisExpression)
-                    && !(qualifier instanceof PsiSuperExpression)){
-                return;
+            if (onlyOnThisObject) {
+                final PsiExpression qualifier =
+                        methodExpression.getQualifierExpression();
+                if(qualifier != null &&
+                        !(qualifier instanceof PsiThisExpression) &&
+                        !(qualifier instanceof PsiSuperExpression)){
+                    return;
+                }
             }
             doesCallIteratorNext = true;
         }

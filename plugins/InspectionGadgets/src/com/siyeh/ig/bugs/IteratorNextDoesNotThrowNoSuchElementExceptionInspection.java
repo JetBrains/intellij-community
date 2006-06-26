@@ -83,7 +83,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
                     return;
                 }
             }
-            if(IteratorUtils.callsIteratorNext(method)){
+            if(IteratorUtils.callsIteratorNext(method, false)){
                 return;
             }
             final CalledMethodsVisitor visitor = new CalledMethodsVisitor();

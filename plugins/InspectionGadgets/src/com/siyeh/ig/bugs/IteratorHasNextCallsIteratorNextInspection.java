@@ -70,7 +70,7 @@ public class IteratorHasNextCallsIteratorNextInspection
             if(!IteratorUtils.isIterator(aClass)){
                 return;
             }
-            if(!IteratorUtils.callsIteratorNext(method)){
+            if(!IteratorUtils.callsIteratorNext(method, true)){
                 return;
             }
             registerMethodError(method);
