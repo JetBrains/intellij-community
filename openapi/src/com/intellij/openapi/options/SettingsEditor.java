@@ -52,9 +52,10 @@ public abstract class SettingsEditor<Settings> implements Disposable {
 
   public SettingsEditor(Factory<Settings> settingsFactory) {
     mySettingsFactory = settingsFactory;
-    //just to test, that this editor is always disposed
     Disposer.register(this, new Disposable() {
       public void dispose() {
+        disposeEditor();
+        uninstallWatcher();
       }
     });
   }
@@ -104,16 +105,11 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   }
 
   public final void dispose() {
-    uninstallWatcher();
-    disposeEditor();
     Disposer.dispose(this);
   }
 
   protected void uninstallWatcher() {
-    if (myWatcher != null) {
-      myWatcher.removeUserActivityListener(myUserActivityListener);
-      myWatcher = null;
-    }
+    myWatcher = null;
   }
 
   protected void installWatcher(JComponent c) {
@@ -124,7 +120,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
         fireEditorStateChanged();
       }
     };
-    myWatcher.addUserActivityListener(myUserActivityListener);
+    myWatcher.addUserActivityListener(myUserActivityListener, this);
   }
 
   public final void addSettingsEditorListener(SettingsEditorListener<Settings> listener) {
