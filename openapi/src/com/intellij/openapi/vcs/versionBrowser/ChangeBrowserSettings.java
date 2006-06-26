@@ -22,6 +22,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -66,6 +67,7 @@ public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizab
   public void projectClosed() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "ChangeBrowserSettings";
   }
