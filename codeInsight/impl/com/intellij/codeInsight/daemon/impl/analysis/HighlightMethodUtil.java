@@ -321,10 +321,11 @@ public class HighlightMethodUtil {
       else if (info != null && !info.isApplicable()) {
         if (info.isTypeArgumentsApplicable()) {
           String methodName = HighlightMessageUtil.getSymbolName(element, resolveResult.getSubstitutor());
-          String containerName = HighlightMessageUtil.getSymbolName(element.getParent(), resolveResult.getSubstitutor());
+          PsiElement parent = element.getParent();
+          String containerName = parent == null ? "" : HighlightMessageUtil.getSymbolName(parent, resolveResult.getSubstitutor());
           String argTypes = HighlightUtil.buildArgTypesList(list);
           String description = JavaErrorMessages.message("wrong.method.arguments", methodName, containerName, argTypes);
-          String toolTip = element.getParent() instanceof PsiClass ?
+          String toolTip = parent instanceof PsiClass ?
                            createMismatchedArgumentsHtmlTooltip(info, list) : description;
           highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, description, toolTip);
           registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
@@ -555,8 +556,7 @@ public class HighlightMethodUtil {
 
       String mismatchColor = showShortType(i, parameters, expressions, substitutor) ? null : "red";
       ms += "<td> " + "<b>" + (i == 0 ? "(" : "")
-            + "<font " + (mismatchColor == null ? "" : "color=" + mismatchColor) + ">"
-            +
+            + "<font " + (mismatchColor == null ? "" : "color=" + mismatchColor) + '>' +
             XmlUtil.escapeString(showShortType(i, parameters, expressions, substitutor)
                                  ? type.getPresentableText()
                                  : HighlightUtil.formatType(type))
