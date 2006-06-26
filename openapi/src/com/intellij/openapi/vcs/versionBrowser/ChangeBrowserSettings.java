@@ -118,6 +118,13 @@ public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizab
     }
   }
 
+  public Long getChangeBeforeFilter() {
+    if (USE_CHANGE_BEFORE_FILTER && CHANGE_BEFORE.length() > 0) {
+      return Long.parseLong(CHANGE_BEFORE);      
+    }
+    return null;
+  }
+
   public Date getDateBeforeFilter() {
     if (USE_DATE_BEFORE_FILTER) {
       return parseDate(DATE_BEFORE);
@@ -125,6 +132,13 @@ public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizab
     else {
       return null;
     }
+  }
+
+  public Long getChangeAfterFilter() {
+    if (USE_CHANGE_AFTER_FILTER && CHANGE_AFTER.length() > 0) {
+      return Long.parseLong(CHANGE_AFTER);
+    }
+    return null;
   }
 
   public Date getDateAfterFilter() {
