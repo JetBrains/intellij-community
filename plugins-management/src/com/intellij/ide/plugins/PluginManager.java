@@ -2,7 +2,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.cl.IdeaClassLoader;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,6 +16,7 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -140,7 +140,8 @@ public class PluginManager {
     final List<Element> extensions = new ArrayList<Element>();
 
     try {
-      final Document stdExtensions = JDOMUtil.loadDocument(PluginManager.class.getResourceAsStream("/standard-extensions.xml"));
+      final InputStream stdExtensionsStream = PluginManager.class.getResourceAsStream("/standard-extensions.xml");
+      final Document stdExtensions = JDOMUtil.loadDocument(stdExtensionsStream);
       final Element root = stdExtensions.getRootElement();
       final List<Element> epRoots = JDOMUtil.getChildrenFromAllNamespaces(root, "extensionPoints");
       for (Element epRoot : epRoots) {
@@ -359,9 +360,9 @@ public class PluginManager {
   private static Collection<URL> getClassLoaderUrls() {
     final ClassLoader classLoader = PluginManager.class.getClassLoader();
     final Class<? extends ClassLoader> aClass = classLoader.getClass();
-    if (aClass.getName().equals(IdeaClassLoader.class.getName())) {
+    if (aClass.getName().equals(UrlClassLoader.class.getName())) {
       try {
-        final ArrayList<URL> urls = (ArrayList<URL>)aClass.getDeclaredMethod("getUrls").invoke(classLoader);
+        final List<URL> urls = (List<URL>)aClass.getDeclaredMethod("getUrls").invoke(classLoader);
         return urls;
       }
       catch (IllegalAccessException e) {
@@ -539,7 +540,7 @@ public class PluginManager {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   protected void bootstrap(List<URL> classpathElements) {
-    IdeaClassLoader newClassLoader = initClassloader(classpathElements);
+    UrlClassLoader newClassLoader = initClassloader(classpathElements);
     try {
       final Class mainClass = Class.forName(getClass().getName(), true, newClassLoader);
       Field field = mainClass.getDeclaredField("ourMainClass");
@@ -569,7 +570,7 @@ public class PluginManager {
     }
   }
 
-  public IdeaClassLoader initClassloader(final List<URL> classpathElements) {
+  public UrlClassLoader initClassloader(final List<URL> classpathElements) {
     PathManager.loadProperties();
 
     try {
@@ -590,9 +591,9 @@ public class PluginManager {
 
     filterClassPath(classpathElements);
 
-    IdeaClassLoader newClassLoader = null;
+    UrlClassLoader newClassLoader = null;
     try {
-      newClassLoader = new IdeaClassLoader(classpathElements, null);
+      newClassLoader = new UrlClassLoader(classpathElements, null);
 
       // prepare plugins
       if (!isLoadingOfExternalPluginsDisabled()) {

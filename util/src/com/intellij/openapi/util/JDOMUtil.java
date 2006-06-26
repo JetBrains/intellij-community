@@ -25,6 +25,7 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
@@ -184,7 +185,7 @@ public class JDOMUtil {
     return saxBuilder.build(new InputStreamReader(new BufferedInputStream(new FileInputStream(file)), ENCODING));
   }
 
-  public static Document loadDocument(InputStream stream) throws JDOMException, IOException {
+  public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
     SAXBuilder saxBuilder = createBuilder();
     return saxBuilder.build(new InputStreamReader(stream, ENCODING));
   }

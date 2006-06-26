@@ -1,15 +1,19 @@
 package com.intellij.util.lang;
 
+import com.intellij.openapi.util.io.FileUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import sun.misc.Resource;
 
 import java.io.*;
 import java.net.URL;
+import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 class JarLoader extends Loader {
   private URL myURL;
+  private THashSet<String> myPackages = null;
   @NonNls private static final String JAR_PROTOCOL = "jar";
   @NonNls private static final String FILE_PROTOCOL = "file";
 
@@ -20,16 +24,40 @@ class JarLoader extends Loader {
 
   private ZipFile getZipFile() throws IOException {
     if (FILE_PROTOCOL.equals(myURL.getProtocol())) {
-      String s = myURL.getFile().replace('/', File.separatorChar);
-      if (!(new File(s)).exists()) throw new FileNotFoundException(s);
-      else return new ZipFile(s);
+      String s = FileUtil.unquote(myURL.getFile());
+      if (!(new File(s)).exists()) {
+        throw new FileNotFoundException(s);
+      }
+      else {
+        return new ZipFile(s);
+      }
     }
 
     return null;
   }
 
+  private void initPackageCache() throws IOException {
+    myPackages = new THashSet<String>();
+
+    final Enumeration<? extends ZipEntry> entries = getZipFile().entries();
+    while (entries.hasMoreElements()) {
+      ZipEntry zipEntry = entries.nextElement();
+      final String name = zipEntry.getName();
+      final int i = name.lastIndexOf("/");
+      String packageName = i > 0 ? name.substring(0, i) : "";
+      myPackages.add(packageName);
+    }
+  }
+
   Resource getResource(String name, boolean flag) {
     try {
+      if (myPackages == null) {
+        initPackageCache();
+      }
+
+      String packageName = getPackageName(name);
+      if (!myPackages.contains(packageName)) return null;
+
       final ZipFile file = getZipFile();
       if (file == null) return null;
 
@@ -42,9 +70,16 @@ class JarLoader extends Loader {
       }
     }
     catch (Exception e) {
+      return null;
     }
 
     return null;
+  }
+
+  private static String getPackageName(final String name) {
+    final int i = name.lastIndexOf("/");
+    if (i < 0) return "";
+    return name.substring(0, i);
   }
 
   private class MyResource extends Resource {

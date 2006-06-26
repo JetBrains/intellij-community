@@ -18,6 +18,15 @@ public class UrlClassLoader extends ClassLoader {
     myClassPath = new ClassPath(urls.toArray(new URL[urls.size()]));
   }
 
+  public void addURL(URL url) {
+    myClassPath.addURL(url);
+    //myUrls.add(url);
+  }
+
+  public List<URL> getUrls() {
+    return myClassPath.getUrls();
+  }
+
   protected Class findClass(final String name) throws ClassNotFoundException {
     Resource res = myClassPath.getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
     if (res == null) {
@@ -33,6 +42,16 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   private Class defineClass(String name, Resource res) throws IOException {
+    int i = name.lastIndexOf('.');
+    if (i != -1) {
+      String pkgname = name.substring(0, i);
+      // Check if package already loaded.
+      Package pkg = getPackage(pkgname);
+      if (pkg == null) {
+        definePackage(pkgname, null, null, null, null, null, null, null);
+      }
+    }
+
     byte[] b = res.getBytes();
     return _defineClass(name, b);
   }

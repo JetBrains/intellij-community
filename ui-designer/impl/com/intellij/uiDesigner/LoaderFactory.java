@@ -1,6 +1,5 @@
 package com.intellij.uiDesigner;
 
-import com.intellij.ide.plugins.cl.IdeaClassLoader;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -13,6 +12,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.PathUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -130,6 +130,6 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
 
     final URL[] _urls = urls.toArray(new URL[urls.size()]);
     //final URLClassLoader classLoader = new URLClassLoader(_urls, null);
-    return (ClassLoader)new IdeaClassLoader(Arrays.asList(_urls), null);
+    return (ClassLoader)new UrlClassLoader(Arrays.asList(_urls), null);
   }
 }

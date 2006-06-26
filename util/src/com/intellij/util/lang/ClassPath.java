@@ -7,10 +7,7 @@ import sun.misc.Resource;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.NoSuchElementException;
-import java.util.Stack;
+import java.util.*;
 
 class ClassPath {
   private final Stack<URL> myUrls = new Stack<URL>();
@@ -20,6 +17,10 @@ class ClassPath {
 
   public ClassPath(URL[] urls) {
     push(urls);
+  }
+
+  void addURL(URL url) {
+    push(new URL[]{url});
   }
 
   public Resource getResource(String s, boolean flag) {
@@ -44,6 +45,7 @@ class ClassPath {
         if (myUrls.empty()) return null;
         url = myUrls.pop();
       }
+
       if (myLoadersMap.containsKey(url)) continue;
 
       Loader loader;
@@ -81,6 +83,10 @@ class ClassPath {
       for (int i = urls.length - 1; i >= 0; i--) myUrls.push(urls[i]);
 
     }
+  }
+
+  public List<URL> getUrls() {
+    return Collections.unmodifiableList(myUrls);
   }
 
   private class MyEnumeration implements Enumeration<URL> {

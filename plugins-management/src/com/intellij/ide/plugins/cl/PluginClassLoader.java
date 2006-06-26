@@ -7,6 +7,7 @@ package com.intellij.ide.plugins.cl;
 
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.lang.UrlClassLoader;
 import sun.misc.CompoundEnumeration;
 
 import java.io.File;
@@ -16,7 +17,7 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.List;
 
-public class PluginClassLoader extends IdeaClassLoader{
+public class PluginClassLoader extends UrlClassLoader {
   private final ClassLoader[] myParents;
   private final PluginId myPluginId;
   private final File myLibDirectory;
