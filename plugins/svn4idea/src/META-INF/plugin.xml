@@ -82,5 +82,10 @@
       <action id="SvnChangesBrowser" class="org.jetbrains.idea.svn.actions.BrowseChangesAction"/>
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>
     </group>
+    <group id="SubversionUpdateActionGroup">
+      <reference id="Subversion.Add"/>
+      <reference id="Subversion.Revert"/>
+      <add-to-group group-id="UpdateActionGroup" anchor="first"/>
+    </group>
   </actions>
 </idea-plugin>
