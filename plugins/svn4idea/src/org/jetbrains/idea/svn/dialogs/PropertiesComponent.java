@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
@@ -38,6 +39,7 @@ public class PropertiesComponent extends JPanel {
   public static final String ID = "SVN Properties";
   private JTable myTable;
   private JTextArea myTextArea;
+  private boolean myIsFollowSelection;
   private File myFile;
   private SvnVcs myVcs;
   private JSplitPane mySplitPane;
@@ -45,6 +47,7 @@ public class PropertiesComponent extends JPanel {
 
   public PropertiesComponent() {
     // register toolwindow and add listener to the selection.
+    myIsFollowSelection = true;
     init();
   }
 
@@ -148,6 +151,7 @@ public class PropertiesComponent extends JPanel {
     group.addSeparator();
     group.add(new SetKeywordsAction());
     group.addSeparator();
+    group.add(new FollowSelectionAction());
     group.add(new RefreshAction());
     group.add(new CloseAction());
     return ActionManager.getInstance().createActionToolbar("", group, false).getComponent();
@@ -174,6 +178,7 @@ public class PropertiesComponent extends JPanel {
   }
 
   private class CloseAction extends AnAction {
+
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Close");
       e.getPresentation().setDescription("Close this tool window");
@@ -314,6 +319,40 @@ public class PropertiesComponent extends JPanel {
         }
       }
       setFile(myVcs, myFile);
+    }
+  }
+
+  private class FollowSelectionAction extends ToggleAction {
+
+    public boolean isSelected(AnActionEvent e) {
+      return myIsFollowSelection;
+    }
+    public void setSelected(AnActionEvent e, boolean state) {
+      if (state && !myIsFollowSelection) {
+        updateSelection(e);        
+      }
+      myIsFollowSelection = state;
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setIcon(IconLoader.findIcon("/general/autoscrollFromSource.png"));
+      e.getPresentation().setText("Follow Selection");
+      e.getPresentation().setDescription("Follow Selection");
+      // change file
+      if (myIsFollowSelection) {
+        updateSelection(e);
+      }
+    }
+
+    private void updateSelection(AnActionEvent e) {
+      VirtualFile vf = (VirtualFile) e.getDataContext().getData(DataConstants.VIRTUAL_FILE);
+      if (vf != null) {
+        File f = new File(vf.getPath());
+        if (!f.equals(myFile)) {
+          setFile(myVcs, f);
+        }
+      }
     }
   }
 
