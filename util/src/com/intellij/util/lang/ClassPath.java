@@ -31,7 +31,9 @@ class ClassPath {
 
     for (int i = 0; (loader = getLoader(i)) != null; i++) {
       Resource resource = loader.getResource(s, flag);
-      if (resource != null) return resource;
+      if (resource != null) {
+        return resource;
+      }
     }
 
     return null;
