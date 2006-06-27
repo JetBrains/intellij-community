@@ -17,6 +17,7 @@
 package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
+import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @see ASTNode
  */
 
-public interface PsiBuilder {
+public interface PsiBuilder extends UserDataHolder {
   /**
    * Returns the complete text being parsed.
    *
