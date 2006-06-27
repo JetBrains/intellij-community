@@ -18,6 +18,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspDeclaration;
 import com.intellij.psi.impl.source.jsp.jspJava.JspScriptlet;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -448,9 +449,14 @@ private boolean canBeAnotherTreeTagStart(final ASTNode child) {
     ));
   }
 
-  private ASTNode findChildAfter(@NotNull final ASTNode child, final int endOffset) {
+  private static ASTNode findChildAfter(@NotNull final ASTNode child, final int endOffset) {
     TreeElement fileNode = TreeUtil.getFileElement((TreeElement)child);
-    return fileNode.findLeafElementAt(endOffset);
+    final LeafElement leaf = fileNode.findLeafElementAt(endOffset);
+    if (leaf != null && leaf.getStartOffset() == endOffset) {
+      final ASTNode prev = TreeUtil.prevLeaf(leaf);
+      if (prev != null) return prev;
+    }
+    return leaf;
     /*
     ASTNode result = child;
     while (result != null && result.getTextRange().getEndOffset() < endOffset) {
