@@ -1,7 +1,6 @@
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -58,8 +57,6 @@ public abstract class ProjectView {
   public abstract String getCurrentViewId();
 
   public abstract void selectPsiElement(PsiElement element, boolean requestFocus);
-
-  public abstract void selectModuleGroup(ModuleGroup moduleGroup, boolean requestFocus);
 
   public abstract boolean isSortByType(String paneId);
   public abstract void setSortByType(String paneId, final boolean sortByType);

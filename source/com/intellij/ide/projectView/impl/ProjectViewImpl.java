@@ -775,7 +775,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       }
     });
 
-    if (views.size() != 0) {
+    if (!views.isEmpty()) {
       list.setSelectedValue(views.get(0), true);
     }
     Runnable runnable = new Runnable() {
@@ -1319,7 +1319,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
           paths.add(new TreePath(treeModel.getPathToRoot(node)));
         }
       }
-      if (paths.size() > 0) {
+      if (!paths.isEmpty()) {
         tree.setSelectionPaths(paths.toArray(new TreePath[paths.size()]));
       }
     }
@@ -1341,9 +1341,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       }
       return new SelectionInfo(selectedElements.toArray());
     }
-  }
-
-  public void selectModuleGroup(ModuleGroup moduleGroup, boolean b) {
   }
 
   private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
