@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.ant.AntLanguage;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.misc.AntPsiUtil;
+import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
@@ -25,7 +26,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -215,14 +215,19 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
       return myReferences;
     }
     final GenericReferenceProvider[] providers = AntReferenceProvidersRegistry.getProvidersByElement(this);
-    final List<PsiReference> result = new ArrayList<PsiReference>();
-    for (final GenericReferenceProvider provider : providers) {
-      final PsiReference[] refs = provider.getReferencesByElement(this);
-      for (PsiReference ref : refs) {
-        result.add(ref);
+    final List<PsiReference> result = PsiReferenceListSpinAllocator.alloc();
+    try {
+      for (final GenericReferenceProvider provider : providers) {
+        final PsiReference[] refs = provider.getReferencesByElement(this);
+        for (PsiReference ref : refs) {
+          result.add(ref);
+        }
       }
+      return myReferences = result.toArray(new PsiReference[result.size()]);
     }
-    return myReferences = result.toArray(new PsiReference[result.size()]);
+    finally {
+      PsiReferenceListSpinAllocator.dispose(result);
+    }
   }
 
   public boolean isPhysical() {

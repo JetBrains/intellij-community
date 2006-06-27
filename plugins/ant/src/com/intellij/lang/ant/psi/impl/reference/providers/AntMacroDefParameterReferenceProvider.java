@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference.providers;
 
+import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
 import com.intellij.lang.ant.psi.AntAllTasksContainer;
 import com.intellij.lang.ant.psi.AntMacroDef;
 import com.intellij.lang.ant.psi.AntStructuredElement;
@@ -14,7 +15,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class AntMacroDefParameterReferenceProvider extends GenericReferenceProvider {
@@ -33,12 +33,17 @@ public class AntMacroDefParameterReferenceProvider extends GenericReferenceProvi
     if (macrodef == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    final List<PsiReference> refs = new ArrayList<PsiReference>();
-    for (XmlAttribute attr : antElement.getSourceElement().getAttributes()) {
-      getXmlElementReferences(attr.getValueElement(), refs, antElement);
+    final List<PsiReference> refs = PsiReferenceListSpinAllocator.alloc();
+    try {
+      for (XmlAttribute attr : antElement.getSourceElement().getAttributes()) {
+        getXmlElementReferences(attr.getValueElement(), refs, antElement);
+      }
+      getXmlElementReferences(antElement.getSourceElement(), refs, antElement);
+      return (refs.size() > 0) ? refs.toArray(new PsiReference[refs.size()]) : PsiReference.EMPTY_ARRAY;
     }
-    getXmlElementReferences(antElement.getSourceElement(), refs, antElement);
-    return (refs.size() > 0) ? refs.toArray(new PsiReference[refs.size()]) : PsiReference.EMPTY_ARRAY;
+    finally {
+      PsiReferenceListSpinAllocator.dispose(refs);
+    }
   }
 
   private void getXmlElementReferences(final XmlElement element, final List<PsiReference> refs, final AntStructuredElement antElement) {

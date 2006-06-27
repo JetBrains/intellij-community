@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference.providers;
 
+import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
@@ -17,7 +18,6 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class AntPropertyReferenceProvider extends GenericReferenceProvider {
@@ -28,23 +28,28 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
     final XmlTag sourceElement = antElement.getSourceElement();
     final XmlAttribute[] attributes = sourceElement.getAttributes();
     if (attributes.length > 0) {
-      final List<PsiReference> refs = new ArrayList<PsiReference>();
-      boolean isTarget = antElement instanceof AntTarget;
-      boolean isSet = "isset".equals(sourceElement.getName());
-      for (XmlAttribute attr : attributes) {
-        @NonNls final String attName = attr.getName();
-        if (isTarget && ("if".equals(attName) || "unless".equals(attName))) {
-          getAttributeReference(antElement, attr, refs);
+      final List<PsiReference> refs = PsiReferenceListSpinAllocator.alloc();
+      try {
+        boolean isTarget = antElement instanceof AntTarget;
+        boolean isSet = "isset".equals(sourceElement.getName());
+        for (XmlAttribute attr : attributes) {
+          @NonNls final String attName = attr.getName();
+          if (isTarget && ("if".equals(attName) || "unless".equals(attName))) {
+            getAttributeReference(antElement, attr, refs);
+          }
+          else if (isSet && "property".equals(attName)) {
+            getAttributeReference(antElement, attr, refs);
+          }
+          else {
+            getAttributeReferences(antElement, attr, refs);
+          }
         }
-        else if (isSet && "property".equals(attName)) {
-          getAttributeReference(antElement, attr, refs);
-        }
-        else {
-          getAttributeReferences(antElement, attr, refs);
+        if (refs.size() > 0) {
+          return refs.toArray(new PsiReference[refs.size()]);
         }
       }
-      if (refs.size() > 0) {
-        return refs.toArray(new PsiReference[refs.size()]);
+      finally {
+        PsiReferenceListSpinAllocator.dispose(refs);
       }
     }
     return PsiReference.EMPTY_ARRAY;

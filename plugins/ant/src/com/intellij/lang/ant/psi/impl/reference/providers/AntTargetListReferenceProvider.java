@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference.providers;
 
+import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.impl.reference.AntTargetReference;
 import com.intellij.openapi.util.TextRange;
@@ -10,7 +11,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class AntTargetListReferenceProvider extends AntTargetReferenceProviderBase {
@@ -33,20 +33,25 @@ public class AntTargetListReferenceProvider extends AntTargetReferenceProviderBa
     if (length == 0) {
       return PsiReference.EMPTY_ARRAY;
     }
-    List<PsiReference> result = new ArrayList<PsiReference>();
-    for (final String t : targets) {
-      int i = 0;
-      for (; i < t.length(); ++i) {
-        if (!Character.isWhitespace(t.charAt(i))) break;
+    final List<PsiReference> result = PsiReferenceListSpinAllocator.alloc();
+    try {
+      for (final String t : targets) {
+        int i = 0;
+        for (; i < t.length(); ++i) {
+          if (!Character.isWhitespace(t.charAt(i))) break;
+        }
+        if (i < t.length()) {
+          final String targetName = t.substring(i).trim();
+          result.add(new AntTargetReference(this, target, targetName,
+                                            new TextRange(offsetInPosition + i, offsetInPosition + i + targetName.length()), attr));
+        }
+        offsetInPosition += t.length() + 1;
       }
-      if (i < t.length()) {
-        final String targetName = t.substring(i).trim();
-        result.add(new AntTargetReference(this, target, targetName,
-                                          new TextRange(offsetInPosition + i, offsetInPosition + i + targetName.length()), attr));
-      }
-      offsetInPosition += t.length() + 1;
+      return (result.size() > 0) ? result.toArray(new PsiReference[result.size()]) : PsiReference.EMPTY_ARRAY;
     }
-    return (result.size() > 0) ? result.toArray(new PsiReference[result.size()]) : PsiReference.EMPTY_ARRAY;
+    finally {
+      PsiReferenceListSpinAllocator.dispose(result);
+    }
   }
 
   @NotNull

@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference.providers;
 
+import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.lang.ant.psi.impl.reference.AntElementNameReference;
@@ -10,7 +11,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericRefe
 import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class AntElementNameReferenceProvider extends GenericReferenceProvider {
@@ -29,12 +29,17 @@ public class AntElementNameReferenceProvider extends GenericReferenceProvider {
         if (attrs.length == 0) {
           return new PsiReference[]{nameReference};
         }
-        List<PsiReference> result = new ArrayList<PsiReference>(attrs.length + 1);
-        result.add(nameReference);
-        for (XmlAttribute attr : attrs) {
-          result.add(new AntElementNameReference(this, task, attr));
+        final List<PsiReference> result = PsiReferenceListSpinAllocator.alloc();
+        try {
+          result.add(nameReference);
+          for (XmlAttribute attr : attrs) {
+            result.add(new AntElementNameReference(this, task, attr));
+          }
+          return result.toArray(new PsiReference[result.size()]);
         }
-        return result.toArray(new PsiReference[result.size()]);
+        finally {
+          PsiReferenceListSpinAllocator.dispose(result);
+        }
       }
     }
     return new PsiReference[]{nameReference};
