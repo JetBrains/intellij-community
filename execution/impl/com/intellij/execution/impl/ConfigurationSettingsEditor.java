@@ -1,18 +1,20 @@
 package com.intellij.execution.impl;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionRegistry;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.options.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -21,8 +23,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dyoma
@@ -106,6 +106,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
         }
       });
       myRunnerEditors.add(wrappedConfigEditor);
+      Disposer.register(this, wrappedConfigEditor);
     }
 
     if (runnerEditor != null) {
@@ -116,6 +117,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
         }
       });
       myRunnerEditors.add(wrappedRunEditor);
+      Disposer.register(this, wrappedRunEditor);
     }
 
     if (wrappedRunEditor != null && wrappedConfigEditor != null) {
@@ -132,6 +134,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
   public ConfigurationSettingsEditor(RunnerAndConfigurationSettingsImpl settings) {
     super(settings.createFactory());
     myConfigurationEditor = (SettingsEditor<RunConfiguration>)settings.getConfiguration().getConfigurationEditor();
+    Disposer.register(this, myConfigurationEditor);
     mySettings = settings;
     myConfiguration = mySettings.getConfiguration();
   }

@@ -16,6 +16,7 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -25,10 +26,14 @@ public class SettingsEditorGroup<T> extends SettingsEditor<T> {
   private List<Pair<String, SettingsEditor<T>>> myEditors = new ArrayList<Pair<String, SettingsEditor<T>>>();
 
   public void addEditor(String name, SettingsEditor<T> editor) {
+    Disposer.register(this, editor);
     myEditors.add(new Pair<String, SettingsEditor<T>>(name, editor));
   }
 
   public void addGroup(SettingsEditorGroup<T> group) {
+    for (final Pair<String, SettingsEditor<T>> pair : group.myEditors) {
+      Disposer.register(this, pair.second);
+    }
     myEditors.addAll(group.myEditors);
   }
 

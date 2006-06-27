@@ -15,13 +15,14 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<Settings> {
@@ -42,20 +43,19 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
   public abstract CompositeSettingsBuilder<Settings> getBuilder();
 
   public void resetEditorFrom(Settings settings) {
-    for (Iterator<SettingsEditor<Settings>> iterator = myEditors.iterator(); iterator.hasNext();) {
-      iterator.next().resetEditorFrom(settings);
+    for (final SettingsEditor<Settings> myEditor : myEditors) {
+      myEditor.resetEditorFrom(settings);
     }
   }
 
   public void applyEditorTo(Settings settings) throws ConfigurationException {
-    for (Iterator<SettingsEditor<Settings>> iterator = myEditors.iterator(); iterator.hasNext();) {
-      iterator.next().applyTo(settings);
+    for (final SettingsEditor<Settings> myEditor : myEditors) {
+      myEditor.applyTo(settings);
     }
   }
 
   public void uninstallWatcher() {
-    for (Iterator<SettingsEditor<Settings>> iterator = myEditors.iterator(); iterator.hasNext();) {
-      SettingsEditor<Settings> editor = iterator.next();
+    for (SettingsEditor<Settings> editor : myEditors) {
       editor.removeSettingsEditorListener(myChildSettingsListener);
     }
   }
@@ -68,25 +68,23 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
       }
     };
 
-    for (Iterator<SettingsEditor<Settings>> iterator = myEditors.iterator(); iterator.hasNext();) {
-      SettingsEditor<Settings> editor = iterator.next();
+    for (SettingsEditor<Settings> editor : myEditors) {
       editor.addSettingsEditorListener(myChildSettingsListener);
     }
   }
 
+  @NotNull
   protected final JComponent createEditor() {
     CompositeSettingsBuilder<Settings> builder = getBuilder();
     myEditors = builder.getEditors();
-    for (Iterator<SettingsEditor<Settings>> iterator = myEditors.iterator(); iterator.hasNext();) {
-      iterator.next().setOwner(this);
+    for (final SettingsEditor<Settings> editor : myEditors) {
+      Disposer.register(this, editor);
+      editor.setOwner(this);
     }
     return builder.createCompoundEditor();
   }
 
   public void disposeEditor() {
-    for (Iterator<SettingsEditor<Settings>> iterator = myEditors.iterator(); iterator.hasNext();) {
-      iterator.next().dispose();
-    }
     myIsDisposed = true;
   }
 
@@ -112,10 +110,10 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
       myIsInSync = true;
       try {
         Settings snapshot = getSnapshot();
-        for (Iterator<SettingsEditor<Settings>> iterator = myEditors.iterator(); iterator.hasNext();) {
-          SettingsEditor<Settings> editor = iterator.next();
-          if (myChangedEditors.contains(editor)) continue;
-          editor.resetFrom(snapshot);
+        for (SettingsEditor<Settings> editor : myEditors) {
+          if (!myChangedEditors.contains(editor)) {
+            editor.resetFrom(snapshot);
+          }
         }
       }
       catch (ConfigurationException e) {
