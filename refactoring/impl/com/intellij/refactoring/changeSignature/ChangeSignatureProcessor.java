@@ -116,8 +116,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     final PsiMethod method = myChangeInfo.getMethod();
 
     findSimpleUsages(method, result);
-    findEjbUsages(result);
-
 
     final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
@@ -280,15 +278,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
           }
         }
       }
-    }
-  }
-
-  private void findEjbUsages(ArrayList<UsageInfo> result) {
-    if (!(myChangeInfo.ejbRole instanceof EjbDeclMethodRole)) return;
-
-    for (PsiMethod implementation : ((EjbDeclMethodRole) myChangeInfo.ejbRole).findAllImplementations()) {
-      result.add(new UsageInfo(implementation));
-      findSimpleUsages(implementation, result);
     }
   }
 
@@ -983,7 +972,10 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
     if (myChangeInfo.isReturnTypeChanged) {
       final PsiType returnType = substitutor.substitute(myChangeInfo.newTypeElement);
-      method.getReturnTypeElement().replace(factory.createTypeElement(returnType));
+      // don't modify return type for non-Java overriders (EJB)
+      if (method.getName().equals(myChangeInfo.newName)) {
+        method.getReturnTypeElement().replace(factory.createTypeElement(returnType));
+      }
     }
 
     PsiParameterList list = method.getParameterList();
