@@ -356,7 +356,7 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
   }
 
   @Nullable public PsiFile getBoundForm() {
-    if (myClassName.startsWith("javax.swing")) {
+    if (myClassName.length() == 0 || myClassName.startsWith("javax.swing")) {
       return null;
     }
     PsiManager psiManager = PsiManager.getInstance(myProject);
