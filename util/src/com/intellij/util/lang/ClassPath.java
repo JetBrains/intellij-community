@@ -7,7 +7,10 @@ import sun.misc.Resource;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.NoSuchElementException;
+import java.util.Stack;
 
 class ClassPath {
   private final Stack<URL> myUrls = new Stack<URL>();
@@ -83,10 +86,6 @@ class ClassPath {
       for (int i = urls.length - 1; i >= 0; i--) myUrls.push(urls[i]);
 
     }
-  }
-
-  public List<URL> getUrls() {
-    return Collections.unmodifiableList(myUrls);
   }
 
   private class MyEnumeration implements Enumeration<URL> {
