@@ -96,6 +96,18 @@ public abstract class UsefulTestCase extends TestCase {
     return (T)o;
   }
 
+  public static <T> T assertOneElement(Collection<T> collection) {
+    assertNotNull(collection);
+    assertEquals(1, collection.size());
+    return collection.iterator().next();
+  }
+
+  public static <T> T assertOneElement(T[] ts) {
+    assertNotNull(ts);
+    assertEquals(1, ts.length);
+    return ts[0];
+  }
+
   protected void printThreadDump() {
     final Map<Thread,StackTraceElement[]> traces = Thread.getAllStackTraces();
     for (final Map.Entry<Thread, StackTraceElement[]> entry : traces.entrySet()) {
