@@ -141,8 +141,6 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
   }
 
   private void processMetaData(@NotNull final IntentionActionMetaData metaData) throws IOException {
-    checkDescriptionProvided(metaData);
-
     final URL description = metaData.getDescription();
     if (description != null) {
       @NonNls String descriptionText = ResourceUtil.loadText(description).toLowerCase();
@@ -158,21 +156,6 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
         descriptors.add(metaData.myFamily);
       }
     }
-  }
-
-  private static void checkNotNull(final IntentionActionMetaData data, final Object dirURL, String cause) {
-    LOG.assertTrue(dirURL != null, cause + " for intention '"+data + "' is not provided.");
-  }
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void checkDescriptionProvided(final IntentionActionMetaData metaData) {
-    URL dirURL = metaData.getDirURL();
-    checkNotNull(metaData, dirURL, "Base dir");
-    URL description = metaData.getDescription();
-    checkNotNull(metaData, description, "Desciption");
-    URL[] before = metaData.getExampleUsagesBefore();
-    checkNotNull(metaData, before, "Before usages");
-    URL[] after = metaData.getExampleUsagesAfter();
-    checkNotNull(metaData, after, "After usages");
   }
 
   public ArrayList<String> getIntentionNames(final String filtString) {
