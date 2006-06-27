@@ -18,6 +18,7 @@ public class LocalChangeList implements Cloneable, ChangeList {
   private String myComment = "";
 
   private boolean myIsDefault = false;
+  private boolean myIsReadOnly = false;
   private Collection<Change> myOutdatedChanges;
   private boolean myIsInUpdate = false;
   private Set<Change> myChangesBeforeUpdate;
@@ -66,6 +67,14 @@ public class LocalChangeList implements Cloneable, ChangeList {
 
   void setDefault(final boolean isDefault) {
     myIsDefault = isDefault;
+  }
+
+  public boolean isReadOnly() {
+    return myIsReadOnly;
+  }
+
+  public void setReadOnly(final boolean isReadOnly) {
+    myIsReadOnly = isReadOnly;
   }
 
   synchronized void addChange(Change change) {
@@ -159,6 +168,7 @@ public class LocalChangeList implements Cloneable, ChangeList {
     if (myIsDefault != list.myIsDefault) return false;
     if (!myChanges.equals(list.myChanges)) return false;
     if (!myName.equals(list.myName)) return false;
+    if (myIsReadOnly != list.myIsReadOnly) return false;
 
     return true;
   }

@@ -89,6 +89,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @NonNls private static final String ATT_COMMENT = "comment";
   @NonNls private static final String NODE_CHANGE = "change";
   @NonNls private static final String ATT_DEFAULT = "default";
+  @NonNls private static final String ATT_READONLY = "readonly";
   @NonNls private static final String ATT_VALUE_TRUE = "true";
   @NonNls private static final String ATT_CHANGE_TYPE = "type";
   @NonNls private static final String ATT_CHANGE_BEFORE_PATH = "beforePath";
@@ -741,7 +742,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     public void update(AnActionEvent e) {
       ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
-      e.getPresentation().setEnabled(lists != null && lists.length == 1 && lists[0] instanceof LocalChangeList);
+      e.getPresentation().setEnabled(lists != null && lists.length == 1 && lists[0] instanceof LocalChangeList &&
+                                     !((LocalChangeList) lists [0]).isReadOnly());
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -923,7 +925,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public static class RemoveChangeListAction extends AnAction {
     public RemoveChangeListAction() {
-      super(VcsBundle.message("changes.action.removechangelist.text"), VcsBundle.message("changes.action.removechangelist.description"), IconLoader.getIcon("/actions/exclude.png"));
+      super(VcsBundle.message("changes.action.removechangelist.text"),
+            VcsBundle.message("changes.action.removechangelist.description"),
+            IconLoader.getIcon("/actions/exclude.png"));
     }
 
     public void update(AnActionEvent e) {
@@ -931,7 +935,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
       e.getPresentation().setEnabled(project != null && lists != null && lists.length == 1 &&
                                      lists[0] instanceof LocalChangeList &&
-                                     !((LocalChangeList)lists[0]).isDefault());
+                                     !((LocalChangeList)lists[0]).isDefault() &&
+                                     !((LocalChangeList) lists [0]).isReadOnly());
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -1006,6 +1011,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_DEFAULT))) {
         setDefaultChangeList(list);
       }
+      if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_READONLY))) {
+        list.setReadOnly(true);
+      }
     }
 
     if (myChangeLists.size() > 0 && myDefaultChangelist == null) {
@@ -1022,6 +1030,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         element.addContent(listNode);
         if (list.isDefault()) {
           listNode.setAttribute(ATT_DEFAULT, ATT_VALUE_TRUE);
+        }
+        if (list.isReadOnly()) {
+          listNode.setAttribute(ATT_READONLY, ATT_VALUE_TRUE);
         }
 
         listNode.setAttribute(ATT_NAME, list.getName());
