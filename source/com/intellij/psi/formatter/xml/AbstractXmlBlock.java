@@ -452,9 +452,8 @@ private boolean canBeAnotherTreeTagStart(final ASTNode child) {
   private static ASTNode findChildAfter(@NotNull final ASTNode child, final int endOffset) {
     TreeElement fileNode = TreeUtil.getFileElement((TreeElement)child);
     final LeafElement leaf = fileNode.findLeafElementAt(endOffset);
-    if (leaf != null && leaf.getStartOffset() == endOffset) {
-      final ASTNode prev = TreeUtil.prevLeaf(leaf);
-      if (prev != null) return prev;
+    if (leaf != null && leaf.getStartOffset() == endOffset && endOffset > 0) {
+      return fileNode.findLeafElementAt(endOffset - 1);
     }
     return leaf;
     /*
