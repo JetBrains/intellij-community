@@ -93,7 +93,7 @@ public class CreateFieldFromUsageAction extends CreateVarFromUsageAction {
       }
 
       builder.setEndVariableAfter(field.getNameIdentifier());
-      field = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(field);
+      field = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(field);
       Template template = builder.buildTemplate();
 
       Editor newEditor = positionCursor(project, targetFile, field);

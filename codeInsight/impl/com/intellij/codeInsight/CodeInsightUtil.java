@@ -378,7 +378,7 @@ public class CodeInsightUtil {
     return true;
   }
 
-  public static <T extends PsiElement> T forcePsiPosprocessAndRestoreElement(final T element) {
+  public static <T extends PsiElement> T forcePsiPostprocessAndRestoreElement(final T element) {
     final PsiFile psiFile = element.getContainingFile();
     final Document document = psiFile.getViewProvider().getDocument();
     if(document == null) return element;

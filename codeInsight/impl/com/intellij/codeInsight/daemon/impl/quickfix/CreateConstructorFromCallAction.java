@@ -39,7 +39,7 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
       CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, myConstructorCall.getArgumentList(), getTargetSubstitutor(myConstructorCall));
       CreateClassFromNewAction.setupSuperCall(targetClass, constructor, templateBuilder);
 
-      constructor = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(constructor);
+      constructor = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(constructor);
       Template template = templateBuilder.buildTemplate();
       targetClass = PsiTreeUtil.getParentOfType(constructor, PsiClass.class);
       final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);

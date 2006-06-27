@@ -183,7 +183,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     cast.getOperand().replace(instanceOfExpression.getOperand());
     PsiDeclarationStatement decl = factory.createVariableDeclarationStatement("xxx", castType, cast);
     PsiDeclarationStatement element = insertAtAnchor(instanceOfExpression, decl);
-    return CodeInsightUtil.forcePsiPosprocessAndRestoreElement(element);
+    return CodeInsightUtil.forcePsiPostprocessAndRestoreElement(element);
   }
 
   @Nullable

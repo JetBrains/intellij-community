@@ -100,7 +100,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
       final Document document = documentManager.getDocument(targetFile);
 
 
-      method = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(method);
+      method = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(method);
       TemplateBuilder builder = new TemplateBuilder(method);
 
       targetClass = (PsiClass)method.getParent();
@@ -120,7 +120,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
       }
 
       RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());
-      method = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(method);
+      method = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(method);
       final Editor newEditor = positionCursor(project, targetFile, method);
       Template template = builder.buildTemplate();
       newEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());

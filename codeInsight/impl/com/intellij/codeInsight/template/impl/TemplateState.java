@@ -503,7 +503,7 @@ public class TemplateState implements Disposable {
             try {
               toProcessChangedUpdate = false;
               paramList.add(aClass.copy());
-              CodeInsightUtil.forcePsiPosprocessAndRestoreElement(paramList);
+              CodeInsightUtil.forcePsiPostprocessAndRestoreElement(paramList);
               toProcessChangedUpdate = true;
             }
             catch (IncorrectOperationException e) {

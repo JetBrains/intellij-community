@@ -36,7 +36,7 @@ class JavaWithSynchronizedSurrounder extends JavaStatementsSurrounder{
     synchronizedBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
-    synchronizedStatement = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(synchronizedStatement);
+    synchronizedStatement = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(synchronizedStatement);
     TextRange range = synchronizedStatement.getLockExpression().getTextRange();
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     return new TextRange(range.getStartOffset(), range.getStartOffset());

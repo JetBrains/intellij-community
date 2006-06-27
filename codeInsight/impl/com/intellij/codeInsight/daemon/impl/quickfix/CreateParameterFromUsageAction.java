@@ -74,7 +74,7 @@ public class CreateParameterFromUsageAction extends CreateVarFromUsageAction {
     builder.replaceElement(param.getTypeElement(), new TypeExpression(project, expectedTypes));
     builder.setEndVariableAfter(method.getParameterList());
 
-    method = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(method);
+    method = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(method);
     Template template = builder.buildTemplate();
     TextRange range = method.getTextRange();
     final PsiFile psiFile = method.getContainingFile();

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -198,6 +199,7 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
       builder.replaceElement(fieldReference, FIELD_VARIABLE, new FieldExpression(field, targetClass, expectedTypes), true);
       builder.setEndVariableAfter(accessor.getBody().getLBrace());
 
+      accessor = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(accessor);
       Template template = builder.buildTemplate();
       TextRange textRange = accessor.getTextRange();
       final PsiFile file = targetClass.getContainingFile();

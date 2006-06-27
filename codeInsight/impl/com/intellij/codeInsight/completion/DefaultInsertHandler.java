@@ -1029,14 +1029,14 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         if(pointerElement instanceof PsiClass){
           if (!(ref instanceof PsiImportStaticReferenceElement)) {
             PsiJavaCodeReferenceElement newRef = (PsiJavaCodeReferenceElement)ref.bindToElement(pointerElement);
-            newRef = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(newRef);
+            newRef = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(newRef);
             final TextRange textRange = newRef.getTextRange();
             endOffset = textRange.getEndOffset();
             newStartOffset = textRange.getStartOffset();
           }
           else {
             PsiImportStaticStatement statement = ((PsiImportStaticReferenceElement)ref).bindToTargetClass((PsiClass) pointerElement);
-            statement = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(statement);
+            statement = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(statement);
             final TextRange textRange = statement.getTextRange();
             endOffset = textRange.getEndOffset();
             newStartOffset = textRange.getStartOffset();

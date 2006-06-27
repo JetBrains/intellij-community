@@ -74,7 +74,7 @@ public abstract class CreateConstructorFromThisOrSuperAction extends CreateFromU
       templateBuilder.setEndVariableAfter(constructor.getBody().getLBrace());
       final RangeMarker rangeMarker = psiFile.getViewProvider().getDocument().createRangeMarker(myMethodCall.getTextRange());
 
-      constructor = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(constructor);
+      constructor = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(constructor);
 
       targetClass = constructor.getContainingClass();
       myMethodCall =

@@ -36,7 +36,7 @@ public class JavaWithIfSurrounder extends JavaStatementsSurrounder{
     thenBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
-    ifStatement = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(ifStatement);
+    ifStatement = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(ifStatement);
     TextRange range = ifStatement.getCondition().getTextRange();
     TextRange textRange = new TextRange(range.getStartOffset(), range.getStartOffset());
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());

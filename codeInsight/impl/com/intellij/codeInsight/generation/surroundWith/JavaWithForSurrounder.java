@@ -36,7 +36,7 @@ class JavaWithForSurrounder extends JavaStatementsSurrounder{
     bodyBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
-    forStatement = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(forStatement);
+    forStatement = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(forStatement);
     TextRange range1 = forStatement.getInitialization().getTextRange();
     TextRange range3 = forStatement.getUpdate().getTextRange();
     editor.getDocument().deleteString(range1.getStartOffset(), range3.getEndOffset());

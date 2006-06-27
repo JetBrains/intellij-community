@@ -80,7 +80,7 @@ public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
       var.getModifierList().setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS &&
                                                                    !CreateFromUsageUtils.isAccessedForWriting(expressions));
 
-      var = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(var);
+      var = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(var);
       TemplateBuilder builder = new TemplateBuilder(var);
       builder.replaceElement(var.getTypeElement(), expression);
       builder.setEndVariableAfter(var.getNameIdentifier());

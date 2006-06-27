@@ -38,7 +38,7 @@ class StatementMover extends LineMover {
         final PsiBlockStatement blockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", statementToSurroundWithCodeBlock);
         blockStatement.getCodeBlock().replace(codeBlock);
         PsiBlockStatement newStatement = (PsiBlockStatement)statementToSurroundWithCodeBlock.replace(blockStatement);
-        newStatement = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(newStatement);
+        newStatement = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(newStatement);
         whatToMove = new LineRange(document.getLineNumber(lineRangeMarker.getStartOffset()),
                                    document.getLineNumber(lineRangeMarker.getEndOffset()));
         PsiCodeBlock newCodeBlock = newStatement.getCodeBlock();

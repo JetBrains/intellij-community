@@ -57,7 +57,7 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
               setupSuperCall(aClass, constructor, templateBuilder);
 
               getReferenceElement(getNewExpression()).bindToElement(aClass);
-              aClass = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(aClass);
+              aClass = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(aClass);
               Template template = templateBuilder.buildTemplate();
 
               Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);

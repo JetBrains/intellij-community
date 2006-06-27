@@ -14,7 +14,6 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateDeclaration;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.codeInsight.CodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +36,7 @@ class DeclarationMover extends LineMover {
 
       try {
         PsiElement inserted = myEnumToInsertSemicolonAfter.getParent().addAfter(semicolon.getPsi(), myEnumToInsertSemicolonAfter);
-        inserted = CodeInsightUtil.forcePsiPosprocessAndRestoreElement(inserted);
+        inserted = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(inserted);
         insertOffset = nextLineOffset(editor, inserted.getTextRange().getEndOffset());
       }
       catch (IncorrectOperationException e) {
