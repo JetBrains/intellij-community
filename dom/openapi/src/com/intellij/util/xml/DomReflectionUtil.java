@@ -30,6 +30,9 @@ public class DomReflectionUtil {
     try {
       return method.invoke(object, args);
     }
+    catch (IllegalArgumentException e) {
+      throw new RuntimeException("Calling method " + method + " on object " + object + " with arguments " + Arrays.asList(args), e);
+    }
     catch (IllegalAccessException e) {
       throw new RuntimeException(e);
     }
