@@ -27,12 +27,10 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.rules.*;
+import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -45,7 +43,7 @@ import java.util.List;
  * Time: 2:42:29 PM
  * To change this template use File | Settings | File Templates.
  */
-public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibrary, UsageInFile, PsiElementUsage, MergeableUsage, Comparable<UsageInfo2UsageAdapter> {
+public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibrary, UsageInFile, PsiElementUsage, MergeableUsage, Comparable<UsageInfo2UsageAdapter>, RenameableUsage {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.UsageInfo2UsageAdapter");
 
   private final UsageInfo myUsageInfo;
@@ -234,8 +232,12 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     }
   }
 
-  public PsiElement getElement() {
+  public final PsiElement getElement() {
     return myUsageInfo.getElement();
+  }
+
+  public PsiReference getReference() {
+    return getElement().getReference();
   }
 
   public boolean isNonCodeUsage() {
@@ -256,6 +258,12 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
       return 0;
     }
     return getRangeMarker().getStartOffset() - o.getRangeMarker().getStartOffset();
+  }
+
+  public void rename(String newName) throws IncorrectOperationException {
+    final PsiReference reference = myUsageInfo.getReference();
+    assert reference != null : this;
+    reference.handleElementRename(newName);
   }
 
   private class MyUsagePresentation implements UsagePresentation {

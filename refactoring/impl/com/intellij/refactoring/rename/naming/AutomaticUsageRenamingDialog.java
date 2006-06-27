@@ -136,6 +136,8 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
         return ScrollPaneFactory.createScrollPane(myTable);
       }
     };
+    
+    myValidatingComponent.doInitialize();
 
     box.add(myValidatingComponent);
     final Box buttonBox = Box.createHorizontalBox();

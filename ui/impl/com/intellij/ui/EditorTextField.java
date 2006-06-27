@@ -48,6 +48,10 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   private Color myEnforcedBgColor = null;
   private boolean myUseTextFieldPreferredSize = true;
 
+  public EditorTextField() {
+    this("");
+  }
+
   public EditorTextField(String text) {
     this(EditorFactory.getInstance().createDocument(text), null, StdFileTypes.PLAIN_TEXT);
   }

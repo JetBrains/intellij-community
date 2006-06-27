@@ -15,6 +15,8 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.util.Disposer;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +28,7 @@ public class CompositeCommittable implements Committable {
 
   public final <T extends Committable> T addComponent(T panel) {
     myComponents.add(panel);
+    Disposer.register(this, panel);
     return panel;
   }
 
@@ -42,9 +45,6 @@ public class CompositeCommittable implements Committable {
   }
 
   public void dispose() {
-    for (final Committable committable : myComponents) {
-      committable.dispose();
-    }
   }
 
   public List<Committable> getChildren() {

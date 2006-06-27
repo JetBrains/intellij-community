@@ -1,7 +1,8 @@
 package com.intellij.refactoring.rename.naming;
 
-import com.intellij.usages.Usage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.usages.RenameableUsage;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -10,17 +11,18 @@ import java.util.*;
  * @author peter
  */
 public abstract class AutomaticUsageRenamer<T> {
-  private static final Logger LOG = com.intellij.openapi.diagnostic.Logger.getInstance("#com.intellij.refactoring.rename.naming.AutomaticRenamer");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.naming.AutomaticRenamer");
   private String myOldName;
   private String myNewName;
   private final Map<T, String> myRenames = new LinkedHashMap<T, String>();
-  private final List<T> myElements;
+  private final List<T> myElements = new ArrayList<T>();
+  private final Map<T, List<RenameableUsage>> myReferences = new HashMap<T, List<RenameableUsage>>();
 
-  protected AutomaticUsageRenamer(List<? extends T> elements, String oldName, String newName) {
+  protected AutomaticUsageRenamer(List<? extends T> renamedElements, String oldName, String newName) {
     myOldName = oldName;
     myNewName = newName;
-    myElements = new ArrayList<T>(elements);
-    Collections.sort(myElements, new Comparator<T>() {
+    List<T> elements = new ArrayList<T>(renamedElements);
+    Collections.sort(elements, new Comparator<T>() {
       private int compareNullable(@Nullable String s1, @Nullable String s2) {
         if (s1 != null) {
           return s2 == null ? 1 : s1.compareTo(s2);
@@ -34,12 +36,17 @@ public abstract class AutomaticUsageRenamer<T> {
         return getName(o1).compareTo(getName(o2));
       }
     });
-    suggestAllNames();
+    for (T element : elements) {
+      String suggestedNewName = suggestName(element);
+      if (!getName(element).equals(suggestedNewName)) {
+        myElements.add(element);
+        setRename(element, suggestedNewName);
+      }
+    }
   }
 
   public boolean hasAnythingToRename() {
-    final Collection<String> strings = myRenames.values();
-    for (final String s : strings) {
+    for (final String s : myRenames.values()) {
       if (s != null) return true;
     }
     return false;
@@ -49,7 +56,7 @@ public abstract class AutomaticUsageRenamer<T> {
     return myRenames.isEmpty();
   }
 
-  public void findUsages(List<Usage> result, final boolean searchInStringsAndComments, final boolean searchInNonJavaFiles) {
+  public void findUsages(List<RenameableUsage> result, final boolean searchInStringsAndComments, final boolean searchInNonJavaFiles) {
     for (Iterator<? extends T> iterator = myElements.iterator(); iterator.hasNext();) {
       final T variable = iterator.next();
       final boolean success = findUsagesForElement(variable, result, searchInStringsAndComments, searchInNonJavaFiles);
@@ -75,11 +82,7 @@ public abstract class AutomaticUsageRenamer<T> {
     return false;
   }
 
-  public boolean findUsagesForElement(T element, List<Usage> result,
-                                                  final boolean searchInStringsAndComments,
-                                                  final boolean searchInNonJavaFiles) {
-    return true;
-  }
+  public abstract boolean findUsagesForElement(T element, List<RenameableUsage> result, final boolean searchInStringsAndComments, final boolean searchInNonJavaFiles);
 
   protected boolean isNameAlreadySuggested(String newName) {
     return myRenames.values().contains(newName);
@@ -90,6 +93,9 @@ public abstract class AutomaticUsageRenamer<T> {
   }
 
   @Nullable
+  /**
+   * Element source, path. For example, package. Taken into account while sorting.
+   */
   public String getSourceName(T element) {
     return null;
   }
@@ -116,23 +122,28 @@ public abstract class AutomaticUsageRenamer<T> {
     return null;
   }
 
-  private void suggestAllNames() {
-    for (Iterator<T> iterator = myElements.iterator(); iterator.hasNext();) {
-      T element = iterator.next();
-      if (!myRenames.containsKey(element)) {
-        String suggestedNewName = suggestName(element);
-        if (!getName(element).equals(suggestedNewName)) {
-          setRename(element, suggestedNewName);
-        }
-        else {
-          doNotRename(element);
-        }
-      }
-      if (myRenames.get(element) == null) {
-        iterator.remove();
+  public void searchForUsages() {
+    for (final T element : myElements) {
+      if (isChecked(element)) {
+        final ArrayList<RenameableUsage> list = new ArrayList<RenameableUsage>();
+        findUsagesForElement(element, list, false, true);
+        myReferences.put(element, list);
       }
     }
   }
+
+  public final void doRename() throws IncorrectOperationException {
+    for (final Map.Entry<T, List<RenameableUsage>> entry : myReferences.entrySet()) {
+      final T element = entry.getKey();
+      final String newName = getNewElementName(element);
+      doRenameElement(element);
+      for (final RenameableUsage usage : entry.getValue()) {
+        usage.rename(newName);
+      }
+    }
+  }
+
+  protected abstract void doRenameElement(T element) throws IncorrectOperationException;
 
   protected abstract String suggestName(T element);
 

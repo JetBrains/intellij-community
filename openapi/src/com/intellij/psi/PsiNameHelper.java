@@ -19,6 +19,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
@@ -41,7 +42,7 @@ public abstract class PsiNameHelper {
    * @param text the text to check.
    * @return true if the text is an identifier, false otherwise
    */
-  public abstract boolean isIdentifier(String text);
+  public abstract boolean isIdentifier(@Nullable String text);
 
   /**
    * Checks if the specified text is a Java identifier, using the specified language level

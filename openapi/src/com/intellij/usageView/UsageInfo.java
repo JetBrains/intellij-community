@@ -79,6 +79,11 @@ public class UsageInfo {
     return mySmartPointer.getElement();
   }
 
+  @Nullable
+  public PsiReference getReference() {
+    return getElement().getReference();
+  }
+
   public TextRange getRange() {
     return new TextRange(startOffset, endOffset);
   }

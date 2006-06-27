@@ -30,12 +30,17 @@ public class MoveRenameUsageInfo extends UsageInfo{
   private final PsiReference myReference;
   private RangeMarker myReferenceRangeMarker = null;
 
+  public MoveRenameUsageInfo(PsiReference reference, PsiElement referencedElement){
+    this(reference.getElement(), reference, referencedElement);
+  }
+
   public MoveRenameUsageInfo(PsiElement element, PsiReference reference, PsiElement referencedElement){
     super(element);
     final Project project = element.getProject();
     myReferencedElement = referencedElement;
     myReferencedElementPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(referencedElement);
     if (reference == null) reference = element.getReference();
+    if (reference == null) reference = element.getContainingFile().findReferenceAt(element.getTextRange().getStartOffset());
     myReference = reference;
     if (reference != null) {
       Document document = PsiDocumentManager.getInstance(project).getDocument(element.getContainingFile());
@@ -52,6 +57,7 @@ public class MoveRenameUsageInfo extends UsageInfo{
     myReferencedElement = referencedElement;
     myReferencedElementPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(referencedElement);
     if (reference == null) reference = element.getReference();
+    if (reference == null) reference = element.getContainingFile().findReferenceAt(element.getTextRange().getStartOffset());
     myReference = reference;
     if (reference != null) {
       Document document = PsiDocumentManager.getInstance(project).getDocument(element.getContainingFile());

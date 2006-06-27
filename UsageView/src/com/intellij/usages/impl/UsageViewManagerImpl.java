@@ -116,8 +116,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
     final SearchForUsagesRunnable runnable = new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener);
     final Factory<ProgressIndicator> progressIndicatorFactory = processPresentation.getProgressIndicatorFactory();
 
-    UsageViewImplUtil.runProcessWithProgress(
-      (progressIndicatorFactory != null)?progressIndicatorFactory.create():null,
+    UsageViewImplUtil.runProcessWithProgress((progressIndicatorFactory != null)?progressIndicatorFactory.create():null,
       new Runnable() {
         public void run() {
           runnable.searchUsages();
