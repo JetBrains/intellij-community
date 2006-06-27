@@ -82,7 +82,6 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
       }
     }, ADD_PLUGIN_MODULE_ICON, "plugin.creation"));
     steps.add(stepFactory.createSourcePathsStep(nameAndLocationStep, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, "plugin.creation"));
-    steps.add(stepFactory.createOutputPathPathsStep(nameAndLocationStep, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, "plugin.creation"));
     return steps.toArray(new ModuleWizardStep[steps.size()]);
   }
 
