@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.j2ee.ClassUtil;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 
 /**
  * @author nik
@@ -25,6 +25,10 @@ public class RequiredLibrariesInfo {
 
   public RequiredLibrariesInfo(LibraryInfo... libs) {
     myLibraryInfos.addAll(new ArrayList<LibraryInfo>(Arrays.asList(libs)));
+  }
+
+  public int getLibrariesCount() {
+    return myLibraryInfos.size();  
   }
 
   public void addLibraryInfo(LibraryInfo lib) {
@@ -46,7 +50,7 @@ public class RequiredLibrariesInfo {
     for (LibraryInfo info : myLibraryInfos) {
       boolean notFound = false;
       for (String className : info.getRequiredClasses()) {
-        if (!ClassUtil.isClassAvailableInLibrary(libraryFiles, className)) {
+        if (!LibraryUtil.isClassAvailableInLibrary(libraryFiles, className)) {
           classes.add(className);
           notFound = true;
         }

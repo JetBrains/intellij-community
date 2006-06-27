@@ -35,11 +35,11 @@ import java.util.Map;
 
 import org.jetbrains.annotations.NonNls;
 
-public abstract class AbstractWizard extends DialogWrapper {
+public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.wizard.AbstractWizard");
 
   private int myCurrentStep;
-  protected final ArrayList<Step> mySteps;
+  protected final ArrayList<T> mySteps;
   private JButton myPreviousButton;
   private JButton myNextButton;
   private JButton myFinishButton;
@@ -48,16 +48,17 @@ public abstract class AbstractWizard extends DialogWrapper {
   private JPanel myContentPanel;
   private JLabel myIconLabel;
   private Component myCurrentStepComponent;
+  private final Map<Component, String> myComponentToIdMap = new HashMap<Component, String>();
 
   public AbstractWizard(final String title, final Component dialogParent) {
     super(dialogParent, true);
-    mySteps = new ArrayList<Step>();
+    mySteps = new ArrayList<T>();
     initWizard(title);
   }
 
   public AbstractWizard(final String title, final Project project) {
     super(project, true);
-    mySteps = new ArrayList<Step>();
+    mySteps = new ArrayList<T>();
     initWizard(title);
   }
 
@@ -161,11 +162,11 @@ public abstract class AbstractWizard extends DialogWrapper {
     return myCurrentStep;
   }
 
-  protected Step getCurrentStepObject() {
+  protected T getCurrentStepObject() {
     return mySteps.get(myCurrentStep);
   }
 
-  public void addStep(final Step step) {
+  public void addStep(final T step) {
     mySteps.add(step);
 
     // card layout is used
@@ -187,7 +188,6 @@ public abstract class AbstractWizard extends DialogWrapper {
     updateStep();
   }
 
-  private final Map<Component, String> myComponentToIdMap = new HashMap<Component, String>();
 
   private String addStepComponent(final Component component) {
     String id = myComponentToIdMap.get(component);
@@ -249,6 +249,8 @@ public abstract class AbstractWizard extends DialogWrapper {
 
   /**
    * override this to provide alternate step order
+   * @param step index
+   * @return the next step's index
    */
   protected int getNextStep(int step) {
     final int stepCount = mySteps.size();
@@ -258,8 +260,19 @@ public abstract class AbstractWizard extends DialogWrapper {
     return step;
   }
 
+  protected final int getNextStep() {
+    return getNextStep(getCurrentStep());
+  }
+
+  protected T getNextStepObject() {
+    int step = getNextStep();
+    return mySteps.get(step);
+  }
+
   /**
    * override this to provide alternate step order
+   * @param step index
+   * @return the previous step's index
    */
   protected int getPreviousStep(int step) {
     if (--step < 0) {
@@ -268,6 +281,9 @@ public abstract class AbstractWizard extends DialogWrapper {
     return step;
   }
 
+  protected final int getPreviousStep() {
+    return getPreviousStep(getCurrentStep());
+  }
 
   protected void updateStep() {
     if (mySteps.size() == 0) {
@@ -319,10 +335,7 @@ public abstract class AbstractWizard extends DialogWrapper {
 
   @NonNls protected abstract String getHelpID();
 
-  protected boolean isCurrentStep(final Step step) {
-    if (step == null) {
-      return false;
-    }
-    return getCurrentStepComponent() == step.getComponent();
+  protected boolean isCurrentStep(final T step) {
+    return step != null && getCurrentStepComponent() == step.getComponent();
   }
 }
