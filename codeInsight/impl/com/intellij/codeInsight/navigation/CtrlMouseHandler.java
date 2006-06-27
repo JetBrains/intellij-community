@@ -263,6 +263,13 @@ public class CtrlMouseHandler implements ProjectComponent {
         if (ref instanceof PsiPolyVariantReference) {
           final ResolveResult[] psiElements = ((PsiPolyVariantReference)ref).multiResolve(false);
           resolvedElement = psiElements.length > 0 ? psiElements[0].getElement() : null;
+
+          if (resolvedElement instanceof XmlAttributeValue &&
+              ref.getElement() == resolvedElement &&     // guard for id references
+              psiElements.length > 1
+             ) {
+            resolvedElement = psiElements[1].getElement();
+          }
         }
         else {
           resolvedElement = ref.resolve();
