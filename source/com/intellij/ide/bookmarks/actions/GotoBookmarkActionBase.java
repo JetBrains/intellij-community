@@ -11,6 +11,10 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiFile;
 
 abstract class GotoBookmarkActionBase extends BaseCodeInsightAction implements CodeInsightActionHandler{
+  protected GotoBookmarkActionBase() {
+    super(false);
+  }
+
   protected CodeInsightActionHandler getHandler() {
     return this;
   }

@@ -10,6 +10,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
 public class GotoPreviousErrorAction extends BaseCodeInsightAction{
+  public GotoPreviousErrorAction() {
+    super(false);
+  }
+
   protected CodeInsightActionHandler getHandler() {
     return new GotoNextErrorHandler(false);
   }

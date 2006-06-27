@@ -11,6 +11,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
 
 public class GotoNextErrorAction extends BaseCodeInsightAction{
+
+  public GotoNextErrorAction() {
+    super(false);
+  }
+
   protected CodeInsightActionHandler getHandler() {
     return new GotoNextErrorHandler(true);
   }

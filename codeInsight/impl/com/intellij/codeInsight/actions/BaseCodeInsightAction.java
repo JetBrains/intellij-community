@@ -12,6 +12,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 
 public abstract class BaseCodeInsightAction extends AnAction {
+  private final boolean myLookForInjectedEditor;
+
+  protected BaseCodeInsightAction() {
+    this(true);
+  }
+  protected BaseCodeInsightAction(boolean lookForInjectedEditor) {
+    myLookForInjectedEditor = lookForInjectedEditor;
+  }
+
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
@@ -20,8 +29,9 @@ public abstract class BaseCodeInsightAction extends AnAction {
     actionPerformedImpl(project, injectedEditor);
   }
 
-  private static Editor getEditor(final DataContext dataContext, final Project project) {
+  private Editor getEditor(final DataContext dataContext, final Project project) {
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    if (!myLookForInjectedEditor) return editor;
     Editor injectedEditor = editor;
     if (editor != null) {
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument());
