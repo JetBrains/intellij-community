@@ -22,6 +22,7 @@ class StableInvocationHandler<T extends DomElement> implements InvocationHandler
   public StableInvocationHandler(final T initial, final Factory<T> provider) {
     myProvider = provider;
     myCachedValue = initial;
+    myOldValue = initial;
   }
 
   public final Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {

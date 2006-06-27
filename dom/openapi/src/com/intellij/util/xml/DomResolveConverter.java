@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.WeakFactoryMap;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.project.Project;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +45,9 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
   private final WeakFactoryMap<DomElement, CachedValue<Map<String, DomElement>>> myResolveCache = new WeakFactoryMap<DomElement, CachedValue<Map<String, DomElement>>>() {
     @NotNull
     protected CachedValue<Map<String, DomElement>> create(final DomElement scope) {
-      return PsiManager.getInstance(scope.getManager().getProject()).getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<String, DomElement>>() {
+      final DomManager domManager = scope.getManager();
+      final Project project = domManager.getProject();
+      return PsiManager.getInstance(project).getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<String, DomElement>>() {
         public Result<Map<String, DomElement>> compute() {
           final Map<String, DomElement> map = new THashMap<String, DomElement>();
           scope.acceptChildren(new DomElementVisitor() {
