@@ -321,6 +321,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
         if (info == null) continue;
         if (!documentRange.isEditable(new TextRange(info.startOffset, info.endOffset))) continue;
         HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, documentRange.injectedToHost(info.startOffset), documentRange.injectedToHost(info.endOffset), info.description, info.toolTip);
+        registerQuickFixes(tool, injectedPsi, descriptor, patched);
         infos.add(patched);
       }
     }
@@ -343,6 +344,12 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     String plainMessage = XmlUtil.unescape(message.replaceAll("<[^>]*>", ""));
     @NonNls String tooltip = message.startsWith("<html>") ? message : "<html><body>" + XmlUtil.escapeString(message) + "</body></html>";
     HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);
+    registerQuickFixes(tool, psiElement, descriptor, highlightInfo);
+    return highlightInfo;
+  }
+
+  private static void registerQuickFixes(final LocalInspectionTool tool, final PsiElement psiElement, final ProblemDescriptor descriptor,
+                                  final HighlightInfo highlightInfo) {
     List<IntentionAction> options = getStandardIntentionOptions(tool, psiElement);
     final QuickFix[] fixes = descriptor.getFixes();
     if (fixes != null && fixes.length > 0) {
@@ -352,7 +359,6 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     } else {
       QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options, tool.getDisplayName());
     }
-    return highlightInfo;
   }
 
   private static List<IntentionAction> getStandardIntentionOptions(final LocalInspectionTool tool, final PsiElement psiElement) {
