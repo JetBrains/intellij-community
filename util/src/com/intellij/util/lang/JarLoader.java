@@ -39,6 +39,7 @@ class JarLoader extends Loader {
 
   private void initPackageCache() throws IOException {
     myPackages = new HashSet<String>();
+    myPackages.add("");
 
     final Enumeration<? extends ZipEntry> entries = getZipFile().entries();
     while (entries.hasMoreElements()) {
