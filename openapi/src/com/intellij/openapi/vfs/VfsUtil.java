@@ -31,9 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -180,6 +178,33 @@ public class VfsUtil {
     //OutputStream out = newChild.getOutputStream(requestor, -1, file.getActualTimeStamp());
     newChild.setBinaryContent(file.contentsToByteArray());
     return newChild;
+  }
+
+  /**
+   * Creates file and copies content of resource to it
+   *
+   * @param requestor any object to control who called this method. Note that
+   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                  See {@link VirtualFileEvent#getRequestor}
+   * @param toDir     directory to create the new file
+   * @param fileName  new file name
+   * @param resourceUrl url of the resource to be copied
+   * @return newly created file
+   * @throws IOException if resource not found or copying failed
+   */
+  public static VirtualFile copyFromResource(Object requestor, VirtualFile toDir, String fileName, String resourceUrl) throws IOException {
+    InputStream out = VfsUtil.class.getResourceAsStream(resourceUrl);
+    if (out == null) {
+      throw new FileNotFoundException(resourceUrl);
+    }
+    try {
+      final VirtualFile newChild = toDir.createChildData(requestor, fileName);
+      byte[] bytes = FileUtil.adaptiveLoadBytes(out);
+      newChild.setBinaryContent(bytes);
+      return newChild;
+    } finally {
+      out.close();
+    }
   }
 
   /**
