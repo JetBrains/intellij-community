@@ -488,7 +488,14 @@ public class MatchingVisitor extends PsiElementVisitor {
             element = psiReferenceExpression.getReferenceNameElement();
           }
         }
-        result = handleTypedElement(nameElement, element);
+
+        final SubstitutionHandler handler = (SubstitutionHandler) matchContext.getPattern().getHandler(nameElement);
+        if (handler.isSubtype() || handler.isStrictSubtype()) {
+          result = checkMatchWithingHierarchy(element,handler);
+        } else {
+          result = handler.handle(element,matchContext);
+        }
+
         return;
       }
     }
@@ -1309,23 +1316,7 @@ public class MatchingVisitor extends PsiElementVisitor {
 
       try {
         if (handler.isSubtype() || handler.isStrictSubtype()) {
-          // is type2 is (strict) subtype of type
-          final NodeIterator node = new HierarchyNodeIterator(el2, true, true);
-
-          if (handler.isStrictSubtype()) {
-            node.advance();
-          }
-
-          while (node.hasNext() && !handler.validate(node.current(), 0, -1, matchContext)) {
-            node.advance();
-          }
-
-          if (node.hasNext()) {
-            handler.addResult(el2, 0, -1, matchContext);
-            return true;
-          } else {
-            return false;
-          }
+          return checkMatchWithingHierarchy(el2, handler);
         } else {
           return handler.handle(el2, matchContext);
         }
@@ -1350,6 +1341,26 @@ public class MatchingVisitor extends PsiElementVisitor {
       } else {
         return MatchUtils.compareWithNoDifferenceToPackage(text,el2.getText());
       }
+    }
+  }
+
+  private boolean checkMatchWithingHierarchy(PsiElement el2, SubstitutionHandler handler) {
+    // is type2 is (strict) subtype of type
+    final NodeIterator node = new HierarchyNodeIterator(el2, true, true);
+
+    if (handler.isStrictSubtype()) {
+      node.advance();
+    }
+
+    while (node.hasNext() && !handler.validate(node.current(), 0, -1, matchContext)) {
+      node.advance();
+    }
+
+    if (node.hasNext()) {
+      handler.addResult(el2, 0, -1, matchContext);
+      return true;
+    } else {
+      return false;
     }
   }
 

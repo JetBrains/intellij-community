@@ -2367,4 +2367,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "}";
     assertEquals("Comparing declarations",1,findMatchesCount(s1,s2));
   }
+
+  public void testFindStaticMethodsWithinHierarchy() {
+    String s1 = "class A {}\n" +
+                "class B extends A { static void foo(); }\n" +
+                "class B2 extends A { static void foo(int a); }\n" +
+                "class B3 extends A { static void foo(int a, int b); }\n" +
+                "class C { static void foo(); }\n" +
+                "B.foo();\n" +
+                "B2.foo(1);\n" +
+                "B3.foo(2,3);\n" +
+                "C.foo();";
+    String s2 = "'_Instance:[regex( *A )].'_Method:[regex( foo )] ( '_Params* )";
+    assertEquals("Find static methods within expr type hierarchy", 3, findMatchesCount(s1,s2));
+  }
 }
