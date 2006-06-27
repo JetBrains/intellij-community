@@ -35,9 +35,9 @@ public class ASTWrapperPsiElement extends PsiElementBase {
     List<PsiElement> result = new ArrayList<PsiElement>();
     ASTNode child = getNode().getFirstChildNode();
     while (child != null) {
-      if (child instanceof CompositeElement) {
+      //if (child instanceof CompositeElement) {
         result.add(child.getPsi());
-      }
+      //}
       child = child.getTreeNext();
     }
     return result.toArray(new PsiElement[result.size()]);
