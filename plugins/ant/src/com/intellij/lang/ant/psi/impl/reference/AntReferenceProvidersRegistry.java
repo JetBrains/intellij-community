@@ -16,6 +16,7 @@ public class AntReferenceProvidersRegistry {
   static {
     ourProviders = new HashMap<Class, GenericReferenceProvider[]>();
 
+    final AntAttributeReferenceProvider attrProvider = new AntAttributeReferenceProvider();
     final AntElementNameReferenceProvider nameProvider = new AntElementNameReferenceProvider();
     final AntPropertyReferenceProvider propProvider = new AntPropertyReferenceProvider();
     final AntFileReferenceProvider fileProvider = new AntFileReferenceProvider();
@@ -23,16 +24,19 @@ public class AntReferenceProvidersRegistry {
     final AntMacroDefParameterReferenceProvider macroParamsProvider = new AntMacroDefParameterReferenceProvider();
     final AntSingleTargetReferenceProvider targetProvider = new AntSingleTargetReferenceProvider();
 
-    ourProviders.put(AntProjectImpl.class, new GenericReferenceProvider[]{targetProvider, nameProvider});
+    ourProviders.put(AntProjectImpl.class, new GenericReferenceProvider[]{targetProvider, nameProvider, attrProvider});
     ourProviders.put(AntTargetImpl.class,
-                     new GenericReferenceProvider[]{new AntTargetListReferenceProvider(), propProvider, refIdProvider, nameProvider});
+                     new GenericReferenceProvider[]{new AntTargetListReferenceProvider(), propProvider, refIdProvider, nameProvider, attrProvider});
     ourProviders.put(AntStructuredElementImpl.class,
-                     new GenericReferenceProvider[]{fileProvider, propProvider, refIdProvider, nameProvider, macroParamsProvider});
+                     new GenericReferenceProvider[]{fileProvider, propProvider, refIdProvider, nameProvider, attrProvider, macroParamsProvider});
     ourProviders.put(AntTaskImpl.class, ourProviders.get(AntStructuredElementImpl.class));
     ourProviders.put(AntPropertyImpl.class, ourProviders.get(AntStructuredElementImpl.class));
-    ourProviders.put(AntImportImpl.class, new GenericReferenceProvider[]{fileProvider, propProvider});
+    ourProviders.put(AntMacroDefImpl.class, ourProviders.get(AntStructuredElementImpl.class));
+    ourProviders.put(AntPresetDefImpl.class, ourProviders.get(AntStructuredElementImpl.class));
+    ourProviders.put(AntTypeDefImpl.class, ourProviders.get(AntStructuredElementImpl.class));
+    ourProviders.put(AntImportImpl.class, new GenericReferenceProvider[]{fileProvider, propProvider, nameProvider, attrProvider});
     ourProviders.put(AntCallImpl.class,
-                     new GenericReferenceProvider[]{targetProvider, propProvider, refIdProvider, nameProvider, macroParamsProvider});
+                     new GenericReferenceProvider[]{targetProvider, propProvider, refIdProvider, nameProvider, attrProvider, macroParamsProvider});
 
   }
 

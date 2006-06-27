@@ -23,28 +23,28 @@ public abstract class AntGenericReference extends GenericReference {
   private final XmlAttribute myAttribute;
 
   protected AntGenericReference(final GenericReferenceProvider provider,
-                                final AntElement antElement,
+                                final AntElement element,
                                 final String str,
                                 final TextRange textRange,
                                 final XmlAttribute attribute) {
     super(provider);
-    myAntElement = antElement;
+    myAntElement = element;
     myText = str;
     myTextRange = textRange;
     myAttribute = attribute;
   }
 
-  protected AntGenericReference(final GenericReferenceProvider provider, final AntStructuredElement antElement, final XmlAttribute attr) {
+  protected AntGenericReference(final GenericReferenceProvider provider, final AntStructuredElement element, final XmlAttribute attr) {
     super(provider);
-    myAntElement = antElement;
-    myText = (attr == null) ? antElement.getSourceElement().getName() : attr.getName();
-    int startInElement = (attr == null) ? 1 : attr.getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset();
+    myAntElement = element;
+    myText = (attr == null) ? element.getSourceElement().getName() : attr.getName();
+    int startInElement = (attr == null) ? 1 : attr.getTextRange().getStartOffset() - element.getTextRange().getStartOffset();
     myTextRange = new TextRange(startInElement, myText.length() + startInElement);
     myAttribute = attr;
   }
 
-  protected AntGenericReference(final GenericReferenceProvider provider, final AntStructuredElement antElement) {
-    this(provider, antElement, null);
+  protected AntGenericReference(final GenericReferenceProvider provider, final AntStructuredElement element) {
+    this(provider, element, null);
   }
 
   public AntElement getElement() {
@@ -73,6 +73,10 @@ public abstract class AntGenericReference extends GenericReference {
 
   public ReferenceType getType() {
     return ourRefType;
+  }
+
+  public boolean isCompletionOnlyReference() {
+    return false;
   }
 
   public ReferenceType getSoftenType() {
