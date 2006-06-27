@@ -595,7 +595,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
-  public LocalChangeList getDefaultChangelist() {
+  public LocalChangeList getDefaultChangeList() {
     return myDefaultChangelist;
   }
 
@@ -968,12 +968,12 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     scheduleRefresh();
   }
 
-  public void addChangeListListner(ChangeListListener listener) {
+  public void addChangeListListener(ChangeListListener listener) {
     myListeners.addListener(listener);
   }
 
 
-  public void removeChangeListListner(ChangeListListener listener) {
+  public void removeChangeListListener(ChangeListListener listener) {
     myListeners.removeListener(listener);
   }
 

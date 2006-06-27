@@ -57,7 +57,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       }
     });
 
-    changeListManager.addChangeListListner(new ChangeListListener() {
+    changeListManager.addChangeListListener(new ChangeListListener() {
       public void changeListAdded(ChangeList list) {
         fileStatusesChanged();
       }

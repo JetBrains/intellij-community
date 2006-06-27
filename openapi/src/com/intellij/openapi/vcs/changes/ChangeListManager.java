@@ -32,7 +32,7 @@ public abstract class ChangeListManager {
 
   public abstract LocalChangeList addChangeList(@NotNull String name);
   public abstract void setDefaultChangeList(@NotNull LocalChangeList list);
-  public abstract LocalChangeList getDefaultChangelist();
+  public abstract LocalChangeList getDefaultChangeList();
 
   public abstract LocalChangeList getChangeList(Change change);
 
@@ -52,8 +52,8 @@ public abstract class ChangeListManager {
 
   public abstract void moveChangesTo(final LocalChangeList list, final Change[] changes);
 
-  public abstract void addChangeListListner(ChangeListListener listener);
-  public abstract void removeChangeListListner(ChangeListListener listener);
+  public abstract void addChangeListListener(ChangeListListener listener);
+  public abstract void removeChangeListListener(ChangeListListener listener);
 
   public abstract void registerCommitExecutor(CommitExecutor executor);
   

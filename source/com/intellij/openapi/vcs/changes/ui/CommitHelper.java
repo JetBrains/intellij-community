@@ -144,7 +144,7 @@ public class CommitHelper {
               ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(config);
               dialog.show();
               if (dialog.isOK()) {
-                final Collection<Change> changes = changeListManager.getDefaultChangelist().getChanges();
+                final Collection<Change> changes = changeListManager.getDefaultChangeList().getChanges();
                 MoveChangesToAnotherListAction.askAndMove(myProject, changes.toArray(new Change[changes.size()]));
               }
             }
