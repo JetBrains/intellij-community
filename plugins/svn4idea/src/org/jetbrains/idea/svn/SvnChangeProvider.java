@@ -131,8 +131,9 @@ public class SvnChangeProvider implements ChangeProvider {
           processStatus(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(status.getFile()), status, builder);
         }
       });
+    } else {
+      processFile(path, stClient, builder);
     }
-    processFile(path, stClient, builder);
   }
 
   private void processFile(FilePath filePath, SVNStatusClient stClient, ChangelistBuilder builder) throws SVNException {
