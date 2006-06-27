@@ -5,15 +5,18 @@ import sun.misc.Resource;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
+import java.net.URLClassLoader;
+import java.util.*;
 
 public class UrlClassLoader extends ClassLoader {
   private final ClassPath myClassPath;
   private final List<URL> myURLs;
   @NonNls private static final String CLASS_EXTENSION = ".class";
+
+
+  public UrlClassLoader(ClassLoader parent) {
+    this(Arrays.asList(((URLClassLoader)parent).getURLs()), null);
+  }
 
   public UrlClassLoader(List<URL> urls, ClassLoader parent) {
     super(parent);
