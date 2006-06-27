@@ -61,7 +61,6 @@
       <reference id="UpdateFiles"/>
       <reference id="IntegrateFiles"/>
       <reference id="CheckStatusForFiles"/>
-      <reference id="Vcs.ShowTabbedFileHistory"/>
       <separator/>
       <action id="Subversion.ShowProperties" class="org.jetbrains.idea.svn.actions.ShowPropertiesAction" text="Edit Properties"/>
       <action id="Subversion.SetProperty" class="org.jetbrains.idea.svn.actions.SetPropertyAction"/>
@@ -73,6 +72,7 @@
       <reference id="Compare.SameVersion" text="Compare with BASE revision"/>
       <reference id="Compare.LastVersion" text="Compare with revision at HEAD"/>
       <reference id="Compare.Selected"/>
+      <reference id="Vcs.ShowTabbedFileHistory"/>
       <reference id="Annotate"/>
       <action id="Subversion.Copy" class="org.jetbrains.idea.svn.actions.CopyAction"/>
       <separator/>
