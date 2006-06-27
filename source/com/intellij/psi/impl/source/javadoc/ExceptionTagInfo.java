@@ -19,15 +19,21 @@ class ExceptionTagInfo implements JavadocTagInfo {
   }
 
   public String checkTagValue(PsiDocTagValue value) {
-    if (value == null || value.getFirstChild() == null) return JavaErrorMessages.message("javadoc.exception.tag.exception.class.expected");
+    if (value == null) return JavaErrorMessages.message("javadoc.exception.tag.exception.class.expected");
+    final PsiElement firstChild = value.getFirstChild();
+    if (firstChild == null) return JavaErrorMessages.message("javadoc.exception.tag.exception.class.expected");
 
-    if (!(value.getFirstChild().getFirstChild() instanceof PsiJavaCodeReferenceElement)) {
+    final PsiElement psiElement = firstChild.getFirstChild();
+    if (!(psiElement instanceof PsiJavaCodeReferenceElement)) {
       return JavaErrorMessages.message("javadoc.exception.tag.wrong.tag.value");
     }
 
-    final PsiJavaCodeReferenceElement ref = ((PsiJavaCodeReferenceElement)value.getFirstChild().getFirstChild());
-    final PsiClass exceptionClass = (PsiClass)ref.resolve();
-    if (exceptionClass == null) return null;
+    final PsiJavaCodeReferenceElement ref = ((PsiJavaCodeReferenceElement)psiElement);
+    final PsiElement element = ref.resolve();
+    if (!(element instanceof PsiClass)) return null;
+
+    final PsiClass exceptionClass = (PsiClass)element;
+
 
     final PsiClass throwable = value.getManager().findClass("java.lang.Throwable", value.getResolveScope());
 
@@ -52,6 +58,9 @@ class ExceptionTagInfo implements JavadocTagInfo {
     }
 
     PsiMethod method = PsiTreeUtil.getParentOfType(value, PsiMethod.class);
+    if (method == null) {
+      return null;
+    }
     final PsiClassType[] references = method.getThrowsList().getReferencedTypes();
 
     for (PsiClassType reference : references) {
