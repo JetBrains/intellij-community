@@ -869,4 +869,38 @@ public class StringUtil {
     builder.setCharAt(0, uppedFirstChar);
     return builder.toString();
   }
+
+  /**
+   * Strip out all charachters not accepted by given filter
+   * @param s e.g. "/n    my string "
+   * @param filter e.g. {@link CharFilter#NOT_WHITESPACE_FILTER}
+   * @return stripped string e.g. "mystring"
+   */
+  public static String strip(final String s, CharFilter filter) {
+    StringBuffer result = new StringBuffer(s.length());
+    for (int i = 0; i < s.length(); i++) {
+      char ch = s.charAt(i);
+      if (filter.accept(ch)) {
+        result.append(ch);
+      }
+    }
+    return result.toString();
+  }
+
+  /**
+   * Find position of the first charachter accepted by given filter
+   * @param s the string to search
+   * @param filter
+   * @return position of the first charachter accepted or -1 if not found
+   */
+  public static int findFirst(final String s, CharFilter filter) {
+    for (int i = 0; i < s.length(); i++) {
+      char ch = s.charAt(i);
+      if (filter.accept(ch)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
 }
