@@ -115,12 +115,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
 
       CreateFromUsageUtils.setupMethodParameters(method, builder, getMethodCall().getArgumentList(), substitutor);
       new GuessTypeParameters(factory).setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
-      if (!targetClass.isInterface()) {
-        builder.setEndVariableAfter(body.getLBrace());
-      } else {
-        //body.delete();
-        builder.setEndVariableAfter(method);
-      }
+      builder.setEndVariableAfter(targetClass.isInterface() ? method : body.getLBrace());
 
       RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());
       method = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(method);
