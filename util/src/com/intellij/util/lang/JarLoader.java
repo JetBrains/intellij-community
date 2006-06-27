@@ -1,19 +1,20 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import sun.misc.Resource;
 
 import java.io.*;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 class JarLoader extends Loader {
   private URL myURL;
-  private THashSet<String> myPackages = null;
+  private Set<String> myPackages = null;
   @NonNls private static final String JAR_PROTOCOL = "jar";
   @NonNls private static final String FILE_PROTOCOL = "file";
 
@@ -37,7 +38,7 @@ class JarLoader extends Loader {
   }
 
   private void initPackageCache() throws IOException {
-    myPackages = new THashSet<String>();
+    myPackages = new HashSet<String>();
 
     final Enumeration<? extends ZipEntry> entries = getZipFile().entries();
     while (entries.hasMoreElements()) {
