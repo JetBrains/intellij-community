@@ -85,9 +85,9 @@ public class PropertiesComponent extends JPanel {
   public void setFile(SvnVcs vcs, File file) {
     final Map props = new TreeMap();
     boolean firstTime = myFile == null;
-    myFile = file;
-    myVcs = vcs;
     if (file != null) {
+      myFile = file;
+      myVcs = vcs;
       try {
         vcs.createWCClient().doGetProperty(file, null, SVNRevision.UNDEFINED, SVNRevision.WORKING, false, new ISVNPropertyHandler() {
           public void handleProperty(File path, SVNPropertyData property) throws SVNException {
@@ -346,12 +346,18 @@ public class PropertiesComponent extends JPanel {
     }
 
     private void updateSelection(AnActionEvent e) {
+      if (myVcs == null) {
+        return;
+      }
       VirtualFile vf = (VirtualFile) e.getDataContext().getData(DataConstants.VIRTUAL_FILE);
       if (vf != null) {
         File f = new File(vf.getPath());
         if (!f.equals(myFile)) {
           setFile(myVcs, f);
+          Project p = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+          ToolWindowManager.getInstance(p).getToolWindow(ID).setTitle(f.getName());
         }
+
       }
     }
   }
