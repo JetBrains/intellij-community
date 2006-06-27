@@ -121,5 +121,9 @@ class FileLoader extends Loader {
     public int getContentLength() throws IOException {
       return (int)myFile.length();
     }
+
+    public String toString() {
+      return myFile.getAbsolutePath();
+    }
   }
 }
