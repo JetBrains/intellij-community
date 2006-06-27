@@ -2,15 +2,16 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import gnu.trove.THashSet;
 import sun.misc.Resource;
 
 import java.io.*;
 import java.net.URL;
+import java.util.HashSet;
+import java.util.Set;
 
 class FileLoader extends Loader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.lang.FileLoader");
-  private THashSet<String> myPackages = null;
+  private Set<String> myPackages = null;
   private File myRootDir;
   private String myRootDirAbsolutePath;
 
@@ -86,7 +87,7 @@ class FileLoader extends Loader {
   }
 
   private void initPackageCache() {
-    myPackages = new THashSet<String>();
+    myPackages = new HashSet<String>();
     buildPackageCache(myRootDir);
   }
 
