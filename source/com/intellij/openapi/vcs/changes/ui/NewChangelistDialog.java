@@ -27,7 +27,7 @@ public class NewChangelistDialog extends DialogWrapper {
     return myPanel.getName();
   }
 
-  public String getDescirption() {
+  public String getDescription() {
     return myPanel.getDescription();
   }
 

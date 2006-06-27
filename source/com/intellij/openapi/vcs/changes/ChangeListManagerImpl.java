@@ -549,9 +549,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     return myUnversionedFilesHolder.containsFile(file);
   }
 
-  public LocalChangeList addChangeList(String name) {
+  public LocalChangeList addChangeList(String name, final String comment) {
     synchronized (myChangeLists) {
       final LocalChangeList list = LocalChangeList.createEmptyChangeList(name);
+      list.setComment(comment);
       myChangeLists.add(list);
       myListeners.getMulticaster().changeListAdded(list);
       scheduleRefresh();
@@ -712,8 +713,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           name = getUniqueName();
         }
 
-        final LocalChangeList list = addChangeList(name);
-        list.setComment(dlg.getDescirption());
+        final LocalChangeList list = addChangeList(name, dlg.getDescription());
       }
     }
 
@@ -992,8 +992,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     final List<Element> listNodes = (List<Element>)element.getChildren(NODE_LIST);
     for (Element listNode : listNodes) {
-      LocalChangeList list = addChangeList(listNode.getAttributeValue(ATT_NAME));
-      list.setComment(listNode.getAttributeValue(ATT_COMMENT));
+      LocalChangeList list = addChangeList(listNode.getAttributeValue(ATT_NAME), listNode.getAttributeValue(ATT_COMMENT));
       final List<Element> changeNodes = (List<Element>)listNode.getChildren(NODE_CHANGE);
       for (Element changeNode : changeNodes) {
         try {

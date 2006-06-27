@@ -115,8 +115,7 @@ public class ChangeListChooser extends DialogWrapper {
       mySelectedList = (LocalChangeList)myExisitingsCombo.getSelectedItem();
     }
     else {
-      mySelectedList = ChangeListManager.getInstance(myProject).addChangeList(myNewListPanel.getName());
-      mySelectedList.setComment(myNewListPanel.getDescription());
+      mySelectedList = ChangeListManager.getInstance(myProject).addChangeList(myNewListPanel.getName(), myNewListPanel.getDescription());
     }
 
     super.doOKAction();

@@ -193,9 +193,7 @@ public class CommitHelper {
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     final LocalChangeList failedList =
-      changeListManager.addChangeList(newChangelistName);
-
-    failedList.setComment(commitMessage);
+      changeListManager.addChangeList(newChangelistName, commitMessage);
     changeListManager.moveChangesTo(failedList, failedChanges.toArray(new Change[failedChanges.size()]));
   }
   
