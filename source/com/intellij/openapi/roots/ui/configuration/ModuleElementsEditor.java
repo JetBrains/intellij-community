@@ -1,10 +1,11 @@
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
 
   public void disposeUIResources() {
     for (Disposable disposable : myDisposables) {
-      disposable.dispose();
+      Disposer.dispose(disposable);
     }
     myDisposables.clear();
   }

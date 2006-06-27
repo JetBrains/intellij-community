@@ -1,5 +1,6 @@
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
@@ -7,7 +8,6 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ide.IdeBundle;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -24,6 +24,7 @@ public class ProjectJdkStep extends ModuleWizardStep {
   private JdkChooserPanel myJdkChooser;
   private JPanel myPanel;
   private WizardContext myContext;
+  private boolean myInitialized = false;
 
   public ProjectJdkStep(WizardContext context) {
     myContext = context;
@@ -43,11 +44,6 @@ public class ProjectJdkStep extends ModuleWizardStep {
     myPanel.add(myJdkChooser, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(2, 10, 10, 5), 0, 0));
     JButton configureButton = new JButton(IdeBundle.message("button.configure"));
     myPanel.add(configureButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 0, 10, 5), 0, 0));
-
-    ProjectJdk defaultJdk = getDefaultJdk();
-    if(defaultJdk != null) {
-      myJdkChooser.selectJdk(defaultJdk);
-    }
 
     configureButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -70,6 +66,17 @@ public class ProjectJdkStep extends ModuleWizardStep {
 
   public void updateDataModel() {
     myContext.setProjectJdk(getJdk());
+  }
+
+
+  public void updateStep() {
+    if (!myInitialized) { //lazy default project initialization 
+      ProjectJdk defaultJdk = getDefaultJdk();
+      if(defaultJdk != null) {
+        myJdkChooser.selectJdk(defaultJdk);
+      }
+      myInitialized = true;
+    }
   }
 
   public ProjectJdk getJdk() {

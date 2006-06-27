@@ -13,6 +13,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.profile.Profile;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.PopupHandler;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -196,7 +197,11 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     TreeUtil.traverseDepth((TreeNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
       public boolean accept(Object node) {
         if (node instanceof MyNode) {
-          ((MyNode)node).getConfigurable().disposeUIResources();
+          final MyNode treeNode = ((MyNode)node);
+          treeNode.getConfigurable().disposeUIResources();
+          if (!(treeNode instanceof MyRootNode)) {
+            treeNode.setUserObject(null);
+          }
         }
         return true;
       }
@@ -247,6 +252,25 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
 
     myTree.setCellEditor(new DefaultTreeCellEditor(myTree, defaultTreeCellRenderer, new MyNamedConfigurableEditor(new JTextField())));
 
+    ArrayList<AnAction> actions = createActions();
+    if (actions != null){
+      final DefaultActionGroup group = new DefaultActionGroup();
+      for (AnAction action : actions) {
+        group.add(action);
+      }
+      actions = getAdditionalActions();
+      if (actions != null){
+        group.addSeparator();
+        for (AnAction action : actions) {
+          group.add(action);
+        }
+      }
+      PopupHandler.installPopupHandler(myTree, group, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    }
+  }
+
+  protected ArrayList<AnAction> getAdditionalActions() {
+    return null;
   }
 
   public void fireItemsChangeListener(final Object editableObject) {
@@ -277,7 +301,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
       public int compare(final Object o1, final Object o2) {
         MyNode node1 = (MyNode)o1;
         MyNode node2 = (MyNode)o2;
-        return node1.getDisplayName().compareTo(node2.getDisplayName());
+        return node1.getDisplayName().compareToIgnoreCase(node2.getDisplayName());
       }
     });
     ((DefaultTreeModel)myTree.getModel()).reload(parent);
@@ -290,6 +314,15 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
         TreeUtil.selectInTree(nodeToSelect, true, myTree);
       }
     });
+  }
+
+  public Object getSelectedObject(){
+    final TreePath selectionPath = myTree.getSelectionPath();
+    if (selectionPath != null){
+      MyNode node = (MyNode)selectionPath.getLastPathComponent();
+      return node.getConfigurable().getEditableObject();
+    }
+    return null;
   }
 
   public void selectNodeInTree(String displayName) {
@@ -346,6 +379,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
 
     public MyDeleteAction(Condition<Object> availableCondition) {
       super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), Icons.DELETE_ICON);
+      registerCustomShortcutSet(CommonShortcuts.DELETE, myTree);
       myCondition = availableCondition;
     }
 

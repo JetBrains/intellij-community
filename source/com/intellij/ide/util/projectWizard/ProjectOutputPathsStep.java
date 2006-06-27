@@ -5,6 +5,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -17,6 +18,7 @@ import java.io.File;
  *         Date: Jan 22, 2004
  */
 public class ProjectOutputPathsStep extends ModuleWizardStep{
+  private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
   private JPanel myPanel;
   private NamePathComponent myNamePathComponent;
   private WizardContext myWizardContext;
@@ -61,7 +63,7 @@ public class ProjectOutputPathsStep extends ModuleWizardStep{
   }
 
   public Icon getIcon() {
-    return null;
+    return NEW_PROJECT_ICON;
   }
 
   public String getHelpId() {

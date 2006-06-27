@@ -833,6 +833,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       profile.save();
     }
     myProfileFilter.dispose();
+    mySelectedProfile = null;
   }
 
   protected JPanel createInspectionProfileSettingsPanel() {

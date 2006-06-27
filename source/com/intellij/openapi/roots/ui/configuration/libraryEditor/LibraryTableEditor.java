@@ -5,6 +5,7 @@ import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.javaee.serverInstances.ApplicationServersManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -25,6 +26,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfig
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -57,7 +59,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Jan 11, 2004
  */
-public class LibraryTableEditor {
+public class LibraryTableEditor implements Disposable {
   static final UrlComparator ourUrlComparator = new UrlComparator();
 
   private JPanel myPanel;
@@ -72,7 +74,7 @@ public class LibraryTableEditor {
   private Tree myTree;
   private Map<Library, LibraryEditor> myLibraryToEditorMap = new HashMap<Library, LibraryEditor>();
 
-  private final LibraryTableModifiableModelProvider myLibraryTable;
+  private LibraryTableModifiableModelProvider myLibraryTable;
   private final boolean myEditingModuleLibraries;
   private LibraryTableTreeBuilder myTreeBuilder;
   private LibraryTable.ModifiableModel myTableModifiableModel;
@@ -173,6 +175,7 @@ public class LibraryTableEditor {
     myAttachUrlJavadocsButton.addActionListener(new AttachUrlJavadocAction());
 
     treeSelectionListener.updateButtons();
+    Disposer.register(this, myTreeBuilder);
   }
 
   public JComponent getComponent() {
@@ -249,7 +252,7 @@ public class LibraryTableEditor {
   }
 
   public void cancelChanges() {
-
+    Disposer.dispose(this);
     myLibraryToEditorMap.clear();
   }
 
@@ -383,6 +386,25 @@ public class LibraryTableEditor {
     return new AddLibraryAction(select, parent);
   }
 
+  @SuppressWarnings({"BoundFieldAssignment"})
+  public void dispose() {
+    myLibraryTable = null;
+    myPanel = null;
+    myAddLibraryButton = null;
+    myRemoveButton = null;
+    myRenameLibraryButton = null;
+    myAttachClassesButton = null;
+    myAttachSourcesButton = null;
+    myAttachJavadocsButton = null;
+    myAttachUrlJavadocsButton = null;
+    myTreePanel = null;
+    myTree = null;
+    myTreeBuilder = null;
+    myTableModifiableModel = null;
+    myLibraryToEditorMap.clear();
+    myListeners.clear();
+  }
+
   private class AddLibraryAction implements ActionListener {
     private final FileChooserDescriptor myFileChooserDescriptor = new FileChooserDescriptor(false, true, true, false, false, true);
     private boolean myNeedToSelect;
@@ -457,6 +479,7 @@ public class LibraryTableEditor {
           }
         }
       }
+      Disposer.dispose(LibraryTableEditor.this);
     }
   }
 
@@ -722,6 +745,11 @@ public class LibraryTableEditor {
     protected void doOKAction() {
       commitChanges();
       super.doOKAction();
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          Disposer.dispose(LibraryTableEditor.this);
+        }
+      }, ModalityState.defaultModalityState());
     }
 
     public void doCancelAction() {

@@ -5,10 +5,9 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
+import com.intellij.find.FindBundle;
 import com.intellij.javaee.serverInstances.ApplicationServersManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
@@ -18,10 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
@@ -31,14 +27,17 @@ import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelPr
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.ui.MasterDetailsComponent;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -51,7 +50,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -111,6 +112,19 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         return ((MyNode)treePath.getLastPathComponent()).getDisplayName();
       }
     });
+  }
+
+
+  protected ArrayList<AnAction> getAdditionalActions() {
+    final ArrayList<AnAction> result = new ArrayList<AnAction>();
+    final AnAction findUsages = new AnAction(ProjectBundle.message("find.usages.action.text")) {
+      public void actionPerformed(AnActionEvent e) {
+        showDependencies();
+      }
+    };
+    findUsages.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES).getShortcutSet(), myTree);
+    result.add(findUsages);
+    return result;
   }
 
   protected void reloadTree() {
@@ -256,7 +270,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         configurable.apply();
       }
     }
-    myJdksTreeModel.apply();
+
+    if (myJdksTreeModel.isModified()) myJdksTreeModel.apply();
     myJdksTreeModel.setProjectJdk(ProjectRootManager.getInstance(myProject).getProjectJdk());
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -268,15 +283,15 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         }
       }
     });
+    if (myModulesConfigurator.isModified()) myModulesConfigurator.apply();
 
-    myModulesConfigurator.apply();
-
+    //cleanup
+    disposeUIResources();
     reset();
   }
 
   public boolean isModified() {
     boolean isModified = myModulesConfigurator.isModified();
-    //isModified |= super.isModified();
     for (LibrariesModifiableModel model : myModule2LibrariesMap.values()) {
       final Library[] libraries = model.getLibraries();
       for (Library library : libraries) {
@@ -328,7 +343,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null) {
       MyNode node = (MyNode)selectionPath.getLastPathComponent();
-      return node.getConfigurable().getHelpTopic();
+      final NamedConfigurable configurable = node.getConfigurable();
+      if (configurable != null) {
+        return configurable.getHelpTopic();
+      }
     }
     return null;
   }
@@ -405,14 +423,81 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
   }
 
-  public ProjectJdk getSelectedJdk() {
-    final TreePath selectionPath = myTree.getSelectionPath();
-    if (selectionPath != null) {
-      MyNode node = (MyNode)selectionPath.getLastPathComponent();
-      final Object editableObject = node.getConfigurable().getEditableObject();
-      if (editableObject instanceof ProjectJdk) {
-        return (ProjectJdk)editableObject;
+  private void showDependencies() {
+    final List<String> dependencies = getDependencies();
+    if (dependencies == null || dependencies.size() == 0){
+      Messages.showInfoMessage(myTree, FindBundle.message("find.usage.view.no.usages.text"), FindBundle.message("find.pointcut.applications.not.found.title"));
+      return;
+    }
+    final int selectedRow = myTree.getSelectionRows()[0];
+    final Rectangle rowBounds = myTree.getRowBounds(selectedRow);
+    final Point location = rowBounds.getLocation();
+    location.x += rowBounds.width;
+    JBPopupFactory.getInstance().createWizardStep(new BaseListPopupStep<String>(ProjectBundle.message("dependencies.used.in.popup.title"), dependencies) {
+
+      public PopupStep onChosen(final String nameToSelect, final boolean finalChoice) {
+        selectNodeInTree(nameToSelect);
+        return PopupStep.FINAL_CHOICE;
       }
+
+      public Icon getIconFor(String selection){
+        return myModulesConfigurator.getModule(selection).getModuleType().getNodeIcon(false);
+      }
+
+    }).show(new RelativePoint(myTree, location));
+  }
+
+  @Nullable
+  private List<String> getDependencies() {
+    final Object selectedObject = getSelectedObject();
+    if (selectedObject instanceof Module) {
+      return getDependencies(new Condition<OrderEntry>() {
+        public boolean value(final OrderEntry orderEntry) {
+          return orderEntry instanceof ModuleOrderEntry && Comparing.equal(((ModuleOrderEntry)orderEntry).getModule(), selectedObject);
+        }
+      });
+    }
+    else if (selectedObject instanceof Library) {
+      return getDependencies(new Condition<OrderEntry>() {
+        public boolean value(final OrderEntry orderEntry) {
+          if (orderEntry instanceof LibraryOrderEntry){
+            final LibraryImpl library = (LibraryImpl)((LibraryOrderEntry)orderEntry).getLibrary();
+            return library != null && Comparing.equal(library.getSource(), selectedObject);
+          }
+          return false;
+        }
+      });
+    }
+    else if (selectedObject instanceof ProjectJdk) {
+      return getDependencies(new Condition<OrderEntry>() {
+        public boolean value(final OrderEntry orderEntry) {
+          return orderEntry instanceof JdkOrderEntry && Comparing.equal(((JdkOrderEntry)orderEntry).getJdk(), selectedObject);
+        }
+      });
+    }
+    return null;
+  }
+
+  private List<String> getDependencies(Condition<OrderEntry> condition) {
+    final List<String> result = new ArrayList<String>();
+    final Module[] modules = myModulesConfigurator.getModules();
+    for (Module module : modules) {
+      final ModifiableRootModel rootModel = myModulesConfigurator.getModuleEditor(module).getModifiableRootModel();
+      final OrderEntry[] entries = rootModel.getOrderEntries();
+      for (OrderEntry entry : entries) {
+        if (condition.value(entry)) {
+          result.add(module.getName());
+          break;
+        }
+      }
+    }
+    return result;
+  }
+
+  public ProjectJdk getSelectedJdk() {
+    final Object object = getSelectedObject();
+    if (object instanceof ProjectJdk){
+      return (ProjectJdk)object;
     }
     return null;
   }
@@ -505,12 +590,14 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       final MyNode node = (MyNode)selectionPath.getLastPathComponent();
       final NamedConfigurable configurable = node.getConfigurable();
       final Object editableObject = configurable.getEditableObject();
-      super.actionPerformed(e);
       if (editableObject instanceof ProjectJdk) {
         myJdksTreeModel.removeJdk((ProjectJdk)editableObject);
       }
       else if (editableObject instanceof Module) {
-        myModulesConfigurator.deleteModule((Module)editableObject);
+        if (!myModulesConfigurator.deleteModule((Module)editableObject)){
+          //wait for confirmation
+          return;
+        }
       }
       else if (editableObject instanceof Library) {
         final Library library = (Library)editableObject;
@@ -525,6 +612,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
           myApplicationServerLibrariesProvider.removeLibrary(library);
         }
       }
+      super.actionPerformed(e);
     }
   }
 
@@ -535,6 +623,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         createNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel), myJdksNode);
         return false;
       }
+
     });
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
     return popupFactory.createActionsStep(group, e.getDataContext(), false, false, ProjectBundle.message("add.new.jdk.title"), myTree, true);    
@@ -566,6 +655,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
     public MyAddAction() {
       super(CommonBundle.message("button.add"), CommonBundle.message("button.add"), Icons.ADD_ICON);
+      registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
     }
 
     public void actionPerformed(final AnActionEvent e) {
@@ -600,7 +690,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
                 final MyNode node2 = (MyNode)o2;
                 if (node1.getConfigurable()instanceof ModuleConfigurable) return -1;
                 if (node2.getConfigurable()instanceof ModuleConfigurable) return 1;
-                return node1.getDisplayName().compareTo(node2.getDisplayName());
+                return node1.getDisplayName().compareToIgnoreCase(node2.getDisplayName());
               }
             });
             ((DefaultTreeModel)myTree.getModel()).reload(myProjectNode);

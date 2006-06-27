@@ -69,6 +69,7 @@ public class LibraryConfigurable implements NamedConfigurable<Library> {
   public void disposeUIResources() {
     if (myLibraryEditor != null) {
       myLibraryEditor.cancelChanges();
+      myLibraryEditor = null;
     }
   }
 

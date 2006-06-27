@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
+import com.intellij.util.Alarm;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
@@ -74,6 +75,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private FieldPanel myProjectCompilerOutput;
 
   private MyJPanel myPanel;
+
+  private Alarm myUpdateWarningAlarm = new Alarm();
 
   private final Comparator<ModuleEditor> myModuleEditorComparator = new Comparator<ModuleEditor>() {
     final ModulesAlphaComparator myModulesComparator = new ModulesAlphaComparator();
@@ -165,7 +168,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
 
 
-    resetModuleEditors();
   }
 
   public void disposeUIResources() {
@@ -175,7 +177,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         myModuleModel.dispose();
       }
     });
-    myProjectJdkConfigurable.disposeUIResources();
+    if (myProjectJdkConfigurable != null){
+      myProjectJdkConfigurable.disposeUIResources();
+    }
   }
 
   public Module[] getModules() {
@@ -257,12 +261,43 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     updateCircularDependencyWarning();
   }
 
-  private synchronized void updateCircularDependencyWarning() {
+  private void updateCircularDependencyWarning() {
+    myUpdateWarningAlarm.cancelAllRequests();
+    myUpdateWarningAlarm.addRequest(new Runnable() {
+      public void run() {
+        final Graph<Chunk<ModifiableRootModel>> graph = ModuleCompilerUtil.toChunkGraph(createGraphGenerator());
+        final Collection<Chunk<ModifiableRootModel>> chunks = graph.getNodes();
+        String cycles = "";
+        int count = 0;
+        for (Chunk<ModifiableRootModel> chunk : chunks) {
+          final Set<ModifiableRootModel> modules = chunk.getNodes();
+          String cycle = "";
+          for (ModifiableRootModel model : modules) {
+            cycle += ", " + model.getModule().getName();
+          }
+          if (modules.size() > 1) {
+            @NonNls final String br = "<br>";
+            cycles += br + cycle.substring(2);
+            count++;
+          }
+        }
+        @NonNls final String leftBrace = "<html>";
+        @NonNls final String rightBrace = "</html>";
+        String warningMessage =
+          leftBrace + (count > 0 ? ProjectBundle.message("module.circular.dependency.warning", cycles, count) : "") + rightBrace;
+        myWarningLabel.setIcon(count > 0 ? Messages.getWarningIcon() : null);
+        myWarningLabel.setText(warningMessage);
+        myWarningLabel.repaint();
+      }
+    }, 300, ModalityState.current());
+  }
+
+  public GraphGenerator<ModifiableRootModel> createGraphGenerator() {
     final List<ModifiableRootModel> result = new ArrayList<ModifiableRootModel>();
     for (ModuleEditor moduleEditor : myModuleEditors) {
       result.add(moduleEditor.getModifiableRootModel());
     }
-    final GraphGenerator<ModifiableRootModel> graphGenerator = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<ModifiableRootModel>() {
+    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<ModifiableRootModel>() {
       public Collection<ModifiableRootModel> getNodes() {
         return result;
       }
@@ -276,28 +311,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         return dependencies.iterator();
       }
     }));
-    final Graph<Chunk<ModifiableRootModel>> graph = ModuleCompilerUtil.toChunkGraph(graphGenerator);
-    final Collection<Chunk<ModifiableRootModel>> chunks = graph.getNodes();
-    String cycles = "";
-    int count = 0;
-    for (Chunk<ModifiableRootModel> chunk : chunks) {
-      final Set<ModifiableRootModel> modules = chunk.getNodes();
-      String cycle = "";
-      for (ModifiableRootModel model : modules) {
-        cycle += ", " + model.getModule().getName();
-      }
-      if (modules.size() > 1) {
-        @NonNls final String br = "<br>";
-        cycles += br + cycle.substring(2);
-        count ++;
-      }
-    }
-    @NonNls final String leftBrace = "<html>";
-    @NonNls final String rightBrace = "</html>";
-    String warningMessage = leftBrace + (count > 0 ? ProjectBundle.message("module.circular.dependency.warning", cycles, count) : "") + rightBrace;
-    myWarningLabel.setIcon(count > 0 ? Messages.getWarningIcon() : null);
-    myWarningLabel.setText(warningMessage);
-    myWarningLabel.repaint();
   }
 
   public void apply() throws ConfigurationException {
@@ -316,27 +329,29 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          final LanguageLevel newLevel = (LanguageLevel)myLanguageLevelCombo.getSelectedItem();
-          projectRootManager.setLanguageLevel(newLevel);
-          ((ProjectEx)myProject).setSavePathsRelative(myRbRelativePaths.isSelected());
-          try {
-            myProjectJdkConfigurable.apply();
-          }
-          catch (ConfigurationException e) {
-            //cant't be
-          }
-          String canonicalPath = myProjectCompilerOutput.getText();
-          if (canonicalPath != null && canonicalPath.length() > 0) {
+          if (myLanguageLevelCombo != null) {
+            final LanguageLevel newLevel = (LanguageLevel)myLanguageLevelCombo.getSelectedItem();
+            projectRootManager.setLanguageLevel(newLevel);
+            ((ProjectEx)myProject).setSavePathsRelative(myRbRelativePaths.isSelected());
             try {
-              canonicalPath = new File(canonicalPath).getCanonicalPath();
+              myProjectJdkConfigurable.apply();
             }
-            catch (IOException e) {
-              //file doesn't exist yet
+            catch (ConfigurationException e) {
+              //cant't be
             }
-            canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
-            projectRootManager.setCompilerOutputUrl(VfsUtil.pathToUrl(canonicalPath));
-          } else {
-            projectRootManager.setCompilerOutputPointer(null);
+            String canonicalPath = myProjectCompilerOutput.getText();
+            if (canonicalPath != null && canonicalPath.length() > 0) {
+              try {
+                canonicalPath = new File(canonicalPath).getCanonicalPath();
+              }
+              catch (IOException e) {
+                //file doesn't exist yet
+              }
+              canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
+              projectRootManager.setCompilerOutputUrl(VfsUtil.pathToUrl(canonicalPath));
+            } else {
+              projectRootManager.setCompilerOutputPointer(null);
+            }
           }
           final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
           projectRootManager.multiCommit(myModuleModel, rootModels);
@@ -355,8 +370,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   }
 
-  public void deleteModule(final Module module) {
-    doRemoveModule(getModuleEditor(module));
+  public boolean deleteModule(final Module module) {
+    return doRemoveModule(getModuleEditor(module));
   }
 
   public void setDisplayName(final String name) {
@@ -439,7 +454,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  private void doRemoveModule(ModuleEditor selectedEditor) {
+  private boolean doRemoveModule(ModuleEditor selectedEditor) {
 
     String question;
     if (myModuleEditors.size() == 1) {
@@ -451,7 +466,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     int result =
       Messages.showYesNoDialog(myProject, question, ProjectBundle.message("module.remove.confirmation.title"), Messages.getQuestionIcon());
     if (result != 0) {
-      return;
+      return false;
     }
     // do remove
     myModuleEditors.remove(selectedEditor);
@@ -470,6 +485,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     final ModifiableRootModel model = selectedEditor.dispose();
     ModuleDeleteProvider.removeModule(moduleToRemove, model, modifiableRootModels, myModuleModel);
     processModuleCountChanged(myModuleEditors.size() + 1, myModuleEditors.size());
+    return true;
   }
 
 

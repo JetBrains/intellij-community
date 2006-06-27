@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -59,9 +60,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -171,6 +170,40 @@ public class ClasspathPanel extends JPanel {
 
     if (myEntryTable.getRowCount() > 0) {
       myEntryTable.getSelectionModel().setSelectionInterval(0,0);
+    }
+
+    myEntryTable.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 2){
+          navigate();
+        }
+      }
+    });
+    final ActionManager actionManager = ActionManager.getInstance();
+    final DefaultActionGroup group = new DefaultActionGroup();
+    final AnAction navigateAction = new AnAction("Navigate") {
+      public void actionPerformed(AnActionEvent e) {
+        navigate();
+      }
+    };
+    navigateAction.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), myEntryTable);
+    group.add(navigateAction);
+    PopupHandler.installPopupHandler(myEntryTable, group, ActionPlaces.UNKNOWN, actionManager);
+  }
+
+  private void navigate() {
+    final int selectedRow = myEntryTable.getSelectedRow();
+    final OrderEntry entry = myModel.getItemAt(selectedRow).getEntry();
+    String nameToSelect = null;
+    if (entry instanceof ModuleOrderEntry){
+      nameToSelect = ((ModuleOrderEntry)entry).getModuleName();
+    } else if (entry instanceof LibraryOrderEntry){
+      nameToSelect = ((LibraryOrderEntry)entry).getLibraryName();
+    } else if (entry instanceof JdkOrderEntry){
+      nameToSelect = ((JdkOrderEntry)entry).getJdkName();
+    }
+    if (nameToSelect != null){
+      ProjectRootConfigurable.getInstance(myRootModel.getModule().getProject()).selectNodeInTree(nameToSelect);
     }
   }
 

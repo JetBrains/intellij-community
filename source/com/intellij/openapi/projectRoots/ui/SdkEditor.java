@@ -71,7 +71,9 @@ public class SdkEditor implements Configurable{
 
   public void setSdk(ProjectJdk sdk){
     mySdk = sdk;
-    myInitialName = mySdk.getName();
+    if (mySdk != null) {
+      myInitialName = mySdk.getName();
+    }
     final AdditionalDataConfigurable additionalDataConfigurable = getAdditionalDataConfigurable();
     if (additionalDataConfigurable != null) {
       additionalDataConfigurable.setSdk(sdk);

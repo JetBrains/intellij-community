@@ -48,6 +48,7 @@ public class LanguageLevelConfigurable implements UnnamedConfigurable {
   }
 
   public boolean isModified() {
+    if (myLanguageLevelCombo == null) return false;
     final LanguageLevel moduleLanguageLevel = myModule.getLanguageLevel();
     if (moduleLanguageLevel == null) {
       return myLanguageLevelCombo.getSelectedItem() != LanguageLevelCombo.USE_PROJECT_LANGUAGE_LEVEL;
@@ -66,5 +67,6 @@ public class LanguageLevelConfigurable implements UnnamedConfigurable {
 
   public void disposeUIResources() {
     myPanel = null;
+    myLanguageLevelCombo = null;
   }
 }
