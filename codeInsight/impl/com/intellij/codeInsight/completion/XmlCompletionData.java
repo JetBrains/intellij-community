@@ -144,7 +144,7 @@ public class XmlCompletionData extends CompletionData {
       final CaretModel caretModel = context.editor.getCaretModel();
       int localOffset = caretModel.getOffset() - current.getTextRange().getStartOffset() - 1;
       startOffset = localOffset;
-      while(localOffset > 0){
+      while(localOffset > 0 && localOffset < text.length()){
         final char cur = text.charAt(localOffset--);
         if(cur == '}') break;
         if(cur == '{'){
