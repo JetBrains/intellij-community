@@ -147,6 +147,9 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
           myProgressIndicator.setText2(SvnBundle.message("progres.text2.updated", displayPath));
           myUpdatedFiles.getGroupById(FileGroup.UPDATED_ID).add(path);
         }
+        else if (event.getContentsStatus() == SVNStatusType.UNCHANGED && event.getPropertiesStatus() == SVNStatusType.UNCHANGED) {
+          myProgressIndicator.setText2(SvnBundle.message("progres.text2.updated", displayPath));
+        }
         else {
           myProgressIndicator.setText2("");
           myUpdatedFiles.getGroupById(FileGroup.UNKNOWN_ID).add(path);
