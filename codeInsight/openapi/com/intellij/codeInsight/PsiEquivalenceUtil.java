@@ -63,9 +63,10 @@ public class PsiEquivalenceUtil {
   }
 
   private static PsiElement[] getFilteredChildren(PsiElement element1, boolean areCommentsSignificant) {
-    PsiElement[] children1 = element1.getChildren();
+    ASTNode[] children1 = element1.getNode().getChildren(null);
     ArrayList<PsiElement> array = new ArrayList<PsiElement>();
-    for (PsiElement child : children1) {
+    for (ASTNode node : children1) {
+      final PsiElement child = node.getPsi();
       if (!(child instanceof PsiWhiteSpace) && (areCommentsSignificant || !(child instanceof PsiComment))) {
         array.add(child);
       }
