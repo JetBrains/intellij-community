@@ -58,17 +58,20 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     final TextRange textRange = el.getTextRange();
     final AntFile file = (AntFile)el.getContainingFile().getViewProvider().getPsi(AntSupport.getLanguage());
     if (file == null) return;
-    AntElement antElement = file.lightFindElementAt(textRange.getStartOffset());
-    while (!(antElement instanceof AntFile) &&
-           (antElement.getTextLength() < textRange.getLength() || antElement instanceof AntOuterProjectElement)) {
-      antElement = antElement.getAntParent();
+    AntElement element = file.lightFindElementAt(textRange.getStartOffset());
+    while (element != null && !(element instanceof AntFile) &&
+           (element.getTextLength() < textRange.getLength() || element instanceof AntOuterProjectElement)) {
+      element = element.getAntParent();
     }
-    antElement.clearCaches();
-    AntMacroDef macrodef = PsiTreeUtil.getParentOfType(antElement, AntMacroDef.class);
+    if (element == null) {
+      element = file;
+    }
+    element.clearCaches();
+    AntMacroDef macrodef = PsiTreeUtil.getParentOfType(element, AntMacroDef.class);
     if (macrodef != null) {
       macrodef.clearCaches();
     }
-    AntPresetDef presetdef = PsiTreeUtil.getParentOfType(antElement, AntPresetDef.class);
+    AntPresetDef presetdef = PsiTreeUtil.getParentOfType(element, AntPresetDef.class);
     if (presetdef != null) {
       presetdef.clearCaches();
     }
