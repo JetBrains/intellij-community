@@ -56,6 +56,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
@@ -509,5 +510,23 @@ import java.util.Map;
 
   static {
     System.setProperty("jbdt.test.fixture", "com.intellij.designer.dt.IJTestFixture");
+
+    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+      public void run() {
+        try {
+          SwingUtilities.invokeAndWait(new Runnable() {
+            public void run() {
+              Disposer.dispose(ourProject);
+            }
+          });
+        }
+        catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+        catch (InvocationTargetException e) {
+          e.printStackTrace();
+        }
+      }
+    }));
   }
 }
