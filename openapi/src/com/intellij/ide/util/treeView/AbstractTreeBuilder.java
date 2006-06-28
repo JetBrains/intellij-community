@@ -92,6 +92,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
   public void dispose() {
     LOG.assertTrue(!myDisposed);
+    if (myDisposed) return;
     myDisposed = true;
     myTree.removeTreeExpansionListener(myExpansionListener);
     disposeNode(myRootNode);
