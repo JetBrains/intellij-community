@@ -50,7 +50,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
    * @return PsiMethod or PsiClass or JspFile
    */
   public final PsiMember getEnclosingElement(){
-    return getEnclosingElement(myElement);
+    return myElement == null ? null : getEnclosingElement(myElement);
   }
 
   static PsiMember getEnclosingElement(final PsiElement element){
@@ -115,7 +115,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       }
       else {
         final PsiMethod method = (PsiMethod)enclosingElement;
-        final StringBuffer buffer = new StringBuffer(128);
+        final StringBuilder buffer = new StringBuilder(128);
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass != null) {
           buffer.append(ClassPresentationUtil.getNameForClass(containingClass, false));
