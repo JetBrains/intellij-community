@@ -866,6 +866,10 @@ public class ClasspathPanel extends JPanel {
       show();
     }
 
+    public void dispose() {
+      super.dispose();
+    }
+
     public List<Module> getChosenElements() {
       return myChooser.getSelectedElements();
     }

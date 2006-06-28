@@ -31,7 +31,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 
-public abstract class DialogWrapper implements Disposable {
+public abstract class DialogWrapper {
   /**
      * The default exit code for "OK" action.
      */
@@ -81,6 +81,17 @@ public abstract class DialogWrapper implements Disposable {
   private static final Object ourLock = new Object();
   private Action myYesAction = null;
   private Action myNoAction = null;
+
+  protected final Disposable myDisposable = new Disposable() {
+
+    public String toString() {
+      return DialogWrapper.this.toString();
+    }
+
+    public void dispose() {
+      DialogWrapper.this.dispose();
+    }
+  };
 
 
   /**
@@ -155,7 +166,7 @@ public abstract class DialogWrapper implements Disposable {
     if (myClosed) return;
     myClosed = true;
     myExitCode = exitCode;
-    Disposer.dispose(this);
+    Disposer.dispose(myDisposable);
   }
 
   /**
@@ -328,7 +339,7 @@ public abstract class DialogWrapper implements Disposable {
    * more effecient garbage collection. You should never invoke this method twice or
    * invoke any method of the wrapper after invocation of <code>dispose</code>.
    */
-  public void dispose() {
+  protected void dispose() {
     synchronized (ourLock) {
       final JRootPane rootPane = getRootPane();
       final KeyStroke[] strokes = rootPane.getRegisteredKeyStrokes();

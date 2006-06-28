@@ -42,13 +42,13 @@ public class HTTPProxySettingsDialog extends DialogWrapper {
     okAction = new AbstractAction (CommonBundle.getOkButtonText()) {
       public void actionPerformed(ActionEvent e) {
         panel.apply();
-        Disposer.dispose(HTTPProxySettingsDialog.this);
+        Disposer.dispose(myDisposable);
       }
     };
     okAction.putValue(DEFAULT_ACTION, Boolean.TRUE.toString());
     cancelAction = new AbstractAction(CommonBundle.getCancelButtonText()) {
       public void actionPerformed(ActionEvent e) {
-        Disposer.dispose(HTTPProxySettingsDialog.this);
+        Disposer.dispose(myDisposable);
       }
     };
     init();

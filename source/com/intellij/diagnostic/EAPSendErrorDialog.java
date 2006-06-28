@@ -74,7 +74,7 @@ public class EAPSendErrorDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         myShouldSend = true;
         storeInfo();
-        Disposer.dispose(EAPSendErrorDialog.this);
+        Disposer.dispose(myDisposable);
       }
     };
     mySendAction.putValue(Action.MNEMONIC_KEY, new Integer(KeyEvent.VK_S));
@@ -82,7 +82,7 @@ public class EAPSendErrorDialog extends DialogWrapper {
     myCancelAction = new AbstractAction(CommonBundle.getCancelButtonText()) {
       public void actionPerformed(ActionEvent e) {
         myShouldSend = false;
-        Disposer.dispose(EAPSendErrorDialog.this);
+        Disposer.dispose(myDisposable);
       }
     };
     myCancelAction.putValue(Action.MNEMONIC_KEY, new Integer (KeyEvent.VK_C));
