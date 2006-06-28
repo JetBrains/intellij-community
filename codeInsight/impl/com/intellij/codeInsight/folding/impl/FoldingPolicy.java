@@ -479,7 +479,7 @@ class FoldingPolicy {
       StringBuffer buffer = new StringBuffer();
       buffer.append("tag#");
       String name = tag.getName();
-      buffer.append(name);
+      buffer.append(name.length() == 0 ? "<unnamed>" : name);
 
       buffer.append("#");
       buffer.append(getChildIndex(tag, parent, name, XmlTag.class));
@@ -657,9 +657,9 @@ class FoldingPolicy {
             // html tag, not found in jsp tree
             result = restoreElementInternal(HtmlUtil.getRealXmlDocument((XmlDocument)parent), name, index, XmlTag.class);
           }
-          else if (name.equals("null")) {
+          else if (name.equals("<unnamed>")) {
             // scriplet/declaration missed because null name
-            result = restoreElementInternal(parent, null, index, XmlTag.class);
+            result = restoreElementInternal(parent, "", index, XmlTag.class);
           }
         }
 
@@ -679,7 +679,10 @@ class FoldingPolicy {
     LOG.assertTrue(elementToFold.isValid());
     TextRange range = getRangeToFold(elementToFold);
     if (range == null) return false;
-    LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementToFold.getContainingFile().getTextRange().getEndOffset());
+    final TextRange fileRange = elementToFold.getContainingFile().getTextRange();
+    if (range.equals(fileRange)) return false;
+
+    LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= fileRange.getEndOffset());
     if (!allowOneLiners) {
       int startLine = document.getLineNumber(range.getStartOffset());
       int endLine = document.getLineNumber(range.getEndOffset() - 1);
