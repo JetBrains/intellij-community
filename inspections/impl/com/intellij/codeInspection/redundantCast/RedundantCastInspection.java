@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,22 +69,27 @@ public class RedundantCastInspection extends BaseLocalInspectionTool {
   }
 
   private ProblemDescriptor createDescription(PsiTypeCastExpression cast, InspectionManager manager) {
-    return manager.createProblemDescriptor(cast.getCastType(), InspectionsBundle.message("inspection.redundant.cast.problem.descriptor", "<code>" + cast.getOperand().getText() + "</code>", "<code>#ref</code> #loc"), myQuickFixAction,
-                                           ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+    String message = InspectionsBundle.message("inspection.redundant.cast.problem.descriptor",
+                                               "<code>" + cast.getOperand().getText() + "</code>", "<code>#ref</code> #loc");
+    return manager.createProblemDescriptor(cast.getCastType(), message, myQuickFixAction, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
   }
 
 
   private static class AcceptSuggested implements LocalQuickFix {
+    @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.redundant.cast.remove.quickfix");
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
       PsiElement castTypeElement = descriptor.getPsiElement();
-      PsiTypeCastExpression cast = (PsiTypeCastExpression)castTypeElement.getParent();
-      removeCast(cast);
+      PsiTypeCastExpression cast = castTypeElement == null ? null : (PsiTypeCastExpression)castTypeElement.getParent();
+      if (cast != null) {
+        removeCast(cast);
+      }
     }
 
+    @NotNull
     public String getFamilyName() {
       return getName();
     }
