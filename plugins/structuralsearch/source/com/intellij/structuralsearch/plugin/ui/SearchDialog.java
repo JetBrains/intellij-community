@@ -868,7 +868,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return "#com.intellij.structuralsearch.plugin.ui.SearchDialog";
   }
 
-  protected void dispose() {
+  public void dispose() {
     Configuration.setActiveCreator(null);
 
     // this will remove from myExcludedSet

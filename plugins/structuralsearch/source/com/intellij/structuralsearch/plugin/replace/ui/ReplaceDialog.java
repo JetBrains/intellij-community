@@ -250,7 +250,7 @@ public class ReplaceDialog extends SearchDialog {
     return configuration;
   }
 
-  protected void dispose() {
+  public void dispose() {
     EditorFactory.getInstance().releaseEditor(replaceCriteriaEdit);
     super.dispose();
   }

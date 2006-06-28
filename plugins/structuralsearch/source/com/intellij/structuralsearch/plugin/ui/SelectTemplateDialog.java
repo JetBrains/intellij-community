@@ -155,7 +155,7 @@ public class SelectTemplateDialog extends DialogWrapper {
     return centerPanel;
   }
 
-  protected void dispose() {
+  public void dispose() {
     EditorFactory.getInstance().releaseEditor(searchPatternEditor);
     if (replacePatternEditor != null) EditorFactory.getInstance().releaseEditor(replacePatternEditor);
     removeListeners();
