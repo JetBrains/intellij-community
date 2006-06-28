@@ -9,6 +9,7 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.JUnitConfigurationProducer;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,8 +18,7 @@ import java.util.Collections;
 class PreferedProducerFind {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.PreferedProducerFind");
 
-  public static RunnerAndConfigurationSettingsImpl createConfiguration(final Location location, final ConfigurationContext context) {
-    LOG.assertTrue(location != null);
+  public static RunnerAndConfigurationSettingsImpl createConfiguration(@NotNull Location location, final ConfigurationContext context) {
     final RuntimeConfigurationProducer preferedProducer = findPreferedProducer(location, context);
     if (preferedProducer != null) {
       return preferedProducer.getConfiguration();
@@ -48,7 +48,7 @@ class PreferedProducerFind {
         producers.add(producer);
       }
     }
-    if (producers.size() == 0) return null;
+    if (producers.isEmpty()) return null;
     Collections.sort(producers, RuntimeConfigurationProducer.COMPARATOR);
     return producers.get(0);
   }
