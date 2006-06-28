@@ -5,6 +5,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
@@ -177,6 +180,15 @@ public class PropertiesComponent extends JPanel {
     return (String) myTable.getValueAt(row, 0);
   }
 
+  private void updateFileStatus() {
+    if (myFile != null && myVcs != null) {
+      String url = "file://" + myFile.getPath().replace(File.separatorChar, '/');
+      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+      VcsDirtyScopeManager.getInstance(myVcs.getProject()).fileDirty(file);
+      FileStatusManager.getInstance(myVcs.getProject()).fileStatusChanged(file);
+    }
+  }
+
   private class CloseAction extends AnAction {
 
     public void update(AnActionEvent e) {
@@ -201,6 +213,7 @@ public class PropertiesComponent extends JPanel {
 
     public void actionPerformed(AnActionEvent e) {
       setFile(myVcs, myFile);
+      updateFileStatus();
     }
   }
 
@@ -236,6 +249,7 @@ public class PropertiesComponent extends JPanel {
         }
       }
       setFile(myVcs, myFile);
+      updateFileStatus();
     }
   }
 
@@ -256,6 +270,7 @@ public class PropertiesComponent extends JPanel {
         // show error message.
       }
       setFile(myVcs, myFile);
+      updateFileStatus();
     }
   }
 
@@ -288,6 +303,7 @@ public class PropertiesComponent extends JPanel {
         }
       }
       setFile(myVcs, myFile);
+      updateFileStatus();
     }
   }
 
@@ -319,6 +335,7 @@ public class PropertiesComponent extends JPanel {
         }
       }
       setFile(myVcs, myFile);
+      updateFileStatus();
     }
   }
 
