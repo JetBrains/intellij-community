@@ -17,6 +17,7 @@ import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.radComponents.RadAbstractGridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
@@ -195,7 +196,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(myEditor);
     if (selection.size() == 1 && selection.get(0) instanceof RadContainer) {
       RadContainer container = (RadContainer) selection.get(0);
-      if (container.getLayoutManager().isGrid()) {
+      if (container.getLayoutManager().isGrid() && (container.getParent() instanceof RadRootContainer || container.getComponentCount() > 0)) {
         return container;
       }
     }
