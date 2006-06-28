@@ -109,7 +109,8 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     RefManager refManager = getContext().getRefManager();
     for (ProblemDescriptor descriptor : descriptors) {
       final PsiElement elt = descriptor.getPsiElement();
-      if (filterSuppressed && InspectionManagerEx.inspectionResultSuppressed(descriptor.getPsiElement(), myTool.getID())) continue;
+      if (elt == null) continue;
+      if (filterSuppressed && InspectionManagerEx.inspectionResultSuppressed(elt, myTool.getID())) continue;
 
       final PsiNamedElement problemElement =
         PsiTreeUtil.getNonStrictParentOfType(elt, PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class);
