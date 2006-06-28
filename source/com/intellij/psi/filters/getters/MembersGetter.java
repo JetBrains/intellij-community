@@ -49,7 +49,7 @@ public class MembersGetter implements ContextGetter{
       }
     }
 
-    final List results = processor.getResults();
-    return (PsiElement[]) results.toArray(new PsiElement[results.size()]);
+    final List<PsiElement> results = processor.getResults();
+    return results.toArray(new PsiElement[results.size()]);
   }
 }

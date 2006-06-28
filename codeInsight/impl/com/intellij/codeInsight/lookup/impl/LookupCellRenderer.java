@@ -167,7 +167,7 @@ class LookupCellRenderer implements ListCellRenderer {
 
   private boolean isBold(Object o) {
     return o instanceof PsiKeyword ||
-           o instanceof PsiExpression ||
+           //o instanceof PsiExpression ||  //[ven] why?
            (o instanceof LookupValueWithUIHint &&
             ((LookupValueWithUIHint)o).isBold()
            );
