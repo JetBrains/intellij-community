@@ -111,20 +111,18 @@ public class AntPropertyReference extends AntGenericReference {
     return result.toArray(new IntentionAction[result.size()]);
   }
 
-  private static PsiElement[] getVariants(AntStructuredElement element) {
-    final Set<PsiElement> variants = new HashSet<PsiElement>();
-    appendSet(variants, element.getProperties());
+  private static String[] getVariants(AntStructuredElement element) {
+    final Set<String> variants = new HashSet<String>();
+    for (AntProperty property : element.getProperties()) {
+      variants.add(property.getName());
+    }
     for (PsiElement child : element.getChildren()) {
       if (child instanceof AntStructuredElement) {
-        appendSet(variants, getVariants((AntStructuredElement)child));
+        for (String variant : getVariants((AntStructuredElement)child)) {
+          variants.add(variant);
+        }
       }
     }
-    return variants.toArray(new PsiElement[variants.size()]);
-  }
-
-  private static void appendSet(final Set<PsiElement> set, final PsiElement[] elements) {
-    for (final PsiElement element : elements) {
-      set.add(element);
-    }
+    return variants.toArray(new String[variants.size()]);
   }
 }
