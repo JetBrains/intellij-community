@@ -33,6 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.build.PluginBuildUtil;
@@ -82,7 +83,8 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
       }
     }, ADD_PLUGIN_MODULE_ICON, "plugin.creation"));
     steps.add(stepFactory.createSourcePathsStep(nameAndLocationStep, pluginModuleBuilder, ADD_PLUGIN_MODULE_ICON, "plugin.creation"));
-    return steps.toArray(new ModuleWizardStep[steps.size()]);
+    final ModuleWizardStep[] wizardSteps = steps.toArray(new ModuleWizardStep[steps.size()]);
+    return ArrayUtil.mergeArrays(wizardSteps, getAdditionalSteps(), ModuleWizardStep.class);
   }
 
   public PluginModuleBuilder createModuleBuilder() {
