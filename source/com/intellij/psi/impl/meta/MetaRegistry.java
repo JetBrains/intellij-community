@@ -160,13 +160,13 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
           )),
         TldDescriptor.class);
 
-      //addMetadataBinding(
-      //  new RootTagFilter(
-      //    new AndFilter(
-      //      new NamespaceFilter(XmlUtil.FACELETS_TAGLIB_URI),
-      //      new TextFilter("facelets-taglib")
-      //    )),
-      //  FaceletsTldDescriptor.class);
+      addMetadataBinding(
+        new RootTagFilter(
+          new AndFilter(
+            new NamespaceFilter(XmlUtil.FACELETS_TAGLIB_URI),
+            new TextFilter("facelet-taglib")
+          )),
+        FaceletsTldDescriptor.class);
     }
 
     {
@@ -177,12 +177,12 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
           ),
           TldTagDescriptorImpl.class);
 
-      //addMetadataBinding(
-      //    new AndFilter(
-      //        new NamespaceFilter(XmlUtil.FACELETS_TAGLIB_URI),
-      //        new TextFilter("tag")
-      //    ),
-      //    FaceletsTagDescriptor.class);
+      addMetadataBinding(
+          new AndFilter(
+              new NamespaceFilter(XmlUtil.FACELETS_TAGLIB_URI),
+              new TextFilter("tag")
+          ),
+          FaceletsTagDescriptor.class);
     }
 
     {
