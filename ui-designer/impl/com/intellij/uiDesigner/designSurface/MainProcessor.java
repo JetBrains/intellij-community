@@ -283,7 +283,7 @@ public final class MainProcessor extends EventProcessor{
 
     if (resizeMask != 0) {
       if (component.getParent() != null) {
-        component = component.getParent().getComponentToResize(component);
+        component = component.getParent().getActionTargetComponent(component);
       }
       myCurrentProcessor = new ResizeProcessor(myEditor, component, resizeMask);
     }

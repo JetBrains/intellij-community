@@ -44,7 +44,7 @@ public final class RadScrollPane extends RadContainer {
     }
   }
 
-  @Override public RadComponent getComponentToResize(RadComponent child) {
+  @Override public RadComponent getActionTargetComponent(RadComponent child) {
     return this;
   }
 

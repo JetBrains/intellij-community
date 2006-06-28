@@ -452,7 +452,7 @@ public class RadContainer extends RadComponent implements IContainer {
     setLayout(layout);
   }
 
-  public RadComponent getComponentToResize(RadComponent child) {
+  public RadComponent getActionTargetComponent(RadComponent child) {
     return child;
   }
 

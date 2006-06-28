@@ -33,6 +33,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
   }
 
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+    remapToActionTargets(selection);
     RadContainer parent = FormEditingUtil.getSelectionParent(selection);
     assert parent != null;
     List<RadComponent> duplicates = new ArrayList<RadComponent>();
@@ -67,6 +68,15 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
     FormEditingUtil.selectComponents(editor, duplicates);
   }
 
+  private static void remapToActionTargets(final List<RadComponent> selection) {
+    for(int i=0; i<selection.size(); i++) {
+      final RadComponent c = selection.get(i);
+      if (c.getParent() != null) {
+        selection.set(i, c.getParent().getActionTargetComponent(c));
+      }
+    }
+  }
+
   private static void copyBinding(final RadComponent c, final RadComponent copy) {
     if (c.getBinding() != null) {
       String binding = BindingProperty.getDefaultBinding(copy);
@@ -98,6 +108,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
   }
 
   protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+    remapToActionTargets(selection);
     final RadContainer parent = FormEditingUtil.getSelectionParent(selection);
     e.getPresentation().setEnabled(parent != null && (parent.getLayoutManager().isGrid() || parent.getLayoutManager().isIndexed()));
     // The action is enabled in any of the following cases:
