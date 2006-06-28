@@ -32,6 +32,7 @@ public class ListModelEditor extends PropertyEditor<String[]> {
         if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
           myLastValue = dlg.getValue();
           myTextField.setText(StringUtil.join(myLastValue, ", "));
+          fireValueCommited(true);
         }
       }
     });
