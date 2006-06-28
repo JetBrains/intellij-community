@@ -234,6 +234,8 @@
         <constant value="2" message="property.selection.multiple.interval"/>
       </property>
     </enum-properties>
+
+    <inplace-property name="model"/>
   </class>
 
   <class name="javax.swing.JScrollPane">

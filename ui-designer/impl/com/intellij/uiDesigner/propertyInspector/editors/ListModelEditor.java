@@ -21,21 +21,27 @@ public class ListModelEditor extends PropertyEditor<String[]> {
   private TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
   private RadComponent myLastComponent;
   private String[] myLastValue;
+  private final String myPropertyName;
 
   public ListModelEditor(final String propertyName) {
+    myPropertyName = propertyName;
     myTextField.getTextField().setBorder(null);
     myTextField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        ListEditorDialog dlg = new ListEditorDialog(myLastComponent.getProject(), propertyName);
-        dlg.setValue(myLastValue);
-        dlg.show();
-        if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-          myLastValue = dlg.getValue();
-          myTextField.setText(StringUtil.join(myLastValue, ", "));
-          fireValueCommited(true);
-        }
+        openListEditorDialog();
       }
     });
+  }
+
+  private void openListEditorDialog() {
+    ListEditorDialog dlg = new ListEditorDialog(myLastComponent.getProject(), myPropertyName);
+    dlg.setValue(myLastValue);
+    dlg.show();
+    if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+      myLastValue = dlg.getValue();
+      myTextField.setText(StringUtil.join(myLastValue, ", "));
+      fireValueCommited(true);
+    }
   }
 
   public String[] getValue() throws Exception {
@@ -46,6 +52,9 @@ public class ListModelEditor extends PropertyEditor<String[]> {
     myLastComponent = component;
     myLastValue = value;
     myTextField.setText(StringUtil.join(value, ", "));
+    if (inplace) {
+      openListEditorDialog();
+    }
     return myTextField;
   }
 
