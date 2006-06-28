@@ -17,6 +17,8 @@
 
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.util.Disposer;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -109,6 +111,7 @@ public class CaptionComponent extends JPanel implements Committable {
 
   public void initErrorPanel(final CommittablePanel errorPanel) {
     myCommittableErrorPanel = errorPanel;
+    Disposer.register(this, errorPanel);
     
     final JComponent component = errorPanel.getComponent();
 

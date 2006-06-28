@@ -38,20 +38,9 @@ public abstract class DomManager implements ProjectComponent {
   @NotNull
   public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> aClass, @NonNls String rootTagName);
 
-  public abstract void addDomEventListener(DomEventListener listener);
-
   public abstract void addDomEventListener(DomEventListener listener, Disposable parentDisposable);
 
-  public abstract void removeDomEventListener(DomEventAdapter listener);
-
   public abstract DomGenericInfo getGenericInfo(Type type);
-
-  /**
-   * This should be done at some project component loading and before file description registering
-   * @param domElementClass
-   * @param implementationClass
-   */
-  public abstract <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass);
 
   @Nullable
   public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file);
@@ -64,9 +53,7 @@ public abstract class DomManager implements ProjectComponent {
 
   public abstract Collection<PsiElement> getPsiElements(DomElement element);
 
-  public abstract void registerPsiElementProvider(Function<DomElement, Collection<PsiElement>> provider);
-
-  public abstract void unregisterPsiElementProvider(Function<DomElement, Collection<PsiElement>> provider);
+  public abstract void registerPsiElementProvider(Function<DomElement, Collection<PsiElement>> provider, Disposable parentDisposable);
 
   public abstract <T extends DomElement> T createMockElement(Class<T> aClass, final Module module, final boolean physical);
 
@@ -81,10 +68,6 @@ public abstract class DomManager implements ProjectComponent {
    */
   public abstract <T extends DomElement> T createStableValue(Factory<T> provider);
 
-  /**
-   * all implementations should be registered before calling this method
-   * @param description
-   */
   public abstract void registerFileDescription(DomFileDescription description);
 
   public abstract ConverterManager getConverterManager();

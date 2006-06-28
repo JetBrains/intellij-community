@@ -20,9 +20,15 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.InstanceMap;
+import com.intellij.util.xml.highlighting.DomElementsAnnotator;
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
+import java.util.HashMap;
+import java.lang.reflect.Type;
 
 /**
  * @author peter
@@ -31,10 +37,31 @@ public abstract class DomFileDescription<T> {
   private final InstanceMap<ScopeProvider> myScopeProviders = new InstanceMap<ScopeProvider>();
   protected final Class<T> myRootElementClass;
   protected final String myRootTagName;
+  private Map<Class<? extends DomElement>,Class<? extends DomElement>> myImplementations = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
 
   protected DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName) {
     myRootElementClass = rootElementClass;
     myRootTagName = rootTagName;
+  }
+
+  protected final <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
+    myImplementations.put(domElementClass, implementationClass);
+  }
+
+  protected static void registerClassChooser(final Type aClass, final ClassChooser classChooser, Disposable parentDisposable) {
+    ClassChooserManager.registerClassChooser(aClass, classChooser, parentDisposable);
+  }
+
+  protected abstract void initializeFileDescription();
+
+  @Nullable
+  public DomElementsAnnotator createAnnotator() {
+    return null;
+  }
+
+  public final Map<Class<? extends DomElement>,Class<? extends DomElement>> getImplementations() {
+    initializeFileDescription();
+    return myImplementations;
   }
 
   public final Class<T> getRootElementClass() {

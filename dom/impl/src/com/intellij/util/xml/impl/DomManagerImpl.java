@@ -31,6 +31,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.WeakFactoryMap;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
+import com.intellij.util.xml.highlighting.DomElementsAnnotator;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -117,6 +120,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     };
 
   private Project myProject;
+  private final DomElementAnnotationsManagerImpl myAnnotationsManager;
   private boolean myChanging;
 
   private final GenericValueReferenceProvider myGenericValueReferenceProvider = new GenericValueReferenceProvider();
@@ -136,8 +140,10 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
                         final ReferenceProvidersRegistry registry,
                         final PsiManager psiManager,
                         final XmlAspect xmlAspect,
-                        final WolfTheProblemSolver solver) {
+                        final WolfTheProblemSolver solver,
+                        final DomElementAnnotationsManagerImpl annotationsManager) {
     myProject = project;
+    myAnnotationsManager = annotationsManager;
     pomModel.addModelListener(new PomModelListener() {
       public synchronized void modelChanged(PomModelEvent event) {
         if (myChanging) return;
@@ -165,16 +171,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return (DomManagerImpl)project.getComponent(DomManager.class);
   }
 
-  public final void addDomEventListener(DomEventListener listener) {
-    myListeners.addListener(listener);
-  }
-
   public void addDomEventListener(DomEventListener listener, Disposable parentDisposable) {
     myListeners.addListener(listener, parentDisposable);
-  }
-
-  public final void removeDomEventListener(DomEventAdapter listener) {
-    myListeners.removeListener(listener);
   }
 
   public final ConverterManager getConverterManager() {
@@ -338,12 +336,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       });
   }
 
-  public void registerPsiElementProvider(Function<DomElement, Collection<PsiElement>> provider) {
-    myPsiElementProviders.add(provider);
-  }
-
-  public void unregisterPsiElementProvider(Function<DomElement, Collection<PsiElement>> provider) {
-    myPsiElementProviders.remove(provider);
+  public void registerPsiElementProvider(final Function<DomElement, Collection<PsiElement>> provider, Disposable parentDisposable) {
+    ContainerUtil.add(provider, myPsiElementProviders, parentDisposable);
   }
 
   @Nullable
@@ -435,10 +429,22 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   public final void registerFileDescription(DomFileDescription description) {
-    myFileDescriptions.add(description);
+    for (final Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : ((DomFileDescription<?>)description).getImplementations().entrySet()) {
+      registerImplementation((Class)entry.getKey(), entry.getValue());
+    }
+    final DomElementsAnnotator annotator = description.createAnnotator();
     final Class<? extends DomElement> rootClass = description.getRootElementClass();
-    final GenericInfoImpl info = getGenericInfo(rootClass);
+    if (annotator != null) {
+      myAnnotationsManager.registerDomElementsAnnotator(annotator, rootClass);
+    }
 
+
+    myFileDescriptions.add(description);
+    registerReferenceProviders(rootClass);
+  }
+
+  private void registerReferenceProviders(final Class<? extends DomElement> rootClass) {
+    final GenericInfoImpl info = getGenericInfo(rootClass);
     final Set<String> tagNames = info.getReferenceTagNames();
     if (!tagNames.isEmpty()) {
       myReferenceProvidersRegistry.registerXmlTagReferenceProvider(tagNames.toArray(new String[tagNames.size()]),
@@ -451,7 +457,6 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
                                                                               new MyElementFilter(rootClass), true,
                                                                               myGenericValueReferenceProvider);
     }
-
   }
 
   @Nullable
@@ -513,10 +518,6 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   public boolean processUsages(Object target, XmlFile scope, Processor<PsiReference> processor) {
     final DomFileElementImpl<DomElement> element = getFileElement(scope);
     return element == null || processUsages(target, element, processor);
-  }
-
-  public final void clearCaches() {
-    myCachedImplementationClasses.clear();
   }
 
   public final VisitorDescription getVisitorDescription(Class<? extends DomElementVisitor> aClass) {

@@ -16,6 +16,8 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
@@ -368,5 +370,14 @@ public class ContainerUtil {
     if (element != null) {
       result.add(element);
     }
+  }
+
+  public static <T> void add(final T element, final Collection<T> result, final Disposable parentDisposable) {
+    result.add(element);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        result.remove(element);
+      }
+    });
   }
 }

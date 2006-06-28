@@ -38,5 +38,4 @@ public abstract class DomElementAnnotationsManager {
 
   public abstract List<DomElementProblemDescriptor> getAllProblems(final DomFileElement<?> fileElement, HighlightSeverity minSeverity);
 
-  public abstract void registerDomElementsAnnotator(DomElementsAnnotator annotator, Class aClass);
 }

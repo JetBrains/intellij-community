@@ -32,9 +32,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
   private static final int ALARM_PERIOD = 241;
 
   private DomElement[] myDomElements;
-  private DomManager myDomManager;
 
-  private final DomChangeAdapter myDomChangeListener;
   private final DomElementsRefreshStatusRenderer myErrorStripeRenderer;
 
   private final Alarm myAlarm = new Alarm();
@@ -45,23 +43,20 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
 
   public DomElementsErrorPanel(final DomElement[] domElements, DomManager domManager, PsiFile file) {
     myDomElements = domElements;
-    myDomManager = domManager;
 
-    final Document document = PsiDocumentManager.getInstance(myDomManager.getProject()).getDocument(file);
+    final Document document = PsiDocumentManager.getInstance(domManager.getProject()).getDocument(file);
 
     setPreferredSize(getDimension());
 
-    myErrorStripeRenderer = new DomElementsRefreshStatusRenderer(myDomManager.getProject(), document, file);
+    myErrorStripeRenderer = new DomElementsRefreshStatusRenderer(domManager.getProject(), document, file);
 
     addUpdateRequest();
 
-    myDomChangeListener = new DomChangeAdapter() {
+    domManager.addDomEventListener(new DomChangeAdapter() {
       protected void elementChanged(DomElement element) {
         updatePanel();
       }
-    };
-
-    myDomManager.addDomEventListener(myDomChangeListener);
+    }, this);
   }
 
   private void updatePanel() {
@@ -95,7 +90,6 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
 
   public void dispose() {
     myAlarm.cancelAllRequests();
-    myDomManager.removeDomEventListener(myDomChangeListener);
   }
 
   public JComponent getComponent() {

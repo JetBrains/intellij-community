@@ -14,6 +14,8 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CoModifiableList;
 import com.intellij.util.containers.WeakList;
@@ -495,6 +497,15 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myCachedDocumentListeners = null;
     LOG.assertTrue(!myDocumentListeners.contains(listener), listener.toString());
     myDocumentListeners.add(listener);
+  }
+
+  public void addDocumentListener(final DocumentListener listener, Disposable parentDisposable) {
+    addDocumentListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        removeDocumentListener(listener);
+      }
+    });
   }
 
   public void removeDocumentListener(DocumentListener listener) {

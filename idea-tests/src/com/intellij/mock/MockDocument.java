@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -100,6 +101,9 @@ public class MockDocument implements DocumentEx {
   }
 
   public void addDocumentListener(DocumentListener listener) {
+  }
+
+  public void addDocumentListener(DocumentListener listener, Disposable parentDisposable) {
   }
 
   public void removeDocumentListener(DocumentListener listener) {
