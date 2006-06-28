@@ -49,6 +49,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private JLabel myIconLabel;
   private Component myCurrentStepComponent;
   private final Map<Component, String> myComponentToIdMap = new HashMap<Component, String>();
+  private final StepListener myStepListener = new StepListener() {
+    public void stateChanged() {
+      updateStep();
+    }
+  };
 
   public AbstractWizard(final String title, final Component dialogParent) {
     super(dialogParent, true);
@@ -169,6 +174,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   public void addStep(final T step) {
     mySteps.add(step);
 
+    if (step instanceof StepAdapter) {
+      ((StepAdapter)step).registerStepListener(myStepListener);
+    }
     // card layout is used
     final Component component = step.getComponent();
     if (component != null) {

@@ -16,11 +16,16 @@
 package com.intellij.ide.wizard;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Vladimir Kondratyev
  */
-public class StepAdapter implements Step{
+public class StepAdapter implements Step {
+
+  private List<StepListener> myListeners = new ArrayList<StepListener>();
+
   public void _init() {}
 
   public void _commit(boolean finishChosen) throws CommitStepException {}
@@ -31,5 +36,15 @@ public class StepAdapter implements Step{
 
   public Icon getIcon() {
     throw new UnsupportedOperationException();
+  }
+
+  public void registerStepListener(StepListener listener) {
+    myListeners.add(listener);
+  }
+
+  public void fireStateChanged() {
+    for (StepListener listener: myListeners) {
+      listener.stateChanged();
+    }
   }
 }
