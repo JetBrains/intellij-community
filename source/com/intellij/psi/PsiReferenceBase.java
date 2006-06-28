@@ -49,7 +49,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
   public String getValue() {
     String text = myElement.getText();
-    return myRange.substring(text);
+    return getRangeInElement().substring(text);
   }
 
 
