@@ -45,6 +45,10 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
     }
   }
 
+  public boolean isValid() {
+    return super.isValid() && myParent.isValid();
+  }
+
   @Nullable
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return null;

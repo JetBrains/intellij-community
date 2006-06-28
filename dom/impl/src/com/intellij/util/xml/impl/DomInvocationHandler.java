@@ -229,7 +229,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return getFile().getManager().getElementFactory().createTagFromText("<" + tagName + "/>");
   }
 
-  public final boolean isValid() {
+  public boolean isValid() {
     if (!myInvalidated && (myXmlTag != null && !myXmlTag.isValid() || myParent != null && !myParent.isValid())) {
       myInvalidated = true;
       return false;

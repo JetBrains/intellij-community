@@ -258,7 +258,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   public boolean isValid() {
-    return myFile.isValid();
+    return myFile.isValid() && myManager.getFileElement(myFile) == this;
   }
 
   @NotNull

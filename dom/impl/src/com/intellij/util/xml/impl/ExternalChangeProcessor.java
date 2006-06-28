@@ -41,8 +41,10 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
 
   private Map<XmlTag,TagChangeSet> myChangeSets = new HashMap<XmlTag, TagChangeSet>();
   private boolean myDocumentChanged;
+  private final DomManagerImpl myDomManager;
 
-  public ExternalChangeProcessor(XmlChangeSet changeSet) {
+  public ExternalChangeProcessor(DomManagerImpl domManager, XmlChangeSet changeSet) {
+    myDomManager = domManager;
     for (XmlChange xmlChange : changeSet.getChanges()) {
       xmlChange.accept(this);
     }
@@ -81,7 +83,7 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
 
   private void documentChanged(final XmlFile xmlFile) {
     myDocumentChanged = true;
-    final DomFileElementImpl element = DomManagerImpl.getCachedElement(xmlFile);
+    final DomFileElementImpl element = myDomManager.getFileElement(xmlFile);
     if (element != null) {
       final DomInvocationHandler rootHandler = element.getRootHandler();
       rootHandler.detach(false);

@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CachedValueImpl<T> implements CachedValue<T> {
+  private static final Object NULL = new Object();
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.CachedValueImpl");
   
   private final PsiManager myManager;
@@ -56,12 +57,12 @@ public class CachedValueImpl<T> implements CachedValue<T> {
   public T getValue() {
     T value = getUpToDateOrNull();
     if (value != null) {
-      return value;
+      return value == NULL ? null : value;
     }
 
     CachedValueProvider.Result<T> result = myProvider.compute();
     value = result.getValue();
-    myValue = new SoftReference<T>(value);
+    myValue = new SoftReference<T>(value == null ? (T) NULL : value);
     computeTimeStamps(result.getDependencyItems());
 
     myComputed = true;
@@ -74,17 +75,11 @@ public class CachedValueImpl<T> implements CachedValue<T> {
       if (isUpToDate()) {
         return value;
       }
-      else {
-        if (value instanceof Disposable) {
-          Disposable disposable = (Disposable)value;
-          Disposer.dispose(disposable);
-        }
-        return null;
+      if (value instanceof Disposable) {
+        Disposer.dispose((Disposable)value);
       }
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   public boolean hasUpToDateValue() {

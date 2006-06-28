@@ -36,6 +36,10 @@ public abstract class DomManager implements ProjectComponent {
   public abstract Project getProject();
 
   @NotNull
+  @Deprecated
+  /**
+   * @deprecated use DomFileDescription and getFileElement(XmlFile)
+   */
   public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> aClass, @NonNls String rootTagName);
 
   public abstract void addDomEventListener(DomEventListener listener, Disposable parentDisposable);
