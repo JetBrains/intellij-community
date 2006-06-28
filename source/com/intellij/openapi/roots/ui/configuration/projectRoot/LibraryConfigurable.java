@@ -13,8 +13,8 @@ import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelPr
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,6 +70,7 @@ public class LibraryConfigurable implements NamedConfigurable<Library> {
   public void disposeUIResources() {
     if (myLibraryEditor != null) {
       myLibraryEditor.cancelChanges();
+      Disposer.dispose(myLibraryEditor);
       myLibraryEditor = null;
     }
   }

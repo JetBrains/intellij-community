@@ -247,7 +247,6 @@ public class LibraryTableEditor implements Disposable {
   }
 
   public void cancelChanges() {
-    Disposer.dispose(this);
     myLibraryToEditorMap.clear();
   }
 
@@ -383,21 +382,6 @@ public class LibraryTableEditor implements Disposable {
 
   @SuppressWarnings({"BoundFieldAssignment"})
   public void dispose() {
-    myLibraryTable = null;
-    myPanel = null;
-    myAddLibraryButton = null;
-    myRemoveButton = null;
-    myRenameLibraryButton = null;
-    myAttachClassesButton = null;
-    myAttachSourcesButton = null;
-    myAttachJavadocsButton = null;
-    myAttachUrlJavadocsButton = null;
-    myTreePanel = null;
-    myTree = null;
-    myTreeBuilder = null;
-    myTableModifiableModel = null;
-    myLibraryToEditorMap.clear();
-    myListeners.clear();
   }
 
   private class AddLibraryAction implements ActionListener {
@@ -739,16 +723,13 @@ public class LibraryTableEditor implements Disposable {
 
     protected void doOKAction() {
       commitChanges();
-      super.doOKAction();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          Disposer.dispose(LibraryTableEditor.this);
-        }
-      }, ModalityState.defaultModalityState());
+      Disposer.dispose(LibraryTableEditor.this);
+      super.doOKAction();      
     }
 
     public void doCancelAction() {
       cancelChanges();
+      Disposer.dispose(LibraryTableEditor.this);
       super.doCancelAction();
     }
 
