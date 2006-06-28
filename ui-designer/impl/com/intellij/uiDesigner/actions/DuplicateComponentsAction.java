@@ -11,16 +11,16 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -37,6 +37,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
     RadContainer parent = FormEditingUtil.getSelectionParent(selection);
     assert parent != null;
     List<RadComponent> duplicates = new ArrayList<RadComponent>();
+    Map<RadComponent, RadComponent> duplicateMap = new HashMap<RadComponent, RadComponent>();
     TIntHashSet insertedRows = new TIntHashSet();
     boolean incrementRow = true;
     if (selection.size() > 1 && canDuplicate(selection, false) && FormEditingUtil.getSelectionBounds(selection).width == 1) {
@@ -61,11 +62,46 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
           copy.getConstraints().setSpan(incrementRow, rowSpan);
         }
         parent.addComponent(copy, insertIndex+1);
-        copyBinding(c, copy);
+        fillDuplicateMap(duplicateMap, c, copy);
         duplicates.add(copy);
       }
     }
+    adjustDuplicates(duplicateMap);
     FormEditingUtil.selectComponents(editor, duplicates);
+  }
+
+  private static void fillDuplicateMap(Map<RadComponent, RadComponent> duplicates, final RadComponent c, final RadComponent copy) {
+    duplicates.put(c, copy);
+    if (c instanceof RadContainer) {
+      LOG.assertTrue(copy instanceof RadContainer);
+      final RadContainer container = (RadContainer)c;
+      final RadContainer containerCopy = (RadContainer)copy;
+      for(int i=0; i<container.getComponentCount(); i++) {
+        fillDuplicateMap(duplicates, container.getComponent(i), containerCopy.getComponent(i));
+      }
+    }
+  }
+
+  private static void adjustDuplicates(final Map<RadComponent, RadComponent> duplicates) {
+    for(RadComponent c: duplicates.keySet()) {
+      RadComponent copy = duplicates.get(c);
+      if (c.getBinding() != null) {
+        String binding = BindingProperty.getDefaultBinding(copy);
+        new BindingProperty(c.getProject()).setValueEx(copy, binding);
+        copy.setDefaultBinding(true);
+      }
+      for(IProperty prop: copy.getModifiedProperties()) {
+        if (prop instanceof IntroComponentProperty) {
+          final IntroComponentProperty componentProperty = (IntroComponentProperty)prop;
+          String copyValue = componentProperty.getValue(copy);
+          for(RadComponent original: duplicates.keySet()) {
+            if (original.getId().equals(copyValue)) {
+              componentProperty.setValueEx(copy, duplicates.get(original).getId());
+            }
+          }
+        }
+      }
+    }
   }
 
   private static void remapToActionTargets(final List<RadComponent> selection) {
@@ -73,22 +109,6 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
       final RadComponent c = selection.get(i);
       if (c.getParent() != null) {
         selection.set(i, c.getParent().getActionTargetComponent(c));
-      }
-    }
-  }
-
-  private static void copyBinding(final RadComponent c, final RadComponent copy) {
-    if (c.getBinding() != null) {
-      String binding = BindingProperty.getDefaultBinding(copy);
-      new BindingProperty(c.getProject()).setValueEx(copy, binding);
-      copy.setDefaultBinding(true);
-    }
-    if (c instanceof RadContainer) {
-      LOG.assertTrue(copy instanceof RadContainer);
-      final RadContainer container = (RadContainer)c;
-      final RadContainer containerCopy = (RadContainer)copy;
-      for(int i=0; i<container.getComponentCount(); i++) {
-        copyBinding(container.getComponent(i), containerCopy.getComponent(i));
       }
     }
   }
