@@ -65,20 +65,6 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
   protected void checkResult(String targetDataName, final String text) throws Exception {
     try{
       String expectedText = loadFile(targetDataName);
-      /*
-      if (!expectedText.equals(treeText)){
-        int length = Math.min(expectedText.length(), treeText.length());
-        for(int i = 0; i < length; i++){
-          char c1 = expectedText.charAt(i);
-          char c2 = treeText.charAt(i);
-          if (c1 != c2){
-            System.out.println("i = " + i);
-            System.out.println("c1 = " + c1);
-            System.out.println("c2 = " + c2);
-          }
-        }
-      }
-      */
       assertEquals(expectedText, text);
     }
     catch(FileNotFoundException e){

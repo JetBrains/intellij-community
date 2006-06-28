@@ -11,10 +11,10 @@ import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.impl.events.XmlTextChangedImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -104,7 +104,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
     final int bsResult = Arrays.binarySearch(myGapPhysicalStarts, physicalIndex);
 
     final int gapIndex;
-    if(bsResult > 0) gapIndex = bsResult;
+    if(bsResult >= 0) gapIndex = bsResult;
     else if(bsResult < -1) gapIndex = -bsResult - 2;
     else gapIndex = -1;
 
