@@ -54,7 +54,9 @@ public class CharArrayUtil {
       }
       else {
         char[] chars = new char[seq.length()];
+        buffer.position(0);
         buffer.get(chars);
+        buffer.position(0);
         return chars;
       }
     }
