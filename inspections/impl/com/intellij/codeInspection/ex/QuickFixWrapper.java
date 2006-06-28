@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -48,6 +49,7 @@ public class QuickFixWrapper implements IntentionAction {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     LocalQuickFix fix = (LocalQuickFix)myDescriptor.getFixes()[myFixNumber];
     fix.applyFix(project, myDescriptor);
+    DaemonCodeAnalyzer.getInstance(project).restart();
     final PsiElement element = myDescriptor.getPsiElement();
     if (element != null) {
       final PsiFile fileForUndo = element.getContainingFile();

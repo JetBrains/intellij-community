@@ -1,6 +1,9 @@
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
@@ -18,6 +21,8 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import gnu.trove.THashSet;
 
 import javax.swing.*;
 import java.util.*;
@@ -120,7 +125,7 @@ public abstract class QuickFixAction extends AnAction {
                           final DescriptorProviderInspection tool,
                           final CommonProblemDescriptor[] descriptors,
                           final AnActionEvent e) {
-    final Set<VirtualFile> readOnlyFiles = new com.intellij.util.containers.HashSet<VirtualFile>();
+    final Set<VirtualFile> readOnlyFiles = new THashSet<VirtualFile>();
     for (CommonProblemDescriptor descriptor : descriptors) {
       final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
       if (psiElement != null && !psiElement.isWritable()) {
@@ -151,6 +156,7 @@ public abstract class QuickFixAction extends AnAction {
 
                     //CCE here means QuickFix was incorrectly inherited, is there a way to signal (plugin) it is wrong?
                     fix.applyFix(project, descriptor);
+                    DaemonCodeAnalyzer.getInstance(project).restart();
 
                     tool.ignoreProblem(descriptor, fix);
                   }
@@ -167,7 +173,7 @@ public abstract class QuickFixAction extends AnAction {
   }
 
   private static void refreshViews(final Project project, final RefElement[] selectedElements, final InspectionTool tool) {
-    InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManagerEx.getInstance(project);
+    InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final Set<GlobalInspectionContextImpl> runningContexts = managerEx.getRunningContexts();
     for (GlobalInspectionContextImpl context : runningContexts) {
       for (RefElement element : selectedElements) {
@@ -207,7 +213,7 @@ public abstract class QuickFixAction extends AnAction {
   }
 
   private static Set<VirtualFile> getReadOnlyFiles(final RefElement[] refElements) {
-    Set<VirtualFile> readOnlyFiles = new com.intellij.util.containers.HashSet<VirtualFile>();
+    Set<VirtualFile> readOnlyFiles = new THashSet<VirtualFile>();
     for (RefElement refElement : refElements) {
       PsiElement psiElement = refElement.getElement();
       if (psiElement == null) continue;
