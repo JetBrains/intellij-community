@@ -80,20 +80,24 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
   private static void copyBinding(final RadComponent c, final RadComponent copy) {
     if (c.getBinding() != null) {
       String binding = BindingProperty.getDefaultBinding(copy);
-      try {
-        new BindingProperty(c.getProject()).setValue(copy, binding);
-      }
-      catch (Exception e1) {
-        LOG.error(e1);
-      }
+      new BindingProperty(c.getProject()).setValueEx(copy, binding);
       copy.setDefaultBinding(true);
+    }
+    if (c instanceof RadContainer) {
+      LOG.assertTrue(copy instanceof RadContainer);
+      final RadContainer container = (RadContainer)c;
+      final RadContainer containerCopy = (RadContainer)copy;
+      for(int i=0; i<container.getComponentCount(); i++) {
+        copyBinding(container.getComponent(i), containerCopy.getComponent(i));
+      }
     }
   }
 
   private static boolean isSpaceBelowEmpty(final RadComponent component, boolean incrementRow) {
     final GridConstraints constraints = component.getConstraints();
     int startRow = constraints.getCell(incrementRow) + constraints.getSpan(incrementRow);
-    int endRow = constraints.getCell(incrementRow) + constraints.getSpan(incrementRow)*2;
+    int endRow = constraints.getCell(incrementRow) + constraints.getSpan(incrementRow)*2 +
+                 component.getParent().getGridLayoutManager().getGapCellCount();
     if (endRow > component.getParent().getGridCellCount(incrementRow)) {
       return false;
     }
