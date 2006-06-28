@@ -21,4 +21,9 @@ public class XmlTagValueManipulator extends AbstractElementManipulator<XmlTag> {
     tag.getValue().setText(replacement.toString());
     return tag;
   }
+
+  public TextRange getRangeInElement(final XmlTag element) {
+    TextRange valueRange = element.getValue().getTextRange();
+    return new TextRange(valueRange.getStartOffset() - element.getTextOffset(), valueRange.getEndOffset() - element.getTextOffset());
+  }
 }

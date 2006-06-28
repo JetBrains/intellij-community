@@ -18,9 +18,13 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -28,17 +32,38 @@ import com.intellij.util.IncorrectOperationException;
 public abstract class PsiReferenceBase<T extends PsiElement> implements PsiReference {
 
   protected final T myElement;
+  private TextRange myRange;
 
   public PsiReferenceBase(T element) {
     myElement = element;
   }
+
+  public PsiReferenceBase(T element, TextRange range) {
+    this(element);
+    myRange = range;
+  }
+
+  public void setRangeInElement(TextRange range) {
+    myRange = range;
+  }
+
+  public String getValue() {
+    String text = myElement.getText();
+    return myRange.substring(text);
+  }
+
 
   public T getElement() {
     return myElement;
   }
 
   public TextRange getRangeInElement() {
-    return new TextRange(0, myElement.getTextLength());
+    if (myRange == null) {
+      final ElementManipulator<T> manipulator = ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement);
+      assert manipulator != null: "Cannot find manipulator for " + myElement;
+      myRange = manipulator.getRangeInElement(myElement);
+    }
+    return myRange;
   }
 
   public String getCanonicalText() {
@@ -47,7 +72,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final ElementManipulator<T> manipulator = ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement);
-    assert manipulator != null;
+    assert manipulator != null: "Cannot find manipulator for " + myElement;
     return manipulator.handleContentChange(myElement, getRangeInElement(), newElementName);
   }
 
@@ -61,5 +86,25 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
   public boolean isSoft() {
     return false;
+  }
+
+  public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, final XmlElement resolveTo) {
+
+    return new PsiReferenceBase<T>(element) {
+
+      @Nullable
+      public PsiElement resolve() {
+        return resolveTo;
+      }
+
+      public Object[] getVariants() {
+        return EMPTY_ARRAY;
+      }
+    };
+  }
+
+  @Nullable
+  public Module getModule() {
+    return ModuleUtil.findModuleForPsiElement(myElement);
   }
 }

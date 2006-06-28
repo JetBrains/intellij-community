@@ -8,7 +8,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.XmlReference;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -76,7 +75,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     if (nameElement != null && nameElement.getValue() instanceof String) {
       final XmlElement valueElement = DomUtil.getValueElement(nameElement);
       if (valueElement == psiElement || nameElement.getXmlTag() == psiElement) {
-        PsiReference selfReference = XmlReference.createSelfReference((XmlElement)psiElement, valueElement);
+        PsiReference selfReference = PsiReferenceBase.createSelfReference((XmlElement)psiElement, valueElement);
         references = ArrayUtil.append(references, selfReference);
       }
     }
