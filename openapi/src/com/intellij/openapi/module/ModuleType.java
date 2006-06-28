@@ -22,6 +22,8 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.ArrayList;
 
 public abstract class ModuleType<T extends ModuleBuilder> {
   // predefined module types
@@ -31,6 +33,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   public static ModuleType J2EE_APPLICATION;
 
   private final String myId;
+  private final List<ModuleWizardStep> myAdditionalWizardSteps = new ArrayList<ModuleWizardStep>();
 
   protected ModuleType(@NonNls String id) {
     myId = id;
@@ -45,6 +48,14 @@ public abstract class ModuleType<T extends ModuleBuilder> {
 
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, T moduleBuilder, ModulesProvider modulesProvider) {
     return ModuleWizardStep.EMPTY_ARRAY;
+  }
+
+  public void addWizardStep(ModuleWizardStep step) {
+    myAdditionalWizardSteps.add(step);
+  }
+
+  protected ModuleWizardStep[] getAdditionalSteps() {
+    return myAdditionalWizardSteps.toArray(ModuleWizardStep.EMPTY_ARRAY);
   }
 
   public final String getId() {

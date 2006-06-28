@@ -35,6 +35,7 @@ import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -78,9 +79,8 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
                                               ModulesProvider modulesProvider) {
     final NameLocationStep nameLocationStep = new NameLocationStep(wizardContext, moduleBuilder, modulesProvider, WIZARD_ICON,
                                                                    "project.creatingModules.page2");
-    return new ModuleWizardStep[]{
-      nameLocationStep,
-      new SourcePathsStep(nameLocationStep, moduleBuilder, WIZARD_ICON, "project.creatingModules.page3"),
-    };
+    final ModuleWizardStep[] wizardSteps = new ModuleWizardStep[]{nameLocationStep,
+      new SourcePathsStep(nameLocationStep, moduleBuilder, WIZARD_ICON, "project.creatingModules.page3"),};
+    return ArrayUtil.mergeArrays(wizardSteps, getAdditionalSteps(), ModuleWizardStep.class);
   }
 }
