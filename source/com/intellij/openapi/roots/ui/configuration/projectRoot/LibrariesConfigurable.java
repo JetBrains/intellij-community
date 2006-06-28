@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEdi
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -84,7 +85,7 @@ public class LibrariesConfigurable implements NamedConfigurable <LibrariesModifi
   public AnAction createAddAction(final Project project){
     return new AnAction(){
       public void actionPerformed(AnActionEvent e) {
-        LibraryTableEditor.editLibraryTable(new LibraryTableModifiableModelProvider() {
+        final LibraryTableEditor editor = LibraryTableEditor.editLibraryTable(new LibraryTableModifiableModelProvider() {
           public LibraryTable.ModifiableModel getModifiableModel() {
             return myModel;
           }
@@ -92,7 +93,9 @@ public class LibrariesConfigurable implements NamedConfigurable <LibrariesModifi
           public String getTableLevel() {
             return myLibraryTable;
           }
-        }, project).createAddLibraryAction(true, myPanel).actionPerformed(null);
+        }, project);
+        editor.createAddLibraryAction(true, myPanel).actionPerformed(null);
+        Disposer.dispose(editor);
       }
     };
   }

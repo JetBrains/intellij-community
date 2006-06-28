@@ -328,7 +328,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
   }
 
 
-  protected void dispose() {
+  public void dispose() {
     if (myBuilder != null) {
       Disposer.dispose(myBuilder);
       myBuilder = null;

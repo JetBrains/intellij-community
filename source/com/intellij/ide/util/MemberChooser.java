@@ -558,7 +558,7 @@ public class MemberChooser extends DialogWrapper {
     }
   }
 
-  protected void dispose() {
+  public void dispose() {
     PropertiesComponent instance = PropertiesComponent.getInstance();
     instance.setValue(PROP_SORTED, Boolean.toString(isSorted()));
     instance.setValue(PROP_SHOWCLASSES, Boolean.toString(myShowClasses));

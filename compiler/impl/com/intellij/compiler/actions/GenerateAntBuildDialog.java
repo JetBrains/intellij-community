@@ -95,7 +95,7 @@ public class GenerateAntBuildDialog extends DialogWrapper{
     properties.setValue(BACKUP_FILES_PROPERTY, Boolean.toString(myRbBackupFiles.isSelected()));
   }
 
-  protected void dispose() {
+  public void dispose() {
     saveSettings();
     super.dispose();
   }

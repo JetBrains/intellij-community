@@ -17,6 +17,8 @@ package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.project.Project;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.UIBundle;
@@ -29,7 +31,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 
-public abstract class DialogWrapper {
+public abstract class DialogWrapper implements Disposable {
   /**
      * The default exit code for "OK" action.
      */
@@ -153,7 +155,7 @@ public abstract class DialogWrapper {
     if (myClosed) return;
     myClosed = true;
     myExitCode = exitCode;
-    dispose();
+    Disposer.dispose(this);
   }
 
   /**
@@ -326,7 +328,7 @@ public abstract class DialogWrapper {
    * more effecient garbage collection. You should never invoke this method twice or
    * invoke any method of the wrapper after invocation of <code>dispose</code>.
    */
-  protected void dispose() {
+  public void dispose() {
     synchronized (ourLock) {
       final JRootPane rootPane = getRootPane();
       final KeyStroke[] strokes = rootPane.getRegisteredKeyStrokes();

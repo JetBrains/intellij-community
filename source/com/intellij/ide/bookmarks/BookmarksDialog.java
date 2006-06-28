@@ -342,7 +342,7 @@ abstract class BookmarksDialog extends DialogWrapper{
     return myModel.getBookmarkWrapper(selectedIndex).getBookmark();
   }
 
-  protected void dispose() {
+  public void dispose() {
     stopCellEditing();
     super.dispose();
   }

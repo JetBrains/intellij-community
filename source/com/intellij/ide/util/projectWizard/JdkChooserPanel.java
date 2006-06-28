@@ -166,7 +166,7 @@ public class JdkChooserPanel extends JPanel {
       setOKActionEnabled(myList.getSelectedValue() != null);
     }
 
-    protected void dispose() {
+    public void dispose() {
       myList.removeListSelectionListener(this);
       super.dispose();
     }

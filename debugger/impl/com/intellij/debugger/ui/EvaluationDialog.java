@@ -142,7 +142,7 @@ public abstract class EvaluationDialog extends DialogWrapper {
     myDisposeRunnables.add(runnable);
   }
 
-  protected void dispose() {
+  public void dispose() {
     for (Runnable runnable : myDisposeRunnables) {
       runnable.run();
     }

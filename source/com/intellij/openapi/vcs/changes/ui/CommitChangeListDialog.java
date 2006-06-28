@@ -223,7 +223,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
 
   @Override
-  protected void dispose() {
+  public void dispose() {
     super.dispose();
     myOKButtonUpdateAlarm.cancelAllRequests();
     PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, String.valueOf(mySplitter.getProportion()));

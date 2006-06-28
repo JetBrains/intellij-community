@@ -166,7 +166,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myCenterPanel);
   }
 
-  protected void dispose() {
+  public void dispose() {
     super.dispose();
     myConfigurable.disposeUIResources();
     myConfigurable = null;

@@ -103,7 +103,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   }
 
   @Override
-  protected void dispose() {
+  public void dispose() {
     DimensionService.getInstance().setExtendedState(getDimensionKey(), mySplitPane.getDividerLocation());
     super.dispose();
   }

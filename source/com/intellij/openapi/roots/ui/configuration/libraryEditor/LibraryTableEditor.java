@@ -131,12 +131,6 @@ public class LibraryTableEditor implements Disposable {
     return result;
   }
 
-  public static LibraryTableEditor create(final LibraryTable libraryTable){
-    LibraryTableEditor result = new LibraryTableEditor(libraryTable);
-    result.init(new LibraryTableTreeStructure(result));
-    return result;
-  }
-
   private LibraryTableEditor(LibraryTableModifiableModelProvider provider){
     myLibraryTable = provider;
     myTableModifiableModel = myLibraryTable.getModifiableModel();
@@ -189,6 +183,7 @@ public class LibraryTableEditor implements Disposable {
       selection.clear();
       selection.addAll(Arrays.asList(libraryTableEditor.getSelectedLibraries()));
     }
+    Disposer.dispose(libraryTableEditor);
     return ok;
   }
 

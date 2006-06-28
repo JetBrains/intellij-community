@@ -257,7 +257,7 @@ public class PsiViewerDialog extends DialogWrapper {
     }
   }
 
-  protected void dispose() {
+  public void dispose() {
     super.dispose();
 
     EditorFactory.getInstance().releaseEditor(myEditor);

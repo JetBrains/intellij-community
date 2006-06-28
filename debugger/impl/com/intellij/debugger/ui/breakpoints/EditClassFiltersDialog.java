@@ -54,7 +54,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
     return contentPanel;
   }
 
-  protected void dispose(){
+  public void dispose(){
     myClassFilterEditor.stopEditing();
     super.dispose();
   }

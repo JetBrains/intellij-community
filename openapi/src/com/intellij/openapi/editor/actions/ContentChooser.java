@@ -165,7 +165,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     mySplitter.revalidate();
   }
 
-  protected void dispose() {
+  public void dispose() {
     super.dispose();
     if (myViewer != null) {
       EditorFactory.getInstance().releaseEditor(myViewer);

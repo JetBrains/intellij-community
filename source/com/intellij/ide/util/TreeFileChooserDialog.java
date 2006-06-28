@@ -288,7 +288,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   }
 
 
-  protected void dispose() {
+  public void dispose() {
     if (myBuilder != null) {
       Disposer.dispose(myBuilder);
       myBuilder = null;

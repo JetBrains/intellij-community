@@ -123,7 +123,7 @@ public class ExportToFileUtil {
       initText();
     }
 
-    protected void dispose() {
+    public void dispose() {
       myExporter.removeSettingsChangedListener(myListener);
       super.dispose();
     }

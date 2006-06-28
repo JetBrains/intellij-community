@@ -319,7 +319,7 @@ public class VcsHistoryDialog extends DialogWrapper {
 
   }
 
-  protected synchronized void dispose() {
+  public synchronized void dispose() {
     myIsDisposed = true;
     myDiffPanel.dispose();
     super.dispose();

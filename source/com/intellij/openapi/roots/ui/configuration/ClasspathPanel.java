@@ -43,7 +43,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.Disposable;
 import com.intellij.ui.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
@@ -398,13 +400,19 @@ public class ClasspathPanel extends JPanel {
       if (dialog == null) {
         return;
       }
-      dialog.doChoose();
-      if (!dialog.isOK()) {
-        return;
+      final List<ItemType> chosen;
+      try {
+        dialog.doChoose();
+        if (!dialog.isOK()) {
+          return;
+        }
+        chosen = dialog.getChosenElements();
+        if (chosen.size() == 0) {
+          return;
+        }
       }
-      final List<ItemType> chosen = dialog.getChosenElements();
-      if (chosen.size() == 0) {
-        return;
+      finally {
+        Disposer.dispose(dialog);
       }
       //int insertionIndex = myEntryTable.getSelectedRow();
       for (ItemType item : chosen) {
@@ -822,7 +830,7 @@ public class ClasspathPanel extends JPanel {
     }
   }
 
-  private static interface ChooserDialog<T> {
+  private static interface ChooserDialog<T> extends Disposable {
     List<T> getChosenElements();
     void doChoose();
     boolean isOK();
@@ -975,8 +983,13 @@ public class ClasspathPanel extends JPanel {
 
     protected ChooserDialog<Library> createChooserDialog() {
       return new ChooserDialog<Library>() {
-        private LibraryTableEditor myEditor = LibraryTableEditor.editLibraryTable(myLibraryTableModelProvider, myProject);
+        private LibraryTableEditor myEditor;
         private boolean myIsOk;
+
+        {
+          myEditor = LibraryTableEditor.editLibraryTable(myLibraryTableModelProvider, myProject);
+          Disposer.register(this, myEditor);
+        }
 
         public List<Library> getChosenElements() {
           final List<Library> chosen = new ArrayList<Library>(Arrays.asList(myEditor.getSelectedLibraries()));
@@ -991,6 +1004,9 @@ public class ClasspathPanel extends JPanel {
 
         public boolean isOK() {
           return myIsOk;
+        }
+
+        public void dispose() {
         }
       };
     }

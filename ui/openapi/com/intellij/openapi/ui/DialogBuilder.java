@@ -287,7 +287,7 @@ public class DialogBuilder {
     public void setButtonsAlignment1(int alignment) { setButtonsAlignment(alignment);}
     protected JComponent createCenterPanel() { return myCenterPanel; }
 
-    protected void dispose() {
+    public void dispose() {
       for (Disposable disposable : myDisposables) {
         disposable.dispose();
       }

@@ -160,7 +160,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     return myFileSystemTree.getTree();
   }
 
-  protected final void dispose() {
+  public final void dispose() {
     for (Disposable disposable : myDisposables) {
       disposable.dispose();
     }

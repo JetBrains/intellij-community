@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,7 +108,9 @@ public class LibraryConfigurable implements NamedConfigurable<Library> {
   public AnAction createAddAction() {
     return new AnAction() {
       public void actionPerformed(AnActionEvent e) {
-        LibraryTableEditor.editLibraryTable(myModel, myProject).createAddLibraryAction(true, myLibraryEditor.getComponent()).actionPerformed(null);
+        final LibraryTableEditor editor = LibraryTableEditor.editLibraryTable(myModel, myProject);
+        editor.createAddLibraryAction(true, myLibraryEditor.getComponent()).actionPerformed(null);
+        Disposer.dispose(editor);
       }
     };
   }

@@ -171,7 +171,7 @@ public class StatementEvaluationDialog extends EvaluationDialog{
     return new DebuggerStatementEditor(getProject(), PositionUtil.getContextElement(getDebuggerContext()), "evaluation");
   }
 
-  protected void dispose() {
+  public void dispose() {
     try {
       final DebuggerEditorImpl editor = getEditor();
       final DimensionService dimensionService = DimensionService.getInstance();

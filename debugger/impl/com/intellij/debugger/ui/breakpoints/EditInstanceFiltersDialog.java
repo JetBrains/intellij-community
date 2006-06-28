@@ -42,7 +42,7 @@ public class EditInstanceFiltersDialog extends DialogWrapper{
     return contentPanel;
   }
 
-  protected void dispose(){
+  public void dispose(){
     myInstanceFilterEditor.stopEditing();
     super.dispose();
   }

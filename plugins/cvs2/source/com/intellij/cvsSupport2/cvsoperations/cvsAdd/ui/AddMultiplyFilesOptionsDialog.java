@@ -167,7 +167,7 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
     return false;
   }
 
-  protected void dispose() {
+  public void dispose() {
     super.dispose();
     for (Iterator each = myRoots.iterator(); each.hasNext();) {
       ((AddedFileInfo)each.next()).removeIncludedObserver(myObserver);

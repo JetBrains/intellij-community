@@ -250,7 +250,7 @@ public class BuildJarDialog extends DialogWrapper {
     return "#com.intellij.j2ee.jar.BuildJarDialog";
   }
 
-  protected void dispose() {
+  public void dispose() {
     mySplitterProportionsData.saveSplitterProportions(myPanel);
     mySplitterProportionsData.externalizeToDimensionService(getDimensionKey());
     for (SettingsEditor editor : mySettings.values()) {

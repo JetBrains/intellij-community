@@ -136,7 +136,7 @@ public abstract class CallerChooser extends DialogWrapper {
     }
   }
 
-  protected void dispose() {
+  public void dispose() {
     myTree.removeTreeSelectionListener(myTreeSelectionListener);
     EditorFactory.getInstance().releaseEditor(myCallerEditor);
     EditorFactory.getInstance().releaseEditor(myCalleeEditor);

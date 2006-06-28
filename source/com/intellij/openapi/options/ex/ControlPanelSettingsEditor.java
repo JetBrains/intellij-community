@@ -315,7 +315,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
   }
 
 
-  protected void dispose() {
+  public void dispose() {
     if (myPopup[0] != null){
       myPopup[0].cancel();
     }

@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 
 import javax.swing.*;
@@ -73,7 +74,7 @@ public class EAPSendErrorDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         myShouldSend = true;
         storeInfo();
-        dispose();
+        Disposer.dispose(EAPSendErrorDialog.this);
       }
     };
     mySendAction.putValue(Action.MNEMONIC_KEY, new Integer(KeyEvent.VK_S));
@@ -81,7 +82,7 @@ public class EAPSendErrorDialog extends DialogWrapper {
     myCancelAction = new AbstractAction(CommonBundle.getCancelButtonText()) {
       public void actionPerformed(ActionEvent e) {
         myShouldSend = false;
-        dispose();
+        Disposer.dispose(EAPSendErrorDialog.this);
       }
     };
     myCancelAction.putValue(Action.MNEMONIC_KEY, new Integer (KeyEvent.VK_C));

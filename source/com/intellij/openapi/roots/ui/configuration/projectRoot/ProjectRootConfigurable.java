@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Icons;
@@ -633,7 +634,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new AnAction(ProjectBundle.message("add.new.global.library.text")) {
       public void actionPerformed(AnActionEvent e) {
-        LibraryTableEditor.editLibraryTable(getGlobalLibrariesProvider(), myProject).createAddLibraryAction(true, myWholePanel).actionPerformed(null);
+        final LibraryTableEditor editor = LibraryTableEditor.editLibraryTable(getGlobalLibrariesProvider(), myProject);
+        editor.createAddLibraryAction(true, myWholePanel).actionPerformed(null);
+        Disposer.dispose(editor);
       }
     });
     group.add(new AnAction(ProjectBundle.message("add.new.application.server.library.text")) {

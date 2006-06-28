@@ -65,7 +65,7 @@ public class CvsWizard extends AbstractWizard {
     super.doOKAction();
   }
 
-  protected void dispose() {
+  public void dispose() {
     try {
       for (Iterator each = mySteps.iterator(); each.hasNext();) {
         ((WizardStep)each.next()).dispose();

@@ -73,7 +73,7 @@ public class FileStructureDialog extends DialogWrapper {
     return null;
   }
 
-  protected void dispose() {
+  public void dispose() {
     myTreeModel.dispose();
     myCommanderPanel.dispose();
     super.dispose();

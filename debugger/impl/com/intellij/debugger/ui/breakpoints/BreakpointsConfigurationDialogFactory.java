@@ -201,7 +201,7 @@ public class BreakpointsConfigurationDialogFactory {
       myPreferredComponent = selectedPanel.getControl(control);
     }
 
-    protected void dispose() {
+    public void dispose() {
       apply();
       for (Runnable runnable : myDisposeActions) {
         runnable.run();

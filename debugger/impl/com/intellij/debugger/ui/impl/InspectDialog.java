@@ -5,7 +5,6 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 
@@ -41,7 +40,7 @@ public class InspectDialog extends DialogWrapper implements DebuggerContextListe
     return null;
   }
 
-  protected void dispose() {
+  public void dispose() {
     myDebuggerContext.getDebuggerSession().getContextManager().removeListener(this);
     if (myInspectView != null) {
       myInspectView.dispose();

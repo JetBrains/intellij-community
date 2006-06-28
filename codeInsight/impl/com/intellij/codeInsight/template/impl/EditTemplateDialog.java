@@ -95,7 +95,7 @@ public class EditTemplateDialog extends DialogWrapper {
     return myKeyField;
   }
 
-  protected void dispose() {
+  public void dispose() {
     super.dispose();
     EditorFactory.getInstance().releaseEditor(myTemplateEditor);
   }

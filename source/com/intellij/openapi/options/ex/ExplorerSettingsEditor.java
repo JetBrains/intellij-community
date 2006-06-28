@@ -178,7 +178,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     }
   }
 
-  protected final void dispose() {
+  public final void dispose() {
     if (myPopup[0] != null) {
       myPopup[0].cancel();
     }
