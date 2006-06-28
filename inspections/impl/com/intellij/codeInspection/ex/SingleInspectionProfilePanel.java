@@ -869,6 +869,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     Splitter splitter = new Splitter(false);
 
+    splitter.setShowDividerControls(true);
     splitter.setFirstComponent(treePanel);
     splitter.setSecondComponent(rightPanel);
     splitter.setProportion((float)treePanel.getPreferredSize().width/getPreferredSize().width);
