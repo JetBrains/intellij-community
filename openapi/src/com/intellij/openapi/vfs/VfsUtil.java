@@ -181,27 +181,20 @@ public class VfsUtil {
   }
 
   /**
-   * Creates file and copies content of resource to it
+   * Copies content of resource to the given file
    *
-   * @param requestor any object to control who called this method. Note that
-   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   *                  See {@link VirtualFileEvent#getRequestor}
-   * @param toDir     directory to create the new file
-   * @param fileName  new file name
+   * @param file to copy to
    * @param resourceUrl url of the resource to be copied
-   * @return newly created file
-   * @throws IOException if resource not found or copying failed
+   * @throws java.io.IOException if resource not found or copying failed
    */
-  public static VirtualFile copyFromResource(Object requestor, VirtualFile toDir, String fileName, String resourceUrl) throws IOException {
+  public static void copyFromResource(VirtualFile file, @NonNls String resourceUrl) throws IOException {
     InputStream out = VfsUtil.class.getResourceAsStream(resourceUrl);
     if (out == null) {
       throw new FileNotFoundException(resourceUrl);
     }
     try {
-      final VirtualFile newChild = toDir.createChildData(requestor, fileName);
       byte[] bytes = FileUtil.adaptiveLoadBytes(out);
-      newChild.setBinaryContent(bytes);
-      return newChild;
+      file.setBinaryContent(bytes);
     } finally {
       out.close();
     }
@@ -592,5 +585,15 @@ public class VfsUtil {
     else {
       return VirtualFileManager.constructUrl(LocalFileSystem.getInstance().getProtocol(), path);
     }
+  }
+
+  public static VirtualFile createChildSequent(Object requestor, VirtualFile dir, String prefix, String extension) throws IOException {
+    String fileName = prefix + "." + extension;
+    int i = 1;
+    while (dir.findChild(fileName) != null) {
+      fileName = prefix + i + "." + extension;
+      i++;
+    }
+    return dir.createChildData(requestor, fileName);
   }
 }

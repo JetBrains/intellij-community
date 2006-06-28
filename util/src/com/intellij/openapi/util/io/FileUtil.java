@@ -411,7 +411,10 @@ public class FileUtil {
   }
 
   public static String getNameWithoutExtension(File file) {
-    String name = file.getName();
+    return getNameWithoutExtension(file.getName());
+  }
+
+  public static String getNameWithoutExtension(String name) {
     int i = name.lastIndexOf('.');
     if (i != -1) {
       name = name.substring(0, i);
