@@ -49,7 +49,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class XmlCompletionData extends CompletionData {
-  public XmlCompletionData(){
+  public XmlCompletionData() {
     declareFinalScope(XmlTag.class);
     declareFinalScope(XmlAttribute.class);
     declareFinalScope(XmlAttributeValue.class);
@@ -80,24 +80,18 @@ public class XmlCompletionData extends CompletionData {
     }
 
     final ElementFilter entityCompletionFilter = createXmlEntityCompletionFilter();
-    
+
     {
-      final CompletionVariant variant = new CompletionVariant(
-        new AndFilter(
-          new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
-          new NotFilter(entityCompletionFilter)
-        )
-      );
+      final CompletionVariant variant =
+        new CompletionVariant(new AndFilter(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), new NotFilter(entityCompletionFilter)));
       variant.includeScopeClass(XmlToken.class, true);
-      variant.addCompletion(new SimpleTagContentEnumerationValuesGetter(),TailType.NONE);
+      variant.addCompletion(new SimpleTagContentEnumerationValuesGetter(), TailType.NONE);
 
       registerVariant(variant);
     }
 
     {
-      final CompletionVariant variant = new CompletionVariant(
-        entityCompletionFilter
-      );
+      final CompletionVariant variant = new CompletionVariant(entityCompletionFilter);
       variant.includeScopeClass(XmlToken.class, true);
       variant.addCompletion(new EntityRefGetter());
       variant.setInsertHandler(new EntityRefInsertHandler());
@@ -106,13 +100,8 @@ public class XmlCompletionData extends CompletionData {
   }
 
   protected ElementFilter createXmlEntityCompletionFilter() {
-    return new AndFilter(
-      new LeftNeighbour(new TextFilter("&")),
-      new OrFilter(
-        new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
-        new TokenTypeFilter(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN)
-      )
-    );
+    return new AndFilter(new LeftNeighbour(new TextFilter("&")), new OrFilter(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
+                                                                              new TokenTypeFilter(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN)));
   }
 
   protected XmlAttributeValueGetter getAttributeValueGetter() {
@@ -131,7 +120,18 @@ public class XmlCompletionData extends CompletionData {
     return TrueFilter.INSTANCE;
   }
 
-  private static class XmlAttributeValueInsertHandler extends DefaultInsertHandler{
+  public String findPrefix(PsiElement insertedElement, int offset) {
+    String result = super.findPrefix(insertedElement, offset);
+    if (insertedElement instanceof XmlToken) {
+      final int index = result.indexOf("${");
+      if (index >= 0) {
+        result = result.substring(index + 2);
+      }
+    }
+    return result;
+  }
+
+  private static class XmlAttributeValueInsertHandler extends DefaultInsertHandler {
     public void handleInsert(CompletionContext context,
                              int startOffset,
                              LookupData data,
@@ -144,11 +144,11 @@ public class XmlCompletionData extends CompletionData {
       final CaretModel caretModel = context.editor.getCaretModel();
       int localOffset = caretModel.getOffset() - current.getTextRange().getStartOffset() - 1;
       startOffset = localOffset;
-      while(localOffset > 0 && localOffset < text.length()){
+      while (localOffset > 0 && localOffset < text.length()) {
         final char cur = text.charAt(localOffset--);
-        if(cur == '}') break;
-        if(cur == '{'){
-          if(localOffset >= 0 && text.charAt(localOffset) == '$'){
+        if (cur == '}') break;
+        if (cur == '{') {
+          if (localOffset >= 0 && text.charAt(localOffset) == '$') {
             if (startOffset >= text.length() - 1 || text.charAt(startOffset + 1) != '}') {
               context.editor.getDocument().insertString(caretModel.getOffset(), "}");
             }
@@ -164,12 +164,12 @@ public class XmlCompletionData extends CompletionData {
     public XmlAttributeInsertHandler() {
     }
 
-    public void handleInsert(
-      CompletionContext context,
-      int startOffset,
-      LookupData data,
-      LookupItem item,
-      boolean signatureSelected, char completionChar) {
+    public void handleInsert(CompletionContext context,
+                             int startOffset,
+                             LookupData data,
+                             LookupItem item,
+                             boolean signatureSelected,
+                             char completionChar) {
       super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
 
       final Editor editor = context.editor;
@@ -177,16 +177,18 @@ public class XmlCompletionData extends CompletionData {
       final Document document = editor.getDocument();
       final int caretOffset = editor.getCaretModel().getOffset();
       if (PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(document).getFileType() == StdFileTypes.HTML &&
-          HtmlUtil.isSingleHtmlAttribute((String)item.getObject())
-          ) {
+          HtmlUtil.isSingleHtmlAttribute((String)item.getObject())) {
         return;
       }
 
       final CharSequence chars = document.getCharsSequence();
-      if (!CharArrayUtil.regionMatches(chars, caretOffset, "=\"") &&
-          !CharArrayUtil.regionMatches(chars, caretOffset, "='")) {
-        if("/> \n\t\r".indexOf(document.getCharsSequence().charAt(caretOffset)) < 0) document.insertString(caretOffset, "=\"\" ");
-        else document.insertString(caretOffset, "=\"\"");
+      if (!CharArrayUtil.regionMatches(chars, caretOffset, "=\"") && !CharArrayUtil.regionMatches(chars, caretOffset, "='")) {
+        if ("/> \n\t\r".indexOf(document.getCharsSequence().charAt(caretOffset)) < 0) {
+          document.insertString(caretOffset, "=\"\" ");
+        }
+        else {
+          document.insertString(caretOffset, "=\"\"");
+        }
       }
 
       editor.getCaretModel().moveToOffset(caretOffset + 2);
@@ -196,14 +198,15 @@ public class XmlCompletionData extends CompletionData {
   }
 
   private static class XmlTagInsertHandler extends BasicInsertHandler {
-    public XmlTagInsertHandler() {}
+    public XmlTagInsertHandler() {
+    }
 
-    public void handleInsert(
-        CompletionContext context,
-        int startOffset,
-        LookupData data,
-        LookupItem item,
-        boolean signatureSelected, char completionChar) {
+    public void handleInsert(CompletionContext context,
+                             int startOffset,
+                             LookupData data,
+                             LookupItem item,
+                             boolean signatureSelected,
+                             char completionChar) {
       super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
       Project project = context.project;
       Editor editor = context.editor;
@@ -253,8 +256,8 @@ public class XmlCompletionData extends CompletionData {
         editor.getSelectionModel().removeSelection();
       }
       current = context.file.findElementAt(context.startOffset);
-      if(current != null && current.getPrevSibling() instanceof XmlToken){
-        if(!isClosed(current) && ((XmlToken)current.getPrevSibling()).getTokenType() == XmlTokenType.XML_END_TAG_START){
+      if (current != null && current.getPrevSibling()instanceof XmlToken) {
+        if (!isClosed(current) && ((XmlToken)current.getPrevSibling()).getTokenType() == XmlTokenType.XML_END_TAG_START) {
           editor.getDocument().insertString(current.getTextRange().getEndOffset(), ">");
           editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 1);
         }
@@ -285,11 +288,13 @@ public class XmlCompletionData extends CompletionData {
 
       // temp code
       FileType fileType = tag.getContainingFile().getFileType();
-      boolean htmlCode = fileType==StdFileTypes.HTML || fileType==StdFileTypes.XHTML;
-      boolean jspCode = fileType==StdFileTypes.JSP || fileType==StdFileTypes.JSPX;
+      boolean htmlCode = fileType == StdFileTypes.HTML || fileType == StdFileTypes.XHTML;
+      boolean jspCode = fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX;
 
       boolean toReformat = true;
-      if (htmlCode || jspCode) { toReformat = false; }
+      if (htmlCode || jspCode) {
+        toReformat = false;
+      }
       template.setToReformat(toReformat);
 
       XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors();
@@ -312,9 +317,7 @@ public class XmlCompletionData extends CompletionData {
         template.addTextSegment(">");
         template.addEndVariable();
 
-        if ( !(tag instanceof HtmlTag) ||
-            !HtmlUtil.isSingleHtmlTag(tag.getName())
-           ) {
+        if (!(tag instanceof HtmlTag) || !HtmlUtil.isSingleHtmlTag(tag.getName())) {
           template.addTextSegment("</");
           template.addTextSegment(descriptor.getName(tag));
           template.addTextSegment(">");
@@ -322,7 +325,8 @@ public class XmlCompletionData extends CompletionData {
       }
       else if (completionChar == '/') {
         template.addTextSegment("/>");
-      } else if (completionChar == ' ') {
+      }
+      else if (completionChar == ' ') {
         template.addTextSegment(" ");
         template.addEndVariable();
       }
@@ -358,12 +362,10 @@ public class XmlCompletionData extends CompletionData {
         if (type instanceof ComplexTypeDescriptor) {
           final XmlTag[] simpleContent = new XmlTag[1];
 
-          XmlUtil.processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(),new PsiElementProcessor() {
+          XmlUtil.processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), new PsiElementProcessor() {
             public boolean execute(final PsiElement element) {
-              if (element instanceof XmlTag &&
-                ((XmlTag)element).getLocalName().equals(XmlUtil.XSD_SIMPLE_CONTENT_TAG) &&
-                ((XmlTag)element).getNamespace().equals(XmlUtil.XML_SCHEMA_URI)
-                ) {
+              if (element instanceof XmlTag && ((XmlTag)element).getLocalName().equals(XmlUtil.XSD_SIMPLE_CONTENT_TAG) &&
+                  ((XmlTag)element).getNamespace().equals(XmlUtil.XML_SCHEMA_URI)) {
                 simpleContent[0] = (XmlTag)element;
                 return false;
               }
@@ -372,9 +374,9 @@ public class XmlCompletionData extends CompletionData {
             }
           }, true);
 
-          if (simpleContent[0]!=null) {
+          if (simpleContent[0] != null) {
             final HashSet<String> variants = new HashSet<String>();
-            XmlUtil.collectEnumerationValues(simpleContent[0],variants);
+            XmlUtil.collectEnumerationValues(simpleContent[0], variants);
             if (variants.size() > 0) return variants.toArray(new Object[variants.size()]);
           }
         }
@@ -391,15 +393,12 @@ public class XmlCompletionData extends CompletionData {
         final XmlElementDescriptor descriptor = parentOfType.getDescriptor();
         final List<String> results = new ArrayList<String>();
 
-        final XmlNSDescriptor nsDescriptor = descriptor != null ? descriptor.getNSDescriptor():null;
+        final XmlNSDescriptor nsDescriptor = descriptor != null ? descriptor.getNSDescriptor() : null;
         final XmlFile containingFile = (XmlFile)parentOfType.getContainingFile();
-        XmlFile descriptorFile = nsDescriptor != null ?
-                                       nsDescriptor.getDescriptorFile():
-                                       containingFile.getDocument().getProlog().getDoctype() != null ? containingFile:null;
-        if (nsDescriptor != null &&
-            ( descriptorFile == null ||
-              descriptorFile.getName().equals(containingFile.getName() + ".dtd")
-            )) {
+        XmlFile descriptorFile = nsDescriptor != null
+                                 ? nsDescriptor.getDescriptorFile()
+                                 : containingFile.getDocument().getProlog().getDoctype() != null ? containingFile : null;
+        if (nsDescriptor != null && (descriptorFile == null || descriptorFile.getName().equals(containingFile.getName() + ".dtd"))) {
           descriptorFile = containingFile;
         }
 
@@ -418,11 +417,7 @@ public class XmlCompletionData extends CompletionData {
             }
           };
 
-          XmlUtil.processXmlElements(
-            descriptorFile,
-            processor,
-            true
-          );
+          XmlUtil.processXmlElements(descriptorFile, processor, true);
 
           return results.toArray(new Object[results.size()]);
         }
@@ -438,8 +433,7 @@ public class XmlCompletionData extends CompletionData {
                              LookupItem item,
                              boolean signatureSelected,
                              char completionChar) {
-      super.handleInsert(context, startOffset, data, item, signatureSelected,
-                         completionChar);
+      super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
 
       final CaretModel caretModel = context.editor.getCaretModel();
       context.editor.getDocument().insertString(caretModel.getOffset(), ";");

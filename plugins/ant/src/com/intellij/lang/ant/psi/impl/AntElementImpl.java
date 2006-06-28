@@ -16,6 +16,7 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -232,6 +233,14 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
 
   public boolean isPhysical() {
     return getSourceElement().isPhysical();
+  }
+
+  public boolean isValid() {
+    return getSourceElement().isValid();
+  }
+
+  public PsiManager getManager() {
+    return getSourceElement().getManager();
   }
 
   protected AntElement[] getChildrenInner() {
