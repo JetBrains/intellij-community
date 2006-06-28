@@ -116,8 +116,9 @@ public class PropertiesReferenceManager implements ProjectComponent {
     myFileTypeManager.removeFileTypeListener(myFileTypeChangedListener);
   }
 
+  @NotNull
   public String getComponentName() {
-    return "Properties support manager";
+    return "Properties reference manager";
   }
   public void beforePropertiesFileChange(final PropertiesFile propertiesFile, final Collection<String> propertiesBefore) {
     synchronized (LOCK) {
@@ -158,12 +159,13 @@ public class PropertiesReferenceManager implements ProjectComponent {
     }
   }
 
+  @NotNull
   public Collection<Property> findPropertiesByKey(final String key) {
     updateChangedFiles();
     Collection<Property> result;
     synchronized (LOCK) {
       Collection<VirtualFile> virtualFiles = myPropertiesMap.get(key);
-      if (virtualFiles == null || virtualFiles.size() == 0) return Collections.emptyList();
+      if (virtualFiles == null || virtualFiles.isEmpty()) return Collections.emptyList();
       result = new ArrayList<Property>(virtualFiles.size());
       PsiManager psiManager = PsiManager.getInstance(myProject);
       for (Iterator<VirtualFile> iterator = virtualFiles.iterator(); iterator.hasNext();) {
@@ -250,7 +252,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
       PsiDirectory directory = (PsiDirectory)psiFile.getParent();
       PsiPackage pkg = directory.getPackage();
       if (pkg != null) {
-        StringBuffer qName = new StringBuffer(pkg.getQualifiedName());
+        StringBuilder qName = new StringBuilder(pkg.getQualifiedName());
         if (qName.length() > 0) {
           qName.append(".");
         }
