@@ -75,7 +75,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     if (nameElement != null && nameElement.getValue() instanceof String) {
       final XmlElement valueElement = DomUtil.getValueElement(nameElement);
       if (valueElement == psiElement || nameElement.getXmlTag() == psiElement) {
-        PsiReference selfReference = PsiReferenceBase.createSelfReference((XmlElement)psiElement, valueElement);
+        PsiReference selfReference = PsiReferenceBase.createSelfReference(psiElement, valueElement);
         references = ArrayUtil.append(references, selfReference);
       }
     }
