@@ -13,6 +13,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
@@ -42,6 +43,7 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
       constructor = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(constructor);
       Template template = templateBuilder.buildTemplate();
       targetClass = PsiTreeUtil.getParentOfType(constructor, PsiClass.class);
+      if (targetClass == null) return;
       final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);
       TextRange textRange = constructor.getTextRange();
       editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
@@ -151,6 +153,7 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
     return null;
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.constructor.from.new.family");
   }
