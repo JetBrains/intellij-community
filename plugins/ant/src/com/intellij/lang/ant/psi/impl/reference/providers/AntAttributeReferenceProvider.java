@@ -6,8 +6,10 @@ import com.intellij.lang.ant.psi.impl.reference.AntAttributeReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlToken;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,9 +35,19 @@ public class AntAttributeReferenceProvider extends GenericReferenceProvider {
             break;
           }
         }
-        int offsetInElement = child.getTextRange().getStartOffset() - elementStartOffset;
-        final String text = child.getText();
-        list.add(new AntAttributeReference(this, se, text, new TextRange(offsetInElement, offsetInElement + text.length()), null));
+        else if (child instanceof PsiWhiteSpace) {
+          final int off = child.getTextRange().getStartOffset() - elementStartOffset;
+          final String text = child.getText();
+          list.add(new AntAttributeReference(this, se, text, new TextRange(off, off + text.length()), null));
+        }
+        else if (child instanceof XmlAttribute) {
+          final PsiElement nameElement = child.getFirstChild();
+          if (nameElement != null) {
+            final int off = nameElement.getTextRange().getStartOffset() - elementStartOffset;
+            final String text = nameElement.getText();
+            list.add(new AntAttributeReference(this, se, text, new TextRange(off, off + text.length()), null));
+          }
+        }
       }
       final int count = list.size();
       return (count == 0) ? PsiReference.EMPTY_ARRAY : list.toArray(new PsiReference[count]);
