@@ -50,8 +50,8 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   private Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<RadComponent, MyPropertyChangeListener>();
 
   @NonNls private static final String ENCODED_FORMSPEC_GROW = "d:grow";
-  private static final Size DEFAULT_NOGROW_SIZE = Sizes.DEFAULT;
-
+  private static final Size DEFAULT_NOGROW_SIZE = new BoundedSize(Sizes.DEFAULT, new ConstantSize(4, ConstantSize.PIXEL), null);
+                                                                                                                                  
   @Nullable public String getName() {
     return UIFormXmlConstants.LAYOUT_FORM;
   }
