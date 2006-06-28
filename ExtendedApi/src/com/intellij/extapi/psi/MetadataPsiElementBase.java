@@ -18,7 +18,7 @@ public abstract class MetadataPsiElementBase extends PsiElementBase {
 
   public int getStartOffsetInParent() {
     final PsiElement parent = getParent();
-    return (parent == null) ? 0 : parent.getTextRange().getStartOffset() - getTextRange().getStartOffset();
+    return (parent == null) ? 0 : getTextRange().getStartOffset() - parent.getTextRange().getStartOffset();
   }
 
   public int getTextLength() {
