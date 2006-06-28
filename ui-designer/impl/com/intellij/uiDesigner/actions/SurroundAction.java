@@ -60,7 +60,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
 
           Rectangle rc = new Rectangle(0, 0, 1, 1);
           if (selectionParent.getLayoutManager().isGrid()) {
-            rc = getSelectionBounds(selection);
+            rc = FormEditingUtil.getSelectionBounds(selection);
           }
           for(RadComponent c: selection) {
             selectionParent.removeComponent(c);
@@ -120,21 +120,6 @@ public class SurroundAction extends AbstractGuiEditorAction {
       }, null, null);
   }
 
-  private static Rectangle getSelectionBounds(List<RadComponent> selection) {
-    int minRow = Integer.MAX_VALUE;
-    int minCol = Integer.MAX_VALUE;
-    int maxRow = 0;
-    int maxCol = 0;
-
-    for(RadComponent c: selection) {
-      minRow = Math.min(minRow, c.getConstraints().getRow());
-      minCol = Math.min(minCol, c.getConstraints().getColumn());
-      maxRow = Math.max(maxRow, c.getConstraints().getRow() + c.getConstraints().getRowSpan());
-      maxCol = Math.max(maxCol, c.getConstraints().getColumn() + c.getConstraints().getColSpan());
-    }
-    return new Rectangle(minCol, minRow, maxCol-minCol, maxRow-minRow);
-  }
-
   protected void update(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
     RadContainer selectionParent = FormEditingUtil.getSelectionParent(selection);
     e.getPresentation().setEnabled(selectionParent != null &&
@@ -155,7 +140,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
   private static boolean isSelectionContiguous(RadContainer selectionParent,
                                                ArrayList<RadComponent> selection) {
     assert selectionParent.getLayoutManager().isGrid();
-    Rectangle rc = getSelectionBounds(selection);
+    Rectangle rc = FormEditingUtil.getSelectionBounds(selection);
     for(RadComponent c: selectionParent.getComponents()) {
       if (!selection.contains(c) &&
           constraintsIntersect(true, c.getConstraints(), rc) &&

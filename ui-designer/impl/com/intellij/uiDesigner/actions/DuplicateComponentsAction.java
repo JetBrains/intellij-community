@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.CutCopyPasteSupport;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
@@ -15,6 +16,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,14 +37,18 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
     assert parent != null;
     List<RadComponent> duplicates = new ArrayList<RadComponent>();
     TIntHashSet insertedRows = new TIntHashSet();
+    boolean incrementRow = true;
+    if (selection.size() > 1 && canDuplicate(selection, false) && FormEditingUtil.getSelectionBounds(selection).width == 1) {
+      incrementRow = false;
+    }
     for(RadComponent c: selection) {
-      final int row = c.getConstraints().getRow();
-      int rowSpan = c.getConstraints().getRowSpan();
+      final int row = c.getConstraints().getCell(incrementRow);
+      int rowSpan = c.getConstraints().getSpan(incrementRow);
       int insertIndex = parent.indexOfComponent(c);
       if (parent.getLayoutManager().isGrid()) {
-        if (!insertedRows.contains(row) && !isSpaceBelowEmpty(c)) {
+        if (!insertedRows.contains(row) && !isSpaceBelowEmpty(c, incrementRow)) {
           insertedRows.add(row);
-          parent.getGridLayoutManager().copyGridRows(parent, row, rowSpan, row + rowSpan);
+          parent.getGridLayoutManager().copyGridCells(parent, incrementRow, row, rowSpan, row + rowSpan);
         }
       }
 
@@ -50,8 +56,8 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
       if (copyList != null) {
         RadComponent copy = copyList.get(0);
         if (parent.getLayoutManager().isGrid()) {
-          copy.getConstraints().setRow(row + rowSpan + parent.getGridLayoutManager().getGapCellCount());
-          copy.getConstraints().setRowSpan(rowSpan);
+          copy.getConstraints().setCell(incrementRow, row + rowSpan + parent.getGridLayoutManager().getGapCellCount());
+          copy.getConstraints().setSpan(incrementRow, rowSpan);
         }
         parent.addComponent(copy, insertIndex+1);
         copyBinding(c, copy);
@@ -74,16 +80,16 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
     }
   }
 
-  private static boolean isSpaceBelowEmpty(final RadComponent component) {
+  private static boolean isSpaceBelowEmpty(final RadComponent component, boolean incrementRow) {
     final GridConstraints constraints = component.getConstraints();
-    int startRow = constraints.getRow() + constraints.getRowSpan();
-    int endRow = constraints.getRow() + constraints.getRowSpan()*2;
-    if (endRow > component.getParent().getGridRowCount()) {
+    int startRow = constraints.getCell(incrementRow) + constraints.getSpan(incrementRow);
+    int endRow = constraints.getCell(incrementRow) + constraints.getSpan(incrementRow)*2;
+    if (endRow > component.getParent().getGridCellCount(incrementRow)) {
       return false;
     }
     for(int row=startRow; row < endRow; row++) {
-      for(int col=constraints.getColumn(); col < constraints.getColumn() + constraints.getColSpan(); col++) {
-        if (component.getParent().getComponentAtGrid(row, col) != null) {
+      for(int col=constraints.getCell(!incrementRow); col < constraints.getCell(!incrementRow) + constraints.getSpan(!incrementRow); col++) {
+        if (component.getParent().getComponentAtGrid(incrementRow, row, col) != null) {
           return false;
         }
       }
@@ -99,17 +105,26 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
     // 2) all selected components have rowspan=1
     // 3) all selected components have the same row and rowspan
     if (selection.size() > 1 && parent != null && parent.getLayoutManager().isGrid()) {
-      int aRow = selection.get(0).getConstraints().getRow();
-      int aRowSpan = selection.get(0).getConstraints().getRowSpan();
-      for(int i=1; i<selection.size(); i++) {
-        final RadComponent c = selection.get(i);
-        if (c.getConstraints().getRowSpan() > 1 || aRowSpan > 1) {
-          if (c.getConstraints().getRow() != aRow || c.getConstraints().getRowSpan() != aRowSpan) {
-            e.getPresentation().setEnabled(false);
-            break;
-          }
+      e.getPresentation().setEnabled(canDuplicate(selection, true) || canDuplicate(selection, false));
+    }
+  }
+
+  private static boolean canDuplicate(final List<RadComponent> selection, final boolean incrementRow) {
+    int aRow = selection.get(0).getConstraints().getCell(incrementRow);
+    int aRowSpan = selection.get(0).getConstraints().getSpan(incrementRow);
+    for(int i=1; i<selection.size(); i++) {
+      final RadComponent c = selection.get(i);
+      if (c.getConstraints().getSpan(incrementRow) > 1 || aRowSpan > 1) {
+        if (c.getConstraints().getCell(incrementRow) != aRow || c.getConstraints().getSpan(incrementRow) != aRowSpan) {
+          return false;
         }
       }
     }
+    return true;
+  }
+
+  @Override @Nullable
+  protected String getCommandName() {
+    return UIDesignerBundle.message("command.duplicate");
   }
 }

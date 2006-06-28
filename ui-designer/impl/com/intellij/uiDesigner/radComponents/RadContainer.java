@@ -289,6 +289,10 @@ public class RadContainer extends RadComponent implements IContainer {
     return getGridLayoutManager().getGridColumnCount(this);
   }
 
+  public int getGridCellCount(boolean isRow) {
+    return isRow ? getGridRowCount() : getGridColumnCount();
+  }
+
   public int getGridRowAt(int y) {
     return getGridLayoutManager().getGridRowAt(this, y);
   }

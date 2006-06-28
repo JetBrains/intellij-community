@@ -370,9 +370,9 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
     return 1;
   }
 
-  public void copyGridRows(RadContainer grid, int rowIndex, int rowCount, int targetIndex) {
-    for(int i=0; i< rowCount; i++) {
-      insertGridCells(grid, rowIndex, true, false, false);
+  public void copyGridCells(RadContainer grid, final boolean isRow, int cellIndex, int cellCount, int targetIndex) {
+    for(int i=0; i< cellCount; i++) {
+      insertGridCells(grid, cellIndex, isRow, false, false);
     }
   }
 

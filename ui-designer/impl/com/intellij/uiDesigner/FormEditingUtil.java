@@ -36,10 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Point;
+import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
@@ -572,6 +569,21 @@ public final class FormEditingUtil {
       }
     }
     return parent;
+  }
+
+  public static Rectangle getSelectionBounds(List<RadComponent> selection) {
+    int minRow = Integer.MAX_VALUE;
+    int minCol = Integer.MAX_VALUE;
+    int maxRow = 0;
+    int maxCol = 0;
+
+    for(RadComponent c: selection) {
+      minRow = Math.min(minRow, c.getConstraints().getRow());
+      minCol = Math.min(minCol, c.getConstraints().getColumn());
+      maxRow = Math.max(maxRow, c.getConstraints().getRow() + c.getConstraints().getRowSpan());
+      maxCol = Math.max(maxCol, c.getConstraints().getColumn() + c.getConstraints().getColSpan());
+    }
+    return new Rectangle(minCol, minRow, maxCol-minCol, maxRow-minRow);
   }
 
   public static boolean isComponentSwitchedInView(@NotNull RadComponent component) {

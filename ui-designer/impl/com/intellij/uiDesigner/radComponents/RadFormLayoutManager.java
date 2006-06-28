@@ -484,15 +484,26 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   }
 
   @Override
-  public void copyGridRows(RadContainer grid, int rowIndex, int rowCount, int targetIndex) {
+  public void copyGridCells(RadContainer grid, final boolean isRow, int cellIndex, int cellCount, int targetIndex) {
     FormLayout formLayout = getFormLayout(grid);
-    insertOrAppendRow(formLayout, targetIndex+1, FormFactory.RELATED_GAP_ROWSPEC);
+    if (isRow) {
+      insertOrAppendRow(formLayout, targetIndex+1, FormFactory.RELATED_GAP_ROWSPEC);
+    }
+    else {
+      insertOrAppendColumn(formLayout, targetIndex+1, FormFactory.RELATED_GAP_COLSPEC);
+    }
     targetIndex++;
-    if (targetIndex < rowIndex) rowIndex++;
-    for(int i=0; i < rowCount; i++) {
-      RowSpec rowSpec = formLayout.getRowSpec(rowIndex + 1);
-      insertOrAppendRow(formLayout, targetIndex+1, rowSpec);
-      rowIndex += (targetIndex < rowIndex) ? 2 : 1;
+    if (targetIndex < cellIndex) cellIndex++;
+    for(int i=0; i < cellCount; i++) {
+      if (isRow) {
+        RowSpec rowSpec = formLayout.getRowSpec(cellIndex + 1);
+        insertOrAppendRow(formLayout, targetIndex+1, rowSpec);
+      }
+      else {
+        ColumnSpec colSpec = formLayout.getColumnSpec(cellIndex + 1);
+        insertOrAppendColumn(formLayout, targetIndex+1, colSpec);
+      }
+      cellIndex += (targetIndex < cellIndex) ? 2 : 1;
       targetIndex++;
     }
   }
