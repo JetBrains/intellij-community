@@ -458,7 +458,6 @@ public class LibraryTableEditor implements Disposable {
           }
         }
       }
-      Disposer.dispose(LibraryTableEditor.this);
     }
   }
 
