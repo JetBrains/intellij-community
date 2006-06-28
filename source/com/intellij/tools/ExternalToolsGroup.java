@@ -19,8 +19,7 @@ public class ExternalToolsGroup extends SimpleActionGroup {
     }
     presentation.setEnabled(true);
     String[] groups = ToolManager.getInstance().getGroups();
-    for (int i = 0; i < groups.length; i++) {
-      String groupName = groups[i];
+    for (String groupName : groups) {
       if (groupName != null && groupName.trim().length() > 0) {
         SimpleActionGroup subgroup = new SimpleActionGroup();
         subgroup.getTemplatePresentation().setText(groupName, false);
@@ -37,17 +36,16 @@ public class ExternalToolsGroup extends SimpleActionGroup {
     presentation.setVisible(getChildrenCount() > 0);
   }
 
-  private void fillGroup(String context, String groupName, SimpleActionGroup group) {
+  private static void fillGroup(String context, String groupName, SimpleActionGroup group) {
     Tool[] tools = ToolManager.getInstance().getTools(groupName);
-    for (int i = 0; i < tools.length; i++) {
-      Tool tool = tools[i];
+    for (Tool tool : tools) {
       if (isToolVisible(tool, context)) {
         addToolToGroup(tool, group);
       }
     }
   }
 
-  private void addToolToGroup(Tool tool, SimpleActionGroup group) {
+  private static void addToolToGroup(Tool tool, SimpleActionGroup group) {
     String id = tool.getActionId();
     AnAction action = ActionManager.getInstance().getAction(id);
     if (action == null) {
@@ -57,7 +55,7 @@ public class ExternalToolsGroup extends SimpleActionGroup {
     group.add(action);
   }
 
-  private boolean isToolVisible(Tool tool, String context) {
+  private static boolean isToolVisible(Tool tool, String context) {
     if (!tool.isEnabled()) return false;
     if (ActionPlaces.EDITOR_POPUP.equals(context)) {
       return tool.isShownInEditor();
@@ -68,7 +66,8 @@ public class ExternalToolsGroup extends SimpleActionGroup {
       ActionPlaces.J2EE_VIEW_POPUP.equals(context) ||
       ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP.equals(context) ||
       ActionPlaces.CALL_HIERARCHY_VIEW_POPUP.equals(context) ||
-      ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP.equals(context)
+      ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP.equals(context) ||
+      ActionPlaces.SCOPE_VIEW_POPUP.equals(context)
     ){
       return tool.isShownInProjectViews();
     }
