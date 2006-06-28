@@ -6,7 +6,6 @@ import com.intellij.lang.ant.psi.impl.reference.AntAttributeReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlToken;
@@ -27,11 +26,6 @@ public class AntAttributeReferenceProvider extends GenericReferenceProvider {
     final List<PsiReference> list = PsiReferenceListSpinAllocator.alloc();
     try {
       for (PsiElement child : se.getSourceElement().getChildren()) {
-        if (child instanceof PsiWhiteSpace) {
-          int offsetInElement = child.getTextRange().getStartOffset() - elementStartOffset;
-          list.add(new AntAttributeReference(this, se, child.getText(), new TextRange(offsetInElement, offsetInElement + 1), null));
-          continue;
-        }
         if (child instanceof XmlToken) {
           XmlToken token = (XmlToken)child;
           // TODO: move XmlTokenType to openAPI
@@ -39,6 +33,9 @@ public class AntAttributeReferenceProvider extends GenericReferenceProvider {
             break;
           }
         }
+        int offsetInElement = child.getTextRange().getStartOffset() - elementStartOffset;
+        final String text = child.getText();
+        list.add(new AntAttributeReference(this, se, text, new TextRange(offsetInElement, offsetInElement + text.length()), null));
       }
       final int count = list.size();
       return (count == 0) ? PsiReference.EMPTY_ARRAY : list.toArray(new PsiReference[count]);
