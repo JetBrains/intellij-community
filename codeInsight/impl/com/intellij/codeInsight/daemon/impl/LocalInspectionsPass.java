@@ -297,7 +297,9 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       LocalInspectionTool tool = myTools.get(i);
       final HighlightInfoType level = myLevels.get(i);
       HighlightInfo highlightInfo = createHighlightInfo(descriptor, tool, level);
-      infos.add(highlightInfo);
+      if (highlightInfo != null) {
+        infos.add(highlightInfo);
+      }
     }
   }
 
@@ -321,8 +323,10 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
         if (info == null) continue;
         if (!documentRange.isEditable(new TextRange(info.startOffset, info.endOffset))) continue;
         HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, documentRange.injectedToHost(info.startOffset), documentRange.injectedToHost(info.endOffset), info.description, info.toolTip);
-        registerQuickFixes(tool, injectedPsi, descriptor, patched);
-        infos.add(patched);
+        if (patched != null) {
+          registerQuickFixes(tool, injectedPsi, descriptor, patched);
+          infos.add(patched);
+        }
       }
     }
   }
