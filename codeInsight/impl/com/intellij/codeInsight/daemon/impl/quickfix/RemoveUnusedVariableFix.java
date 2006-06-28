@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -30,11 +31,13 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     myVariable = variable;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message(myVariable instanceof PsiField ? "remove.unused.field" : "remove.unused.variable",
                                   myVariable.getName());
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("remove.unused.variable.family");
   }
@@ -71,25 +74,19 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     final List<PsiElement> references = new ArrayList<PsiElement>();
     final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
     final boolean[] canCopeWithSideEffects = {true};
-    //ApplicationManager.getApplication().runWriteAction(new Runnable() {
-    //  public void run() {
-        try {
-          PsiElement context = myVariable instanceof PsiField
-                               ? ((PsiField)myVariable).getContainingClass()
-                               : PsiUtil.getVariableCodeBlock(myVariable, null);
-          collectReferences(context, myVariable, references);
-          // do not forget to delete variable declaration
-          references.add(myVariable);
-          // check for side effects
-          for (PsiElement element : references) {
-            canCopeWithSideEffects[0] &= processUsage(element, myVariable, sideEffects, SideEffectWarningDialog.CANCEL);
-          }
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      //}
-    //});
+    try {
+      PsiElement context = myVariable instanceof PsiField ? ((PsiField)myVariable).getContainingClass() : PsiUtil.getVariableCodeBlock(myVariable, null);
+      collectReferences(context, myVariable, references);
+      // do not forget to delete variable declaration
+      references.add(myVariable);
+      // check for side effects
+      for (PsiElement element : references) {
+        canCopeWithSideEffects[0] &= processUsage(element, myVariable, sideEffects, SideEffectWarningDialog.CANCEL);
+      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
 
     final int deleteMode = showSideEffectsWarning(sideEffects, myVariable, editor, canCopeWithSideEffects[0]);
 
@@ -111,7 +108,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
                                            boolean canCopeWithSideEffects,
                                            @NonNls String beforeText,
                                            @NonNls String afterText) {
-    if (sideEffects.size() == 0) return SideEffectWarningDialog.DELETE_ALL;
+    if (sideEffects.isEmpty()) return SideEffectWarningDialog.DELETE_ALL;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return canCopeWithSideEffects
              ? SideEffectWarningDialog.MAKE_STATEMENT
@@ -133,7 +130,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
                                             PsiVariable variable,
                                             Editor editor,
                                             boolean canCopeWithSideEffects) {
-    String text = sideEffects.size() > 0 ? sideEffects.get(0).getText() : "";
+    String text = !sideEffects.isEmpty() ? sideEffects.get(0).getText() : "";
     return showSideEffectsWarning(sideEffects, variable, editor, canCopeWithSideEffects, text, text);
   }
 
@@ -297,7 +294,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
       for (PsiElement child : children) {
         checkSideEffects(child, variable, sideEffects);
       }
-    return sideEffects.size() > 0;
+    return !sideEffects.isEmpty();
   }
 
   private static final Set<String> ourSideEffectFreeClasses = new THashSet<String>();
