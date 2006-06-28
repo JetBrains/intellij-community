@@ -19,6 +19,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -33,7 +34,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   public static ModuleType J2EE_APPLICATION;
 
   private final String myId;
-  private final List<ModuleWizardStep> myAdditionalWizardSteps = new ArrayList<ModuleWizardStep>();
+  private final List<ModuleWizardStepsProvider<T>> myWizardStepProviders = new ArrayList<ModuleWizardStepsProvider<T>>();
 
   protected ModuleType(@NonNls String id) {
     myId = id;
@@ -47,15 +48,15 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   public abstract Icon getNodeIcon(boolean isOpened);
 
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, T moduleBuilder, ModulesProvider modulesProvider) {
-    return ModuleWizardStep.EMPTY_ARRAY;
+    ModuleWizardStep[] result = ModuleWizardStep.EMPTY_ARRAY;
+    for (ModuleWizardStepsProvider<T> provider: myWizardStepProviders) {
+      ArrayUtil.mergeArrays(result, provider.createWizardSteps(wizardContext, moduleBuilder, modulesProvider), ModuleWizardStep.class);
+    }
+    return result;
   }
 
-  public void addWizardStep(ModuleWizardStep step) {
-    myAdditionalWizardSteps.add(step);
-  }
-
-  protected ModuleWizardStep[] getAdditionalSteps() {
-    return myAdditionalWizardSteps.toArray(ModuleWizardStep.EMPTY_ARRAY);
+  public void registerWizardStepsProvider(ModuleWizardStepsProvider<T> provider) {
+    myWizardStepProviders.add(provider);
   }
 
   public final String getId() {

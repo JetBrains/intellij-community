@@ -81,6 +81,6 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
                                                                    "project.creatingModules.page2");
     final ModuleWizardStep[] wizardSteps = new ModuleWizardStep[]{nameLocationStep,
       new SourcePathsStep(nameLocationStep, moduleBuilder, WIZARD_ICON, "project.creatingModules.page3"),};
-    return ArrayUtil.mergeArrays(wizardSteps, getAdditionalSteps(), ModuleWizardStep.class);
+    return ArrayUtil.mergeArrays(wizardSteps, super.createWizardSteps(wizardContext, moduleBuilder, modulesProvider), ModuleWizardStep.class);
   }
 }
