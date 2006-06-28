@@ -256,7 +256,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
         String name = getName();
         if (name == null) name = getGeneratedName();
         CoverageDataManager.getInstance(getProject()).addCoverageSuite(name, coverageFileName, getCoveragePatterns(),
-                                                                       lastCoverageTime, false);
+                                                                       lastCoverageTime, isMergeWithPreviousResults());
         ApplicationConfiguration.this.appendCoverageArgument(params);
       }
 
