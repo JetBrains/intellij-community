@@ -50,6 +50,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
     final int index = Arrays.asList(parent.getXmlTag().findSubTags(tagName)).indexOf(getXmlTag());
     return getManager().createStableValue(new Factory<T>() {
       public T create() {
+        if (!parentCopy.isValid()) return null;
         final XmlTag[] subTags = parentCopy.getXmlTag().findSubTags(tagName);
         if (subTags.length <= index) {
           return null;

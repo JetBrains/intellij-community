@@ -78,7 +78,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     final DomAttributeChildDescription description = getChildDescription();
     return getManager().createStableValue(new Factory<T>() {
       public T create() {
-        return (T)description.getValues(parentCopy).get(0);
+        return parentCopy.isValid() ? (T) description.getValues(parentCopy).get(0) : null;
       }
     });
   }

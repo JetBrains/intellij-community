@@ -109,7 +109,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     final DomElement parentCopy = getParent().createStableCopy();
     return getManager().createStableValue(new Factory<T>() {
       public T create() {
-        return (T)description.getValues(parentCopy).get(myIndex);
+        return parentCopy.isValid() ? (T)description.getValues(parentCopy).get(myIndex) : null;
       }
     });
   }
