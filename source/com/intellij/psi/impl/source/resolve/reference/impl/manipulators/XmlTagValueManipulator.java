@@ -1,15 +1,14 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
-import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.impl.source.resolve.reference.AbstractElementManipulator;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author Maxim.Mossienko
  */
-public class XmlTagValueManipulator implements ElementManipulator<XmlTag> {
+public class XmlTagValueManipulator extends AbstractElementManipulator<XmlTag> {
   public XmlTag handleContentChange(XmlTag tag, TextRange range, String newContent) throws IncorrectOperationException {
     final StringBuffer replacement = new StringBuffer( tag.getValue().getText() );
     final int valueOffset = tag.getValue().getTextRange().getStartOffset() - tag.getTextOffset();

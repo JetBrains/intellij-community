@@ -4,13 +4,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
+import com.intellij.psi.impl.source.resolve.reference.AbstractElementManipulator;
 import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author ven
  */
-public class StringLiteralManipulator implements ElementManipulator<PsiLiteralExpression> {
+public class StringLiteralManipulator extends AbstractElementManipulator<PsiLiteralExpression> {
   public PsiLiteralExpression handleContentChange(PsiLiteralExpression expr, TextRange range, String newContent) throws IncorrectOperationException {
     if (!(expr.getValue() instanceof String)) throw new IncorrectOperationException("cannot handle content change");
     String oldText = expr.getText();

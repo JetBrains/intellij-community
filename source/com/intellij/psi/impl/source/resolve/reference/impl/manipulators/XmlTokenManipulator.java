@@ -2,7 +2,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
+import com.intellij.psi.impl.source.resolve.reference.AbstractElementManipulator;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -14,7 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author ven
  */
-public class XmlTokenManipulator implements ElementManipulator<XmlToken> {
+public class XmlTokenManipulator extends AbstractElementManipulator<XmlToken> {
   public XmlToken handleContentChange(XmlToken xmlToken, TextRange range, String newContent) throws IncorrectOperationException {
     String oldText = xmlToken.getText();
     String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());

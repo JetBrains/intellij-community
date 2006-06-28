@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
+import com.intellij.psi.impl.source.resolve.reference.AbstractElementManipulator;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -23,7 +23,7 @@ import com.intellij.util.IncorrectOperationException;
  * Time: 20:00:23
  * To change this template use Options | File Templates.
  */
-public class XmlAttributeValueManipulator implements ElementManipulator<XmlAttributeValue> {
+public class XmlAttributeValueManipulator extends AbstractElementManipulator<XmlAttributeValue> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator");
   public XmlAttributeValue handleContentChange(XmlAttributeValue element, TextRange range, String newContent) throws IncorrectOperationException{
     final CompositeElement compositeElement = (CompositeElement)element.getNode();
@@ -56,5 +56,9 @@ public class XmlAttributeValueManipulator implements ElementManipulator<XmlAttri
     compositeElement.replaceChildInternal(SourceTreeToPsiMap.psiElementToTree(elementToReplace), newValueElement);
     return element;
     //return ((XmlAttributeValueImpl) element).replaceRangeInText(range, newContent);
+  }
+
+  public TextRange getRangeInElement(final XmlAttributeValue xmlAttributeValue) {
+    return new TextRange(1, xmlAttributeValue.getTextLength() - 1);
   }
 }

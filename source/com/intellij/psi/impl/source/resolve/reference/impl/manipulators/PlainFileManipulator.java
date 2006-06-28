@@ -5,7 +5,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiPlainTextFile;
-import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
+import com.intellij.psi.impl.source.resolve.reference.AbstractElementManipulator;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -15,7 +15,7 @@ import com.intellij.util.IncorrectOperationException;
  * Time: 14:10:35
  * To change this template use Options | File Templates.
  */
-public class PlainFileManipulator implements ElementManipulator<PsiPlainTextFile> {
+public class PlainFileManipulator extends AbstractElementManipulator<PsiPlainTextFile> {
   public PsiPlainTextFile handleContentChange(PsiPlainTextFile file, TextRange range, String newContent)
   throws IncorrectOperationException {
     final Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());

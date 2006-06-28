@@ -12,5 +12,10 @@ import com.intellij.util.IncorrectOperationException;
  * To change this template use Options | File Templates.
  */
 public interface ElementManipulator<T extends PsiElement> {
+
   T handleContentChange(T element, TextRange range, String newContent) throws IncorrectOperationException;
+
+  T handleContentChange(T element, String newContent) throws IncorrectOperationException;
+
+  TextRange getRangeInElement(T element);
 }
