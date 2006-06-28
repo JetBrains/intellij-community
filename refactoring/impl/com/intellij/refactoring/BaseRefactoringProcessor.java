@@ -330,7 +330,7 @@ public abstract class BaseRefactoringProcessor {
     final CodeStyleManager styleManager = PsiManager.getInstance(myProject).getCodeStyleManager();
     for (PsiJavaFile file : javaFiles) {
       try {
-        if (file.getVirtualFile() != null) {
+        if (file.isValid() && file.getVirtualFile() != null) {
           styleManager.removeRedundantImports(file);
         }
       }
