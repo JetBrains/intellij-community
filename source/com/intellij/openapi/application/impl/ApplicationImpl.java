@@ -116,7 +116,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     loadApplicationComponents();
 
-    if (SystemInfo.isMac) {
+    if (SystemInfo.isMac || myTestModeFlag) {
       registerShutdownHook();
     }
   }
