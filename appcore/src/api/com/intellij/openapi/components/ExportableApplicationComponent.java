@@ -18,9 +18,11 @@
  */
 package com.intellij.openapi.components;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 
 public interface ExportableApplicationComponent extends ApplicationComponent {
-  File[] getExportFiles();
-  String getPresentableName();
+  @NotNull File[] getExportFiles();
+  @NotNull String getPresentableName();
 }
