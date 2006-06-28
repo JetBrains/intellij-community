@@ -75,7 +75,6 @@ public class DefaultSearchableConfigurable implements Configurable {
 
   public void reset() {
     myComponent.getRootPane().setGlassPane(myGlassPanel);
-    myGlassPanel.setVisible(true);
     myDelegate.reset();
   }
 

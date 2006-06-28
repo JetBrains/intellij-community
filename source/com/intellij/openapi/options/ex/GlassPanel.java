@@ -30,6 +30,7 @@ public class GlassPanel extends JComponent {
     myHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     myHints.put(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
     myPanel = containingPanel;
+    setVisible(false);
   }
 
   public void paintComponent(Graphics g) {
