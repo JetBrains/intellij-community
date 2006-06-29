@@ -46,7 +46,7 @@ import java.util.List;
 
 public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.DebuggerTree");
-  protected static final Key VISIBLE_RECT = new Key("VISIBLE_RECT");
+  protected static final Key<Rectangle> VISIBLE_RECT = Key.create("VISIBLE_RECT");
 
   private final Project myProject;
   private final NodeManagerImpl myDescriptorManager;
@@ -102,13 +102,10 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
           node.calcRepresentation();
         }
 
-        try {
-          for (Enumeration e = node.rawChildren(); e.hasMoreElements();) {
-            DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)e.nextElement();
-            rendererSettingsChanged(child);
-          }
-        }
-        catch (NoSuchElementException e) {
+        final Enumeration e = node.rawChildren();
+        while (e.hasMoreElements()) {
+          DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)e.nextElement();
+          rendererSettingsChanged(child);
         }
       }
 
@@ -226,7 +223,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         final NodeDescriptorImpl descriptor = pathNode.getDescriptor();
 
         if (descriptor != null && descriptor.myIsVisible) {
-          final Rectangle visibleRect = (Rectangle) descriptor.getUserData(VISIBLE_RECT);
+          final Rectangle visibleRect = descriptor.getUserData(VISIBLE_RECT);
           if(visibleRect != null) {
             // prefer visible rect
             scrollRectToVisible(visibleRect);
@@ -358,7 +355,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     saveState((DebuggerTreeNodeImpl)getModel().getRoot());
   }
 
-  protected abstract class RefreshDebuggerTreeCommand extends DebuggerContextCommandImpl {
+  protected abstract static class RefreshDebuggerTreeCommand extends DebuggerContextCommandImpl {
     public RefreshDebuggerTreeCommand(DebuggerContextImpl context) {
       super(context);
     }
@@ -388,8 +385,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
         public void run() {
           myNode.removeAllChildren();
-          for (Iterator<DebuggerTreeNode> iterator = myChildren.iterator(); iterator.hasNext();) {
-            DebuggerTreeNode debuggerTreeNode = iterator.next();
+          for (DebuggerTreeNode debuggerTreeNode : myChildren) {
             myNode.add(debuggerTreeNode);
           }
           myNode.childrenChanged(scrollToVisible);
@@ -426,9 +422,9 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         }
         myChildren.add(myDescriptorManager.createNode(descriptor, evaluationContext));
         try {
-          for (Iterator<LocalVariableProxyImpl> iterator = frame.visibleVariables().iterator(); iterator.hasNext();) {
-            final LocalVariableProxyImpl local = iterator.next();
-            final LocalVariableDescriptorImpl localVariableDescriptor = myDescriptorManager.getLocalVariableDescriptor(stackDescriptor, local);
+          for (final LocalVariableProxyImpl local : frame.visibleVariables()) {
+            final LocalVariableDescriptorImpl localVariableDescriptor =
+              myDescriptorManager.getLocalVariableDescriptor(stackDescriptor, local);
             final DebuggerTreeNodeImpl variableNode = myDescriptorManager.createNode(localVariableDescriptor, evaluationContext);
             myChildren.add(variableNode);
           }
@@ -460,11 +456,11 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
             !(status == ThreadReference.THREAD_STATUS_NOT_STARTED) &&
             !(status == ThreadReference.THREAD_STATUS_ZOMBIE)) {
           try {
-            for (Iterator it = threadProxy.frames().iterator(); it.hasNext();) {
-              StackFrameProxyImpl stackFrame = (StackFrameProxyImpl)it.next();
+            for (StackFrameProxyImpl stackFrame : threadProxy.frames()) {
               //Method method = stackFrame.location().method();
               //ToDo :check whether is synthetic if (shouldDisplay(method)) {
-              myChildren.add(myDescriptorManager.createNode(myDescriptorManager.getStackFrameDescriptor(threadDescriptor, stackFrame), getDebuggerContext().createEvaluationContext()));
+              myChildren.add(myDescriptorManager.createNode(myDescriptorManager.getStackFrameDescriptor(threadDescriptor, stackFrame),
+                                                            getDebuggerContext().createEvaluationContext()));
             }
           }
           catch (EvaluateException e) {
@@ -496,17 +492,17 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       ThreadGroupDescriptorImpl groupDescriptor = (ThreadGroupDescriptorImpl)getNode().getDescriptor();
       ThreadGroupReferenceProxyImpl threadGroup = groupDescriptor.getThreadGroupReference();
 
-      List threads = new ArrayList(threadGroup.threads());
+      List<ThreadReferenceProxyImpl> threads = new ArrayList<ThreadReferenceProxyImpl>(threadGroup.threads());
       Collections.sort(threads, ThreadReferenceProxyImpl.ourComparator);
 
       EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
 
       boolean showCurrent = ThreadsViewSettings.getInstance().SHOW_CURRENT_THREAD;
 
-      for (Iterator it = threadGroup.threadGroups().iterator(); it.hasNext();) {
-        ThreadGroupReferenceProxyImpl group = (ThreadGroupReferenceProxyImpl)it.next();
+      for (final ThreadGroupReferenceProxyImpl group : threadGroup.threadGroups()) {
         if (group != null) {
-          DebuggerTreeNodeImpl threadNode = myDescriptorManager.createNode(myDescriptorManager.getThreadGroupDescriptor(groupDescriptor, group), evaluationContext);
+          DebuggerTreeNodeImpl threadNode =
+            myDescriptorManager.createNode(myDescriptorManager.getThreadGroupDescriptor(groupDescriptor, group), evaluationContext);
 
           if (showCurrent && ((ThreadGroupDescriptorImpl)threadNode.getDescriptor()).isCurrent()) {
             myChildren.add(0, threadNode);
@@ -519,10 +515,10 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
       ArrayList<DebuggerTreeNodeImpl> threadNodes = new ArrayList<DebuggerTreeNodeImpl>();
 
-      for (Iterator it = threads.iterator(); it.hasNext();) {
-        ThreadReferenceProxyImpl thread = (ThreadReferenceProxyImpl)it.next();
+      for (ThreadReferenceProxyImpl thread : threads) {
         if (thread != null) {
-          DebuggerTreeNodeImpl threadNode = myDescriptorManager.createNode(myDescriptorManager.getThreadDescriptor(groupDescriptor, thread), evaluationContext);
+          DebuggerTreeNodeImpl threadNode =
+            myDescriptorManager.createNode(myDescriptorManager.getThreadDescriptor(groupDescriptor, thread), evaluationContext);
           if (showCurrent && ((ThreadDescriptorImpl)threadNode.getDescriptor()).isCurrent()) {
             threadNodes.add(0, threadNode);
           }
@@ -584,9 +580,8 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     public void threadAction() {
       final StaticDescriptorImpl sd = (StaticDescriptorImpl)getNode().getDescriptor();
       final ReferenceType refType = sd.getType();
-      List fields = refType.allFields();
-      for (Iterator it = fields.iterator(); it.hasNext();) {
-        Field field = (Field)it.next();
+      List<Field> fields = refType.allFields();
+      for (Field field : fields) {
         if (field.isStatic()) {
           final FieldDescriptorImpl fieldDescriptor = myDescriptorManager.getFieldDescriptor(sd, null, field);
           final EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
