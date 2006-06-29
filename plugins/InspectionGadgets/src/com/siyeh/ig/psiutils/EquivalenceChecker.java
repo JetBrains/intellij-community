@@ -29,42 +29,6 @@ public class EquivalenceChecker{
         super();
     }
 
-    private static final int THIS_EXPRESSION = 0;
-    private static final int LITERAL_EXPRESSION = 1;
-    private static final int CLASS_OBJECT_EXPRESSION = 2;
-    private static final int REFERENCE_EXPRESSION = 3;
-    private static final int SUPER_EXPRESSION = 4;
-    private static final int METHOD_CALL_EXPRESSION = 5;
-    private static final int NEW_EXPRESSION = 6;
-    private static final int ARRAY_INITIALIZER_EXPRESSION = 7;
-    private static final int TYPECAST_EXPRESSION = 8;
-    private static final int ARRAY_ACCESS_EXPRESSION = 9;
-    private static final int PREFIX_EXPRESSION = 10;
-    private static final int POSTFIX_EXPRESSION = 11;
-    private static final int BINARY_EXPRESSION = 12;
-    private static final int CONDITIONAL_EXPRESSION = 13;
-    private static final int ASSIGNMENT_EXPRESSION = 14;
-    private static final int ASSERT_STATEMENT = 0;
-    private static final int BLOCK_STATEMENT = 1;
-    private static final int BREAK_STATEMENT = 2;
-    private static final int CONTINUE_STATEMENT = 3;
-    private static final int DECLARATION_STATEMENT = 4;
-    private static final int DO_WHILE_STATEMENT = 5;
-    private static final int EMPTY_STATEMENT = 6;
-    private static final int EXPRESSION_LIST_STATEMENT = 7;
-    private static final int EXPRESSION_STATEMENT = 8;
-    private static final int FOR_STATEMENT = 9;
-    private static final int IF_STATEMENT = 10;
-    private static final int LABELED_STATEMENT = 11;
-    private static final int RETURN_STATEMENT = 12;
-    private static final int SWITCH_LABEL_STATEMENT = 13;
-    private static final int SWITCH_STATEMENT = 14;
-    private static final int SYNCHRONIZED_STATEMENT = 15;
-    private static final int THROW_STATEMENT = 16;
-    private static final int TRY_STATEMENT = 17;
-    private static final int WHILE_STATEMENT = 18;
-    private static final int FOR_EACH_STATEMENT = 19;
-
     public static boolean modifierListsAreEquivalent(
             @Nullable PsiModifierList list1, @Nullable PsiModifierList list2) {
         if (list1 == null) {
@@ -139,149 +103,165 @@ public class EquivalenceChecker{
         if(statement1 == null || statement2 == null){
             return false;
         }
-        final int type1 = getStatementType(statement1);
-        final int type2 = getStatementType(statement2);
-        if(type1 != type2){
+        if(statement1.getClass() != statement2.getClass()){
             return false;
         }
-        switch(type1){
-            case ASSERT_STATEMENT:
-                final PsiAssertStatement assertStatement1 =
-                        (PsiAssertStatement)statement1;
-                final PsiAssertStatement assertStatement2 =
-                        (PsiAssertStatement)statement2;
-                return assertStatementsAreEquivalent(assertStatement1,
-                        assertStatement2);
-            case BLOCK_STATEMENT:
-                final PsiBlockStatement blockStatement1 =
-                        (PsiBlockStatement)statement1;
-                final PsiBlockStatement blockStatement2 =
-                        (PsiBlockStatement)statement2;
-                return blockStatementsAreEquivalent(blockStatement1,
-                        blockStatement2);
-            case BREAK_STATEMENT:
-                final PsiBreakStatement breakStatement1 =
-                        (PsiBreakStatement)statement1;
-                final PsiBreakStatement breakStatement2 =
-                        (PsiBreakStatement)statement2;
-                return breakStatementsAreEquivalent(breakStatement1,
-                        breakStatement2);
-            case CONTINUE_STATEMENT:
-                final PsiContinueStatement continueStatement1 =
-                        (PsiContinueStatement)statement1;
-                final PsiContinueStatement continueStatement2 =
-                        (PsiContinueStatement)statement2;
-                return continueStatementsAreEquivalent(continueStatement1,
-                        continueStatement2);
-            case DECLARATION_STATEMENT:
-                final PsiDeclarationStatement declarationStatement1 =
-                        (PsiDeclarationStatement)statement1;
-                final PsiDeclarationStatement declarationStatement2 =
-                        (PsiDeclarationStatement)statement2;
-                return declarationStatementsAreEquivalent(declarationStatement1,
-                        declarationStatement2);
-            case DO_WHILE_STATEMENT:
-                final PsiDoWhileStatement doWhileStatement1 =
-                        (PsiDoWhileStatement)statement1;
-                final PsiDoWhileStatement doWhileStatement2 =
-                        (PsiDoWhileStatement)statement2;
-                return doWhileStatementsAreEquivalent(
-                        doWhileStatement1, doWhileStatement2);
-            case EMPTY_STATEMENT:
-                return true;
-            case EXPRESSION_LIST_STATEMENT:
-                final PsiExpressionListStatement expressionListStatement1 =
-                        (PsiExpressionListStatement)statement1;
-                final PsiExpressionListStatement expressionListStatement2 =
-                        (PsiExpressionListStatement)statement2;
-                return expressionListStatementsAreEquivalent(
-                        expressionListStatement1,
-                        expressionListStatement2);
-            case EXPRESSION_STATEMENT:
-                final PsiExpressionStatement expressionStatement1 =
-                        (PsiExpressionStatement)statement1;
-                final PsiExpressionStatement expressionStatement2 =
-                        (PsiExpressionStatement)statement2;
-                return expressionStatementsAreEquivalent(
-                        expressionStatement1,
-                        expressionStatement2);
-            case FOR_STATEMENT:
-                final PsiForStatement forStatement1 =
-                        (PsiForStatement)statement1;
-                final PsiForStatement forStatement2 =
-                        (PsiForStatement)statement2;
-                return forStatementsAreEquivalent(forStatement1, forStatement2);
-            case FOR_EACH_STATEMENT:
-                final PsiForeachStatement forEachStatement1 =
-                        (PsiForeachStatement)statement1;
-                final PsiForeachStatement forEachStatement2 =
-                        (PsiForeachStatement)statement2;
-                return forEachStatementsAreEquivalent(forEachStatement1,
-                        forEachStatement2);
-            case IF_STATEMENT:
-                return ifStatementsAreEquivalent((PsiIfStatement) statement1,
-                        (PsiIfStatement) statement2);
-            case LABELED_STATEMENT:
-                final PsiLabeledStatement labeledStatement1 =
-                        (PsiLabeledStatement)statement1;
-                final PsiLabeledStatement labeledStatement2 =
-                        (PsiLabeledStatement)statement2;
-                return labeledStatementsAreEquivalent(labeledStatement1,
-                        labeledStatement2);
-            case RETURN_STATEMENT:
-                final PsiReturnStatement returnStatement1 =
-                        (PsiReturnStatement)statement1;
-                final PsiReturnStatement returnStatement2 =
-                        (PsiReturnStatement)statement2;
-                return returnStatementsAreEquivalent(returnStatement1,
-                        returnStatement2);
-            case SWITCH_LABEL_STATEMENT:
-                final PsiSwitchLabelStatement switchLabelStatement1 =
-                        (PsiSwitchLabelStatement)statement1;
-                final PsiSwitchLabelStatement switchLabelStatement2 =
-                        (PsiSwitchLabelStatement)statement2;
-                return switchLabelStatementsAreEquivalent(switchLabelStatement1,
-                        switchLabelStatement2);
-            case SWITCH_STATEMENT:
-                final PsiSwitchStatement switchStatement1 =
-                        (PsiSwitchStatement)statement1;
-                final PsiSwitchStatement switchStatement2 =
-                        (PsiSwitchStatement)statement2;
-                return switchStatementsAreEquivalent(switchStatement1,
-                        switchStatement2);
-            case SYNCHRONIZED_STATEMENT:
-                final PsiSynchronizedStatement synchronizedStatement1 =
-                        (PsiSynchronizedStatement)statement1;
-                final PsiSynchronizedStatement synchronizedStatement2 =
-                        (PsiSynchronizedStatement)statement2;
-                return synchronizedStatementsAreEquivalent(
-                        synchronizedStatement1, synchronizedStatement2);
-            case THROW_STATEMENT:
-                final PsiThrowStatement throwStatement1 =
-                        (PsiThrowStatement)statement1;
-                final PsiThrowStatement throwStatement2 =
-                        (PsiThrowStatement)statement2;
-                return throwStatementsAreEquivalent(throwStatement1,
-                        throwStatement2);
-            case TRY_STATEMENT:
-                final PsiTryStatement tryStatement1 =
-                        (PsiTryStatement)statement1;
-                final PsiTryStatement tryStatement2 =
-                        (PsiTryStatement)statement2;
-                return tryStatementsAreEquivalent(tryStatement1,
-                        tryStatement2);
-            case WHILE_STATEMENT:
-                final PsiWhileStatement whileStatement1 =
-                        (PsiWhileStatement)statement1;
-                final PsiWhileStatement whileStatement2 =
-                        (PsiWhileStatement)statement2;
-                return whileStatementsAreEquivalent(whileStatement1,
-                        whileStatement2);
-            default:
-                final String text1 = statement1.getText();
-                final String text2 = statement2.getText();
-                return text1.equals(text2);
+        if(statement1 instanceof PsiAssertStatement){
+            final PsiAssertStatement assertStatement1 =
+                    (PsiAssertStatement)statement1;
+            final PsiAssertStatement assertStatement2 =
+                    (PsiAssertStatement)statement2;
+            return assertStatementsAreEquivalent(assertStatement1,
+                    assertStatement2);
         }
+        if(statement1 instanceof PsiBlockStatement){
+            final PsiBlockStatement blockStatement1 =
+                    (PsiBlockStatement)statement1;
+            final PsiBlockStatement blockStatement2 =
+                    (PsiBlockStatement)statement2;
+            return blockStatementsAreEquivalent(blockStatement1,
+                    blockStatement2);
+        }
+        if(statement1 instanceof PsiBreakStatement){
+            final PsiBreakStatement breakStatement1 =
+                    (PsiBreakStatement)statement1;
+            final PsiBreakStatement breakStatement2 =
+                    (PsiBreakStatement)statement2;
+            return breakStatementsAreEquivalent(breakStatement1,
+                    breakStatement2);
+        }
+        if(statement1 instanceof PsiContinueStatement){
+            final PsiContinueStatement continueStatement1 =
+                    (PsiContinueStatement)statement1;
+            final PsiContinueStatement continueStatement2 =
+                    (PsiContinueStatement)statement2;
+            return continueStatementsAreEquivalent(continueStatement1,
+                    continueStatement2);
+        }
+        if(statement1 instanceof PsiDeclarationStatement){
+            final PsiDeclarationStatement declarationStatement1 =
+                    (PsiDeclarationStatement)statement1;
+            final PsiDeclarationStatement declarationStatement2 =
+                    (PsiDeclarationStatement)statement2;
+            return declarationStatementsAreEquivalent(declarationStatement1,
+                    declarationStatement2);
+        }
+        if(statement1 instanceof PsiDoWhileStatement){
+            final PsiDoWhileStatement doWhileStatement1 =
+                    (PsiDoWhileStatement)statement1;
+            final PsiDoWhileStatement doWhileStatement2 =
+                    (PsiDoWhileStatement)statement2;
+            return doWhileStatementsAreEquivalent(
+                    doWhileStatement1, doWhileStatement2);
+        }
+        if(statement1 instanceof PsiEmptyStatement){
+            return true;
+        }
+        if(statement1 instanceof PsiExpressionListStatement){
+            final PsiExpressionListStatement expressionListStatement1 =
+                    (PsiExpressionListStatement)statement1;
+            final PsiExpressionListStatement expressionListStatement2 =
+                    (PsiExpressionListStatement)statement2;
+            return expressionListStatementsAreEquivalent(
+                    expressionListStatement1,
+                    expressionListStatement2);
+        }
+        if(statement1 instanceof PsiExpressionStatement){
+            final PsiExpressionStatement expressionStatement1 =
+                    (PsiExpressionStatement)statement1;
+            final PsiExpressionStatement expressionStatement2 =
+                    (PsiExpressionStatement)statement2;
+            return expressionStatementsAreEquivalent(
+                    expressionStatement1,
+                    expressionStatement2);
+        }
+        if(statement1 instanceof PsiForStatement){
+            final PsiForStatement forStatement1 =
+                    (PsiForStatement)statement1;
+            final PsiForStatement forStatement2 =
+                    (PsiForStatement)statement2;
+            return forStatementsAreEquivalent(forStatement1, forStatement2);
+        }
+        if(statement1 instanceof PsiForeachStatement){
+            final PsiForeachStatement forEachStatement1 =
+                    (PsiForeachStatement)statement1;
+            final PsiForeachStatement forEachStatement2 =
+                    (PsiForeachStatement)statement2;
+            return forEachStatementsAreEquivalent(forEachStatement1,
+                    forEachStatement2);
+        }
+        if(statement1 instanceof PsiIfStatement){
+            return ifStatementsAreEquivalent(
+                    (PsiIfStatement) statement1,
+                    (PsiIfStatement) statement2);
+        }
+        if(statement1 instanceof PsiLabeledStatement){
+            final PsiLabeledStatement labeledStatement1 =
+                    (PsiLabeledStatement)statement1;
+            final PsiLabeledStatement labeledStatement2 =
+                    (PsiLabeledStatement)statement2;
+            return labeledStatementsAreEquivalent(labeledStatement1,
+                    labeledStatement2);
+        }
+        if(statement1 instanceof PsiReturnStatement){
+            final PsiReturnStatement returnStatement1 =
+                    (PsiReturnStatement)statement1;
+            final PsiReturnStatement returnStatement2 =
+                    (PsiReturnStatement)statement2;
+            return returnStatementsAreEquivalent(returnStatement1,
+                    returnStatement2);
+        }
+        if(statement1 instanceof PsiSwitchStatement){
+            final PsiSwitchStatement switchStatement1 =
+                    (PsiSwitchStatement)statement1;
+            final PsiSwitchStatement switchStatement2 =
+                    (PsiSwitchStatement)statement2;
+            return switchStatementsAreEquivalent(switchStatement1,
+                    switchStatement2);
+        }
+        if(statement1 instanceof PsiSwitchLabelStatement){
+            final PsiSwitchLabelStatement switchLabelStatement1 =
+                    (PsiSwitchLabelStatement)statement1;
+            final PsiSwitchLabelStatement switchLabelStatement2 =
+                    (PsiSwitchLabelStatement)statement2;
+            return switchLabelStatementsAreEquivalent(switchLabelStatement1,
+                    switchLabelStatement2);
+        }
+        if(statement1 instanceof PsiSynchronizedStatement){
+            final PsiSynchronizedStatement synchronizedStatement1 =
+                    (PsiSynchronizedStatement)statement1;
+            final PsiSynchronizedStatement synchronizedStatement2 =
+                    (PsiSynchronizedStatement)statement2;
+            return synchronizedStatementsAreEquivalent(
+                    synchronizedStatement1, synchronizedStatement2);
+        }
+        if(statement1 instanceof PsiThrowStatement){
+            final PsiThrowStatement throwStatement1 =
+                    (PsiThrowStatement)statement1;
+            final PsiThrowStatement throwStatement2 =
+                    (PsiThrowStatement)statement2;
+            return throwStatementsAreEquivalent(throwStatement1,
+                    throwStatement2);
+        }
+        if(statement1 instanceof PsiTryStatement){
+            final PsiTryStatement tryStatement1 =
+                    (PsiTryStatement)statement1;
+            final PsiTryStatement tryStatement2 =
+                    (PsiTryStatement)statement2;
+            return tryStatementsAreEquivalent(tryStatement1,
+                    tryStatement2);
+        }
+        if(statement1 instanceof PsiWhileStatement){
+            final PsiWhileStatement whileStatement1 =
+                    (PsiWhileStatement)statement1;
+            final PsiWhileStatement whileStatement2 =
+                    (PsiWhileStatement)statement2;
+            return whileStatementsAreEquivalent(whileStatement1,
+                    whileStatement2);
+        }
+        final String text1 = statement1.getText();
+        final String text2 = statement2.getText();
+        return text1.equals(text2);
     }
 
     private static boolean declarationStatementsAreEquivalent(
@@ -326,7 +306,13 @@ public class EquivalenceChecker{
         }
         final String name1 = var1.getName();
         final String name2 = var2.getName();
-        if (!name1.equals(name2)) {
+        if(name1 == null){
+            if (name2 != null) {
+                return false;
+            }
+        } else if (name2 == null) {
+            return false;
+        } else if (!name1.equals(name2)) {
             return false;
         }
         final PsiExpression initializer1 = var1.getInitializer();
@@ -383,6 +369,9 @@ public class EquivalenceChecker{
         }
         final String name1 = parameter1.getName();
         final String name2 = parameter2.getName();
+        if(name1 == null){
+            return name2 == null;
+        }
         return name1.equals(name2);
     }
 
@@ -444,7 +433,14 @@ public class EquivalenceChecker{
         final PsiParameter parameter1 = statement1.getIterationParameter();
         final PsiParameter parameter2 = statement1.getIterationParameter();
         final String name1 = parameter1.getName();
-        if(!name1.equals(parameter2.getName())){
+        final String name2 = parameter2.getName();
+        if(name1 == null) {
+            if(name2 != null){
+                return false;
+            }
+        } else if (name2 == null) {
+            return false;
+        } else if (!name1.equals(name2)){
             return false;
         }
         final PsiType type1 = parameter1.getType();
@@ -661,64 +657,131 @@ public class EquivalenceChecker{
         if(expToCompare1 == null || expToCompare2 == null){
             return false;
         }
-        final int type1 = getExpressionType(expToCompare1);
-        final int type2 = getExpressionType(expToCompare2);
-        if(type1 != type2){
+        if (expToCompare1.getClass() != expToCompare2.getClass()) {
             return false;
         }
-        switch(type1){
-            case THIS_EXPRESSION:
-            case SUPER_EXPRESSION:
-                return true;
-            case LITERAL_EXPRESSION:
-            case CLASS_OBJECT_EXPRESSION:
-            case REFERENCE_EXPRESSION:
-                final String text1 = expToCompare1.getText();
-                final String text2 = expToCompare2.getText();
-                return text1.equals(text2);
-            case METHOD_CALL_EXPRESSION:
-                return methodCallExpressionsAreEquivalent(
-                        (PsiMethodCallExpression) expToCompare1,
-                        (PsiMethodCallExpression) expToCompare2);
-            case NEW_EXPRESSION:
-                return newExpressionsAreEquivalent(
-                        (PsiNewExpression) expToCompare1,
-                        (PsiNewExpression) expToCompare2);
-            case ARRAY_INITIALIZER_EXPRESSION:
-                return arrayInitializerExpressionsAreEquivalent(
-                        (PsiArrayInitializerExpression) expToCompare1,
-                        (PsiArrayInitializerExpression) expToCompare2);
-            case TYPECAST_EXPRESSION:
-                return typecastExpressionsAreEquivalent(
-                        (PsiTypeCastExpression) expToCompare2,
-                        (PsiTypeCastExpression) expToCompare1);
-            case ARRAY_ACCESS_EXPRESSION:
-                return arrayAccessExpressionsAreEquivalent(
-                        (PsiArrayAccessExpression) expToCompare2,
-                        (PsiArrayAccessExpression) expToCompare1);
-            case PREFIX_EXPRESSION:
-                return prefixExpressionsAreEquivalent(
-                        (PsiPrefixExpression) expToCompare1,
-                        (PsiPrefixExpression) expToCompare2);
-            case POSTFIX_EXPRESSION:
-                return postfixExpressionsAreEquivalent(
-                        (PsiPostfixExpression) expToCompare1,
-                        (PsiPostfixExpression) expToCompare2);
-            case BINARY_EXPRESSION:
-                return binaryExpressionsAreEquivalent(
-                        (PsiBinaryExpression) expToCompare1,
-                        (PsiBinaryExpression) expToCompare2);
-            case ASSIGNMENT_EXPRESSION:
-                return assignmentExpressionsAreEquivalent(
-                        (PsiAssignmentExpression) expToCompare1,
-                        (PsiAssignmentExpression) expToCompare2);
-            case CONDITIONAL_EXPRESSION:
-                return conditionalExpressionsAreEquivalent(
-                        (PsiConditionalExpression) expToCompare1,
-                        (PsiConditionalExpression) expToCompare2);
-            default:
-                return false;
+        if (expToCompare1 instanceof PsiThisExpression) {
+            return true;
+        } else if (expToCompare1 instanceof PsiSuperExpression) {
+            return true;
+        } else if (expToCompare1 instanceof PsiLiteralExpression) {
+            final String text1 = expToCompare1.getText();
+            final String text2 = expToCompare2.getText();
+            return text1.equals(text2);
+        } else if (expToCompare1 instanceof PsiClassObjectAccessExpression) {
+            final String text1 = expToCompare1.getText();
+            final String text2 = expToCompare2.getText();
+            return text1.equals(text2);
+        } else if (expToCompare1 instanceof PsiReferenceExpression) {
+            return referenceExpressionsAreEquivalent(
+                    (PsiReferenceExpression) expToCompare1,
+                    (PsiReferenceExpression) expToCompare2);
+        } else if (expToCompare1 instanceof PsiMethodCallExpression) {
+            return methodCallExpressionsAreEquivalent(
+                    (PsiMethodCallExpression) expToCompare1,
+                    (PsiMethodCallExpression) expToCompare2);
+        } else if (expToCompare1 instanceof PsiNewExpression) {
+            return newExpressionsAreEquivalent(
+                    (PsiNewExpression) expToCompare1,
+                    (PsiNewExpression) expToCompare2);
+        } else if (expToCompare1 instanceof PsiArrayInitializerExpression) {
+            return arrayInitializerExpressionsAreEquivalent(
+                    (PsiArrayInitializerExpression) expToCompare1,
+                    (PsiArrayInitializerExpression) expToCompare2);
+        } else if (expToCompare1 instanceof PsiTypeCastExpression) {
+            return typecastExpressionsAreEquivalent(
+                    (PsiTypeCastExpression) expToCompare1,
+                    (PsiTypeCastExpression) expToCompare2);
+        } else if (expToCompare1 instanceof PsiArrayAccessExpression) {
+            return arrayAccessExpressionsAreEquivalent(
+                    (PsiArrayAccessExpression) expToCompare2,
+                    (PsiArrayAccessExpression) expToCompare1);
+        } else if (expToCompare1 instanceof PsiPrefixExpression) {
+            return prefixExpressionsAreEquivalent(
+                    (PsiPrefixExpression) expToCompare1,
+                    (PsiPrefixExpression) expToCompare2);
+        } else if (expToCompare1 instanceof PsiPostfixExpression) {
+            return postfixExpressionsAreEquivalent(
+                    (PsiPostfixExpression) expToCompare1,
+                    (PsiPostfixExpression) expToCompare2);
+        } else if (expToCompare1 instanceof PsiBinaryExpression) {
+            return binaryExpressionsAreEquivalent(
+                    (PsiBinaryExpression) expToCompare1,
+                    (PsiBinaryExpression) expToCompare2);
+        } else if (expToCompare1 instanceof PsiAssignmentExpression) {
+            return assignmentExpressionsAreEquivalent(
+                    (PsiAssignmentExpression) expToCompare1,
+                    (PsiAssignmentExpression) expToCompare2);
+        } else if (expToCompare1 instanceof PsiConditionalExpression) {
+            return conditionalExpressionsAreEquivalent(
+                    (PsiConditionalExpression) expToCompare1,
+                    (PsiConditionalExpression) expToCompare2);
+        } else if (expToCompare1 instanceof PsiInstanceOfExpression) {
+            return instanceofExpressionsAreEquivalent(
+                    (PsiInstanceOfExpression) expToCompare1,
+                    (PsiInstanceOfExpression) expToCompare2);
         }
+        return false;
+    }
+
+    private static boolean referenceExpressionsAreEquivalent(
+            PsiReferenceExpression referenceExpression1,
+            PsiReferenceExpression referenceExpression2) {
+        final PsiElement element1 = referenceExpression1.resolve();
+        final PsiElement element2 = referenceExpression2.resolve();
+        if (element1 instanceof PsiField) {
+            if (!(element2 instanceof PsiField)) {
+                return false;
+            }
+            final PsiField field1 = (PsiField)element1;
+            final PsiField field2 = (PsiField)element2;
+            final String name1 = field1.getName();
+            final String name2 = field2.getName();
+            if (name1 == null) {
+                if (name2 != null) {
+                    return false;
+                }
+            } else if (name2 == null) {
+                return false;
+            } else if (!name1.equals(name2)) {
+                return false;
+            }
+            final PsiClass containingClass1 = field1.getContainingClass();
+            final PsiClass containingClass2 = field2.getContainingClass();
+            final String qualifiedName1 = containingClass1.getQualifiedName();
+            final String qualifiedName2 = containingClass2.getQualifiedName();
+            if (qualifiedName1 == null) {
+                return qualifiedName2 == null;
+            } else if (qualifiedName2 == null) {
+                return false;
+            }
+            return qualifiedName1.equals(qualifiedName2);
+        }
+        final String text1 = referenceExpression1.getText();
+        final String text2 = referenceExpression2.getText();
+        return text1.equals(text2);
+    }
+
+    private static boolean instanceofExpressionsAreEquivalent(
+            PsiInstanceOfExpression instanceOfExpression1,
+            PsiInstanceOfExpression instanceOfExpression2) {
+        final PsiExpression operand1 = instanceOfExpression1.getOperand();
+        final PsiExpression operand2 = instanceOfExpression2.getOperand();
+        if (!expressionsAreEquivalent(operand1, operand2)) {
+            return false;
+        }
+        final PsiTypeElement typeElement1 =
+                instanceOfExpression1.getCheckType();
+        final PsiTypeElement typeElement2 =
+                instanceOfExpression2.getCheckType();
+        if (typeElement1 == null) {
+            return  typeElement2 == null;
+        } else if (typeElement2 == null) {
+            return false;
+        }
+        final PsiType type1 = typeElement1.getType();
+        final PsiType type2 = typeElement2.getType();
+        return typesAreEquivalent(type1, type2);
     }
 
     private static boolean methodCallExpressionsAreEquivalent(
@@ -795,17 +858,19 @@ public class EquivalenceChecker{
     }
 
     private static boolean typecastExpressionsAreEquivalent(
-            @NotNull PsiTypeCastExpression typecastExp2,
-            @NotNull PsiTypeCastExpression typecastExp1){
-        final PsiTypeElement castType2 = typecastExp2.getCastType();
-        final PsiTypeElement castType1 = typecastExp1.getCastType();
-        if (castType1 == null && castType2 == null) {
+            @NotNull PsiTypeCastExpression typecastExp1,
+            @NotNull PsiTypeCastExpression typecastExp2) {
+        final PsiTypeElement typeElement1 = typecastExp1.getCastType();
+        final PsiTypeElement typeElement2 = typecastExp2.getCastType();
+        if (typeElement1 == null && typeElement2 == null) {
             return true;
         }
-        if (castType1 == null || castType2 == null) {
+        if (typeElement1 == null || typeElement2 == null) {
             return false;
         }
-        if(!castType2.equals(castType1)){
+        final PsiType type1 = typeElement1.getType();
+        final PsiType type2 = typeElement2.getType();
+        if(!typesAreEquivalent(type1, type2)) {
             return false;
         }
         final PsiExpression operand1 = typecastExp1.getOperand();
@@ -922,118 +987,5 @@ public class EquivalenceChecker{
             }
         }
         return true;
-    }
-
-    private static int getExpressionType(@Nullable PsiExpression exp){
-        if(exp instanceof PsiThisExpression){
-            return THIS_EXPRESSION;
-        }
-        if(exp instanceof PsiLiteralExpression){
-            return LITERAL_EXPRESSION;
-        }
-        if(exp instanceof PsiClassObjectAccessExpression){
-            return CLASS_OBJECT_EXPRESSION;
-        }
-        if(exp instanceof PsiReferenceExpression){
-            return REFERENCE_EXPRESSION;
-        }
-        if(exp instanceof PsiSuperExpression){
-            return SUPER_EXPRESSION;
-        }
-        if(exp instanceof PsiMethodCallExpression){
-            return METHOD_CALL_EXPRESSION;
-        }
-        if(exp instanceof PsiNewExpression){
-            return NEW_EXPRESSION;
-        }
-        if(exp instanceof PsiArrayInitializerExpression){
-            return ARRAY_INITIALIZER_EXPRESSION;
-        }
-        if(exp instanceof PsiTypeCastExpression){
-            return TYPECAST_EXPRESSION;
-        }
-        if(exp instanceof PsiArrayAccessExpression){
-            return ARRAY_ACCESS_EXPRESSION;
-        }
-        if(exp instanceof PsiPrefixExpression){
-            return PREFIX_EXPRESSION;
-        }
-        if(exp instanceof PsiPostfixExpression){
-            return POSTFIX_EXPRESSION;
-        }
-        if(exp instanceof PsiBinaryExpression){
-            return BINARY_EXPRESSION;
-        }
-        if(exp instanceof PsiConditionalExpression){
-            return CONDITIONAL_EXPRESSION;
-        }
-        if(exp instanceof PsiAssignmentExpression){
-            return ASSIGNMENT_EXPRESSION;
-        }
-        return -1;
-    }
-
-    private static int getStatementType(@Nullable PsiStatement statement){
-        if(statement instanceof PsiAssertStatement){
-            return ASSERT_STATEMENT;
-        }
-        if(statement instanceof PsiBlockStatement){
-            return BLOCK_STATEMENT;
-        }
-        if(statement instanceof PsiBreakStatement){
-            return BREAK_STATEMENT;
-        }
-        if(statement instanceof PsiContinueStatement){
-            return CONTINUE_STATEMENT;
-        }
-        if(statement instanceof PsiDeclarationStatement){
-            return DECLARATION_STATEMENT;
-        }
-        if(statement instanceof PsiDoWhileStatement){
-            return DO_WHILE_STATEMENT;
-        }
-        if(statement instanceof PsiEmptyStatement){
-            return EMPTY_STATEMENT;
-        }
-        if(statement instanceof PsiExpressionListStatement){
-            return EXPRESSION_LIST_STATEMENT;
-        }
-        if(statement instanceof PsiExpressionStatement){
-            return EXPRESSION_STATEMENT;
-        }
-        if(statement instanceof PsiForStatement){
-            return FOR_STATEMENT;
-        }
-        if(statement instanceof PsiForeachStatement){
-            return FOR_EACH_STATEMENT;
-        }
-        if(statement instanceof PsiIfStatement){
-            return IF_STATEMENT;
-        }
-        if(statement instanceof PsiLabeledStatement){
-            return LABELED_STATEMENT;
-        }
-        if(statement instanceof PsiReturnStatement){
-            return RETURN_STATEMENT;
-        }
-        if(statement instanceof PsiSwitchLabelStatement){
-            return SWITCH_LABEL_STATEMENT;
-        }
-        if(statement instanceof PsiSwitchStatement){
-            return SWITCH_STATEMENT;
-        }
-        if(statement instanceof PsiSynchronizedStatement){
-            return SYNCHRONIZED_STATEMENT;
-        }
-        if(statement instanceof PsiThrowStatement){
-            return THROW_STATEMENT;
-        }
-        if(statement instanceof PsiTryStatement){
-            return TRY_STATEMENT;
-        }
-        if(statement instanceof PsiWhileStatement){
-            return WHILE_STATEMENT;
-        }
-        return -1;
     }
 }
