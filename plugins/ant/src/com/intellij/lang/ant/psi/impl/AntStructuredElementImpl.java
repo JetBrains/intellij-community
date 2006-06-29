@@ -39,6 +39,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   @NonNls private String myNameElementAttribute;
   private Map<String, AntElement> myReferencedElements;
   private String[] myRefIdsArray;
+  private int myLastFoundElementOffset = -1;
   private AntElement myLastFoundElement;
   private boolean myIsImported;
 
@@ -113,12 +114,13 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public PsiElement findElementAt(int offset) {
-    if (myLastFoundElement != null && myLastFoundElement.getTextRange().contains(offset)) {
+    if (offset == myLastFoundElementOffset) {
       return myLastFoundElement;
     }
     final PsiElement foundElement = super.findElementAt(offset);
     if (foundElement != null) {
       myLastFoundElement = (AntElement)foundElement;
+      myLastFoundElementOffset = offset;
     }
     return foundElement;
   }
@@ -263,12 +265,13 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     myRefIdsArray = null;
     myIdElement = null;
     myNameElement = null;
+    myLastFoundElementOffset = -1;
     myLastFoundElement = null;
   }
 
 
   public AntElement lightFindElementAt(int offset) {
-    if (myLastFoundElement != null && myLastFoundElement.getTextRange().contains(offset)) {
+    if (offset == myLastFoundElementOffset) {
       return myLastFoundElement;
     }
     return super.lightFindElementAt(offset);
