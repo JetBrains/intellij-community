@@ -27,13 +27,13 @@ public class AntRefIdReferenceProvider extends GenericReferenceProvider {
     if (valueElement == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    final int offsetInPosition =
-      valueElement.getTextRange().getStartOffset() - se.getTextRange().getStartOffset() + 1;
+    final int offsetInPosition = valueElement.getTextRange().getStartOffset() - se.getTextRange().getStartOffset() + 1;
     final String attrValue = attr.getValue();
-    return new PsiReference[]{new AntRefIdReference(this, se, attrValue, new TextRange(offsetInPosition,
-                                                                                       offsetInPosition +
-                                                                                       attrValue.length()),
-                                                                         attr)};
+    if (attrValue == null || attrValue.indexOf("@{") >= 0) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+    return new PsiReference[]{
+      new AntRefIdReference(this, se, attrValue, new TextRange(offsetInPosition, offsetInPosition + attrValue.length()), attr)};
   }
 
   @NotNull
@@ -42,10 +42,7 @@ public class AntRefIdReferenceProvider extends GenericReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByString(String str,
-                                              PsiElement position,
-                                              ReferenceType type,
-                                              int offsetInPosition) {
+  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
     return getReferencesByElement(position);
   }
 }

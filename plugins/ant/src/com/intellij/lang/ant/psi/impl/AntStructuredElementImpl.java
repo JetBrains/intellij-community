@@ -197,6 +197,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public void registerRefId(final String id, AntElement element) {
+    if (id == null || id.length() == 0) return;
     if (myReferencedElements == null) {
       myReferencedElements = new HashMap<String, AntElement>();
     }

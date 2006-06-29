@@ -27,8 +27,11 @@ public class AntFileReferenceProvider extends GenericReferenceProvider {
     if (xmlAttributeValue == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    final int offsetInPosition = xmlAttributeValue.getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset() + 1;
     final String attrValue = attr.getValue();
+    if(attrValue == null || attrValue.indexOf("@{") >=0 ) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+    final int offsetInPosition = xmlAttributeValue.getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset() + 1;
     return new AntFileReference[]{
       new AntFileReference(this, antElement, attrValue, new TextRange(offsetInPosition, offsetInPosition + attrValue.length()))};
   }

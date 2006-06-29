@@ -47,6 +47,7 @@ public class AntMacroDefParameterReferenceProvider extends GenericReferenceProvi
   }
 
   private void getXmlElementReferences(final XmlElement element, final List<PsiReference> refs, final AntStructuredElement antElement) {
+    if (element == null) return;
     final String text = element.getText();
     final int offsetInPosition = element.getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset();
     int startIndex;
