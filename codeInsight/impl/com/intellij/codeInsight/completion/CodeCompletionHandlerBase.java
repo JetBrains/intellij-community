@@ -245,19 +245,11 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                         final CompletionData completionData,
                         final Set<LookupItem> lookupSet) {
     if (lastElement == null) return;
-    if (context.file instanceof XmlFileImpl) {
-      final XmlFileImpl xmlFile = (XmlFileImpl)context.file;
-      final XmlDocument document = xmlFile.getDocument();
-      if (document != null) {
-        final XmlTag tag = document.getRootTag();
-        if (tag != null && "project".equals(tag.getName()) && tag.getContext()instanceof XmlDocument &&
-            tag.getAttributeValue("default") != null) {
-          final PsiReference ref = xmlFile.findReferenceAt(context.offset);
-          if (ref != null) {
-            completionData.completeReference(ref, lookupSet, context, lastElement);
-            return;
-          }
-        }
+    if (isAntFile(context.file)) {
+      final PsiReference ref = context.file.findReferenceAt(context.offset);
+      if (ref != null) {
+        completionData.completeReference(ref, lookupSet, context, lastElement);
+        return;
       }
     }
     final PsiReference ref = lastElement.getContainingFile().findReferenceAt(context.offset);
@@ -330,9 +322,11 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
     complete(context, insertedElement, completionData, lookupSet);
     insertedElement.putUserData(CompletionUtil.COMPLETION_PREFIX, context.prefix);
-    final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-    completionData.addKeywordVariants(keywordVariants, context, insertedElement);
-    CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
+    if (!isAntFile(file)) {
+      final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
+      completionData.addKeywordVariants(keywordVariants, context, insertedElement);
+      CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
+    }
     CompletionUtil.highlightMembersOfContainer(lookupSet);
 
     final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
@@ -493,5 +487,19 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     copyVisitor.visitFile(fileCopy);
     return fileCopy;
   }
-}
 
+  private static boolean isAntFile(final PsiFile file) {
+    if (file instanceof XmlFileImpl) {
+      final XmlFileImpl xmlFile = (XmlFileImpl)file;
+      final XmlDocument document = xmlFile.getDocument();
+      if (document != null) {
+        final XmlTag tag = document.getRootTag();
+        if (tag != null && "project".equals(tag.getName()) && tag.getContext()instanceof XmlDocument &&
+            tag.getAttributeValue("default") != null) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+}
