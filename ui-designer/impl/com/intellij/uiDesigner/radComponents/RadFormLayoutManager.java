@@ -742,6 +742,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     else {
       cc.vAlign = FormLayoutSerializer.ourVerticalAlignments [alignment];
     }
+    updateConstraints(component);
   }
 
   public void resetAlignment(RadComponent component, boolean horizontal) {
