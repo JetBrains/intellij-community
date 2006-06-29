@@ -49,12 +49,22 @@ public class AntPsiUtil {
   public static AntFile[] getImportedFiles(final AntProject project, final AntElement anchor) {
     final HashSet<PsiElement> set = PsiElementHashSetSpinAllocator.alloc();
     try {
-      for (PsiElement child : project.getChildren()) {
-        if (child == anchor) break;
-        if (child instanceof AntImport) {
-          final AntFile file = ((AntImport)child).getImportedFile();
+      if (anchor == null) {
+        for (AntImport antImport : project.getImports()) {
+          final AntFile file = antImport.getImportedFile();
           if (file != null) {
             set.add(file);
+          }
+        }
+      }
+      else {
+        for (PsiElement child : project.getChildren()) {
+          if (child == anchor) break;
+          if (child instanceof AntImport) {
+            final AntFile file = ((AntImport)child).getImportedFile();
+            if (file != null) {
+              set.add(file);
+            }
           }
         }
       }

@@ -24,7 +24,6 @@ public interface AntProject extends AntStructuredElement {
   AntImport[] getImports();
 
   @Nullable
-  AntImport getImport(final String file);
 
   void addEnvironmentPropertyPrefix(@NotNull final String envPrefix);
 

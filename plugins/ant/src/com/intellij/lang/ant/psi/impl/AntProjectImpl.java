@@ -124,17 +124,6 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     return myImports;
   }
 
-  @Nullable
-  public AntImport getImport(final String file) {
-    for (AntImport antImport : getImports()) {
-      final String fileName = antImport.getFileName();
-      if (fileName != null && fileName.equals(file)) {
-        return antImport;
-      }
-    }
-    return null;
-  }
-
   public void addEnvironmentPropertyPrefix(@NotNull final String envPrefix) {
     checkEnvList();
     final String env = (envPrefix.endsWith(".")) ? envPrefix : envPrefix + '.';
