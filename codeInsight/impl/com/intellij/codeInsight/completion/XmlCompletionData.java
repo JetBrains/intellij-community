@@ -123,9 +123,15 @@ public class XmlCompletionData extends CompletionData {
   public String findPrefix(PsiElement insertedElement, int offset) {
     String result = super.findPrefix(insertedElement, offset);
     if (insertedElement instanceof XmlToken) {
-      final int index = result.indexOf("${");
+      int index = result.lastIndexOf("${");
       if (index >= 0) {
         result = result.substring(index + 2);
+      }
+      else {
+        index = result.lastIndexOf("@{");
+        if (index >= 0) {
+          result = result.substring(index + 2);
+        }
       }
     }
     return result;
