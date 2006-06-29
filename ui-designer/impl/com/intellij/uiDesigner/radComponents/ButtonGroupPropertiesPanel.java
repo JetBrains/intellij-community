@@ -33,10 +33,7 @@ public class ButtonGroupPropertiesPanel implements CustomPropertiesPanel {
     myBindToFieldCheckBox.setSelected(group.isBound());
     myBindToFieldCheckBox.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
-        if (myGroup.isBound() != myBindToFieldCheckBox.isSelected()) {
-          myGroup.setBound(myBindToFieldCheckBox.isSelected());
-          notifyListeners(new ChangeEvent(myGroup));
-        }
+        saveButtonGroupIsBound();
       }
     });
     myNameTextField.addFocusListener(new FocusAdapter() {
@@ -49,6 +46,16 @@ public class ButtonGroupPropertiesPanel implements CustomPropertiesPanel {
         saveButtonGroupName();
       }
     });
+  }
+
+  private void saveButtonGroupIsBound() {
+    if (myGroup.isBound() != myBindToFieldCheckBox.isSelected()) {
+      myGroup.setBound(myBindToFieldCheckBox.isSelected());
+      notifyListeners(new ChangeEvent(myGroup));
+      if (myGroup.isBound()) {
+        BindingProperty.updateBoundFieldName(myRootContainer, null, myGroup.getName(), ButtonGroup.class.getName());
+      }
+    }
   }
 
   private void saveButtonGroupName() {
