@@ -30,8 +30,16 @@ class JdkComboBox extends JComboBox{
             append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
           }
           else if (value instanceof ProjectJdkComboBoxItem){
-            final String str = value.toString();
-            append(str, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            final ProjectJdkComboBoxItem item = (ProjectJdkComboBoxItem)value;
+            final String str = item.toString();
+            final ProjectJdk jdk = jdksModel.getProjectJdk();
+            if (jdk != null){
+              setIcon(jdk.getSdkType().getIcon());
+              append(jdk.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+              append(" (" + str + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            } else {
+              append(str, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            }
           }
           else {
             super.customizeCellRenderer(list, value != null ? ((JdkComboBoxItem)value).getJdk() : new NoneJdkComboBoxItem(), index, selected, hasFocus);

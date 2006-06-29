@@ -59,16 +59,13 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
         myJdksModel.setProjectJdk(myCbProjectJdk.getSelectedJdk());
       }
     });
-    final Box horizontalBox = Box.createHorizontalBox();
-    horizontalBox.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.project.radio")));
-    horizontalBox.add(Box.createHorizontalStrut(5));
-    horizontalBox.add(myCbProjectJdk);
-    myJdkPanel.add(horizontalBox, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 6, 0, 0), 0, 0));
+    myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.project.radio")), new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    myJdkPanel.add(myCbProjectJdk, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
   }
 
   public boolean isModified() {
     final ProjectJdk projectJdk = ProjectRootManager.getInstance(myProject).getProjectJdk();
-    return projectJdk == null || !Comparing.equal(projectJdk, getSelectedProjectJdk());
+    return !Comparing.equal(projectJdk, getSelectedProjectJdk());
   }
 
   public void apply() throws ConfigurationException {

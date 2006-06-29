@@ -1,7 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.Patches;
-import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.JavaUtil;
 import com.intellij.ide.util.projectWizard.ToolbarPanel;
 import com.intellij.openapi.Disposable;
@@ -11,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
@@ -26,30 +26,20 @@ import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.FieldPanel;
-import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -72,13 +62,11 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
   private JPanel myEditorsPanel;
   private final Map<ContentEntry, ContentEntryEditor> myEntryToEditorMap = new HashMap<ContentEntry, ContentEntryEditor>();
   private ContentEntry mySelectedEntry;
-  private JRadioButton myInheritCompilerOutput;
-  private JRadioButton myPerModuleCompilerOutput;
-  private FieldPanel myOutputPathPanel;
-  private FieldPanel myTestsOutputPathPanel;
+
+  private LanguageLevelConfigurable myLanguageLevelConfigurable;
+
   private VirtualFile myLastSelectedDir = null;
   private JRadioButton myRbRelativePaths;
-  private JCheckBox myCbExcludeOutput;
   private final String myModuleName;
   private final ModulesProvider myModulesProvider;
 
@@ -122,6 +110,7 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
       myRootTreeEditor.setContentEntryEditor(null);
     }
     myEntryToEditorMap.clear();
+    myLanguageLevelConfigurable.disposeUIResources();
     super.disposeUIResources();
   }
 
@@ -129,9 +118,9 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     if (super.isModified()) {
       return true;
     }
+    if (myLanguageLevelConfigurable != null && myLanguageLevelConfigurable.isModified()) return true;
     final Module selfModule = getModule();
-    if (selfModule == null) return false;
-    return myRbRelativePaths != null && selfModule.isSavePathsRelative() != myRbRelativePaths.isSelected();
+    return selfModule != null && myRbRelativePaths != null && selfModule.isSavePathsRelative() != myRbRelativePaths.isSelected();
   }
 
   public JPanel createComponentImpl() {
@@ -143,9 +132,9 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     final JPanel mainPanel = new JPanel(new BorderLayout());
     mainPanel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
 
-    JComponent outputPathsBlock = createOutputPathsBlock();
-    outputPathsBlock.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
-    mainPanel.add(outputPathsBlock, BorderLayout.NORTH);
+    myLanguageLevelConfigurable = new LanguageLevelConfigurable(getModule());
+    mainPanel.add(myLanguageLevelConfigurable.createComponent(), BorderLayout.NORTH);
+    myLanguageLevelConfigurable.reset();
 
     final JPanel entriesPanel = new JPanel(new BorderLayout());
 
@@ -210,163 +199,6 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     return myModulesProvider.getModule(myModuleName);
   }
 
-  private JComponent createOutputPathsBlock() {
-    myInheritCompilerOutput = new JRadioButton(ProjectBundle.message("project.inherit.compile.output.path"));
-    myPerModuleCompilerOutput = new JRadioButton(ProjectBundle.message("project.module.compile.output.path"));
-    ButtonGroup group = new ButtonGroup();
-    group.add(myInheritCompilerOutput);
-    group.add(myPerModuleCompilerOutput);
-
-    final ActionListener listener = new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        enableCompilerSettings(!myInheritCompilerOutput.isSelected());
-      }
-    };
-
-    myInheritCompilerOutput.addActionListener(listener);
-    myPerModuleCompilerOutput.addActionListener(listener);
-
-    myOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.output.title"), new CommitPathRunnable() {
-      public void saveUrl(String url) {
-        myModel.setCompilerOutputPath(url);
-      }
-    });
-    myTestsOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.test.output.title"), new CommitPathRunnable() {
-      public void saveUrl(String url) {
-        myModel.setCompilerOutputPathForTests(url);
-      }
-    });
-
-    myCbExcludeOutput = new JCheckBox(ProjectBundle.message("module.paths.exclude.output.checkbox"), myModel.isExcludeOutput());
-    myCbExcludeOutput.addItemListener(new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        myModel.setExcludeOutput(e.getStateChange() == ItemEvent.SELECTED);
-        if (myRootTreeEditor != null) {
-          myRootTreeEditor.update();
-        }
-      }
-    });
-
-    final JPanel outputPathsPanel = new JPanel(new GridBagLayout());
-
-
-    outputPathsPanel.add(myInheritCompilerOutput,
-                         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                                new Insets(6, 0, 0, 4), 0, 0));
-    outputPathsPanel.add(myPerModuleCompilerOutput,
-                         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                                    new Insets(6, 0, 0, 4), 0, 0));
-
-    outputPathsPanel.add(new JLabel(ProjectBundle.message("module.paths.output.label")),
-                         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-                                                new Insets(6, 12, 0, 4), 0, 0));
-    outputPathsPanel.add(myOutputPathPanel,
-                         new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                new Insets(6, 4, 0, 0), 0, 0));
-
-    outputPathsPanel.add(new JLabel(ProjectBundle.message("module.paths.test.output.label")),
-                         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-                                                new Insets(6, 12, 0, 4), 0, 0));
-    outputPathsPanel.add(myTestsOutputPathPanel,
-                         new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                new Insets(6, 4, 0, 0), 0, 0));
-
-    outputPathsPanel.add(myCbExcludeOutput,
-                         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                                new Insets(6, 12, 0, 0), 0, 0));
-
-    // fill with data
-    final VirtualFile compilerOutputPath = myModel.getCompilerOutputPath();
-    if (compilerOutputPath != null) {
-      myOutputPathPanel.setText(compilerOutputPath.getPath().replace('/', File.separatorChar));
-    }
-    else {
-      final String compilerOutputUrl = myModel.getCompilerOutputPathUrl();
-      if (compilerOutputUrl != null) {
-        myOutputPathPanel.setText(VirtualFileManager.extractPath(compilerOutputUrl).replace('/', File.separatorChar));
-      }
-    }
-
-    final VirtualFile testsOutputPath = myModel.getCompilerOutputPathForTests();
-    if (testsOutputPath != null) {
-      myTestsOutputPathPanel.setText(testsOutputPath.getPath().replace('/', File.separatorChar));
-    }
-    else {
-      final String testsOutputUrl = myModel.getCompilerOutputPathForTestsUrl();
-      if (testsOutputUrl != null) {
-        myTestsOutputPathPanel.setText(VirtualFileManager.extractPath(testsOutputUrl).replace('/', File.separatorChar));
-      }
-    }
-
-    //compiler settings
-    final boolean outputPathInherited = myModel.isCompilerOutputPathInherited();
-    myInheritCompilerOutput.setSelected(outputPathInherited);
-    myPerModuleCompilerOutput.setSelected(!outputPathInherited);
-    enableCompilerSettings(!outputPathInherited);
-
-    return outputPathsPanel;
-  }
-
-  private void enableCompilerSettings(final boolean enabled) {
-    UIUtil.setEnabled(myOutputPathPanel, enabled, true);
-    UIUtil.setEnabled(myTestsOutputPathPanel, enabled, true);
-    myCbExcludeOutput.setEnabled(enabled);
-    myModel.inheritCompilerOutputPath(!enabled);
-    if (myRootTreeEditor != null) {
-      myRootTreeEditor.update(); // need this in order to update appearance of excluded output paths if they are under content root
-    }
-  }
-
-  private static interface CommitPathRunnable {
-    void saveUrl(String url);
-  }
-
-  private FieldPanel createOutputPathPanel(final String title, final CommitPathRunnable commitPathRunnable) {
-    final JTextField textField = new JTextField();
-    final FileChooserDescriptor outputPathsChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
-    outputPathsChooserDescriptor.setHideIgnored(false);
-    InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
-
-    final Runnable commitRunnable = new Runnable() {
-      public void run() {
-        if (!myModel.isWritable()) {
-          return;
-        }
-        final String path = textField.getText().trim();
-        if (path.length() == 0) {
-          commitPathRunnable.saveUrl(null);
-        }
-        else {
-          // should set only absolute paths
-          String canonicalPath;
-          try {
-            canonicalPath = new File(path).getCanonicalPath();
-          }
-          catch (IOException e) {
-            canonicalPath = path;
-          }
-          commitPathRunnable.saveUrl(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
-        }
-        if (myRootTreeEditor != null) {
-          myRootTreeEditor.update(); // need this in order to update appearance of excluded output paths if they are under content root
-        }
-      }
-    };
-
-    textField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
-        commitRunnable.run();
-      }
-    });
-
-    return new FieldPanel(textField, null, null, new BrowseFilesListener(textField, title, "", outputPathsChooserDescriptor) {
-      public void actionPerformed(ActionEvent e) {
-        super.actionPerformed(e);
-        commitRunnable.run();
-      }
-    }, null);
-  }
-
   private void addContentEntryPanel(final ContentEntry contentEntry) {
     final ContentEntryEditor contentEntryEditor = new ContentEntryEditor(contentEntry, myModel);
     contentEntryEditor.addContentEntryEditorListener(myContentEntryEditorListener);
@@ -411,6 +243,12 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     }
     finally {
       mySelectedEntry = contentEntry;
+    }
+  }
+
+  public void moduleStateChanged() {
+    if (myRootTreeEditor != null) { //in order to update exclude output root if it is under content root
+      myRootTreeEditor.update();
     }
   }
 
@@ -477,6 +315,12 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
   public void saveData() {
     final Module module = getModule();
     module.setSavePathsRelative(myRbRelativePaths.isSelected());
+    try {
+      myLanguageLevelConfigurable.apply();
+    }
+    catch (ConfigurationException e) {
+      //can't be
+    }
   }
 
 
@@ -516,7 +360,8 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
           if (suggestedRoots != null) {
             for (final Pair<File, String> suggestedRoot : suggestedRoots) {
               final VirtualFile sourceRoot = LocalFileSystem.getInstance().findFileByIoFile(suggestedRoot.first);
-              if (sourceRoot != null && VfsUtil.isAncestor(contentEntry.getFile(), sourceRoot, false)) {
+              final VirtualFile fileContent = contentEntry.getFile();
+              if (sourceRoot != null && fileContent != null && VfsUtil.isAncestor(fileContent, sourceRoot, false)) {
                 contentEntry.addSourceFolder(sourceRoot, false, suggestedRoot.getSecond());
               }
             }
@@ -554,18 +399,6 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
       removeContentEntryPanel(entry);
       selectContentEntry(nextContentEntry);
       editor.removeContentEntryEditorListener(this);
-    }
-
-    public void folderIncluded(ContentEntryEditor editor, VirtualFile file) {
-      if (editor.isCompilerOutput(file)) {
-        myCbExcludeOutput.setSelected(false);
-      }
-    }
-
-    public void folderExcluded(ContentEntryEditor editor, VirtualFile file) {
-      if (editor.isCompilerOutput(file)) {
-        myCbExcludeOutput.setSelected(true);
-      }
     }
 
     public void navigationRequested(ContentEntryEditor editor, VirtualFile file) {

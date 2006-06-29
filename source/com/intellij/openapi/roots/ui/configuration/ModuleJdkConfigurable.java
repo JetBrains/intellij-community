@@ -4,14 +4,11 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
-import com.intellij.openapi.util.Comparing;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,16 +19,16 @@ import java.awt.event.ActionListener;
  * User: anna
  * Date: 05-Jun-2006
  */
-public class ModuleJdkConfigurable implements UnnamedConfigurable {
+public class ModuleJdkConfigurable implements Disposable {
   private JdkComboBox myCbModuleJdk;
   private ProjectJdk mySelectedModuleJdk = null;
   private ModifiableRootModel myRootModel;
   private JPanel myJdkPanel;
-  private ModuleEditor myModuleEditor;
+  private ClasspathEditor myModuleEditor;
   private ProjectJdksModel myJdksModel;
   private boolean myFreeze = false;
 
-  public ModuleJdkConfigurable(ModuleEditor moduleEditor,
+  public ModuleJdkConfigurable(ClasspathEditor moduleEditor,
                                ModifiableRootModel model,
                                ProjectJdksModel jdksModel) {
     myModuleEditor = moduleEditor;
@@ -54,7 +51,8 @@ public class ModuleJdkConfigurable implements UnnamedConfigurable {
   public JComponent createComponent() {
     myFreeze = true;
     final ProjectJdk projectJdk = myCbModuleJdk.getSelectedJdk();
-    myCbModuleJdk.reloadModel(new JdkComboBox.ProjectJdkComboBoxItem(), myRootModel.getModule().getProject());
+    myCbModuleJdk.reloadModel(new JdkComboBox.ProjectJdkComboBoxItem(),
+                              myRootModel.getModule().getProject());
     myCbModuleJdk.setSelectedJdk(projectJdk);    //restore selection
     myFreeze = false;
     return myJdkPanel;
@@ -74,22 +72,11 @@ public class ModuleJdkConfigurable implements UnnamedConfigurable {
         } else {
           myRootModel.inheritJdk();
         }
-        myModuleEditor.updateOrderEntriesInEditors();
+        myModuleEditor.flushChangesToModel();
       }
     });
-    myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.module.radio")), new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 6, 0, 0), 0, 0));
-    myJdkPanel.add(myCbModuleJdk, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 6, 0, 0), 0, 0));
-  }
-
-  @SuppressWarnings({"SimplifiableIfStatement"})
-  public boolean isModified() {
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(myRootModel.getModule());
-    if (rootManager.isJdkInherited() != myRootModel.isJdkInherited()) return true;
-    return !myRootModel.isJdkInherited() && !Comparing.equal(rootManager.getJdk(), myJdksModel.findSdk(myRootModel.getJdk()));
-  }
-
-  public void apply() throws ConfigurationException {
-    //do nothing
+    myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.module.radio")), new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(12, 6, 12, 0), 0, 0));
+    myJdkPanel.add(myCbModuleJdk, new GridBagConstraints(1, 0, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(6, 6, 12, 0), 0, 0));
   }
 
   public void reset() {
@@ -104,7 +91,7 @@ public class ModuleJdkConfigurable implements UnnamedConfigurable {
     myFreeze = false;
   }
 
-  public void disposeUIResources() {
+  public void dispose() {
     myModuleEditor = null;
     myCbModuleJdk = null;
     myJdkPanel = null;

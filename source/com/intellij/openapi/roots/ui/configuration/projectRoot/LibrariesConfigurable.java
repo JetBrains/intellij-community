@@ -16,8 +16,9 @@ import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelPr
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,14 +52,29 @@ public class LibrariesConfigurable implements NamedConfigurable <LibrariesModifi
   }
 
   public final JComponent createComponent() {
+    JLabel label = new JLabel();
+    @NonNls String opentTag = "<html>";
+    @NonNls String closeTag = "</html>";
+    final int choice = getChoice();
+    String message = choice == 1
+                     ? ProjectBundle.message("libraries.node.text.ide")
+                     : choice == 2
+                       ? ProjectBundle.message("libraries.node.text.application.server")
+                       : ProjectBundle.message("libraries.node.text.project");
+    label.setText(opentTag + message + closeTag);
+    myPanel.add(label, BorderLayout.NORTH);
     return myPanel;
   }
 
+
   public String getDisplayName() {
-    int choice = Comparing.strEqual(myLibraryTable, LibraryTablesRegistrar.APPLICATION_LEVEL)
+    return ProjectBundle.message("libraries.node.display.name", getChoice());
+  }
+
+  private int getChoice() {
+    return Comparing.strEqual(myLibraryTable, LibraryTablesRegistrar.APPLICATION_LEVEL)
                  ? 1
                  : Comparing.strEqual(myLibraryTable, ApplicationServersManager.APPLICATION_SERVER_MODULE_LIBRARIES) ? 2 : 3;
-    return ProjectBundle.message("libraries.node.display.name", choice);
   }
 
   public String getHelpTopic() {

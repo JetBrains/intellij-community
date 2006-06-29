@@ -13,7 +13,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
@@ -42,13 +41,7 @@ public class ModuleEditor {
   private final ModulesProvider myModulesProvider;
   private final String myName;
   private List<ModuleConfigurationEditor> myEditors = new ArrayList<ModuleConfigurationEditor>();
-  private DependenciesEditor myDependenciesEditor;
   private ModifiableRootModel myModifiableRootModelProxy;
-  private ModuleJdkConfigurable myJdkConfigurable;
-  private LanguageLevelConfigurable myLanguageLevelConfigurable;
-
-  //callback
-  private ProjectRootConfigurable myProjectRootConfigurable;
 
   private EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
   @NonNls private static final String METHOD_COMMIT = "commit";
@@ -57,10 +50,9 @@ public class ModuleEditor {
     void moduleStateChanged(ModifiableRootModel moduleRootModel);
   }
 
-  public ModuleEditor(Project project, ModulesProvider modulesProvider, String moduleName, final ProjectRootConfigurable projectRootConfigurable) {
+  public ModuleEditor(Project project, ModulesProvider modulesProvider, String moduleName) {
     myProject = project;
     myModulesProvider = modulesProvider;
-    myProjectRootConfigurable = projectRootConfigurable;
     myName = moduleName;
   }
 
@@ -92,15 +84,13 @@ public class ModuleEditor {
     return myModifiableRootModelProxy;
   }
 
-  @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isModified() {
     for (ModuleConfigurationEditor moduleElementsEditor : myEditors) {
       if (moduleElementsEditor.isModified()) {
         return true;
       }
     }
-    if ( myJdkConfigurable != null && myJdkConfigurable.isModified()) return true;
-    return myLanguageLevelConfigurable != null && myLanguageLevelConfigurable.isModified();
+    return false;
   }
 
   private void createEditors(Module module) {
@@ -122,14 +112,6 @@ public class ModuleEditor {
   private void processEditorsProvider(final ModuleConfigurationEditorProvider provider, final ModuleConfigurationState state) {
     final ModuleConfigurationEditor[] editors = provider.createEditors(state);
     myEditors.addAll(Arrays.asList(editors));
-    if (myDependenciesEditor == null) {
-      for (ModuleConfigurationEditor editor : editors) {
-        if (editor instanceof DependenciesEditor) {
-          myDependenciesEditor = (DependenciesEditor)editor;
-          break;
-        }
-      }
-    }
   }
 
   private JPanel createPanel() {
@@ -142,21 +124,10 @@ public class ModuleEditor {
 
     JPanel northPanel = new JPanel(new GridBagLayout());
 
-    myLanguageLevelConfigurable = new LanguageLevelConfigurable(getModule());
-    northPanel.add(myLanguageLevelConfigurable.createComponent(), new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0));
-    myLanguageLevelConfigurable.reset();
-
-    myJdkConfigurable = new ModuleJdkConfigurable(this, myModifiableRootModel, myProjectRootConfigurable.getProjectJdksModel());
-    northPanel.add(myJdkConfigurable.createComponent(), new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,10,0,0), 0,0));
-    myJdkConfigurable.reset();
-
     myPanel.add(northPanel, BorderLayout.NORTH);
 
     myTabbedPane = new TabbedPaneWrapper();
     for (ModuleConfigurationEditor editor : myEditors) {
-      if (editor == myDependenciesEditor && myModulesProvider.getModules().length <= 1) {
-        continue;
-      }
       myTabbedPane.addTab(editor.getDisplayName(), editor.getIcon(), editor.createComponent(), null);
       editor.reset();
     }
@@ -183,26 +154,10 @@ public class ModuleEditor {
     if (myPanel == null) {
       myPanel = createPanel();
     }
-    myJdkConfigurable.createComponent(); //reload inherited jdk
     return myPanel;
   }
 
   public void moduleCountChanged(int oldCount, int newCount) {
-    if (myTabbedPane != null && myDependenciesEditor != null) {
-      if (newCount > 1) {
-        if (getEditorTabIndex(myDependenciesEditor.getDisplayName()) == -1) { // if not added yet
-          final int indexToInsert = myEditors.indexOf(myDependenciesEditor);
-          myTabbedPane.insertTab(myDependenciesEditor.getDisplayName(), myDependenciesEditor.getIcon(),
-                                 myDependenciesEditor.getComponent(), null, indexToInsert);
-        }
-      }
-      else {
-        final int editorTabIndex = getEditorTabIndex(myDependenciesEditor.getDisplayName());
-        if (editorTabIndex >= 0) { // already added
-          myTabbedPane.removeTabAt(editorTabIndex);
-        }
-      }
-    }
     updateOrderEntriesInEditors();
   }
 
@@ -226,10 +181,6 @@ public class ModuleEditor {
         myTabbedPane = null;
       }
 
-      if (myPanel != null) {
-        myJdkConfigurable.disposeUIResources();
-        myLanguageLevelConfigurable.disposeUIResources();
-      }
 
       myPanel = null;
       return myModifiableRootModel;
@@ -252,9 +203,6 @@ public class ModuleEditor {
         j2EEModulePropertiesEx.commit(myModifiableRootModel);
       }
     }
-
-    if (myJdkConfigurable != null) myJdkConfigurable.apply();
-    if (myLanguageLevelConfigurable != null) myLanguageLevelConfigurable.apply();
 
     return dispose();
   }
@@ -283,7 +231,7 @@ public class ModuleEditor {
     @NonNls private final Set<String> myCheckedNames = new HashSet<String>(
       Arrays.asList(
         new String[]{"addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry",
-                     "removeOrderEntry", "setJdk", "inheritJdk", "inheritCompilerOutputPath"}
+                     "removeOrderEntry", "setJdk", "inheritJdk", "inheritCompilerOutputPath", "setExcludeOutput"}
       ));
 
     ModifiableRootModelInvocationHandler(ModifiableRootModel model) {

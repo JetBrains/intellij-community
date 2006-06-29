@@ -35,8 +35,8 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Icons;
@@ -118,7 +118,16 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   protected ArrayList<AnAction> getAdditionalActions() {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
+    result.add(new MyRenameAction());
     final AnAction findUsages = new AnAction(ProjectBundle.message("find.usages.action.text")) {
+      public void update(AnActionEvent e) {
+        final Presentation presentation = e.getPresentation();
+        final Object selectedObject = getSelectedObject();
+        presentation.setEnabled(selectedObject instanceof Module ||
+                                selectedObject instanceof Library ||
+                                selectedObject instanceof ProjectJdk);
+      }
+
       public void actionPerformed(AnActionEvent e) {
         showDependencies();
       }
@@ -131,7 +140,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   protected void reloadTree() {
 
     myRoot.removeAllChildren();
-    
+
     createProjectNodes();
 
     createProjectJdks();
@@ -265,14 +274,16 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
 
   public void apply() throws ConfigurationException {
+    boolean modifiedJdks = false;
     for (int i = 0; i < myJdksNode.getChildCount(); i++) {
       final NamedConfigurable configurable = ((MyNode)myJdksNode.getChildAt(i)).getConfigurable();
       if (configurable.isModified()) {
         configurable.apply();
+        modifiedJdks = true;
       }
     }
 
-    if (myJdksTreeModel.isModified()) myJdksTreeModel.apply();
+    if (myJdksTreeModel.isModified() || modifiedJdks) myJdksTreeModel.apply();
     myJdksTreeModel.setProjectJdk(ProjectRootManager.getInstance(myProject).getProjectJdk());
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -349,7 +360,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         return configurable.getHelpTopic();
       }
     }
-    return null;
+    return "root.settings";
   }
 
   public void projectOpened() {
@@ -627,7 +638,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
     });
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    return popupFactory.createActionsStep(group, e.getDataContext(), false, false, ProjectBundle.message("add.new.jdk.title"), myTree, true);    
+    return popupFactory.createActionsStep(group, e.getDataContext(), false, false, ProjectBundle.message("add.new.jdk.title"), myTree, true);
   }
 
   private PopupStep createLibrariesStep(AnActionEvent e) {
@@ -683,22 +694,26 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
           else if (selectedValue.compareTo(jdkChoice) == 0) {
             return createJdksStep(e);
           }
-          final Module module = myModulesConfigurator.addModule(myTree);
-          if (module != null) {
-            final MyNode node = new MyNode(new ModuleConfigurable(myModulesConfigurator, module), true);
-            myProjectNode.add(node);
-            TreeUtil.sort(myProjectNode, new Comparator() {
-              public int compare(final Object o1, final Object o2) {
-                final MyNode node1 = (MyNode)o1;
-                final MyNode node2 = (MyNode)o2;
-                if (node1.getConfigurable()instanceof ModuleConfigurable) return -1;
-                if (node2.getConfigurable()instanceof ModuleConfigurable) return 1;
-                return node1.getDisplayName().compareToIgnoreCase(node2.getDisplayName());
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              final Module module = myModulesConfigurator.addModule(myTree);
+              if (module != null) {
+                final MyNode node = new MyNode(new ModuleConfigurable(myModulesConfigurator, module), true);
+                myProjectNode.add(node);
+                TreeUtil.sort(myProjectNode, new Comparator() {
+                  public int compare(final Object o1, final Object o2) {
+                    final MyNode node1 = (MyNode)o1;
+                    final MyNode node2 = (MyNode)o2;
+                    if (node1.getConfigurable()instanceof ModuleConfigurable) return -1;
+                    if (node2.getConfigurable()instanceof ModuleConfigurable) return 1;
+                    return node1.getDisplayName().compareToIgnoreCase(node2.getDisplayName());
+                  }
+                });
+                ((DefaultTreeModel)myTree.getModel()).reload(myProjectNode);
+                selectNodeInTree(node);
               }
-            });
-            ((DefaultTreeModel)myTree.getModel()).reload(myProjectNode);
-            selectNodeInTree(node);
-          }
+            }
+          });
           return PopupStep.FINAL_CHOICE;
         }
       });

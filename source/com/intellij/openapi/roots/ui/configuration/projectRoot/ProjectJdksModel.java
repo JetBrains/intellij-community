@@ -247,6 +247,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     return null;
   }
 
+  @Nullable
   public ProjectJdk getProjectJdk() {
     return myProjectJdk;
   }

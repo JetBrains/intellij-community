@@ -6,7 +6,6 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.ui.SdkEditor;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -22,13 +21,11 @@ import javax.swing.*;
 public class JdkConfigurable implements NamedConfigurable<ProjectJdk> {
   private ProjectJdkImpl myProjectJdk;
   private SdkEditor mySdkEditor;
-  private ProjectJdksModel myJdksModel;
 
   public JdkConfigurable(final ProjectJdkImpl projectJdk, ProjectJdksModel configurable) {
     myProjectJdk = projectJdk;
     mySdkEditor = new SdkEditor(configurable);
     mySdkEditor.setSdk(myProjectJdk);
-    myJdksModel = configurable;
   }
 
   public void setDisplayName(final String name) {
@@ -58,11 +55,6 @@ public class JdkConfigurable implements NamedConfigurable<ProjectJdk> {
   }
 
   public JComponent createComponent() {
-    final ProjectJdk projectJdk = ProjectJdkTable.getInstance().findJdk(myProjectJdk.getName());
-    if (projectJdk != null) { //just created
-      myProjectJdk = (ProjectJdkImpl)myJdksModel.getProjectJdks().get(projectJdk);
-    }
-    mySdkEditor.setSdk(myProjectJdk);
     return mySdkEditor.createComponent();
   }
 

@@ -73,6 +73,8 @@ public class SdkEditor implements Configurable{
     mySdk = sdk;
     if (mySdk != null) {
       myInitialName = mySdk.getName();
+    } else {
+      myInitialName = "";
     }
     final AdditionalDataConfigurable additionalDataConfigurable = getAdditionalDataConfigurable();
     if (additionalDataConfigurable != null) {
@@ -156,7 +158,7 @@ public class SdkEditor implements Configurable{
 
   public void apply() throws ConfigurationException{
     if(!Comparing.equal(myInitialName, (mySdk == null) ? "" : mySdk.getName())){
-      if(mySdk.getName().length() == 0){
+      if(mySdk == null || mySdk.getName().length() == 0){
         throw new ConfigurationException(ProjectBundle.message("sdk.list.name.required.error"));
       }
     }

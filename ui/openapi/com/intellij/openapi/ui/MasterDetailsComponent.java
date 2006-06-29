@@ -11,6 +11,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.*;
 import com.intellij.profile.Profile;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.PopupHandler;
@@ -372,6 +373,37 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     }
     myOptionsPanel.revalidate();
     myOptionsPanel.repaint();
+  }
+
+  protected class MyRenameAction extends AnAction {
+
+    public MyRenameAction() {
+      super(RefactoringBundle.message("rename.title"));
+      registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME).getShortcutSet(), myTree);
+    }
+
+    public void update(AnActionEvent e) {
+      final Presentation presentation = e.getPresentation();
+      presentation.setEnabled(false);
+      final TreePath selectionPath = myTree.getSelectionPath();
+      if (selectionPath != null){
+        final MyNode node = (MyNode)selectionPath.getLastPathComponent();
+        presentation.setEnabled(node.isNameEditable());
+      }
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      MyNode node = (MyNode)myTree.getSelectionPath().getLastPathComponent();
+      final NamedConfigurable namedConfigurable = node.getConfigurable();
+      final String newName = Messages.showInputDialog(myTree,
+                                                      RefactoringBundle.message("copy.files.new.name.label"),
+                                                      RefactoringBundle.message("rename.title"),
+                                                      Messages.getInformationIcon());
+      if (newName != null){
+        namedConfigurable.setDisplayName(newName);
+        ((DefaultTreeModel)myTree.getModel()).reload();
+      }
+    }
   }
 
   protected class MyDeleteAction extends AnAction {

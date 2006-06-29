@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -92,6 +91,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private ModifiableModuleModel myModuleModel;
   private JLabel myWarningLabel = new JLabel("");
   private ProjectRootConfigurable myProjectRootConfigurable;
+  private JPanel myWholePanel;
 
   public ModulesConfigurator(Project project, ProjectRootConfigurable projectRootConfigurable) {
     myProject = project;
@@ -108,12 +108,10 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private void init() {
     myPanel = new MyJPanel();
     myPanel.setPreferredSize(new Dimension(700, 500));
-    myLanguageLevelCombo = new LanguageLevelCombo(myProject);
-    myRbRelativePaths = new JRadioButton(ProjectBundle.message("module.paths.outside.module.dir.relative.radio"));
-    myRbAbsolutePaths = new JRadioButton(ProjectBundle.message("module.paths.outside.module.dir.absolute.radio"));
-    ButtonGroup buttonGroup = new ButtonGroup();
-    buttonGroup.add(myRbRelativePaths);
-    buttonGroup.add(myRbAbsolutePaths);
+
+    myRbRelativePaths.setText(ProjectBundle.message("module.paths.outside.module.dir.relative.radio"));
+    myRbAbsolutePaths.setText(ProjectBundle.message("module.paths.outside.module.dir.absolute.radio"));
+
     if (((ProjectEx)myProject).isSavePathsRelative()) {
       myRbRelativePaths.setSelected(true);
     }
@@ -121,53 +119,18 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       myRbAbsolutePaths.setSelected(true);
     }
 
-    myPanel.add(new JLabel(ProjectBundle.message("module.paths.outside.project.dir.label")), new GridBagConstraints(0,
-                                                                                                                    GridBagConstraints.RELATIVE,
-                                                                                                                    1, 1, 0.0, 0.0,
-                                                                                                                    GridBagConstraints.WEST,
-                                                                                                                    GridBagConstraints.NONE,
-                                                                                                                    new Insets(2, 0, 0, 0),
-                                                                                                                    0, 0));
-    myPanel.add(myRbAbsolutePaths, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-                                                          GridBagConstraints.NONE, new Insets(2, 0, 0, 0), 0, 0));
-    myPanel.add(myRbRelativePaths, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST,
-                                                          GridBagConstraints.NONE, new Insets(2, 0, 0, 0), 0, 0));
-
-    final Box horizontalBox = Box.createHorizontalBox();
-    horizontalBox.add(new JLabel(ProjectBundle.message("module.project.language.level")));
-    horizontalBox.add(Box.createHorizontalStrut(5));
-    horizontalBox.add(myLanguageLevelCombo);
-    myPanel.add(horizontalBox, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 0.0, 0.0, GridBagConstraints.WEST,
-                                                      GridBagConstraints.NONE, new Insets(2, 0, 0, 0), 0, 0));
-
     myProjectJdkConfigurable = new ProjectJdkConfigurable(myProject, myProjectRootConfigurable.getProjectJdksModel());
-    myPanel.add(myProjectJdkConfigurable.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 0.0, 0.0, GridBagConstraints.WEST,
-                                                                                   GridBagConstraints.NONE, new Insets(2, 0, 0, 0), 0, 0));
+    myPanel.add(myProjectJdkConfigurable.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0,
+                                                                                   GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                                                   new Insets(4, 4, 0, 0), 0, 0));
 
-    final JTextField textField = new JTextField();
-    final FileChooserDescriptor outputPathsChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
-    InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
-    outputPathsChooserDescriptor.setHideIgnored(false);
-    myProjectCompilerOutput = new FieldPanel(textField, null, null, new BrowseFilesListener(textField, ProjectBundle.message("project.compiler.output"), "", outputPathsChooserDescriptor), new Runnable() {//todo description
-      public void run() {
-        //do nothing
-      }
-    });
+    myPanel.add(myWholePanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0,
+                                                                                   GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                                                   new Insets(4, 0, 0, 0), 0, 0));
 
-    final Box compilerBox = Box.createHorizontalBox();
-    compilerBox.add(new JLabel(ProjectBundle.message("project.compiler.output")));
-    compilerBox.add(Box.createHorizontalStrut(5));
-    compilerBox.add(myProjectCompilerOutput);
-    myPanel.add(compilerBox, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 0.0, 0.0, GridBagConstraints.WEST,
-                                                      GridBagConstraints.HORIZONTAL, new Insets(2, 0, 0, 0), 0, 0));
-
-
-    myWarningLabel.setUI(new MultiLineLabelUI());
-    myPanel.add(myWarningLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 0.0, 1.0, GridBagConstraints.WEST,
-                                                       GridBagConstraints.BOTH, new Insets(2, 6, 0, 0), 0, 0));
-
-
-
+    //myWarningLabel.setUI(new MultiLineLabelUI());
+    myPanel.add(myWarningLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                       GridBagConstraints.BOTH, new Insets(10, 6, 0, 0), 0, 0));
   }
 
   public void disposeUIResources() {
@@ -177,7 +140,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         myModuleModel.dispose();
       }
     });
-    if (myProjectJdkConfigurable != null){
+    if (myProjectJdkConfigurable != null) {
       myProjectJdkConfigurable.disposeUIResources();
     }
   }
@@ -217,12 +180,13 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
     resetModuleEditors();
     if (myProjectJdkConfigurable != null) myProjectJdkConfigurable.reset();
-    if (myProjectCompilerOutput != null){
+    if (myProjectCompilerOutput != null) {
       final String compilerOutput = ProjectRootManagerEx.getInstance(myProject).getCompilerOutputUrl();
       if (compilerOutput != null) {
         myProjectCompilerOutput.setText(VfsUtil.urlToPath(compilerOutput));
       }
     }
+    myLanguageLevelCombo.reset(myProject);
   }
 
   private void disposeModuleEditors() {
@@ -251,7 +215,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private ModuleEditor createModuleEditor(final Module module) {
-    final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, module.getName(), myProjectRootConfigurable);
+    final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, module.getName());
     myModuleEditors.add(moduleEditor);
     moduleEditor.addChangeListener(this);
     return moduleEditor;
@@ -349,7 +313,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
               }
               canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
               projectRootManager.setCompilerOutputUrl(VfsUtil.pathToUrl(canonicalPath));
-            } else {
+            }
+            else {
               projectRootManager.setCompilerOutputPointer(null);
             }
           }
@@ -513,12 +478,12 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
     }
 
-    if (myProjectCompilerOutput != null){
+    if (myProjectCompilerOutput != null) {
       final String compilerOutput = projectRootManagerEx.getCompilerOutputUrl();
       if (!Comparing.strEqual(VfsUtil.urlToPath(compilerOutput), myProjectCompilerOutput.getText())) return true;
     }
 
-    if (myProjectJdkConfigurable != null){
+    if (myProjectJdkConfigurable != null) {
       if (myProjectJdkConfigurable.isModified()) return true;
     }
 
@@ -537,7 +502,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public static boolean showDialog(Project project, final String moduleToSelect, final String tabNameToSelect, final boolean show) {
     final ProjectRootConfigurable projectRootConfigurable = ProjectRootConfigurable.getInstance(project);
-    return ShowSettingsUtil.getInstance().editConfigurable(project, projectRootConfigurable, new Runnable(){
+    return ShowSettingsUtil.getInstance().editConfigurable(project, projectRootConfigurable, new Runnable() {
       public void run() {
         projectRootConfigurable.selectModuleTab(moduleToSelect, tabNameToSelect);
         projectRootConfigurable.setStartModuleWizard(show);
@@ -552,6 +517,21 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public void setStartModuleWizardOnShow(final boolean show) {
     myStartModuleWizardOnShow = show;
+  }
+
+  private void createUIComponents() {
+    myLanguageLevelCombo = new LanguageLevelCombo();
+    final JTextField textField = new JTextField();
+    final FileChooserDescriptor outputPathsChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+    InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
+    outputPathsChooserDescriptor.setHideIgnored(false);
+    myProjectCompilerOutput = new FieldPanel(textField, null, null, new BrowseFilesListener(textField, ProjectBundle.message(
+      "project.compiler.output"), "", outputPathsChooserDescriptor), new Runnable() {//todo description
+
+      public void run() {
+        //do nothing
+      }
+    });
   }
 
   private class MyJPanel extends JPanel {

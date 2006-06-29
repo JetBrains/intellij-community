@@ -722,8 +722,12 @@ public class LibraryTableEditor implements Disposable {
 
     protected void doOKAction() {
       commitChanges();
-      Disposer.dispose(LibraryTableEditor.this);
-      super.doOKAction();      
+      super.doOKAction();
+      ApplicationManager.getApplication().invokeLater(new Runnable(){
+        public void run() {
+          Disposer.dispose(LibraryTableEditor.this);
+        }
+      });
     }
 
     public void doCancelAction() {

@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,10 +43,9 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.Disposable;
 import com.intellij.ui.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
@@ -183,9 +183,20 @@ public class ClasspathPanel extends JPanel {
     });
     final ActionManager actionManager = ActionManager.getInstance();
     final DefaultActionGroup group = new DefaultActionGroup();
-    final AnAction navigateAction = new AnAction("Navigate") {
+    final AnAction navigateAction = new AnAction(ProjectBundle.message("classpath.panel.navigate.action.text")) {
       public void actionPerformed(AnActionEvent e) {
         navigate();
+      }
+
+      public void update(AnActionEvent e) {
+        final Presentation presentation = e.getPresentation();
+        presentation.setEnabled(false);
+        final OrderEntry entry = myModel.getItemAt(myEntryTable.getSelectedRow()).getEntry();
+        if (entry != null && entry.isValid()){
+          if (!(entry instanceof ModuleSourceOrderEntry)){
+            presentation.setEnabled(true);
+          }
+        }
       }
     };
     navigateAction.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), myEntryTable);
@@ -296,8 +307,8 @@ public class ClasspathPanel extends JPanel {
         }
         final LibraryTable moduleLibraryTable = myRootModel.getModuleLibraryTable();
         LibraryTable.ModifiableModel modifiableModel = null;
-        for (Iterator it = removedRows.iterator(); it.hasNext();) {
-          final TableItem item = (TableItem)((Object[])it.next())[MyTableModel.ITEM_COLUMN];
+        for (final Object removedRow : removedRows) {
+          final TableItem item = (TableItem)((Object[])removedRow)[MyTableModel.ITEM_COLUMN];
           final OrderEntry orderEntry = item.getEntry();
           if (orderEntry == null) {
             continue;
@@ -401,19 +412,19 @@ public class ClasspathPanel extends JPanel {
         return;
       }
       final List<ItemType> chosen;
-      try {
-        dialog.doChoose();
-        if (!dialog.isOK()) {
-          return;
-        }
-        chosen = dialog.getChosenElements();
-        if (chosen.size() == 0) {
-          return;
-        }
+      //try {
+      dialog.doChoose();
+      if (!dialog.isOK()) {
+        return;
       }
+      chosen = dialog.getChosenElements();
+      if (chosen.size() == 0) {
+        return;
+      }
+      /*} was already disposed on close !!
       finally {
         Disposer.dispose(dialog);
-      }
+      }*/
       //int insertionIndex = myEntryTable.getSelectedRow();
       for (ItemType item : chosen) {
         //myModel.addItemAt(createTableItem(item), insertionIndex++);
@@ -677,7 +688,7 @@ public class ClasspathPanel extends JPanel {
     private static final String EXPORT_COLUMN_NAME = ProjectBundle.message("modules.order.export.export.column");
     public static final int EXPORT_COLUMN = 0;
     public static final int ITEM_COLUMN = 1;
-    private final java.util.List<TableItem> myItems = new ArrayList<TableItem>();
+    private final List<TableItem> myItems = new ArrayList<TableItem>();
     private final ModifiableRootModel myRootModel;
 
     public MyTableModel(final ModifiableRootModel rootModel) {
@@ -745,7 +756,7 @@ public class ClasspathPanel extends JPanel {
     public Object getValueAt(int rowIndex, int columnIndex) {
       final TableItem item = myItems.get(rowIndex);
       if (columnIndex == EXPORT_COLUMN) {
-        return Boolean.valueOf(item.isExported());
+        return item.isExported();
       }
       if (columnIndex == ITEM_COLUMN) {
         return item;
@@ -800,7 +811,7 @@ public class ClasspathPanel extends JPanel {
     }
   }
 
-  private class TableItemRenderer extends ColoredTableCellRenderer {
+  private static class TableItemRenderer extends ColoredTableCellRenderer {
     private final Border NO_FOCUS_BORDER = BorderFactory.createEmptyBorder(1, 1, 1, 1);
 
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
@@ -985,6 +996,7 @@ public class ClasspathPanel extends JPanel {
       return new LibItem(myRootModel.addLibraryEntry(item));
     }
 
+    @SuppressWarnings({"NonStaticInitializer"})
     protected ChooserDialog<Library> createChooserDialog() {
       return new ChooserDialog<Library>() {
         private LibraryTableEditor myEditor;

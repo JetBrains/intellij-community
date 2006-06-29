@@ -19,11 +19,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.OrderPanelListener;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -72,13 +74,20 @@ public class ClasspathEditor extends ModuleElementsEditor {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
     panel.add(myPanel, BorderLayout.CENTER);
+
+    final ModuleJdkConfigurable jdkConfigurable =
+      new ModuleJdkConfigurable(this, myModel, ProjectRootConfigurable.getInstance(myProject).getProjectJdksModel());
+    panel.add(jdkConfigurable.createComponent(), BorderLayout.NORTH);
+    jdkConfigurable.reset();
+    registerDisposable(jdkConfigurable);
+
     return panel;
   }
 
 
 
-  private void flushChangesToModel() {
-    java.util.List<OrderEntry> entries = myPanel.getEntries();
+  public void flushChangesToModel() {
+    List<OrderEntry> entries = myPanel.getEntries();
     myModel.rearrangeOrderEntries(entries.toArray(new OrderEntry[entries.size()]));
   }
 

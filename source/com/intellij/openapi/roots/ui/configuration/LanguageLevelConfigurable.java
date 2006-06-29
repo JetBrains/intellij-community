@@ -7,7 +7,6 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
@@ -25,12 +24,10 @@ public class LanguageLevelConfigurable implements UnnamedConfigurable {
 
   private JPanel myPanel = new JPanel(new GridBagLayout());
 
-  private Project myProject;
   private Module myModule;
 
 
   public LanguageLevelConfigurable(Module module) {
-    myProject = module.getProject();
     myModule = module;
     init();
   }
@@ -40,11 +37,11 @@ public class LanguageLevelConfigurable implements UnnamedConfigurable {
   }
 
   private void init() {
-    myLanguageLevelCombo = new LanguageLevelCombo(myProject);
+    myLanguageLevelCombo = new LanguageLevelCombo();
     myLanguageLevelCombo.insertItemAt(LanguageLevelCombo.USE_PROJECT_LANGUAGE_LEVEL, 0);
     myLanguageLevelCombo.setSelectedItem(myModule.getLanguageLevel());
-    myPanel.add(new JLabel(ProjectBundle.message("module.module.language.level")), new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 6, 0, 0), 0, 0));
-    myPanel.add(myLanguageLevelCombo, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 6, 0, 0), 0, 0));
+    myPanel.add(new JLabel(ProjectBundle.message("module.module.language.level")), new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 6, 6, 0), 0, 0));
+    myPanel.add(myLanguageLevelCombo, new GridBagConstraints(1, 0, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(6, 6, 6, 0), 0, 0));
   }
 
   public boolean isModified() {
