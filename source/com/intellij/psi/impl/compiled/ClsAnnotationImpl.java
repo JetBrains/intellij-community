@@ -2,7 +2,9 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.Nullable;
@@ -78,5 +80,13 @@ public class ClsAnnotationImpl extends ClsElementImpl implements PsiAnnotation {
     final StringBuffer buffer = new StringBuffer();
     appendMirrorText(0, buffer);
     return buffer.toString();
+  }
+
+  public PsiMetaData getMetaData() {
+    return MetaRegistry.getMeta(this);
+  }
+
+  public boolean isMetaEnough() {
+    return false;
   }
 }

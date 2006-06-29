@@ -18,13 +18,14 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.meta.PsiMetaOwner;
 
 /**
  * Represents a Java annotation.
  *
  * @author ven
  */
-public interface PsiAnnotation extends PsiAnnotationMemberValue {
+public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
   /**
    * The empty array of PSI annotations which can be reused to avoid unnecessary allocations.
    */

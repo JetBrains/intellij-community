@@ -2,8 +2,10 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.cache.DeclarationView;
 import com.intellij.psi.impl.source.IndexedRepositoryPsiElement;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
@@ -87,5 +89,13 @@ public class PsiAnnotationImpl extends IndexedRepositoryPsiElement implements Ps
 
   public final void accept(PsiElementVisitor visitor) {
     visitor.visitAnnotation(this);
+  }
+
+  public PsiMetaData getMetaData() {
+    return MetaRegistry.getMeta(this);
+  }
+
+  public boolean isMetaEnough() {
+    return false;
   }
 }
