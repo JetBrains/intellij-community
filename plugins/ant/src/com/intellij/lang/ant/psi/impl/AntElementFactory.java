@@ -25,14 +25,25 @@ public class AntElementFactory {
   private AntElementFactory() {
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
   public static AntElement createAntElement(final AntElement parent, final XmlElement element) {
     instantiate();
     if (element instanceof XmlComment) return new AntCommentImpl(parent, element);
     if (!(element instanceof XmlTag)) return null;
-    XmlTag tag = (XmlTag)element;
+
+    final XmlTag tag = (XmlTag)element;
     AntTypeDefinition typeDef = null;
-    final AntTypeId id = new AntTypeId(tag.getName());
+    String typeName = tag.getName();
+
+    /**
+     * Hardcode for <javadoc> task (IDEADEV-6731).
+     */
+    if (typeName.equals("javadoc2")) {
+      typeName = "javadoc";
+    }
+
+    final AntTypeId id = new AntTypeId(typeName);
     final AntFile file = parent.getAntFile();
 
     if (parent instanceof AntStructuredElement) {

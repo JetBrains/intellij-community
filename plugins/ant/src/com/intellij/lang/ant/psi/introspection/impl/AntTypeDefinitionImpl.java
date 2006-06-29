@@ -105,9 +105,13 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
     return myNestedClassNames;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
   public String getNestedClassName(final AntTypeId id) {
-    return myNestedClassNames.get(id);
+    /**
+     * Hardcode for <javadoc> task (IDEADEV-6731).
+     */
+    return (id.getName().equals("javadoc2")) ? myNestedClassNames.get(new AntTypeId("javadoc")) : myNestedClassNames.get(id);
   }
 
   public void registerNestedType(final AntTypeId id, String taskClassName) {

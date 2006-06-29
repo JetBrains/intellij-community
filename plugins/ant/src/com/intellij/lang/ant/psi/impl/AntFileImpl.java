@@ -238,13 +238,20 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private void updateTypeDefinitions(final Hashtable ht, final boolean isTask) {
     if (ht == null) return;
     final Enumeration types = ht.keys();
     while (types.hasMoreElements()) {
-      final String typeName = (String)types.nextElement();
+      String typeName = (String)types.nextElement();
+      /**
+       * Hardcode for <javadoc> task (IDEADEV-6731).
+       */
+      if (isTask && typeName.equals("javadoc2")) {
+        typeName = "javadoc";
+      }
       final Class typeClass = (Class)ht.get(typeName);
-      AntTypeDefinition def = createTypeDefinition(new AntTypeId(typeName), typeClass, isTask);
+      final AntTypeDefinition def = createTypeDefinition(new AntTypeId(typeName), typeClass, isTask);
       if (def != null) {
         myTypeDefinitions.put(def.getClassName(), def);
         /**
