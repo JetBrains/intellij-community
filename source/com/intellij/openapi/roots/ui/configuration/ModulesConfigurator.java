@@ -62,6 +62,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private boolean myStartModuleWizardOnShow;
 
   private static final Icon PROJECT_ICON = IconLoader.getIcon("/nodes/project.png");
+  private boolean myModified = false;
 
   private List<ModuleEditor> myModuleEditors = new ArrayList<ModuleEditor>();
   private LanguageLevelCombo myLanguageLevelCombo;
@@ -187,6 +188,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
     }
     myLanguageLevelCombo.reset(myProject);
+    myModified = false;
   }
 
   private void disposeModuleEditors() {
@@ -333,6 +335,15 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
     ApplicationManager.getApplication().saveAll();
 
+    myModified = false;
+  }
+
+  public void setModified(final boolean modified) {
+    myModified = modified;
+  }
+
+  public ModifiableModuleModel getModuleModel() {
+    return myModuleModel;
   }
 
   public boolean deleteModule(final Module module) {
@@ -496,7 +507,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       return true;
     }
 
-    return false;
+    return myModified;
   }
 
 
