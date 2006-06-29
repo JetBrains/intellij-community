@@ -26,12 +26,12 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedPaneContentUI;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Iterator;
 
 /**
  * @author Vladimir Kondratyev
@@ -65,20 +65,22 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
     mySelectedIndex=0;
     try{
       mySelectedIndex=Integer.parseInt(element.getAttributeValue(ATTRIBUTE_SELECTED_INDEX));
-    }catch(NumberFormatException ignored){}
+    }catch(NumberFormatException ignored){
+      //nothing to be done
+    }
 
-    for(Iterator i=element.getChildren().iterator();i.hasNext();){
-      Element child=(Element)i.next();
-      if(ELEMENT_TODO_PANEL.equals(child.getName())){
-        String id=child.getAttributeValue(ATTRIBUTE_ID);
-        if(VALUE_SELECTED_FILE.equals(id)){
+    //noinspection unchecked
+    for (Element child : (Iterable<Element>)element.getChildren()) {
+      if (ELEMENT_TODO_PANEL.equals(child.getName())) {
+        String id = child.getAttributeValue(ATTRIBUTE_ID);
+        if (VALUE_SELECTED_FILE.equals(id)) {
           myCurrentPanelSettings.readExternal(child);
         }
-        else if(VALUE_ALL.equals(id)){
+        else if (VALUE_ALL.equals(id)) {
           myAllPanelSettings.readExternal(child);
         }
-        else{
-          throw new IllegalArgumentException("unknown id: "+id);
+        else {
+          throw new IllegalArgumentException("unknown id: " + id);
         }
       }
     }
@@ -103,6 +105,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
 
   public void disposeComponent(){}
 
+  @NotNull
   public String getComponentName(){
     return "TodoView";
   }
@@ -233,6 +236,8 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
       // PSI gets the same event.
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
+          if (myProject.isDisposed()) return;
+
           ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
             public void run(){
               if (myAllTodos == null) return;
