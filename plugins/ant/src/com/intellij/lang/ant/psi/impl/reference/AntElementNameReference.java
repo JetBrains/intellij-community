@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.ant.misc.StringSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntMacroDef;
 import com.intellij.lang.ant.psi.AntPresetDef;
 import com.intellij.lang.ant.psi.AntStructuredElement;
@@ -13,7 +14,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Set;
 
 public class AntElementNameReference extends AntGenericReference {
 
@@ -104,11 +105,16 @@ public class AntElementNameReference extends AntGenericReference {
         return ourEmptyIntentions;
       }
     }
-    final ArrayList<String> ids = new ArrayList<String>();
-    for (AntTypeId id : def.getNestedElements()) {
-      ids.add(id.getName());
+    final Set<String> ids = StringSetSpinAllocator.alloc();
+    try {
+      for (AntTypeId id : def.getNestedElements()) {
+        ids.add(id.getName());
+      }
+      return ids.toArray(new Object[ids.size()]);
     }
-    return ids.toArray(new Object[ids.size()]);
+    finally {
+      StringSetSpinAllocator.dispose(ids);
+    }
   }
 
   @NotNull

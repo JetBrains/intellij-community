@@ -2,6 +2,7 @@ package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.misc.AntPsiUtil;
+import com.intellij.lang.ant.misc.StringSetSpinAllocator;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntElementImpl;
 import com.intellij.lang.ant.quickfix.AntCreatePropertyAction;
@@ -20,7 +21,6 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -91,16 +91,21 @@ public class AntPropertyReference extends AntGenericReference {
   }
 
   public Object[] getVariants() {
-    final Set<String> variants = new HashSet<String>();
-    final AntProject project = getElement().getAntProject();
-    for (AntProperty property : project.getProperties()) {
-      variants.add(property.getName());
+    final Set<String> variants = StringSetSpinAllocator.alloc();
+    try {
+      final AntProject project = getElement().getAntProject();
+      for (AntProperty property : project.getProperties()) {
+        variants.add(property.getName());
+      }
+      getVariants(project, variants);
+      for (AntFile imported : AntPsiUtil.getImportedFiles(project)) {
+        getVariants(imported.getAntProject(), variants);
+      }
+      return variants.toArray(new String[variants.size()]);
     }
-    getVariants(project, variants);
-    for (AntFile imported : AntPsiUtil.getImportedFiles(project)) {
-      getVariants(imported.getAntProject(), variants);
+    finally {
+      StringSetSpinAllocator.dispose(variants);
     }
-    return variants.toArray(new String[variants.size()]);
   }
 
   @NotNull

@@ -2,6 +2,7 @@ package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.misc.AntPsiUtil;
+import com.intellij.lang.ant.misc.StringSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
@@ -15,7 +16,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class AntRefIdReference extends AntGenericReference {
@@ -67,13 +67,18 @@ public class AntRefIdReference extends AntGenericReference {
   }
 
   public Object[] getVariants() {
-    final Set<String> variants = new HashSet<String>();
-    final AntProject project = getElement().getAntProject();
-    getVariants(project, variants);
-    for (AntFile imported : AntPsiUtil.getImportedFiles(project)) {
-      getVariants(imported.getAntProject(), variants);
+    final Set<String> variants = StringSetSpinAllocator.alloc();
+    try {
+      final AntProject project = getElement().getAntProject();
+      getVariants(project, variants);
+      for (AntFile imported : AntPsiUtil.getImportedFiles(project)) {
+        getVariants(imported.getAntProject(), variants);
+      }
+      return variants.toArray(new String[variants.size()]);
     }
-    return variants.toArray(new String[variants.size()]);
+    finally {
+      StringSetSpinAllocator.dispose(variants);
+    }
   }
 
   @NotNull

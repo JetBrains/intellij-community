@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.ant.misc.StringSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntAllTasksContainer;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntMacroDef;
@@ -14,7 +15,6 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class AntMacroDefParameterReference extends AntGenericReference {
@@ -76,19 +76,24 @@ public class AntMacroDefParameterReference extends AntGenericReference {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public Object[] getVariants() {
-    Set<String> variants = new HashSet<String>();
-    AntMacroDef macrodef = PsiTreeUtil.getParentOfType(getElement(), AntMacroDef.class);
-    if (macrodef != null) {
-      for (PsiElement child : macrodef.getChildren()) {
-        if (child instanceof AntStructuredElement) {
-          AntStructuredElement element = (AntStructuredElement)child;
-          if (element.getSourceElement().getName().equals("attribute")) {
-            variants.add(element.getName());
+    Set<String> variants = StringSetSpinAllocator.alloc();
+    try {
+      AntMacroDef macrodef = PsiTreeUtil.getParentOfType(getElement(), AntMacroDef.class);
+      if (macrodef != null) {
+        for (PsiElement child : macrodef.getChildren()) {
+          if (child instanceof AntStructuredElement) {
+            AntStructuredElement element = (AntStructuredElement)child;
+            if (element.getSourceElement().getName().equals("attribute")) {
+              variants.add(element.getName());
+            }
           }
         }
       }
+      final int count = variants.size();
+      return (count == 0) ? ourEmptyIntentions : variants.toArray(new String[count]);
     }
-    final int count = variants.size();
-    return (count == 0) ? ourEmptyIntentions : variants.toArray(new String[count]);
+    finally {
+      StringSetSpinAllocator.dispose(variants);
+    }
   }
 }
