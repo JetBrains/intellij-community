@@ -28,8 +28,15 @@ public class CreateParameterFromUsageAction extends CreateVarFromUsageAction {
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
     if(!!myReferenceExpression.isQualified()) return false;
-    PsiElement scope = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiMethod.class, PsiClass.class);
-    return scope instanceof PsiMethod && ((PsiMethod)scope).getParameterList().isPhysical();
+    PsiElement scope = myReferenceExpression;
+    do {
+      scope = PsiTreeUtil.getParentOfType(scope, PsiMethod.class, PsiClass.class);
+      if (!(scope instanceof PsiAnonymousClass)) {
+        return scope instanceof PsiMethod &&
+               ((PsiMethod)scope).getParameterList().isPhysical();
+      }
+    }
+    while (true);
   }
 
     public String getText(String varName) {
