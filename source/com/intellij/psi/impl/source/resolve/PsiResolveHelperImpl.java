@@ -186,12 +186,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     return lowerBound;
   }
 
-  public PsiSubstitutor inferTypeArguments(final PsiTypeParameter[] typeParameters,
-                                           final PsiParameter[] parameters,
+  public PsiSubstitutor inferTypeArguments(PsiTypeParameter[] typeParameters,
+                                           PsiParameter[] parameters,
                                            PsiExpression[] arguments,
                                            PsiSubstitutor partialSubstitutor,
                                            PsiElement parent,
-                                           final boolean forCompletion) {
+                                           boolean forCompletion) {
     PsiType[] substitutions = new PsiType[typeParameters.length];
     for (int i = 0; i < typeParameters.length; i++) {
       substitutions[i] = inferTypeForMethodTypeParameter(typeParameters[i], parameters, arguments, partialSubstitutor, null, forCompletion);
