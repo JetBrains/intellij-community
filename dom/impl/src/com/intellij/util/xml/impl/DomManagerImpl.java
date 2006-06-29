@@ -18,14 +18,14 @@ import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.xml.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -162,6 +162,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       }
     });
     myReferenceProvidersRegistry = registry;
+
     myElementFactory = psiManager.getElementFactory();
     solver.registerFileHighlightFilter(new Condition<VirtualFile>() {
       public boolean value(final VirtualFile file) {
@@ -410,6 +411,20 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return file instanceof XmlFile && getFileElement((XmlFile)file) != null;
   }
 
+  @Nullable
+  public final DomFileDescription getDomFileDescription(PsiElement element) {
+    if (element instanceof XmlElement) {
+      final PsiFile psiFile = element.getContainingFile();
+      if (psiFile instanceof XmlFile) {
+        final XmlFile xmlFile = (XmlFile)psiFile;
+        if (getFileElement(xmlFile) != null) {
+          return getOrCreateCachedValueProvider(xmlFile).getFileDescription();
+        }
+      }
+    }
+    return null;
+  }
+
   public final DomRootInvocationHandler getRootInvocationHandler(final XmlFile xmlFile) {
     if (xmlFile != null) {
       DomFileElementImpl element = getFileElement(xmlFile);
@@ -452,7 +467,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     });
   }
 
-  public final void registerFileDescription(DomFileDescription description) {
+  public final void registerFileDescription(final DomFileDescription description) {
     for (final Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : ((DomFileDescription<?>)description).getImplementations().entrySet()) {
       registerImplementation((Class)entry.getKey(), entry.getValue());
     }
@@ -462,30 +477,34 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       myAnnotationsManager.registerDomElementsAnnotator(annotator, rootClass);
     }
 
-
     myFileDescriptions.add(description);
-    registerReferenceProviders(rootClass);
+    final MyElementFilter filter = new MyElementFilter(description);
+
+    myReferenceProvidersRegistry.registerReferenceProvider(filter, XmlTag.class, new DomLazyReferenceProvider(description,
+                                                                                                              myRegisteredTagNames) {
+      protected void registerTrueReferenceProvider(final String[] names) {
+        myReferenceProvidersRegistry.registerXmlTagReferenceProvider(names, filter, true, myGenericValueReferenceProvider);
+      }
+
+      protected Set<String> getReferenceElementNames(final GenericInfoImpl info) {
+        return info.getReferenceTagNames();
+      }
+    });
+    myReferenceProvidersRegistry.registerReferenceProvider(filter, XmlAttributeValue.class, new DomLazyReferenceProvider(description,
+                                                                                                                         myRegisteredAttributeNames) {
+      protected void registerTrueReferenceProvider(final String[] names) {
+        myReferenceProvidersRegistry.registerXmlAttributeValueReferenceProvider(names, filter, true, myGenericValueReferenceProvider);
+      }
+
+      protected Set<String> getReferenceElementNames(final GenericInfoImpl info) {
+        return info.getReferenceAttributeNames();
+      }
+    });
+
+
   }
 
-  private void registerReferenceProviders(final Class<? extends DomElement> rootClass) {
-    final GenericInfoImpl info = getGenericInfo(rootClass);
-    final Set<String> tagNames = new HashSet<String>(info.getReferenceTagNames());
-    tagNames.removeAll(myRegisteredTagNames);
-    if (!tagNames.isEmpty()) {
-      myReferenceProvidersRegistry.registerXmlTagReferenceProvider(tagNames.toArray(new String[tagNames.size()]),
-                                                                   new MyElementFilter(rootClass), true, myGenericValueReferenceProvider);
-      myRegisteredTagNames.addAll(tagNames);
-    }
 
-    final Set<String> attributeNames = new HashSet<String>(info.getReferenceAttributeNames());
-    attributeNames.removeAll(myRegisteredAttributeNames);
-    if (!attributeNames.isEmpty()) {
-      myReferenceProvidersRegistry.registerXmlAttributeValueReferenceProvider(attributeNames.toArray(new String[attributeNames.size()]),
-                                                                              new MyElementFilter(rootClass), true,
-                                                                              myGenericValueReferenceProvider);
-      myRegisteredAttributeNames.addAll(attributeNames);
-    }
-  }
 
   @Nullable
   private DomFileDescription findFileDescription(DomElement element) {
@@ -544,24 +563,14 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   private class MyElementFilter implements ElementFilter {
-    private final Class<? extends DomElement> myRootClass;
+    private final DomFileDescription myDescription;
 
-
-    public MyElementFilter(final Class<? extends DomElement> rootClass) {
-      myRootClass = rootClass;
+    public MyElementFilter(final DomFileDescription description) {
+      myDescription = description;
     }
 
     public boolean isAcceptable(Object element, PsiElement context) {
-      if (element instanceof XmlElement) {
-        final PsiFile psiFile = ((PsiElement)element).getContainingFile();
-        if (psiFile instanceof XmlFile) {
-          final DomRootInvocationHandler handler = getRootInvocationHandler((XmlFile)psiFile);
-          if (handler != null && myRootClass.isAssignableFrom(DomReflectionUtil.getRawType(handler.getDomElementType()))) {
-            return true;
-          }
-        }
-      }
-      return false;
+      return element instanceof XmlElement && getDomFileDescription((XmlElement)element) == myDescription;
     }
 
     public boolean isClassAcceptable(Class hintClass) {
@@ -620,5 +629,55 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       }
       return result;
     }
+  }
+
+  private abstract class DomLazyReferenceProvider implements PsiReferenceProvider {
+    private boolean myInitialized;
+    private final DomFileDescription myDescription;
+    private final Set<String> myRegisteredNames;
+
+    public DomLazyReferenceProvider(final DomFileDescription description, final Set<String> registeredNames) {
+      myDescription = description;
+      myRegisteredNames = registeredNames;
+    }
+
+    private boolean initialize(PsiElement element) {
+      if (myInitialized || getDomFileDescription(element) != myDescription) {
+        return false;
+      }
+      myInitialized = true;
+      final GenericInfoImpl info = getGenericInfo(myDescription.getRootElementClass());
+      final Set<String> tagNames = new HashSet<String>(getReferenceElementNames(info));
+      tagNames.removeAll(myRegisteredNames);
+      if (!tagNames.isEmpty()) {
+        final String[] names = tagNames.toArray(new String[tagNames.size()]);
+        registerTrueReferenceProvider(names);
+        myRegisteredNames.addAll(tagNames);
+      }
+      return true;
+    }
+
+    @NotNull
+    public PsiReference[] getReferencesByElement(PsiElement element) {
+      return initialize(element) ? myGenericValueReferenceProvider.getReferencesByElement(element) : PsiReference.EMPTY_ARRAY;
+    }
+
+    @NotNull
+    public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
+      return initialize(element) ? myGenericValueReferenceProvider.getReferencesByElement(element, type) : PsiReference.EMPTY_ARRAY;
+    }
+
+    @NotNull
+    public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
+      return initialize(position) ? myGenericValueReferenceProvider.getReferencesByString(str, position, type, offsetInPosition) : PsiReference.EMPTY_ARRAY;
+    }
+
+    public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
+    }
+
+    protected abstract void registerTrueReferenceProvider(String[] names);
+
+    protected abstract Set<String> getReferenceElementNames(GenericInfoImpl info);
+
   }
 }

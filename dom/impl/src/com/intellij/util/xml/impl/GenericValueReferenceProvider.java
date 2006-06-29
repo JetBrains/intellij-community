@@ -35,7 +35,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement psiElement) {
+  public final PsiReference[] getReferencesByElement(PsiElement psiElement) {
     
     if (!(psiElement instanceof XmlTag || psiElement instanceof XmlAttributeValue)) {
       return PsiReference.EMPTY_ARRAY;
@@ -120,12 +120,12 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
 
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
+  public final PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
     return getReferencesByElement(element);
   }
 
   @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
+  public final PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
     return getReferencesByElement(position);
   }
 
