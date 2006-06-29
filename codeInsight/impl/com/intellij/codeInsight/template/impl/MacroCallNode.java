@@ -17,7 +17,7 @@ public class MacroCallNode implements Expression {
   }
 
   private Macro myMacro;
-  private ArrayList myParameters = new ArrayList();
+  private ArrayList<Expression> myParameters = new ArrayList<Expression>();
 
   public MacroCallNode(Macro macro) {
     myMacro = macro;
@@ -28,17 +28,17 @@ public class MacroCallNode implements Expression {
   }
 
   public Result calculateResult(ExpressionContext context) {
-    Expression[] parameters = (Expression[])myParameters.toArray(new Expression[myParameters.size()]);
+    Expression[] parameters = myParameters.toArray(new Expression[myParameters.size()]);
     return myMacro.calculateResult(parameters, context);
   }
 
   public Result calculateQuickResult(ExpressionContext context) {
-    Expression[] parameters = (Expression[])myParameters.toArray(new Expression[myParameters.size()]);
+    Expression[] parameters = myParameters.toArray(new Expression[myParameters.size()]);
     return myMacro.calculateQuickResult(parameters, context);
   }
 
   public LookupItem[] calculateLookupItems(ExpressionContext context) {
-    Expression[] parameters = (Expression[])myParameters.toArray(new Expression[myParameters.size()]);
+    Expression[] parameters = myParameters.toArray(new Expression[myParameters.size()]);
     return myMacro.calculateLookupItems(parameters, context);
   }
 
