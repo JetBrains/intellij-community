@@ -218,6 +218,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     if (myReferences.isEmpty()) return false;
     final PsiReference firstReference = myReferences.get(0);
     final PsiElement callElement = firstReference.getElement().getParent();
+    if (!callElement.isValid()) return false;
     if (!(callElement instanceof Navigatable) || !((Navigatable)callElement).canNavigate()) {
       final PsiFile psiFile = callElement.getContainingFile();
       if (psiFile == null) return false;
