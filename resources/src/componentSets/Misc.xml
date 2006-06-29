@@ -118,6 +118,7 @@
     <component>
       <interface-class>com.intellij.coverage.CoverageDataManager</interface-class>
       <implementation-class>com.intellij.coverage.CoverageDataManagerImpl</implementation-class>
+      <option name="workspace" value="true"/>
     </component>
 
     <component>
