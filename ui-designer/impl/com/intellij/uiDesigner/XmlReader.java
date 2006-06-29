@@ -57,8 +57,7 @@ public final class XmlReader {
           module,
           id,
           lwComponent.getComponentClassName(),
-          lwComponent.getErrorComponentProperties(),
-          "Form cannot be loaded because of recursive form nesting");
+          lwComponent.getErrorComponentProperties(), UIDesignerBundle.message("error.recursive.form.nesting"));
       }
       else {
         component = new RadNestedForm(module, nestedForm.getFormFileName(), id);
@@ -157,6 +156,7 @@ public final class XmlReader {
     // binding
     component.setBinding(lwComponent.getBinding());
     component.setCustomCreate(lwComponent.isCustomCreate());
+    component.setDefaultBinding(lwComponent.isDefaultBinding());
 
     // bounds
     component.setBounds(lwComponent.getBounds());

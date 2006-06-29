@@ -67,6 +67,7 @@ public class UIFormXmlConstants {
   public static final String ATTRIBUTE_INSPECTION = "inspection";
   public static final String ATTRIBUTE_BOUND = "bound";
   public static final String ATTRIBUTE_LAYOUT_MANAGER = "layout-manager";
+  public static final String ATTRIBUTE_DEFAULT_BINDING = "default-binding";
 
   public static final String ELEMENT_BUTTON_GROUPS = "buttonGroups";
   public static final String ELEMENT_GROUP = "group";

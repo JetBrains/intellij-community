@@ -539,6 +539,9 @@ public abstract class RadComponent implements IComponent {
     if (isCustomCreate()) {
       writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_CUSTOM_CREATE, Boolean.TRUE.toString());
     }
+    if (isDefaultBinding()) {
+      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_DEFAULT_BINDING, Boolean.TRUE.toString());
+    }
   }
 
   protected void writeConstraints(final XmlWriter writer){

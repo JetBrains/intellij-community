@@ -64,6 +64,7 @@ public abstract class LwComponent implements IComponent{
   protected final HashMap myClientProperties;
   protected final HashMap myDelegeeClientProperties;
   private boolean myCustomCreate = false;
+  private boolean myDefaultBinding = false;
 
   public LwComponent(final String className){
     if (className == null){
@@ -135,8 +136,8 @@ public abstract class LwComponent implements IComponent{
     return myCustomCreate;
   }
 
-  public void setCustomCreate(final boolean customCreate) {
-    myCustomCreate = customCreate;
+  public boolean isDefaultBinding() {
+    return myDefaultBinding;
   }
 
   public boolean accept(ComponentVisitor visitor) {
@@ -192,7 +193,8 @@ public abstract class LwComponent implements IComponent{
   protected final void readBase(final Element element) {
     setId(LwXmlReader.getRequiredString(element, UIFormXmlConstants.ATTRIBUTE_ID));
     setBinding(element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_BINDING));
-    setCustomCreate(LwXmlReader.getOptionalBoolean(element, UIFormXmlConstants.ATTRIBUTE_CUSTOM_CREATE, false));
+    myCustomCreate = LwXmlReader.getOptionalBoolean(element, UIFormXmlConstants.ATTRIBUTE_CUSTOM_CREATE, false);
+    myDefaultBinding = LwXmlReader.getOptionalBoolean(element, UIFormXmlConstants.ATTRIBUTE_DEFAULT_BINDING, false);
   }
 
   /**
