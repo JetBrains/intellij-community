@@ -354,8 +354,8 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       }
 
       mySelectedContainer.getGridLayoutManager().processCellResized(mySelectedContainer, myIsRow, myResizeLine-1, newSize);
-
-      myEditor.refreshAndSave(false);
+      mySelectedContainer.revalidate();
+      myEditor.refreshAndSave(true);
     }
 
     public void mouseMoved(MouseEvent e) {
