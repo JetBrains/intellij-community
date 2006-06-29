@@ -4,25 +4,21 @@
 
 package com.intellij.xml.util;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlChildRole;
-import com.intellij.xml.XmlBundle;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.lang.ASTNode;
-
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
 
 /**
