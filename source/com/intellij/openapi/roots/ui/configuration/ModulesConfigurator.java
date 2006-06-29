@@ -18,7 +18,6 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
@@ -567,25 +566,4 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
   }
 
-  private class ReloadProjectRequest implements Runnable {
-    private final LanguageLevel myOriginalLanguageLevel;
-
-    public ReloadProjectRequest(final LanguageLevel originalLanguageLevel) {
-      myOriginalLanguageLevel = originalLanguageLevel;
-    }
-
-    public void start() {
-      final ProjectRootManagerEx projectRootManagerEx = ProjectRootManagerEx.getInstanceEx(myProject);
-      if (!myOriginalLanguageLevel.equals(projectRootManagerEx.getLanguageLevel())) {
-        ApplicationManager.getApplication().invokeLater(this, ModalityState.current());
-      }
-    }
-
-    public void run() {
-      final String _message = ProjectBundle.message("module.project.language.level.changed.reload.prompt", myProject.getName());
-      if (Messages.showYesNoDialog(myProject, _message, ProjectBundle.message("modules.title"), Messages.getQuestionIcon()) == 0) {
-        ProjectManagerEx.getInstanceEx().reloadProject(myProject);
-      }
-    }
-  }
 }
