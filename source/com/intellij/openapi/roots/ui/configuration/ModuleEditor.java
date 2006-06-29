@@ -78,7 +78,7 @@ public class ModuleEditor {
   public ModifiableRootModel getModifiableRootModelProxy() {
     if (myModifiableRootModelProxy == null) {
       myModifiableRootModelProxy = (ModifiableRootModel)Proxy.newProxyInstance(
-        getClass().getClassLoader(), new Class[]{ModifiableRootModel.class}, new ModifiableRootModelInvocationHandler(myModifiableRootModel)
+        getClass().getClassLoader(), new Class[]{ModifiableRootModel.class}, new ModifiableRootModelInvocationHandler(getModifiableRootModel())
       );
     }
     return myModifiableRootModelProxy;

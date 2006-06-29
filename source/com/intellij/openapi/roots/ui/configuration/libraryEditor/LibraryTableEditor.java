@@ -419,6 +419,7 @@ public class LibraryTableEditor implements Disposable {
         return;
       }
       final Library[] libraryToSelect = new Library[] {null};
+      final String[] libraryPresentableName = new String[]{null};
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           if (myEditingModuleLibraries) {
@@ -426,8 +427,8 @@ public class LibraryTableEditor implements Disposable {
               final Library library = myTableModifiableModel.createLibrary(null);
               getLibraryEditor(library).addRoot(file, OrderRootType.CLASSES);
               libraryToSelect[0] = library;
+              libraryPresentableName[0] = file.getUrl();
             }
-            commitChanges();
           }
           else {
             final Library library = myTableModifiableModel.createLibrary(name);
@@ -452,7 +453,7 @@ public class LibraryTableEditor implements Disposable {
               }
             });
           }
-          final DefaultMutableTreeNode libraryNode = rootConfigurable.createLibraryNode(libraryToSelect[0]);
+          final DefaultMutableTreeNode libraryNode = rootConfigurable.createLibraryNode(libraryToSelect[0], libraryPresentableName[0]);
           if (myNeedToSelect){
             rootConfigurable.selectNodeInTree(libraryNode);
           }
@@ -607,7 +608,6 @@ public class LibraryTableEditor implements Disposable {
         public void run() {
           for (Object selectedElement : selectedElements) {
             if (selectedElement instanceof LibraryElement) {
-              // todo: any confirmation on library remove?
               removeLibrary(((LibraryElement)selectedElement).getLibrary());
             }
             else if (selectedElement instanceof ItemElement) {

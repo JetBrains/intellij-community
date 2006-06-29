@@ -211,7 +211,11 @@ public class ClasspathPanel extends JPanel {
     if (entry instanceof ModuleOrderEntry){
       nameToSelect = ((ModuleOrderEntry)entry).getModuleName();
     } else if (entry instanceof LibraryOrderEntry){
-      nameToSelect = ((LibraryOrderEntry)entry).getLibraryName();
+      final LibraryOrderEntry libraryOrderEntry = ((LibraryOrderEntry)entry);
+      nameToSelect = libraryOrderEntry.getLibraryName();
+      if (nameToSelect == null){
+        nameToSelect = libraryOrderEntry.getPresentableName();
+      }
     } else if (entry instanceof JdkOrderEntry){
       nameToSelect = ((JdkOrderEntry)entry).getJdkName();
     }

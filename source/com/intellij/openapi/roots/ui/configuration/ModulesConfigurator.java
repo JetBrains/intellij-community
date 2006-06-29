@@ -177,9 +177,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public void reset() {
-    myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-
-    resetModuleEditors();
     if (myProjectJdkConfigurable != null) myProjectJdkConfigurable.reset();
     if (myProjectCompilerOutput != null) {
       final String compilerOutput = ProjectRootManagerEx.getInstance(myProject).getCompilerOutputUrl();
@@ -201,7 +198,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myModuleEditors.clear();
   }
 
-  private void resetModuleEditors() {
+  public void resetModuleEditors() {
+    myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+
     for (final ModuleEditor moduleEditor : myModuleEditors) {
       moduleEditor.removeChangeListener(this);
     }
@@ -359,7 +358,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public String getBannerSlogan() {
-    return myProject.getName();
+    return ProjectBundle.message("project.roots.project.banner.text", myProject.getName());
   }
 
   public String getDisplayName() {
@@ -372,7 +371,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   @Nullable
   @NonNls
-  public String getHelpTopic() { //todo help 
+  public String getHelpTopic() { //todo help id
     return null;
   }
 
@@ -503,11 +502,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         return true;
       }
     }
-    if (!J2EEModuleUtilEx.checkDependentModulesOutputPathConsistency(myProject, J2EEModuleUtil.getAllJ2EEModules(myProject), false)) {
-      return true;
-    }
-
-    return myModified;
+    return myModified ||
+           !J2EEModuleUtilEx.checkDependentModulesOutputPathConsistency(myProject, J2EEModuleUtil.getAllJ2EEModules(myProject), false);
   }
 
 

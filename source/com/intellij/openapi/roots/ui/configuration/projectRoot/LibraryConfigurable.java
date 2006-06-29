@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
@@ -89,7 +90,7 @@ public class LibraryConfigurable implements NamedConfigurable<Library> {
   }
 
   public String getBannerSlogan() {
-    return myLibraryName;
+    return ProjectBundle.message("project.roots.library.banner.text", myLibraryName);
   }
 
   public String getDisplayName() {
