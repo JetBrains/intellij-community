@@ -1,39 +1,37 @@
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDescriptor{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl");
   private final Field myField;
   private ObjectReference myObject;
   private Boolean myIsPrimitive = null;
   private final boolean myIsStatic;
 
-  public FieldDescriptorImpl(Project project, ObjectReference objRef, Field field) {
+  public FieldDescriptorImpl(Project project, ObjectReference objRef, @NotNull Field field) {
     super(project);
     myObject = objRef;
     myField = field;
     myIsStatic = field.isStatic();
     setLvalue(!field.isFinal());
-    LOG.assertTrue(myField != null);
   }
 
   public Field getField() {
@@ -105,7 +103,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
 
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if ((myObject != null)? !VirtualMachineProxyImpl.isCollected(myObject) : true) {
+    if (myObject == null || !VirtualMachineProxyImpl.isCollected(myObject)) {
       return (myObject != null) ? myObject.getValue(myField) : myField.declaringType().getValue(myField);
     }
     else {
