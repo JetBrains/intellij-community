@@ -1060,7 +1060,7 @@ public class CompileDriver {
     }
   }
 
-  private boolean isUnderOutputDir(final String outputDir, final String outputPath, final String className) {
+  private static boolean isUnderOutputDir(final String outputDir, final String outputPath, final String className) {
     final int outputRootLen = outputPath.length() - className.length() - ".class".length() - 1;
     return (outputDir.length() == outputRootLen) && outputDir.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, outputPath, 0, outputRootLen);
   }
