@@ -5,6 +5,7 @@ import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -17,19 +18,20 @@ import java.io.File;
 
 public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
-  private AntElement propHolder;
+  private AntElement myPropHolder;
+  private PsiElement myPropertiesFile;
 
   public AntPropertyImpl(final AntElement parent,
                          final XmlElement sourceElement,
                          final AntTypeDefinition definition,
                          @NonNls final String nameElementAttribute) {
     super(parent, sourceElement, definition, nameElementAttribute);
-    propHolder = parent;
-    if (propHolder instanceof AntCall) {
-      propHolder = propHolder.getAntProject();
+    myPropHolder = parent;
+    if (myPropHolder instanceof AntCall) {
+      myPropHolder = myPropHolder.getAntProject();
     }
     if (getName() != null) {
-      propHolder.setProperty(getName(), this);
+      myPropHolder.setProperty(getName(), this);
     }
     else if (getEnvironment() != null) {
       getAntProject().addEnvironmentPropertyPrefix(getEnvironment());
@@ -106,10 +108,17 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   @Nullable
   public PropertiesFile getPropertiesFile() {
-    final String name = getFileName();
-    if (name == null) return null;
-    final PsiFile psiFile = findFileByName(name);
-    return (psiFile instanceof PropertiesFile) ? (PropertiesFile)psiFile : null;
+    if (myPropertiesFile == null) {
+      myPropertiesFile = AntElementImpl.ourNull;
+      final String name = getFileName();
+      if (name != null) {
+        final PsiFile psiFile = findFileByName(name);
+        if (psiFile instanceof PropertiesFile) {
+          myPropertiesFile = psiFile;
+        }
+      }
+    }
+    return (myPropertiesFile == AntElementImpl.ourNull) ? null : (PropertiesFile)myPropertiesFile;
   }
 
   public void setPropertiesFile(final String name) throws IncorrectOperationException {
@@ -126,6 +135,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   public void clearCaches() {
     super.clearCaches();
-    propHolder.clearCaches();
+    myPropHolder.clearCaches();
+    myPropertiesFile = null;
   }
 }
