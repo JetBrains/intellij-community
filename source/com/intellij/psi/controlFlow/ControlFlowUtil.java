@@ -155,7 +155,7 @@ public class ControlFlowUtil {
       }
 
       public Boolean getResult() {
-        return Boolean.valueOf(neededBelow[offset]);
+        return neededBelow[offset];
       }
     };
     depthFirstSearch(flow, visitor, offset, flow.getSize());
@@ -258,7 +258,7 @@ public class ControlFlowUtil {
       public void visitThrowToInstruction(ThrowToInstruction instruction, int offset, int nextOffset) {
         //[ven]This is a hack since Extract Method doesn't want to see throw's exit points
         processGotoStatement(flow, offset, classesFilter, exitStatements);
-      }                                                                       
+      }
 
       public void visitBranchingInstruction(BranchingInstruction instruction, int offset, int nextOffset) {
         processGoto(flow, start, end, exitPoints, exitStatements, offset, instruction.offset, null, classesFilter);
@@ -512,7 +512,7 @@ public class ControlFlowUtil {
     }
 
     public Boolean getResult() {
-      return Boolean.valueOf(!isNormalCompletion[0]);
+      return !isNormalCompletion[0];
     }
   }
 
@@ -592,7 +592,7 @@ public class ControlFlowUtil {
       }
 
       public Boolean getResult() {
-        return Boolean.valueOf(!isNormalCompletion[startOffset]);
+        return !isNormalCompletion[startOffset];
       }
     }
     final MyVisitor visitor = new MyVisitor();
@@ -679,7 +679,7 @@ public class ControlFlowUtil {
       }
 
       public Boolean getResult() {
-        return Boolean.valueOf(canCompleteNormally[startOffset]);
+        return canCompleteNormally[startOffset];
       }
     }
     final MyVisitor visitor = new MyVisitor();
@@ -807,7 +807,7 @@ public class ControlFlowUtil {
       }
 
       public Boolean getResult() {
-        return Boolean.valueOf(!maybeUnassigned[0]);
+        return !maybeUnassigned[0];
       }
     }
     if (flow.getSize() == 0) return false;
@@ -851,7 +851,7 @@ public class ControlFlowUtil {
       }
 
       public Boolean getResult() {
-        return Boolean.valueOf(!maybeAssigned[0]);
+        return !maybeAssigned[0];
       }
     }
     MyVisitor visitor = new MyVisitor();
@@ -903,7 +903,7 @@ public class ControlFlowUtil {
             maxExitPoints = size;
           }
         }
-        return new Integer(minOffset);
+        return minOffset;
       }
     }
     MyVisitor visitor = new MyVisitor();
@@ -1225,7 +1225,7 @@ public class ControlFlowUtil {
       }
 
       public Integer getResult() {
-        return new Integer((returnCalled[offset] ? RETURN_COMPLETION_REASON : 0) | (normalCompletion[offset] ? NORMAL_COMPLETION_REASON : 0));
+        return (returnCalled[offset] ? RETURN_COMPLETION_REASON : 0) | (normalCompletion[offset] ? NORMAL_COMPLETION_REASON : 0);
       }
     }
     MyVisitor visitor = new MyVisitor();
@@ -1322,7 +1322,7 @@ public class ControlFlowUtil {
       }
 
       public Boolean getResult() {
-        return Boolean.valueOf(reachable);
+        return reachable;
       }
     }
 

@@ -35,7 +35,8 @@ import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.refactoring.util.duplicates.MatchProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.containers.*;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -217,8 +218,6 @@ public class ExtractMethodProcessor implements MatchProvider {
       exitPoints.add(myControlFlow.getEndOffset(myElements[myElements.length - 1]));
     }
 
-    myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, exitPoints.toArray());
-
     if (exitPoints.size() != 1) {
       if (!areExitStatementsTheSame()) {
         showMultipleExitPointsMessage();
@@ -228,6 +227,26 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     else {
       myHasReturnStatement = myExpression == null && ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
+    }
+
+    myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, exitPoints.toArray());
+    if (myGenerateConditionalExit) {
+      //variables declared in selected block used in return statements are to be considered output variables when extracting guard methods
+      final Set<PsiVariable> outputVariables = new HashSet<PsiVariable>(Arrays.asList(myOutputVariables));
+      for (PsiStatement statement : myExitStatements) {
+        statement.accept(new PsiRecursiveElementVisitor() {
+
+          public void visitReferenceExpression(PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            final PsiElement resolved = expression.resolve();
+            if (resolved instanceof PsiVariable && isDeclaredInside((PsiVariable)resolved)) {
+              outputVariables.add((PsiVariable)resolved);
+            }
+          }
+        });
+      }
+
+      myOutputVariables = outputVariables.toArray(new PsiVariable[outputVariables.size()]);
     }
 
     List<PsiVariable> inputVariables =
