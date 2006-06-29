@@ -30,6 +30,7 @@ import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProper
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.radComponents.RadAbstractGridLayoutManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -155,14 +156,15 @@ public final class FormEditingUtil {
   }
 
   public static void deleteEmptyGridCells(final RadContainer parent, final GridConstraints delConstraints) {
+    final RadAbstractGridLayoutManager layoutManaget = parent.getGridLayoutManager();
     for(int row=delConstraints.getRow() + delConstraints.getRowSpan()-1; row >= delConstraints.getRow(); row--) {
-      if (row < parent.getGridRowCount() && GridChangeUtil.isRowEmpty(parent, row)) {
-        parent.getGridLayoutManager().deleteGridCells(parent, row, true);
+      if (row < parent.getGridRowCount() && GridChangeUtil.isRowEmpty(parent, row) && !layoutManaget.isGapCell(parent, true, row)) {
+        layoutManaget.deleteGridCells(parent, row, true);
       }
     }
     for(int col=delConstraints.getColumn() + delConstraints.getColSpan()-1; col >= delConstraints.getColumn(); col--) {
-      if (col < parent.getGridColumnCount() && GridChangeUtil.isColumnEmpty(parent, col)) {
-        parent.getGridLayoutManager().deleteGridCells(parent, col, false);
+      if (col < parent.getGridColumnCount() && GridChangeUtil.isColumnEmpty(parent, col) && !layoutManaget.isGapCell(parent, false, col)) {
+        layoutManaget.deleteGridCells(parent, col, false);
       }
     }
   }
