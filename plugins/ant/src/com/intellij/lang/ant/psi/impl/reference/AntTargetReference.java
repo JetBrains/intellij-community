@@ -68,8 +68,7 @@ public class AntTargetReference extends AntGenericReference {
     AntProject project = getElement().getAntProject();
     AntTarget result = project.getTarget(name);
     if (result == null) {
-      final AntFile[] importedFiles = AntPsiUtil.getImportedFiles(project);
-      for (AntFile imported : importedFiles) {
+      for (AntFile imported : AntPsiUtil.getImportedFiles(project)) {
         if ((result = imported.getAntProject().getTarget(name)) != null) {
           break;
         }
