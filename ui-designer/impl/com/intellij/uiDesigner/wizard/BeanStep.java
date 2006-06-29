@@ -5,7 +5,6 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.ide.wizard.StepAdapter;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -17,6 +16,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -29,8 +29,6 @@ import java.awt.event.ItemListener;
  * @author Vladimir Kondratyev
  */
 final class BeanStep extends StepAdapter{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.wizard.BeanStep");
-
   private JPanel myComponent;
   private TextFieldWithBrowseButton myTfWitgBtnChooseClass;
   private JRadioButton myRbBindToNewBean;
@@ -39,9 +37,7 @@ final class BeanStep extends StepAdapter{
   private TextFieldWithBrowseButton myTfWithBtnChoosePackage;
   private final WizardData myData;
 
-  public BeanStep(final WizardData data) {
-    LOG.assertTrue(data != null);
-
+  public BeanStep(@NotNull final WizardData data) {
     myData = data;
 
     final ItemListener itemListener = new ItemListener() {

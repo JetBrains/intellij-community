@@ -7,8 +7,9 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -34,8 +35,7 @@ final class BindToExistingBeanStep extends StepAdapter{
   private JCheckBox myChkSetData;
   private JPanel myPanel;
 
-  BindToExistingBeanStep(final WizardData data) {
-    LOG.assertTrue(data != null);
+  BindToExistingBeanStep(@NotNull final WizardData data) {
     myData = data;
     myTableModel = new MyTableModel();
     myTable.setModel(myTableModel);
@@ -235,8 +235,8 @@ final class BindToExistingBeanStep extends StepAdapter{
 
       Collections.sort(rwProps);
 
-      for(int i = 0; i < rwProps.size(); i++){
-        model.addElement(rwProps.get(i));
+      for (BeanProperty rwProp : rwProps) {
+        model.addElement(rwProp);
       }
 
       // Set initially selected item

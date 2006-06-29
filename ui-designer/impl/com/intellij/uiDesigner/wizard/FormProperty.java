@@ -1,32 +1,25 @@
 package com.intellij.uiDesigner.wizard;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.lw.LwComponent;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
 public final class FormProperty {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.wizard.FormProperty");
-
-  private LwComponent myLwComponent;
-  private String myComponentPropertyGetterName;
-  private String myComponentPropertySetterName;
-  private String myComponentPropertyClassName;
+  @NotNull private LwComponent myLwComponent;
+  @NotNull private String myComponentPropertyGetterName;
+  @NotNull private String myComponentPropertySetterName;
+  @NotNull private String myComponentPropertyClassName;
 
   public FormProperty(
-    final LwComponent component,
-    final @NonNls String componentPropertyGetterName,
-    final @NonNls String componentPropertySetterName,
-    final @NonNls String componentPropertyClassName
+    final @NotNull LwComponent component,
+    final @NotNull @NonNls String componentPropertyGetterName,
+    final @NotNull @NonNls String componentPropertySetterName,
+    final @NotNull @NonNls String componentPropertyClassName
   ) {
-    LOG.assertTrue(component != null);
-    LOG.assertTrue(componentPropertyGetterName != null);
-    LOG.assertTrue(componentPropertySetterName != null);
-    LOG.assertTrue(componentPropertyClassName != null);
-
     if(
       !String.class.getName().equals(componentPropertyClassName) &&
       !int.class.getName().equals(componentPropertyClassName) &&
@@ -47,32 +40,23 @@ public final class FormProperty {
     myComponentPropertyClassName = componentPropertyClassName;
   }
 
-  /**
-   * @return never <code>null</code>.
-   */
-  public LwComponent getLwComponent() {
+  @NotNull public LwComponent getLwComponent() {
     return myLwComponent;
   }
 
-  /**
-   * @return never <code>null</code>
-   */
-  public String getComponentPropertyGetterName() {
+  @NotNull public String getComponentPropertyGetterName() {
     return myComponentPropertyGetterName;
   }
 
-  /**
-   * @return never <code>null</code>
-   */
-  public String getComponentPropertySetterName() {
+  @NotNull public String getComponentPropertySetterName() {
     return myComponentPropertySetterName;
   }
 
   /**
-   * @return never <code>null</code>. This method can return only one of the following values:
+   * @return This method can return only one of the following values:
    * "int", "float", "double", "long", "boolean", "char", "byte", "short", "java.lang.String"
    */
-  public String getComponentPropertyClassName() {
+  @NotNull public String getComponentPropertyClassName() {
     return myComponentPropertyClassName;
   }
 }

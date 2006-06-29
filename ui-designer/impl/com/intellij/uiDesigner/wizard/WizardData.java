@@ -8,6 +8,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -16,14 +17,11 @@ import com.intellij.uiDesigner.lw.LwRootContainer;
 public final class WizardData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.wizard.WizardData");
 
+  @NotNull public final Project myProject;
   /**
-   * Never <code>null</code>.
+   * Form's file.
    */
-  public final Project myProject;
-  /**
-   * Form's file. Never <code>null</code>.
-   */
-  public final VirtualFile myFormFile;
+  @NotNull public final VirtualFile myFormFile;
 
   /**
    * If <code>true</code> then {@link #myShortClassName} and {@link #myPackageName} should be
@@ -43,15 +41,11 @@ public final class WizardData {
    * Bean's class. If <code>null</code> then bean's class is't defined yet.
    */
   public PsiClass myBeanClass;
-  /**
-   * Never <code>null</code>.
-   */
-  public final FormProperty2BeanProperty[] myBindings;
+  @NotNull public final FormProperty2BeanProperty[] myBindings;
 
   public boolean myGenerateIsModified;
 
-  public WizardData(final Project project, final VirtualFile formFile) throws Generator.MyException {
-    LOG.assertTrue(formFile != null);
+  public WizardData(@NotNull final Project project, @NotNull final VirtualFile formFile) throws Generator.MyException {
     myProject = project;
     myFormFile = formFile;
     myBindToNewBean = true;

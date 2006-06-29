@@ -2,19 +2,17 @@ package com.intellij.uiDesigner.wizard;
 
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.ide.wizard.StepAdapter;
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
 final class BindCompositeStep extends StepAdapter{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.wizard.BindCompositeStep");
   private final WizardData myData;
   private final JPanel myCardHolder;
 
@@ -27,8 +25,7 @@ final class BindCompositeStep extends StepAdapter{
   @NonNls
   private static final String CARD_EXISTING_BEAN = "existingBean";
 
-  BindCompositeStep(final WizardData data) {
-    LOG.assertTrue(data != null);
+  BindCompositeStep(@NotNull final WizardData data) {
     myData = data;
 
     myBindToNewBeanStep = new BindToNewBeanStep(data);
