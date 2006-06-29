@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.diff.*;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -103,7 +104,12 @@ public class ShowDiffAction extends AnAction {
       });
     }
 
-    diffReq.setContents(createContent(project, bRev), createContent(project, aRev));
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        diffReq.setContents(createContent(project, bRev), createContent(project, aRev));
+      }
+    }, "Getting revisions content", false, project);
+
     diffReq.setContentTitles("Base version", "Your version");
     return diffReq;
   }
