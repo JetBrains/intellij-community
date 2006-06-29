@@ -509,7 +509,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   public ProjectJdk getSelectedJdk() {
     final Object object = getSelectedObject();
     if (object instanceof ProjectJdk){
-      return (ProjectJdk)object;
+      return myJdksTreeModel.findSdk((ProjectJdk)object);
     }
     return null;
   }

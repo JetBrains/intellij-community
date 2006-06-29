@@ -20,6 +20,7 @@ import java.awt.*;
  */
 public class ProjectJdksEditor extends DialogWrapper{
   private ProjectRootConfigurable myConfigurable;
+  private ProjectJdk myProjectJdk;
 
   public ProjectJdksEditor(ProjectJdk jdk, Component parent){
     super(parent, true);
@@ -42,6 +43,7 @@ public class ProjectJdksEditor extends DialogWrapper{
 
   protected void doOKAction(){
     try{
+      myProjectJdk = myConfigurable.getSelectedJdk(); //before dispose
       myConfigurable.apply();
       super.doOKAction();
     }
@@ -56,7 +58,7 @@ public class ProjectJdksEditor extends DialogWrapper{
   }
 
   public ProjectJdk getSelectedJdk(){
-    return myConfigurable.getSelectedJdk();
+    return myProjectJdk;
   }
 
 }
