@@ -1018,10 +1018,7 @@ public class CompileDriver {
             if (currentOutputDir != null) {
               final String className = cache.getClassName(outputPath);
               //noinspection HardCodedStringLiteral
-              final boolean pathsEqual = className == null || currentOutputDir.regionMatches(
-                !SystemInfo.isFileSystemCaseSensitive, 0, outputPath, 0, outputPath.length() - className.length() - ".class".length() - 1
-              );
-              if (pathsEqual) {
+              if (className == null || isUnderOutputDir(currentOutputDir, outputPath, className)) {
                 shouldDelete = false;
               }
               else {
@@ -1061,6 +1058,11 @@ public class CompileDriver {
     for (final String aToRemove : toRemove) {
       cache.remove(aToRemove);
     }
+  }
+
+  private boolean isUnderOutputDir(final String outputDir, final String outputPath, final String className) {
+    final int outputRootLen = outputPath.length() - className.length() - ".class".length() - 1;
+    return (outputDir.length() == outputRootLen) && outputDir.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, outputPath, 0, outputRootLen);
   }
 
   private static void updateInternalCaches(final TranslatingCompilerStateCache cache, final CompileContextImpl context, final TranslatingCompiler.OutputItem[] successfullyCompiled, final VirtualFile[] filesToRecompile) {
@@ -1225,6 +1227,11 @@ public class CompileDriver {
     String path = map.get(module);
     if (path == null) {
       path = CompilerPaths.getModuleOutputPath(module, inTestSourceContent);
+      /*
+      if (!path.endsWith("/")) {
+        path = path + "/";
+      }
+      */
       map.put(module, path);
     }
 
