@@ -101,7 +101,13 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     final Dimension preferredSize = new Dimension(myTree.getPreferredSize().width + 20, myScrollPane.getPreferredSize().height);
     myScrollPane.setPreferredSize(preferredSize);
     myScrollPane.setMaximumSize(new Dimension(150, -1));
-    return myWholePanel;
+    final JPanel panel = new JPanel(new BorderLayout()) {
+      public Dimension getPreferredSize() {
+        return new Dimension(500, 600);
+      }
+    };
+    panel.add(myWholePanel, BorderLayout.CENTER);
+    return panel;
   }
 
   public boolean isModified() {
@@ -162,7 +168,8 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     myTree.requestFocus();
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        TreeUtil.selectFirstNode(myTree);
+        TreeUtil.selectInTree((DefaultMutableTreeNode)myRoot.getChildAt(0), true, myTree);
+        if (myLastEditedConfigurable == null) return;
         final Enumeration enumeration = myRoot.breadthFirstEnumeration();
         while (enumeration.hasMoreElements()) {
           final MyNode node = (MyNode)enumeration.nextElement();
