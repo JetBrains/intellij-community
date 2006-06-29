@@ -9,14 +9,10 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.tree.StaticDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
-import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Field;
 import com.sun.jdi.ReferenceType;
 
-import java.util.Iterator;
-
 public class StaticDescriptorImpl extends NodeDescriptorImpl implements StaticDescriptor{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.StaticDescriptorImpl");
 
   private final ReferenceType myType;
   private final boolean myHasStaticFields;
@@ -25,8 +21,7 @@ public class StaticDescriptorImpl extends NodeDescriptorImpl implements StaticDe
     myType = refType;
 
     boolean hasStaticFields = false;
-    for (Iterator it = myType.allFields().iterator(); it.hasNext();) {
-      Field field = (Field)it.next();
+    for (Field field : myType.allFields()) {
       if (field.isStatic()) {
         hasStaticFields = true;
         break;
