@@ -48,5 +48,7 @@ public class SettingsEditorGroup<T> extends SettingsEditor<T> {
     return null;
   }
 
-  public void disposeEditor() {}
+  public void disposeEditor() {
+    Disposer.dispose(this);
+  }
 }

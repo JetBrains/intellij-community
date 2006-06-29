@@ -85,6 +85,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
   }
 
   public void disposeEditor() {
+    Disposer.dispose(this);
     myIsDisposed = true;
   }
 
