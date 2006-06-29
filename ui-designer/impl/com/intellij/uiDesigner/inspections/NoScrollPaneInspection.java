@@ -14,6 +14,7 @@ import com.intellij.uiDesigner.quickFixes.QuickFix;
 
 import javax.swing.*;
 import java.util.Collections;
+import java.util.ArrayList;
 
 /**
  * @author yole
@@ -47,9 +48,8 @@ public class NoScrollPaneInspection extends BaseFormInspection {
     }
 
     public void run() {
-      new SurroundAction(JScrollPane.class.getName()).actionPerformed(myEditor,
-                                                                      Collections.singletonList(myComponent),
-                                                                      null);
+      ArrayList<RadComponent> targetList = new ArrayList<RadComponent>(Collections.singletonList(myComponent));
+      new SurroundAction(JScrollPane.class.getName()).actionPerformed(myEditor, targetList, null);
     }
   }
 }
