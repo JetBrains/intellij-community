@@ -35,10 +35,12 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
     final PsiFile containingFile = root.getContainingFile();
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     FileHighlighingSetting[] fileHighlighingSettings = myHighlightSettings.get(virtualFile);
-    if(fileHighlighingSettings == null){
+    final int index = PsiUtil.getRootIndex(root);
+
+    if(fileHighlighingSettings == null || fileHighlighingSettings.length <= index){
       fileHighlighingSettings = getDefaults(containingFile.getViewProvider().getBaseLanguage());
     }
-    return fileHighlighingSettings[PsiUtil.getRootIndex(root)];
+    return fileHighlighingSettings[index];
   }
 
   public FileHighlighingSetting[] getDefaults(Language lang){
