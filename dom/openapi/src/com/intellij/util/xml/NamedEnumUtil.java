@@ -4,6 +4,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.util.Function;
+import com.intellij.openapi.util.Comparing;
 
 /**
  * @author peter
@@ -22,7 +23,7 @@ public class NamedEnumUtil {
   
   public static <T extends Enum> T getEnumElementByValue(final Class<T> enumClass, final String value, Function<Enum, String> show) {
     for (final T t : enumClass.getEnumConstants()) {
-      if (value.equals(show.fun(t))) {
+      if (Comparing.equal(value, show.fun(t))) {
         return t;
       }
     }
