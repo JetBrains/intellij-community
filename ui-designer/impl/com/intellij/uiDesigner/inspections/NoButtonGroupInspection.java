@@ -2,8 +2,10 @@ package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.propertyInspector.properties.IdentifierValidator;
 import com.intellij.uiDesigner.actions.GroupButtonsAction;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.GuiEditor;

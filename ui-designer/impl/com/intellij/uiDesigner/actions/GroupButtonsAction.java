@@ -1,10 +1,13 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.propertyInspector.properties.IdentifierValidator;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,8 +23,15 @@ public class GroupButtonsAction extends AbstractGuiEditorAction {
   }
 
   public static void groupButtons(final GuiEditor editor, final List<RadComponent> selectedComponents) {
+    String groupName = Messages.showInputDialog(editor.getProject(),
+                                                UIDesignerBundle.message("group.buttons.name.prompt"),
+                                                UIDesignerBundle.message("group.buttons.title"),
+                                                Messages.getQuestionIcon(),
+                                                editor.getRootContainer().suggestGroupName(),
+                                                new IdentifierValidator(editor.getProject()));
+    if (groupName == null) return;
     RadRootContainer rootContainer = editor.getRootContainer();
-    RadButtonGroup group = rootContainer.createGroup(rootContainer.suggestGroupName());
+    RadButtonGroup group = rootContainer.createGroup(groupName);
     for(RadComponent component: selectedComponents) {
       rootContainer.setGroupForComponent(component, group);
     }

@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.InputValidator;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -91,16 +90,7 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
         component.getProject(),
         UIDesignerBundle.message("custom.create.field.name.prompt"),
         UIDesignerBundle.message("custom.create.title"), Messages.getQuestionIcon(),
-        initialBinding,
-        new InputValidator() {
-           public boolean checkInput(String inputString) {
-             return nameHelper.isIdentifier(inputString);
-           }
-
-           public boolean canClose(String inputString) {
-             return nameHelper.isIdentifier(inputString);
-           }
-         });
+        initialBinding, new IdentifierValidator(component.getProject()));
       if (binding == null) {
         return;
       }
@@ -168,4 +158,5 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
       });
     }
   }
+
 }
