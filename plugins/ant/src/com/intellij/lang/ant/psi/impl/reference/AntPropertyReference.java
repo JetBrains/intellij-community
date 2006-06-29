@@ -1,14 +1,13 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.AntProperty;
-import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.misc.AntPsiUtil;
+import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntElementImpl;
 import com.intellij.lang.ant.quickfix.AntCreatePropertyAction;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -92,7 +91,16 @@ public class AntPropertyReference extends AntGenericReference {
   }
 
   public Object[] getVariants() {
-    return getVariants(getElement().getAntProject());
+    final Set<String> variants = new HashSet<String>();
+    final AntProject project = getElement().getAntProject();
+    for (AntProperty property : project.getProperties()) {
+      variants.add(property.getName());
+    }
+    getVariants(project, variants);
+    for (AntFile imported : AntPsiUtil.getImportedFiles(project)) {
+      getVariants(imported.getAntProject(), variants);
+    }
+    return variants.toArray(new String[variants.size()]);
   }
 
   @NotNull
@@ -111,18 +119,29 @@ public class AntPropertyReference extends AntGenericReference {
     return result.toArray(new IntentionAction[result.size()]);
   }
 
-  private static String[] getVariants(AntStructuredElement element) {
-    final Set<String> variants = new HashSet<String>();
-    for (AntProperty property : element.getProperties()) {
-      variants.add(property.getName());
-    }
+  private static void getVariants(final AntStructuredElement element, final Set<String> variants) {
     for (PsiElement child : element.getChildren()) {
       if (child instanceof AntStructuredElement) {
-        for (String variant : getVariants((AntStructuredElement)child)) {
-          variants.add(variant);
+        getVariants((AntStructuredElement)child, variants);
+        if (child instanceof AntProperty) {
+          AntProperty property = (AntProperty)child;
+          final PropertiesFile propertiesFile = property.getPropertiesFile();
+          if (propertiesFile == null) {
+            final String name = property.getName();
+            if (name != null) {
+              variants.add(name);
+            }
+          }
+          else {
+            for (Property importedProp : propertiesFile.getProperties()) {
+              final String name = importedProp.getKey();
+              if (name != null) {
+                variants.add(name);
+              }
+            }
+          }
         }
       }
     }
-    return variants.toArray(new String[variants.size()]);
   }
 }
