@@ -67,7 +67,13 @@ public class AntRefIdReference extends AntGenericReference {
   }
 
   public Object[] getVariants() {
-    return getVariants(getElement().getAntProject());
+    final Set<String> variants = new HashSet<String>();
+    final AntProject project = getElement().getAntProject();
+    getVariants(project, variants);
+    for (AntFile imported : AntPsiUtil.getImportedFiles(project)) {
+      getVariants(imported.getAntProject(), variants);
+    }
+    return variants.toArray(new String[variants.size()]);
   }
 
   @NotNull
@@ -75,20 +81,14 @@ public class AntRefIdReference extends AntGenericReference {
     return super.getFixes();
   }
 
-  private static String[] getVariants(AntStructuredElement element) {
-    final Set<String> variants = new HashSet<String>();
-    appendSet(variants, element.getRefIds());
+  private static void getVariants(final AntStructuredElement element, final Set<String> variants) {
+    for (String str : element.getRefIds()) {
+      variants.add(str);
+    }
     for (PsiElement child : element.getChildren()) {
       if (child instanceof AntStructuredElement) {
-        appendSet(variants, getVariants((AntStructuredElement)child));
+        getVariants((AntStructuredElement)child, variants);
       }
-    }
-    return variants.toArray(new String[variants.size()]);
-  }
-
-  private static void appendSet(final Set<String> set, final String[] strs) {
-    for (String str : strs) {
-      set.add(str);
     }
   }
 }
