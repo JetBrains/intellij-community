@@ -180,10 +180,87 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
 
     if (lowerBound == PsiType.NULL) lowerBound = upperBound;
 
-    if (lowerBound == PsiType.NULL) {
+    if (lowerBound == PsiType.NULL && parent != null) {
       lowerBound = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, forCompletion);
     }
     return lowerBound;
+  }
+
+  public PsiSubstitutor inferTypeArguments(final PsiTypeParameter[] typeParameters,
+                                           final PsiParameter[] parameters,
+                                           PsiExpression[] arguments,
+                                           PsiSubstitutor partialSubstitutor,
+                                           PsiElement parent,
+                                           final boolean forCompletion) {
+    PsiType[] substitutions = new PsiType[typeParameters.length];
+    for (int i = 0; i < typeParameters.length; i++) {
+      substitutions[i] = inferTypeForMethodTypeParameter(typeParameters[i], parameters, arguments, partialSubstitutor, null, forCompletion);
+    }
+
+    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(parent);
+    final PsiManager manager = parent.getManager();
+    for (int i = 0; i < typeParameters.length; i++) {
+      PsiTypeParameter typeParameter = typeParameters[i];
+      if (substitutions[i] == PsiType.NULL) {
+        PsiType substitutionFromBounds = PsiType.NULL;
+        OtherParameters:
+        for (int j = 0; j < typeParameters.length; j++) {
+          if (i != j) {
+            PsiTypeParameter other = typeParameters[j];
+            final PsiType otherSubstitution = substitutions[j];
+            if (otherSubstitution == PsiType.NULL) continue;
+            final PsiClassType[] bounds = other.getExtendsListTypes();
+            for (PsiClassType bound : bounds) {
+              final PsiType substitutedBound = partialSubstitutor.substitute(bound);
+              final Pair<PsiType, ConstraintType> currentConstraint =
+                getSubstitutionForTypeParameterConstraint(typeParameter, substitutedBound, otherSubstitution, true, languageLevel);
+              if (currentConstraint == null) continue;
+              final PsiType currentSubstitution = currentConstraint.getFirst();
+              final ConstraintType currentConstraintType = currentConstraint.getSecond();
+              if (currentConstraintType == ConstraintType.EQUALS) {
+                substitutionFromBounds = currentSubstitution;
+                break OtherParameters;
+              }
+              else if (currentConstraintType == ConstraintType.SUPERTYPE) {
+                if (substitutionFromBounds == PsiType.NULL) {
+                  substitutionFromBounds = currentSubstitution;
+                }
+                else {
+                  substitutionFromBounds = GenericsUtil.getLeastUpperBound(substitutionFromBounds, currentSubstitution, manager);
+                }
+              }
+            }
+
+          }
+        }
+
+        if (substitutionFromBounds != PsiType.NULL) substitutions[i] = substitutionFromBounds;
+      }
+    }
+
+    for (int i = 0; i < typeParameters.length; i++) {
+      PsiTypeParameter typeParameter = typeParameters[i];
+      PsiType substitution = substitutions[i];
+      if (substitution == PsiType.NULL) {
+        substitution = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, forCompletion);
+      }
+
+      if (substitution == null) {
+        return createRawSubstitutor(partialSubstitutor, typeParameters);
+      }
+      else if (substitution != PsiType.NULL) {
+        partialSubstitutor = partialSubstitutor.put(typeParameter, substitution);
+      }
+    }
+    return partialSubstitutor;
+  }
+
+  private static PsiSubstitutor createRawSubstitutor(PsiSubstitutor substitutor, PsiTypeParameter[] typeParameters) {
+    for (PsiTypeParameter typeParameter : typeParameters) {
+      substitutor = substitutor.put(typeParameter, null);
+    }
+
+    return substitutor;
   }
 
   private static Pair<PsiType, ConstraintType> processArgType(PsiType arg, final ConstraintType constraintType) {
@@ -240,7 +317,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
       JavaResolveResult paramResult = ((PsiClassType)param).resolveGenerics();
       PsiClass paramClass = (PsiClass)paramResult.getElement();
       if (typeParam == paramClass) {
-        return arg == null || arg.getDeepComponentType() instanceof PsiPrimitiveType ||
+        return arg == null || arg.getDeepComponentType() instanceof PsiPrimitiveType || arg instanceof PsiIntersectionType ||
                PsiUtil.resolveClassInType(arg) != null ? new Pair<PsiType, ConstraintType> (arg, ConstraintType.SUPERTYPE) : null;
       }
       if (paramClass == null) return null;

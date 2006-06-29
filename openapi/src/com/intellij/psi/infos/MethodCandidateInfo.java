@@ -113,19 +113,12 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
 
     PsiResolveHelper helper = method.getManager().getResolveHelper();
-    for (final PsiTypeParameter typeParameter : typeParameters) {
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
-
-      PsiType substitution = helper.inferTypeForMethodTypeParameter(typeParameter, parameters, arguments,
-                                                                    partialSubstitutor, myArgumentList.getParent(), forCompletion);
-
-      if (substitution == null) return createRawSubstitutor(partialSubstitutor, typeParameters);
-      if (substitution == PsiType.NULL) continue;
-
-      if (substitution == PsiType.NULL || substitution == PsiType.VOID) substitution = null;
-      partialSubstitutor = partialSubstitutor.put(typeParameter, substitution);
-    }
-    return partialSubstitutor;
+    return helper.inferTypeArguments(typeParameters,
+                                                   method.getParameterList().getParameters(),
+                                                   arguments,
+                                                   partialSubstitutor,
+                                                   myArgumentList.getParent(),
+                                                   forCompletion);
   }
 
   private static PsiSubstitutor createRawSubstitutor(PsiSubstitutor substitutor, PsiTypeParameter[] typeParameters) {

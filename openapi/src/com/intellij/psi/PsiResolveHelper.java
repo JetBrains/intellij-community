@@ -99,8 +99,15 @@ public interface PsiResolveHelper {
                                           final PsiParameter[] parameters,
                                           PsiExpression[] arguments,
                                           PsiSubstitutor partialSubstitutor,
-                                          PsiElement parent,
+                                          @Nullable PsiElement parent,
                                           final boolean forCompletion);
+
+  PsiSubstitutor inferTypeArguments(final PsiTypeParameter[] typeParameters,
+                                    final PsiParameter[] parameters,
+                                    PsiExpression[] arguments,
+                                    PsiSubstitutor partialSubstitutor,
+                                    PsiElement parent,
+                                    final boolean forCompletion);
 
   PsiType getSubstitutionForTypeParameter(PsiTypeParameter typeParam,
                                           PsiType param,
