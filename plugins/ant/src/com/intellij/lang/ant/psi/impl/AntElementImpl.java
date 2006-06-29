@@ -288,24 +288,28 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   }
 
   private static PsiElement resolvePropertyInProject(final AntProject project, final String propName) {
-    for (PsiElement child : project.getChildren()) {
-      if (child instanceof AntProperty) {
-        AntProperty prop = (AntProperty)child;
-        final PropertiesFile propFile = prop.getPropertiesFile();
-        if (propFile != null) {
-          String prefix = prop.getPrefix();
-          if (prefix != null && !prefix.endsWith(".")) {
-            prefix += '.';
-          }
-          final String key = (prefix == null) ? propName : prefix + propName;
-          final Property property = propFile.findPropertyByKey(key);
-          if (property != null) {
-            return property;
+    PsiElement result = project.getProperty(propName);
+    if (result == null) {
+      for (PsiElement child : project.getChildren()) {
+        if (child instanceof AntProperty) {
+          AntProperty prop = (AntProperty)child;
+          final PropertiesFile propFile = prop.getPropertiesFile();
+          if (propFile != null) {
+            String prefix = prop.getPrefix();
+            if (prefix != null && !prefix.endsWith(".")) {
+              prefix += '.';
+            }
+            final String key = (prefix == null) ? propName : prefix + propName;
+            final Property property = propFile.findPropertyByKey(key);
+            if (property != null) {
+              result = property;
+              break;
+            }
           }
         }
       }
     }
-    return null;
+    return result;
   }
 
   private static PsiElement resolveTargetProperty(final AntTarget target, final String propName, final HashSet<PsiElement> stack) {
