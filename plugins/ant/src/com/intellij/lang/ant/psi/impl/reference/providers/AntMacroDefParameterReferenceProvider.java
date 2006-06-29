@@ -55,7 +55,7 @@ public class AntMacroDefParameterReferenceProvider extends GenericReferenceProvi
       startIndex += 2;
       endIndex = text.indexOf('}', startIndex);
       if (endIndex < 0) break;
-      if (endIndex > startIndex) {
+      if (endIndex >= startIndex) {
         final String name = text.substring(startIndex, endIndex);
         refs.add(new AntMacroDefParameterReference(this, antElement, name,
                                                    new TextRange(offsetInPosition + startIndex, offsetInPosition + endIndex), element));

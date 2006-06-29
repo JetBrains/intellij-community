@@ -74,7 +74,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
         startIndex += 2;
         endIndex = value.indexOf('}', startIndex);
         if (endIndex < 0) break;
-        if (endIndex > startIndex) {
+        if (endIndex >= startIndex) {
           final String propName = value.substring(startIndex, endIndex);
           if (project.isEnvironmentProperty(propName) && AntElementImpl.resolveProperty(element, propName) == null) {
             continue;

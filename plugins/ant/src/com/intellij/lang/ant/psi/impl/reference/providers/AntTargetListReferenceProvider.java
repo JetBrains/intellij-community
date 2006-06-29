@@ -29,23 +29,18 @@ public class AntTargetListReferenceProvider extends AntTargetReferenceProviderBa
     int offsetInPosition = xmlAttributeValue.getTextRange().getStartOffset() - target.getTextRange().getStartOffset() + 1;
     final String str = attr.getValue();
     final String[] targets = str.split(",");
-    final int length = targets.length;
-    if (length == 0) {
-      return PsiReference.EMPTY_ARRAY;
-    }
     final List<PsiReference> result = PsiReferenceListSpinAllocator.alloc();
     try {
       for (final String t : targets) {
         int i = 0;
-        for (; i < t.length(); ++i) {
+        final int len = t.length();
+        for (; i < len; ++i) {
           if (!Character.isWhitespace(t.charAt(i))) break;
         }
-        if (i < t.length()) {
-          final String targetName = t.substring(i).trim();
-          result.add(new AntTargetReference(this, target, targetName,
-                                            new TextRange(offsetInPosition + i, offsetInPosition + i + targetName.length()), attr));
-        }
-        offsetInPosition += t.length() + 1;
+        final String targetName = (i < len) ? t.substring(i).trim() : "";
+        result.add(new AntTargetReference(this, target, targetName,
+                                          new TextRange(offsetInPosition + i, offsetInPosition + i + targetName.length()), attr));
+        offsetInPosition += len + 1;
       }
       return (result.size() > 0) ? result.toArray(new PsiReference[result.size()]) : PsiReference.EMPTY_ARRAY;
     }
