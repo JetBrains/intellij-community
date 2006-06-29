@@ -64,14 +64,14 @@ public abstract class DebuggerAction extends AnAction {
     if (paths == null || paths.length == 0) {
       return EMPTY_TREE_NODE_ARRAY;
     }
-    List nodes = new ArrayList(paths.length);
-    for (int idx = 0; idx < paths.length; idx++) {
-      Object component = paths[idx].getLastPathComponent();
+    List<Object> nodes = new ArrayList<Object>(paths.length);
+    for (TreePath path : paths) {
+      Object component = path.getLastPathComponent();
       if (component instanceof DebuggerTreeNodeImpl) {
         nodes.add(component);
       }
     }
-    return ((DebuggerTreeNodeImpl[])nodes.toArray(new DebuggerTreeNodeImpl[nodes.size()]));
+    return nodes.toArray(new DebuggerTreeNodeImpl[nodes.size()]);
   }
 
   public static DebuggerContextImpl getDebuggerContext(DataContext dataContext) {
