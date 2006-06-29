@@ -441,15 +441,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
   }
 
-  public void reloadProject(final Project project) {
-    ProjectReloadState.getInstance(project).onBeforeAutomaticProjectReload();
+  public void reloadProject(final Project p) {
+    final Project[] project = new Project[]{p};
+
+    ProjectReloadState.getInstance(project[0]).onBeforeAutomaticProjectReload();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         LOG.info("Reloading project.");
-        final String path = project.getProjectFilePath();
-        final List<VirtualFile> original = getAllProjectFiles(project);
+        final String path = project[0].getProjectFilePath();
+        final List<VirtualFile> original = getAllProjectFiles(project[0]);
 
-        if (project.isDisposed() || ProjectUtil.closeProject(project)) {
+        if (project[0].isDisposed() || ProjectUtil.closeProject(project[0])) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               for (final VirtualFile aOriginal : original) {
@@ -458,6 +460,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
             }
           });
 
+          project[0] = null; // Let it go.
           ProjectUtil.openProject(path, null, true);
         }
       }
