@@ -31,6 +31,7 @@
  */
 package com.intellij.pom.core.impl;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -240,7 +241,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     // there could be pseudo phisical trees (JSPX/JSP/etc.) which must not translate
     // any changes to document and not to fire any PSI events
     LOG.assertTrue(changeScope != null);
-    final FileElement fileElement = TreeUtil.getFileElement((TreeElement)changeScope.getNode());
+    final ASTNode node = changeScope.getNode();
+    if (node == null) return changeScope.getContainingFile();
+    final FileElement fileElement = TreeUtil.getFileElement((TreeElement)node);
     if (fileElement == null) {
       LOG.assertTrue(false);
     }
