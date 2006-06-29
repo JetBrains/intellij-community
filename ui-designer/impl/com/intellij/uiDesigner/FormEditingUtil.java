@@ -726,6 +726,15 @@ public final class FormEditingUtil {
     return null;
   }
 
+  public static void remapToActionTargets(final List<RadComponent> selection) {
+    for(int i=0; i<selection.size(); i++) {
+      final RadComponent c = selection.get(i);
+      if (c.getParent() != null) {
+        selection.set(i, c.getParent().getActionTargetComponent(c));
+      }
+    }
+  }
+
   public static interface StringDescriptorVisitor<T extends IComponent> {
     boolean visit(T component, StringDescriptor descriptor);
   }

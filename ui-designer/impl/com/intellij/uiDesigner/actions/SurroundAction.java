@@ -6,6 +6,7 @@ package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 import com.intellij.uiDesigner.radComponents.*;
@@ -26,6 +27,8 @@ import java.util.List;
  * @author yole
  */
 public class SurroundAction extends AbstractGuiEditorAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.SurroundAction");
+
   private String myComponentClass;
 
   public SurroundAction(String componentClass) {
@@ -36,6 +39,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
 
   public void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
     // the action is also reused as quickfix for NoScrollPaneInspection, so this code should be kept here
+    FormEditingUtil.remapToActionTargets(selection);
     if (!editor.ensureEditable()) {
       return;
     }
@@ -55,7 +59,18 @@ public class SurroundAction extends AbstractGuiEditorAction {
           }
 
           if (cItem == palette.getPanelItem()) {
-            newContainer.setLayoutManager(new RadGridLayoutManager());
+            if (selectionParent.getLayoutManager().isGrid()) {
+              try {
+                newContainer.setLayoutManager(LayoutManagerRegistry.createLayoutManager(selectionParent.getLayoutManager().getName()));
+              }
+              catch (Exception e1) {
+                LOG.error(e1);
+                return;
+              }
+            }
+            else {
+              newContainer.setLayoutManager(LayoutManagerRegistry.createDefaultGridLayoutManager(editor.getProject()));
+            }
           }
 
           Rectangle rc = new Rectangle(0, 0, 1, 1);
@@ -104,14 +119,30 @@ public class SurroundAction extends AbstractGuiEditorAction {
             }
           }
 
-          if (!(newContainer instanceof RadScrollPane) && !(newContainer instanceof RadSplitPane)) {
-            newContainer.setLayout(new GridLayoutManager(rc.height, rc.width));
+          // if surrounding a single control with JPanel, 1x1 grid in resulting container is sufficient
+          // otherwise, copy column properties and row/col spans
+          if (newContainer.getComponentClass().equals(JPanel.class) && selection.size() > 1) {
+            if (selectionParent.getLayoutManager().isGrid()) {
+              newContainer.getGridLayoutManager().copyGridSection(selectionParent, newContainer, rc);
+            }
+            else {
+              // TODO[yole]: correctly handle surround from indexed
+              newContainer.setLayout(new GridLayoutManager(rc.height, rc.width));
+            }
           }
 
           for(RadComponent c: selection) {
             if (selectionParent.getLayoutManager().isGrid()) {
-              c.getConstraints().setRow(c.getConstraints().getRow() - rc.y);
-              c.getConstraints().setColumn(c.getConstraints().getColumn() - rc.x);
+              if (selection.size() > 1) {
+                c.getConstraints().setRow(c.getConstraints().getRow() - rc.y);
+                c.getConstraints().setColumn(c.getConstraints().getColumn() - rc.x);
+              }
+              else {
+                c.getConstraints().setRow(0);
+                c.getConstraints().setColumn(0);
+                c.getConstraints().setRowSpan(1);
+                c.getConstraints().setColSpan(1);
+              }
             }
             newContainer.addComponent(c);
           }
@@ -121,6 +152,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
   }
 
   protected void update(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+    FormEditingUtil.remapToActionTargets(selection);
     RadContainer selectionParent = FormEditingUtil.getSelectionParent(selection);
     e.getPresentation().setEnabled(selectionParent != null &&
                                    ((!selectionParent.getLayoutManager().isGrid() && selection.size() == 1) ||

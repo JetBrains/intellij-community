@@ -458,7 +458,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
 
   @Override
   public Property[] getContainerProperties(final Project project) {
-    return Property.EMPTY_ARRAY; // TODO
+    return Property.EMPTY_ARRAY;
   }
 
   @Override
@@ -484,28 +484,46 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   }
 
   @Override
-  public void copyGridCells(RadContainer grid, final boolean isRow, int cellIndex, int cellCount, int targetIndex) {
-    FormLayout formLayout = getFormLayout(grid);
+  public void copyGridCells(RadContainer source, final RadContainer destination, final boolean isRow, int cellIndex, int cellCount, int targetIndex) {
+    FormLayout sourceLayout = getFormLayout(source);
+    FormLayout destinationLayout = getFormLayout(destination);
     if (isRow) {
-      insertOrAppendRow(formLayout, targetIndex+1, FormFactory.RELATED_GAP_ROWSPEC);
+      insertOrAppendRow(destinationLayout, targetIndex+1, FormFactory.RELATED_GAP_ROWSPEC);
     }
     else {
-      insertOrAppendColumn(formLayout, targetIndex+1, FormFactory.RELATED_GAP_COLSPEC);
+      insertOrAppendColumn(destinationLayout, targetIndex+1, FormFactory.RELATED_GAP_COLSPEC);
     }
     targetIndex++;
     if (targetIndex < cellIndex) cellIndex++;
+    copyFormSpecs(sourceLayout, destinationLayout, isRow, cellIndex, cellCount, targetIndex);
+  }
+
+  private void copyFormSpecs(final FormLayout sourceLayout,
+                             final FormLayout destinationLayout,
+                             final boolean isRow,
+                             int cellIndex,
+                             final int cellCount,
+                             int targetIndex) {
     for(int i=0; i < cellCount; i++) {
       if (isRow) {
-        RowSpec rowSpec = formLayout.getRowSpec(cellIndex + 1);
-        insertOrAppendRow(formLayout, targetIndex+1, rowSpec);
+        RowSpec rowSpec = sourceLayout.getRowSpec(cellIndex + 1);
+        insertOrAppendRow(destinationLayout, targetIndex+1, rowSpec);
       }
       else {
-        ColumnSpec colSpec = formLayout.getColumnSpec(cellIndex + 1);
-        insertOrAppendColumn(formLayout, targetIndex+1, colSpec);
+        ColumnSpec colSpec = sourceLayout.getColumnSpec(cellIndex + 1);
+        insertOrAppendColumn(destinationLayout, targetIndex+1, colSpec);
       }
-      cellIndex += (targetIndex < cellIndex) ? 2 : 1;
+      cellIndex += (targetIndex < cellIndex && sourceLayout == destinationLayout) ? 2 : 1;
       targetIndex++;
     }
+  }
+
+  @Override
+  public void copyGridSection(final RadContainer source, final RadContainer destination, final Rectangle rc) {
+    final FormLayout destinationLayout = new FormLayout();
+    destination.setLayout(destinationLayout);
+    copyFormSpecs(getFormLayout(source), destinationLayout, true, rc.y, rc.height, 0);
+    copyFormSpecs(getFormLayout(source), destinationLayout, false, rc.x, rc.width, 0);
   }
 
   @Override

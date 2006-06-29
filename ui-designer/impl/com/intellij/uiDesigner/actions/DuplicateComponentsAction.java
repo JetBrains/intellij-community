@@ -33,7 +33,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
   }
 
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
-    remapToActionTargets(selection);
+    FormEditingUtil.remapToActionTargets(selection);
     RadContainer parent = FormEditingUtil.getSelectionParent(selection);
     assert parent != null;
     List<RadComponent> duplicates = new ArrayList<RadComponent>();
@@ -50,7 +50,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
       if (parent.getLayoutManager().isGrid()) {
         if (!insertedRows.contains(row) && !isSpaceBelowEmpty(c, incrementRow)) {
           insertedRows.add(row);
-          parent.getGridLayoutManager().copyGridCells(parent, incrementRow, row, rowSpan, row + rowSpan);
+          parent.getGridLayoutManager().copyGridCells(parent, parent, incrementRow, row, rowSpan, row + rowSpan);
         }
       }
 
@@ -104,15 +104,6 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
     }
   }
 
-  private static void remapToActionTargets(final List<RadComponent> selection) {
-    for(int i=0; i<selection.size(); i++) {
-      final RadComponent c = selection.get(i);
-      if (c.getParent() != null) {
-        selection.set(i, c.getParent().getActionTargetComponent(c));
-      }
-    }
-  }
-
   private static boolean isSpaceBelowEmpty(final RadComponent component, boolean incrementRow) {
     final GridConstraints constraints = component.getConstraints();
     int startRow = constraints.getCell(incrementRow) + constraints.getSpan(incrementRow);
@@ -132,7 +123,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
   }
 
   protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
-    remapToActionTargets(selection);
+    FormEditingUtil.remapToActionTargets(selection);
     final RadContainer parent = FormEditingUtil.getSelectionParent(selection);
     e.getPresentation().setEnabled(parent != null && (parent.getLayoutManager().isGrid() || parent.getLayoutManager().isIndexed()));
     // The action is enabled in any of the following cases:

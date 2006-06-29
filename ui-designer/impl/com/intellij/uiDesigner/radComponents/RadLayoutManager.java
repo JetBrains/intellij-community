@@ -15,8 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.LayoutManager;
-import java.awt.Point;
+import java.awt.*;
 
 /**
  * Design-time support for a layout manager.

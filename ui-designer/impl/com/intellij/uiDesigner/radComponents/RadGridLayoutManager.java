@@ -370,9 +370,9 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
     return 1;
   }
 
-  public void copyGridCells(RadContainer grid, final boolean isRow, int cellIndex, int cellCount, int targetIndex) {
+  public void copyGridCells(RadContainer source, final RadContainer destination, final boolean isRow, int cellIndex, int cellCount, int targetIndex) {
     for(int i=0; i< cellCount; i++) {
-      insertGridCells(grid, cellIndex, isRow, false, false);
+      insertGridCells(destination, cellIndex, isRow, false, false);
     }
   }
 
@@ -413,6 +413,10 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
         }
       }
     }
+  }
+
+  public void copyGridSection(final RadContainer source, final RadContainer destination, final Rectangle rc) {
+    destination.setLayout(new GridLayoutManager(rc.height, rc.width));
   }
 
   private static void processRootContainerResize(final RadContainer container, final boolean isRow, final int newSize) {

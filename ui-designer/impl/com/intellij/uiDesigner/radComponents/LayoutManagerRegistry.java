@@ -5,6 +5,8 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.GuiDesignerConfiguration;
+import com.intellij.openapi.project.Project;
 import com.jgoodies.forms.layout.FormLayout;
 import org.jetbrains.annotations.NonNls;
 
@@ -97,5 +99,18 @@ public class LayoutManagerRegistry {
       }
     }
     return false;
+  }
+
+  public static RadLayoutManager createDefaultGridLayoutManager(Project project) {
+    final String defaultLayoutManager = GuiDesignerConfiguration.getInstance(project).DEFAULT_LAYOUT_MANAGER;
+    if (defaultLayoutManager.equals(UIFormXmlConstants.LAYOUT_GRIDBAG)) {
+      return new RadGridBagLayoutManager();
+    }
+    else if (defaultLayoutManager.equals(UIFormXmlConstants.LAYOUT_FORM)) {
+      return new RadFormLayoutManager();
+    }
+    else {
+      return new RadGridLayoutManager();
+    }
   }
 }

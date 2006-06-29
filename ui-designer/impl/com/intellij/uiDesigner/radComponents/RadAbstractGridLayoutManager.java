@@ -69,7 +69,7 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
    * @return the number of inserted rows or columns
    */
   public abstract int insertGridCells(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore, final boolean grow);
-  public abstract void copyGridCells(RadContainer grid, final boolean isRow, int cellIndex, int cellCount, int targetIndex);
+  public abstract void copyGridCells(RadContainer source, RadContainer destination, boolean isRow, int cellIndex, int cellCount, int targetIndex);
   public int getGapCellCount() {
     return 0;
   }
@@ -88,4 +88,6 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
     return null;
   }
   public abstract void processCellResized(RadContainer container, final boolean isRow, final int cell, final int newSize);
+
+  public abstract void copyGridSection(final RadContainer source, final RadContainer destination, final Rectangle rc);
 }
