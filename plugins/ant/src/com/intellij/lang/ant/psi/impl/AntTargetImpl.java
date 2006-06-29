@@ -94,4 +94,11 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
     }
     return myCalls;
   }
+
+
+  public void clearCaches() {
+    super.clearCaches();
+    myDependsTargets = null;
+    myCalls = null;
+  }
 }

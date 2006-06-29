@@ -5,11 +5,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.ant.AntLanguage;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.misc.AntPsiUtil;
+import com.intellij.lang.ant.misc.PsiElementHashSetSpinAllocator;
 import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
-import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.AntProperty;
+import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.reference.AntReferenceProvidersRegistry;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -28,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -253,21 +252,43 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return element;
   }
 
-  public static PsiElement resolveProperty(@NotNull final AntElement element, final String name) {
+  public static PsiElement resolveProperty(@NotNull final AntElement element, final String propName) {
+    PsiElement result;
     AntElement temp = element;
     while (temp != null) {
-      final PsiElement property = temp.getProperty(name);
-      if (property != null) {
-        return property;
+      result = temp.getProperty(propName);
+      if (result != null) {
+        return result;
       }
       temp = temp.getAntParent();
     }
-    final AntElement anchor = AntPsiUtil.getSubProjectElement(element);
-    for (PsiElement child : element.getAntProject().getChildren()) {
-      if (child == anchor) {
-        break;
+    final AntProject project = element.getAntProject();
+    if ((result = resolvePropertyInProject(project, propName)) != null) {
+      return result;
+    }
+    for (AntFile file : AntPsiUtil.getImportedFiles(project)) {
+      final AntProject importedProject = file.getAntProject();
+      importedProject.getChildren();
+      if ((result = resolvePropertyInProject(importedProject, propName)) != null) {
+        return result;
       }
-      else if (child instanceof AntProperty) {
+    }
+    final AntTarget target = PsiTreeUtil.getParentOfType(element, AntTarget.class);
+    if (target != null) {
+      final HashSet<PsiElement> targetStack = PsiElementHashSetSpinAllocator.alloc();
+      try {
+        result = resolveTargetProperty(target, propName, targetStack);
+      }
+      finally {
+        PsiElementHashSetSpinAllocator.dispose(targetStack);
+      }
+    }
+    return result;
+  }
+
+  private static PsiElement resolvePropertyInProject(final AntProject project, final String propName) {
+    for (PsiElement child : project.getChildren()) {
+      if (child instanceof AntProperty) {
         AntProperty prop = (AntProperty)child;
         final PropertiesFile propFile = prop.getPropertiesFile();
         if (propFile != null) {
@@ -275,7 +296,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
           if (prefix != null && !prefix.endsWith(".")) {
             prefix += '.';
           }
-          final String key = (prefix == null) ? name : prefix + name;
+          final String key = (prefix == null) ? propName : prefix + propName;
           final Property property = propFile.findPropertyByKey(key);
           if (property != null) {
             return property;
@@ -283,14 +304,20 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
         }
       }
     }
-    for (AntFile file : AntPsiUtil.getImportedFiles(element.getAntProject(), anchor)) {
-      final AntProject importedProject = file.getAntProject();
-      importedProject.getChildren();
-      final AntProperty property = importedProject.getProperty(name);
-      if (property != null) {
-        return property;
+    return null;
+  }
+
+  private static PsiElement resolveTargetProperty(final AntTarget target, final String propName, final HashSet<PsiElement> stack) {
+    PsiElement result = null;
+    if (!stack.contains(target)) {
+      result = target.getProperty(propName);
+      if (result == null) {
+        stack.add(target);
+        for (AntTarget dependie : target.getDependsTargets()) {
+          if ((result = resolveTargetProperty(dependie, propName, stack)) != null) break;
+        }
       }
     }
-    return null;
+    return result;
   }
 }
