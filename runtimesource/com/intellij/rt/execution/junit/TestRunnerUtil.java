@@ -91,10 +91,7 @@ public class TestRunnerUtil {
     Class testClass = loadTestClass(runner, suiteClassName);
     if (testClass == null) return null;
     Test test = null;
-    if (methodName != null) {
-      test = createMethodSuite(runner, testClass, methodName);
-    }
-    else {
+    if (methodName == null) {
       if (runner.JUNIT4_API != null) {
         test = runner.JUNIT4_API.createClassSuite(testClass);
       }
@@ -130,6 +127,9 @@ public class TestRunnerUtil {
           test = new TestSuite(testClass);
         }
       }
+    }
+    else {
+      test = createMethodSuite(runner, testClass, methodName);
     }
     return test;
   }
