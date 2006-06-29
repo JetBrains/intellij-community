@@ -124,12 +124,16 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   }
 
   public void setGroupForComponent(@NotNull RadComponent component, @Nullable RadButtonGroup value) {
-    for(RadButtonGroup group: myButtonGroups) {
+    for(int i=myButtonGroups.size()-1; i >= 0; i--) {
+      RadButtonGroup group = myButtonGroups.get(i);
       if (group == value) {
         group.add(component);
       }
       else {
         group.remove(component);
+        if (group.isEmpty()) {
+          myButtonGroups.remove(i);
+        }
       }
     }
   }

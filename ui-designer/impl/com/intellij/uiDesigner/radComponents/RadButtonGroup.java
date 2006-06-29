@@ -71,4 +71,8 @@ public class RadButtonGroup implements IButtonGroup {
   public String[] getComponentIds() {
     return myComponentIds.toArray(new String[myComponentIds.size()]);
   }
+
+  public boolean isEmpty() {
+    return myComponentIds.size() == 0;
+  }
 }
