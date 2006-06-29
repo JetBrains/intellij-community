@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.java.JavaLanguage;
@@ -14,7 +15,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlFile;
 
 import java.util.List;
 
@@ -127,7 +127,9 @@ public class SelectWordHandler extends EditorActionHandler {
   }
 
   private static PsiElement findElementAt(final PsiFile file, final int caretOffset) {
-    return (file instanceof XmlFile) ? file.getViewProvider().findElementAt(caretOffset, file.getLanguage()) : file.findElementAt(caretOffset);
+    return (CodeInsightUtil.isAntFile(file))
+           ? file.getViewProvider().findElementAt(caretOffset, file.getLanguage())
+           : file.findElementAt(caretOffset);
   }
 
   private static PsiElement getUpperElement(final PsiElement e, final TextRange selectionRange) {

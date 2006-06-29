@@ -2,6 +2,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
@@ -18,9 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
@@ -245,7 +244,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                         final CompletionData completionData,
                         final Set<LookupItem> lookupSet) {
     if (lastElement == null) return;
-    if (isAntFile(context.file)) {
+    if (CodeInsightUtil.isAntFile(context.file)) {
       final PsiReference ref = context.file.findReferenceAt(context.offset);
       if (ref != null) {
         completionData.completeReference(ref, lookupSet, context, lastElement);
@@ -322,7 +321,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
     complete(context, insertedElement, completionData, lookupSet);
     insertedElement.putUserData(CompletionUtil.COMPLETION_PREFIX, context.prefix);
-    if (!isAntFile(file)) {
+    if (!CodeInsightUtil.isAntFile(file)) {
       final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
       completionData.addKeywordVariants(keywordVariants, context, insertedElement);
       CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
@@ -486,20 +485,5 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     };
     copyVisitor.visitFile(fileCopy);
     return fileCopy;
-  }
-
-  private static boolean isAntFile(final PsiFile file) {
-    if (file instanceof XmlFileImpl) {
-      final XmlFileImpl xmlFile = (XmlFileImpl)file;
-      final XmlDocument document = xmlFile.getDocument();
-      if (document != null) {
-        final XmlTag tag = document.getRootTag();
-        if (tag != null && "project".equals(tag.getName()) && tag.getContext()instanceof XmlDocument &&
-            tag.getAttributeValue("default") != null) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 }

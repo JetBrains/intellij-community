@@ -19,9 +19,12 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportList;
+import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -388,5 +391,20 @@ public class CodeInsightUtil {
     documentManager.commitDocument(document);
 
     return findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), (Class<? extends T>)element.getClass());
+  }
+
+  public static boolean isAntFile(final PsiFile file) {
+    if (file instanceof XmlFileImpl) {
+      final XmlFileImpl xmlFile = (XmlFileImpl)file;
+      final XmlDocument document = xmlFile.getDocument();
+      if (document != null) {
+        final XmlTag tag = document.getRootTag();
+        if (tag != null && "project".equals(tag.getName()) && tag.getContext()instanceof XmlDocument &&
+            tag.getAttributeValue("default") != null) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }
