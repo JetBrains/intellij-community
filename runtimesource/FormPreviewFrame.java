@@ -2,8 +2,6 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.text.MessageFormat;
 import java.util.ResourceBundle;
 
@@ -18,21 +16,20 @@ public class FormPreviewFrame {
 
     JFrame frame = new JFrame(ourBundle.getString("form.preview.title"));
     frame.setContentPane(f.myComponent);
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
     // Add menu bar
     final JMenuBar menuBar = new JMenuBar();
     frame.setJMenuBar(menuBar);
 
-    final JMenu menuFile = new JMenu(ourBundle.getString("form.menu.file"));
-    menuFile.setMnemonic(ourBundle.getString("form.menu.file.mnemonic").charAt(0));
-    final JMenuItem menuItemExit = new JMenuItem(new MyExitAction());
-    menuFile.add(menuItemExit);
+    final JMenu menuFile = new JMenu(ourBundle.getString("form.menu.preview"));
+    menuFile.setMnemonic(ourBundle.getString("form.menu.preview.mnemonic").charAt(0));
+    menuFile.add(new JMenuItem(new MyPackAction(frame)));
+    menuFile.add(new JMenuItem(new MyExitAction()));
     menuBar.add(menuFile);
 
-    final JMenu viewMenu = new JMenu(ourBundle.getString("form.menu.view"));
-    viewMenu.setMnemonic(ourBundle.getString("form.menu.view.mnemonic").charAt(0));
-    viewMenu.add(new JMenuItem(new MyPackAction(frame)));
-    viewMenu.addSeparator();
+    final JMenu viewMenu = new JMenu(ourBundle.getString("form.menu.laf"));
+    viewMenu.setMnemonic(ourBundle.getString("form.menu.laf.mnemonic").charAt(0));
     menuBar.add(viewMenu);
 
     final UIManager.LookAndFeelInfo[] lafs = UIManager.getInstalledLookAndFeels();
@@ -41,16 +38,9 @@ public class FormPreviewFrame {
     }
 
     frame.pack();
-    frame.addWindowListener(new MyWindowListener());
     Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
     frame.setLocation((screenSize.width - frame.getWidth())/2, (screenSize.height - frame.getHeight())/2);
-    frame.show();
-  }
-
-  private static final class MyWindowListener extends WindowAdapter{
-    public void windowClosing(final WindowEvent e) {
-      System.exit(0);
-    }
+    frame.setVisible(true);
   }
 
   private static final class MyExitAction extends AbstractAction{
