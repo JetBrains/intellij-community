@@ -14,6 +14,7 @@ import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -104,7 +105,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     if (Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
       myStoredEvaluationContext = evaluationContext;
     }
-    Value value = null;
+    Value value;
     try {
       value = calcValue(evaluationContext);
 
@@ -145,12 +146,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener){
-    if(myValueException == null) {
-      myIsExpandable = getRenderer(context.getDebugProcess()).isExpandable(getValue(), context, this);
-    }
-    else {
-      myIsExpandable = false;
-    }
+    myIsExpandable = myValueException == null && getRenderer(context.getDebugProcess()).isExpandable(getValue(), context, this);
 
     return setValueLabel(calcValueLabel(context, labelListener));
   }
@@ -181,7 +177,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return buf.toString();
   }
 
-  private String makeIdLabel(ObjectReference ref) {
+  private static String makeIdLabel(ObjectReference ref) {
     if (ref != null) {
       return getIdLabel(ref);
     }
@@ -227,7 +223,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     super.displayAs(descriptor);
   }
 
-  public com.intellij.debugger.ui.tree.render.Renderer getLastRenderer() {
+  public Renderer getLastRenderer() {
     return myRenderer != null ? myRenderer: myAutoRenderer;
   }
 
