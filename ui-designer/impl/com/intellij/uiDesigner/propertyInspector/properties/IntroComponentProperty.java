@@ -3,8 +3,6 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 import com.intellij.openapi.util.Condition;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.SwingProperties;
-import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.inspections.FormInspectionUtil;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
@@ -13,6 +11,7 @@ import com.intellij.uiDesigner.propertyInspector.editors.ComponentEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.ComponentRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.radComponents.RadScrollPane;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +66,9 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
         if (root != null) {
           RadComponent valueComponent = (RadComponent)FormEditingUtil.findComponent(root, value);
           if (valueComponent != null) {
+            if (valueComponent instanceof RadScrollPane && ((RadScrollPane) valueComponent).getComponentCount() == 1) {
+              valueComponent = ((RadScrollPane) valueComponent).getComponent(0);
+            }
             BindingProperty.checkCreateBindingFromText(valueComponent, text);
           }
         }
