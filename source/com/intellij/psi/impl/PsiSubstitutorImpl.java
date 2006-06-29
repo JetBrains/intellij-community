@@ -1,8 +1,8 @@
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.diagnostic.Logger;import com.intellij.openapi.util.Key;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
