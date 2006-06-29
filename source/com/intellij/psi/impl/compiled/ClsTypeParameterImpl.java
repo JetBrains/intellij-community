@@ -282,6 +282,7 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
     visitor.visitTypeParameter(this);
   }
 
+  @NonNls
   public String toString() {
     return "PsiTypeParameter";
   }
