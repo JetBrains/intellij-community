@@ -1,33 +1,28 @@
 package com.intellij.uiDesigner.wizard;
 
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
 final class BeanProperty implements Comparable<BeanProperty>{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.wizard.BeanProperty");
-
   /**
-   * Property name. Cannot be <code>null</code>.
+   * Property name.
    */
-  public final String myName;
+  @NotNull public final String myName;
   /**
-   * Property type. Cannot be <code>null</code>.
+   * Property type.
    * There are two possible types:
    * <ul>
    *  <li>java.lang.String</li>
    *  <li>boolean</li>
    * </ul>
    */
-  public final String myType;
+  @NotNull public final String myType;
 
-  public BeanProperty(final String name, final String type) {
-    LOG.assertTrue(name != null);
-    LOG.assertTrue(type != null);
-
-    //noinspection HardCodedStringLiteral
+  public BeanProperty(@NotNull final String name, @NonNls @NotNull final String type) {
     if(!"java.lang.String".equals(type) && !"boolean".equals(type)){
       throw new IllegalArgumentException("unknown type: " + type);
     }

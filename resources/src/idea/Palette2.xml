@@ -25,6 +25,7 @@
       class="javax.swing.JScrollPane"
       icon="/com/intellij/uiDesigner/icons/scrollPane.png"
       removable="false"
+      can-attach-label="true"
       >
       <default-constraints vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
     </item>

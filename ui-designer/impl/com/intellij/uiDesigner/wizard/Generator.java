@@ -445,7 +445,7 @@ public final class Generator {
         property2fqClassName.put(binding.myBeanProperty.myName, propertyClassName);
       }
 
-      generateBean(beanClass, (String[])properties.toArray(new String[properties.size()]), property2fqClassName);
+      generateBean(beanClass, properties.toArray(new String[properties.size()]), property2fqClassName);
 
       return beanClass;
     }
