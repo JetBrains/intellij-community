@@ -12,8 +12,9 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlFile;
 
 import java.util.List;
 
@@ -65,15 +66,14 @@ public class SelectWordHandler extends EditorActionHandler {
     int caretOffset = editor.getCaretModel().getOffset();
 
     if (caretOffset > 0 && caretOffset < editor.getDocument().getTextLength() &&
-        !Character.isJavaIdentifierPart(text.charAt(caretOffset)) &&
-        Character.isJavaIdentifierPart(text.charAt(caretOffset - 1))) {
+        !Character.isJavaIdentifierPart(text.charAt(caretOffset)) && Character.isJavaIdentifierPart(text.charAt(caretOffset - 1))) {
       caretOffset--;
     }
 
-    PsiElement element = file.findElementAt(caretOffset);
+    PsiElement element = findElementAt(file, caretOffset);
 
     if (element instanceof PsiWhiteSpace && caretOffset > 0) {
-      PsiElement anotherElement = file.findElementAt(caretOffset - 1);
+      PsiElement anotherElement = findElementAt(file, caretOffset - 1);
 
       if (!(anotherElement instanceof PsiWhiteSpace)) {
         element = anotherElement;
@@ -81,7 +81,8 @@ public class SelectWordHandler extends EditorActionHandler {
     }
 
     while (element instanceof PsiWhiteSpace) {
-      nextParent: while (element.getNextSibling() == null) {
+      nextParent:
+      while (element.getNextSibling() == null) {
         final PsiElement parent = element.getParent();
         final PsiElement[] children = parent.getChildren();
 
@@ -125,10 +126,14 @@ public class SelectWordHandler extends EditorActionHandler {
     editor.getSelectionModel().setSelection(selectionRange.getStartOffset(), selectionRange.getEndOffset());
   }
 
+  private static PsiElement findElementAt(final PsiFile file, final int caretOffset) {
+    return (file instanceof XmlFile) ? file.getViewProvider().findElementAt(caretOffset, file.getLanguage()) : file.findElementAt(caretOffset);
+  }
+
   private static PsiElement getUpperElement(final PsiElement e, final TextRange selectionRange) {
     final PsiElement parent = e.getParent();
 
-    if (PsiUtil.isInJspFile(e.getContainingFile()) && e.getLanguage() instanceof JavaLanguage) {
+    if (PsiUtil.isInJspFile(e.getContainingFile()) && e.getLanguage()instanceof JavaLanguage) {
       final JspFile psiFile = PsiUtil.getJspFile(e.getContainingFile());
       if (e.getParent().getTextLength() == psiFile.getTextLength()) {
         PsiFile baseRoot = psiFile.getBaseLanguageRoot();
@@ -140,11 +145,7 @@ public class SelectWordHandler extends EditorActionHandler {
     return parent;
   }
 
-  private static TextRange advance(TextRange selectionRange,
-                                   PsiElement element,
-                                   CharSequence text,
-                                   int cursorOffset,
-                                   Editor editor) {
+  private static TextRange advance(TextRange selectionRange, PsiElement element, CharSequence text, int cursorOffset, Editor editor) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: advance(selectionRange='" + selectionRange + "', element='" + element + "')");
     }
