@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.inspections;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -91,16 +92,24 @@ public class NoLabelForInspection extends BaseFormInspection {
       if (!myEditor.ensureEditable()) {
         return;
       }
-      final Palette palette = Palette.getInstance(myEditor.getProject());
-      IntrospectedProperty[] props = palette.getIntrospectedProperties(myLabel);
-      for(IntrospectedProperty prop: props) {
-        if (prop.getName().equals(SwingProperties.LABEL_FOR) && prop instanceof IntroComponentProperty) {
-          IntroComponentProperty icp = (IntroComponentProperty) prop;
-          icp.setValueEx(myLabel, myComponent.getId());
-          myEditor.refreshAndSave(false);
-          break;
+      Runnable runnable = new Runnable() {
+        public void run() {
+          final Palette palette = Palette.getInstance(myEditor.getProject());
+          IntrospectedProperty[] props = palette.getIntrospectedProperties(myLabel);
+          boolean modified = false;
+          for(IntrospectedProperty prop: props) {
+            if (prop.getName().equals(SwingProperties.LABEL_FOR) && prop instanceof IntroComponentProperty) {
+              IntroComponentProperty icp = (IntroComponentProperty) prop;
+              icp.setValueEx(myLabel, myComponent.getId());
+              modified = true;
+              break;
+            }
+          }
+          if (modified) myEditor.refreshAndSave(false);
         }
-      }
+      };
+      CommandProcessor.getInstance().executeCommand(myEditor.getProject(), runnable,
+                                                    UIDesignerBundle.message("inspection.no.label.for.command"), null);
     }
   }
 }
