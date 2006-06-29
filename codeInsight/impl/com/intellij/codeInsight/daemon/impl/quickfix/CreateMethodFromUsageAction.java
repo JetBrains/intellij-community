@@ -71,11 +71,6 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
       PsiElementFactory factory = psiManager.getElementFactory();
 
       PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
-      final PsiCodeBlock body = method.getBody();
-      assert body != null;
-      if (targetClass.isInterface()) {
-        body.delete();
-      }
 
       if (targetClass.equals(parentClass)) {
         method = (PsiMethod) targetClass.addAfter(method, enclosingContext);
@@ -93,6 +88,12 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
         } else {
           method = (PsiMethod) targetClass.add(method);
         }
+      }
+
+      final PsiCodeBlock body = method.getBody();
+      assert body != null;
+      if (targetClass.isInterface()) {
+        body.delete();
       }
 
       setupVisibility(parentClass, targetClass, method.getModifierList());
@@ -116,9 +117,9 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
       CreateFromUsageUtils.setupMethodParameters(method, builder, getMethodCall().getArgumentList(), substitutor);
       new GuessTypeParameters(factory).setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
       builder.setEndVariableAfter(targetClass.isInterface() ? method : body.getLBrace());
+      method = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(method);
 
       RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());
-      method = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(method);
       final Editor newEditor = positionCursor(project, targetFile, method);
       Template template = builder.buildTemplate();
       newEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
