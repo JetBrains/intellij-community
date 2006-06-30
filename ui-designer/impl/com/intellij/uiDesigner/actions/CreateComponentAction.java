@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.palette.ComponentItem;
@@ -55,13 +56,15 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
         GridConstraints c = component.getConstraints();
         // try to insert in empty cell to the right or below the component; if not found -
         // insert row below selected component
-        if (c.getColumn() + c.getColSpan() < container.getGridColumnCount() &&
-            container.getComponentAtGrid(c.getRow(), c.getColumn() + c.getColSpan()) == null) {
-          dropLocation = new GridDropLocation(container, c.getRow(), c.getColumn() + c.getColSpan());
+        int nextCol = FormEditingUtil.adjustForGap(component.getParent(), c.getColumn() + c.getColSpan(), false, 1);
+        int nextRow = FormEditingUtil.adjustForGap(component.getParent(), c.getRow() + c.getRowSpan(), true, 1);
+        if (nextCol < container.getGridColumnCount() &&
+            container.getComponentAtGrid(c.getRow(), nextCol) == null) {
+          dropLocation = new GridDropLocation(container, c.getRow(), nextCol);
         }
-        else if (c.getRow() + c.getRowSpan() < container.getGridRowCount() &&
-                 container.getComponentAtGrid(c.getRow() + c.getRowSpan(), c.getColumn()) == null) {
-          dropLocation = new GridDropLocation(container, c.getRow() + c.getRowSpan(), c.getColumn());
+        else if (nextRow < container.getGridRowCount() &&
+                 container.getComponentAtGrid(nextRow, c.getColumn()) == null) {
+          dropLocation = new GridDropLocation(container, nextRow, c.getColumn());
         }
         else {
           dropLocation = new GridInsertLocation(container, c.getRow() + c.getRowSpan() - 1, c.getColumn(),
