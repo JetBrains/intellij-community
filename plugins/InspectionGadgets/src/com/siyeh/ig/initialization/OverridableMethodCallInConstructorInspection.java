@@ -73,6 +73,7 @@ public class OverridableMethodCallInConstructorInspection
             this.methodName = methodName;
         }
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "make.method.final.fix.name", methodName);
@@ -132,6 +133,14 @@ public class OverridableMethodCallInConstructorInspection
                 return;
             }
             if (!PsiUtil.canBeOverriden(calledMethod)) {
+                return;
+            }
+            final PsiClass calledMethodClass =
+                    calledMethod.getContainingClass();
+            if(calledMethodClass == null){
+                return;
+            }
+            if(!calledMethodClass.equals(containingClass)){
                 return;
             }
             registerMethodCallError(call);
