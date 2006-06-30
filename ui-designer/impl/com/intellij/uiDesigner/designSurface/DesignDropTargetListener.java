@@ -55,7 +55,7 @@ class DesignDropTargetListener implements DropTargetListener {
       else {
         ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
         if (componentItem != null) {
-          myComponentDragObject = componentItem;
+          myComponentDragObject = new ComponentItemDragObject(componentItem);
           dtde.acceptDrag(dtde.getDropAction());
           myLastPoint = dtde.getLocation();
         }

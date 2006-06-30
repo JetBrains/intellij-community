@@ -18,13 +18,12 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.LoaderFactory;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.radComponents.RadAtomicComponent;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,7 +34,7 @@ import java.util.HashMap;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ComponentItem implements Cloneable, PaletteItem, ComponentDragObject {
+public final class ComponentItem implements Cloneable, PaletteItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.ComponentItem");
 
   @NonNls private String myClassName;
@@ -364,38 +363,6 @@ public final class ComponentItem implements Cloneable, PaletteItem, ComponentDra
     if (boundForms != null && boundForms.length > 0) {
       return boundForms [0];
     }
-    return null;
-  }
-
-  public int getComponentCount() {
-    return 1;
-  }
-
-  public int getHSizePolicy() {
-    return myDefaultConstraints.getHSizePolicy();
-  }
-
-  public int getVSizePolicy() {
-    return myDefaultConstraints.getVSizePolicy();
-  }
-
-  public int getRelativeRow(int componentIndex) {
-    return 0;
-  }
-
-  public int getRelativeCol(int componentIndex) {
-    return 0;
-  }
-
-  public int getRowSpan(int componentIndex) {
-    return 1;
-  }
-
-  public int getColSpan(int componentIndex) {
-    return 1;
-  }
-
-  public Point getDelta(int componentIndex) {
     return null;
   }
 

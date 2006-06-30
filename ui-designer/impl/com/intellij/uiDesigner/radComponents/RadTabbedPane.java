@@ -657,9 +657,10 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       }
       else {
         Palette palette = Palette.getInstance(editor.getProject());
-        RadContainer panel = (RadContainer) InsertComponentProcessor.createPanelComponent(editor);
+        RadContainer panel = InsertComponentProcessor.createPanelComponent(editor);
         addComponent(panel);
-        panel.getDropLocation(null).processDrop(editor, new RadComponent[] { componentToAdd }, null, palette.getPanelItem());
+        panel.getDropLocation(null).processDrop(editor, new RadComponent[] { componentToAdd }, null,
+                                                new ComponentItemDragObject(palette.getPanelItem()));
       }
       getTabbedPane().setSelectedIndex(myInsertIndex);
     }

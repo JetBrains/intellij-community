@@ -459,7 +459,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         else {
           ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
           if (componentItem != null) {
-            dragObject = componentItem;
+            dragObject = new ComponentItemDragObject(componentItem);
           }
         }
 

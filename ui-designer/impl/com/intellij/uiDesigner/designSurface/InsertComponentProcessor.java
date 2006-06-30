@@ -86,16 +86,17 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   public void setLastLocation(final DropLocation location) {
-    if (location.canDrop(getComponentToInsert())) {
+    ComponentItemDragObject dragObject = new ComponentItemDragObject(getComponentToInsert());
+    if (location.canDrop(dragObject)) {
       myLastLocation = location;
     }
     else {
       DropLocation locationToRight = location.getAdjacentLocation(DropLocation.Direction.RIGHT);
       DropLocation locationToBottom = location.getAdjacentLocation(DropLocation.Direction.DOWN);
-      if (locationToRight != null && locationToRight.canDrop(getComponentToInsert())) {
+      if (locationToRight != null && locationToRight.canDrop(dragObject)) {
         myLastLocation = locationToRight;
       }
-      else if (locationToBottom != null && locationToBottom.canDrop(getComponentToInsert())) {
+      else if (locationToBottom != null && locationToBottom.canDrop(dragObject)) {
         myLastLocation = locationToBottom;
       }
       else {
@@ -103,8 +104,8 @@ public final class InsertComponentProcessor extends EventProcessor {
       }
     }
 
-    if (myLastLocation.canDrop(getComponentToInsert())) {
-      myLastLocation.placeFeedback(myEditor.getActiveDecorationLayer(), getComponentToInsert());
+    if (myLastLocation.canDrop(dragObject)) {
+      myLastLocation.placeFeedback(myEditor.getActiveDecorationLayer(), dragObject);
     }
   }
 
@@ -117,7 +118,7 @@ public final class InsertComponentProcessor extends EventProcessor {
         }
       }
       else {
-        myLastLocation = moveDropLocation(myEditor, myLastLocation, getComponentToInsert(), e);
+        myLastLocation = moveDropLocation(myEditor, myLastLocation, new ComponentItemDragObject(getComponentToInsert()), e);
       }
     }
   }
@@ -218,8 +219,9 @@ public final class InsertComponentProcessor extends EventProcessor {
     else if (e.getID() == MouseEvent.MOUSE_MOVED) {
       final ComponentItem componentToInsert = getComponentToInsert();
       if (componentToInsert != null) {
-        myLastLocation = myGridInsertProcessor.processDragEvent(e.getPoint(), componentToInsert);
-        if (myLastLocation.canDrop(getComponentToInsert())) {
+        ComponentItemDragObject dragObject = new ComponentItemDragObject(componentToInsert);
+        myLastLocation = myGridInsertProcessor.processDragEvent(e.getPoint(), dragObject);
+        if (myLastLocation.canDrop(dragObject)) {
           setCursor(FormEditingUtil.getCopyDropCursor());
         }
         else {
@@ -270,7 +272,8 @@ public final class InsertComponentProcessor extends EventProcessor {
       return;
     }
 
-    if (location.canDrop(item)) {
+    final ComponentItemDragObject dragObject = new ComponentItemDragObject(item);
+    if (location.canDrop(dragObject)) {
       CommandProcessor.getInstance().executeCommand(
         myEditor.getProject(),
         new Runnable(){
@@ -278,7 +281,7 @@ public final class InsertComponentProcessor extends EventProcessor {
             createBindingWhenDrop(myEditor, myInsertedComponent);
 
             final RadComponent[] components = new RadComponent[]{myInsertedComponent};
-            location.processDrop(myEditor, components, null, item);
+            location.processDrop(myEditor, components, null, dragObject);
 
             FormEditingUtil.selectSingleComponent(myEditor, myInsertedComponent);
 
@@ -514,7 +517,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   public Cursor processMouseMoveEvent(final MouseEvent e) {
     final ComponentItem componentItem = myPaletteManager.getActiveItem(ComponentItem.class);
     if (componentItem != null) {
-      return myGridInsertProcessor.processMouseMoveEvent(e.getPoint(), false, componentItem);
+      return myGridInsertProcessor.processMouseMoveEvent(e.getPoint(), false, new ComponentItemDragObject(componentItem));
     }
     return FormEditingUtil.getMoveNoDropCursor();
   }
