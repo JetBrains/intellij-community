@@ -22,6 +22,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.lw.LwInspectionSuppression;
@@ -516,7 +517,17 @@ public final class ComponentTree extends Tree implements DataProvider {
             if (dcl != null) {
               if (!FormEditingUtil.isDropOnChild(dcl, dropLocation)) {
                 RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
+                RadContainer[] originalParents = dcl.getOriginalParents();
+                final GridConstraints[] originalConstraints = dcl.getOriginalConstraints();
+                for(int i=0; i<components.length; i++) {
+                  originalParents [i].removeComponent(components [i]);
+                }
                 dropLocation.processDrop(myEditor, components, null, dcl);
+                for (int i = 0; i < originalConstraints.length; i++) {
+                  if (originalParents[i].getLayoutManager().isGrid()) {
+                    FormEditingUtil.deleteEmptyGridCells(originalParents[i], originalConstraints[i]);
+                  }
+                }
               }
             }
             else {

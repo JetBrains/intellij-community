@@ -229,9 +229,8 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
   }
 
   private int getLastNonSpacerRow(final RadContainer container) {
-    GridLayoutManager grid = (GridLayoutManager) container.getLayout();
-    int lastRow = grid.getRowCount()-1;
-    for(int col=0; col<grid.getColumnCount(); col++) {
+    int lastRow = getGridRowCount(container)-1;
+    for(int col=0; col<getGridColumnCount(container); col++) {
       RadComponent c = getComponentAtGrid(container, lastRow, col);
       if (c != null && !(c instanceof RadHSpacer) && !(c instanceof RadVSpacer)) {
         return lastRow;
