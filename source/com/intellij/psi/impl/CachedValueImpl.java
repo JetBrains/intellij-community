@@ -116,7 +116,7 @@ public class CachedValueImpl<T> implements CachedValue<T> {
     }
 
     TLongArrayList timeStamps = new TLongArrayList();
-    List deps = new ArrayList();
+    List<Object> deps = new ArrayList<Object>();
     collectDependencies(timeStamps, deps, dependencies);
     if (myTrackValue) {
       collectDependencies(timeStamps, deps, new Object[]{myValue.get()});
@@ -127,12 +127,11 @@ public class CachedValueImpl<T> implements CachedValue<T> {
     myDependencies = deps.toArray(new Object[deps.size()]);
   }
 
-  private void collectDependencies(TLongArrayList timeStamps, List resultingDeps, Object[] dependencies) {
+  private void collectDependencies(TLongArrayList timeStamps, List<Object> resultingDeps, Object[] dependencies) {
     for (Object dependency : dependencies) {
       if (dependency == null || dependency == NULL) continue;
-      if (dependency.getClass().isArray()) {
-        Object[] objects = (Object[])dependency;
-        collectDependencies(timeStamps, resultingDeps, objects);
+      if (dependency instanceof Object[]) {
+        collectDependencies(timeStamps, resultingDeps, (Object[])dependency);
       }
       else {
         resultingDeps.add(dependency);
