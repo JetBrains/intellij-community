@@ -48,62 +48,69 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.CreateListenerAction");
 
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
-    RadComponent component = selection.get(0);
-    final DefaultActionGroup actionGroup = prepareActionGroup(component);
-    final DataContext context = DataManager.getInstance().getDataContext(component.getDelegee());
+    final DefaultActionGroup actionGroup = prepareActionGroup(selection);
+    final DataContext context = DataManager.getInstance().getDataContext(selection.get(0).getDelegee());
     final JBPopupFactory factory = JBPopupFactory.getInstance();
     final ListPopup popup = factory.createActionGroupPopup(UIDesignerBundle.message("create.listener.title"), actionGroup, context,
                                                            JBPopupFactory.ActionSelectionAid.NUMBERING, true);
-    popup.showUnderneathOf(component.getDelegee());
+    popup.showUnderneathOf(selection.get(0).getDelegee());
   }
 
-  private DefaultActionGroup prepareActionGroup(final RadComponent component) {
-    RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
-    final PsiField boundField = BindingProperty.findBoundField(root, component.getBinding());
-    if (boundField != null) {
-      final DefaultActionGroup actionGroup = new DefaultActionGroup();
-      final EventSetDescriptor[] eventSetDescriptors;
-      try {
-        BeanInfo beanInfo = Introspector.getBeanInfo(component.getComponentClass());
-        eventSetDescriptors = beanInfo.getEventSetDescriptors();
-      }
-      catch (IntrospectionException e) {
-        LOG.error(e);
-        return null;
-      }
-      EventSetDescriptor[] sortedDescriptors = new EventSetDescriptor[eventSetDescriptors.length];
-      System.arraycopy(eventSetDescriptors, 0, sortedDescriptors, 0, eventSetDescriptors.length);
-      Arrays.sort(sortedDescriptors, new Comparator<EventSetDescriptor>() {
-        public int compare(final EventSetDescriptor o1, final EventSetDescriptor o2) {
-          return o1.getListenerType().getName().compareTo(o2.getListenerType().getName());
-        }
-      });
-      for(EventSetDescriptor descriptor: sortedDescriptors) {
-        actionGroup.add(new MyCreateListenerAction(boundField, descriptor));
-      }
-      return actionGroup;
+  private DefaultActionGroup prepareActionGroup(final List<RadComponent> selection) {
+    RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(selection.get(0));
+    final PsiField[] boundFields = new PsiField[selection.size()];
+    for(int i=0; i<selection.size(); i++) {
+      boundFields [i] = BindingProperty.findBoundField(root, selection.get(i).getBinding());
     }
-    return null;
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    final EventSetDescriptor[] eventSetDescriptors;
+    try {
+      BeanInfo beanInfo = Introspector.getBeanInfo(selection.get(0).getComponentClass());
+      eventSetDescriptors = beanInfo.getEventSetDescriptors();
+    }
+    catch (IntrospectionException e) {
+      LOG.error(e);
+      return null;
+    }
+    EventSetDescriptor[] sortedDescriptors = new EventSetDescriptor[eventSetDescriptors.length];
+    System.arraycopy(eventSetDescriptors, 0, sortedDescriptors, 0, eventSetDescriptors.length);
+    Arrays.sort(sortedDescriptors, new Comparator<EventSetDescriptor>() {
+      public int compare(final EventSetDescriptor o1, final EventSetDescriptor o2) {
+        return o1.getListenerType().getName().compareTo(o2.getListenerType().getName());
+      }
+    });
+    for(EventSetDescriptor descriptor: sortedDescriptors) {
+      actionGroup.add(new MyCreateListenerAction(boundFields, descriptor));
+    }
+    return actionGroup;
   }
 
   @Override
   protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
-    e.getPresentation().setEnabled(selection.size() == 1 &&
-                                   selection.get(0).getBinding() != null &&
-                                   FormEditingUtil.getRoot(selection.get(0)).getClassToBind() != null);
+    e.getPresentation().setEnabled(canCreateListener(selection));
+  }
+
+  private static boolean canCreateListener(final ArrayList<RadComponent> selection) {
+    if (selection.size() == 0) return false;
+    if (FormEditingUtil.getRoot(selection.get(0)).getClassToBind() == null) return false;
+    String componentClass = selection.get(0).getComponentClassName();
+    for(RadComponent c: selection) {
+      if (!c.getComponentClassName().equals(componentClass) || c.getBinding() == null) return false;
+    }
+    return true;
   }
 
   private class MyCreateListenerAction extends AnAction {
     private final PsiClass myClass;
-    private final PsiField myField;
+    private final PsiField[] myFields;
     private final EventSetDescriptor myDescriptor;
     @NonNls private static final String LISTENER_SUFFIX = "Listener";
     @NonNls private static final String ADAPTER_SUFFIX = "Adapter";
 
-    public MyCreateListenerAction(final PsiField boundField, EventSetDescriptor descriptor) {
+    public MyCreateListenerAction(final PsiField[] boundFields, EventSetDescriptor descriptor) {
       super(descriptor.getListenerType().getSimpleName());
-      myClass = boundField.getContainingClass();
-      myField = boundField;
+      myClass = boundFields [0].getContainingClass();
+      myFields = boundFields;
       myDescriptor = descriptor;
     }
 
@@ -144,19 +151,52 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         }
 
         PsiElementFactory factory = myClass.getManager().getElementFactory();
-
-        @NonNls StringBuilder builder = new StringBuilder(myField.getName());
-        builder.append(".");
-        builder.append(myDescriptor.getAddListenerMethod().getName());
-        builder.append("(new ");
-        builder.append(listenerClass.getQualifiedName());
-        builder.append("() { } );");
-
-        PsiStatement stmt = factory.createStatementFromText(builder.toString(), constructor);
         final PsiCodeBlock body = constructor.getBody();
         LOG.assertTrue(body != null);
+
+        @NonNls StringBuilder builder = new StringBuilder();
+        @NonNls String variableName = null;
+        if (myFields.length == 1) {
+          builder.append(myFields [0].getName());
+          builder.append(".");
+          builder.append(myDescriptor.getAddListenerMethod().getName());
+          builder.append("(");
+        }
+        else {
+          builder.append(listenerClass.getQualifiedName()).append(" ");
+          if (body.getLastBodyElement() == null) {
+            variableName = "listener";
+          }
+          else {
+            final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myClass.getProject());
+            variableName = codeStyleManager.suggestUniqueVariableName("listener", body.getLastBodyElement(), false);
+          }
+          builder.append(variableName).append("=");
+        }
+        builder.append("new ");
+        builder.append(listenerClass.getQualifiedName());
+        builder.append("() { } ");
+        if (myFields.length == 1) {
+          builder.append(");");
+        }
+        else {
+          builder.append(";");
+        }
+
+        PsiStatement stmt = factory.createStatementFromText(builder.toString(), constructor);
         stmt = (PsiStatement) body.addAfter(stmt, body.getLastBodyElement());
         CodeStyleManager.getInstance(body.getProject()).shortenClassReferences(stmt);
+
+        if (myFields.length > 1) {
+          PsiElement anchor = stmt;
+          for(PsiField field: myFields) {
+            PsiElement addStmt = factory.createStatementFromText(field.getName() + "." + myDescriptor.getAddListenerMethod().getName() +
+              "(" + variableName + ");", constructor);
+            addStmt = body.addAfter(addStmt, anchor);
+            anchor = addStmt;
+          }
+        }
+
         final Ref<PsiClass> newClassRef = new Ref<PsiClass>();
         stmt.accept(new PsiRecursiveElementVisitor() {
           public void visitClass(PsiClass aClass) {
