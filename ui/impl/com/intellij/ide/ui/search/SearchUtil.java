@@ -163,6 +163,7 @@ public class SearchUtil {
                                                 JComponent rootComponent,
                                                 String option,
                                                 boolean force){
+    if (option == null || option.trim().length() == 0) return false;
     boolean highlight = false;
     if (rootComponent instanceof JCheckBox){
       final JCheckBox checkBox = ((JCheckBox)rootComponent);
