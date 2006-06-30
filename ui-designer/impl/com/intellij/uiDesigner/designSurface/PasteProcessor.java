@@ -147,12 +147,12 @@ public class PasteProcessor extends EventProcessor {
       return myComponentsToPaste.size();
     }
 
-    public int getHSizePolicy() {
-      return 0;
+    public boolean isHGrow() {
+      return false;
     }
 
-    public int getVSizePolicy() {
-      return 0;
+    public boolean isVGrow() {
+      return false;
     }
 
     public int getRelativeRow(int componentIndex) {

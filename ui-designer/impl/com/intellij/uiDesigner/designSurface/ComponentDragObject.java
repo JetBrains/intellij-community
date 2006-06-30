@@ -14,8 +14,8 @@ import java.awt.*;
  */
 public interface ComponentDragObject {
   int getComponentCount();
-  int getHSizePolicy();
-  int getVSizePolicy();
+  boolean isHGrow();
+  boolean isVGrow();
   int getRelativeRow(int componentIndex);
   int getRelativeCol(int componentIndex);
   int getRowSpan(int componentIndex);

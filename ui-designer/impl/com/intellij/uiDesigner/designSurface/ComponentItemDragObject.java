@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.uiDesigner.palette.ComponentItem;
+import com.intellij.uiDesigner.core.GridConstraints;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,12 +29,12 @@ public class ComponentItemDragObject implements ComponentDragObject {
     return 1;
   }
 
-  public int getHSizePolicy() {
-    return myItem.getDefaultConstraints().getHSizePolicy();
+  public boolean isHGrow() {
+    return (myItem.getDefaultConstraints().getHSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0;
   }
 
-  public int getVSizePolicy() {
-    return myItem.getDefaultConstraints().getVSizePolicy();
+  public boolean isVGrow() {
+    return (myItem.getDefaultConstraints().getVSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0;
   }
 
   public int getRelativeRow(int componentIndex) {

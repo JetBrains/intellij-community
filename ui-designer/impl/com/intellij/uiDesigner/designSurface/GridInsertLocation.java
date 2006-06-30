@@ -205,7 +205,7 @@ public class GridInsertLocation extends GridDropLocation {
         if (insertCol == layoutManager.getGridColumnCount(getContainer())-1 && myMode == GridInsertMode.ColumnAfter) {
           final Dimension initialSize = dragObject.getInitialSize(getContainer().getDelegee());
           int remainingSize = getContainer().getDelegee().getWidth() - vGridLines [vGridLines.length-1];
-          if (dragObject.getHSizePolicy() == 0 && remainingSize > initialSize.width) {
+          if (!dragObject.isHGrow() && remainingSize > initialSize.width) {
             rcFeedback = new Rectangle(vGridLines [vGridLines.length-1], hGridLines [insertRow], initialSize.width, cellHeight);
           }
           else if (remainingSize >= 4) {
@@ -215,7 +215,7 @@ public class GridInsertLocation extends GridDropLocation {
         else if (insertRow == layoutManager.getGridRowCount(getContainer())-1 && myMode == GridInsertMode.RowAfter) {
           final Dimension initialSize = dragObject.getInitialSize(getContainer().getDelegee());
           int remainingSize = getContainer().getDelegee().getHeight() - hGridLines [hGridLines.length-1];
-          if (dragObject.getVSizePolicy() == 0 && remainingSize > initialSize.height) {
+          if (!dragObject.isVGrow() && remainingSize > initialSize.height) {
             rcFeedback = new Rectangle(vGridLines [insertCol], hGridLines [hGridLines.length-1], cellWidth, initialSize.height);
           }
           else if (remainingSize >= 4) {
@@ -251,9 +251,8 @@ public class GridInsertLocation extends GridDropLocation {
     int[] vGridLines = manager.getVerticalGridLines(container);
     int[] hGridLines = manager.getHorizontalGridLines(container);
 
-    Rectangle rc;
+    Rectangle rc = feedbackRect;
     int w=4;
-    //noinspection EnumSwitchStatementWhichMissesCases
     switch (mode) {
       case ColumnBefore:
         rc = new Rectangle(vGridLines [cellRect.x] - w, feedbackRect.y - INSERT_ARROW_SIZE,
@@ -286,9 +285,6 @@ public class GridInsertLocation extends GridDropLocation {
           rc.translate(0, (hGridLines [cellRect.y+2] - hGridLines [cellRect.y+1]) / 2);
         }
         break;
-
-      default:
-        return feedbackRect;
     }
 
     return rc;
@@ -302,8 +298,8 @@ public class GridInsertLocation extends GridDropLocation {
                           final ComponentDragObject dragObject) {
     int row = getRow();
     int col = getColumn();
-    boolean canHGrow = (dragObject.getHSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0;
-    boolean canVGrow = (dragObject.getVSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0;
+    boolean canHGrow = dragObject.isHGrow();
+    boolean canVGrow = dragObject.isVGrow();
     int insertedCells;
     RadContainer container = getContainer();
     //noinspection EnumSwitchStatementWhichMissesCases
@@ -352,7 +348,6 @@ public class GridInsertLocation extends GridDropLocation {
 
   @Override @Nullable
   public DropLocation getAdjacentLocation(Direction direction) {
-    RadAbstractGridLayoutManager manager = myContainer.getGridLayoutManager();
     if (isRowInsert()) {
       if (direction == Direction.RIGHT) {
         if (getColumn() < myContainer.getGridColumnCount()-1) {

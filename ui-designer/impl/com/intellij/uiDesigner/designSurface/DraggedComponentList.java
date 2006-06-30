@@ -193,20 +193,18 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     return this;
   }
 
-  public int getHSizePolicy() {
-    int result = 0;
+  public boolean isHGrow() {
     for(GridConstraints c: myOriginalConstraints) {
-      result |= c.getHSizePolicy();
+      if ((c.getHSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0) return true;
     }
-    return result;
+    return false;
   }
 
-  public int getVSizePolicy() {
-    int result = 0;
+  public boolean isVGrow() {
     for(GridConstraints c: myOriginalConstraints) {
-      result |= c.getVSizePolicy();
+      if ((c.getVSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0) return true;
     }
-    return result;
+    return false;
   }
 
   public int getRelativeRow(int componentIndex) {
