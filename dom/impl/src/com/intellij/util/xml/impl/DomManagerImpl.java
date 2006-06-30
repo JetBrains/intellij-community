@@ -599,6 +599,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
     public Result<DomFileElementImpl> compute() {
       synchronized (PsiLock.LOCK) {
+        if (myProject.isDisposed()) return new Result<DomFileElementImpl>(null);
+
         if (myOldResult != null && myFileDescription != null && myFileDescription.isMyFile(myXmlFile)) {
           return myOldResult;
         }
