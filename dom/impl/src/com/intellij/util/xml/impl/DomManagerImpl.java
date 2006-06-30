@@ -18,13 +18,13 @@ import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
@@ -609,7 +609,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
         if (originalFile != null) {
           return saveResult(getOrCreateCachedValueProvider(originalFile).getFileDescription(), new Factory<DomFileElementImpl>() {
             public DomFileElementImpl create() {
-              return getOrCreateFileElement(myXmlFile, myFileDescription);
+              return getOrCreateFileElement(originalFile, myFileDescription);
             }
           });
         }
