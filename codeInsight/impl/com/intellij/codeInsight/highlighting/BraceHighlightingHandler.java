@@ -8,17 +8,21 @@
  */
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.impl.injected.EditorDelegate;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -26,12 +30,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
+import com.intellij.ide.highlighter.HighlighterFactory;
 
 import java.awt.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class BraceHighlightingHandler {
   private static final Key<List<RangeHighlighter>> BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY = Key.create("BraceHighlighter.BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY");
@@ -48,9 +54,17 @@ public class BraceHighlightingHandler {
 
   public BraceHighlightingHandler(Project project, Editor editor, Alarm alarm) {
     myProject = project;
+
+    Document document = editor.getDocument();
+    if (!PsiDocumentManager.getInstance(myProject).isUncommited(document)) {
+      // when document is committed, try to highlight braces in injected lang - it's fast
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      editor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile);
+    }
+
     myEditor = editor;
     myAlarm = alarm;
-    myDocument = (DocumentEx)editor.getDocument();
+    myDocument = (DocumentEx)myEditor.getDocument();
 
     myPsiFile = PsiDocumentManager.getInstance(project).getPsiFile(myDocument);
     myCodeInsightSettings = CodeInsightSettings.getInstance();
@@ -80,7 +94,7 @@ public class BraceHighlightingHandler {
 
     final int originalOffset = offset;
 
-    HighlighterIterator iterator = ((EditorEx)myEditor).getHighlighter().createIterator(offset);
+    HighlighterIterator iterator = getEditorHighlighter().createIterator(offset);
 
     if (iterator.atEnd()) {
       offset--;
@@ -92,7 +106,7 @@ public class BraceHighlightingHandler {
       offset--;
 
       if (offset >= 0) {
-        final HighlighterIterator i = ((EditorEx)myEditor).getHighlighter().createIterator(offset);
+        final HighlighterIterator i = getEditorHighlighter().createIterator(offset);
         if (!BraceMatchingUtil.isRBraceToken(i, chars, myFileType)) offset++;
       }
     }
@@ -102,7 +116,7 @@ public class BraceHighlightingHandler {
       return;
     }
 
-    iterator = ((EditorEx)myEditor).getHighlighter().createIterator(offset);
+    iterator = getEditorHighlighter().createIterator(offset);
 
     myAlarm.cancelAllRequests();
 
@@ -125,10 +139,19 @@ public class BraceHighlightingHandler {
     }, 300);
   }
 
+  public EditorHighlighter getEditorHighlighter() {
+    if (myEditor instanceof EditorDelegate) {
+      LexerEditorHighlighter editorHighlighter = HighlighterFactory.createHighlighter(myProject, myPsiFile.getFileType());
+      editorHighlighter.setText(myDocument.getText());
+      return editorHighlighter;
+    }
+    return ((EditorEx)myEditor).getHighlighter();
+  }
+
   private void highlightScope(int offset) {
     if (myEditor.getFoldingModel().isOffsetCollapsed(offset)) return;
 
-    HighlighterIterator iterator = ((EditorEx)myEditor).getHighlighter().createIterator(offset);
+    HighlighterIterator iterator = getEditorHighlighter().createIterator(offset);
     final CharSequence chars = myDocument.getCharsSequence();
 
     if (!BraceMatchingUtil.isStructuralBraceToken(myFileType, iterator, chars)) {
@@ -149,7 +172,7 @@ public class BraceHighlightingHandler {
   private void doHighlight(int offset, int originalOffset) {
     if (myEditor.getFoldingModel().isOffsetCollapsed(offset)) return;
 
-    HighlighterIterator iterator = ((EditorEx)myEditor).getHighlighter().createIterator(offset);
+    HighlighterIterator iterator = getEditorHighlighter().createIterator(offset);
     final CharSequence chars = myDocument.getCharsSequence();
 
     if (BraceMatchingUtil.isLBraceToken(iterator, chars, myFileType)) {
@@ -164,7 +187,7 @@ public class BraceHighlightingHandler {
       highlightLeftBrace(iterator, false);
 
       if (offset > 0) {
-        iterator = ((EditorEx)myEditor).getHighlighter().createIterator(offset - 1);
+        iterator = getEditorHighlighter().createIterator(offset - 1);
         if (BraceMatchingUtil.isRBraceToken(iterator, chars, myFileType)) {
           highlightRightBrace(iterator, false);
         }

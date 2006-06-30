@@ -34,9 +34,9 @@ import java.io.IOException;
 public class LightCodeInsightTestCase extends LightIdeaTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.LightCodeInsightTestCase");
 
-  protected Editor myEditor;
-  protected PsiFile myFile;
-  protected VirtualFile myVFile;
+  protected static Editor myEditor;
+  protected static PsiFile myFile;
+  protected static VirtualFile myVFile;
 
   private static final String CARET_MARKER = "<caret>";
   private static final String SELECTION_START_MARKER = "<selection>";
@@ -91,7 +91,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
    * @param fileText - data file text.
    * @throws IOException
    */
-  protected void configureFromFileText(final String fileName, String fileText) throws IOException {
+  protected static void configureFromFileText(final String fileName, String fileText) throws IOException {
     final Document fakeDocument = new DocumentImpl(fileText);
 
     int caretIndex = fileText.indexOf(CARET_MARKER);
@@ -121,13 +121,13 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     setupEditorForInjectedLangugae();
   }
 
-  private void setupSelection(final RangeMarker selStartMarker, final RangeMarker selEndMarker) {
+  private static void setupSelection(final RangeMarker selStartMarker, final RangeMarker selEndMarker) {
     if (selStartMarker != null) {
       myEditor.getSelectionModel().setSelection(selStartMarker.getStartOffset(), selEndMarker.getStartOffset());
     }
   }
 
-  private void setupCaret(final RangeMarker caretMarker, String fileText) {
+  private static void setupCaret(final RangeMarker caretMarker, String fileText) {
     if (caretMarker != null) {
       int caretLine = StringUtil.offsetToLineNumber(fileText, caretMarker.getStartOffset());
       int caretCol = EditorUtil.calcColumnNumber(null, myEditor.getDocument().getText(),
@@ -142,9 +142,9 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     return FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
   }
 
-  private void setupFileEditorAndDocument(final String fileName, String fileText) throws IOException {
+  private static void setupFileEditorAndDocument(final String fileName, String fileText) throws IOException {
     deleteVFile();
-    myVFile = getSourceRoot().createChildData(this, fileName);
+    myVFile = getSourceRoot().createChildData(null, fileName);
     VfsUtil.saveText(myVFile, fileText);
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     manager.reloadFromDisk(manager.getDocument(myVFile));
@@ -154,7 +154,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     myEditor = createEditor(myVFile);
   }
 
-  private void setupEditorForInjectedLangugae() {
+  private static void setupEditorForInjectedLangugae() {
     Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, myFile);
     if (editor instanceof EditorDelegate) {
       myFile = ((EditorDelegate)editor).getInjectedFile();
@@ -162,7 +162,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     }
   }
 
-  private void deleteVFile() {
+  private static void deleteVFile() {
     if (myVFile != null) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
@@ -363,18 +363,18 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
   /**
    * @return Editor used in test.
    */
-  protected Editor getEditor() {
+  protected static Editor getEditor() {
     return myEditor;
   }
 
   /**
    * @return PsiFile opened in editor used in test
    */
-  protected PsiFile getFile() {
+  protected static PsiFile getFile() {
     return myFile;
   }
 
-  protected VirtualFile getVFile() {
+  protected static VirtualFile getVFile() {
     return myVFile;
   }
 

@@ -52,29 +52,11 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
 
   public int getLineStartOffset(int line) {
     return new DocumentImpl(getText()).getLineStartOffset(line);
-    //if (line < myPrefixLineCount) {
-    //  return new DocumentImpl(myPrefix).getLineStartOffset(line);
-    //}
-    //if (line > getLineCount() - mySuffixLineCount) {
-    //  return new DocumentImpl(mySuffix).getLineStartOffset(line + getLineCount() - mySuffixLineCount) + getTextLength() - mySuffix.length();
-    //}
-    //
-    //int hostLine = myDelegate.getLineNumber(myHostRange.getStartOffset()) + line - (myPrefixLineCount - 1);
-    //int hostOffset = myDelegate.getLineStartOffset(hostLine);
-    //return hostToInjected(hostOffset);
   }
 
   public int getLineEndOffset(int line) {
     if (line==0 && myPrefix.length()==0) return getTextLength();
     return new DocumentImpl(getText()).getLineEndOffset(line);
-    //if (line < myPrefixLineCount) {
-    //}
-    //if (line > getLineCount()-mySuffixLineCount) {
-    //  return new DocumentImpl(getText()).getLineEndOffset(line+getLineCount()-mySuffixLineCount) + getTextLength() - mySuffix.length();
-    //}
-    //int hostLine = myDelegate.getLineNumber(myHostRange.getStartOffset()) + line - (myPrefixLineCount-1);
-    //int hostOffset = myDelegate.getLineEndOffset(hostLine);
-    //return hostToInjected(hostOffset);
   }
 
   public String getText() {

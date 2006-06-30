@@ -360,14 +360,17 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   public void setProcessDocumentEvents(Document document, boolean processDocumentEvents) {
-    if (!processDocumentEvents && document instanceof DocumentRange) return; // PSI changes in little psiFile can lead to changes in big document. Do not block them.
     myProcessDocumentEvents = processDocumentEvents;
+  }
+
+  private boolean processDocumentEvents(final DocumentEvent event) {
+    return myProcessDocumentEvents;
   }
 
   private final Key<ASTNode> TEMP_TREE_IN_DOCUMENT_KEY = Key.create("TEMP_TREE_IN_DOCUMENT_KEY");
 
   public void beforeDocumentChange(DocumentEvent event) {
-    if (!myProcessDocumentEvents) return;
+    if (!processDocumentEvents(event)) return;
 
     final Document document = event.getDocument();
     final PsiFile file = getCachedPsiFile(document);
@@ -391,7 +394,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   public void documentChanged(DocumentEvent event) {
-    if (!myProcessDocumentEvents) return;
+    if (!processDocumentEvents(event)) return;
 
     final Document document = event.getDocument();
     final PsiFile file = getCachedPsiFile(document);

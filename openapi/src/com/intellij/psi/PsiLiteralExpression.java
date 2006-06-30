@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java literal expression.
  */
-public interface PsiLiteralExpression extends PsiExpression, PsiLanguageInjectionHost {
+public interface PsiLiteralExpression extends PsiExpression {
   //TODO: consider getValue to throw exception when parsing error and remove method getParsingError()!
 
   /**

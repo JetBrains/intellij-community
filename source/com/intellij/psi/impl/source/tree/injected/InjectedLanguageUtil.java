@@ -30,6 +30,7 @@ import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
+import com.intellij.psi.impl.source.xml.XmlTextImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -119,6 +120,17 @@ public class InjectedLanguageUtil {
 
   private static <T extends PsiLanguageInjectionHost> SingleRootFileViewProvider createViewProvider(final Project project, final VirtualFileDelegate virtualFile) {
     return new SingleRootFileViewProvider(PsiManager.getInstance(project), virtualFile) {
+
+      public void rootChanged(PsiFile psiFile) {
+        super.rootChanged(psiFile);
+        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+        DocumentRange documentRange = (DocumentRange)documentManager.getDocument(psiFile);
+        DocumentEx document = documentRange.getDelegate();
+        if (!documentManager.isUncommited(document)) {
+          document.replaceString(0,0,""); // change document outside commit
+        }
+      }
+
       public FileViewProvider clone() {
         DocumentRange oldDocumentRange = ((VirtualFileDelegate)getVirtualFile()).getDocumentRange();
         RangeMarker documentWindow = oldDocumentRange.getTextRange();
@@ -297,11 +309,11 @@ public class InjectedLanguageUtil {
     boolean decode(T text, final TextRange rangeInsideHost, StringBuilder outChars);
     int getOffsetInSource(int offsetInDecoded);
   }
-  public static class StringLiteralEscaper implements LiteralTextEscaper<PsiLiteralExpression> {
+  public static class StringLiteralEscaper implements LiteralTextEscaper<PsiLiteralExpressionImpl> {
     public static final StringLiteralEscaper INSTANCE = new StringLiteralEscaper();
     private int[] outSourceOffsets;
 
-    public boolean decode(PsiLiteralExpression host, final TextRange rangeInsideHost, StringBuilder outChars) {
+    public boolean decode(PsiLiteralExpressionImpl host, final TextRange rangeInsideHost, StringBuilder outChars) {
       final String text = host.getText().substring(rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset());
       outSourceOffsets = new int[text.length() + 1];
       return PsiLiteralExpressionImpl.parseStringCharacters(text, outChars, outSourceOffsets);
@@ -312,11 +324,11 @@ public class InjectedLanguageUtil {
     }
   }
 
-  public static class XmlTextLiteralEscaper implements LiteralTextEscaper<XmlText> {
+  public static class XmlTextLiteralEscaper implements LiteralTextEscaper<XmlTextImpl> {
     public static final XmlTextLiteralEscaper INSTANCE = new XmlTextLiteralEscaper();
     private XmlText myXmlText;
 
-    public boolean decode(XmlText host, final TextRange rangeInsideHost, StringBuilder outChars) {
+    public boolean decode(XmlTextImpl host, final TextRange rangeInsideHost, StringBuilder outChars) {
       myXmlText = host;
       int startInDecoded = host.physicalToDisplay(rangeInsideHost.getStartOffset());
       int endInDecoded = host.physicalToDisplay(rangeInsideHost.getEndOffset());

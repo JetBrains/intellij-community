@@ -476,11 +476,11 @@ public class IntentionHintComponent extends JPanel {
                 public void run() {
                   try {
                     action.invoke(myProject, myEditor, file);
-                    DaemonCodeAnalyzer.getInstance(myProject).updateVisibleHighlighters(myEditor);
                   }
                   catch (IncorrectOperationException e1) {
                     LOG.error(e1);
                   }
+                  DaemonCodeAnalyzer.getInstance(myProject).updateVisibleHighlighters(myEditor);
                 }
               };
 

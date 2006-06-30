@@ -21,9 +21,6 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.Iterator;
-import java.util.Set;
-
 public abstract class PomTransactionBase implements PomTransaction{
   private PsiElement myScope;
   private PomModelAspect myAspect;
@@ -46,10 +43,7 @@ public abstract class PomTransactionBase implements PomTransaction{
       myAccumulatedEvent.registerChangeSet(myAspect, null);
       return;
     }
-    final Set<PomModelAspect> changedAspects = event.getChangedAspects();
-    final Iterator<PomModelAspect> iterator = changedAspects.iterator();
-    while (iterator.hasNext()) {
-      final PomModelAspect aspect = iterator.next();
+    for (PomModelAspect aspect : event.getChangedAspects()) {
       myAccumulatedEvent.registerChangeSet(aspect, event.getChangeSet(aspect));
     }
   }

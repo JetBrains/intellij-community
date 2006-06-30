@@ -16,9 +16,8 @@
 package com.intellij.psi.xml;
 
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.psi.PsiLanguageInjectionHost;
 
-public interface XmlText extends XmlTagChild, PsiLanguageInjectionHost {
+public interface XmlText extends XmlTagChild {
   String getText();
   /**
    * Substituted text

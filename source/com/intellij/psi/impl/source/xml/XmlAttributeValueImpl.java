@@ -59,4 +59,5 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   public List<Pair<PsiElement,TextRange>> getInjectedPsi() {
     return InjectedLanguageUtil.getInjectedPsiFiles(this, InjectedLanguageUtil.XmlAttributeLiteralEscaper.INSTANCE);
   }
+
 }

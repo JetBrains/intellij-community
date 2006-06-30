@@ -257,8 +257,8 @@ public class SingleRootFileViewProvider implements FileViewProvider {
 
   private PsiFile createFileIridaAPI(final Language lang) throws Exception {
     ParserDefinition parserDefinition = lang.getParserDefinition();
-    //noinspection HardCodedStringLiteral
     assert parserDefinition != null;
+    //noinspection HardCodedStringLiteral
     Method m = parserDefinition.getClass().getMethod("createFile", Project.class, VirtualFile.class);
     PsiFile file = (PsiFile)m.invoke(parserDefinition, myManager.getProject(), myFile);
     if (file instanceof PsiFileImpl) {

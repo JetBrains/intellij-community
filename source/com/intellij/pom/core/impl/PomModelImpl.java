@@ -166,8 +166,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
             dependants.addAll(getAllDependants(pomModelAspect));
           }
           for (final PomModelAspect modelAspect : dependants) {
-            if (myBlockedAspects.contains(modelAspect) || changedAspects.contains(modelAspect)) continue;
-            modelAspect.update(event);
+            if (!changedAspects.contains(modelAspect)) {
+              modelAspect.update(event);
+            }
           }
         }
         {
@@ -216,7 +217,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     if (containingFileByTree != null) {
       document = manager.getCachedDocument(containingFileByTree);
     }
-    if(document != null && transaction.getAccumulatedEvent().getChangeSet(getModelAspect(TreeAspect.class)) != null) synchronizer.commitTransaction(document);
+    if (document != null && transaction.getAccumulatedEvent().getChangeSet(getModelAspect(TreeAspect.class)) != null) {
+      synchronizer.commitTransaction(document);
+    }
     if(progressIndicator != null) progressIndicator.finishNonCancelableSection();
   }
 

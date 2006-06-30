@@ -11,6 +11,7 @@ import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.impl.events.XmlTextChangedImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-public class XmlTextImpl extends XmlElementImpl implements XmlText {
+public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageInjectionHost {
   private String myDisplayText = null;
   private int[] myGapDisplayStarts = null;
   private int[] myGapPhysicalStarts = null;
@@ -222,4 +223,5 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
   public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
     return InjectedLanguageUtil.getInjectedPsiFiles(this, InjectedLanguageUtil.XmlTextLiteralEscaper.INSTANCE);
   }
+
 }

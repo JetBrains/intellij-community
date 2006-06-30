@@ -10,8 +10,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
@@ -41,9 +39,9 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
             try {
               String contents = StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(ioFile)), "\n");
               configureFromFileText(ioFile.getName(), contents);
-              final Pair<String, Boolean> pair = parseActionHint(getFile());
+              final Pair<String, Boolean> pair = parseActionHint(getFile(), contents);
               final String text = pair.getFirst();
-              final boolean actionShouldBeAvailable = pair.getSecond();
+              final boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
 
               beforeActionStarted(testName, contents);
 
@@ -55,6 +53,8 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
               }
             }
             catch (Exception e) {
+              e.printStackTrace();
+              fail();
             }
           }
         });
@@ -68,13 +68,11 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   protected void beforeActionStarted(final String testName, final String contents) {
   }
 
-  public static Pair<String, Boolean> parseActionHint(final PsiFile file) throws IOException {
+  public static Pair<String, Boolean> parseActionHint(final PsiFile file, String contents) throws IOException {
     String comment = file instanceof XmlFile ? "<!--" : "//";
     // "quick fix action text to perform" "should be available"
     Pattern pattern = Pattern.compile("^" + comment + " \"([^\"]*)\" \"(\\S*)\".*", Pattern.DOTALL);
-    final VirtualFile virtualFile = file.getVirtualFile();
-    assertNotNull(virtualFile);
-    Matcher matcher = pattern.matcher(VfsUtil.loadText(virtualFile));
+    Matcher matcher = pattern.matcher(contents);
     assertTrue(matcher.matches());
     final String text = matcher.group(1);
     final Boolean actionShouldBeAvailable = Boolean.valueOf(matcher.group(2));

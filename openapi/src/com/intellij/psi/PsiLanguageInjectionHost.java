@@ -26,4 +26,5 @@ public interface PsiLanguageInjectionHost extends PsiElement {
    */
   @Nullable
   List<Pair<PsiElement,TextRange>> getInjectedPsi();
+
 }

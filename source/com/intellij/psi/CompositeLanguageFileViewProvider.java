@@ -273,7 +273,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     if (myRootsInUpdate.contains(psiFile)) return;
     if (psiFile.getLanguage() == getBaseLanguage()) {
       super.rootChanged(psiFile);
-      // rest of sync mechanism is now handeled by JspxAspect
+      // rest of sync mechanism is now handled by JspxAspect
     }
     else if (!myRootsInUpdate.contains(getPsi(getBaseLanguage()))) doHolderToXmlChanges(psiFile);
   }

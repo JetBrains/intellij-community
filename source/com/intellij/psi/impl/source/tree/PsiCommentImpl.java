@@ -29,14 +29,6 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiJav
 
   @Nullable
   public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
-    //InjectedLanguageUtil.LiteralTextEscaper<PsiCommentImpl> escaper = null;
-    //if (getTokenType() == C_STYLE_COMMENT) {
-    //  escaper = new InjectedLanguageUtil.BlockCommentTextLiteralEscaper();
-    //}
-    //else if (getTokenType() == END_OF_LINE_COMMENT) {
-    //  escaper = new InjectedLanguageUtil.LineCommentTextLiteralEscaper();
-    //}
-    //
     return InjectedLanguageUtil.getInjectedPsiFiles(this, null);
   }
 }

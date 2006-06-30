@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PsiLiteralExpressionImpl extends CompositePsiElement implements PsiLiteralExpression {
+public class PsiLiteralExpressionImpl extends CompositePsiElement implements PsiLiteralExpression,PsiLanguageInjectionHost {
   private static final @NonNls String QUOT = "&quot;";
   private static final @NonNls String HEXPREFIX = "0x";
   private static final @NonNls String HEXPREFIX2 = "0X";

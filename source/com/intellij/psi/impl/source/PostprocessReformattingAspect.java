@@ -139,7 +139,8 @@ public class PostprocessReformattingAspect implements PomModelAspect {
           doPostponedFormatting(viewProvider);
         }
       }
-      finally{
+      finally {
+        LOG.assertTrue(myReformatElements.isEmpty());
         myUpdatedProviders.clear();
         myReformatElements.clear();
       }

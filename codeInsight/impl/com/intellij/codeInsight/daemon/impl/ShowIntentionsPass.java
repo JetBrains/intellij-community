@@ -31,6 +31,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.impl.injected.EditorDelegate;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -42,6 +43,7 @@ import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.ClassUtil;
@@ -148,6 +150,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
     Point xy = myEditor.logicalPositionToXY(caretPos);
     if (!visibleArea.contains(xy)) return;
+    Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, myFile);
+    PsiFile injectedFile = injectedEditor instanceof EditorDelegate ? ((EditorDelegate)injectedEditor).getInjectedFile() : myFile;
 
     ArrayList<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     ArrayList<HighlightInfo.IntentionActionDescriptor> fixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
@@ -167,7 +171,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
           }
         }
       }
-      else if (action.isAvailable(myProject, myEditor, myFile)) {
+      else if (action.isAvailable(myProject, injectedEditor, injectedFile)) {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
         enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
         intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
@@ -200,7 +204,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         }
 
         if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
-          IntentionHintComponent hintComponent = IntentionHintComponent.showIntentionHint(myProject, myEditor, intentionsToShow,
+          IntentionHintComponent hintComponent = IntentionHintComponent.showIntentionHint(myProject, injectedEditor, intentionsToShow,
                                                                                           fixesToShow, false);
           if (!myIsSecondPass) {
             codeAnalyzer.setLastIntentionHint(hintComponent);
