@@ -68,7 +68,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
     if (!myErrorStripeRenderer.getDaemonCodeAnalyzerStatus().inspectionFinished) {
       addUpdateRequest();
     }
-  }
+  }          
 
   private void addUpdateRequest() {
     myAlarm.addRequest(new Runnable() {

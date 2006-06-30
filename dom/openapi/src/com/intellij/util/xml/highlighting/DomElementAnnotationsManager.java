@@ -21,6 +21,8 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.InspectionManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -38,4 +40,5 @@ public abstract class DomElementAnnotationsManager {
 
   public abstract List<DomElementProblemDescriptor> getAllProblems(final DomFileElement<?> fileElement, HighlightSeverity minSeverity);
 
+  public abstract List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor);
 }

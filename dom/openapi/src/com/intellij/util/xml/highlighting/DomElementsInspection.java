@@ -17,18 +17,13 @@
 
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericValue;
-import com.intellij.lang.ASTNode;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -36,11 +31,10 @@ import org.jetbrains.annotations.Nullable;
  */
 abstract public class DomElementsInspection extends LocalInspectionTool {
 
-
   @Nullable
   public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
     if (isAcceptable(file)) {
-        return findProblems(file, manager, isOnTheFly);
+      return findProblems(file, manager, isOnTheFly);
     }
 
     return super.checkFile(file, manager, isOnTheFly);
@@ -51,8 +45,14 @@ abstract public class DomElementsInspection extends LocalInspectionTool {
     return null;
   }
 
+  public HighlightDisplayLevel getDefaultLevel() {
+    return HighlightDisplayLevel.ERROR;
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   abstract protected boolean isAcceptable(final PsiFile file);
-  abstract protected ProblemDescriptor[] findProblems(final PsiFile file, InspectionManager manager, final boolean onTheFly);
-
-
+  abstract protected ProblemDescriptor[] findProblems(final PsiFile file, final InspectionManager manager, final boolean onTheFly);
 }

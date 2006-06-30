@@ -14,6 +14,8 @@ import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomReflectionUtil;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.InspectionManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -118,6 +120,11 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       myClass2Annotator.put(aClass, annotators);
     }
     return annotators;
+  }
+
+
+  public List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor) {
+    return DomElementsHighlightingUtil.createProblemDescriptors(manager, problemDescriptor);
   }
 
   @NotNull

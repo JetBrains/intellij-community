@@ -23,7 +23,7 @@ import java.util.List;
  */
 public class DomElementsHighlightingUtil {
 
-  public static List<ProblemDescriptor> getProblemDescriptor(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor) {
+  public static List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor) {
     List<ProblemDescriptor>  descritors = new ArrayList<ProblemDescriptor>();
     final DomElement domElement = problemDescriptor.getDomElement();
 
