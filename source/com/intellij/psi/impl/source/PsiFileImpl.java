@@ -121,7 +121,15 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   public boolean isValid() {
     if (!getViewProvider().isPhysical() || myExplicitlySetAsValid) return true; // "dummy" file
     final VirtualFile vFile = getViewProvider().getVirtualFile();
-    return vFile.isValid() &&  myManager.findFile(vFile) == this;
+    return vFile.isValid() && isPsiUpToDate(vFile);
+  }
+
+  protected boolean isPsiUpToDate(VirtualFile vFile) {
+    final boolean b = myManager.findFile(vFile) == this;
+    if (!b) {
+      int a = 1;
+    }
+    return b;
   }
 
   public boolean isContentsLoaded() {
