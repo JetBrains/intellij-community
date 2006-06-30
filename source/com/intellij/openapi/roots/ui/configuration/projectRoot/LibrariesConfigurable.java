@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.awt.*;
 
-public class LibrariesConfigurable implements NamedConfigurable <LibrariesModifiableModel> {
+public class LibrariesConfigurable implements NamedConfigurable <String> {
   private static final Icon ICON = IconLoader.getIcon("/modules/libraries.png");
 
   private String myLibraryTable;
@@ -90,8 +90,8 @@ public class LibrariesConfigurable implements NamedConfigurable <LibrariesModifi
     //do nothing
   }
 
-  public LibrariesModifiableModel getEditableObject() {
-    return myModel;
+  public String getEditableObject() {
+    return myLibraryTable;
   }
 
   public String getBannerSlogan() {

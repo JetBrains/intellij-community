@@ -170,7 +170,7 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     }
   }
 
-  private void handleSelect(boolean handleFinalChoices) {
+  public void handleSelect(boolean handleFinalChoices) {
     if (myList.getSelectedIndex() == -1) return;
 
     if (myList.getSelectedIndex() == getIndexForShowingChild()) {

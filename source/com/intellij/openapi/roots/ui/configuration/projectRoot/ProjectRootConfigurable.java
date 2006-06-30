@@ -41,6 +41,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -429,7 +430,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     return project.getComponent(ProjectRootConfigurable.class);
   }
 
-  public void createNode(final NamedConfigurable configurable, final MyNode parentNode) {
+  public void createNode(final NamedConfigurable<ProjectJdk> configurable, final MyNode parentNode) {
     final MyNode node = new MyNode(configurable, true);
     addNode(node, parentNode);
     selectNodeInTree(node);
@@ -695,15 +696,15 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         Disposer.dispose(editor);
       }
     });
+    group.add(new AnAction(ProjectBundle.message("add.new.project.library.text")) {
+      public void actionPerformed(AnActionEvent e) {
+        LibraryTableEditor.editLibraryTable(getProjectLibrariesProvider(), myProject).createAddLibraryAction(true, myWholePanel).actionPerformed(null);
+      }
+    });
     group.add(new AnAction(ProjectBundle.message("add.new.application.server.library.text")) {
       public void actionPerformed(AnActionEvent e) {
         LibraryTableEditor.editLibraryTable(getApplicationServerLibrariesProvider(), myProject).createAddLibraryAction(true, myWholePanel)
           .actionPerformed(null);
-      }
-    });
-    group.add(new AnAction(ProjectBundle.message("add.new.project.library.text")) {
-      public void actionPerformed(AnActionEvent e) {
-        LibraryTableEditor.editLibraryTable(getProjectLibrariesProvider(), myProject).createAddLibraryAction(true, myWholePanel).actionPerformed(null);
       }
     });
     group.add(new AnAction(ProjectBundle.message("add.new.module.library.text")) {
@@ -718,7 +719,17 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       }
     });
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    return popupFactory.createActionsStep(group, e.getDataContext(), false, false, ProjectBundle.message("add.new.library.title"), myTree, true);
+    final int defaultOptionIndex;
+    final Object selectedObject = getSelectedObject();
+    if (selectedObject instanceof String){
+      final String libraryTable = (String)selectedObject;
+      defaultOptionIndex = Comparing.strEqual(libraryTable, LibraryTablesRegistrar.APPLICATION_LEVEL)
+                           ? 0
+                           : Comparing.strEqual(libraryTable, LibraryTablesRegistrar.PROJECT_LEVEL) ? 1 : 2;
+    } else {
+      defaultOptionIndex = 1;  //do not create too many module libraries ;)
+    }
+    return popupFactory.createActionsStep(group, e.getDataContext(), false, false, ProjectBundle.message("add.new.library.title"), myTree, true, defaultOptionIndex);
   }
 
   private LibraryTableModifiableModelProvider getModifiableModelProvider(final Module module) {
@@ -786,8 +797,26 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
           });
           return PopupStep.FINAL_CHOICE;
         }
+
+        public int getDefaultOptionIndex() {
+          final Object selectedObject = getSelectedObject();
+          if (selectedObject instanceof Library || selectedObject instanceof String){
+            return 0;
+          } else if (selectedObject instanceof ProjectJdk || selectedObject instanceof ProjectJdksModel){
+            return 1;
+          }
+          return 2;
+        }
       });
       listPopup.showUnderneathOf(myNorthPanel);
+      final int defaultOptionIndex = listPopup.getListStep().getDefaultOptionIndex();
+      if (defaultOptionIndex == 0 || defaultOptionIndex == 1) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            ((ListPopupImpl)listPopup).handleSelect(true);
+          }
+        });
+      }
     }
 
   }

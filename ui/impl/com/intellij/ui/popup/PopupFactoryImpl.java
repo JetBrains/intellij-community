@@ -20,6 +20,7 @@ import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,6 +41,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
 
   public PopupFactoryImpl() {}
 
+  @NotNull
   public String getComponentName() {
     return "PopupFactory";
   }
@@ -114,16 +116,23 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
   }
 
   public ListPopupStep createActionsStep(final ActionGroup actionGroup,
-                                                             final DataContext dataContext,
-                                                             final boolean showNumbers,
-                                                             final boolean showDisabledActions,
-                                                             final String title,
-                                                             final Component component,
-                                                             final boolean honorActionMnemonics) {
+                                         final DataContext dataContext,
+                                         final boolean showNumbers,
+                                         final boolean showDisabledActions,
+                                         final String title,
+                                         final Component component,
+                                         final boolean honorActionMnemonics) {
+    return createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics, 0);
+  }
+
+  public ListPopupStep createActionsStep(ActionGroup actionGroup, DataContext dataContext, boolean showNumbers, boolean showDisabledActions, String title,
+                                Component component,
+                                boolean honorActionMnemonics,
+                                int defaultOptionIndex) {
     final ArrayList<ActionItem> items = new ArrayList<ActionItem>();
     fillModel(items, actionGroup, dataContext, showNumbers, showDisabledActions, new HashMap<AnAction, Presentation>(), 0, false, honorActionMnemonics);
 
-    return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items));
+    return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items), defaultOptionIndex);
   }
 
   private static boolean itemsHaveMnemonics(final ArrayList<ActionItem> items) {
@@ -313,7 +322,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
 
       Icon icon = presentation.getIcon();
       if (icon == null) {
-        final String actionId = ActionManager.getInstance().getId(action);
+        @NonNls final String actionId = ActionManager.getInstance().getId(action);
         if (actionId != null && actionId.startsWith("QuickList.")){
           icon = QUICK_LIST_ICON;
         }
@@ -375,12 +384,18 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
     private final String myTitle;
     private Component myContext;
     private boolean myEnableMnemonics;
+    private int myDefaultOptionIndex;
 
-    public ActionPopupStep(final ArrayList<ActionItem> items, final String title, Component context, boolean enableMnemonics) {
+    public ActionPopupStep(final ArrayList<ActionItem> items,
+                           final String title,
+                           Component context,
+                           boolean enableMnemonics,
+                           final int defaultOptionIndex) {
       myItems = items;
       myTitle = title;
       myContext = context;
       myEnableMnemonics = enableMnemonics;
+      myDefaultOptionIndex = defaultOptionIndex;
     }
 
     public List<ActionItem> getValues() {
@@ -417,7 +432,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
     }
 
     public int getDefaultOptionIndex() {
-      return 0;
+      return myDefaultOptionIndex;
     }
 
     public String getTitle() {
