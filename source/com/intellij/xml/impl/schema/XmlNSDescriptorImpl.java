@@ -169,9 +169,10 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)myTag.getNSDescriptor(namespace, true);
 
     if (nsDescriptor != this && nsDescriptor != null) {
-      return nsDescriptor.getAttribute(
+      return nsDescriptor.getAttributeImpl(
         localName,
-        namespace
+        namespace,
+        visited
       );
     }
 
