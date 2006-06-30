@@ -1,109 +1,276 @@
+/*
+ * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
+ */
+
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.compiler.Chunk;
+import com.intellij.compiler.ModuleCompilerUtil;
+import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.ui.FieldPanel;
+import com.intellij.ui.InsertPathAction;
+import com.intellij.util.Alarm;
+import com.intellij.util.graph.Graph;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Dec 15, 2003
  */
-public class ModulesConfigurable implements Configurable {
+public class ModulesConfigurable implements NamedConfigurable<Project> {
+
   private final Project myProject;
-  private final String myModuleNameToSelect;
-  private final String myTabNameToSelect;
-  private final boolean myStartModuleWizardOnShow;
-  private ModulesConfigurator myConfigurator;
-  private static final Icon ICON = IconLoader.getIcon("/modules/modules.png");
 
-  public ModulesConfigurable(Project project) {
-    this(project, null, null, false);
-  }
+  private static final Icon PROJECT_ICON = IconLoader.getIcon("/nodes/project.png");
 
-  public ModulesConfigurable(Project project, String moduleNameToSelect, String tabNameToSelect, boolean startModuleWizard) {
+  private boolean myStartModuleWizardOnShow;
+  private LanguageLevelCombo myLanguageLevelCombo;
+  private ProjectJdkConfigurable myProjectJdkConfigurable;
+  private JRadioButton myRbRelativePaths;
+
+  @SuppressWarnings({"FieldCanBeLocal"})
+  private JRadioButton myRbAbsolutePaths;
+
+  private FieldPanel myProjectCompilerOutput;
+
+  private ModulesConfigurable.MyJPanel myPanel;
+
+  private Alarm myUpdateWarningAlarm = new Alarm();
+
+  private JLabel myWarningLabel = new JLabel("");
+  private ModulesConfigurator myModulesConfigurator;
+  private JPanel myWholePanel;
+
+  public ModulesConfigurable(Project project, ModulesConfigurator configurator, ProjectJdksModel model) {
     myProject = project;
-    myModuleNameToSelect = moduleNameToSelect;
-    myTabNameToSelect = tabNameToSelect;
-    myStartModuleWizardOnShow = startModuleWizard;
-  }
-
-  public String getDisplayName() {
-    return ProjectBundle.message("modules.title");
-  }
-
-  public void reset() {
-    if (myConfigurator != null) {
-      if (isModified()) {
-        myConfigurator.reset();
-      }
-      final String moduleNameToSelect = getModuleNameToSelect();
-      if (moduleNameToSelect == null || !myConfigurator.selectModule(moduleNameToSelect, getTabNameToSelect())) {
-        myConfigurator.selectFirstModule();
-      }
-    }
-  }
-
-  public void apply() throws ConfigurationException {
-    if (myConfigurator != null) {
-      myConfigurator.apply();
-    }
-  }
-
-  public String getHelpTopic() {
-    if (myConfigurator != null) {
-      final String helpTopic = myConfigurator.getHelpTopic();
-      if (helpTopic != null) {
-        return helpTopic;
-      }
-    }
-    return "project.paths";
-  }
-
-  public void disposeUIResources() {
-    if (myConfigurator != null) {
-      final ModuleEditorState state = ModuleEditorState.getInstance(myProject);
-      state.LAST_EDITED_MODULE_NAME = myConfigurator.getSelectedModuleName();
-      state.LAST_EDITED_TAB_NAME = myConfigurator.getSelectedTabName();
-      myConfigurator.dispose();
-      myConfigurator = null; // important: becomes invalid after destroyProcess
-    }
-  }
-
-  public boolean isModified() {
-    return myConfigurator != null && myConfigurator.isModified();
+    myModulesConfigurator = configurator;
+    init(model);
   }
 
   public JComponent createComponent() {
-    if (myConfigurator == null) {
-      myConfigurator = new ModulesConfigurator(myProject, myStartModuleWizardOnShow);
+    myProjectJdkConfigurable.createComponent(); //reload changed jdks
+    return myPanel;
+  }
+
+  private void init(final ProjectJdksModel model) {
+    myPanel = new ModulesConfigurable.MyJPanel();
+    myPanel.setPreferredSize(new Dimension(700, 500));
+
+    myRbRelativePaths.setText(ProjectBundle.message("module.paths.outside.module.dir.relative.radio"));
+    myRbAbsolutePaths.setText(ProjectBundle.message("module.paths.outside.module.dir.absolute.radio"));
+
+    if (((ProjectEx)myProject).isSavePathsRelative()) {
+      myRbRelativePaths.setSelected(true);
     }
-    return myConfigurator.createComponent();
+    else {
+      myRbAbsolutePaths.setSelected(true);
+    }
+
+    myProjectJdkConfigurable = new ProjectJdkConfigurable(myProject, model);
+    myPanel.add(myProjectJdkConfigurable.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0,
+                                                                                   GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                                                   new Insets(4, 4, 0, 0), 0, 0));
+
+    myPanel.add(myWholePanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
+                                                     GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
+
+    //myWarningLabel.setUI(new MultiLineLabelUI());
+    myPanel.add(myWarningLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                       GridBagConstraints.BOTH, new Insets(10, 6, 0, 0), 0, 0));
+  }
+
+  public void disposeUIResources() {
+    if (myProjectJdkConfigurable != null) {
+      myProjectJdkConfigurable.disposeUIResources();
+    }
+  }
+
+  public void reset() {
+    myProjectJdkConfigurable.reset();
+    final String compilerOutput = ProjectRootManagerEx.getInstance(myProject).getCompilerOutputUrl();
+    if (compilerOutput != null) {
+      myProjectCompilerOutput.setText(VfsUtil.urlToPath(compilerOutput));
+    }
+    myLanguageLevelCombo.reset(myProject);
+    updateCircularDependencyWarning();
+  }
+
+  void updateCircularDependencyWarning() {
+    myUpdateWarningAlarm.cancelAllRequests();
+    myUpdateWarningAlarm.addRequest(new Runnable() {
+      public void run() {
+        final Graph<Chunk<ModifiableRootModel>> graph = ModuleCompilerUtil.toChunkGraph(myModulesConfigurator.createGraphGenerator());
+        final Collection<Chunk<ModifiableRootModel>> chunks = graph.getNodes();
+        String cycles = "";
+        int count = 0;
+        for (Chunk<ModifiableRootModel> chunk : chunks) {
+          final Set<ModifiableRootModel> modules = chunk.getNodes();
+          String cycle = "";
+          for (ModifiableRootModel model : modules) {
+            cycle += ", " + model.getModule().getName();
+          }
+          if (modules.size() > 1) {
+            @NonNls final String br = "<br>";
+            cycles += br + cycle.substring(2);
+            count++;
+          }
+        }
+        @NonNls final String leftBrace = "<html>";
+        @NonNls final String rightBrace = "</html>";
+        String warningMessage =
+          leftBrace + (count > 0 ? ProjectBundle.message("module.circular.dependency.warning", cycles, count) : "") + rightBrace;
+        myWarningLabel.setIcon(count > 0 ? Messages.getWarningIcon() : null);
+        myWarningLabel.setText(warningMessage);
+        myWarningLabel.repaint();
+      }
+    }, 300, ModalityState.current());
+  }
+
+
+  public void apply() throws ConfigurationException {
+    final ProjectRootManagerImpl projectRootManager = ProjectRootManagerImpl.getInstanceImpl(myProject);
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final LanguageLevel newLevel = (LanguageLevel)myLanguageLevelCombo.getSelectedItem();
+        projectRootManager.setLanguageLevel(newLevel);
+        ((ProjectEx)myProject).setSavePathsRelative(myRbRelativePaths.isSelected());
+        try {
+          myProjectJdkConfigurable.apply();
+        }
+        catch (ConfigurationException e) {
+          //cant't be
+        }
+        String canonicalPath = myProjectCompilerOutput.getText();
+        if (canonicalPath != null && canonicalPath.length() > 0) {
+          try {
+            canonicalPath = new File(canonicalPath).getCanonicalPath();
+          }
+          catch (IOException e) {
+            //file doesn't exist yet
+          }
+          canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
+          projectRootManager.setCompilerOutputUrl(VfsUtil.pathToUrl(canonicalPath));
+        }
+        else {
+          projectRootManager.setCompilerOutputPointer(null);
+        }
+      }
+    });
+  }
+
+
+  public void setDisplayName(final String name) {
+    //do nothing
+  }
+
+  public Project getEditableObject() {
+    return myProject;
+  }
+
+  public String getBannerSlogan() {
+    return ProjectBundle.message("project.roots.project.banner.text", myProject.getName());
+  }
+
+  public String getDisplayName() {
+    return myProject.getName();
   }
 
   public Icon getIcon() {
-    return ICON;
+    return PROJECT_ICON;
   }
 
-  public ModulesConfigurator getConfigurator() {
-    return myConfigurator;
+  @Nullable
+  @NonNls
+  public String getHelpTopic() { //todo help id
+    return null;
   }
 
-  private String getModuleNameToSelect() {
-    if (myModuleNameToSelect == null) {
-      return ModuleEditorState.getInstance(myProject).LAST_EDITED_MODULE_NAME;
+
+  @SuppressWarnings({"SimplifiableIfStatement"})
+  public boolean isModified() {
+    final ProjectRootManagerEx projectRootManagerEx = ProjectRootManagerEx.getInstanceEx(myProject);
+    if (!projectRootManagerEx.getLanguageLevel().equals(myLanguageLevelCombo.getSelectedItem())) {
+      return true;
     }
-    return myModuleNameToSelect;
+    final String compilerOutput = projectRootManagerEx.getCompilerOutputUrl();
+    if (!Comparing.strEqual(VfsUtil.urlToPath(compilerOutput), myProjectCompilerOutput.getText())) return true;
+    if (myProjectJdkConfigurable.isModified()) return true;
+    return (((ProjectEx)myProject).isSavePathsRelative() != myRbRelativePaths.isSelected());
   }
 
-  private String getTabNameToSelect() {
-    if (myTabNameToSelect == null) {
-      return ModuleEditorState.getInstance(myProject).LAST_EDITED_TAB_NAME;
-    }
-    return myTabNameToSelect;
+  private void createUIComponents() {
+    myLanguageLevelCombo = new LanguageLevelCombo();
+    final JTextField textField = new JTextField();
+    final FileChooserDescriptor outputPathsChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+    InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
+    outputPathsChooserDescriptor.setHideIgnored(false);
+    myProjectCompilerOutput = new FieldPanel(textField, null, null, new BrowseFilesListener(textField, ProjectBundle.message(
+      "project.compiler.output"), "", outputPathsChooserDescriptor), new Runnable() {//todo description
+
+      public void run() {
+        //do nothing
+      }
+    });
   }
+
+  public void setStartModuleWizardOnShow(final boolean show) {
+    myStartModuleWizardOnShow = show;
+  }
+
+  private class MyJPanel extends JPanel {
+    public MyJPanel() {
+      super(new GridBagLayout());
+    }
+
+    public void addNotify() {
+      super.addNotify();
+      if (myStartModuleWizardOnShow) {
+        final Window parentWindow = (Window)SwingUtilities.getAncestorOfClass(Window.class, this);
+        parentWindow.addWindowListener(new WindowAdapter() {
+          public void windowActivated(WindowEvent e) {
+            parentWindow.removeWindowListener(this);
+            SwingUtilities.invokeLater(new Runnable() {
+              public void run() {
+                final ModuleBuilder moduleBuilder = myModulesConfigurator.runModuleWizard(parentWindow);
+                if (moduleBuilder != null) {
+                  myModulesConfigurator.addModule(moduleBuilder);
+                }
+              }
+            });
+          }
+        });
+      }
+    }
+  }
+
 }

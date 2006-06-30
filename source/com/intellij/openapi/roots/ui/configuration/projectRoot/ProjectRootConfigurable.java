@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurable;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -78,6 +79,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   private ModuleManager myModuleManager;
   private ModulesConfigurator myModulesConfigurator;
+  private ModulesConfigurable myModulesConfigurable;
   private ProjectJdksModel myJdksTreeModel = new ProjectJdksModel(this);
 
   private MyNode myApplicationServerLibrariesNode;
@@ -186,7 +188,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   private void createProjectNodes() {
-    myProjectNode = new MyNode(myModulesConfigurator, false);
+    myProjectNode = new MyNode(myModulesConfigurable, false);
     final Module[] modules = myModuleManager.getModules();
     for (final Module module : modules) {
       ModuleConfigurable configurable = new ModuleConfigurable(myModulesConfigurator, module);
@@ -272,6 +274,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myJdksTreeModel.reset();
     myModulesConfigurator = new ModulesConfigurator(myProject, this);
     myModulesConfigurator.resetModuleEditors();
+    myModulesConfigurable = myModulesConfigurator.getModulesConfigurable();
     final LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
     myProjectLibrariesProvider = new LibrariesModifiableModel(tablesRegistrar.getLibraryTable(myProject).getModifiableModel());
     myGlobalLibrariesProvider = new LibrariesModifiableModel(tablesRegistrar.getLibraryTable().getModifiableModel());
@@ -309,6 +312,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         }
       }
     });
+    if (isInitialized(myModulesConfigurable) && myModulesConfigurable.isModified()) myModulesConfigurable.apply();
     if (myModulesConfigurator.isModified()) myModulesConfigurator.apply();
 
     //cleanup
@@ -330,6 +334,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         return true;
       }
     }
+    isModified |= isInitialized(myModulesConfigurable) && myModulesConfigurable.isModified();
     isModified |= myJdksTreeModel.isModified();
     isModified |= myGlobalLibrariesProvider.isChanged();
     isModified |= myApplicationServerLibrariesProvider.isChanged();
@@ -543,7 +548,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   public void setStartModuleWizard(final boolean show) {
-    myModulesConfigurator.setStartModuleWizardOnShow(show);
+    myModulesConfigurator.getModulesConfigurable().setStartModuleWizardOnShow(show);
   }
 
   public LibraryTableModifiableModelProvider getApplicationServerLibrariesProvider() {

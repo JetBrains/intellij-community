@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.roots.ui.configuration.ModulesConfigurator">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.roots.ui.configuration.ModulesConfigurable">
   <grid id="27dc6" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="10">
     <margin top="4" left="4" bottom="4" right="4"/>
     <constraints>

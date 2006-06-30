@@ -117,7 +117,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
       public boolean accept(Object node) {
         if (node instanceof MyNode) {
           final NamedConfigurable configurable = ((MyNode)node).getConfigurable();
-          if (myInitializedConfigurables.contains(configurable) && configurable.isModified()) {
+          if (isInitialized(configurable) && configurable.isModified()) {
             modified[0] = true;
             return false;
           }
@@ -126,6 +126,10 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
       }
     });
     return modified[0];
+  }
+
+  protected boolean isInitialized(final NamedConfigurable configurable) {
+    return myInitializedConfigurables.contains(configurable);
   }
 
   protected boolean hasDeletedeItems() {
@@ -168,7 +172,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     myTree.requestFocus();
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        TreeUtil.selectInTree((DefaultMutableTreeNode)myRoot.getChildAt(0), true, myTree);
+        TreeUtil.selectFirstNode(myTree);
         if (myLastEditedConfigurable == null) return;
         final Enumeration enumeration = myRoot.breadthFirstEnumeration();
         while (enumeration.hasMoreElements()) {
@@ -374,7 +378,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     myBanner.repaint();
     myOptionsPanel.removeAll();
     myOptionsPanel.add(configurable.createComponent(), BorderLayout.CENTER);
-    if (!myInitializedConfigurables.contains(configurable)) {
+    if (!isInitialized(configurable)) {
       configurable.reset();
       myInitializedConfigurables.add(configurable);
     }

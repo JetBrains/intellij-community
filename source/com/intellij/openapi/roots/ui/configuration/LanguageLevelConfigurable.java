@@ -62,8 +62,11 @@ public class LanguageLevelConfigurable implements UnnamedConfigurable {
 
   public void apply() throws ConfigurationException {
     final LanguageLevel newLanguageLevel = myLanguageLevelCombo.getSelectedItem() != LanguageLevelCombo.USE_PROJECT_LANGUAGE_LEVEL ? (LanguageLevel)myLanguageLevelCombo.getSelectedItem() : null;
+    final boolean needToReload = myModule.getLanguageLevel() != newLanguageLevel;
     ((ModuleRootManagerImpl)ModuleRootManager.getInstance(myModule)).setLanguageLevel(newLanguageLevel);
-    myReloadProjectRequest.start();
+    if (needToReload) {
+      myReloadProjectRequest.start();
+    }
   }
 
   public void reset() {
