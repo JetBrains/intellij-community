@@ -55,6 +55,14 @@ public class AbstractMethodCallInConstructorInspection extends MethodInspection{
             }
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (qualifier != null) {
+                if (!(qualifier instanceof PsiThisExpression) &&
+                        !(qualifier instanceof PsiSuperExpression)) {
+                    return;
+                }
+            }
             final PsiMethod calledMethod =
                     (PsiMethod) methodExpression.resolve();
             if(calledMethod == null){
