@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.completion.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -30,8 +31,8 @@ public class FastWordCompletionHandler implements CodeInsightActionHandler {
   }
 
   public void invoke(Project project, final Editor editor, PsiFile file) {
+    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     final CharSequence charsSequence = editor.getDocument().getCharsSequence();
-
 
     final Pair<String, Integer> p = getPrefix(editor, charsSequence);
     String currentPrefix = p.first;
