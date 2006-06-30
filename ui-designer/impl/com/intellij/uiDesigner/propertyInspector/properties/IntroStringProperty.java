@@ -7,6 +7,7 @@ import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -64,6 +65,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
    */
   @NotNull
   private static HashMap<String, StringDescriptor> getName2Descriptor(final RadComponent component){
+    //noinspection unchecked
     HashMap<String, StringDescriptor> name2Descriptor = (HashMap<String, StringDescriptor>)component.getClientProperty(CLIENT_PROP_NAME_2_DESCRIPTOR);
     if(name2Descriptor == null){
       name2Descriptor = new HashMap<String,StringDescriptor>();
@@ -182,9 +184,6 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
 
     if(SwingProperties.TEXT.equals(getName())) {
       final SupportCode.TextWithMnemonic textWithMnemonic = SupportCode.parseText(resolvedValue);
-      if (!component.isLoadingProperties()) {
-        BindingProperty.checkCreateBindingFromText(component, textWithMnemonic.myText);
-      }
       if (delegee instanceof JLabel) {
         final JLabel label = (JLabel)delegee;
         label.setText(textWithMnemonic.myText);
@@ -210,9 +209,23 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
       else {
         invokeSetter(component, resolvedValue);
       }
+      if (!component.isLoadingProperties()) {
+        updateBindingFromText(component, textWithMnemonic);
+      }
     }
     else{
       invokeSetter(component, resolvedValue);
+    }
+  }
+
+  private static void updateBindingFromText(final RadComponent component, final SupportCode.TextWithMnemonic textWithMnemonic) {
+    BindingProperty.checkCreateBindingFromText(component, textWithMnemonic.myText);
+    if (component.getDelegee() instanceof JLabel) {
+      for(IProperty prop: component.getModifiedProperties()) {
+        if (prop.getName().equals(SwingProperties.LABEL_FOR) && prop instanceof IntroComponentProperty) {
+          ((IntroComponentProperty) prop).updateLabelForBinding(component);
+        }
+      }
     }
   }
 

@@ -60,17 +60,22 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
   @Override protected void setValueImpl(final RadComponent component, final String value) throws Exception {
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), value);
     if (getName().equals(SwingProperties.LABEL_FOR) && !component.isLoadingProperties()) {
-      String text = FormInspectionUtil.getText(component.getModule(), component);
-      if (text != null && value != null) {
-        RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
-        if (root != null) {
-          RadComponent valueComponent = (RadComponent)FormEditingUtil.findComponent(root, value);
-          if (valueComponent != null) {
-            if (valueComponent instanceof RadScrollPane && ((RadScrollPane) valueComponent).getComponentCount() == 1) {
-              valueComponent = ((RadScrollPane) valueComponent).getComponent(0);
-            }
-            BindingProperty.checkCreateBindingFromText(valueComponent, text);
+      updateLabelForBinding(component);
+    }
+  }
+
+  void updateLabelForBinding(final RadComponent component) {
+    String value = getValue(component);
+    String text = FormInspectionUtil.getText(component.getModule(), component);
+    if (text != null && value != null) {
+      RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
+      if (root != null) {
+        RadComponent valueComponent = (RadComponent)FormEditingUtil.findComponent(root, value);
+        if (valueComponent != null) {
+          if (valueComponent instanceof RadScrollPane && ((RadScrollPane) valueComponent).getComponentCount() == 1) {
+            valueComponent = ((RadScrollPane) valueComponent).getComponent(0);
           }
+          BindingProperty.checkCreateBindingFromText(valueComponent, text);
         }
       }
     }
