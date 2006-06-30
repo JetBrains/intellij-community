@@ -204,7 +204,7 @@ class DeclarationMover extends LineMover {
     if (member instanceof PsiField) {
       final PsiField field = (PsiField)member;
       PsiIdentifier nameIdentifier = field.getNameIdentifier();
-      if (nameIdentifier != null) memberSuspects.add(nameIdentifier);
+      memberSuspects.add(nameIdentifier);
       PsiTypeElement typeElement = field.getTypeElement();
       if (typeElement != null) memberSuspects.add(typeElement);
     }
@@ -228,6 +228,7 @@ class DeclarationMover extends LineMover {
       final PsiClass aClass = (PsiClass)sibling.getParent();
       final PsiElement parent = aClass.getParent();
       if (!areWeMovingClass && !(parent instanceof PsiClass)) return ILLEGAL_MOVE;
+      if (aClass instanceof PsiAnonymousClass) return ILLEGAL_MOVE;
       return isDown ? nextLineOffset(editor, aClass.getTextRange().getEndOffset()) : aClass.getTextRange().getStartOffset();
     }
     // trying to move up inside enum constant list, move outside of enum class instead
@@ -240,6 +241,7 @@ class DeclarationMover extends LineMover {
     if (sibling instanceof PsiClass) {
       // moving inside class
       PsiClass aClass = (PsiClass)sibling;
+      if (aClass instanceof PsiAnonymousClass) return ILLEGAL_MOVE;
       return isDown
              ? nextLineOffset(editor, aClass.isEnum() ? afterEnumConstantsPosition(aClass) : aClass.getLBrace().getTextOffset())
              : aClass.getRBrace().getTextOffset();

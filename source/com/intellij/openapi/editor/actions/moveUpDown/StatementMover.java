@@ -97,7 +97,10 @@ class StatementMover extends LineMover {
             found = true;
           }
           else if (element instanceof PsiMember) {
-            found = true;
+            PsiClass containingClass = ((PsiMember)element).getContainingClass();
+            if (!(containingClass instanceof PsiAnonymousClass) || PsiTreeUtil.isAncestor(containingClass, range.firstElement, false)) {
+              found = true;
+            }
           }
           if (found) {
             statementToSurroundWithCodeBlock = elementToSurround;
