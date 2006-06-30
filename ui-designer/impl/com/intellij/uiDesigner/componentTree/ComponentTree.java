@@ -70,6 +70,9 @@ public final class ComponentTree extends Tree implements DataProvider {
   private StartInplaceEditingAction myStartInplaceEditingAction;
   private MyDeleteProvider myDeleteProvider = new MyDeleteProvider();
 
+  private Icon myButtonGroupIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/buttonGroup.png");
+  private Icon myInspectionSuppressionIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/inspectionSuppression.png");
+
   public ComponentTree() {
     super(new DefaultTreeModel(new DefaultMutableTreeNode()));
 
@@ -441,6 +444,12 @@ public final class ComponentTree extends Tree implements DataProvider {
         final String fragment = node.getUserObject().toString();
         if (fragment != null) {
           append(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+        if (node.getUserObject() instanceof SuppressionDescriptor) {
+          setIcon(myInspectionSuppressionIcon);
+        }
+        else if (node.getUserObject() instanceof ButtonGroupDescriptor) {
+          setIcon(myButtonGroupIcon);
         }
       }
     }
