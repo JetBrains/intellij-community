@@ -2,7 +2,6 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionRegistry;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
@@ -15,6 +14,7 @@ import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -33,7 +33,6 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
   private RunConfiguration myConfiguration;
   private final SettingsEditor<RunConfiguration> myConfigurationEditor;
   private SettingsEditorGroup<RunnerAndConfigurationSettingsImpl> myCompound;
-  private RunnerAndConfigurationSettings mySettings;
 
   public CompositeSettingsBuilder<RunnerAndConfigurationSettingsImpl> getBuilder() {
     init();
@@ -46,8 +45,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
       if (myConfigurationEditor instanceof SettingsEditorGroup) {
         SettingsEditorGroup<RunConfiguration> group = (SettingsEditorGroup<RunConfiguration>)myConfigurationEditor;
         List<Pair<String, SettingsEditor<RunConfiguration>>> editors = group.getEditors();
-        for (int i = 0; i < editors.size(); i++) {
-          Pair<String, SettingsEditor<RunConfiguration>> pair = editors.get(i);
+        for (Pair<String, SettingsEditor<RunConfiguration>> pair : editors) {
           myCompound.addEditor(pair.getFirst(), new ConfigToSettingsWrapper(pair.getSecond()));
         }
       }
@@ -58,8 +56,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
 
       myRunnersComponent = new RunnersEditorComponent();
       JavaProgramRunner[] runners = ExecutionRegistry.getInstance().getRegisteredRunners();
-      for (int i = 0; i < runners.length; i++) {
-        JavaProgramRunner runner = runners[i];
+      for (JavaProgramRunner runner : runners) {
         JComponent perRunnerSettings = createCompositePerRunnerSettings(runner);
         if (perRunnerSettings != null) {
           myRunnersComponent.addRunnerComponent(runner, perRunnerSettings);
@@ -135,8 +132,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
     super(settings.createFactory());
     myConfigurationEditor = (SettingsEditor<RunConfiguration>)settings.getConfiguration().getConfigurationEditor();
     Disposer.register(this, myConfigurationEditor);
-    mySettings = settings;
-    myConfiguration = mySettings.getConfiguration();
+    myConfiguration = settings.getConfiguration();
   }
 
   public RunnerAndConfigurationSettingsImpl getSnapshot() throws ConfigurationException {
@@ -196,7 +192,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
     }
   }
 
-  private class ConfigToSettingsWrapper extends SettingsEditor<RunnerAndConfigurationSettingsImpl> {
+  private static class ConfigToSettingsWrapper extends SettingsEditor<RunnerAndConfigurationSettingsImpl> {
     private final SettingsEditor<RunConfiguration> myConfigEditor;
 
     public ConfigToSettingsWrapper(SettingsEditor<RunConfiguration> configEditor) {
@@ -211,12 +207,13 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
       myConfigEditor.applyTo(configurationSettings.getConfiguration());
     }
 
+    @NotNull
     public JComponent createEditor() {
       return myConfigEditor.getComponent();
     }
 
     public void disposeEditor() {
-      myConfigEditor.dispose();
+      Disposer.dispose(myConfigEditor);
     }
   }
 }

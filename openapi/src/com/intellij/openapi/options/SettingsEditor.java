@@ -97,15 +97,12 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   public final JComponent getComponent() {
     if (myEditorComponent == null) {
       myEditorComponent = createEditor();
-      if (myEditorComponent != null) {
-        installWatcher(myEditorComponent);
-      }
+      installWatcher(myEditorComponent);
     }
     return myEditorComponent;
   }
 
   public final void dispose() {
-    Disposer.dispose(this);
   }
 
   protected void uninstallWatcher() {

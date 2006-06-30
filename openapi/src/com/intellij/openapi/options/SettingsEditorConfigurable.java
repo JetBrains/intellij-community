@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.util.Disposer;
+
 import javax.swing.*;
 
 public abstract class SettingsEditorConfigurable<Settings> extends BaseConfigurable {
@@ -51,7 +53,7 @@ public abstract class SettingsEditorConfigurable<Settings> extends BaseConfigura
 
   public void disposeUIResources() {
     myEditor.removeSettingsEditorListener(myListener);
-    myEditor.dispose();
+    Disposer.dispose(myEditor);
     myEditor = null;
   }
 
