@@ -108,7 +108,10 @@ class LookupCellRenderer implements ListCellRenderer {
       }
       else {
         Template template = (Template)item.getObject();
-        myMaxTemplateDescriptionLength = Math.max(myMaxTemplateDescriptionLength, template.getDescription().length());
+        final String description = template.getDescription();
+        if (description != null) {
+          myMaxTemplateDescriptionLength = Math.max(myMaxTemplateDescriptionLength, description.length());
+        }
       }
     }
 
