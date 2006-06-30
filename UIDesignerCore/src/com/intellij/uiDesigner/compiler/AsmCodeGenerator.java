@@ -641,7 +641,7 @@ public class AsmCodeGenerator {
             generator.invokeConstructor(ourButtonGroupType, Method.getMethod("void <init>()"));
             generator.storeLocal(groupLocal);
 
-            if (groups [groupIndex].isBound()) {
+            if (groups [groupIndex].isBound() && !myIgnoreCustomCreation) {
               validateFieldClass(groups [groupIndex].getName(), ButtonGroup.class, null);
               generator.loadThis();
               generator.loadLocal(groupLocal);
