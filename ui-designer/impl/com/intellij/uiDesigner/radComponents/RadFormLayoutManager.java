@@ -532,6 +532,15 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   }
 
   @Override
+  public int getGapCellSize(final RadContainer container, boolean isRow) {
+    Size size = isRow ? FormFactory.RELATED_GAP_ROWSPEC.getSize() : FormFactory.RELATED_GAP_COLSPEC.getSize();
+    if (size instanceof ConstantSize) {
+      return ((ConstantSize) size).getPixelSize(container.getDelegee());
+    }
+    return 0;
+  }
+
+  @Override
   public boolean isGapCell(RadContainer grid, boolean isRow, int cellIndex) {
     if (cellIndex < 0 || cellIndex >= (isRow ? getGridRowCount(grid) : getGridColumnCount(grid))) {
       return false;

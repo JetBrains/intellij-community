@@ -70,9 +70,15 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
    */
   public abstract int insertGridCells(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore, final boolean grow);
   public abstract void copyGridCells(RadContainer source, RadContainer destination, boolean isRow, int cellIndex, int cellCount, int targetIndex);
+
   public int getGapCellCount() {
     return 0;
   }
+
+  public int getGapCellSize(final RadContainer container, boolean isRow) {
+    return 0;
+  }
+
   public boolean isGapCell(RadContainer grid, boolean isRow, int cellIndex) {
     return false;
   }
