@@ -139,7 +139,7 @@ public class PopupChooserBuilder {
 
     final JScrollPane scrollPane;
     if (myChooserComponent instanceof MyListWrapper) {
-      scrollPane = createScrollPane((MyListWrapper)myChooserComponent);
+      scrollPane = (MyListWrapper)myChooserComponent;
     }
     else if (myChooserComponent instanceof JTable) {
       scrollPane = createScrollPane((JTable)myChooserComponent);
@@ -247,49 +247,38 @@ public class PopupChooserBuilder {
     return scrollPane;
   }
 
-  @NotNull
-  public static JScrollPane createScrollPane(MyListWrapper wrapper) {
-    final JList list = wrapper.getList();
-    list.addMouseMotionListener(new MouseMotionAdapter() {
-      public void mouseMoved(MouseEvent e) {
-        Point point = e.getPoint();
-        int index = list.locationToIndex(point);
-        list.setSelectedIndex(index);
-      }
-    });
-
-    ListScrollingUtil.installActions(list);
-
-    if (list.getSelectedIndex() == -1) {
-      list.setSelectedIndex(0);
-    }
-
-    int modelSize = list.getModel().getSize();
-    JScrollPane scrollPane = new JScrollPane(wrapper);
-    scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-    if (modelSize > 0 && modelSize <= 20) {
-      list.setVisibleRowCount(0);
-      scrollPane.getViewport().setPreferredSize(list.getPreferredSize());
-    }
-    else {
-      list.setVisibleRowCount(20);
-    }
-
-    return scrollPane;
-  }
-
-  private static class MyListWrapper extends JPanel implements DataProvider {
+  private static class MyListWrapper extends JScrollPane implements DataProvider {
+    @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
     private JList myList;
 
     public MyListWrapper(final JList list) {
-      super(new BorderLayout());
+      super(list);
+      list.addMouseMotionListener(new MouseMotionAdapter() {
+        public void mouseMoved(MouseEvent e) {
+          Point point = e.getPoint();
+          int index = list.locationToIndex(point);
+          list.setSelectedIndex(index);
+        }
+      });
+
+      ListScrollingUtil.installActions(list);
+
+      if (list.getSelectedIndex() == -1) {
+        list.setSelectedIndex(0);
+      }
+
+      int modelSize = list.getModel().getSize();
+      setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+      if (modelSize > 0 && modelSize <= 20) {
+        list.setVisibleRowCount(0);
+        getViewport().setPreferredSize(list.getPreferredSize());
+      }
+      else {
+        list.setVisibleRowCount(20);
+      }
       myList = list;
-      add(myList, BorderLayout.CENTER);
     }
 
-    public JList getList() {
-      return myList;
-    }
 
     @Nullable
     public Object getData(@NonNls String dataId) {
