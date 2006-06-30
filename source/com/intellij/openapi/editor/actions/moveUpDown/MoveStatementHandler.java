@@ -54,7 +54,10 @@ class MoveStatementHandler extends EditorWriteActionHandler {
 
   private static PsiFile getRoot(final PsiFile file, final Editor editor) {
     if (file == null || editor == null) return null;
-    PsiElement leafElement = file.findElementAt(editor.getCaretModel().getOffset());
+    int offset = editor.getCaretModel().getOffset();
+    if (offset == editor.getDocument().getTextLength()) offset--;
+    if (offset<0) return null;
+    PsiElement leafElement = file.findElementAt(offset);
     if (leafElement == null) return null;
     ASTNode node = leafElement.getNode();
     if (node == null) return null;

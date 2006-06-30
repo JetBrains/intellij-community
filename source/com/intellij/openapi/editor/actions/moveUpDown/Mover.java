@@ -2,17 +2,14 @@ package com.intellij.openapi.editor.actions.moveUpDown;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 abstract class Mover {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.Mover");
-
   protected final boolean myIsDown;
   @NotNull protected LineRange whatToMove;
   protected int insertOffset;    // -1 means we cannot move, e.g method outside class
@@ -46,7 +43,10 @@ abstract class Mover {
     final Document document = editor.getDocument();
     final int start = editor.logicalPositionToOffset(new LogicalPosition(startLine, 0));
     final int end = editor.logicalPositionToOffset(new LogicalPosition(endLine+1, 0));
-    final String toInsert = document.getCharsSequence().subSequence(start, end).toString();
+    String toInsert = document.getCharsSequence().subSequence(start, end).toString();
+    if (!StringUtil.endsWithChar(toInsert, '\n')) {
+      toInsert += '\n';
+    }
     myInsertStartAfterCutOffset = myIsDown ? insertOffset - toInsert.length() : insertOffset;
     myInsertEndAfterCutOffset = myInsertStartAfterCutOffset + toInsert.length();
     myDeleteStartAfterMoveOffset = myIsDown ? start : start + toInsert.length();
