@@ -28,7 +28,7 @@ public final class RadErrorComponent extends RadAtomicComponent {
     final String id,
     final String componentClassName,
     final Element properties,
-    final String errorDescription
+    @NotNull final String errorDescription
   ){
     return new RadErrorComponent(module, id, componentClassName, properties, errorDescription);
   }

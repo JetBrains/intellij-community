@@ -31,9 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Point;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
@@ -442,16 +440,19 @@ public final class InsertComponentProcessor extends EventProcessor {
     else {
       PsiFile boundForm = item.getBoundForm();
       if (boundForm != null) {
+        final String formFileName = FormEditingUtil.buildResourceName(boundForm);
         try {
-          result = new RadNestedForm(editor.getModule(), FormEditingUtil.buildResourceName(boundForm), id);
+          result = new RadNestedForm(editor.getModule(), formFileName, id);
         }
         catch(Exception ex) {
+          String errorMessage = UIDesignerBundle.message("error.instantiating.nested.form", formFileName,
+                                (ex.getMessage() != null ? ex.getMessage() : ex.toString()));
           result = RadErrorComponent.create(
             editor.getModule(),
             id,
             item.getClassName(),
             null,
-            ex.getMessage()
+            errorMessage
           );
         }
       }
