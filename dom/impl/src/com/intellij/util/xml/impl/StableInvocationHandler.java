@@ -13,7 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author peter
-*/
+ */
 class StableInvocationHandler<T extends DomElement> implements InvocationHandler, StableElement {
   private T myOldValue;
   private T myCachedValue;
@@ -35,11 +35,11 @@ class StableInvocationHandler<T extends DomElement> implements InvocationHandler
       }
     }
 
-    if (isNotValid(myCachedValue)) {
-      if (AdvancedProxy.FINALIZE_METHOD.equals(method)) {
-        return null;
-      }
+    if (AdvancedProxy.FINALIZE_METHOD.equals(method)) {
+      return null;
+    }
 
+    if (isNotValid(myCachedValue)) {
       if (myCachedValue != null) {
         myOldValue = myCachedValue;
       }
