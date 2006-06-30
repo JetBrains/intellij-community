@@ -139,9 +139,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
     GridBagConstraints gc = new GridBagConstraints(0, 0, 0, 0, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                    new Insets(5, 5, 5, 5), 0, 0);
-    int y = 0;
     releaseAllEditors();
     myTitledPanels.clear();
+    int y = 0;
     for (final PropertiesFile propertiesFile : propertiesFiles) {
       final Editor editor = createEditor();
       myEditors.put(propertiesFile, editor);
@@ -170,7 +170,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       }
 
       String title = propertiesFile.getName();
-      if (names.size() != 0) {
+      if (!names.isEmpty()) {
         title += " ("+StringUtil.join(names, "/")+")";
       }
       JPanel panel = new JPanel(new BorderLayout());
@@ -330,7 +330,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   private static String getPropertyValueFromText(final String text) {
-    StringBuffer value = new StringBuffer();
+    StringBuilder value = new StringBuilder();
     for (int i=0; i<text.length();i++) {
       char c = text.charAt(i);
       if (c == '\n') {
@@ -549,7 +549,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     myEditors.clear();
   }
 
-  private static class ResourceBundleEditorState implements FileEditorState {
+  public static class ResourceBundleEditorState implements FileEditorState {
     private final String myPropertyName;
 
     public ResourceBundleEditorState(String propertyName) {

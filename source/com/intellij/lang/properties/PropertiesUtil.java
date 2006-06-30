@@ -53,12 +53,15 @@ public class PropertiesUtil {
     String name = virtualFile.getNameWithoutExtension();
 
     String[] parts = name.split("_");
-    String baseName = "";
-    for (String part : parts) {
+    if (parts.length == 1) return parts[0];
+
+    String baseName = parts[0];
+    for (int i = 1; i<parts.length; i++) {
+      String part = parts[i];
       if (part.length() == 2) {
         break;
       }
-      if (baseName.length() != 0) baseName += "_";
+      baseName += "_";
       baseName += part;
     }
 
