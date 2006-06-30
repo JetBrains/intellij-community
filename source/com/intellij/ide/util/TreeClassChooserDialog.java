@@ -44,6 +44,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.List;
 
 public class TreeClassChooserDialog extends DialogWrapper implements TreeClassChooser{
   private Tree myTree;
@@ -112,7 +113,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
                                                         PsiClass initialClass) {
 
     return new TreeClassChooserDialog(title, project, scope, classFilter, null, initialClass, new PsiClassChildrenSource() {
-      public void addChildren(PsiClass psiClass, java.util.List<PsiElement> children) {
+      public void addChildren(PsiClass psiClass, List<PsiElement> children) {
         ArrayList<PsiElement> innerClasses = new ArrayList<PsiElement>();
         PsiClassChildrenSource.CLASSES.addChildren(psiClass, innerClasses);
         for (PsiElement innerClass : innerClasses) {
@@ -381,11 +382,11 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
       final PsiManager manager = PsiManager.getInstance(myProject);
       PsiClass[] classes = manager.getSearchHelper().findInheritors(myBaseClass, myScope, true);
       ArrayList<String> names = new ArrayList<String>(classes.length + 1);
-      if (myClassFilter == null || myClassFilter.isAccepted(myBaseClass)) {
+      if ((myClassFilter == null || myClassFilter.isAccepted(myBaseClass)) && myBaseClass.getName() != null) {
         names.add(myBaseClass.getName());
       }
       for (PsiClass aClass : classes) {
-        if (myClassFilter == null || myClassFilter.isAccepted(myBaseClass)) {
+        if ((myClassFilter == null || myClassFilter.isAccepted(myBaseClass)) && aClass.getName() != null) {
           names.add(aClass.getName());
         }
       }

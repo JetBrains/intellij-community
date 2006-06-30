@@ -38,6 +38,13 @@ public interface ChooseByNameModel {
 
   ListCellRenderer getListCellRenderer();
 
+  /**
+   * Returns the list of names to show in the chooser.
+   *
+   * @param checkBoxState the current state of the chooser checkbox (for example, [x] Include non-project classes for Ctrl-N)
+   * @return the names to show. All items in the returned array must be non-null.
+   *
+   */
   String[] getNames(boolean checkBoxState);
   Object[] getElementsByName(String name, boolean checkBoxState);
   @Nullable
