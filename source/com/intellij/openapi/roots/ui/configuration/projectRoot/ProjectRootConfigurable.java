@@ -236,9 +236,13 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
   }
 
-  private static String trancateModuleLibraryName(LibraryOrderEntry entry) {
+  public static String trancateModuleLibraryName(LibraryOrderEntry entry) {
     final String presentableName = entry.getPresentableName();
-    return presentableName.substring(FileUtil.toSystemIndependentName(presentableName).lastIndexOf("/") + 1);
+    String independantName = FileUtil.toSystemIndependentName(presentableName);
+    if (independantName.lastIndexOf('/') + 1 == independantName.length() && independantName.length() > 1){
+      independantName = independantName.substring(0, independantName.length() - 2);
+    }
+    return independantName.substring(independantName.lastIndexOf("/") + 1);
   }
 
 
@@ -576,12 +580,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       }
     }, libraryOrderEntry.getLibrary(), trancateModuleLibraryName(libraryOrderEntry), myProject);
     final MyNode node = new MyNode(configurable, true);
-    addNode(node, findNodeByObject(myProjectNode, model.getModule()));
+    addNode(node, findNodeByObject(myProjectNode, libraryOrderEntry.getOwnerModule()));
     return node;
   }
 
   public void deleteLibraryNode(LibraryOrderEntry libraryOrderEntry) {
-    final MyNode node = findNodeByName(myProjectNode, libraryOrderEntry.getPresentableName());
+    final MyNode node = findNodeByObject(myProjectNode, libraryOrderEntry.getLibrary());
     if (node != null) {
       final TreeNode parent = node.getParent();
       node.removeFromParent();
