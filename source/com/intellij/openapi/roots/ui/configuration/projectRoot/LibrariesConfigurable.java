@@ -63,7 +63,7 @@ public class LibrariesConfigurable implements NamedConfigurable <LibrariesModifi
                        ? ProjectBundle.message("libraries.node.text.application.server")
                        : ProjectBundle.message("libraries.node.text.project");
     label.setText(opentTag + message + closeTag);
-    myPanel.add(label, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(8,8,8,8), 0, 0));
+    myPanel.add(label, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(8,8,8,8), 0, 0));
     return myPanel;
   }
 
