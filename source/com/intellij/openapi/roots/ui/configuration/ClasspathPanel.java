@@ -45,6 +45,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.EventDispatcher;
@@ -215,6 +216,9 @@ public class ClasspathPanel extends JPanel {
       nameToSelect = libraryOrderEntry.getLibraryName();
       if (nameToSelect == null){
         nameToSelect = libraryOrderEntry.getPresentableName();
+        if (nameToSelect != null){
+          nameToSelect = nameToSelect.substring(FileUtil.toSystemIndependentName(nameToSelect).lastIndexOf("/") + 1);
+        }
       }
     } else if (entry instanceof JdkOrderEntry){
       nameToSelect = ((JdkOrderEntry)entry).getJdkName();

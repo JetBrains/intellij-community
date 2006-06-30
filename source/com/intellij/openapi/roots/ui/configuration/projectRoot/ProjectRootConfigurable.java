@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Icons;
@@ -118,7 +119,15 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   protected ArrayList<AnAction> getAdditionalActions() {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
-    result.add(new MyRenameAction());
+    result.add(new MyRenameAction() {
+      public void update(AnActionEvent e) {
+        super.update(e);
+        final Object selectedObject = getSelectedObject();
+        if (selectedObject instanceof Library && ((Library)selectedObject).getTable() == null){
+          e.getPresentation().setEnabled(false);
+        }
+      }
+    });
     final AnAction findUsages = new AnAction(ProjectBundle.message("find.usages.action.text")) {
       public void update(AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
@@ -218,11 +227,16 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         if (orderEntry.isModuleLevel()) {
           final Library library = orderEntry.getLibrary();
           final LibraryConfigurable libraryConfigurable =
-            new LibraryConfigurable(libraryTableModelProvider, library, orderEntry.getPresentableName(), myProject);
+            new LibraryConfigurable(libraryTableModelProvider, library, trancateModuleLibraryName(orderEntry), myProject);
           addNode(new MyNode(libraryConfigurable, true), moduleNode);
         }
       }
     }
+  }
+
+  private static String trancateModuleLibraryName(LibraryOrderEntry entry) {
+    final String presentableName = entry.getPresentableName();
+    return presentableName.substring(FileUtil.toSystemIndependentName(presentableName).lastIndexOf("/") + 1);
   }
 
 
@@ -478,6 +492,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       });
     }
     else if (selectedObject instanceof Library) {
+      if (((Library)selectedObject).getTable() == null) { //module library navigation
+        final MyNode node = (MyNode)myTree.getSelectionPath().getLastPathComponent();
+        final List<String> list = new ArrayList<String>();
+        list.add(((MyNode)node.getParent()).getDisplayName());
+        return list;
+      }
       return getDependencies(new Condition<OrderEntry>() {
         public boolean value(final OrderEntry orderEntry) {
           if (orderEntry instanceof LibraryOrderEntry){
@@ -538,7 +558,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     };
   }
 
-  public DefaultMutableTreeNode createLibraryNode(final LibraryOrderEntry library, final ModifiableRootModel model) {
+  public DefaultMutableTreeNode createLibraryNode(final LibraryOrderEntry libraryOrderEntry, final ModifiableRootModel model) {
     final LibraryConfigurable configurable = new LibraryConfigurable(new LibraryTableModifiableModelProvider() {
       public LibraryTable.ModifiableModel getModifiableModel() {
         final LibraryTable.ModifiableModel modifiableModel = model.getModuleLibraryTable().getModifiableModel();
@@ -549,7 +569,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       public String getTableLevel() {
         return LibraryTableImplUtil.MODULE_LEVEL;
       }
-    }, library.getLibrary(), library.getPresentableName(), myProject);
+    }, libraryOrderEntry.getLibrary(), trancateModuleLibraryName(libraryOrderEntry), myProject);
     final MyNode node = new MyNode(configurable, true);
     addNode(node, findNodeByObject(myProjectNode, model.getModule()));
     return node;

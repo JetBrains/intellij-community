@@ -92,6 +92,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private JLabel myWarningLabel = new JLabel("");
   private ProjectRootConfigurable myProjectRootConfigurable;
   private JPanel myWholePanel;
+  private boolean myShown = false;
 
   public ModulesConfigurator(Project project, ProjectRootConfigurable projectRootConfigurable) {
     myProject = project;
@@ -176,6 +177,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public void reset() {
+    myShown = true;
     if (myProjectJdkConfigurable != null) myProjectJdkConfigurable.reset();
     if (myProjectCompilerOutput != null) {
       final String compilerOutput = ProjectRootManagerEx.getInstance(myProject).getCompilerOutputUrl();
@@ -293,7 +295,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          if (myLanguageLevelCombo != null) {
+          if (myShown) {
             final LanguageLevel newLevel = (LanguageLevel)myLanguageLevelCombo.getSelectedItem();
             projectRootManager.setLanguageLevel(newLevel);
             ((ProjectEx)myProject).setSavePathsRelative(myRbRelativePaths.isSelected());
@@ -481,22 +483,13 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
     }
     final ProjectRootManagerEx projectRootManagerEx = ProjectRootManagerEx.getInstanceEx(myProject);
-    if (myLanguageLevelCombo != null) {
+    if (myShown) {
       if (!projectRootManagerEx.getLanguageLevel().equals(myLanguageLevelCombo.getSelectedItem())) {
         return true;
       }
-    }
-
-    if (myProjectCompilerOutput != null) {
       final String compilerOutput = projectRootManagerEx.getCompilerOutputUrl();
       if (!Comparing.strEqual(VfsUtil.urlToPath(compilerOutput), myProjectCompilerOutput.getText())) return true;
-    }
-
-    if (myProjectJdkConfigurable != null) {
       if (myProjectJdkConfigurable.isModified()) return true;
-    }
-
-    if (myRbRelativePaths != null) {
       if (((ProjectEx)myProject).isSavePathsRelative() != myRbRelativePaths.isSelected()) {
         return true;
       }

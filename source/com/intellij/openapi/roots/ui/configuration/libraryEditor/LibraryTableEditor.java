@@ -427,7 +427,7 @@ public class LibraryTableEditor implements Disposable {
               final Library library = myTableModifiableModel.createLibrary(null);
               getLibraryEditor(library).addRoot(file, OrderRootType.CLASSES);
               libraryToSelect[0] = library;
-              libraryPresentableName[0] = file.getUrl();
+              libraryPresentableName[0] = file.getName();
             }
           }
           else {
