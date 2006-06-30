@@ -536,7 +536,8 @@ public class VirtualFileImpl extends VirtualFile {
         final VirtualFileImpl child = children[i];
         if (found[i]) {
           if (recursive) {
-            child.refreshInternal(recursive, modalityState, false, asynchronous);
+            ourFileSystem.refresh(child, true, true, modalityState, asynchronous, false, false);
+            //child.refreshInternal(recursive, modalityState, false, asynchronous);
           }
         }
         else {
