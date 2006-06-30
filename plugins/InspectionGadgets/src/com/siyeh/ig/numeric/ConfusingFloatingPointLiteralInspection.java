@@ -39,6 +39,11 @@ public class ConfusingFloatingPointLiteralInspection
     @NonNls private static final Pattern pickyFloatingPointPattern =
             Pattern.compile("[0-9]+\\.[0-9]+((e|E)(-)?[0-9]+)?(f|F|d|D)?");
 
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "confusing.floating.point.literal.display.name");
+    }
+
     public String getGroupDisplayName() {
         return GroupNames.NUMERIC_GROUP_NAME;
     }
@@ -56,6 +61,7 @@ public class ConfusingFloatingPointLiteralInspection
     private static class ConfusingFloatingPointLiteralFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "confusing.floating.point.literal.change.quickfix");

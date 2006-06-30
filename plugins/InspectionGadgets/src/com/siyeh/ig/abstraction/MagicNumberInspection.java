@@ -41,12 +41,13 @@ public class MagicNumberInspection extends ExpressionInspection {
                     "5", "6", "7", "8", "9",
                     "10", "0L", "1L", "2L", "0l",
                     "1l", "2l", "0.0", "1.0", "0.0F",
-                    "1.0F", "0.0f", "1.0f"
+                    "1.0F", "0.0f", "1.0f", "0.0d", "1.0d",
+                    "0.0D", "1.0D"
             };
 
     /** @noinspection StaticCollection*/
     private static final Set<String> s_specialCaseLiterals =
-            new HashSet<String>(23);
+            new HashSet<String>(27);
 
 	/** @noinspection PublicField*/
     public boolean m_ignoreInHashCode = true;
@@ -86,7 +87,8 @@ public class MagicNumberInspection extends ExpressionInspection {
         return new IntroduceConstantFix();
     }
 
-    boolean isSpecialCaseLiteral(String text) {
+    static boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {
+        final String text = expression.getText();
         return s_specialCaseLiterals.contains(text);
     }
 
@@ -106,11 +108,7 @@ public class MagicNumberInspection extends ExpressionInspection {
             if (PsiType.CHAR.equals(type)) {
                 return;
             }
-            final String text = expression.getText();
-            if (text == null) {
-                return;
-            }
-            if (isSpecialCaseLiteral(text)) {
+            if (isSpecialCaseLiteral(expression)) {
                 return;
             }
             if (isDeclaredConstant(expression)) {
