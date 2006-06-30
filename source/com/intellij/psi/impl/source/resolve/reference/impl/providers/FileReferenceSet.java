@@ -8,7 +8,11 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.jsp.JspUtil;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.source.jsp.JspManager;
+import com.intellij.psi.impl.source.jsp.JspContextManager;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -17,6 +21,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.Function;
+import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -201,6 +206,19 @@ public class FileReferenceSet {
       result = getAbsoluteTopLevelDirLocation(properties, project, file);
     }
     else {
+      JspFile jspFile = PsiUtil.getJspFile(file);
+      if (jspFile != null) {
+        final JspContextManager manager = JspContextManager.getInstance(project);
+        JspFile contextFile = manager.getContextFile(jspFile);
+        Set<JspFile> visited = new HashSet<JspFile>();
+        while (contextFile != null && !visited.contains(jspFile)) {
+          visited.add(jspFile);
+          jspFile = contextFile;
+          contextFile = manager.getContextFile(jspFile);
+        }
+        file = jspFile;
+      }
+
       final PsiDirectory dir = file.getContainingDirectory();
       if (dir != null) {
         if (properties != null) {
