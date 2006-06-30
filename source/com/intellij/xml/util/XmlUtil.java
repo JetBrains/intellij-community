@@ -582,7 +582,7 @@ public class XmlUtil {
     final XmlFile file = getContainingFile(document);
 
     final XmlTag tag = document.getRootTag();
-    if (tag == null) return new String[][]{new String[]{EMPTY_URI}};
+    if (tag == null) return new String[][]{new String[]{"",EMPTY_URI}};
 
     if (file != null) {
       final @NotNull XmlFileNSInfoProvider[] nsProviders = ApplicationManager.getApplication().getComponents(XmlFileNSInfoProvider.class);
