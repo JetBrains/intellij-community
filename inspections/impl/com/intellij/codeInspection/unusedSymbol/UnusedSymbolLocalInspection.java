@@ -19,7 +19,7 @@ import java.awt.*;
  * Date: 17-Feb-2006
  */
 public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
-  @NonNls public static final String SHORT_NAME = "UNUSED_SYMBOL";
+  @NonNls public static final String SHORT_NAME = "UnusedDeclaration";
   @NonNls public static final String DISPLAY_NAME = InspectionsBundle.message("unused.symbol");
 
   public boolean LOCAL_VARIABLE = true;
