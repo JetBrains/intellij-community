@@ -335,6 +335,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   }
 
   @Nullable public DnDDragStartBean startDragging() {
+    if (isAnyComponent()) return null;
     return new DnDDragStartBean(this);
   }
 

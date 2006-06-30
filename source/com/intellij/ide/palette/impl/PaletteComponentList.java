@@ -360,7 +360,7 @@ public class PaletteComponentList extends JList {
   private class MyDnDSource implements DnDSource {
     public boolean canStartDragging(DnDAction action, Point dragOrigin) {
       int index = locationToIndex(dragOrigin);
-      return index >= 0;
+      return index >= 0 && myGroup.getItems() [index].startDragging() != null;
     }
 
     public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
