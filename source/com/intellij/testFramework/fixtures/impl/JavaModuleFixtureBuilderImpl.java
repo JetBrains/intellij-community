@@ -43,7 +43,7 @@ class JavaModuleFixtureBuilderImpl extends ModuleFixtureBuilderImpl implements J
     throw new UnsupportedOperationException("setLanguageLevel is not implemented in : " + getClass());
   }
 
-  public JavaModuleFixtureBuilder addLibrary(String libraryName, String[] classPath) {
+  public JavaModuleFixtureBuilder addLibrary(String libraryName, String... classPath) {
     myLibraries.add(new Pair<String, String[]>(libraryName, classPath));
     return this;
   }
