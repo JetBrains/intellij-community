@@ -54,8 +54,6 @@ class LineMover extends Mover {
   }
 
   static PsiElement firstNonWhiteElement(int offset, PsiFile file, final boolean lookRight) {
-    //final PsiElement element = file.getViewProvider().findElementAt(offset, StdLanguages.JAVA);
-    //return firstNonWhiteElement(element, lookRight);
     final ASTNode leafElement = file.getNode().findLeafElementAt(offset);
     return leafElement == null ? null : firstNonWhiteElement(leafElement.getPsi(), lookRight);
   }

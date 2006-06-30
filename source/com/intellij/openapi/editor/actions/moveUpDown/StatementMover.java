@@ -113,9 +113,6 @@ class StatementMover extends LineMover {
       }
       line += myIsDown ? 1 : -1;
       if (line == 0 || line >= editor.getDocument().getLineCount()) {
-        //statementToSurroundWithCodeBlock = null;
-        //whatToMove = range;
-        //insertOffset = editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0));
         return false;
       }
     }
@@ -135,6 +132,7 @@ class StatementMover extends LineMover {
     if (parent instanceof PsiDoWhileStatement && element == ((PsiDoWhileStatement)parent).getBody()) {
       return true;
     }
+    // know nothing about that
     return false;
   }
 
@@ -167,11 +165,12 @@ class StatementMover extends LineMover {
 
   private static boolean isInside(final int offset, final PsiElement guard) {
     if (guard == null) return false;
-    TextRange inside = guard instanceof PsiMethod ? ((PsiMethod)guard).getBody().getTextRange() : guard instanceof PsiClassInitializer
-                                                                                                  ? ((PsiClassInitializer)guard).getBody().getTextRange()
-                                                                                                  : guard instanceof PsiClass
-                                                                                                    ? new TextRange(((PsiClass)guard).getLBrace().getTextOffset(), ((PsiClass)guard).getRBrace().getTextOffset())
-                                                                                                    : guard.getTextRange();
+    TextRange inside = guard instanceof PsiMethod
+                       ? ((PsiMethod)guard).getBody().getTextRange()
+                       : guard instanceof PsiClassInitializer
+                         ? ((PsiClassInitializer)guard).getBody().getTextRange()
+                         : guard instanceof PsiClass ? new TextRange(((PsiClass)guard).getLBrace().getTextOffset(),
+                                                                     ((PsiClass)guard).getRBrace().getTextOffset()) : guard.getTextRange();
     return inside != null && inside.contains(offset);
   }
 
@@ -189,6 +188,8 @@ class StatementMover extends LineMover {
     else {
       endLine = editor.offsetToLogicalPosition(endOffset).line;
     }
-    return new LineRange(editor.offsetToLogicalPosition(elementRange.getFirst().getTextOffset()).line, endLine);
+    int startLine = Math.min(range.startLine, editor.offsetToLogicalPosition(elementRange.getFirst().getTextOffset()).line);
+    endLine = Math.max(endLine, range.endLine);
+    return new LineRange(startLine, endLine);
   }
 }
