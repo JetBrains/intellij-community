@@ -53,7 +53,7 @@ public class NoLabelForInspection extends BaseFormInspection {
                      (prop == null || StringUtil.isEmpty((String)prop.getPropertyValue(c2)))) {
               RadComponent radComponent = (RadComponent) component;
               final RadComponent radComponent2 = ((RadComponent)c2);
-              if (radComponent.getParent() == radComponent2.getParent()) {
+              if (radComponent.getParent() == radComponent2.getParent() && radComponent.getParent().getLayoutManager().isGrid()) {
                 GridConstraints gc1 = radComponent.getConstraints();
                 GridConstraints gc2 = radComponent2.getConstraints();
                 int nextColumn = FormEditingUtil.nextCol(radComponent.getParent(), gc2.getColumn());
