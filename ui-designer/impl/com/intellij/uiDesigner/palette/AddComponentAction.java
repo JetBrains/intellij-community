@@ -76,11 +76,31 @@ public class AddComponentAction extends AnAction {
       return;
     }
 
+    assignDefaultIcon(project, itemToBeAdded);
+
     // add to the group
 
     final Palette palette = Palette.getInstance(project);
     palette.addItem(groupItem, itemToBeAdded);
     palette.fireGroupsChanged();
+  }
+
+  private static void assignDefaultIcon(final Project project, final ComponentItem itemToBeAdded) {
+    Palette palette = Palette.getInstance(project);
+    if (itemToBeAdded.getIconPath() == null || itemToBeAdded.getIconPath().length() == 0) {
+      PsiClass aClass = PsiManager.getInstance(project).findClass(itemToBeAdded.getClassName().replace('$', '.'), project.getAllScope());
+      while(aClass != null) {
+        final ComponentItem item = palette.getItem(aClass.getQualifiedName());
+        if (item != null) {
+          String iconPath = item.getIconPath();
+          if (iconPath != null && iconPath.length() > 0) {
+            itemToBeAdded.setIconPath(iconPath);
+            return;
+          }
+        }
+        aClass = aClass.getSuperClass();
+      }
+    }
   }
 
   @Override public void update(AnActionEvent e) {
