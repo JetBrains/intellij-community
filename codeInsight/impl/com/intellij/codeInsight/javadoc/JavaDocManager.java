@@ -119,6 +119,7 @@ public class JavaDocManager implements ProjectComponent {
     final JavaDocInfoComponent component = new JavaDocInfoComponent(this);
 
 
+    final String title = SymbolPresentationUtil.getSymbolPresentableText(element);
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
       .setRequestFocusIfNotLookupOrSearch(myProject)
       .setLookupAndSearchUpdater(new Condition<PsiElement>() {
@@ -131,7 +132,7 @@ public class JavaDocManager implements ProjectComponent {
       .setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE)
       .setResizable(true)
       .setMovable(true)
-      .setTitle(CodeInsightBundle.message("javadoc.info.title", SymbolPresentationUtil.getSymbolPresentableText(element)))
+      .setTitle(CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText()))
       .setCancelCallback(new Computable<Boolean>() {
         public Boolean compute() {
           if (fromQuickSearch()) {
@@ -255,12 +256,13 @@ public class JavaDocManager implements ProjectComponent {
     }
 
     JavaDocInfoComponent component = new JavaDocInfoComponent(this);
-
     try {
       element.putUserData(ORIGINAL_ELEMENT_KEY,originalElement);
-    } catch(RuntimeException ex) {} // PsiPackage does not allow putUserData
+    } catch (RuntimeException ex) {
+      // PsiPackage does not allow putUserData
+    }
 
-
+    final String title = SymbolPresentationUtil.getSymbolPresentableText(element);
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
       .setRequestFocusIfNotLookupOrSearch(myProject)
       .setLookupAndSearchUpdater(new Condition<PsiElement>() {
@@ -282,7 +284,7 @@ public class JavaDocManager implements ProjectComponent {
       .setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE)
       .setResizable(true)
       .setMovable(true)
-      .setTitle(CodeInsightBundle.message("javadoc.info.title", SymbolPresentationUtil.getSymbolPresentableText(element)))
+      .setTitle(CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText()))
       .setCancelCallback(new Computable<Boolean>(){
         public Boolean compute() {
           if (fromQuickSearch()) {
@@ -624,7 +626,9 @@ public class JavaDocManager implements ProjectComponent {
   }
 
   private void createElementLink(final @NonNls StringBuffer sb, final PsiElement element, final String str,final String str2) {
-    sb.append("&nbsp;&nbsp;<a href=\"psi_element://" + JavaDocUtil.getReferenceText(myProject, element) + "\">");
+    sb.append("&nbsp;&nbsp;<a href=\"psi_element://");
+    sb.append(JavaDocUtil.getReferenceText(myProject, element));
+    sb.append("\">");
     sb.append(str);
     sb.append("</a>");
     if (str2 != null) sb.append(str2);
