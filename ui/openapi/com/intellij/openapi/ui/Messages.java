@@ -456,6 +456,7 @@ public class Messages {
         messagePane.setText(myMessage);
         messagePane.setEditable(false);
         messagePane.setCaretPosition(0);
+        messagePane.setFont(new JLabel().getFont());
         final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         final Dimension textSize = messagePane.getPreferredSize();
         if (textSize.width > screenSize.width /2 || textSize.height > screenSize.height / 2) {
