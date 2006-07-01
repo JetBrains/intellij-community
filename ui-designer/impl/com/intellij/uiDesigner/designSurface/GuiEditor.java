@@ -1008,7 +1008,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
     public void propertyChanged(final PsiTreeChangeEvent event) {
       if (PsiTreeChangeEvent.PROP_ROOTS.equals(event.getPropertyName())) {
-        handleEvent(event);
+        myAlarm.cancelRequest(myRefreshPropertiesRequest);
+        myAlarm.addRequest(myRefreshPropertiesRequest, 500, ModalityState.stateForComponent(GuiEditor.this));
       }
     }
 
