@@ -38,7 +38,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
     myCbx.addActionListener(
       new ActionListener(){
         public void actionPerformed(final ActionEvent e){
-          fireValueCommited(true);
+          fireValueCommitted(true);
         }
       }
     );

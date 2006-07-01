@@ -82,7 +82,7 @@ public class ClientPropertiesProperty extends ReadOnlyProperty {
       dlg.show();
       if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
         dlg.save();
-        fireValueCommited(true);
+        fireValueCommitted(true);
       }
     }
 

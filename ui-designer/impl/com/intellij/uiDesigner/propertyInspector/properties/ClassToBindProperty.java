@@ -90,7 +90,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
       myEditorTextField.addActionListener(
         new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
-            fireValueCommited();
+            fireValueCommitted();
           }
         }
       );

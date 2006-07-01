@@ -26,15 +26,20 @@ public class FontEditor extends PropertyEditor<FontDescriptor> {
     myTextField.getTextField().setBorder(null);
     myTextField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        FontEditorDialog dlg = new FontEditorDialog(myProject, myPropertyName);
-        dlg.setValue(myValue);
-        dlg.show();
-        if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-          myValue = dlg.getValue();
-          myTextField.setText(IntroFontProperty.descriptorToString(myValue));
-        }
+        showFontEditorDialog();
       }
     });
+  }
+
+  private void showFontEditorDialog() {
+    FontEditorDialog dlg = new FontEditorDialog(myProject, myPropertyName);
+    dlg.setValue(myValue);
+    dlg.show();
+    if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+      myValue = dlg.getValue();
+      myTextField.setText(IntroFontProperty.descriptorToString(myValue));
+      fireValueCommitted(true);
+    }
   }
 
   public FontDescriptor getValue() throws Exception {

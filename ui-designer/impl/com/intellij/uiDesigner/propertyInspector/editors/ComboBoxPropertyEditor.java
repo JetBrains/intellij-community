@@ -47,7 +47,7 @@ public abstract class ComboBoxPropertyEditor<V> extends PropertyEditor<V> {
 
     public void popupMenuWillBecomeInvisible(final PopupMenuEvent e){
       if(!myCancelled){
-        fireValueCommited(true);
+        fireValueCommitted(true);
       }
     }
 
