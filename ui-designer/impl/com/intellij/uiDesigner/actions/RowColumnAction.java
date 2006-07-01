@@ -50,7 +50,7 @@ public abstract class RowColumnAction extends AnAction {
       presentation.setEnabled(false);
     }
     else {
-      presentation.setEnabled(selection.getContainer() != null);
+      presentation.setEnabled(selection.getContainer() != null && selection.getFocusedIndex() >= 0);
       if (!selection.isRow()) {
         presentation.setText(myColumnText);
         if (myColumnIcon != null) {

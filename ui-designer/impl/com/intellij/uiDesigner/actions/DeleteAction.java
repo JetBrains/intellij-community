@@ -24,7 +24,7 @@ public final class DeleteAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     CaptionSelection selection = (CaptionSelection) e.getDataContext().getData(CaptionSelection.class.getName());
-    if (editor == null || selection == null) return;
+    if (editor == null || selection == null || selection.getFocusedIndex() < 0) return;
     FormEditingUtil.deleteRowOrColumn(editor, selection.getContainer(), selection.getFocusedIndex(), selection.isRow());
     selection.getContainer().revalidate();
   }
@@ -45,6 +45,9 @@ public final class DeleteAction extends AnAction {
       presentation.setEnabled(false);
     }
     else if (!selection.isRow() && selection.getContainer().getGridColumnCount() < 2) {
+      presentation.setEnabled(false);
+    }
+    else if (selection.getFocusedIndex() < 0) {
       presentation.setEnabled(false);
     }
     else {
