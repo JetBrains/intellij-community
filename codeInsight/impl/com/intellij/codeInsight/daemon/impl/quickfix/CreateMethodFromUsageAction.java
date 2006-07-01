@@ -90,7 +90,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
         }
       }
 
-      final PsiCodeBlock body = method.getBody();
+      PsiCodeBlock body = method.getBody();
       assert body != null;
       if (targetClass.isInterface()) {
         body.delete();
@@ -107,6 +107,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
 
 
       method = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(method);
+      body = method.getBody();
       TemplateBuilder builder = new TemplateBuilder(method);
 
       targetClass = (PsiClass)method.getParent();
