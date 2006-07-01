@@ -31,8 +31,12 @@ public final class IntEnumEditor extends PropertyEditor<Integer> {
     return pair.myValue;
   }
 
-  public JComponent getComponent(final RadComponent ignored, @NotNull final Integer value, final boolean inplace) {
+  public JComponent getComponent(final RadComponent ignored, final Integer value, final boolean inplace) {
     // Find pair
+    if (value == null) {
+      getCbx().setSelectedItem(null);
+      return getCbx();
+    }
     final ComboBoxModel model = getCbx().getModel();
     for (int i = model.getSize() - 1; i >= 0; i--) {
       final Pair pair = (Pair)model.getElementAt(i);
