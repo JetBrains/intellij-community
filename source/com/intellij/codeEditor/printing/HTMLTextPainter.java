@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.io.*;
@@ -61,20 +62,22 @@ class HTMLTextPainter {
     psiDocumentManager.commitAllDocuments();
     Document document = psiDocumentManager.getDocument(psiFile);
 
-    GeneralHighlightingPass action = new GeneralHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), false, true);
-    Collection<LineMarkerInfo> lineMarkerInfos = action.queryLineMarkers();
     ArrayList<LineMarkerInfo> methodSeparators = new ArrayList<LineMarkerInfo>();
-    for (LineMarkerInfo lineMarkerInfo : lineMarkerInfos) {
-      if (lineMarkerInfo.separatorColor != null) {
-        methodSeparators.add(lineMarkerInfo);
+    if (document != null) {
+      GeneralHighlightingPass action = new GeneralHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), false, true);
+      Collection<LineMarkerInfo> lineMarkerInfos = action.queryLineMarkers();
+      for (LineMarkerInfo lineMarkerInfo : lineMarkerInfos) {
+        if (lineMarkerInfo.separatorColor != null) {
+          methodSeparators.add(lineMarkerInfo);
+        }
       }
-    }
 
-    Collections.sort(methodSeparators, new Comparator<LineMarkerInfo>() {
-      public int compare(LineMarkerInfo o1, LineMarkerInfo o2) {
-        return o1.startOffset - o2.startOffset;
-      }
-    });
+      Collections.sort(methodSeparators, new Comparator<LineMarkerInfo>() {
+        public int compare(LineMarkerInfo o1, LineMarkerInfo o2) {
+          return o1.startOffset - o2.startOffset;
+        }
+      });
+    }
 
     myMethodSeparators = methodSeparators.toArray(new LineMarkerInfo[methodSeparators.size()]);
     myCurrentMethodSeparator = 0;
@@ -241,8 +244,6 @@ class HTMLTextPainter {
   @SuppressWarnings({"HardCodedStringLiteral"})
   private String writeFontTag(Writer writer, TextAttributes textAttributes) throws IOException {
 //    "<FONT COLOR=\"#000000\">"
-    StringBuffer openTag = new StringBuffer();
-    StringBuffer closeTag = new StringBuffer();
     writer.write("<span class=\"" + myStyleMap.get(textAttributes) + "\">");
     return "</span>";
   }
@@ -292,8 +293,7 @@ class HTMLTextPainter {
     myColumn++;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private void writeLineNumber(Writer writer) throws IOException {
+  private void writeLineNumber(@NonNls Writer writer) throws IOException {
     writer.write('\n');
     myColumn = 0;
     lineCount++;
@@ -317,8 +317,7 @@ class HTMLTextPainter {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private void writeHeader(Writer writer, String title) throws IOException {
+  private void writeHeader(@NonNls Writer writer, String title) throws IOException {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     writer.write("<html>\r\n");
     writer.write("<head>\r\n");
@@ -337,15 +336,14 @@ class HTMLTextPainter {
     writer.write("<pre>\r\n");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private void writeStyles(final Writer writer) throws IOException {
+  private void writeStyles(@NonNls final Writer writer) throws IOException {
     writer.write("<style type=\"text/css\">\n");
     writer.write(".ln { color: rgb(0,0,0); font-weight: normal; font-style: normal; }\n");
     HighlighterIterator hIterator = myHighlighter.createIterator(myOffset);
     while(!hIterator.atEnd()) {
       TextAttributes textAttributes = hIterator.getTextAttributes();
       if (!myStyleMap.containsKey(textAttributes)) {
-        String styleName = "s" + myStyleMap.size();
+        @NonNls String styleName = "s" + myStyleMap.size();
         myStyleMap.put(textAttributes, styleName);
         writer.write("." + styleName + " { ");
         final Color foreColor = textAttributes.getForegroundColor();
@@ -365,14 +363,13 @@ class HTMLTextPainter {
     writer.write("</style>\n");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private void writeFooter(Writer writer) throws IOException {
+  private static void writeFooter(@NonNls Writer writer) throws IOException {
     writer.write("</pre>\r\n");
     writer.write("</body>\r\n");
     writer.write("</html>");
   }
 
-  private boolean equals(TextAttributes attributes1, TextAttributes attributes2) {
+  private static boolean equals(TextAttributes attributes1, TextAttributes attributes2) {
     if (attributes2 == null) {
       return attributes1 == null;
     }
