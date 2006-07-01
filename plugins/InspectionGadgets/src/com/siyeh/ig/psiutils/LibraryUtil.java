@@ -21,23 +21,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class LibraryUtil {
 
-    @NonNls
-    private static final String JAVA = ".java";
-
     private LibraryUtil() {
         super();
     }
 
     public static boolean classIsInLibrary(@NotNull PsiClass aClass) {
-        final PsiFile file = aClass.getContainingFile();
-        if (file == null) {
-            return false;
-        }
-        final String fileName = file.getName();
-        if (fileName == null) {
-            return false;
-        }
-        return !fileName.endsWith(JAVA);
+        return aClass instanceof PsiCompiledElement;
     }
 
     public static boolean isOverrideOfLibraryMethod(PsiMethod method){
