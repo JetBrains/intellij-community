@@ -132,7 +132,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
               public void run() {
                 PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
                 final int offset = newEditor.getCaretModel().getOffset();
-                PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset, PsiMethod.class, false);
+                PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset - 1, PsiMethod.class, false);
 
                 if (method != null) {
                   try {

@@ -4,8 +4,8 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.TemplateEditingListener;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,10 +17,11 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -43,15 +44,8 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     }
 
     PsiClass[] targetClasses = getTargetClasses(element);
-    if (targetClasses == null) {
-      return false;
-    }
+    return targetClasses != null && !isValidElement(element) && isAvailableImpl(offset);
 
-    if (isValidElement(element)) {
-      return false;
-    }
-
-    return isAvailableImpl(offset);
   }
 
   protected abstract boolean isAvailableImpl(int offset);
@@ -60,7 +54,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
 
   protected abstract boolean isValidElement(PsiElement result);
 
-  protected boolean shouldShowTag(int offset, PsiElement namedElement, PsiElement element) {
+  protected static boolean shouldShowTag(int offset, PsiElement namedElement, PsiElement element) {
     if (namedElement == null) return false;
     TextRange range = namedElement.getTextRange();
     if (range.getLength() == 0) return false;
@@ -118,7 +112,11 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
         final PsiClass aClass = (PsiClass) list.getSelectedValue();
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            doInvoke(project, aClass);
+            CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+              public void run() {
+                doInvoke(project, aClass);
+              }
+            }, getText(), null);
           }
         });
       }
@@ -139,7 +137,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
-  protected void setupVisibility(PsiClass parentClass, PsiClass targetClass, PsiModifierList list) throws IncorrectOperationException {
+  protected static void setupVisibility(PsiClass parentClass, PsiClass targetClass, PsiModifierList list) throws IncorrectOperationException {
     if (targetClass.isInterface()) {
       list.deleteChildRange(list.getFirstChild(), list.getLastChild());
       return;
@@ -152,7 +150,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     }
   }
 
-  protected boolean shouldCreateStaticMember(PsiReferenceExpression ref, PsiElement enclosingContext, PsiClass targetClass) {
+  protected static boolean shouldCreateStaticMember(PsiReferenceExpression ref, PsiElement enclosingContext, PsiClass targetClass) {
     if (targetClass.isInterface()) {
       return false;
     }
@@ -215,7 +213,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     return null;
   }
 
-  public PsiSubstitutor getTargetSubstitutor (PsiElement element) {
+  public static PsiSubstitutor getTargetSubstitutor (PsiElement element) {
     if (element instanceof PsiNewExpression) {
       PsiSubstitutor substitutor = ((PsiNewExpression)element).getClassReference().advancedResolve(false).getSubstitutor();
       return substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
@@ -236,39 +234,44 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
   protected PsiClass[] getTargetClasses(PsiElement element) {
     PsiClass psiClass = null;
     PsiExpression qualifier = null;
+
+    boolean allowOuterClasses = false;
     if (element instanceof PsiNewExpression) {
-      PsiJavaCodeReferenceElement ref = ((PsiNewExpression) element).getClassReference();
-      if (ref instanceof PsiReferenceExpression) {
-        qualifier = ((PsiReferenceExpression) ref).getQualifierExpression();
-      } else if (ref != null) {
-        PsiElement refElement = ref.resolve();
-        if (refElement instanceof PsiClass) psiClass = (PsiClass) refElement;
+      final PsiNewExpression newExpression = (PsiNewExpression)element;
+      qualifier = newExpression.getQualifier();
+
+      if (qualifier == null) {
+        PsiJavaCodeReferenceElement ref = newExpression.getClassReference();
+        if (ref != null) {
+          PsiElement refElement = ref.resolve();
+          if (refElement instanceof PsiClass) psiClass = (PsiClass) refElement;
+        }
       }
     } else if (element instanceof PsiReferenceExpression) {
       qualifier = ((PsiReferenceExpression) element).getQualifierExpression();
     } else if (element instanceof PsiMethodCallExpression) {
-      qualifier = ((PsiMethodCallExpression) element).getMethodExpression().getQualifierExpression();
+      final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)element).getMethodExpression();
+      qualifier = methodExpression.getQualifierExpression();
+      final @NonNls String referenceName = methodExpression.getReferenceName();
+      if (referenceName == null) return null;
     }
     if (qualifier != null) {
       PsiType type = qualifier.getType();
       if (type instanceof PsiClassType) {
-        psiClass = PsiUtil.resolveClassInType(type);
-      } else if (qualifier instanceof PsiReferenceExpression) {
-        PsiElement refElement = ((PsiReferenceExpression) qualifier).resolve();
+        psiClass = ((PsiClassType)type).resolve();
+      }
 
-        if (refElement instanceof PsiClass) {
-          psiClass = (PsiClass) refElement;
+      if (qualifier instanceof PsiJavaCodeReferenceElement) {
+        final PsiElement resolved = ((PsiJavaCodeReferenceElement)qualifier).resolve();
+        if (resolved instanceof PsiClass) {
+          if (psiClass == null) psiClass = (PsiClass)resolved;
         }
       }
     } else if (psiClass == null) {
       psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      allowOuterClasses = true;
     }
 
-    if (!(element instanceof PsiMethodCallExpression)) {
-      while (psiClass instanceof PsiAnonymousClass) {
-        psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
-      }
-    }
     if (psiClass instanceof PsiTypeParameter) {
       PsiClass[] supers = psiClass.getSupers();
       List<PsiClass> filtered = new ArrayList<PsiClass>();
@@ -279,7 +282,21 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
       return filtered.size() > 0 ? filtered.toArray(new PsiClass[filtered.size()]) : null;
     }
     else {
-      return psiClass != null && psiClass.getManager().isInProject(psiClass)? new PsiClass[]{psiClass} : null;
+      if (psiClass == null || !psiClass.getManager().isInProject(psiClass)) {
+        return null;
+      }
+
+      if (!allowOuterClasses || ApplicationManager.getApplication().isUnitTestMode())
+        return new PsiClass[]{psiClass};
+
+      List<PsiClass> result = new ArrayList<PsiClass>();
+
+      while (psiClass != null) {
+        result.add(psiClass);
+        if (psiClass.hasModifierProperty(PsiModifier.STATIC)) break;
+        psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
+      }
+      return result.toArray(new PsiClass[result.size()]);
     }
   }
 
