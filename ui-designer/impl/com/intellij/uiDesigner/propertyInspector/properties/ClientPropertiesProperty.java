@@ -72,13 +72,18 @@ public class ClientPropertiesProperty extends ReadOnlyProperty {
       myTf.getTextField().setForeground(Color.BLACK);
       myTf.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          ConfigureClientPropertiesDialog dlg = new ConfigureClientPropertiesDialog(myProject);
-          dlg.show();
-          if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-            dlg.save();
-          }
+          showClientPropertiesDialog();
         }
       });
+    }
+
+    private void showClientPropertiesDialog() {
+      ConfigureClientPropertiesDialog dlg = new ConfigureClientPropertiesDialog(myProject);
+      dlg.show();
+      if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+        dlg.save();
+        fireValueCommited(true);
+      }
     }
 
     public Object getValue() throws Exception {
@@ -92,5 +97,10 @@ public class ClientPropertiesProperty extends ReadOnlyProperty {
     public void updateUI() {
       SwingUtilities.updateComponentTreeUI(myTf);
     }
+  }
+
+  @Override
+  public boolean needRefreshPropertyList() {
+    return true;
   }
 }

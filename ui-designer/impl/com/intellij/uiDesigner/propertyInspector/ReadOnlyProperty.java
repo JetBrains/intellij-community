@@ -5,12 +5,13 @@
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author yole
  */
 public abstract class ReadOnlyProperty extends Property {
-  public ReadOnlyProperty(final Property parent, final String name) {
+  public ReadOnlyProperty(final Property parent, @NonNls final String name) {
     super(parent, name);
   }
 
