@@ -200,6 +200,8 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
       builder.setEndVariableAfter(accessor.getBody().getLBrace());
 
       accessor = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(accessor);
+      targetClass = accessor.getContainingClass();
+      LOG.assertTrue (targetClass != null);
       Template template = builder.buildTemplate();
       TextRange textRange = accessor.getTextRange();
       final PsiFile file = targetClass.getContainingFile();
