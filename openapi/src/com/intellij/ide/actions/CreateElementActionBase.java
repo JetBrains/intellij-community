@@ -168,9 +168,13 @@ public abstract class CreateElementActionBase extends AnAction {
       CommandProcessor.getInstance().executeCommand(myProject, command, getCommandName(), null);
 
       if (exception[0] != null) {
+        String errorMessage = filterMessage(exception[0].getMessage());
+        if (errorMessage == null || errorMessage.length() == 0) {
+          errorMessage = exception [0].toString();
+        }
         Messages.showMessageDialog(
           myProject,
-          filterMessage(exception[0].getMessage()),
+          errorMessage,
           getErrorTitle(),
           Messages.getErrorIcon()
         );
