@@ -35,6 +35,7 @@ import com.intellij.uiDesigner.snapShooter.SnapShooter;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xml.util.XmlUtil;
+import com.jgoodies.forms.layout.FormLayout;
 import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -241,6 +242,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
         paths.add(PathUtil.getJarPathForClass(Navigatable.class));         // pom
         paths.add(PathUtil.getJarPathForClass(AreaInstance.class));        // extensions
         paths.add(PathUtil.getJarPathForClass(THashMap.class));            // trove4j
+        paths.add(PathUtil.getJarPathForClass(FormLayout.class));          // jgoodies
         for(String path: paths) {
           params.getClassPath().addTail(path);
         }

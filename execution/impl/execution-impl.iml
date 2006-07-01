@@ -2,8 +2,9 @@
 <module version="4" relativePaths="true" type="JAVA_MODULE">
   <component name="ModuleRootManager" />
   <component name="NewModuleRootManager" inherit-compiler-output="true">
-    <output url="file://$MODULE_DIR$/../classes/impl" />
+    <output url="file://$MODULE_DIR$/../../out/classes/production/execution-impl" />
     <exclude-output />
+    <output-test url="file://$MODULE_DIR$/../../out/classes/test/execution-impl" />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$" isTestSource="false" />
     </content>
@@ -28,6 +29,7 @@
     <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="module" module-name="UIDesignerCore" />
     <orderEntry type="module" module-name="forms_rt" />
+    <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
