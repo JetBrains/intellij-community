@@ -17,7 +17,10 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.reference.SoftReference;
-import com.intellij.xml.impl.schema.*;
+import com.intellij.xml.impl.schema.NamedObjectDescriptor;
+import com.intellij.xml.impl.schema.SchemaNSDescriptor;
+import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -214,7 +217,10 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
               new TextFilter("attribute")
           ),
           new OrFilter(
-            new TextFilter("directive.attribute"),
+            new AndFilter(
+              new ClassFilter(XmlTag.class),
+              new TextFilter("directive.attribute")
+            ),
             new AndFilter(
               new ClassFilter(JspDirective.class),
               new TextFilter("attribute")
@@ -233,7 +239,10 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
               new TextFilter("variable")
           ),
           new OrFilter(
-            new TextFilter("directive.variable"),
+            new AndFilter(
+              new ClassFilter(XmlTag.class),
+              new TextFilter("directive.variable")
+            ),
             new AndFilter(
               new ClassFilter(JspDirective.class),
               new TextFilter("variable")
