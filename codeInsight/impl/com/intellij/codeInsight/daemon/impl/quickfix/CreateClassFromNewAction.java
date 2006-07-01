@@ -174,6 +174,10 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
     return null;
   }
 
+  protected boolean isAllowOuterTargetClass() {
+    return false;
+  }
+
   protected boolean isValidElement(PsiElement element) {
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.getChildOfType(element, PsiJavaCodeReferenceElement.class);
     if (ref == null) return false;
