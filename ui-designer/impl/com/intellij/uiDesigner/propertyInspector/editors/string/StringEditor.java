@@ -43,7 +43,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     textField.addActionListener(
       new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
-          fireValueCommitted(false);
+          fireValueCommitted(false, false);
         }
       }
     );
@@ -161,7 +161,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
               return;
             }
             setValue(descriptor);
-            fireValueCommitted(true);
+            fireValueCommitted(true, false);
           }
         }, UIDesignerBundle.message("command.edit.string.property"), null); 
     }

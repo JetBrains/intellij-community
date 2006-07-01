@@ -43,7 +43,7 @@ public class BooleanEditor extends PropertyEditor<Boolean> {
   private final class MyActionListener implements ActionListener{
     public void actionPerformed(final ActionEvent e){
       if(!myInsideChange){
-        fireValueCommitted(true);
+        fireValueCommitted(true, false);
       }
     }
   }

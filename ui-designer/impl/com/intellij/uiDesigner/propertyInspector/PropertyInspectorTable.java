@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiClass;
@@ -188,9 +189,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
     }
 
-    final PsiClass aClass = PsiManager.getInstance(module.getProject()).findClass(
-      className, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
-    return aClass;
+    return PsiManager.getInstance(module.getProject()).findClass(className,
+                                                                 GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
   }
 
   public Object getData(final String dataId) {
@@ -212,8 +212,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         return getter;
       }
 
-      final PsiMethod setter = PropertyUtil.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
-      return setter;
+      return PropertyUtil.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
     }
     else if (DataConstants.PSI_FILE.equals(dataId) && myEditor != null) {
       return PsiManager.getInstance(myEditor.getProject()).findFile(myEditor.getFile());
@@ -426,7 +425,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    * @return index of the property with specified <code>name</code>.
    * If there is no such property then the method returns <code>-1</code>.
    */
-  private int findPropertyByName(final ArrayList<Property> properties, final String name){
+  private static int findPropertyByName(final ArrayList<Property> properties, final String name){
     for(int i=properties.size()-1;i>=0;i--){
       final Property property=properties.get(i);
       if(property.getName().equals(name)){
@@ -514,7 +513,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     return myExpandedProperties.contains(getDottedName(property));
   }
 
-  private String getDottedName(final Property property) {
+  private static String getDottedName(final Property property) {
     final Property parent = property.getParent();
     if (parent != null) {
       return parent.getName() + "." + property.getName();
@@ -522,7 +521,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     return property.getName();
   }
 
-  private int getPropertyIndent(final Property property) {
+  private static int getPropertyIndent(final Property property) {
     final Property parent = property.getParent();
     if (parent != null) {
       return parent.getParent() != null ? 2 : 1;
@@ -674,6 +673,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       errorInfo = (ErrorInfo)component.getClientProperty(ErrorAnalyzer.CLIENT_PROP_BINDING_ERROR);
     }
     else {
+      //noinspection unchecked
       ArrayList<ErrorInfo> errors = (ArrayList<ErrorInfo>) component.getClientProperty(ErrorAnalyzer.CLIENT_PROP_ERROR_ARRAY);
       if (errors != null) {
         for(ErrorInfo err: errors) {
@@ -734,22 +734,26 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     return result;
   }
 
-  private void setSelectionValue(Property property, Object newValue) {
-    if (!setPropValue(property, mySelection.get(0), newValue)) return;
+  /**
+   * @return false if some of the set value operations have failed; true if everything successful
+   */
+  private boolean setSelectionValue(Property property, Object newValue) {
+    if (!setPropValue(property, mySelection.get(0), newValue)) return false;
     for(int i=1; i<mySelection.size(); i++) {
       if (property instanceof IntrospectedProperty) {
         IntrospectedProperty[] props = Palette.getInstance(myProject).getIntrospectedProperties(mySelection.get(i));
         for(IntrospectedProperty otherProperty: props) {
           if (otherProperty.getName().equals(property.getName())) {
-            if (!setPropValue(otherProperty, mySelection.get(i), newValue)) return;
+            if (!setPropValue(otherProperty, mySelection.get(i), newValue)) return false;
             break;
           }
         }
       }
       else {
-        if (!setPropValue(property, mySelection.get(i), newValue)) return;
+        if (!setPropValue(property, mySelection.get(i), newValue)) return false;
       }
     }
+    return true;
   }
 
   private static boolean setPropValue(final Property property, final RadComponent c, final Object newValue) {
@@ -814,28 +818,34 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       if (column != 1){
         throw new IllegalArgumentException("wrong index: " + column);
       }
+      setValueAtRow(row, newValue);
+    }
+
+    boolean setValueAtRow(final int row, final Object newValue) {
       final Property property=myProperties.get(row);
 
       // Optimization: do nothing if value doesn't change
       final Object oldValue=getSelectionValue(property);
       if(Comparing.equal(oldValue,newValue)){
-        return;
+        return true;
       }
       if (!myEditor.ensureEditable()) {
-        return;
+        return false;
       }
+      final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         public void run() {
-          setSelectionValue(property, newValue);
+          result.set(setSelectionValue(property, newValue));
 
           myEditor.refreshAndSave(false);
         }
       }, UIDesignerBundle.message("command.set.property.value"), null);
+      return result.get().booleanValue();
     }
   }
 
   private final class MyPropertyEditorListener extends PropertyEditorAdapter{
-    public void valueCommitted(final PropertyEditor source, final boolean continueEditing){
+    public void valueCommitted(final PropertyEditor source, final boolean continueEditing, final boolean closeEditorOnError){
       if(isEditing()){
         final Object value;
         try {
@@ -851,9 +861,12 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
           }
           return;
         }
-        setValueAt(value, editingRow, editingColumn);
-        if (!continueEditing) {
-          cellEditor.stopCellEditing();
+        boolean valueAccepted = myModel.setValueAtRow(editingRow, value);
+        if (valueAccepted) {
+          if (!continueEditing) cellEditor.stopCellEditing();
+        }
+        else {
+          if (closeEditorOnError) cellEditor.cancelCellEditing();
         }
       }
     }
@@ -1052,6 +1065,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     public Component getTableCellEditorComponent(final JTable table, final Object value, final boolean isSelected, final int row, final int column){
       LOG.assertTrue(value!=null);
       final Property property=(Property)value;
+      //noinspection unchecked
       return myEditor.getComponent(mySelection.get(0), getSelectionValue(property), false);
     }
   }

@@ -38,7 +38,7 @@ public class FontEditor extends PropertyEditor<FontDescriptor> {
     if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       myValue = dlg.getValue();
       myTextField.setText(IntroFontProperty.descriptorToString(myValue));
-      fireValueCommitted(true);
+      fireValueCommitted(true, false);
     }
   }
 

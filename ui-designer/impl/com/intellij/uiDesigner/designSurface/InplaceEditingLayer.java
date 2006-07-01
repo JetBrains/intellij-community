@@ -331,7 +331,7 @@ public final class InplaceEditingLayer extends JComponent{
    * Finishes editing by "Enter" and cancels editing by "Esc"
    */
   private final class MyPropertyEditorListener extends PropertyEditorAdapter{
-    public void valueCommitted(final PropertyEditor source, final boolean continueEditing) {
+    public void valueCommitted(final PropertyEditor source, final boolean continueEditing, final boolean closeEditorOnError) {
       finishInplaceEditing();
     }
 

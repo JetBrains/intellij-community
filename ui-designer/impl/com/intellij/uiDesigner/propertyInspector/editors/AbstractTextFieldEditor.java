@@ -46,7 +46,7 @@ public abstract class AbstractTextFieldEditor<V> extends PropertyEditor<V> {
 
   protected final class MyActionListener implements ActionListener {
     public void actionPerformed(final ActionEvent e){
-      fireValueCommitted(true);
+      fireValueCommitted(true, false);
     }
   }
 }
