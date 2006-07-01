@@ -125,6 +125,10 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
     return null;
   }
 
+  protected boolean isAllowOuterTargetClass() {
+    return false;
+  }
+
   private boolean checkClassName(String name) {
     return Character.isUpperCase(name.charAt(0));
   }
