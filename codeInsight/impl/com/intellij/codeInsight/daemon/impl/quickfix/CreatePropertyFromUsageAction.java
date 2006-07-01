@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author ven
@@ -127,10 +129,11 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
     PsiClass[] all = super.getTargetClasses(element);
     if (all == null) return null;
 
+    List<PsiClass> nonInterfaces = new ArrayList<PsiClass>();
     for (PsiClass aClass : all) {
-      if (!aClass.isInterface()) return new PsiClass[]{aClass};
+      if (!aClass.isInterface()) nonInterfaces.add(aClass);
     }
-    return null;
+    return nonInterfaces.toArray(new PsiClass[nonInterfaces.size()]);
   }
 
   protected void invokeImpl(PsiClass targetClass) {
