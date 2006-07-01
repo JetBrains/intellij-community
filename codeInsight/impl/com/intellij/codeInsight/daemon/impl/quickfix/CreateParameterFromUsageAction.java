@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -90,6 +91,11 @@ public class CreateParameterFromUsageAction extends CreateVarFromUsageAction {
     TemplateManager.getInstance(project).startTemplate(editor, template);
   }
 
+  protected boolean isAllowOuterTargetClass() {
+    return false;
+  }
+
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.parameter.from.usage.family");
   }
