@@ -98,7 +98,11 @@ public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
     }
   }
 
-  private PsiStatement getAnchor(PsiExpression[] expressionOccurences) {
+  protected boolean isAllowOuterTargetClass() {
+    return false;
+  }
+
+  private static PsiStatement getAnchor(PsiExpression[] expressionOccurences) {
     PsiElement parent = expressionOccurences[0];
     int minOffset = expressionOccurences[0].getTextRange().getStartOffset();
     for (int i = 1; i < expressionOccurences.length; i++) {

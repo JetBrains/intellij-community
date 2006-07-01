@@ -230,6 +230,10 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     return PsiSubstitutor.EMPTY;
   }
 
+  protected boolean isAllowOuterTargetClass() {
+    return true;
+  }
+
   //Should return only valid inproject classes
   protected PsiClass[] getTargetClasses(PsiElement element) {
     PsiClass psiClass = null;
@@ -286,7 +290,9 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
         return null;
       }
 
-      if (!allowOuterClasses || ApplicationManager.getApplication().isUnitTestMode())
+      if (!allowOuterClasses ||
+          !isAllowOuterTargetClass() ||
+          ApplicationManager.getApplication().isUnitTestMode())
         return new PsiClass[]{psiClass};
 
       List<PsiClass> result = new ArrayList<PsiClass>();
