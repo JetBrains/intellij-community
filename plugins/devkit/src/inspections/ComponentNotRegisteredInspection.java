@@ -126,8 +126,8 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
           if (IGNORE_NON_PUBLIC && !isPublic(checkedClass)) {
             return null;
           }
-          if (!isActionRegistered(checkedClass)) {
-            final LocalQuickFix fix = canFix(checkedClass) ? new RegisterActionFix(checkedClass) : null;
+          if (!isActionRegistered(checkedClass) && canFix(checkedClass)) {
+            final LocalQuickFix fix = new RegisterActionFix(checkedClass);
             final ProblemDescriptor problem = manager.createProblemDescriptor(
                     classIdentifier,
                     DevKitBundle.message("inspections.component.not.registered.message",
@@ -149,8 +149,8 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
           return null;
         }
         if (checkedClass.isInheritor(compClass, true)) {
-          if (getRegistrationTypes(checkedClass, false) == null) {
-            final LocalQuickFix fix = canFix(checkedClass) ? new RegisterComponentFix(type, checkedClass) : null;
+          if (getRegistrationTypes(checkedClass, false) == null && canFix(checkedClass)) {
+            final LocalQuickFix fix = new RegisterComponentFix(type, checkedClass);
             final ProblemDescriptor problem = manager.createProblemDescriptor(classIdentifier,
                                                                               DevKitBundle.message("inspections.component.not.registered.message",
                                                                                                    DevKitBundle.message(type.myPropertyKey)),
