@@ -95,7 +95,7 @@ public abstract class PropertyEditor<V> {
   protected final void fireValueCommitted(final boolean continueEditing) {
     final PropertyEditorListener[] listeners=myListenerList.getListeners(PropertyEditorListener.class);
     for (PropertyEditorListener listener : listeners) {
-      listener.valueCommited(this, continueEditing);
+      listener.valueCommitted(this, continueEditing);
     }
   }
 

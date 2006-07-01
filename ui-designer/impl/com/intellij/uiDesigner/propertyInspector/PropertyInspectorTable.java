@@ -835,7 +835,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   }
 
   private final class MyPropertyEditorListener extends PropertyEditorAdapter{
-    public void valueCommited(final PropertyEditor source, final boolean continueEditing){
+    public void valueCommitted(final PropertyEditor source, final boolean continueEditing){
       if(isEditing()){
         final Object value;
         try {
