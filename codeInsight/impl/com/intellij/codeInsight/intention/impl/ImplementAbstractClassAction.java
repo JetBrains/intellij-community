@@ -69,7 +69,7 @@ public class ImplementAbstractClassAction implements IntentionAction {
       myText,
       psiClass.getName() + IMPL_SUFFIX,
       aPackage != null ? aPackage.getQualifiedName() : "",
-      CreateClassKind.CLASS.getDescription(), true);
+      CreateClassKind.CLASS, true);
     dialog.show();
     if (!dialog.isOK()) return;
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();

@@ -2,6 +2,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -39,7 +40,7 @@ public class CreateClassDialog extends DialogWrapper {
                            String title,
                            String targetClassName,
                            String targetPackageName,
-                           String toCreateKindString,
+                           CreateClassKind kind,
                            boolean classNameEditable) {
     super(project, true);
     myClassNameEditable = classNameEditable;
@@ -50,10 +51,10 @@ public class CreateClassDialog extends DialogWrapper {
     setTitle(title);
 
     if (!myClassNameEditable) {
-      myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.name", toCreateKindString, targetClassName));
+      myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.name", kind.getDescription(), targetClassName));
     }
     else {
-      myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.label", toCreateKindString));
+      myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.label", kind.getDescription()));
     }
 
     myTfClassName.setText(myClassName);
