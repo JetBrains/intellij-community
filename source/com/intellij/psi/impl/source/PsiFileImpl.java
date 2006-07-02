@@ -191,6 +191,9 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public int getTextLength() {
+    final ASTNode tree = _getTreeElement();
+    if (tree != null) return tree.getTextLength();
+
     return getViewProvider().getContents().length();
   }
 
