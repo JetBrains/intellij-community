@@ -372,6 +372,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPlainFontMetrics = null;
     myScrollingModel.dispose();
     myGutterComponent.dispose();
+    clearCaretThread();
+  }
+
+  private void clearCaretThread() {
+    synchronized (ourCaretThread) {
+      if (ourCaretThread.myEditor == EditorImpl.this) {
+        ourCaretThread.myEditor = null;
+      }
+    }
   }
 
   private void initComponent() {
@@ -457,11 +466,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       public void focusLost(FocusEvent e) {
-        synchronized (ourCaretThread) {
-          if (ourCaretThread.myEditor == EditorImpl.this) {
-            ourCaretThread.myEditor = null;
-          }
-        }
+        clearCaretThread();
         int caretLine = getCaretModel().getLogicalPosition().line;
         repaintLines(caretLine, caretLine);
         fireFocusLost();

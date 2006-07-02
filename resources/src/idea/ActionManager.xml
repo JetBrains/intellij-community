@@ -612,6 +612,7 @@
             <action id="DumpPsiMemoryCaches" internal="true" class="com.intellij.psi.impl.DumpPsiMemoryCaches"/>
           </group>
           <action internal="true" id="DecodeBytesAction" class="com.intellij.internal.encodings.DecodeBytesAction"/>
+          <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
           <separator/>
           <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
         </group>

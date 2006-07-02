@@ -29,7 +29,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
   private final MyPsiTreeChangeListener myPsiTreeChangeListener;
   private final MyFileStatusListener myFileStatusListener;
   private final CopyPasteManager.ContentChangedListener myCopyPasteListener;
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm;
 
   public ProjectListBuilder(final Project project,
                             final CommanderPanel panel,
@@ -47,6 +47,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
     myCopyPasteListener = new MyCopyPasteListener();
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
     buildRoot();
+    myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myProject);
   }
 
   protected void updateParentTitle() {

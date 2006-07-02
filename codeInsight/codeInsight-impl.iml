@@ -2,8 +2,9 @@
 <module version="4" relativePaths="true" type="JAVA_MODULE">
   <component name="ModuleRootManager" />
   <component name="NewModuleRootManager" inherit-compiler-output="true">
-    <output url="file://$MODULE_DIR$/classes/impl" />
+    <output url="file://$MODULE_DIR$/../out/classes/production/codeInsight-impl" />
     <exclude-output />
+    <output-test url="file://$MODULE_DIR$/../out/classes/test/codeInsight-impl" />
     <content url="file://$MODULE_DIR$/impl">
       <sourceFolder url="file://$MODULE_DIR$/impl" isTestSource="false" />
     </content>
@@ -31,6 +32,7 @@
     <orderEntry type="module" module-name="ejb-openapi" />
     <orderEntry type="module" module-name="ExtendedApi" />
     <orderEntry type="module" module-name="plugins-management" />
+    <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

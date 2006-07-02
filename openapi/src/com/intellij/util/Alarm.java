@@ -15,16 +15,18 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.LongArrayList;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class Alarm {
+public class Alarm implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.Alarm");
 
   private final Object LOCK = new Object();
@@ -34,6 +36,10 @@ public class Alarm {
 
   private static MyThread ourThreadNormal = new MyThread(false);
   private static MyThread ourThreadUseSwing = new MyThread(true);
+
+  public void dispose() {
+    cancelAllRequests();
+  }
 
   static {
     ourThreadNormal.start();
@@ -53,7 +59,14 @@ public class Alarm {
     this(ThreadToUse.SWING_THREAD);
   }
 
+  public Alarm(Disposable parentDisposable) {
+    this(ThreadToUse.SWING_THREAD, parentDisposable);
+  }
+
   public Alarm(ThreadToUse threadToUse) {
+    this(threadToUse, null);
+  }
+  public Alarm(ThreadToUse threadToUse, Disposable parentDisposable) {
     if (threadToUse == ThreadToUse.SWING_THREAD) {
       myThread = ourThreadUseSwing;
     }
@@ -63,6 +76,10 @@ public class Alarm {
     else {
       myThread = new MyThread(false);
       myThread.start();
+    }
+
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, this);
     }
   }
 

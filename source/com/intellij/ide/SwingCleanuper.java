@@ -132,6 +132,17 @@ public final class SwingCleanuper implements ApplicationComponent{
                       } catch(Exception e) {
                         LOG.error(e);
                       }
+
+                      focusManager.setGlobalCurrentFocusCycleRoot(null); //Remove focus leaks
+
+                      try {
+                        final Method m = KeyboardFocusManager.class.getDeclaredMethod("setGlobalFocusOwner", Component.class);
+                        m.setAccessible(true);
+                        m.invoke(focusManager, new Object[]{null});
+                      }
+                      catch (Exception e) {
+                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                      }
                     }
                   }
                 );
@@ -161,4 +172,5 @@ public final class SwingCleanuper implements ApplicationComponent{
       focusedComponentField.set(null, null);
     }
   }
+
 }

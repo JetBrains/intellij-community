@@ -57,7 +57,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private static ScheduledExecutorService ourUpdateAlarm = Executors.newSingleThreadScheduledExecutor();
 
-  private Alarm myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private Alarm myRepaintAlarm;
   private ScheduledFuture<?> myCurrentUpdate = null;
 
   private boolean myInitialized = false;
@@ -101,6 +101,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     myView = new ChangesListView(project);
     Disposer.register(project, myView);
     myUnversionedFilesHolder = new UnversionedFilesHolder(project);
+    myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
   }
 
   public void projectOpened() {

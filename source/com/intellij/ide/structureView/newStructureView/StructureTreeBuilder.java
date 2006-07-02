@@ -10,17 +10,16 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-
-import org.jetbrains.annotations.NotNull;
 
 final class StructureTreeBuilder extends AbstractTreeBuilder {
   private final Project myProject;
@@ -30,8 +29,8 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
   private final PsiTreeChangeListener myPsiTreeChangeListener;
   private final ModelListener myModelListener;
 
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final Alarm myUpdateEditorAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
+  private final Alarm myUpdateEditorAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
   private DocumentAdapter myDocumentsListener;
 
   public StructureTreeBuilder(Project project,
@@ -77,8 +76,6 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
   }
 
   public void dispose() {
-    myUpdateAlarm.cancelAllRequests();
-    myUpdateEditorAlarm.cancelAllRequests();
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
     CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
     myStructureModel.removeModelListener(myModelListener);

@@ -4,10 +4,7 @@ import com.intellij.CommonBundle;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +26,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ProfilingUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.TObjectLongHashMap;
 import org.jdom.Document;
@@ -442,6 +440,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public void reloadProject(final Project p) {
+    reloadProject(p, false);
+  }
+
+  public void reloadProject(final Project p, final boolean takeMemorySnapshot) {
     final Project[] project = new Project[]{p};
 
     ProjectReloadState.getInstance(project[0]).onBeforeAutomaticProjectReload();
@@ -461,6 +463,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           });
 
           project[0] = null; // Let it go.
+
+          if (takeMemorySnapshot) {
+            String outputFileName = ProfilingUtil.createDumpFileName(ApplicationInfo.getInstance().getBuildNumber());
+            ProfilingUtil.forceCaptureMemorySnapshot(outputFileName);
+          }
+
           ProjectUtil.openProject(path, null, true);
         }
       }

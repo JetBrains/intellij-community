@@ -1344,7 +1344,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
-    private Alarm myAlarm = new Alarm();
+    private Alarm myAlarm = new Alarm(myProject);
     private FileEditorManagerAdapter myEditorManagerListener;
 
     public MyAutoScrollFromSourceHandler() {
