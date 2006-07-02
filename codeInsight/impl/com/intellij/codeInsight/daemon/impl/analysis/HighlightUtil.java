@@ -1915,8 +1915,9 @@ public class HighlightUtil {
             QuickFixAction.registerQuickFixAction(info, fixRange, new CreateParameterFromUsageAction(refExpr), null, null);
           }
         }
-        QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageAction(ref, true));
-        QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageAction(ref, false));
+        QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageAction(ref, CreateClassKind.CLASS));
+        QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageAction(ref, CreateClassKind.INTERFACE));
+        QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageAction(ref, CreateClassKind.ENUM));
         if (parent instanceof PsiNewExpression) {
           QuickFixAction.registerQuickFixAction(info, new CreateClassFromNewAction((PsiNewExpression)parent));
         }

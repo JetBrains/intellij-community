@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.proc.VariablesProcessor;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.*;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
@@ -19,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -211,7 +213,7 @@ public class CreateFromUsageUtils {
 
   public static PsiClass createClass(
     final PsiJavaCodeReferenceElement referenceElement,
-    final boolean createInterface,
+    final CreateClassKind classKind,
     final String superClassName) {
     final String name = referenceElement.getReferenceName();
 
@@ -228,7 +230,9 @@ public class CreateFromUsageUtils {
 
                 PsiManager manager = psiClass.getManager();
                 PsiElementFactory elementFactory = manager.getElementFactory();
-                PsiClass result = createInterface ? elementFactory.createInterface(name) : elementFactory.createClass(name);
+                PsiClass result = classKind == INTERFACE ? elementFactory.createInterface(name) :
+                                  classKind == CLASS ? elementFactory.createClass(name) :
+                                  elementFactory.createEnum(name);
                 result = (PsiClass)manager.getCodeStyleManager().reformat(result);
                 return (PsiClass) psiClass.add(result);
               }
@@ -249,11 +253,12 @@ public class CreateFromUsageUtils {
     PsiDirectory targetDirectory = null;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       Project project = manager.getProject();
-      String title = createInterface ? QuickFixBundle.message("create.interface.title") : QuickFixBundle.message("create.class.title");
+      String subject = classKind.getDescription();
+      String title = QuickFixBundle.message("create.class.title", StringUtil.capitalize(subject));
       PsiPackage aPackage = sourceDir.getPackage();
       CreateClassDialog dialog = new CreateClassDialog(project, title, name,
                                                        aPackage != null ? aPackage.getQualifiedName() : "",
-                                                       createInterface, false);
+                                                       subject, false);
       dialog.show();
       if (dialog.getExitCode() != CreateClassDialog.OK_EXIT_CODE) return null;
 
@@ -261,10 +266,10 @@ public class CreateFromUsageUtils {
       if (targetDirectory == null) return null;
     }
 
-    return createClass(createInterface, targetDirectory, name, manager, referenceElement, sourceFile, superClassName);
+    return createClass(classKind, targetDirectory, name, manager, referenceElement, sourceFile, superClassName);
   }
 
-  public static PsiClass createClass(final boolean createInterface,
+  public static PsiClass createClass(final CreateClassKind classKind,
                                       final PsiDirectory directory,
                                       final String name,
                                       final PsiManager manager,
@@ -280,11 +285,18 @@ public class CreateFromUsageUtils {
             PsiClass targetClass;
             if (!ApplicationManager.getApplication().isUnitTestMode()) {
               try {
-                if (createInterface) {
+                if (classKind == INTERFACE) {
                   targetClass = directory.createInterface(name);
                 }
-                else {
+                else if (classKind == CLASS) {
                   targetClass = directory.createClass(name);
+                }
+                else if (classKind == ENUM) {
+                  targetClass = directory.createEnum(name);
+                }
+                else {
+                  LOG.error("Unknown kind of a class to create");
+                  return null;
                 }
               }
               catch (final IncorrectOperationException e) {
@@ -304,12 +316,18 @@ public class CreateFromUsageUtils {
             }
             else {
               PsiClass aClass;
-              if (createInterface) {
+              if (classKind == INTERFACE) {
                 aClass = factory.createInterface(name);
               }
-              else {
+              else if (classKind == CLASS) {
                 aClass = factory.createClass(name);
-                aClass = (PsiClass)CodeStyleManager.getInstance(manager).reformat(aClass);
+              }
+              else if (classKind == ENUM) {
+                aClass = factory.createEnum(name);
+              }
+              else {
+                LOG.error("Unknown kind of a class to create");
+                return null;
               }
               targetClass = (PsiClass) sourceFile.add(aClass);
             }

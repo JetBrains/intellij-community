@@ -10,6 +10,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -68,7 +69,7 @@ public class ImplementAbstractClassAction implements IntentionAction {
       myText,
       psiClass.getName() + IMPL_SUFFIX,
       aPackage != null ? aPackage.getQualifiedName() : "",
-      false, true);
+      CreateClassKind.CLASS.getDescription(), true);
     dialog.show();
     if (!dialog.isOK()) return;
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();

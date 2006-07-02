@@ -153,6 +153,17 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return classes[0];
   }
 
+  public PsiClass createEnum(final String name) throws IncorrectOperationException {
+    CheckUtil.checkIsIdentifier(myManager, name);
+    @NonNls String text = "public enum " + name + "{ }";
+    PsiJavaFile aFile = createDummyJavaFile(text);
+    PsiClass[] classes = aFile.getClasses();
+    if (classes.length != 1) {
+      throw new IncorrectOperationException();
+    }
+    return classes[0];
+  }
+
   @NotNull
   public PsiTypeElement createTypeElement(PsiType psiType) {
     final LightTypeElement element = new LightTypeElement(myManager, psiType);

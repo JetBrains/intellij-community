@@ -56,6 +56,16 @@ public interface PsiElementFactory {
   @NotNull PsiClass createInterface(@NonNls String name) throws IncorrectOperationException;
 
   /**
+   * Creates an empty enum with the specified name.
+   *
+   * @param name the name of the enum to create.
+   * @return the created enum instance.
+   * @throws IncorrectOperationException if <code>name</code> is not a valid Java identifier.
+   */
+
+  PsiClass createEnum(final String name) throws IncorrectOperationException;
+
+  /**
    * Creates a field with the specified name and type.
    *
    * @param name the name of the field to create.
@@ -691,4 +701,5 @@ public interface PsiElementFactory {
 
   @NotNull PsiFile createFileFromText(@NonNls String name, @NotNull FileType fileType, @NotNull CharSequence text,
                                       long modificationStamp, boolean physical);
+
 }

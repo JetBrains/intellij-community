@@ -39,7 +39,7 @@ public class CreateClassDialog extends DialogWrapper {
                            String title,
                            String targetClassName,
                            String targetPackageName,
-                           boolean createInterface,
+                           String toCreateKindString,
                            boolean classNameEditable) {
     super(project, true);
     myClassNameEditable = classNameEditable;
@@ -49,21 +49,11 @@ public class CreateClassDialog extends DialogWrapper {
 
     setTitle(title);
 
-    if (createInterface) {
-      if (!myClassNameEditable) {
-        myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.interface.name", targetClassName));
-      }
-      else {
-        myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.create.interface.label"));
-      }
+    if (!myClassNameEditable) {
+      myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.name", toCreateKindString, targetClassName));
     }
     else {
-      if (!myClassNameEditable) {
-        myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.class.name", targetClassName));
-      }
-      else {
-        myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.create.class.label"));
-      }
+      myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.label", toCreateKindString));
     }
 
     myTfClassName.setText(myClassName);

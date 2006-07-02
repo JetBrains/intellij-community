@@ -35,7 +35,9 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
     final Project project = psiManager.getProject();
     final PsiElementFactory elementFactory = psiManager.getElementFactory();
 
-    final PsiClass psiClass = CreateFromUsageUtils.createClass(getReferenceElement(getNewExpression()), false, null);
+    final PsiClass psiClass = CreateFromUsageUtils.createClass(getReferenceElement(getNewExpression()),
+                                                               CreateClassKind.CLASS,
+                                                               null);
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         public void run() {
