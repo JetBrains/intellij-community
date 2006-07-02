@@ -49,7 +49,7 @@ public abstract class DiffMarkup implements EditorSource {
     if (!drawBorder && range.getLength() == 0) return;
     RangeHighlighter rangeMarker;
     if (drawBorder && range.getLength() == 0) {
-      TextAttributes textAttributes = new TextAttributes(null, null, attributes.getBackgroundColor(), EffectType.BOXED, TextAttributes.TRANSPARENT);
+      TextAttributes textAttributes = new TextAttributes(null, null, attributes.getBackgroundColor(), EffectType.BOXED, Font.PLAIN);
       rangeMarker = getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getStartOffset(), LAYER, textAttributes, HighlighterTargetArea.EXACT_RANGE);
     }
     else {
@@ -133,7 +133,7 @@ public abstract class DiffMarkup implements EditorSource {
     RangeHighlighter highlighter =
       getMarkupModel().addRangeHighlighter(lineStartOffset, lineStartOffset,
                                            HighlighterLayer.ADDITIONAL_SYNTAX,
-                                           new TextAttributes(null, null, null, null, TextAttributes.TRANSPARENT),
+                                           new TextAttributes(null, null, null, null, Font.PLAIN),
                                            HighlighterTargetArea.LINES_IN_RANGE);
     final MergeActionGroup.OperationAction action = new MergeActionGroup.OperationAction(operation);
     highlighter.setGutterIconRenderer(new GutterActionRenderer(action));

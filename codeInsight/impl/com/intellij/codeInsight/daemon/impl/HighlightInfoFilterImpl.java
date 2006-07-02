@@ -10,7 +10,7 @@ public class HighlightInfoFilterImpl implements HighlightInfoFilter, Application
   public boolean accept(HighlightInfo info, PsiFile file) {
     TextAttributes attributes = info.getTextAttributes();
     // optimization
-    return attributes != null &&
+     return attributes == TextAttributes.ERASE_MARKER || attributes != null &&
            !(attributes.isEmpty() && info.getSeverity() == HighlightSeverity.INFORMATION && info.getGutterIconRenderer() == null);
   }
 

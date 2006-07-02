@@ -336,7 +336,7 @@ public class DiffColorsForm {
 
     public void apply(EditorColorsScheme scheme) {
       TextAttributesKey key = myDiffType.getAttributesKey();
-      TextAttributes attrs = new TextAttributes(null, myBackgroundColor, null, EffectType.BOXED, TextAttributes.TRANSPARENT);
+      TextAttributes attrs = new TextAttributes(null, myBackgroundColor, null, EffectType.BOXED, Font.PLAIN);
       attrs.setErrorStripeColor(myStripebarColor);
       scheme.setAttributes(key, attrs);
     }

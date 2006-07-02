@@ -22,8 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -33,8 +33,10 @@ import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -855,7 +857,7 @@ public class TemplateState implements Disposable {
 
   private RangeHighlighter getSegmentHighlighter(int segmentNumber, boolean isSelected, boolean isEnd) {
     TextAttributes attributes = isSelected
-                                ? new TextAttributes(null, null, Color.red, EffectType.BOXED, TextAttributes.TRANSPARENT)
+                                ? new TextAttributes(null, null, Color.red, EffectType.BOXED, Font.PLAIN)
                                 : new TextAttributes();
     TextAttributes endAttributes = new TextAttributes();
 

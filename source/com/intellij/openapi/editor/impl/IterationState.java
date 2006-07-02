@@ -6,7 +6,10 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -379,9 +382,18 @@ public class IterationState {
       Collections.sort(myCurrentHighlighters, LayerComparator.INSTANCE);
     }
 
+    int start = 0;
+    for (int i = 0; i < size; i++) {
+      RangeHighlighterImpl highlighter = myCurrentHighlighters.get(i);
+      if (highlighter.getTextAttributes() == TextAttributes.ERASE_MARKER) {
+        //start = i;
+        syntax = null;
+      }
+    }
+
     myCachedAttributesList.clear();
 
-    for (int i = 0; i < size; i++) {
+    for (int i = start; i < size; i++) {
       RangeHighlighterImpl highlighter = myCurrentHighlighters.get(i);
       if (selection != null && highlighter.getLayer() < HighlighterLayer.SELECTION) {
         myCachedAttributesList.add(selection);
@@ -424,20 +436,21 @@ public class IterationState {
     Color back = isInGuardedBlock ? myReadOnlyColor : null;
     Color effect = null;
     EffectType effectType = null;
-    int fontType = TextAttributes.TRANSPARENT;
+    int fontType = 0;
 
     for (int i = 0; i < myCachedAttributesList.size(); i++) {
       TextAttributes attrs = myCachedAttributesList.get(i);
+
       if (fore == null) {
-        fore = attrs.getForegroundColor();
+        fore = ifDiffers(attrs.getForegroundColor(), myDefaultForeground);
       }
 
       if (back == null) {
-        back = attrs.getBackgroundColor();
+        back = ifDiffers(attrs.getBackgroundColor(), myDefaultBackground);
       }
 
-      if (fontType == TextAttributes.TRANSPARENT) {
-        fontType = attrs.getRawFontType();
+      if (fontType == Font.PLAIN) {
+        fontType = attrs.getFontType();
       }
 
       if (effect == null) {
@@ -445,9 +458,10 @@ public class IterationState {
         effectType = attrs.getEffectType();
       }
     }
+
     if (fore == null) fore = myDefaultForeground;
     if (back == null) back = myDefaultBackground;
-    if (fontType == TextAttributes.TRANSPARENT) fontType = Font.PLAIN;
+    if (fontType == Font.PLAIN) fontType = Font.PLAIN;
     if (effectType == null) effectType = EffectType.BOXED;
 
     myMergedAttributes.setForegroundColor(fore);
@@ -455,6 +469,11 @@ public class IterationState {
     myMergedAttributes.setFontType(fontType);
     myMergedAttributes.setEffectColor(effect);
     myMergedAttributes.setEffectType(effectType);
+  }
+
+  @Nullable
+  private static Color ifDiffers(final Color c1, final Color c2) {
+    return c1 == c2 ? null : c1;
   }
 
   public boolean atEnd() {
