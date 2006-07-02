@@ -228,6 +228,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   private void setNewFieldVisibility(PsiField field) {
     try{
       if (myDialog.getFieldsVisibility() != null){
+        field.normalizeDeclaration();
         field.getModifierList().setModifierProperty(myDialog.getFieldsVisibility(), true);
       }
     }
