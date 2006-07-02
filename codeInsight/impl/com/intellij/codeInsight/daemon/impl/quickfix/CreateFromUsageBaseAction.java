@@ -110,15 +110,16 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
         int index = list.getSelectedIndex();
         if (index < 0) return;
         final PsiClass aClass = (PsiClass) list.getSelectedValue();
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           public void run() {
-            CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
                 doInvoke(project, aClass);
               }
-            }, getText(), null);
+            });
+
           }
-        });
+        }, getText(), null);
       }
     };
 
