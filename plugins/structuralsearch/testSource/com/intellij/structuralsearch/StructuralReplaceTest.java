@@ -1458,6 +1458,56 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
+//  public void testClassReplacement10() throws IOException {
+//    String s1 = TestUtils.loadFile("before2.java");
+//    String s2 = "class '_Class {\n" +
+//                "  '_remainingclass*\n" +
+//                "  '_ReturnType+ '_MethodName+('_ParameterType* '_Parameter*, '_removeParmType:[regex( String )] '_removeParm){\n" +
+//                "    '_content*;\n" +
+//                "  }\n" +
+//                "}";
+//    String s3 = "class $Class$ {\n" +
+//                "  $remainingclass$\n" +
+//                "  $ReturnType$ $MethodName$($ParameterType$ $Parameter$){\n" +
+//                "    $content$;\n" +
+//                "  }\n" +
+//                "}";
+//    String expectedResult = TestUtils.loadFile("after2.java");
+//
+//    options.setToReformatAccordingToStyle(true);
+//    actualResult = replacer.testReplace(s1,s2,s3,options,true);
+//
+//    assertEquals(
+//      "Class replacement 10",
+//      expectedResult,
+//      actualResult
+//    );
+//  }
+
+  public void testCatchReplacement() throws Exception {
+    String s1 = "try {\n" +
+                "  aaa();\n" +
+                "} catch(Exception ex) {\n" +
+                "  LOG.assertTrue(false);\n" +
+                "}";
+    String s2 = "{  LOG.assertTrue(false); }";
+    String s3 = "{  if (false) LOG.assertTrue(false); }";
+    String expectedResult = "try {\n" +
+                "  aaa();\n" +
+                "} catch (Exception ex) {\n" +
+                "    if (false) LOG.assertTrue(false);\n" +
+                "}";
+    options.setToReformatAccordingToStyle(true);
+    actualResult = replacer.testReplace(s1,s2,s3,options);
+    options.setToReformatAccordingToStyle(false);
+
+    assertEquals(
+      "Catch replacement by block",
+      expectedResult,
+      actualResult
+    );
+  }
+
   public void testClassReplacement2() {
     final String actualResult;
     String s40 = "class A {\n" +

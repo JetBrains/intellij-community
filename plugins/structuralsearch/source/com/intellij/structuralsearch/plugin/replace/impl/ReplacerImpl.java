@@ -235,7 +235,7 @@ public class ReplacerImpl {
         if (statements.length > 1) {
           elementParent.addRangeBefore(statements[0],statements[statements.length-1],elementToReplace);
         } else if (statements.length==1) {
-          PsiElement replacement = getMatchExpr(statements[0]);
+          PsiElement replacement = getMatchExpr(statements[0], elementToReplace);
 
           handleModifierList(el, replacement, context);
           replacement = handleSymbolReplacemenent(replacement, el, context);
@@ -290,7 +290,7 @@ public class ReplacerImpl {
         if (i != 0) {
           elementParent.addRangeBefore(statements[0],statements[i-1],el);
         }
-        PsiElement replacement = getMatchExpr(statements[i]);
+        PsiElement replacement = getMatchExpr(statements[i], elementToReplace);
 
         if (replacement instanceof PsiStatement &&
             !(replacement.getLastChild() instanceof PsiJavaToken)
@@ -709,7 +709,7 @@ public class ReplacerImpl {
     }
   }
 
-  private static PsiElement getMatchExpr(PsiElement replacement) {
+  private static PsiElement getMatchExpr(PsiElement replacement, PsiElement elementToReplace) {
     if (replacement instanceof PsiExpressionStatement &&
         !(replacement.getLastChild() instanceof PsiJavaToken)
        ) {
@@ -720,6 +720,10 @@ public class ReplacerImpl {
                ((PsiDeclarationStatement)replacement).getDeclaredElements().length==1
                ) {
       return ((PsiDeclarationStatement)replacement).getDeclaredElements()[0];
+    } else if (replacement instanceof PsiBlockStatement &&
+               elementToReplace instanceof PsiCodeBlock
+              ) {
+      return ((PsiBlockStatement)replacement).getCodeBlock();
     }
 
     return replacement;
