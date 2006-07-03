@@ -26,7 +26,6 @@ import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.application.ApplicationManager;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,14 +106,14 @@ public abstract class ModuleBuilder {
     final Runnable runnable = new Runnable() {
 
       public void run() {
-        addSupport(module);
+         addSupport(module);
       }
     };
     if (runFromProjectWizard) {
       StartupManager.getInstance(module.getProject()).registerPostStartupActivity(runnable);
     }
     else {
-      ApplicationManager.getApplication().invokeLater(runnable);
+      runnable.run();
     }
     return module;
   }
