@@ -10,6 +10,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,6 +38,7 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
       }
     });
     myLogConfigurations = new LogConfigurationPanel();
+    Disposer.register(this, myLogConfigurations);
     myLogsPanel.setLayout(new BorderLayout());
     myLogsPanel.add(myLogConfigurations.getLoggerComponent(), BorderLayout.CENTER);
     ClassBrowser.createApplicationClassBrowser(project, myModuleSelector).setField(getMainClassField());

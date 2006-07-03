@@ -10,16 +10,16 @@ import com.intellij.execution.ui.ConfigurationArgumentsHelpArea;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.DocumentAdapter;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.remote.RemoteConfigurable");
@@ -102,6 +102,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     myAddressField.addFocusListener(fieldFocusListener);
     myPortField.addFocusListener(fieldFocusListener);
     myLogConfigurations = new LogConfigurationPanel();
+    Disposer.register(this, myLogConfigurations);
     myLogsPanel.setLayout(new BorderLayout());
     myLogsPanel.add(myLogConfigurations.getLoggerComponent(), BorderLayout.CENTER);
   }

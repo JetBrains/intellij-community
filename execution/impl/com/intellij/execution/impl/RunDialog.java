@@ -2,6 +2,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -72,10 +73,16 @@ public class RunDialog extends DialogWrapper {
   }
 
   public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettingsImpl configuration, final String title) {
-    final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, SingleConfigurationConfigurable.editSettings(configuration));
-    dialog.setTitle(title);
-    dialog.show();
-    return dialog.isOK();
+    final SingleConfigurationConfigurable<RunConfiguration> configurable = SingleConfigurationConfigurable.editSettings(configuration);
+    try {
+      final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable);
+      dialog.setTitle(title);
+      dialog.show();
+      return dialog.isOK();
+    }
+    finally {
+      configurable.disposeUIResources();
+    }
   }
 
   private class ApplyAction extends AbstractAction {

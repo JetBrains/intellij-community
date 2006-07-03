@@ -42,6 +42,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
   private void init() {
     if (myCompound == null) {
       myCompound = new SettingsEditorGroup<RunnerAndConfigurationSettingsImpl>();
+      Disposer.register(this, myCompound);
       if (myConfigurationEditor instanceof SettingsEditorGroup) {
         SettingsEditorGroup<RunConfiguration> group = (SettingsEditorGroup<RunConfiguration>)myConfigurationEditor;
         List<Pair<String, SettingsEditor<RunConfiguration>>> editors = group.getEditors();

@@ -49,6 +49,5 @@ public class SettingsEditorGroup<T> extends SettingsEditor<T> {
   }
 
   public void disposeEditor() {
-    Disposer.dispose(this);
   }
 }

@@ -7,7 +7,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
@@ -152,7 +151,7 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
   }
 
   protected void disposeEditor() {
-    Disposer.dispose(this);
+
   }
 
   public JComponent getLoggerComponent() {
