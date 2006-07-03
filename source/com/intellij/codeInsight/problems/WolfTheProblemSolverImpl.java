@@ -55,11 +55,25 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }));
   private final ProblemListener fireProblemListeners = new ProblemListener() {
-    public void problemsChanged(Collection<VirtualFile> added, Collection<VirtualFile> removed) {
-      for (ProblemListener problemListener : myProblemListeners) {
-        problemListener.problemsChanged(added, removed);
+
+    public void problemsAppeared(VirtualFile file) {
+      for (final ProblemListener problemListener : myProblemListeners) {
+        problemListener.problemsAppeared(file);
       }
     }
+
+    public void problemsChanged(VirtualFile file) {
+      for (final ProblemListener problemListener : myProblemListeners) {
+        problemListener.problemsChanged(file);
+      }
+    }
+
+    public void problemsDisappeared(VirtualFile file) {
+      for (final ProblemListener problemListener : myProblemListeners) {
+        problemListener.problemsDisappeared(file);
+      }
+    }
+
   };
 
   private long myPsiModificationCount = -1000;
@@ -331,7 +345,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         storedProblems = new ProblemFileInfo();
 
         myProblems.put(virtualFile, storedProblems);
-        fireProblemListeners.problemsChanged(Collections.singletonList(virtualFile), Collections.<VirtualFile>emptyList());
+        fireProblemListeners.problemsAppeared(virtualFile);
       }
       storedProblems.problems.add(problem);
       myCheckingQueue.addIfAbsent(virtualFile);
@@ -342,7 +356,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     synchronized (myProblems) {
       ProblemFileInfo old = myProblems.remove(virtualFile);
       if (old != null) {
-        fireProblemListeners.problemsChanged(Collections.<VirtualFile>emptyList(), Collections.singletonList(virtualFile));
+        fireProblemListeners.problemsDisappeared(virtualFile);
       }
       myCheckingQueue.remove(virtualFile);
     }
@@ -391,7 +405,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         myCheckingQueue.addIfAbsent(file);
       }
       if (!hasProblemsBefore) {
-        fireProblemListeners.problemsChanged(Collections.singletonList(file), Collections.<VirtualFile>emptyList());
+        fireProblemListeners.problemsAppeared(file);
+      } else {
+        fireProblemListeners.problemsChanged(file);
       }
     }
   }

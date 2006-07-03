@@ -41,7 +41,6 @@ import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -425,16 +426,12 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return openFileImpl(file, focusEditor, null);
   }
 
-  @NotNull private Pair<FileEditor[], FileEditorProvider[]> openFileImpl(final VirtualFile file,
-                                                               final boolean focusEditor,
-                                                               final HistoryEntry entry) {
+  @NotNull private Pair<FileEditor[], FileEditorProvider[]> openFileImpl(final VirtualFile file, final boolean focusEditor, final HistoryEntry entry) {
     return openFileImpl2(mySplitters.getOrCreateCurrentWindow(file), file, focusEditor, entry);
   }
 
-  @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(final EditorWindow window,
-                                                                final VirtualFile file,
-                                                                final boolean focusEditor,
-                                                                final HistoryEntry entry) {
+  @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(final EditorWindow window, final VirtualFile file, final boolean focusEditor,
+                                                                  final HistoryEntry entry) {
     final Ref<Pair<FileEditor[], FileEditorProvider[]>> resHolder = new Ref<Pair<FileEditor[], FileEditorProvider[]>>();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
@@ -453,10 +450,8 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * @param entry map between FileEditorProvider and FileEditorState. If this parameter
    *              is not <code>null</code> then it's used to restore state for the newly created
    */
-  @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(final EditorWindow window,
-                                                         final VirtualFile file,
-                                                         final boolean focusEditor,
-                                                         final HistoryEntry entry) {
+  @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(final EditorWindow window, final VirtualFile file, final boolean focusEditor,
+                                                                  final HistoryEntry entry) {
     LOG.assertTrue(file != null);
 
     // Open file
@@ -1317,20 +1312,26 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     return getOpenFiles();
   }
 
-  private class MyProblemListener implements WolfTheProblemSolver.ProblemListener {
-    public void problemsChanged(Collection<VirtualFile> added, Collection<VirtualFile> removed) {
-      final Set<VirtualFile> filesToRefresh = new THashSet<VirtualFile>(added);
-      filesToRefresh.addAll(removed);
+  private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
+
+    public void problemsAppeared(final VirtualFile file) {
+      updateFile(file);
+    }
+
+    private void updateFile(final VirtualFile file) {
       myQueue.queue(new Update("ProblemUpdate") {
         public void run() {
-          for (VirtualFile virtualFile : filesToRefresh) {
-            if (isFileOpen(virtualFile)) {
-              updateFileIcon(virtualFile);
-              updateFileColor(virtualFile);
-            }
+          if (isFileOpen(file)) {
+            updateFileIcon(file);
+            updateFileColor(file);
           }
         }
       });
     }
+
+    public void problemsDisappeared(VirtualFile file) {
+      updateFile(file);
+    }
+
   }
 }

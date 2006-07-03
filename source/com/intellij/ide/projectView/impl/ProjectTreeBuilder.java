@@ -132,15 +132,20 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     }
   }
 
-  private class MyProblemListener implements WolfTheProblemSolver.ProblemListener {
+  private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
     private final Alarm myUpdateProblemAlarm = new Alarm();
     private final Collection<VirtualFile> myFilesToRefresh = Collections.synchronizedSet(new THashSet<VirtualFile>());
 
-    public void problemsChanged(Collection<VirtualFile> added, Collection<VirtualFile> removed) {
-      Collection<VirtualFile> filesToRefresh = new THashSet<VirtualFile>(added);
-      filesToRefresh.addAll(removed);
+    public void problemsAppeared(VirtualFile file) {
+      queueUpdate(file);
+    }
 
-      if (myFilesToRefresh.addAll(filesToRefresh)) {
+    public void problemsDisappeared(VirtualFile file) {
+      queueUpdate(file);
+    }
+
+    private void queueUpdate(final VirtualFile fileToRefresh) {
+      if (myFilesToRefresh.add(fileToRefresh)) {
         myUpdateProblemAlarm.cancelAllRequests();
         myUpdateProblemAlarm.addRequest(new Runnable() {
           public void run() {

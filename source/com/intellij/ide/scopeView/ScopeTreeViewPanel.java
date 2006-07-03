@@ -47,10 +47,10 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,8 +59,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
@@ -498,8 +500,26 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     return myTree;
   }
 
-  private class MyProblemListener implements WolfTheProblemSolver.ProblemListener {
-    public void problemsChanged(final Collection<VirtualFile> added, final Collection<VirtualFile> removed) {
+  private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
+
+
+    public void problemsAppeared(VirtualFile file) {
+      queueUpdate(file, new Function<PsiFile, DefaultMutableTreeNode>() {
+        public DefaultMutableTreeNode fun(final PsiFile psiFile) {
+          return myBuilder.addFileNode(psiFile);
+        }
+      });
+    }
+
+    public void problemsDisappeared(VirtualFile file) {
+      queueUpdate(file, new Function<PsiFile, DefaultMutableTreeNode>() {
+        public DefaultMutableTreeNode fun(final PsiFile psiFile) {
+          return myBuilder.removeNode(psiFile, psiFile.getContainingDirectory());
+        }
+      });
+    }
+
+    private void queueUpdate(final VirtualFile fileToRefresh, final Function<PsiFile, DefaultMutableTreeNode> rootToReloadGetter) {
       AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
       if (pane == null
           || !ScopeViewPane.ID.equals(pane.getId())
@@ -509,17 +529,11 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;
-          Set<VirtualFile> filesToRefresh = new THashSet<VirtualFile>(added);
-          filesToRefresh.addAll(removed);
           myTreeExpansionMonitor.freeze();
-
           final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
-          for (VirtualFile virtualFile : filesToRefresh) {
-            PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
-            if (psiFile == null) continue;
-            DefaultMutableTreeNode rootToReload = added.contains(virtualFile) ?
-                                                  myBuilder.addFileNode(psiFile) :
-                                                  myBuilder.removeNode(psiFile, psiFile.getContainingDirectory());
+          final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(fileToRefresh);
+          if (psiFile != null) {
+            DefaultMutableTreeNode rootToReload = rootToReloadGetter.fun(psiFile);
             if (rootToReload != null) {
               TreeUtil.sort(rootToReload, new DependencyNodeComparator());
               treeModel.reload(rootToReload);

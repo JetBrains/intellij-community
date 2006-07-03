@@ -18,8 +18,8 @@ import com.intellij.util.xml.DomChangeAdapter;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -29,7 +29,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class DomModelTreeView extends Wrapper implements DataProvider, Disposable {
@@ -88,11 +87,42 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
       }
     });
 
-    final ChangeListener changeListener = new ChangeListener();
-    myDomManager.addDomEventListener(changeListener, this);
-    WolfTheProblemSolver.getInstance(myDomManager.getProject()).addProblemListener(changeListener, this);
+    myDomManager.addDomEventListener(new DomChangeAdapter() {
+      protected void elementChanged(DomElement element) {
+        queueUpdate();
+      }
+    }, this);
+    WolfTheProblemSolver.getInstance(myDomManager.getProject()).addProblemListener(new WolfTheProblemSolver.ProblemListener() {
+      public void problemsAppeared(VirtualFile file) {
+        if (isRightFile(file)) {
+          queueUpdate();
+      }
+      }
+
+      public void problemsChanged(VirtualFile file) {
+        if (isRightFile(file)) {
+          queueUpdate();
+      }
+      }
+
+      public void problemsDisappeared(VirtualFile file) {
+        if (isRightFile(file)) {
+          queueUpdate();
+      }
+      }
+    }, this);
 
     myTree.setPopupGroup(getPopupActions(), DOM_MODEL_TREE_VIEW_POPUP);
+  }
+
+  private boolean isRightFile(final VirtualFile file) {
+    return file.equals(myRootElement.getRoot().getFile().getVirtualFile());
+  }
+
+  private void queueUpdate() {
+    if (myTree.isShowing()) {
+      myBuilder.queueUpdate();
+    }
   }
 
   protected boolean isRootVisible() {
@@ -183,21 +213,5 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     return false;
   }
 
-  private class ChangeListener extends DomChangeAdapter implements WolfTheProblemSolver.ProblemListener {
-
-    protected void elementChanged(DomElement element) {
-      update();
-    }
-
-    public void problemsChanged(Collection<VirtualFile> added, Collection<VirtualFile> removed) {
-      update();
-    }
-
-    private void update() {
-      if (myTree.isShowing()) {
-        myBuilder.queueUpdate();
-      }
-    }
-  }
 }
 
