@@ -68,11 +68,10 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     PsiConstantEvaluationHelper evalHelper = myField.getManager().getConstantEvaluationHelper();
     initializer = normalize ((PsiExpression)initializer.copy());
     for (UsageInfo usage : usages) {
-      PsiExpression initializer1 = initializer;
       final PsiElement element = usage.getElement();
       try {
         if (element instanceof PsiExpression) {
-          inlineExpressionUsage(((PsiExpression)element), evalHelper, initializer1);
+          inlineExpressionUsage(((PsiExpression)element), evalHelper, initializer);
         }
         else {
           PsiImportStaticStatement importStaticStatement = PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class);
@@ -122,14 +121,17 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     ChangeContextUtil.decodeContextInfo(element, null, null);
   }
 
-  private PsiExpression normalize(PsiExpression expression) {
+  private static PsiExpression normalize(PsiExpression expression) {
     if (expression instanceof PsiArrayInitializerExpression) {
       PsiElementFactory factory = expression.getManager().getElementFactory();
       try {
-        String typeString = expression.getType().getCanonicalText();
-        PsiNewExpression result = (PsiNewExpression)factory.createExpressionFromText("new " + typeString + "{}", expression);
-        result.getArrayInitializer().replace(expression);
-        return result;
+        final PsiType type = expression.getType();
+        if (type != null) {
+          String typeString = type.getCanonicalText();
+          PsiNewExpression result = (PsiNewExpression)factory.createExpressionFromText("new " + typeString + "{}", expression);
+          result.getArrayInitializer().replace(expression);
+          return result;
+        }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -175,7 +177,7 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     return showConflicts(conflicts);
   }
 
-  private boolean isAccessedForWriting (PsiExpression expr) {
+  private static boolean isAccessedForWriting (PsiExpression expr) {
     while(expr.getParent() instanceof PsiArrayAccessExpression) {
       expr = (PsiExpression)expr.getParent();
     }
