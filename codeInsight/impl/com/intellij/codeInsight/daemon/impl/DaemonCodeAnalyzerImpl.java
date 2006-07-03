@@ -67,7 +67,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
@@ -76,7 +75,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -156,8 +154,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private static final String FILE_TAG = "file";
   @NonNls
   private static final String URL_ATT = "url";
-
-  private final EventDispatcher<HighlightingListener> myDispatcher = EventDispatcher.create(HighlightingListener.class);
 
   protected DaemonCodeAnalyzerImpl(Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings) {
     myProject = project;
@@ -371,8 +367,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     BackgroundEditorHighlighter highlighter = editor.getBackgroundHighlighter();
     final HighlightingPass[] passes = highlighter == null ? HighlightingPass.EMPTY_ARRAY : highlighter.createPassesForEditor();
     updateHighlighters(editor, new LinkedHashSet<HighlightingPass>(Arrays.asList(passes)), postRunnable);
-
-    myDispatcher.getMulticaster().highlightingFinished();
   }
 
   public void setUpdateByTimerEnabled(boolean value) {
@@ -448,10 +442,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   public FileStatusMap getFileStatusMap() {
     return myFileStatusMap;
-  }
-
-  public void addHighlightingListener(HighlightingListener listener, Disposable parentDisposable) {
-    myDispatcher.addListener(listener, parentDisposable);
   }
 
   public DaemonProgress getUpdateProgress() {
