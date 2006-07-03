@@ -2,6 +2,7 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -9,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.util.IconUtil;
 
 import javax.swing.*;
 import java.util.Set;
@@ -54,7 +56,7 @@ public class FileNode extends PackageDependenciesNode {
   private Icon getIcon() {
     VirtualFile vFile = myFile.getVirtualFile();
     LOG.assertTrue(vFile != null);
-    return vFile.getIcon();
+    return IconUtil.getIcon(vFile, Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, myFile.getProject());
   }
 
   public int getWeight() {

@@ -44,7 +44,7 @@ public class BasePsiNode<T extends PsiMember> extends PackageDependenciesNode {
 
   private Icon getIcon() {
     final PsiElement element = myPsiElementPointer.getElement();
-    return element != null && element.isValid() ? element.getIcon(Iconable.ICON_FLAG_VISIBILITY) : null;
+    return element != null && element.isValid() ? element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS) : null;
   }
 
   public FileStatus getStatus() {
