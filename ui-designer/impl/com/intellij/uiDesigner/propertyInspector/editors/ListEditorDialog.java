@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
@@ -37,7 +38,9 @@ public class ListEditorDialog extends DialogWrapper {
   }
 
   public String[] getValue() {
-    return myLinesTextArea.getText().split("\n");
+    final String text = myLinesTextArea.getText();
+    if (text.length() == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+    return text.split("\n");
   }
 
   public void setValue(final String[] value) {

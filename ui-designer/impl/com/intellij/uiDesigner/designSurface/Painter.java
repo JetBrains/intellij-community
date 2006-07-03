@@ -394,6 +394,13 @@ public final class Painter {
           return;
         }
       }
+      else if (prop.getName().equals(SwingProperties.MODEL)) {
+        // don't paint tags on non-empty lists
+        final Object value = prop.getPropertyValue(component);
+        if (value instanceof String[] && ((String[]) value).length > 0) {
+          return;
+        }
+      }
     }
 
     Rectangle bounds = component.getDelegee().getBounds();
