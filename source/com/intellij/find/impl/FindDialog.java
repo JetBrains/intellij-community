@@ -55,6 +55,8 @@ final class FindDialog extends DialogWrapper {
   protected JCheckBox myCbToSkipResultsWhenOneUsage;
   private final Project myProject;
 
+  private Action myFindAllAction;
+
   public FindDialog(Project project, FindModel model){
     super(project, true);
     myProject = project;
@@ -100,7 +102,7 @@ final class FindDialog extends DialogWrapper {
   }
 
   private Action getFindAllAction() {
-    return new AbstractAction(FindBundle.message("find.all.button")) {
+    return myFindAllAction = new AbstractAction(FindBundle.message("find.all.button")) {
       public void actionPerformed(ActionEvent e) {
         doOKAction(true);
       }
@@ -206,6 +208,9 @@ final class FindDialog extends DialogWrapper {
   private void validateFindButton() {
     if (getStringToFind() == null || getStringToFind().length() == 0){
       setOKActionEnabled(false);
+      if (myFindAllAction != null) {
+        myFindAllAction.setEnabled(false);
+      }
       return;
     }
     if (myRbDirectory != null && myRbDirectory.isSelected() &&
@@ -214,6 +219,7 @@ final class FindDialog extends DialogWrapper {
       return;
     }
     setOKActionEnabled(true);
+    if (myFindAllAction != null) myFindAllAction.setEnabled(true);
   }
 
   public JComponent createCenterPanel() {
