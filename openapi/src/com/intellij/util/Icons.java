@@ -65,9 +65,14 @@ public abstract class Icons {
   public static final Icon EJB_CMR_FIELD_ICON = IconLoader.getIcon("/nodes/ejbCmrField.png");
   public static final Icon EJB_PRIMARY_KEY_CLASS = IconLoader.getIcon("/nodes/ejbPrimaryKeyClass.png");
   public static final Icon EJB_REFERENCE = IconLoader.getIcon("/nodes/ejbReference.png");
-  public static final Icon EJB_DATASOURCE = IconLoader.getIcon("/nodes/DataSource.png");
-  public static final Icon EJB_DATASOURCE_DISABLED = IconLoader.getIcon("/nodes/DataSourceDisabled.png");
-  public static final Icon EJB_DATASOURCE_TABLE = IconLoader.getIcon("/nodes/DataTables.png");
+
+  public static final Icon DATASOURCE_ICON = IconLoader.getIcon("/nodes/DataSource.png");
+  public static final Icon DATASOURCE_DISABLED_ICON = IconLoader.getIcon("/nodes/DataSourceDisabled.png");
+  public static final Icon DATASOURCE_TABLE_ICON = IconLoader.getIcon("/nodes/DataTables.png");
+  public static final Icon DATASOURCE_COLUMN_ICON = IconLoader.getIcon("/nodes/dataColumn.png");
+  public static final Icon DATASOURCE_FK_COLUMN_ICON = IconLoader.getIcon("/nodes/dataFkColumn.png");
+  public static final Icon DATASOURCE_PK_COLUMN_ICON = IconLoader.getIcon("/nodes/dataPkColumn.png");
+
   public static final Icon DATASOURCE_REMOTE_INSTANCE = IconLoader.getIcon("/nodes/addRemoteWeblogicInstance.png");
   public static final Icon EJB_FIELD_PK = IconLoader.getIcon("/nodes/fieldPK.png");
   public static final Icon VARIABLE_READ_ACCESS = IconLoader.getIcon("/nodes/read-access.png");

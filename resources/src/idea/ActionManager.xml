@@ -135,15 +135,16 @@
 
     <group id="J2EEGenerateGroup">
       <action id="CreatePersistenceUnit" class="com.intellij.javaee.persistence.view.CreatePersistenceUnitAction"
-              icon="/nodes/persistenceUnit.png"/>
+              icon="/javaee/persistenceUnit.png"/>
       <action id="CreateEntityListener" class="com.intellij.javaee.persistence.view.actions.CreateEntityListenerAction"
-              icon="/nodes/entityListener.png"/>
+              icon="/javaee/persistenceEntityListener.png"/>
 
       <action id="CreatePersistentEntity" class="com.intellij.javaee.persistence.view.actions.CreatePersistentEntity"
-              icon="/nodes/persistentEntity.png"/>
+              icon="/javaee/persistenceEntity.png"/>
       <action id="CreateMappedSuperclass" class="com.intellij.javaee.persistence.view.actions.CreateMappedSuperclass"
-              icon="/nodes/mappedSuperclass.png"/>
-      <action id="CreateEmbeddable" class="com.intellij.javaee.persistence.view.actions.CreateEmbeddable" icon="/nodes/embeddable.png"/>
+              icon="/javaee/persistenceMappedSuperclass.png"/>
+      <action id="CreateEmbeddable" class="com.intellij.javaee.persistence.view.actions.CreateEmbeddable"
+              icon="/javaee/persistenceEmbeddable.png"/>
 
       <action id="CreateSessionBean" class="com.intellij.javaee.module.view.ejb.actions.CreateSessionBeanAction"
               icon="/javaee/sessionBean.png"/>
