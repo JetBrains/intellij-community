@@ -49,7 +49,14 @@ public class XmlFoldingBuilder implements FoldingBuilder {
     if (rootTag != null) {
       foldings = new ArrayList<FoldingDescriptor>();
 
-      if (rootTag instanceof XmlTag) addElementsToFold(foldings, rootTag, document);
+      if (rootTag instanceof XmlTag) {
+        addElementsToFold(foldings, rootTag, document);
+
+        // HTML tags in JSP
+        for(PsiElement sibling = rootTag.getNextSibling(); sibling != null; sibling = sibling.getNextSibling()) {
+          if (sibling instanceof XmlTag) addElementsToFold(foldings, (XmlElement) sibling, document);
+        }
+      }
       else doAddForChildren(xmlDocument, foldings, document);
     }
 
