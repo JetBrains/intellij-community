@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.EventDispatcher;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,20 +41,28 @@ public class ModuleEditor {
   private TabbedPaneWrapper myTabbedPane;
   private final ModulesProvider myModulesProvider;
   private final String myName;
+  @Nullable
+  private final ModuleBuilder myModuleBuilder;
   private List<ModuleConfigurationEditor> myEditors = new ArrayList<ModuleConfigurationEditor>();
   private ModifiableRootModel myModifiableRootModelProxy;
 
   private EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
   @NonNls private static final String METHOD_COMMIT = "commit";
 
+  @Nullable
+  public ModuleBuilder getModuleBuilder() {
+    return myModuleBuilder;
+  }
+
   public static interface ChangeListener extends EventListener {
     void moduleStateChanged(ModifiableRootModel moduleRootModel);
   }
 
-  public ModuleEditor(Project project, ModulesProvider modulesProvider, String moduleName) {
+  public ModuleEditor(Project project, ModulesProvider modulesProvider, String moduleName, @Nullable ModuleBuilder moduleBuilder) {
     myProject = project;
     myModulesProvider = modulesProvider;
     myName = moduleName;
+    myModuleBuilder = moduleBuilder;
   }
 
   public void addChangeListener(ChangeListener listener) {

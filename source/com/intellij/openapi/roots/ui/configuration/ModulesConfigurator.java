@@ -121,15 +121,15 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     final Module[] modules = myModuleModel.getModules();
     if (modules.length > 0) {
       for (Module module : modules) {
-        createModuleEditor(module);
+        createModuleEditor(module, null);
       }
       Collections.sort(myModuleEditors, myModuleEditorComparator);
     }
     myModified = false;
   }
 
-  private ModuleEditor createModuleEditor(final Module module) {
-    final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, module.getName());
+  private ModuleEditor createModuleEditor(final Module module, ModuleBuilder moduleBuilder) {
+    final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, module.getName(), moduleBuilder);
     myModuleEditors.add(moduleEditor);
     moduleEditor.addChangeListener(this);
     return moduleEditor;
@@ -181,6 +181,19 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         }
         finally {
           myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+
+          final ArrayList<ModuleEditor> editors = new ArrayList<ModuleEditor>(myModuleEditors);
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              for (final ModuleEditor moduleEditor : editors) {
+                final Module module = moduleEditor.getModule();
+                final ModuleBuilder builder = moduleEditor.getModuleBuilder();
+                if (builder != null) {
+                  builder.addSupport(module);
+                }
+              }
+            }
+          });
         }
       }
     });
@@ -212,7 +225,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     if (builder != null) {
       final Module module = createModule(builder);
       if (module != null) {
-        createModuleEditor(module);
+        createModuleEditor(module, builder);
       }
       return module;
     }
@@ -242,7 +255,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   Module addModule(final ModuleBuilder moduleBuilder) {
     final Module module = createModule(moduleBuilder);
     if (module != null) {
-      createModuleEditor(module);
+      createModuleEditor(module, moduleBuilder);
       Collections.sort(myModuleEditors, myModuleEditorComparator);
       processModuleCountChanged(myModuleEditors.size() - 1, myModuleEditors.size());
       return module;
