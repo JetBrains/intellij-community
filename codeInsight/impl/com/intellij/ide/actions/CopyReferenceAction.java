@@ -33,6 +33,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -157,11 +159,30 @@ public class CopyReferenceAction extends AnAction {
     final PsiFile file = documentManager.getPsiFile(document);
 
     final int offset = editor.getCaretModel().getOffset();
+    PsiElement elementAtCaret = file.findElementAt(offset);
+    if (elementAtCaret == null) return;
+
     fqn = fqn.replace('#', '.');
     String toInsert;
     String suffix = "";
     if (element == null) {
       toInsert = fqn;
+    }
+    else if (element instanceof PsiMethod && PsiTreeUtil.getParentOfType(elementAtCaret, PsiDocComment.class) != null) {
+      // fqn#methodName(ParamType)
+      PsiMethod method = (PsiMethod)element;
+      PsiClass aClass = method.getContainingClass();
+      String className = aClass == null ? "" : aClass.getQualifiedName();
+      toInsert = className == null ? "" : className;
+      if (toInsert.length() != 0) toInsert += "#";
+      toInsert += method.getName() + "(";
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      for (int i = 0; i < parameters.length; i++) {
+        PsiParameter parameter = parameters[i];
+        if (i!=0) toInsert += ", ";
+        toInsert += parameter.getType().getCanonicalText();
+      }
+      toInsert += ")";
     }
     else {
       toInsert = element.getName();
