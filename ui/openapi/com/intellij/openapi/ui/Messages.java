@@ -452,22 +452,21 @@ public class Messages {
 
       if (myMessage != null) {
         JTextPane messagePane = new JTextPane();
-        messagePane.setContentType("text/html");
         messagePane.setBackground(panel.getBackground());
-        messagePane.setText(myMessage);
+          messagePane.setText(myMessage);
         messagePane.setEditable(false);
         messagePane.setCaretPosition(0);
         messagePane.setFont(new JLabel().getFont());
         final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         final Dimension textSize = messagePane.getPreferredSize();
-        if (textSize.width > screenSize.width *4/5 || textSize.height > screenSize.height / 2) {
+        if (textSize.width > screenSize.width /2 || textSize.height > screenSize.height / 2) {
 
           final JScrollPane pane = ScrollPaneFactory.createScrollPane(messagePane);
           pane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
           pane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
           pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-          final Dimension preferredSize = new Dimension(Math.min(textSize.width, screenSize.width * 4 / 5), Math.min(textSize.height, screenSize.height/2));
+          final Dimension preferredSize = new Dimension(Math.min(textSize.width, screenSize.width/2), Math.min(textSize.height, screenSize.height/2));
           pane.setPreferredSize(preferredSize);
           panel.add(pane, BorderLayout.CENTER);
         }
