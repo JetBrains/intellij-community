@@ -873,6 +873,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
     return UIDesignerToolWindowManager.getInstance(getProject()).getActiveFormEditor() == this;
   }
 
+  void hideIntentionHint() {
+    myQuickFixManager.hideIntentionHint();
+  }
+
   private final class MyLayeredPane extends JLayeredPane implements Scrollable {
     /**
      * All components allocate whole pane's area.

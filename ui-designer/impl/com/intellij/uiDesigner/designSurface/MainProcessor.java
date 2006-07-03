@@ -230,6 +230,14 @@ public final class MainProcessor extends EventProcessor{
     }
   }
 
+  private void removeDragger() {
+    final RadComponent oldDraggerHost = FormEditingUtil.getDraggerHost(myEditor);
+    if (oldDraggerHost != null) {
+      oldDraggerHost.setDragger(false);
+      myEditor.repaintLayeredPane();
+    }
+  }
+
   private void processMousePressed(final MouseEvent e){
     if(myCurrentProcessor != null){
       if (myCurrentProcessor.needMousePressed()) {
@@ -331,6 +339,8 @@ public final class MainProcessor extends EventProcessor{
   }
 
   public void startPasteProcessor(final ArrayList<RadComponent> componentsToPaste, final TIntArrayList xs, final TIntArrayList ys) {
+    removeDragger();
+    myEditor.hideIntentionHint();
     myCurrentProcessor = new PasteProcessor(myEditor, componentsToPaste, xs, ys);
     myCurrentProcessor.processMouseEvent(new MouseEvent(myEditor, MouseEvent.MOUSE_MOVED, 0, 0,
                                                         myLastMousePosition.x, myLastMousePosition.y,
@@ -338,6 +348,8 @@ public final class MainProcessor extends EventProcessor{
   }
 
   public void startInsertProcessor(final ComponentItem componentToInsert, final DropLocation location) {
+    removeDragger();
+    myEditor.hideIntentionHint();
     myInsertComponentProcessor.setComponentToInsert(componentToInsert);
     myInsertComponentProcessor.setLastLocation(location);
     myCurrentProcessor = myInsertComponentProcessor;
