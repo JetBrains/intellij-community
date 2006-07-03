@@ -491,7 +491,7 @@ public class VirtualFileImpl extends VirtualFile {
     if (isDirectory) {
       if (myChildren == null) return;
 
-      final boolean[] found = new boolean[myChildren.length];
+      final int[] newIndices = new int[myChildren.length];
 
       VirtualFileImpl[] children = myChildren;
       for (int i = 0; i < childFiles.length; i++) {
@@ -529,12 +529,30 @@ public class VirtualFileImpl extends VirtualFile {
           );
         }
         else {
-          found[index] = true;
+          newIndices[index] = i;
         }
       }
       for (int i = 0; i < children.length; i++) {
         final VirtualFileImpl child = children[i];
-        if (found[i]) {
+        final int newIndex = newIndices[i];
+        if (newIndex >= 0) {
+          final String oldName = child.getName();
+          final String newName = childFiles[newIndex].getName();
+          if (!oldName.equals(newName)) {
+            ourFileSystem.getManager().addEventToFireByRefresh(
+                      new Runnable() {
+                        public void run() {
+                          if (child.isValid()) {
+                            ourFileSystem.fireBeforePropertyChange(null, child, VirtualFile.PROP_NAME, oldName, newName);
+                            child.setName(newName);
+                            ourFileSystem.firePropertyChanged(null, child, VirtualFile.PROP_NAME, oldName, newName);
+                          }
+                        }
+                      },
+                      asynchronous,
+                      modalityState
+            );
+          }
           if (recursive) {
             ourFileSystem.refresh(child, true, true, modalityState, asynchronous, false, false);
             //child.refreshInternal(recursive, modalityState, false, asynchronous);
