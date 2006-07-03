@@ -26,11 +26,11 @@ public class FileStatusMap {
   private final Object myRefCountHolderLock = new Object();
 
   private static class FileStatus {
-    PsiElement dirtyScope; //Q: use WeakReference?
-    PsiElement overridenDirtyScope;
-    PsiElement localInspectionsDirtyScope;
+    private PsiElement dirtyScope; //Q: use WeakReference?
+    private PsiElement overridenDirtyScope;
+    private PsiElement localInspectionsDirtyScope;
 
-    FileStatus(PsiElement dirtyScope, PsiElement overridenDirtyScope, PsiElement inspectionDirtyScope) {
+    private FileStatus(PsiElement dirtyScope, PsiElement overridenDirtyScope, PsiElement inspectionDirtyScope) {
       this.dirtyScope = dirtyScope;
       this.overridenDirtyScope = overridenDirtyScope;
       localInspectionsDirtyScope = inspectionDirtyScope;
@@ -130,6 +130,7 @@ public class FileStatusMap {
   private static PsiElement combineScopes(PsiElement scope1, PsiElement scope2) {
     if (scope1 == null) return scope2;
     if (scope2 == null) return scope1;
+    if (!scope1.isValid() || !scope2.isValid()) return null;
     final PsiElement commonParent = PsiTreeUtil.findCommonParent(scope1, scope2);
     if (commonParent instanceof PsiDirectory) return null;
     return commonParent;
