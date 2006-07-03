@@ -416,11 +416,12 @@ public class PluginManagerMain
 
     private static void setHtmlValue( final String val, JLabel label)
     {
-        boolean isValid = (val != null && val.trim().length() > 0);
-        String setVal = isValid ? HTML_PREFIX + val.trim() + HTML_SUFIX : IdeBundle.message("plugin.status.not.specified");
+      boolean isValid = (val != null && val.trim().length() > 0);
+      String setVal = isValid ? HTML_PREFIX + val.trim() + HTML_SUFIX : IdeBundle.message("plugin.status.not.specified");
 
-        label.setText( setVal );
-        label.setCursor( new Cursor( isValid ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR ));
+      label.setText( setVal );
+      label.setCursor( isValid ? Cursor.getPredefinedCursor( Cursor.HAND_CURSOR ) :
+                                 Cursor.getPredefinedCursor( Cursor.DEFAULT_CURSOR ) );
     }
 
     private void pluginInfoUpdate( Object plugin )
