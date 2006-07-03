@@ -36,7 +36,7 @@ import java.util.*;
  */
 public abstract class MasterDetailsComponent implements Configurable, JDOMExternalizable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.MasterDetailsComponent");
-  public static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
+  protected static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
 
 
   protected MyNode myRoot = new MyRootNode();
@@ -413,6 +413,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
       if (newName != null){
         namedConfigurable.setDisplayName(newName);
         ((DefaultTreeModel)myTree.getModel()).reload();
+        selectNodeInTree(node);
       }
     }
   }
