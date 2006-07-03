@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +55,7 @@ public class PaletteManager implements ProjectComponent {
         myPaletteToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(IdeBundle.message("toolwindow.palette"),
                                                                                           myPaletteWindow,
                                                                                           ToolWindowAnchor.RIGHT);
+        myPaletteToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowPalette.png"));
       }
     });
   }

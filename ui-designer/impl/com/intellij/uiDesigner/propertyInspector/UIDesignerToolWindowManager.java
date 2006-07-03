@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -66,7 +67,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
         myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(UIDesignerBundle.message("toolwindow.ui.designer"),
                                                                                    myToolWindowPanel,
                                                                                    ToolWindowAnchor.LEFT);
-
+        myToolWindow.setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/toolWindowUIDesigner.png"));
       }
     });
   }
