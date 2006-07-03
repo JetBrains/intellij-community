@@ -702,7 +702,9 @@ public class GenericInfoImpl implements DomGenericInfo {
       for (final DomChildDescriptionImpl description : getChildrenDescriptions()) {
         final Type type = description.getType();
         if (condition.value(DomReflectionUtil.getRawType(type))) {
-          set.add(description.getXmlElementName());
+          if (!String.class.equals(DomUtil.getGenericValueParameter(type)) || description.getAnnotation(NameValue.class) != null) {
+            set.add(description.getXmlElementName());
+          }
         } else {
           final GenericInfoImpl childGenericInfo = description.getChildGenericInfo(myDomManager.getProject());
           if (!visited.contains(childGenericInfo)) {

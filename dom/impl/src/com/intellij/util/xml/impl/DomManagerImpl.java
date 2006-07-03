@@ -607,24 +607,16 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
         final XmlFile originalFile = (XmlFile)myXmlFile.getOriginalFile();
         if (originalFile != null) {
-          return saveResult(getOrCreateCachedValueProvider(originalFile).getFileDescription(), new Factory<DomFileElementImpl>() {
-            public DomFileElementImpl create() {
-              return getOrCreateFileElement(originalFile, myFileDescription);
-            }
-          });
+          return saveResult(getOrCreateCachedValueProvider(originalFile).getFileDescription());
         }
 
-        return saveResult(ContainerUtil.find(myFileDescriptions, myCondition), new Factory<DomFileElementImpl>() {
-          public DomFileElementImpl create() {
-            return new DomFileElementImpl(myXmlFile, myFileDescription.getRootElementClass(), myFileDescription.getRootTagName(), DomManagerImpl.this);
-          }
-        });
+        return saveResult(ContainerUtil.find(myFileDescriptions, myCondition));
       }
     }
 
-    private Result<DomFileElementImpl> saveResult(final DomFileDescription description, Factory<DomFileElementImpl> function) {
+    private Result<DomFileElementImpl> saveResult(final DomFileDescription description) {
       myFileDescription = description;
-      DomFileElementImpl fileElement = description == null ? null : function.create();
+      DomFileElementImpl fileElement = description == null ? null : new DomFileElementImpl(myXmlFile, myFileDescription.getRootElementClass(), myFileDescription.getRootTagName(), DomManagerImpl.this);
       final Result<DomFileElementImpl> result = new Result<DomFileElementImpl>(fileElement, myXmlFile);
       if (description != null) {
         myOldResult = result;

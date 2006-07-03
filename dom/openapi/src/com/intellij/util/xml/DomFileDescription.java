@@ -76,7 +76,7 @@ public abstract class DomFileDescription<T> {
     XmlDocument doc = file.getDocument();
     if (doc != null) {
       XmlTag rootTag = doc.getRootTag();
-      if (rootTag != null && rootTag.getName().equals(myRootTagName)) {
+      if (rootTag != null && rootTag.getLocalName().equals(myRootTagName)) {
         return true;
       }
     }
