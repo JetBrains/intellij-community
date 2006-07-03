@@ -619,10 +619,9 @@ public class GenericInfoImpl implements DomGenericInfo {
     buildMethodMaps();
     final Method getter = findGetterMethod(myCollectionChildrenGetterMethods, tagName);
     return getter == null ? null : new CollectionChildDescriptionImpl(tagName, getCollectionChildrenType(tagName), getCollectionAddMethod(tagName),
-                                              getCollectionAddMethod(tagName, Class.class), getter,
-                                              getCollectionAddMethod(tagName, int.class),
-                                              getCollectionAddMethod(tagName, Class.class, int.class),
-                                              getCollectionAddMethod(tagName, int.class, Class.class));
+                                                                      getCollectionAddMethod(tagName, Class.class), getter,
+                                                                      getCollectionAddMethod(tagName, int.class), getCollectionAddMethod(tagName, Class.class, int.class),
+                                                                      getCollectionAddMethod(tagName, int.class, Class.class));
   }
 
   @Nullable
@@ -703,9 +702,7 @@ public class GenericInfoImpl implements DomGenericInfo {
       for (final DomChildDescriptionImpl description : getChildrenDescriptions()) {
         final Type type = description.getType();
         if (condition.value(DomReflectionUtil.getRawType(type))) {
-          if (!String.class.equals(DomUtil.getGenericValueParameter(type))) {
-            set.add(description.getXmlElementName());
-          }
+          set.add(description.getXmlElementName());
         } else {
           final GenericInfoImpl childGenericInfo = description.getChildGenericInfo(myDomManager.getProject());
           if (!visited.contains(childGenericInfo)) {

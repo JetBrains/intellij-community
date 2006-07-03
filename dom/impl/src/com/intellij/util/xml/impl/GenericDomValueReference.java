@@ -3,19 +3,19 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.javaee.J2EEBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -25,28 +25,18 @@ import java.util.List;
 /**
  * @author peter
  */
-public class GenericDomValueReference<T> extends GenericReference {
+public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> implements EmptyResolveMessageProvider {
   private final GenericDomValue<T> myGenericValue;
-  private final XmlTag myXmlTag;
-  private final TextRange myTextRange;
-  private final XmlElement myValueElement;
 
-  public GenericDomValueReference(final PsiReferenceProvider provider, GenericDomValue<T> domValue) {
-    super(provider);
+  public GenericDomValueReference(GenericDomValue<T> domValue) {
+    super(DomUtil.getValueElement(domValue));
     myGenericValue = domValue;
-    myXmlTag = domValue.getXmlTag();
-    assert myXmlTag != null;
-    myValueElement = DomUtil.getValueElement(domValue);
-    assert myValueElement != null;
-    myTextRange = createTextRange();
+    assert domValue.getXmlTag() != null;
+    setRangeInElement(createTextRange());
   }
 
   protected final PsiManager getPsiManager() {
     return PsiManager.getInstance(myGenericValue.getManager().getProject());
-  }
-
-  protected final XmlElement getValueElement() {
-    return myValueElement;
   }
 
   protected TextRange createTextRange() {
@@ -57,25 +47,18 @@ public class GenericDomValueReference<T> extends GenericReference {
     return myGenericValue;
   }
 
-  public XmlElement getContext() {
-    return myXmlTag;
-  }
-
-  public PsiReference getContextReference() {
-    return null;
-  }
-
-  public ReferenceType getType() {
-    return new ReferenceType(ReferenceType.UNKNOWN);
-  }
-
   protected PsiElement resolveInner(T o) {
+    final Converter<T> converter = myGenericValue.getConverter();
+    if (converter instanceof ResolvingConverter) {
+      final PsiElement psiElement = ((ResolvingConverter<T>)converter).getPsiElement(o);
+      return psiElement == null && o != null ? getElement() : psiElement;
+    }
+
     if (o instanceof PsiElement) {
       return (PsiElement)o;
     }
     if (o instanceof DomElement) {
-      final XmlElement element = ((DomElement)o).getGenericInfo().getNameElement((DomElement)o);
-      return element != null? element : ((DomElement)o).getXmlElement();
+      return ((DomElement)o).getXmlElement();
     }
     if (o instanceof MergedObject) {
       final List<T> list = ((MergedObject<T>)o).getImplementations();
@@ -86,46 +69,18 @@ public class GenericDomValueReference<T> extends GenericReference {
         }
       }
     }
-    if (o != null) {
-      return getValueElement();
-    }
-    else {
-      return null;
-    }
+    return o != null ? getElement() : null;
   }
 
-  public final PsiElement resolveInner() {
+  @Nullable
+  public PsiElement resolve() {
     final T value = myGenericValue.getValue();
     return value == null ? null : resolveInner(value);
   }
 
-  public ReferenceType getSoftenType() {
-    return getType();
-  }
-
-  public boolean needToCheckAccessibility() {
-    return false;
-  }
-
-  public XmlElement getElement() {
-    return myValueElement;
-  }
-
-  public TextRange getRangeInElement() {
-    return myTextRange;
-  }
-
   public String getCanonicalText() {
     String value = myGenericValue.getStringValue();
-    if (value != null) {
-      return value;
-    }
-    return J2EEBundle.message("unknown.j2ee.reference.canonical.text");
-  }
-
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    myGenericValue.setStringValue(newElementName);
-    return myGenericValue.getXmlTag();
+    return value != null ? value : J2EEBundle.message("unknown.j2ee.reference.canonical.text");
   }
 
   public String getUnresolvedMessagePattern() {
@@ -166,6 +121,6 @@ public class GenericDomValueReference<T> extends GenericReference {
       }
       return result.toArray();
     }
-    return super.getVariants();
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 }

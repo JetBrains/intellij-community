@@ -261,12 +261,6 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
                          NamedObjectDescriptor.class);
     }
 
-    {
-      addMetadataBinding(new AndFilter(
-          new NamespaceFilter(XmlUtil.JSF_URIS),
-          new TextFilter(new String[] {"managed-bean" })
-      ), ManagedBeanDescriptor.class);
-    }
   }
 
   public static final Key<SoftReference<CachedValue<PsiMetaData>>> META_DATA_KEY = Key.create("META DATA KEY");

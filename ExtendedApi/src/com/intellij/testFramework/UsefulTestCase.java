@@ -29,6 +29,10 @@ public abstract class UsefulTestCase extends TestCase {
     return builder.toString();
   }
 
+  public static <T> void assertOrderedEquals(T[] actual, T... expected) {
+    assertOrderedEquals(Arrays.asList(actual), expected);
+  }
+
   public static <T> void assertOrderedEquals(Collection<T> actual, T... expected) {
     assertNotNull(actual);
     assertNotNull(expected);

@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -107,10 +108,10 @@ public class UsageViewUtil {
     }
     char c = Character.toUpperCase(s.charAt(0));
     if (s.length() == 1) {
-      return "" + c;
+      return String.valueOf(c);
     }
     else {
-      return "" + c + s.substring(1);
+      return String.valueOf(c) + s.substring(1);
     }
   }
 
@@ -170,8 +171,7 @@ public class UsageViewUtil {
     }
     else if (psiElement instanceof PsiMethod) {
       PsiMethod psiMethod = (PsiMethod)psiElement;
-      ret =
-      PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY,
+      ret = PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY,
                                  PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS, PsiFormatUtil.SHOW_TYPE);
     }
     else {
@@ -183,6 +183,10 @@ public class UsageViewUtil {
   public static String getType(PsiElement psiElement) {
     if (psiElement instanceof XmlTag) {
       final PsiMetaData metaData = ((XmlTag)psiElement).getMetaData();
+      if (metaData instanceof PsiPresentableMetaData) {
+        return ((PsiPresentableMetaData)metaData).getTypeName();
+      }
+
       if (metaData!=null && metaData.getDeclaration() instanceof XmlTag) {
         return ((XmlTag)metaData.getDeclaration()).getName();
       }
@@ -191,11 +195,14 @@ public class UsageViewUtil {
 
     if (psiElement instanceof PsiAntElement) {
       return ((PsiAntElement)psiElement).getRole().getName();
-    } else if (psiElement instanceof PsiFile) {
+    }
+    if (psiElement instanceof PsiFile) {
       return LangBundle.message("terms.file");
-    } else if (psiElement instanceof PsiDirectory) {
+    }
+    if (psiElement instanceof PsiDirectory) {
       return LangBundle.message("terms.directory");
-    } else if (psiElement instanceof WebDirectoryElement) {
+    }
+    if (psiElement instanceof WebDirectoryElement) {
       return LangBundle.message("terms.web.directory");
     }
 
@@ -239,7 +246,7 @@ public class UsageViewUtil {
     return false;
   }
 
-  public static UsageInfo[] removeDuplicatedUsages(UsageInfo usages[]) {
+  public static UsageInfo[] removeDuplicatedUsages(UsageInfo[] usages) {
     Set<UsageInfo> set = new THashSet<UsageInfo>(Arrays.asList(usages));
     return set.toArray(new UsageInfo[set.size()]);
   }

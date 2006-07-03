@@ -10,17 +10,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.ui.UserActivityWatcher;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.TableCellEditor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
@@ -77,7 +76,7 @@ public abstract class DomUIFactory implements ApplicationComponent {
     if (DomElement.class.isAssignableFrom(rawType)) {
       final ComboControl control = new ComboControl(element);
       final Required annotation = element.getAnnotation(Required.class);
-      if (annotation == null || !annotation.nonEmpty()) {
+      if (annotation == null || !annotation.value() || !annotation.nonEmpty()) {
         control.setNullable(true);
       }
       return control;

@@ -1,6 +1,10 @@
 <components>
   <application-components>
     <component>
+      <implementation-class>com.intellij.util.xml.impl.DomApplicationComponent</implementation-class>
+    </component>
+
+    <component>
       <interface-class>com.intellij.openapi.application.ApplicationInfo</interface-class>
       <implementation-class>com.intellij.openapi.application.impl.ApplicationInfoImpl</implementation-class>
     </component>

@@ -16,10 +16,13 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.codeInsight.CodeInsightBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 
 /**
@@ -61,8 +64,22 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
     }
   };
 
+  public String getErrorMessage(@Nullable String s, final ConvertContext context) {
+    return CodeInsightBundle.message("error.cannot.resolve.default.message", s);
+  }
+
   @NotNull
   public abstract Collection<T> getVariants(final ConvertContext context);
+
+  public PsiElement getPsiElement(T resolvedValue) {
+    if (resolvedValue instanceof PsiElement) {
+      return (PsiElement)resolvedValue;
+    }
+    if (resolvedValue instanceof DomElement) {
+      return ((DomElement)resolvedValue).getXmlElement();
+    }
+    return null;
+  }
 
   public static abstract class WrappedResolvingConverter<T> extends ResolvingConverter<T> {
 

@@ -18,7 +18,7 @@ public abstract class Converter<T> {
   public abstract @Nullable String toString(@Nullable T t, final ConvertContext context);
 
   public String getErrorMessage(@Nullable String s, final ConvertContext context) {
-    return CodeInsightBundle.message("error.cannot.resolve.default.message", s);
+    return CodeInsightBundle.message("error.cannot.convert.default.message", s);
   }
 
   public static final Converter<Integer> INTEGER_CONVERTER = new Converter<Integer>() {

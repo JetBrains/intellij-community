@@ -4,6 +4,7 @@ import com.intellij.ant.impl.dom.impl.PsiAntTarget;
 import com.intellij.ant.impl.tasks.properties.PsiAntProperty;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.javaee.model.common.ejb.EjbPsiMethodUtil;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,9 +14,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.HelpID;
@@ -24,7 +26,6 @@ import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.javaee.model.common.ejb.EjbPsiMethodUtil;
 
 /**
  * created at Nov 13, 2001
@@ -92,7 +93,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     }
 
     final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
-    if (element instanceof XmlTag ||
+    if (element instanceof XmlTag && !(((XmlTag)element).getMetaData() instanceof PsiWritableMetaData) ||
         !(element instanceof PsiNamedElement || element instanceof XmlAttributeValue)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol"));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);

@@ -99,8 +99,12 @@ public class ArrayUtil {
    * @param element object to be appended to the end of <code>src</code> array.
    */
   public static <T> T[] append(@NotNull final T[] src,final T element){
+    return append(src, element, (Class<T>)src.getClass().getComponentType());
+  }
+
+  public static <T> T[] append(final T[] src, final T element, final Class<T> componentType) {
     int length=src.length;
-    T[] result=(T[])Array.newInstance(src.getClass().getComponentType(), length+ 1);
+    T[] result=(T[])Array.newInstance(componentType, length+ 1);
     System.arraycopy(src,0,result,0,length);
     result[length] = element;
     return result;

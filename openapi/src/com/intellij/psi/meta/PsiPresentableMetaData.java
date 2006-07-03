@@ -14,17 +14,11 @@
  * limitations under the License.
  *
  */
-package com.intellij.util.xml;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+package com.intellij.psi.meta;
 
 /**
  * @author peter
  */
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Required {
-  boolean value() default true;
-  boolean nonEmpty() default true;
-  boolean identifier() default false;
+public interface PsiPresentableMetaData extends PsiMetaData {
+  String getTypeName();
 }
