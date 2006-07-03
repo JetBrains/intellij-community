@@ -492,6 +492,7 @@ public class VirtualFileImpl extends VirtualFile {
       if (myChildren == null) return;
 
       final int[] newIndices = new int[myChildren.length];
+      for (int i = 0; i < newIndices.length; i++) newIndices[i] = -1;
 
       VirtualFileImpl[] children = myChildren;
       for (int i = 0; i < childFiles.length; i++) {
