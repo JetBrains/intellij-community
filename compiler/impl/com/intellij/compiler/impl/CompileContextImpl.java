@@ -90,7 +90,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       myMessages.put(msg.getCategory(), messages);
     }
     if (messages.add(msg)) {
-      myProgressIndicator.addMessage(msg);
+      myProgressIndicator.addMessage(this, msg);
     }
   }
 

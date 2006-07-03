@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.StatusBar;
@@ -49,6 +50,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ProfilingUtil;
+import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -230,6 +232,7 @@ public class CompileDriver {
     return scope;
   }
 
+  public static final Key<Long> COMPILATION_START_TIMESTAMP = Key.create("COMPILATION_START_TIMESTAMP");
   private void startup(final CompileScope scope,
                        final boolean isRebuild,
                        final boolean forceCompile,
@@ -245,6 +248,7 @@ public class CompileDriver {
 
     final DependencyCache dependencyCache = new DependencyCache(myCachesDirectoryPath, myProject);
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, indicator, scope, dependencyCache, this, !isRebuild && !forceCompile);
+    compileContext.putUserData(COMPILATION_START_TIMESTAMP, LocalTimeCounter.currentTime());
     for (Pair<Compiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
       compileContext.assignModule(myGenerationCompilerModuleToOutputDirMap.get(pair), pair.getSecond());
     }
@@ -809,7 +813,7 @@ public class CompileDriver {
     final List<File> generatedFiles = new ArrayList<File>();
     final List<Module> affectedModules = new ArrayList<Module>();
     try {
-      if (pathsToRemove.size() > 0) {
+      if (!pathsToRemove.isEmpty()) {
         context.getProgressIndicator().pushState();
         context.getProgressIndicator().setText(CompilerBundle.message("progress.synchronizing.output.directory"));
         for (final String path : pathsToRemove) {
@@ -835,7 +839,7 @@ public class CompileDriver {
         context.getProgressIndicator().pushState();
         try {
           final Set<GeneratingCompiler.GenerationItem> items = moduleToItemMap.get(module);
-          if (items != null && items.size() > 0) {
+          if (items != null && !items.isEmpty()) {
             final VirtualFile outputDir = getGenerationOutputDir(compiler, module);
             final GeneratingCompiler.GenerationItem[] successfullyGenerated =
               compiler.generate(context, items.toArray(new GeneratingCompiler.GenerationItem[items.size()]), outputDir);
@@ -862,7 +866,7 @@ public class CompileDriver {
     finally {
       context.getProgressIndicator().pushState();
       CompilerUtil.refreshIOFiles(filesToRefresh);
-      if (forceGenerate && generatedFiles.size() > 0) {
+      if (forceGenerate && !generatedFiles.isEmpty()) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             List<VirtualFile> vFiles = new ArrayList<VirtualFile>(generatedFiles.size());
@@ -886,7 +890,7 @@ public class CompileDriver {
       }
       context.getProgressIndicator().popState();
     }
-    return toGenerate.size() > 0 || filesToRefresh.size() > 0;
+    return !toGenerate.isEmpty() || !filesToRefresh.isEmpty();
   }
 
   private boolean compileSources(final CompileContextImpl context,
@@ -910,7 +914,7 @@ public class CompileDriver {
         public void run() {
           findOutOfDateFiles(compiler, snapshot, forceCompile, cache, toCompile, context);
 
-          if (trackDependencies && toCompile.size() > 0) { // should add dependent files
+          if (trackDependencies && !toCompile.isEmpty()) { // should add dependent files
             final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
             final PsiManager psiManager = PsiManager.getInstance(myProject);
             final VirtualFile[] filesToCompile = toCompile.toArray(new VirtualFile[toCompile.size()]);
@@ -938,7 +942,7 @@ public class CompileDriver {
         }
       });
 
-      if (toDelete.size() > 0) {
+      if (!toDelete.isEmpty()) {
         try {
           wereFilesDeleted[0] = syncOutputDir(urlsWithSourceRemoved, context, toDelete, cache, outputDirectories);
         }
@@ -948,11 +952,11 @@ public class CompileDriver {
         }
       }
 
-      if (wereFilesDeleted[0] && toDelete.size() > 0) {
+      if (wereFilesDeleted[0] && !toDelete.isEmpty()) {
         CompilerUtil.refreshPaths(toDelete.toArray(new String[toDelete.size()]));
       }
 
-      if ((wereFilesDeleted[0] || toCompile.size() > 0) && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
+      if ((wereFilesDeleted[0] || !toCompile.isEmpty()) && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
         final TranslatingCompiler.ExitStatus exitStatus = compiler.compile(context, toCompile.toArray(new VirtualFile[toCompile.size()]));
         updateInternalCaches(cache, context, exitStatus.getSuccessfullyCompiled(), exitStatus.getFilesToRecompile());
       }
@@ -972,7 +976,7 @@ public class CompileDriver {
       }
       context.getProgressIndicator().popState();
     }
-    return toCompile.size() > 0 || wereFilesDeleted[0];
+    return !toCompile.isEmpty() || wereFilesDeleted[0];
   }
 
   private Set<String> getSourcesWithOutputRemoved(TranslatingCompilerStateCache cache) {
@@ -1062,7 +1066,8 @@ public class CompileDriver {
 
   private static boolean isUnderOutputDir(final String outputDir, final String outputPath, final String className) {
     final int outputRootLen = outputPath.length() - className.length() - ".class".length() - 1;
-    return (outputDir.length() == outputRootLen) && outputDir.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, outputPath, 0, outputRootLen);
+    return outputDir.length() == outputRootLen &&
+           outputDir.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, outputPath, 0, outputRootLen);
   }
 
   private static void updateInternalCaches(final TranslatingCompilerStateCache cache, final CompileContextImpl context, final TranslatingCompiler.OutputItem[] successfullyCompiled, final VirtualFile[] filesToRecompile) {
@@ -1184,7 +1189,7 @@ public class CompileDriver {
     builder.analyze();
     final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
     final Set<PsiFile> dependentFiles = dependencies.get(psiFile);
-    if (dependentFiles != null && dependentFiles.size() > 0) {
+    if (dependentFiles != null && !dependentFiles.isEmpty()) {
       for (final PsiFile dependentFile : dependentFiles) {
         if (dependentFile instanceof PsiCompiledElement) {
           continue;
@@ -1282,7 +1287,7 @@ public class CompileDriver {
           }
         }
       });
-      if (urlsToRemove.size() > 0) {
+      if (!urlsToRemove.isEmpty()) {
         for (final String url : urlsToRemove) {
           adapter.processOutdatedItem(context, url, cache.getExtState(url));
           cache.remove(url);
@@ -1291,7 +1296,7 @@ public class CompileDriver {
       context.getProgressIndicator().popState();
     }
 
-    if (toProcess.size() == 0) {
+    if (toProcess.isEmpty()) {
       return false;
     }
 
@@ -1305,8 +1310,8 @@ public class CompileDriver {
       context.getProgressIndicator().setText(CompilerBundle.message("progress.updating.caches"));
       try {
         List<VirtualFile> vFiles = new ArrayList<VirtualFile>(processed.length);
-        for (int idx = 0; idx < processed.length; idx++) {
-          vFiles.add(processed[idx].getFile());
+        for (FileProcessingCompiler.ProcessingItem aProcessed : processed) {
+          vFiles.add(aProcessed.getFile());
         }
         CompilerUtil.refreshVirtualFiles(vFiles);
         ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -1491,17 +1496,17 @@ public class CompileDriver {
         }
       }
     }
-    if (modulesWithoutJdkAssigned.size() > 0) {
+    if (!modulesWithoutJdkAssigned.isEmpty()) {
       showNotSpecifiedError("error.jdk.not.specified", modulesWithoutJdkAssigned, ClasspathEditor.NAME);
       return false;
     }
 
-    if (modulesWithoutOutputPathSpecified.size() > 0) {
+    if (!modulesWithoutOutputPathSpecified.isEmpty()) {
       showNotSpecifiedError("error.output.not.specified", modulesWithoutOutputPathSpecified, ContentEntriesEditor.NAME);
       return false;
     }
 
-    if (nonExistingOutputPaths.size() > 0) {
+    if (!nonExistingOutputPaths.isEmpty()) {
       for (File file : nonExistingOutputPaths) {
         final boolean succeeded = file.mkdirs();
         if (!succeeded) {
@@ -1666,8 +1671,8 @@ public class CompileDriver {
         }
       }
     }
-    if (affectedOutputPaths.size() > 0) {
-      final StringBuffer paths = new StringBuffer();
+    if (!affectedOutputPaths.isEmpty()) {
+      final StringBuilder paths = new StringBuilder();
       for (final VirtualFile affectedOutputPath : affectedOutputPaths) {
         if (paths.length() < 0) {
           paths.append("\n");

@@ -8,6 +8,7 @@ package com.intellij.compiler.progress;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerErrorTreeView;
+import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,9 +27,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.problems.Problem;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.MessageCategory;
@@ -84,12 +88,11 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     updateProgressText();
   }
 
-  public void addMessage(final CompilerMessage message) {
+  public void addMessage(final CompileContext compileContext, final CompilerMessage message) {
     openMessageView();
     if (CompilerMessageCategory.ERROR.equals(message.getCategory())) {
       myErrorCount += 1;
-      WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-      wolf.weHaveGotProblem(wolf.convertToProblem(message));
+      informWolf(message, compileContext);
     }
     if (CompilerMessageCategory.WARNING.equals(message.getCategory())) {
       myWarningCount += 1;
@@ -106,6 +109,21 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
           doAddMessage(message);
         }
       }, modalityState);
+    }
+  }
+
+  private void informWolf(final CompilerMessage message, final CompileContext compileContext) {
+    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
+    Problem problem = wolf.convertToProblem(message);
+    if (problem != null && problem.getVirtualFile() != null) {
+      VirtualFile virtualFile = problem.getVirtualFile();
+      Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+
+      Long compileStart = compileContext.getUserData(CompileDriver.COMPILATION_START_TIMESTAMP);
+      if (document != null && compileStart != null && compileStart.longValue() > document.getModificationStamp()) {
+        // user might have changed the file after compile start
+        wolf.weHaveGotProblem(problem);
+      }
     }
   }
 
@@ -351,11 +369,9 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
             final boolean hasMessagesToRead = myErrorCount > 0 || myWarningCount > 0;
             final boolean shouldRetainView = hasMessagesToRead || !closeViewOnSuccess;
             if (shouldRetainView) {
-              addMessage(
-                new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
+              addMessage(null, new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
                                         CompilerBundle.message("statistics.error.count", myErrorCount), null, -1, -1, null));
-              addMessage(
-                new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
+              addMessage(null, new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
                                         CompilerBundle.message("statistics.warnings.count", myWarningCount), null, -1, -1, null));
               activateMessageView();
               myErrorTreeView.selectFirstMessage();

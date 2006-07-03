@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -32,6 +33,7 @@ public abstract class WolfTheProblemSolver implements ProjectComponent {
 
   public abstract boolean hasProblemFilesBeneath(Module scope);
 
+  @Nullable
   public abstract Problem convertToProblem(CompilerMessage message);
   public abstract Problem convertToProblem(VirtualFile virtualFile, int line, int column, String[] message);
 
