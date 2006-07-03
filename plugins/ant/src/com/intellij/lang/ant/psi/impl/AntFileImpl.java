@@ -46,6 +46,11 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
    * Set of classnames of custom definitions.
    */
   private Set<String> myCustomDefinitions;
+  /**
+   * Map of nested elements specially for the project element.
+   * It's updated together with the set of custom definitons.
+   */
+  private HashMap<AntTypeId, String> myProjectElements;
 
   public AntFileImpl(final FileViewProvider viewProvider) {
     super(viewProvider, AntSupport.getLanguage());
@@ -175,66 +180,79 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @NotNull
   public AntTypeDefinition[] getBaseTypeDefinitions() {
-    final int defCount = myTypeDefinitions.size();
-    if (myTypeDefinitionArray == null || myTypeDefinitionArray.length != defCount) {
-      getBaseTypeDefinition(null);
-      myTypeDefinitionArray = myTypeDefinitions.values().toArray(new AntTypeDefinition[defCount]);
+    synchronized (PsiLock.LOCK) {
+      final int defCount = myTypeDefinitions.size();
+      if (myTypeDefinitionArray == null || myTypeDefinitionArray.length != defCount) {
+        getBaseTypeDefinition(null);
+        myTypeDefinitionArray = myTypeDefinitions.values().toArray(new AntTypeDefinition[defCount]);
+      }
+      return myTypeDefinitionArray;
     }
-    return myTypeDefinitionArray;
   }
 
   @Nullable
   public AntTypeDefinition getBaseTypeDefinition(final String className) {
-    if (myTypeDefinitions == null) {
-      myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
-      myCustomDefinitions = new HashSet<String>();
-      myAntProject = new Project();
-      myAntProject.init();
-      // first, create task definitons
-      updateTypeDefinitions(myAntProject.getTaskDefinitions(), true);
-      // second, create definitions of data types
-      updateTypeDefinitions(myAntProject.getDataTypeDefinitions(), false);
+    synchronized (PsiLock.LOCK) {
+      if (myTypeDefinitions == null) {
+        myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
+        myCustomDefinitions = new HashSet<String>();
+        myProjectElements = new HashMap<AntTypeId, String>();
+        myAntProject = new Project();
+        myAntProject.init();
+        // first, create task definitons
+        updateTypeDefinitions(myAntProject.getTaskDefinitions(), true);
+        // second, create definitions of data types
+        updateTypeDefinitions(myAntProject.getDataTypeDefinitions(), false);
+      }
+      return myTypeDefinitions.get(className);
     }
-    return myTypeDefinitions.get(className);
   }
 
   @NotNull
   public AntTypeDefinition getTargetDefinition() {
     getBaseTypeDefinition(null);
-    if (myTargetDefinition == null) {
-      @NonNls final HashMap<String, AntAttributeType> targetAttrs = new HashMap<String, AntAttributeType>();
-      targetAttrs.put("name", AntAttributeType.STRING);
-      targetAttrs.put("depends", AntAttributeType.STRING);
-      targetAttrs.put("if", AntAttributeType.STRING);
-      targetAttrs.put("unless", AntAttributeType.STRING);
-      targetAttrs.put("description", AntAttributeType.STRING);
-      final HashMap<AntTypeId, String> targetElements = new HashMap<AntTypeId, String>();
-      for (AntTypeDefinition def : getBaseTypeDefinitions()) {
-        targetElements.put(def.getTypeId(), def.getClassName());
+    synchronized (PsiLock.LOCK) {
+      if (myTargetDefinition == null) {
+        @NonNls final HashMap<String, AntAttributeType> targetAttrs = new HashMap<String, AntAttributeType>();
+        targetAttrs.put("name", AntAttributeType.STRING);
+        targetAttrs.put("depends", AntAttributeType.STRING);
+        targetAttrs.put("if", AntAttributeType.STRING);
+        targetAttrs.put("unless", AntAttributeType.STRING);
+        targetAttrs.put("description", AntAttributeType.STRING);
+        final HashMap<AntTypeId, String> targetElements = new HashMap<AntTypeId, String>();
+        for (AntTypeDefinition def : getBaseTypeDefinitions()) {
+          targetElements.put(def.getTypeId(), def.getClassName());
+        }
+        myTargetDefinition = new AntTypeDefinitionImpl(new AntTypeId("target"), Target.class.getName(), false, targetAttrs, targetElements);
+        registerCustomType(myTargetDefinition);
       }
-      myTargetDefinition = new AntTypeDefinitionImpl(new AntTypeId("target"), Target.class.getName(), false, targetAttrs, targetElements);
-      registerCustomType(myTargetDefinition);
+      return myTargetDefinition;
     }
-    return myTargetDefinition;
   }
 
   public void registerCustomType(final AntTypeDefinition def) {
-    myTypeDefinitionArray = null;
-    final String classname = def.getClassName();
-    myTypeDefinitions.put(classname, def);
-    myCustomDefinitions.add(classname);
-    if (myTargetDefinition != null && myTargetDefinition != def) {
-      myTargetDefinition = null;
+    synchronized (PsiLock.LOCK) {
+      myTypeDefinitionArray = null;
+      final String classname = def.getClassName();
+      myTypeDefinitions.put(classname, def);
+      myCustomDefinitions.add(classname);
+      myProjectElements.put(def.getTypeId(), classname);
+      if (myTargetDefinition != null && myTargetDefinition != def) {
+        myTargetDefinition = null;
+      }
     }
   }
 
   public void unregisterCustomType(final AntTypeDefinition def) {
-    myTypeDefinitionArray = null;
-    final String classname = def.getClassName();
-    myTypeDefinitions.remove(classname);
-    myCustomDefinitions.remove(classname);
-    if (myTargetDefinition != null && myTargetDefinition != def) {
-      myTargetDefinition = null;
+    synchronized (PsiLock.LOCK) {
+      myTypeDefinitionArray = null;
+      final String classname = def.getClassName();
+      myTypeDefinitions.remove(classname);
+      myCustomDefinitions.remove(classname);
+      myProjectElements.remove(def.getTypeId());
+      if (myTargetDefinition != null && myTargetDefinition != def) {
+        myTargetDefinition = null;
+      }
     }
   }
 
@@ -251,9 +269,12 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         typeName = "javadoc";
       }
       final Class typeClass = (Class)ht.get(typeName);
-      final AntTypeDefinition def = createTypeDefinition(new AntTypeId(typeName), typeClass, isTask);
+      final AntTypeId typeId = new AntTypeId(typeName);
+      final AntTypeDefinition def = createTypeDefinition(typeId, typeClass, isTask);
       if (def != null) {
-        myTypeDefinitions.put(def.getClassName(), def);
+        final String className = def.getClassName();
+        myTypeDefinitions.put(className, def);
+        myProjectElements.put(typeId, className);
         /**
          * some types are defined only as nested elements, project doesn't return their classes
          * these elements can exist only in context of another element and are defined as subclasses of its class
@@ -283,13 +304,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     projectAttrs.put("name", AntAttributeType.STRING);
     projectAttrs.put("default", AntAttributeType.STRING);
     projectAttrs.put("basedir", AntAttributeType.STRING);
-    final HashMap<AntTypeId, String> projectElements = new HashMap<AntTypeId, String>();
-    for (AntTypeDefinition def : getBaseTypeDefinitions()) {
-      projectElements.put(def.getTypeId(), def.getClassName());
-    }
     final AntTypeDefinition def = getTargetDefinition();
-    projectElements.put(def.getTypeId(), def.getClassName());
-    return new AntTypeDefinitionImpl(new AntTypeId("project"), Project.class.getName(), false, projectAttrs, projectElements);
+    myProjectElements.put(def.getTypeId(), def.getClassName());
+    return new AntTypeDefinitionImpl(new AntTypeId("project"), Project.class.getName(), false, projectAttrs, myProjectElements);
   }
 
   static AntTypeDefinition createTypeDefinition(final AntTypeId id, final Class typeClass, final boolean isTask) {
