@@ -1,6 +1,7 @@
 package com.intellij.util.xml.tree;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -85,26 +86,20 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
 
     myDomManager.addDomEventListener(new DomChangeAdapter() {
       protected void elementChanged(DomElement element) {
-        queueUpdate();
+        queueUpdate(null);
       }
     }, this);
     WolfTheProblemSolver.getInstance(myDomManager.getProject()).addProblemListener(new WolfTheProblemSolver.ProblemListener() {
       public void problemsAppeared(VirtualFile file) {
-        if (isRightFile(file)) {
-          queueUpdate();
-        }
+        queueUpdate(file);
       }
 
       public void problemsChanged(VirtualFile file) {
-        if (isRightFile(file)) {
-          queueUpdate();
-        }
+        queueUpdate(file);
       }
 
       public void problemsDisappeared(VirtualFile file) {
-        if (isRightFile(file)) {
-          queueUpdate();
-        }
+        queueUpdate(file);
       }
 
     }, this);
@@ -116,10 +111,14 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     return file.equals(myRootElement.getRoot().getFile().getVirtualFile());
   }
 
-  private void queueUpdate() {
-    if (myTree.isShowing()) {
+  private void queueUpdate(final VirtualFile file) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if ((file == null || isRightFile(file)) && myTree.isShowing()) {
       myBuilder.queueUpdate();
     }
+      }
+    });
   }
 
   protected boolean isRootVisible() {
