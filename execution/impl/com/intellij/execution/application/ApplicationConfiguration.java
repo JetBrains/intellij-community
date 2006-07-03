@@ -244,7 +244,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
         paths.add(PathUtil.getJarPathForClass(THashMap.class));            // trove4j
         paths.add(PathUtil.getJarPathForClass(FormLayout.class));          // jgoodies
         for(String path: paths) {
-          params.getClassPath().addTail(path);
+          params.getClassPath().addFirst(path);
         }
         params.setMainClass("com.intellij.uiDesigner.snapShooter.SnapShooter");
       }

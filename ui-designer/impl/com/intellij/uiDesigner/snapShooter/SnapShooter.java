@@ -26,7 +26,8 @@ public class SnapShooter {
 
       URL[] oldURLs = ucl.getURLs();
       URL[] newURLs = new URL[origClassPathSize];
-      System.arraycopy(oldURLs, 0, newURLs, 0, origClassPathSize);
+      final int startIndex = oldURLs.length - origClassPathSize;
+      System.arraycopy(oldURLs, startIndex, newURLs, 0, origClassPathSize);
       loader = new URLClassLoader(newURLs, null);
       Thread.currentThread().setContextClassLoader(loader);
     }
