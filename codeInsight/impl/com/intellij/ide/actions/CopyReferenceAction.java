@@ -5,7 +5,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PasteProvider;
 import com.intellij.javaee.web.WebModuleProperties;
@@ -20,11 +19,12 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -33,11 +33,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.awt.datatransfer.DataFlavor;
@@ -117,7 +117,7 @@ public class CopyReferenceAction extends AnAction {
   public static void doCopy(final PsiElement element, final Project project) {
     String fqn = elementToFqn(element);
 
-    CopyPasteManagerEx.getInstance().setContents(new MyTransferable(fqn));
+    CopyPasteManager.getInstance().setContents(new MyTransferable(fqn));
 
     final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(project);
     statusBar.setInfo(IdeBundle.message("message.reference.to.fqn.has.been.copied", fqn));
@@ -232,7 +232,7 @@ public class CopyReferenceAction extends AnAction {
       if (project == null || editor == null) return;
 
       final String fqn = getCopiedFqn();
-      PsiNamedElement element = CopyReferenceAction.fqnToElement(project, fqn);
+      PsiNamedElement element = fqnToElement(project, fqn);
       insert(fqn, element, editor);
 
     }
@@ -244,13 +244,12 @@ public class CopyReferenceAction extends AnAction {
     public boolean isPasteEnabled(DataContext dataContext) {
       final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
       final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-      if (project == null || editor == null) return false;
-      return getCopiedFqn() != null;
+      return project != null && editor != null && getCopiedFqn() != null;
     }
   }
 
   private static String getCopiedFqn() {
-    final Transferable contents = CopyPasteManagerEx.getInstance().getContents();
+    final Transferable contents = CopyPasteManager.getInstance().getContents();
     if (contents == null) return null;
     try {
       return (String)contents.getTransferData(OUR_DATA_FLAVOR);
@@ -319,7 +318,7 @@ public class CopyReferenceAction extends AnAction {
       return file.getName();
     }
     final Project project = file.getManager().getProject();
-    final WebModuleProperties webModuleProperties = (WebModuleProperties)WebUtil.getWebModuleProperties(file);
+    final WebModuleProperties webModuleProperties = WebUtil.getWebModuleProperties(file);
     if (webModuleProperties != null) {
       final WebRoot webRoot = WebUtil.findParentWebRoot(virtualFile, webModuleProperties.getWebRoots(true));
       if (webRoot != null && webRoot.getFile() != null) {
@@ -340,18 +339,17 @@ public class CopyReferenceAction extends AnAction {
 
   private static PsiNamedElement fqnToElement(final Project project, final String fqn) {
     PsiClass aClass = PsiManager.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));
-    PsiNamedElement element;
     if (aClass != null) {
       return aClass;
     }
-    final int endIndex = fqn.indexOf("#");
+    final int endIndex = fqn.indexOf('#');
     if (endIndex == -1) return null;
     String className = fqn.substring(0, endIndex);
     if (className == null) return null;
     aClass = PsiManager.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
     if (aClass == null) return null;
     String memberName = fqn.substring(endIndex + 1);
-    element = aClass.findFieldByName(memberName, false);
+    PsiNamedElement element = aClass.findFieldByName(memberName, false);
     if (element != null) {
       return element;
     }
