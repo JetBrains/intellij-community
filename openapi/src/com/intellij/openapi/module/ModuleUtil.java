@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -42,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ModuleUtil {
-
+  public static final Key<Module> KEY_MODULE = new Key<Module>("Module");
   private ModuleUtil() {}
 
   public static String getModuleNameInReadAction(@NotNull final Module module) {
@@ -94,6 +95,7 @@ public class ModuleUtil {
   @Nullable
   public static Module findModuleForPsiElement(@NotNull PsiElement element) {
     if (!element.isValid()) return null;
+
     Project project = element.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (element instanceof PsiPackage) {
@@ -126,6 +128,10 @@ public class ModuleUtil {
     }
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile != null) {
+      if (containingFile.getUserData(KEY_MODULE) != null) {
+        return containingFile.getUserData(KEY_MODULE);
+      }
+
       VirtualFile virtualFile = containingFile.getVirtualFile();
       if (virtualFile == null) {
         PsiFile originalFile = containingFile.getOriginalFile();
@@ -137,7 +143,8 @@ public class ModuleUtil {
         return fileIndex.getModuleForFile(virtualFile);
       }
     }
-    return null;
+
+    return element.getUserData(KEY_MODULE);
   }
 
   public static void getDependencies(Module module, Set<Module> modules) {
@@ -176,6 +183,7 @@ public class ModuleUtil {
     return findResourceFileInScope(resourceName, project, GlobalSearchScope.projectScope(project));
   }
 
+  @Nullable
   public static VirtualFile findResourceFileInScope(final String resourceName,
                                                     final Project project,
                                                     final GlobalSearchScope scope) {
