@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -43,6 +42,9 @@ import java.io.IOException;
  */
 public class ProjectUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.ProjectUtil");
+
+  private ProjectUtil() {
+  }
 
   public static void createNewProject(Project projectToClose) {
     AddModuleWizard dialog = new AddModuleWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER);
@@ -115,10 +117,7 @@ public class ProjectUtil {
         public Exception compute() {
           try {
             final ModifiableModuleModel moduleModel = ModuleManager.getInstance(newProject).getModifiableModel();
-            final Module module = moduleBuilder.createModule(moduleModel);
-            if (module != null) {
-              moduleModel.commitAssertingNoCircularDependency();
-            }
+            moduleBuilder.createAndCommit(moduleModel);
             return null;
           }
           catch (Exception e) {
@@ -211,8 +210,7 @@ public class ProjectUtil {
     }
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    for (int i = 0; i < openProjects.length; i++) {
-      Project project = openProjects[i];
+    for (Project project : openProjects) {
       if (Comparing.equal(path, project.getProjectFilePath())) {
         return project;
       }
@@ -254,8 +252,7 @@ public class ProjectUtil {
 
   public static String mainModulePathByProjectPath(String path) {
     int dotIdx = path.lastIndexOf('.');
-    final String filePath = dotIdx >= 0 ? path.substring(0, dotIdx) + ModuleFileType.DOT_DEFAULT_EXTENSION : "";
-    return filePath;
+    return dotIdx >= 0 ? path.substring(0, dotIdx) + ModuleFileType.DOT_DEFAULT_EXTENSION : "";
   }
 
   public static String getInitialModuleRootPath(String projectFilePath) {
@@ -264,8 +261,7 @@ public class ProjectUtil {
 
   public static String getInitialModuleLocation(final String projectFilePath) {
     int dotIdx = projectFilePath.lastIndexOf('.');
-    final String filePath = dotIdx >= 0 ? projectFilePath.substring(0, dotIdx) + ModuleFileType.DOT_DEFAULT_EXTENSION : "";
-    return filePath;
+    return dotIdx >= 0 ? projectFilePath.substring(0, dotIdx) + ModuleFileType.DOT_DEFAULT_EXTENSION : "";
   }
 
 }

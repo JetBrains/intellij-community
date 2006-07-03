@@ -23,9 +23,12 @@ import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.startup.StartupManager;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,6 +71,7 @@ public abstract class ModuleBuilder  {
     return parent.replace(File.separatorChar, '/');
   }
 
+  @NotNull
   public Module createModule(ModifiableModuleModel moduleModel)
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     LOG.assertTrue(myName != null);
@@ -86,6 +90,21 @@ public abstract class ModuleBuilder  {
   public abstract void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException;
 
   public abstract ModuleType getModuleType();
+
+  @NotNull
+  public Module createAndCommit(ModifiableModuleModel moduleModel) throws InvalidDataException, ConfigurationException, IOException,
+                                                                          JDOMException, ModuleWithNameAlreadyExists,
+                                                                          ModuleCircularDependencyException {
+    final Module module = createModule(moduleModel);
+    moduleModel.commit();
+    StartupManager.getInstance(module.getProject()).registerPostStartupActivity(new Runnable() {
+
+      public void run() {
+        addSupport(module, ModuleRootManager.getInstance(module).getModifiableModel());
+      }
+    });
+    return module;
+  }
 
   public void addSupport(Module module, ModifiableRootModel rootModel) {
 

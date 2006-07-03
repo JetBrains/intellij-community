@@ -9,14 +9,12 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.LoadCancelledException;
 import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
-import com.intellij.openapi.roots.ModuleRootManager;
 
 /**
  * @author Eugene Zhuravlev
@@ -42,13 +40,7 @@ public class NewModuleAction extends AnAction {
         public Exception compute() {
           try {
             final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-            final Module module = moduleBuilder.createModule(moduleModel);
-            if (module != null) {
-              moduleModel.commitAssertingNoCircularDependency();
-            }
-            moduleBuilder.addSupport(module, ModuleRootManager.getInstance(module).getModifiableModel());
-
-
+            moduleBuilder.createAndCommit(moduleModel);
             return null;
           }
           catch (Exception e) {
