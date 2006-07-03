@@ -112,7 +112,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
     return constructor.newInstance(project, value, settings);
   }
 
-  protected boolean someChildContainsFile(final VirtualFile file) {
+  public boolean someChildContainsFile(final VirtualFile file) {
     Collection<AbstractTreeNode> kids = getChildren();
     for (final AbstractTreeNode kid : kids) {
       ProjectViewNode node = (ProjectViewNode)kid;

@@ -2,11 +2,13 @@ package com.intellij.codeInsight.problems;
 
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -19,20 +21,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
-import com.intellij.lang.annotation.HighlightSeverity;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -247,7 +248,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   public boolean hasProblemFilesBeneath(final ProjectViewNode scope) {
     return hasProblemFilesBeneath(new Condition<VirtualFile>() {
       public boolean value(final VirtualFile virtualFile) {
-        return scope.contains(virtualFile);
+        return scope.contains(virtualFile)
+               // in case of flattened packages, when package node a.b.c contains error file, node a.b might not.
+               && (scope.getValue() instanceof PsiElement && PsiUtil.getVirtualFile((PsiElement)scope.getValue()) == virtualFile || scope.someChildContainsFile(virtualFile));
       }
     });
   }
