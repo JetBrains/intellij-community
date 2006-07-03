@@ -40,7 +40,7 @@ public class NewModuleAction extends AnAction {
         public Exception compute() {
           try {
             final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-            moduleBuilder.createAndCommit(moduleModel);
+            moduleBuilder.createAndCommit(moduleModel, false);
             return null;
           }
           catch (Exception e) {

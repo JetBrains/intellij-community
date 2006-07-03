@@ -117,7 +117,7 @@ public class ProjectUtil {
         public Exception compute() {
           try {
             final ModifiableModuleModel moduleModel = ModuleManager.getInstance(newProject).getModifiableModel();
-            moduleBuilder.createAndCommit(moduleModel);
+            moduleBuilder.createAndCommit(moduleModel, true);
             return null;
           }
           catch (Exception e) {

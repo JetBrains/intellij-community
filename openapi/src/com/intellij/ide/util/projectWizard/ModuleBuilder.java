@@ -22,26 +22,28 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
-import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 
-public abstract class ModuleBuilder  {
+public abstract class ModuleBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
   private String myName;
   private String myModuleFilePath;
   @Nullable
   private AddSupportContext[] myAddSupportContexts;
 
-  @Nullable protected final String acceptParameter(String param) {
-    return param != null && param.length() > 0? param : null;
+  @Nullable
+  protected final String acceptParameter(String param) {
+    return param != null && param.length() > 0 ? param : null;
   }
 
   public String getName() {
@@ -92,24 +94,36 @@ public abstract class ModuleBuilder  {
   public abstract ModuleType getModuleType();
 
   @NotNull
-  public Module createAndCommit(ModifiableModuleModel moduleModel) throws InvalidDataException, ConfigurationException, IOException,
-                                                                          JDOMException, ModuleWithNameAlreadyExists,
-                                                                          ModuleCircularDependencyException {
+  public Module createAndCommit(ModifiableModuleModel moduleModel, boolean runFromProjectWizard) throws
+                                                                                                 InvalidDataException,
+                                                                                                 ConfigurationException,
+                                                                                                 IOException,
+                                                                                                 JDOMException,
+                                                                                                 ModuleWithNameAlreadyExists,
+                                                                                                 ModuleCircularDependencyException {
     final Module module = createModule(moduleModel);
     moduleModel.commit();
-    StartupManager.getInstance(module.getProject()).registerPostStartupActivity(new Runnable() {
+
+    final Runnable runnable = new Runnable() {
 
       public void run() {
-        addSupport(module, ModuleRootManager.getInstance(module).getModifiableModel());
+        addSupport(module);
       }
-    });
+    };
+    if (runFromProjectWizard) {
+      StartupManager.getInstance(module.getProject()).registerPostStartupActivity(runnable);
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable);
+    }
     return module;
   }
 
-  public void addSupport(Module module, ModifiableRootModel rootModel) {
+  public void addSupport(Module module) {
 
+    ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
     if (myAddSupportContexts != null) {
-      for (AddSupportContext supportContext: myAddSupportContexts) {
+      for (AddSupportContext supportContext : myAddSupportContexts) {
         if (supportContext.isAddSupport()) {
           supportContext.installSupport(module, rootModel);
         }
