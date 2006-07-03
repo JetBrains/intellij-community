@@ -806,9 +806,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     }
   }
 
+  @NotNull
   protected XmlText splitText(final XmlTextImpl childText, final int displayOffset) throws IncorrectOperationException{
     if(displayOffset == 0) return childText;
-    if(displayOffset >= childText.getValue().length()) return null;
+    if(displayOffset >= childText.getValue().length()) {
+      throw new IllegalArgumentException("Wrong offset: " + displayOffset + " text length: " + childText.getValue().length());
+    }
 
     final PomModel model = getProject().getModel();
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);

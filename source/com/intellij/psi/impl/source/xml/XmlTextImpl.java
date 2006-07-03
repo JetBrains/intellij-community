@@ -21,6 +21,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -39,12 +40,14 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     return "XmlText";
   }
 
+  @NotNull
   public XmlText split(int displayIndex) {
     try {
       return ((XmlTagImpl)getParentTag()).splitText(this, displayIndex);
     }
-    catch (IncorrectOperationException e) {}
-    return null;
+    catch (IncorrectOperationException e) {
+      throw new IllegalArgumentException(e);
+    }
   }
 
   public String getValue() {
