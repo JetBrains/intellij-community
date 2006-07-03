@@ -626,6 +626,23 @@ class RunConfigurable extends BaseConfigurable {
             return PopupStep.FINAL_CHOICE;
           }
 
+          public int getDefaultOptionIndex() {
+            final TreePath selectionPath = myTree.getSelectionPath();            
+            if (selectionPath != null){
+              DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+              final Object userObject = node.getUserObject();
+              ConfigurationType type = null;
+              if (userObject instanceof SingleConfigurationConfigurable){
+                final SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
+                type = configurable.getConfiguration().getType();
+              } else if (userObject instanceof ConfigurationType){
+                type = (ConfigurationType)userObject;
+              }
+              return ArrayUtil.find(configurationTypes, type);
+            }
+            return super.getDefaultOptionIndex();
+          }
+
           private ListPopupStep getSupStep(final ConfigurationType type) {
             final ConfigurationFactory[] factories = type.getConfigurationFactories();
             Arrays.sort(factories, new Comparator<ConfigurationFactory>() {
