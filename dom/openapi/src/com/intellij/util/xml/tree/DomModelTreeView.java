@@ -45,10 +45,6 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     this(rootElement, rootElement.getManager(), new DomModelTreeStructure(rootElement));
   }
 
-  public DomModelTreeView(@NotNull DomElement rootElement, boolean isRootVisible) {
-    this(rootElement, rootElement.getManager(), new DomModelTreeStructure(rootElement));
-  }
-
   protected DomModelTreeView(DomElement rootElement, DomManager manager, SimpleTreeStructure treeStructure) {
     myDomManager = manager;
     myRootElement = rootElement;
@@ -96,26 +92,27 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
       public void problemsAppeared(VirtualFile file) {
         if (isRightFile(file)) {
           queueUpdate();
-      }
+        }
       }
 
       public void problemsChanged(VirtualFile file) {
         if (isRightFile(file)) {
           queueUpdate();
-      }
+        }
       }
 
       public void problemsDisappeared(VirtualFile file) {
         if (isRightFile(file)) {
           queueUpdate();
+        }
       }
-      }
+
     }, this);
 
     myTree.setPopupGroup(getPopupActions(), DOM_MODEL_TREE_VIEW_POPUP);
   }
 
-  private boolean isRightFile(final VirtualFile file) {
+  protected boolean isRightFile(final VirtualFile file) {
     return file.equals(myRootElement.getRoot().getFile().getVirtualFile());
   }
 
