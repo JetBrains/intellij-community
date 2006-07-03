@@ -82,7 +82,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
     synchronized (PsiLock.LOCK) {
       if (parent == null) return 0;
       int offset = parent.getStartOffset();
-      for (TreeElement element1 = parent.firstChild; element1 != this; element1 = element1.getTreeNext()) {
+      for (TreeElement element1 = parent.firstChild; element1 != this; element1 = element1.next) {
         offset += element1.getTextLength();
       }
       return offset;
@@ -90,9 +90,9 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   }
 
   public final int getStartOffsetInParent() {
-    if (getTreeParent() == null) return -1;
+    if (parent == null) return -1;
     int offset = 0;
-    for (ASTNode child = getTreeParent().getFirstChildNode(); child != this; child = child.getTreeNext()) {
+    for (TreeElement child = parent.firstChild; child != this; child = child.next) {
       offset += child.getTextLength();
     }
     return offset;

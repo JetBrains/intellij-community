@@ -33,7 +33,7 @@ public class SourceUtil implements Constants {
       }
       else {
         int curOffset = offset;
-        for (ASTNode child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+        for (TreeElement child = (TreeElement)element.getFirstChildNode(); child != null; child = child.next) {
           curOffset = toBuffer(child, buffer, curOffset, skipTypes);
         }
         return curOffset;

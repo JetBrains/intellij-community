@@ -53,7 +53,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public void acceptChildren(PsiElementVisitor visitor) {
-    TreeElement childNode = getFirstChildNode();
+    TreeElement childNode = firstChild;
     while (childNode != null) {
       if (childNode instanceof ChameleonElement) {
         childNode = (TreeElement)childNode.getTransformedFirstOrSelf();
@@ -69,7 +69,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
       }
 
       psi.accept(visitor);
-      childNode = childNode.getTreeNext();
+      childNode = childNode.next;
     }
   }
 
