@@ -145,12 +145,17 @@ import java.util.HashSet;
   protected void setUpModule() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        myModule = createMainModule();
+        try {
+          myModule = createMainModule();
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
       }
     });
   }
 
-  protected Module createMainModule() {
+  protected Module createMainModule() throws IOException {
     return createModule(myProject.getName());
   }
 

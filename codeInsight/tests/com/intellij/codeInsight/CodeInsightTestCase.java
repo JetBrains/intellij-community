@@ -72,9 +72,10 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final VirtualFile[] vFiles = new VirtualFile[files.length];
     for (int i = 0; i < files.length; i++) {
       String path = files[i];
-      VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + path.replace(File.separatorChar, '/'));
+      final String fullPath = getTestDataPath() + path.replace(File.separatorChar, '/');
+      VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath);
       vFiles[i] = vFile;
-      assertNotNull("file " + path + " not found", vFile);
+      assertNotNull("file " + fullPath + " not found", vFile);
     }
 
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
