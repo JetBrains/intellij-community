@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import com.intellij.openapi.roots.ModuleRootManager;
 
 /**
  * @author Eugene Zhuravlev
@@ -45,6 +46,9 @@ public class NewModuleAction extends AnAction {
             if (module != null) {
               moduleModel.commitAssertingNoCircularDependency();
             }
+            moduleBuilder.addSupport(module, ModuleRootManager.getInstance(module).getModifiableModel());
+
+
             return null;
           }
           catch (Exception e) {

@@ -22,10 +22,13 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 public class WizardContext {
   /**
    * a project where the module should be added, can be null => the wizard creates a new project
    */
+  @Nullable
   private final Project myProject;
   private String myProjectFileDirectory;
   private String myProjectName;
@@ -44,6 +47,7 @@ public class WizardContext {
     }
   }
 
+  @Nullable
   public Project getProject() {
     return myProject;
   }

@@ -34,6 +34,8 @@ public abstract class ModuleBuilder  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
   private String myName;
   private String myModuleFilePath;
+  @Nullable
+  private AddSupportContext[] myAddSupportContexts;
 
   @Nullable protected final String acceptParameter(String param) {
     return param != null && param.length() > 0? param : null;
@@ -76,6 +78,7 @@ public abstract class ModuleBuilder  {
     final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
     setupRootModel(modifiableModel);
     modifiableModel.commit();
+
     module.setSavePathsRelative(true); // default setting
     return module;
   }
@@ -83,4 +86,23 @@ public abstract class ModuleBuilder  {
   public abstract void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException;
 
   public abstract ModuleType getModuleType();
+
+  public void addSupport(Module module, ModifiableRootModel rootModel) {
+
+    if (myAddSupportContexts != null) {
+      for (AddSupportContext supportContext: myAddSupportContexts) {
+        if (supportContext.isAddSupport()) {
+          supportContext.installSupport(module, rootModel);
+        }
+      }
+    }
+  }
+
+  public AddSupportContext[] getAddSupportContexts() {
+    return myAddSupportContexts;
+  }
+
+  public void setAddSupportContexts(final AddSupportContext[] addSupportContexts) {
+    myAddSupportContexts = addSupportContexts;
+  }
 }

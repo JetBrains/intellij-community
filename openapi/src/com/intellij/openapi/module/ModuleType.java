@@ -15,16 +15,11 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.util.List;
-import java.util.ArrayList;
 
 public abstract class ModuleType<T extends ModuleBuilder> {
   // predefined module types
@@ -34,7 +29,6 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   public static ModuleType J2EE_APPLICATION;
 
   private final String myId;
-  private final List<ModuleWizardStepsProvider<T>> myWizardStepProviders = new ArrayList<ModuleWizardStepsProvider<T>>();
 
   protected ModuleType(@NonNls String id) {
     myId = id;
@@ -48,15 +42,15 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   public abstract Icon getNodeIcon(boolean isOpened);
 
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, T moduleBuilder, ModulesProvider modulesProvider) {
-    ModuleWizardStep[] result = ModuleWizardStep.EMPTY_ARRAY;
-    for (ModuleWizardStepsProvider<T> provider: myWizardStepProviders) {
-      ArrayUtil.mergeArrays(result, provider.createWizardSteps(wizardContext, moduleBuilder, modulesProvider), ModuleWizardStep.class);
-    }
-    return result;
+    return ModuleWizardStep.EMPTY_ARRAY;
   }
 
-  public void registerWizardStepsProvider(ModuleWizardStepsProvider<T> provider) {
-    myWizardStepProviders.add(provider);
+  public ModuleWizardStep[] createAddSupportSteps(WizardContext wizardContext,
+                                                  T moduleBuilder,
+                                                  ModulesProvider modulesProvider,
+                                                  Icon icon) {
+    
+    return ProjectWizardStepFactory.getInstance().createAddSupportSteps(wizardContext, moduleBuilder, modulesProvider, icon);
   }
 
   public final String getId() {

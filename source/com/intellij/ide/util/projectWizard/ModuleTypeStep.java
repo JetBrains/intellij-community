@@ -124,7 +124,7 @@ public class ModuleTypeStep extends ModuleWizardStep {
     if (createNewProject) {
       final JLabel moduleTypeLabel = new JLabel(IdeBundle.message("label.select.module.type"));
       moduleTypeLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-      myPanel.add(moduleTypeLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 10, 0, 10), 0, 0));
+      myPanel.add(moduleTypeLabel, LABEL_CONSTRAINT);
     }
     else {
       myPanel.add(myRbCreateNewModule, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 10, 8, 10), 0, 0));

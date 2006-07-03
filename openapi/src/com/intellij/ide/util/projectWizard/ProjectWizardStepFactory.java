@@ -18,10 +18,12 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.module.ModuleType;
 
 import javax.swing.*;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A factory for creating some commonly used project wizards steps
@@ -39,4 +41,13 @@ public abstract class ProjectWizardStepFactory {
   public abstract ModuleWizardStep createSourcePathsStep(ModuleWizardStep nameAndLocationStep, JavaModuleBuilder builder, Icon icon, @NonNls String helpId);
 
   public abstract ModuleWizardStep createProjectJdkStep(WizardContext context, JavaModuleBuilder builder, Computable<Boolean> isVisibile, Icon icon, @NonNls String helpId);
+
+  public abstract void registerAddSupportProvider(final ModuleType moduleType, AddSupportStepsProvider provider);
+
+  @NotNull
+  public abstract AddSupportStepsProvider[] getAddSupportProviders(ModuleType moduleType);
+
+  public abstract ModuleWizardStep[] createAddSupportSteps(WizardContext wizardContext,
+                                                  ModuleBuilder moduleBuilder,
+                                                  ModulesProvider modulesProvider, final Icon icon);
 }
