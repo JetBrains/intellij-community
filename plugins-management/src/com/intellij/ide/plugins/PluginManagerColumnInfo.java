@@ -312,7 +312,11 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
           setHorizontalAlignment( SwingConstants.CENTER );
           if( descriptor instanceof IdeaPluginDescriptorImpl )
           {
-              if( PluginsTableModel.hasNewerVersion(((IdeaPluginDescriptorImpl)descriptor).getPluginId() ))
+              IdeaPluginDescriptorImpl impl = (IdeaPluginDescriptorImpl)descriptor;
+              if( impl.isDeleted())
+                setIcon( null );
+              else
+              if( PluginsTableModel.hasNewerVersion( impl.getPluginId() ))
                 setIcon(IconLoader.getIcon("/nodes/pluginobsolete.png"));
               else
                 setIcon(IconLoader.getIcon("/nodes/plugin.png"));
@@ -335,8 +339,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
 
                 if(((IdeaPluginDescriptorImpl)descriptor).isDeleted())
                   setForeground( Color.lightGray );
-                else
-                  setBackground( LIGHT_BLUE_COLOR );
+                setBackground( LIGHT_BLUE_COLOR );
               }
               else
               {
