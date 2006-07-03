@@ -243,12 +243,14 @@ public class GridInsertLocation extends GridDropLocation {
   }
 
   private String getInsertFeedbackTooltip() {
+    int displayRow = myRow + getContainer().getGridLayoutManager().getCellIndexBase();
+    int displayColumn = myColumn + getContainer().getGridLayoutManager().getCellIndexBase();
     String displayName = getContainer().getDisplayName();
     switch(myMode) {
-      case ColumnBefore: return UIDesignerBundle.message("insert.feedback.before.col", displayName, myRow, myColumn);
-      case ColumnAfter:  return UIDesignerBundle.message("insert.feedback.after.col", displayName, myRow, myColumn);
-      case RowBefore:    return UIDesignerBundle.message("insert.feedback.before.row", displayName, myColumn, myRow);
-      case RowAfter:     return UIDesignerBundle.message("insert.feedback.after.row", displayName, myColumn, myRow);
+      case ColumnBefore: return UIDesignerBundle.message("insert.feedback.before.col", displayName, displayRow, displayColumn);
+      case ColumnAfter:  return UIDesignerBundle.message("insert.feedback.after.col", displayName, displayRow, displayColumn);
+      case RowBefore:    return UIDesignerBundle.message("insert.feedback.before.row", displayName, displayColumn, displayRow);
+      case RowAfter:     return UIDesignerBundle.message("insert.feedback.after.row", displayName, displayColumn, displayRow);
     }
     return null;
   }

@@ -83,6 +83,10 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
     return false;
   }
 
+  public int getCellIndexBase() {
+    return 0;
+  }
+
   /**
    * @return the number of deleted rows or columns
    */

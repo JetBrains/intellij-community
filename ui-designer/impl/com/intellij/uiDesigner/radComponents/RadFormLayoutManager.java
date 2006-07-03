@@ -548,6 +548,11 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     return cellIndex % 2 == 1 && GridChangeUtil.canDeleteCell(grid, cellIndex, isRow, false);
   }
 
+  @Override
+  public int getCellIndexBase() {
+    return 1;
+  }
+
   /**
    * @return index where new column or row was actually inserted (0-based)
    */
@@ -625,8 +630,8 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   public String getCellResizeTooltip(RadContainer container, boolean isRow, int cell, int newSize) {
     final String size = getUpdatedSize(container, isRow, cell, newSize).toString();
     return isRow
-           ? UIDesignerBundle.message("tooltip.resize.row", cell, size)
-           : UIDesignerBundle.message("tooltip.resize.column", cell, size);
+           ? UIDesignerBundle.message("tooltip.resize.row", cell+getCellIndexBase(), size)
+           : UIDesignerBundle.message("tooltip.resize.column", cell+getCellIndexBase(), size);
   }
 
   @Override
