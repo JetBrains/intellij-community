@@ -6,8 +6,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -25,15 +27,7 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
   }
 
   public String getText(String varName) {
-    switch(myKind) {
-      case CLASS:
-        return QuickFixBundle.message("create.class.from.usage.class.text", varName);
-      case INTERFACE:
-        return QuickFixBundle.message("create.interface.from.usage.text", varName);
-      case ENUM:
-        return QuickFixBundle.message("create.enum.from.usage.text", varName);
-    }
-    return null;
+    return QuickFixBundle.message("create.class.from.usage.text", StringUtil.capitalize(myKind.getDescription()), varName);
   }
 
   protected void invokeImpl(PsiClass targetClass) {
@@ -135,7 +129,7 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
     return false;
   }
 
-  private boolean checkClassName(String name) {
+  private static boolean checkClassName(String name) {
     return Character.isUpperCase(name.charAt(0));
   }
 
@@ -152,6 +146,7 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
     return false;
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.class.from.usage.family");
   }
