@@ -36,11 +36,12 @@ public class RequiredLibrariesInfo {
   }
 
   public void addLibraryInfoForRepository(@NonNls String expectedJarName,
+                                          @Nullable @NonNls String version,
                              @Nullable @NonNls String downloadingUrl,
                              @Nullable String repositoryUrl,
                              @NonNls String... requiredClasses) {
 
-    myLibraryInfos.add(new LibraryInfoImpl(expectedJarName, downloadingUrl, repositoryUrl, requiredClasses));
+    myLibraryInfos.add(new LibraryInfoImpl(expectedJarName, version, downloadingUrl, repositoryUrl, requiredClasses));
   }
 
   public @Nullable RequiredClassesNotFoundInfo checkLibraries(VirtualFile[] libraryFiles) {

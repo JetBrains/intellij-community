@@ -118,7 +118,8 @@ public class LibraryDownloader {
   }
 
   private VirtualFile chooseDirectoryForLibraries() {
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.getDirectoryChooserDescriptor(J2EEBundle.message("dialog.directory.for.libraries.title"));
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    descriptor.setTitle(J2EEBundle.message("dialog.directory.for.libraries.title"));
 
     final VirtualFile[] files;
     if (myProject != null) {
@@ -136,7 +137,8 @@ public class LibraryDownloader {
 
     final File ioDir = VfsUtil.virtualToIoFile(dir);
     for (Pair<LibraryInfo, File> pair : downloadedFiles) {
-      final File toFile = generateName(pair.getFirst().getExpectedJarName(), ioDir);
+      final LibraryInfo info = pair.getFirst();
+      final File toFile = generateName(info.getExpectedJarName(), info.getVersion(), ioDir);
       FileUtil.rename(pair.getSecond(), toFile);
       files.add(new WriteAction<VirtualFile>() {
         protected void run(final Result<VirtualFile> result) {
@@ -149,14 +151,14 @@ public class LibraryDownloader {
     return files.toArray(new VirtualFile[files.size()]);
   }
 
-  private static File generateName(final String baseName, final File dir) {
+  private static File generateName(final String baseName, final String version, final File dir) {
     int index = baseName.lastIndexOf('.');
-    String prefix = index != -1 ? baseName.substring(0, index) : baseName;
+    String prefix = (index != -1 ? baseName.substring(0, index) : baseName) + "-" + version;
     String suffix = index != -1 ? baseName.substring(index) : "";
-    File file = new File(dir, baseName);
+    File file = new File(dir, prefix + suffix);
     int count = 1;
     while (file.exists()) {
-      file = new File(dir, prefix + count++ + suffix);
+      file = new File(dir, prefix + "_" + count++ + suffix);
     }
     return file;
   }
@@ -188,12 +190,12 @@ public class LibraryDownloader {
         throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
       }
 
-      final int size = connection.getContentLength();
-      indicator.setIndeterminate(size == -1);
-
+      indicator.setIndeterminate(true);
       input = UrlConnectionUtil.getConnectionInputStreamWithException(connection, indicator);
       output = new BufferedOutputStream(new FileOutputStream(tempFile));
 
+      final int size = connection.getContentLength();
+      indicator.setIndeterminate(size == -1);
       int len;
       final byte[] buf = new byte[1024];
       int count = 0;
