@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * User: anna
@@ -52,7 +53,14 @@ public class JdksConfigurable implements NamedConfigurable<ProjectJdksModel> {
   }
 
   public JComponent createComponent() {
-    return new JPanel();
+    JPanel panel = new JPanel(new GridBagLayout());
+    panel.setBorder(BorderFactory.createEtchedBorder());
+    JLabel label = new JLabel();
+    @NonNls String opentTag = "<html>";
+    @NonNls String closeTag = "</html>";
+    label.setText(opentTag + ProjectBundle.message("project.roots.jdks.node.text") + closeTag);
+    panel.add(label, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(8,8,8,8), 0, 0));
+    return panel;
   }
 
   public boolean isModified() {
