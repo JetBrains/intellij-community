@@ -11,6 +11,7 @@ import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.apache.oro.text.regex.Perl5Matcher;
@@ -37,7 +38,7 @@ public class CompletionVariant {
   private final List<CompletionVariantItem> myCompletionsList = new ArrayList<CompletionVariantItem>();
   private final Set<Class> myScopeClassExceptions = new HashSet<Class>();
   private InsertHandler myInsertHandler = null;
-  private final Map<Object, Serializable> myItemProperties = new com.intellij.util.containers.HashMap<Object, Serializable>();
+  private final Map<Object, Serializable> myItemProperties = new HashMap<Object, Serializable>();
   private boolean caseInsensitive;
 
   public CompletionVariant(){}
@@ -336,9 +337,11 @@ public class CompletionVariant {
       if (results != null) {
         for (CompletionElement element : results) {
           final LookupItem lookupItem = addLookupItem(set, item, element.getElement(), prefix);
-          lookupItem.setAttribute(LookupItem.SUBSTITUTOR, element.getSubstitutor());
-          if (element.getQualifier() != null){
-            CompletionUtil.setQualifierType(lookupItem, element.getQualifier());
+          if (lookupItem != null) {
+            lookupItem.setAttribute(LookupItem.SUBSTITUTOR, element.getSubstitutor());
+            if (element.getQualifier() != null){
+              CompletionUtil.setQualifierType(lookupItem, element.getQualifier());
+            }
           }
         }
       }
