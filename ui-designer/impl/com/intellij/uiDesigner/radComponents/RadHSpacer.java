@@ -1,7 +1,6 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.uiDesigner.radComponents.RadAtomicComponent;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.HSpacer;
 
@@ -12,6 +11,10 @@ import com.intellij.uiDesigner.HSpacer;
 public final class RadHSpacer extends RadAtomicComponent {
   public RadHSpacer(final Module module, final String id) {
     super(module, HSpacer.class, id);
+  }
+
+  public RadHSpacer(final Module module, final Class aClass, final String id) {
+    super(module, aClass, id);
   }
 
   public void write(final XmlWriter writer) {
