@@ -682,6 +682,17 @@ public abstract class RadComponent implements IComponent {
       container.setLayoutManager(manager);
       result = container;
     }
+    else if (component instanceof Box.Filler) {
+      Box.Filler filler = (Box.Filler) component;
+      if (filler.getMaximumSize().height == Short.MAX_VALUE) {
+        result = new RadVSpacer(null, id);
+        result.getConstraints().setVSizePolicy(GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_WANT_GROW);
+      }
+      else {
+        result = new RadHSpacer(null, id);
+        result.getConstraints().setHSizePolicy(GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_WANT_GROW);
+      }
+    }
     else {
       final Class<? extends RadComponent> radClass = InsertComponentProcessor.getRadComponentClass(componentClass);
       if (radClass == null) {
