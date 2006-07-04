@@ -244,7 +244,7 @@ public class SnapShooterDaemon implements Runnable {
         rootContainer = createFormSnapshot((JComponent) component);
       }
       catch (Exception ex) {
-        System.out.println(ex.toString());
+        ex.printStackTrace();
         return "E:" + ex.getMessage() + "\n";
       }
       rootContainer.write(xmlWriter);
