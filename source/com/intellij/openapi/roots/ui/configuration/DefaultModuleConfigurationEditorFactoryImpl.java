@@ -7,6 +7,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -40,6 +41,11 @@ public class DefaultModuleConfigurationEditorFactoryImpl extends DefaultModuleCo
     return new JavadocEditor(state.getProject(), state.getRootModel());
   }
 
+  public ModuleConfigurationEditor createOutputEditor(ModuleConfigurationState state) {
+    return new BuildElementsEditor(state.getProject(), state.getRootModel());
+  }
+
+  @NotNull
   public String getComponentName() {
     return "DefaultModuleConfigurationEditorFactory";
   }

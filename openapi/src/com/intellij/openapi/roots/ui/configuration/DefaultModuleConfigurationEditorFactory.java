@@ -33,6 +33,8 @@ public abstract class DefaultModuleConfigurationEditorFactory implements Applica
 
   public abstract ModuleConfigurationEditor createJavadocEditor(ModuleConfigurationState state);
 
+  public abstract ModuleConfigurationEditor createOutputEditor(ModuleConfigurationState state);
+
   public static DefaultModuleConfigurationEditorFactory getInstance() {
     return ApplicationManager.getApplication().getComponent(DefaultModuleConfigurationEditorFactory.class);
   }
