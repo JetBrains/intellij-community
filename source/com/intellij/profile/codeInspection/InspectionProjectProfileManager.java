@@ -54,12 +54,17 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     return getInspectionProfile(psiFile).getName();
   }
 
-  public InspectionProfile getInspectionProfile(@NotNull final PsiElement psiElement){
+  public @NotNull InspectionProfile getInspectionProfile(@NotNull final PsiElement psiElement){
     final PsiFile psiFile = psiElement.getContainingFile();
     LOG.assertTrue(psiFile != null);
 
     final String profile = super.getProfileName(psiFile);
-    if (profile != null) return (InspectionProfileImpl)getProfile(profile);
+    if (profile != null) {
+      final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)getProfile(profile);
+      if (inspectionProfile != null) { //to avoid problems with inconsistent ipr files
+        return inspectionProfile;
+      }
+    }
     return (InspectionProfileImpl)myApplicationProfileManager.getRootProfile();
   }
 
@@ -88,6 +93,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     profileWrapper.cleanup(myProject);
   }
 
+  @NotNull
   @NonNls
   public String getComponentName() {
     return "InspectionProjectProfileManager";
