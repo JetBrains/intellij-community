@@ -32,11 +32,14 @@ public class AntUsagesProvider implements FindUsagesProvider {
 
   @NotNull
   public String getDescriptiveName(PsiElement element) {
-    return ((AntStructuredElement)element).getName();
+    final AntStructuredElement se = (AntStructuredElement)element;
+    final String name = se.getName();
+    if (name != null) return name;
+    return se.getSourceElement().getName();
   }
 
   @NotNull
   public String getNodeText(PsiElement element, boolean useFullName) {
-    return ((AntStructuredElement)element).getName();
+    return getDescriptiveName(element);
   }
 }
