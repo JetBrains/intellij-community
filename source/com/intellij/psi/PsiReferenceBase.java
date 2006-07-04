@@ -17,7 +17,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
@@ -67,7 +66,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   public String getCanonicalText() {
-    return StringUtil.stripQuotesAroundValue(myElement.getText());
+    return getValue();
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
