@@ -25,10 +25,13 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
+import com.sun.java.swing.SwingUtilities2;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -449,29 +452,46 @@ public class Messages {
         container.add(iconLabel, BorderLayout.NORTH);
         panel.add(container, BorderLayout.WEST);
       }
-
       if (myMessage != null) {
-        JTextPane messagePane = new JTextPane();
-        messagePane.setBackground(panel.getBackground());
-          messagePane.setText(myMessage);
-        messagePane.setEditable(false);
-        messagePane.setCaretPosition(0);
-        messagePane.setFont(new JLabel().getFont());
-        final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        final Dimension textSize = messagePane.getPreferredSize();
-        if (textSize.width > screenSize.width /2 || textSize.height > screenSize.height / 2) {
+        JLabel label = new JLabel();
+        final JTextPane messageComponent = new JTextPane();
+        messageComponent.setFont(label.getFont());
+        messageComponent.setBackground(label.getBackground());
+        messageComponent.setForeground(label.getForeground());
+        if (BasicHTML.isHTMLString(myMessage)) {
+          final HTMLEditorKit editorKit = new HTMLEditorKit();
+          editorKit.getStyleSheet().addRule(SwingUtilities2.displayPropertiesToCSS(label.getFont(), label.getForeground()));
+          messageComponent.setEditorKit(editorKit);
+          messageComponent.setContentType("text/html");
+        }
+        messageComponent.setText(myMessage);
+        messageComponent.setEditable(false);
+        messageComponent.setCaretPosition(0);
 
-          final JScrollPane pane = ScrollPaneFactory.createScrollPane(messagePane);
+        final Dimension screenSize = messageComponent.getToolkit().getScreenSize();
+        final Dimension textSize = messageComponent.getPreferredSize();
+        if (textSize.width > screenSize.width * 4 / 5 || textSize.height > screenSize.height / 2) {
+          final JScrollPane pane = ScrollPaneFactory.createScrollPane(messageComponent);
           pane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
           pane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
           pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
-          final Dimension preferredSize = new Dimension(Math.min(textSize.width, screenSize.width/2), Math.min(textSize.height, screenSize.height/2));
+          final int scrollSize = (int)new JScrollBar(JScrollBar.VERTICAL).getPreferredSize().getWidth();
+          final Dimension preferredSize =
+            new Dimension(Math.min(textSize.width, screenSize.width * 4 / 5) + scrollSize, Math.min(textSize.height, screenSize.height/2) + scrollSize);
           pane.setPreferredSize(preferredSize);
           panel.add(pane, BorderLayout.CENTER);
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              final Dimension textSize = messageComponent.getPreferredSize();
+              final Dimension preferredSize = new Dimension(Math.min(textSize.width, screenSize.width * 4 / 5) + scrollSize,
+                                                            Math.min(textSize.height, screenSize.height / 2) + scrollSize);
+              pane.setPreferredSize(preferredSize);
+              SwingUtilities.getWindowAncestor(pane).pack();
+            }
+          });
         }
         else {
-          panel.add(messagePane, BorderLayout.CENTER);
+          panel.add(messageComponent, BorderLayout.CENTER);
         }
       }
       return panel;
