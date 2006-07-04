@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.meta;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Created by IntelliJ IDEA.
  * User: ik
@@ -23,6 +25,7 @@ package com.intellij.psi.meta;
  * To change this template use Options | File Templates.
  */
 public interface PsiMetaOwner{
+  @Nullable
   PsiMetaData getMetaData();
   boolean isMetaEnough();
 }
