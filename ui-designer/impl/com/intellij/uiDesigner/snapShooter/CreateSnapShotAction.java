@@ -27,6 +27,8 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -177,12 +179,25 @@ public class CreateSnapShotAction extends AnAction {
     final MyDialog dlg = new MyDialog(project, client, dir);
     dlg.show();
     if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      int id = dlg.getSelectedComponentId();
+      final int id = dlg.getSelectedComponentId();
+      final Ref<Object> result = new Ref<Object>();
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          try {
+            result.set(client.createSnapshot(id));
+          }
+          catch (Exception ex) {
+            result.set(ex);
+          }
+        }
+      }, UIDesignerBundle.message("progress.creating.snapshot"), false, project);
+
       String snapshot = null;
-      try {
-        snapshot = client.createSnapshot(id);
+      if (result.get() instanceof String) {
+        snapshot = (String) result.get();
       }
-      catch (Exception ex) {
+      else {
+        Exception ex = (Exception) result.get();
         Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.create.error", ex.getMessage()),
                                    UIDesignerBundle.message("snapshot.title"), Messages.getErrorIcon());
       }
@@ -392,14 +407,27 @@ public class CreateSnapShotAction extends AnAction {
       }
     }
 
-    private boolean checkUnknownLayoutManagers(Project project) {
-      Set<String> layoutManagerClasses = new TreeSet<String>();
-      SnapShotRemoteComponent rc = (SnapShotRemoteComponent) myComponentTree.getSelectionPath().getLastPathComponent();
+    private boolean checkUnknownLayoutManagers(final Project project) {
+      final Set<String> layoutManagerClasses = new TreeSet<String>();
+      final SnapShotRemoteComponent rc = (SnapShotRemoteComponent) myComponentTree.getSelectionPath().getLastPathComponent();
       assert rc != null;
-      try {
-        collectUnknownLayoutManagerClasses(project, rc, layoutManagerClasses);
+      final Ref<Exception> err = new Ref<Exception>();
+      Runnable runnable = new Runnable() {
+        public void run() {
+          try {
+            collectUnknownLayoutManagerClasses(project, rc, layoutManagerClasses);
+          }
+          catch (IOException e) {
+            err.set(e);
+          }
+        }
+      };
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable,
+                                                                             UIDesignerBundle.message("progress.validating.layout.managers"),
+                                                                             false, project)) {
+        return false;
       }
-      catch (IOException e) {
+      if (!err.isNull()) {
         Messages.showErrorDialog(myRootPanel, UIDesignerBundle.message("snapshot.connection.broken"), UIDesignerBundle.message("snapshot.title"));
         return false;
       }
