@@ -5,12 +5,14 @@
 package com.intellij.util.xml.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.util.xml.tree.DomModelTreeView;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.DomElementsNavigationManager;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.idea.ActionsBundle;
 
 /**
  * User: Sergey.Vasiliev
@@ -31,6 +33,7 @@ public class GotoDomElementDeclarationAction extends BaseDomTreeAction {
   }
 
   public void update(AnActionEvent e, DomModelTreeView treeView) {
-     e.getPresentation().setText("Go to declaration");
+    e.getPresentation().setVisible(treeView.getTree().getSelectedNode() instanceof BaseDomElementNode);
+    e.getPresentation().setText(ActionsBundle.message("action.EditSource.text"));
   }
 }

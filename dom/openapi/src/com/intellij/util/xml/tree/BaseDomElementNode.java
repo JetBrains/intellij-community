@@ -171,7 +171,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
   public String getNodeName() {
     final String name = myDomElement.getPresentation().getElementName();
-    return name != null ? name : getPropertyName();
+    return name != null && name.trim().length() > 0 ? name : getPropertyName();
   }
 
   public String getTagName() {

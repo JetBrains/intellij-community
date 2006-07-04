@@ -6,6 +6,7 @@ package com.intellij.util.xml.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -18,7 +19,6 @@ import com.intellij.util.xml.tree.DomModelTreeView;
  * User: Sergey.Vasiliev
  */
 public class DeleteDomElement extends BaseDomTreeAction {
-
 
   public DeleteDomElement() {
   }
@@ -48,20 +48,22 @@ public class DeleteDomElement extends BaseDomTreeAction {
 
     boolean enabled = false;
     if (selectedNode instanceof BaseDomElementNode) {
-      if (((BaseDomElementNode)selectedNode).getDomElement().getXmlElement() != null) {
+      final DomElement domElement = ((BaseDomElementNode)selectedNode).getDomElement();
+      if (domElement.getXmlElement() != null && !domElement.equals(domElement.getRoot().getRootElement())) {
         enabled = true;
       }
     }
 
     e.getPresentation().setEnabled(enabled);
 
+    final String removeString = ApplicationBundle.message("action.remove");
     if (enabled) {
       final ElementPresentation presentation = ((BaseDomElementNode)selectedNode).getDomElement().getPresentation();
-      e.getPresentation().setText(
-        "Delete " + presentation.getTypeName() + (presentation.getElementName() == null ? "" : ": " + presentation.getElementName()));
+
+      e.getPresentation().setText(removeString + " " +presentation.getTypeName() + (presentation.getElementName() == null ? "" : ": " + presentation.getElementName()));
     }
     else {
-      e.getPresentation().setText("Delete");
+      e.getPresentation().setText(removeString);
     }
 
     e.getPresentation().setIcon(IconLoader.getIcon("/general/remove.png"));

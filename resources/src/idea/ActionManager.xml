@@ -180,6 +180,7 @@
       <action id="GenerateSuperMethodCall" class="com.intellij.codeInsight.generation.actions.GenerateSuperMethodCallAction"/>
       <action id="GuiDesigner.GenerateMain" class="com.intellij.uiDesigner.actions.GenerateMainAction"/>
       <reference ref="JavaeeEditorGenerateGroup"/>
+      <action id="Faces.Generate" class="com.intellij.jsf.ui.actions.FacesElementGenerateActionGroup" text="Generate"/>
     </group>
 
     <action id="NextDiff" class="com.intellij.openapi.diff.actions.NextDiffAction" icon="/actions/moveDown.png"/>
@@ -1490,6 +1491,8 @@
     </group>
 
     <!-- ***** java server faces actions *************************************** -->
+    <action id="Faces.Create.Model.Element" class="com.intellij.jsf.ui.actions.CreateFacesElementAction"
+            text="Generate" use-shortcut-of="Generate"/>
 
      <!-- ***** yFiles actions *************************************** -->
     <action id="Graph.ZoomIn" class="com.intellij.javaee.diagram.y.actions.ZoomInAction" text="Zoom In">
