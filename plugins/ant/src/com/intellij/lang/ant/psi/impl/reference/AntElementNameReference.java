@@ -45,10 +45,10 @@ public class AntElementNameReference extends AntGenericReference {
     }
     else {
       AntTask task = (AntTask)element;
-      if (task.isMacroDefined() || task.isPresetDefined()) {
+      if (task.isMacroDefined() || task.isPresetDefined() || task.isTypeDefined()) {
         final XmlAttribute attr = getAttribute();
         if (attr == null) {
-          // renaming macrodef or presetdef itself
+          // renaming macrodef, presetdef or typedef/taskdef itself
           task.getSourceElement().setName(newElementName);
         }
         else {
