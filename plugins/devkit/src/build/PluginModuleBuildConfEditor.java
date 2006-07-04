@@ -25,17 +25,16 @@ import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 
 /**
@@ -49,8 +48,6 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
 
   private TextFieldWithBrowseButton myManifest = new TextFieldWithBrowseButton();
   private JCheckBox myUseUserManifest = new JCheckBox(DevKitBundle.message("manifest.use.user.defined"));
-
-  private boolean myModified = false;
 
   private PluginModuleBuildProperties myBuildProperties;
 
@@ -66,22 +63,12 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
 
   public JComponent createComponent() {
     myPluginXML.addActionListener(new BrowseFilesListener(myPluginXML.getTextField(), DevKitBundle.message("deployment.directory.location", META_INF), DevKitBundle.message("saved.message.common", META_INF + File.separator + PLUGIN_XML), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR));
-    myPluginXML.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
-        myModified = !myPluginXML.getText().equals(myBuildProperties.getPluginXmlPath());
-      }
-    });
     myManifest.addActionListener(new BrowseFilesListener(myManifest.getTextField(), DevKitBundle.message("deployment.view.select", MANIFEST_MF), DevKitBundle.message("manifest.selection", MANIFEST_MF), BrowseFilesListener.SINGLE_FILE_DESCRIPTOR));
-    myManifest.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
-        myModified = !myManifest.getText().equals(myBuildProperties.getManifestPath());
-      }
-    });
     myManifest.setEnabled(myBuildProperties.isUseUserManifest());
-    myUseUserManifest.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
+    myUseUserManifest.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
         final boolean selected = myUseUserManifest.isSelected();
-        myModified = (myBuildProperties.isUseUserManifest() != selected);
+
         myManifest.setEnabled(selected);
       }
     });
@@ -102,7 +89,14 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   }
 
   public boolean isModified() {
-    return myModified;
+    final String pluginXmlPath = new File(myBuildProperties.getPluginXmlPath()).getParentFile().getParent(); //parent for meta-inf
+    boolean modified = !Comparing.strEqual(myPluginXML.getText(), pluginXmlPath);
+    final boolean selected = myUseUserManifest.isSelected();
+    modified |= myBuildProperties.isUseUserManifest() != selected;
+    if (selected) {
+      modified |= !Comparing.strEqual(myManifest.getText(), myBuildProperties.getManifestPath());
+    }
+    return modified;
   }
 
   public void apply() throws ConfigurationException {
@@ -130,14 +124,12 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     myBuildProperties.setPluginXMLUrl(newPluginPath);
     myBuildProperties.setManifestUrl(myManifest.getText());
     myBuildProperties.setUseUserManifest(myUseUserManifest.isSelected());
-    myModified = false;
   }
 
   public void reset() {
     myPluginXML.setText(myBuildProperties.getPluginXmlPath().substring(0, myBuildProperties.getPluginXmlPath().length() - META_INF.length() - PLUGIN_XML.length() - 2));
     myManifest.setText(myBuildProperties.getManifestPath());
     myUseUserManifest.setSelected(myBuildProperties.isUseUserManifest());
-    myModified = false;
   }
 
   public void disposeUIResources() {}
