@@ -52,22 +52,10 @@ public class RadBoxLayoutManager extends RadGridLayoutManager {
     container.setLayout(new GridLayoutManager(rowCount, colCount));
     if (!hasFiller) {
       if (myHorizontal) {
-        RadHSpacer spacer = new RadHSpacer(null, context.newId());
-        spacer.getConstraints().setColumn(colCount-1);
-        spacer.getConstraints().setHSizePolicy(GridConstraints.SIZEPOLICY_CAN_SHRINK |
-                                               GridConstraints.SIZEPOLICY_CAN_GROW |
-                                               GridConstraints.SIZEPOLICY_WANT_GROW);
-        spacer.getConstraints().setFill(GridConstraints.FILL_HORIZONTAL);
-        container.addComponent(spacer);
+        container.addComponent(new RadHSpacer(context.newId(), colCount-1));
       }
       else {
-        RadVSpacer spacer = new RadVSpacer(null, context.newId());
-        spacer.getConstraints().setRow(rowCount-1);
-        spacer.getConstraints().setVSizePolicy(GridConstraints.SIZEPOLICY_CAN_SHRINK |
-                                               GridConstraints.SIZEPOLICY_CAN_GROW |
-                                               GridConstraints.SIZEPOLICY_WANT_GROW);
-        spacer.getConstraints().setFill(GridConstraints.FILL_VERTICAL);
-        container.addComponent(spacer);
+        container.addComponent(new RadVSpacer(context.newId(), rowCount-1));
       }
     }
   }

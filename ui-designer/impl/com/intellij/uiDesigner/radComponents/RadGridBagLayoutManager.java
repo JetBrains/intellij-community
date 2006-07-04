@@ -10,10 +10,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 
 import javax.swing.*;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.LayoutManager;
-import java.awt.Component;
+import java.awt.*;
 
 /**
  * @author yole
@@ -33,10 +30,35 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
                                    final JComponent parent,
                                    final RadContainer container,
                                    final LayoutManager layout) {
-    container.setLayout(gridFromGridBag(container, parent, layout));
+    Dimension gridSize = getGridBagSize(parent, layout);
+
+    boolean haveHGrow = false;
+    boolean haveVGrow = false;
+    GridBagLayout gridBag = (GridBagLayout) layout;
+    for(Component component: parent.getComponents()) {
+      final GridBagConstraints constraints = gridBag.getConstraints(component);
+      if (constraints.weightx > 0.01) haveHGrow = true;
+      if (constraints.weighty > 0.01) haveVGrow = true;
+    }
+
+    if (!haveHGrow) {
+      gridSize.width++;
+    }
+    if (!haveVGrow) {
+      gridSize.height++;
+    }
+
+    container.setLayout(new GridLayoutManager(gridSize.height, gridSize.width));
+
+    if (!haveHGrow) {
+      container.addComponent(new RadHSpacer(context.newId(), gridSize.width-1));
+    }
+    if (!haveVGrow) {
+      container.addComponent(new RadVSpacer(context.newId(), gridSize.height-1));
+    }
   }
 
-  public static GridLayoutManager gridFromGridBag(final RadContainer container, final JComponent parent, final LayoutManager layout) {
+  public static Dimension getGridBagSize(final JComponent parent, final LayoutManager layout) {
     GridBagLayout gridBag = (GridBagLayout) layout;
     int[][] layoutDimensions = gridBag.getLayoutDimensions();
 
@@ -50,7 +72,7 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
       rowCount = Math.max(rowCount, constraints.gridy + constraints.gridheight);
     }
 
-    return new GridLayoutManager(rowCount, colCount);
+    return new Dimension(colCount, rowCount);
   }
 
   @Override

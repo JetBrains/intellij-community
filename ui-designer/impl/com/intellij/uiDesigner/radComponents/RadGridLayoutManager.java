@@ -46,8 +46,8 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
       container.setLayoutManager(this, new GridLayoutManager(oldGridLayout.getRowCount(), oldGridLayout.getColumnCount()));
     }
     else if (container.getLayout() instanceof GridBagLayout) {
-      container.setLayoutManager(this,
-                                 RadGridBagLayoutManager.gridFromGridBag(container, container.getDelegee(), container.getLayout()));
+      Dimension gridSize = RadGridBagLayoutManager.getGridBagSize(container.getDelegee(), container.getLayout());
+      container.setLayoutManager(this, new GridLayoutManager(gridSize.height, gridSize.width));
     }
     else if (container.getLayoutManager().isIndexed()) {
       int col = 0;
