@@ -7,6 +7,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -152,19 +154,24 @@ public class FindUsagesUtil {
     if (element instanceof PsiPackage){
       return ((PsiPackage)element).getQualifiedName();
     }
-    else if (element instanceof PsiClass){
+    if (element instanceof PsiClass){
       return ((PsiClass)element).getQualifiedName();
     }
-    else if (element instanceof PsiMethod){
+    if (element instanceof PsiMethod){
       return ((PsiMethod)element).getName();
     }
-    else if (element instanceof PsiVariable){
+    if (element instanceof PsiVariable){
       return ((PsiVariable)element).getName();
     }
-    else{
-      LOG.error("Unknown element type: "+element);
-      return null;
+    if (element instanceof PsiMetaOwner){
+      final PsiMetaData metaData = ((PsiMetaOwner)element).getMetaData();
+      if (metaData != null) {
+        return metaData.getName();
+      }
     }
+
+    LOG.error("Unknown element type: "+element);
+    return null;
   }
 
   private static void addElementUsages(final PsiElement element, final Processor<UsageInfo> results, final FindUsagesOptions options) {

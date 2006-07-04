@@ -5,6 +5,8 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
@@ -289,12 +291,18 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
     if (value == null || (value != NULL && value.get() == null)) {
       for (final MyBinding binding : ourBindings) {
         try {
-          if (binding.myFilter.isClassAcceptable(element.getClass()) &&
-              binding.myFilter.isAcceptable(element, element.getParent())) {
+          if (isAcceptable(binding.myFilter, element)) {
             final PsiMetaData data = binding.myDataClass.newInstance();
             final CachedValue<PsiMetaData> cachedValue = element.getManager().getCachedValuesManager()
               .createCachedValue(new CachedValueProvider<PsiMetaData>() {
                 public Result<PsiMetaData> compute() {
+                  if (!isAcceptable(binding.myFilter, element)) {
+                    clearMetaForElement(element);
+                    final PsiMetaData data1 = getMeta(element);
+                    if (data1 == null) return new Result<PsiMetaData>(null);
+                    return new Result<PsiMetaData>(data1, data1.getDependences());
+                  }
+
                   data.init(element);
                   return new Result<PsiMetaData>(data, data.getDependences());
                 }
@@ -320,10 +328,27 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
     return ret;
   }
 
+  private static boolean isAcceptable(final ElementFilter filter, final PsiElement element) {
+    return filter.isClassAcceptable(element.getClass()) &&
+        filter.isAcceptable(element, element.getParent());
+  }
+
+  public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter, Class<T> aMetadataClass, Disposable parentDisposable) {
+    final MyBinding binding = new MyBinding(filter, aMetadataClass);
+    addBinding(binding);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        ourBindings.remove(binding);
+      }
+    });
+  }
+
   public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter, Class<T> aMetadataClass) {
-    LOG.assertTrue(filter != null);
-    LOG.assertTrue(aMetadataClass != null);
-    ourBindings.add(0, new MyBinding(filter, aMetadataClass));
+    addBinding(new MyBinding(filter, aMetadataClass));
+  }
+
+  private static <T extends PsiMetaData> void addBinding(final MyBinding binding) {
+    ourBindings.add(0, binding);
   }
 
   public static void clearMetaForElement(PsiElement element) {
@@ -347,6 +372,8 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
     Class<PsiMetaData> myDataClass;
 
     public <T extends PsiMetaData> MyBinding(ElementFilter filter, Class<T> dataClass) {
+      LOG.assertTrue(filter != null);
+      LOG.assertTrue(dataClass != null);
       myFilter = filter;
       myDataClass = (Class)dataClass;
     }

@@ -136,9 +136,6 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     }
   };
 
-  private final Set<String> myRegisteredTagNames = new HashSet<String>();
-  private final Set<String> myRegisteredAttributeNames = new HashSet<String>();
-
   public DomManagerImpl(final PomModel pomModel,
                         final Project project,
                         final ReferenceProvidersRegistry registry,
@@ -480,8 +477,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     myFileDescriptions.add(description);
     final MyElementFilter filter = new MyElementFilter(description);
 
-    myReferenceProvidersRegistry.registerReferenceProvider(filter, XmlTag.class, new DomLazyReferenceProvider(description,
-                                                                                                              myRegisteredTagNames) {
+    myReferenceProvidersRegistry.registerReferenceProvider(filter, XmlTag.class, new DomLazyReferenceProvider(description) {
       protected void registerTrueReferenceProvider(final String[] names) {
         myReferenceProvidersRegistry.registerXmlTagReferenceProvider(names, filter, true, myGenericValueReferenceProvider);
       }
@@ -490,8 +486,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
         return info.getReferenceTagNames();
       }
     });
-    myReferenceProvidersRegistry.registerReferenceProvider(filter, XmlAttributeValue.class, new DomLazyReferenceProvider(description,
-                                                                                                                         myRegisteredAttributeNames) {
+    myReferenceProvidersRegistry.registerReferenceProvider(filter, XmlAttributeValue.class, new DomLazyReferenceProvider(description) {
       protected void registerTrueReferenceProvider(final String[] names) {
         myReferenceProvidersRegistry.registerXmlAttributeValueReferenceProvider(names, filter, true, myGenericValueReferenceProvider);
       }
@@ -628,11 +623,9 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private abstract class DomLazyReferenceProvider implements PsiReferenceProvider {
     private boolean myInitialized;
     private final DomFileDescription myDescription;
-    private final Set<String> myRegisteredNames;
 
-    public DomLazyReferenceProvider(final DomFileDescription description, final Set<String> registeredNames) {
+    public DomLazyReferenceProvider(final DomFileDescription description) {
       myDescription = description;
-      myRegisteredNames = registeredNames;
     }
 
     private boolean initialize(PsiElement element) {
@@ -642,11 +635,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       myInitialized = true;
       final GenericInfoImpl info = getGenericInfo(myDescription.getRootElementClass());
       final Set<String> tagNames = new HashSet<String>(getReferenceElementNames(info));
-      tagNames.removeAll(myRegisteredNames);
       if (!tagNames.isEmpty()) {
-        final String[] names = tagNames.toArray(new String[tagNames.size()]);
-        registerTrueReferenceProvider(names);
-        myRegisteredNames.addAll(tagNames);
+        registerTrueReferenceProvider(tagNames.toArray(new String[tagNames.size()]));
       }
       return true;
     }
