@@ -14,12 +14,12 @@ import java.lang.reflect.Type;
 /**
  * @author peter
  */
-public class ClassChooserManager {
-  private static final Map<Type, ClassChooser> ourClassChoosers = new HashMap<Type, ClassChooser>();
+public class TypeChooserManager {
+  private static final Map<Type, TypeChooser> ourClassChoosers = new HashMap<Type, TypeChooser>();
 
-  public static ClassChooser getClassChooser(final Type type) {
-    final ClassChooser classChooser = ourClassChoosers.get(type);
-    return classChooser != null ? classChooser : new ClassChooser() {
+  public static TypeChooser getClassChooser(final Type type) {
+    final TypeChooser typeChooser = ourClassChoosers.get(type);
+    return typeChooser != null ? typeChooser : new TypeChooser() {
       public Type chooseType(final XmlTag tag) {
         return type;
       }
@@ -27,14 +27,14 @@ public class ClassChooserManager {
       public void distinguishTag(final XmlTag tag, final Type aClass) {
       }
 
-      public Type[] getChooserClasses() {
+      public Type[] getChooserTypes() {
         return new Type[]{type};
       }
     };
   }
 
-  public static void registerClassChooser(final Type aClass, final ClassChooser classChooser, Disposable parentDisposable) {
-    registerClassChooser(aClass, classChooser);
+  public static void registerClassChooser(final Type aClass, final TypeChooser typeChooser, Disposable parentDisposable) {
+    registerClassChooser(aClass, typeChooser);
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
         unregisterClassChooser(aClass);
@@ -42,8 +42,8 @@ public class ClassChooserManager {
     });
   }
 
-  public static void registerClassChooser(final Type aClass, final ClassChooser classChooser) {
-    ourClassChoosers.put(aClass, classChooser);
+  public static void registerClassChooser(final Type aClass, final TypeChooser typeChooser) {
+    ourClassChoosers.put(aClass, typeChooser);
   }
 
   public static void unregisterClassChooser(Type aClass) {

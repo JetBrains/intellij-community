@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.ClassChooserManager;
+import com.intellij.util.xml.TypeChooserManager;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 
@@ -49,7 +49,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
         try {
           newTag[0] = (XmlTag)parent.getXmlTag().add(tag);
           if (getParentHandler().getFixedChildrenClass(tag.getName()) != null) {
-            ClassChooserManager.getClassChooser(getChildDescription().getType()).distinguishTag(newTag[0], getDomElementType());
+            TypeChooserManager.getClassChooser(getChildDescription().getType()).distinguishTag(newTag[0], getDomElementType());
           }
         }
         catch (IncorrectOperationException e) {

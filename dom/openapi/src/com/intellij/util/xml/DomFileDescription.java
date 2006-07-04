@@ -48,8 +48,8 @@ public abstract class DomFileDescription<T> {
     myImplementations.put(domElementClass, implementationClass);
   }
 
-  protected static void registerClassChooser(final Type aClass, final ClassChooser classChooser, Disposable parentDisposable) {
-    ClassChooserManager.registerClassChooser(aClass, classChooser, parentDisposable);
+  protected static void registerClassChooser(final Type aClass, final TypeChooser typeChooser, Disposable parentDisposable) {
+    TypeChooserManager.registerClassChooser(aClass, typeChooser, parentDisposable);
   }
 
   protected abstract void initializeFileDescription();

@@ -632,7 +632,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   public final Type[] getConcreteInterfaceVariants() {
-    return ClassChooserManager.getClassChooser(myClass).getChooserClasses();
+    return TypeChooserManager.getClassChooser(myClass).getChooserTypes();
   }
 
   public boolean isTagValueElement() {

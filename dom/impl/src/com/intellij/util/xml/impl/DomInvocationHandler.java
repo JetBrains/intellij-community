@@ -88,7 +88,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myTagName = tagName;
     myAbstractType = type;
 
-    final Type concreteInterface = ClassChooserManager.getClassChooser(type).chooseType(tag);
+    final Type concreteInterface = TypeChooserManager.getClassChooser(type).chooseType(tag);
     final Converter converter = getConverter(new Function<Class<? extends Annotation>, Annotation>() {
       @Nullable
       public Annotation fun(final Class<? extends Annotation> s) {

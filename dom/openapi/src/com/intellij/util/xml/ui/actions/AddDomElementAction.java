@@ -90,8 +90,8 @@ public abstract class AddDomElementAction extends AnAction {
     DomCollectionChildDescription[] descriptions = getDomCollectionChildDescriptions(e);
     final List<AnAction> actions = new ArrayList<AnAction>();
     for (DomCollectionChildDescription description : descriptions) {
-      final ClassChooser chooser = ClassChooserManager.getClassChooser(description.getType());
-      for (Type type : chooser.getChooserClasses()) {
+      final TypeChooser chooser = TypeChooserManager.getClassChooser(description.getType());
+      for (Type type : chooser.getChooserTypes()) {
 
         final Class<?> rawType = DomReflectionUtil.getRawType(type);
         String name = ElementPresentationManager.getTypeName(rawType);
