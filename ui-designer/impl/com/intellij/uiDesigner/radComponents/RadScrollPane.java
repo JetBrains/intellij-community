@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -22,12 +23,12 @@ import java.awt.*;
 public final class RadScrollPane extends RadContainer {
   public static final Class COMPONENT_CLASS = JScrollPane.class;
 
-  public RadScrollPane(final Module module, final String id){
-    super(module, COMPONENT_CLASS, id);
+  public RadScrollPane(final Module module, final Class componentClass, final String id){
+    super(module, componentClass, id);
   }
 
-  public RadScrollPane(final String id, final Palette palette) {
-    super(COMPONENT_CLASS, id, palette);
+  public RadScrollPane(final Class componentClass, final String id, final Palette palette) {
+    super(componentClass, id, palette);
   }
 
   @Nullable @Override
@@ -36,9 +37,9 @@ public final class RadScrollPane extends RadContainer {
   }
 
   public void write(final XmlWriter writer) {
-    writer.startElement("scrollpane");
+    writer.startElement(UIFormXmlConstants.ELEMENT_SCROLLPANE);
     try {
-      writeNoLayout(writer);
+      writeNoLayout(writer, JScrollPane.class.getName());
     } finally {
       writer.endElement(); // scrollpane
     }

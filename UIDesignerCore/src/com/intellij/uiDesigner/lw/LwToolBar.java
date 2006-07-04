@@ -18,15 +18,14 @@ package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author yole
  */
 public class LwToolBar extends LwContainer {
-  public LwToolBar() {
-    super(JToolBar.class.getName());
+  public LwToolBar(String className) {
+    super(className);
   }
 
   protected LayoutManager createInitialLayout() {

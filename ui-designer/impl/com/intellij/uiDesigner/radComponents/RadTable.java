@@ -20,8 +20,8 @@ public class RadTable extends RadAtomicComponent {
     initDefaultModel();
   }
 
-  public RadTable(final String id, final Palette palette) {
-    super(JTable.class, id, palette);
+  public RadTable(final Class componentClass, final String id, final Palette palette) {
+    super(componentClass, id, palette);
     initDefaultModel();
   }
 

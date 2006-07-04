@@ -104,16 +104,16 @@ public final class XmlReader {
         }
       }
       else if (lwComponent instanceof LwScrollPane) {
-        component = new RadScrollPane(module, id);
+        component = new RadScrollPane(module, componentClass, id);
       }
       else if (lwComponent instanceof LwTabbedPane) {
-        component = new RadTabbedPane(module, id);
+        component = new RadTabbedPane(module, componentClass, id);
       }
       else if (lwComponent instanceof LwSplitPane) {
-        component = new RadSplitPane(module, id);
+        component = new RadSplitPane(module, componentClass, id);
       }
       else if (lwComponent instanceof LwToolBar) {
-        component = new RadToolBar(module, id);
+        component = new RadToolBar(module, componentClass, id);
       }
       else if (lwComponent instanceof LwContainer) {
         final LwContainer lwContainer = (LwContainer)lwComponent;

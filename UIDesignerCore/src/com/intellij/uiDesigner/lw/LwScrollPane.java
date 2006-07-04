@@ -17,16 +17,15 @@ package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class LwScrollPane extends LwContainer{
-  public LwScrollPane() throws Exception{
-    super(JScrollPane.class.getName());
+public final class LwScrollPane extends LwContainer {
+  public LwScrollPane(String className) {
+    super(className);
   }
 
   protected LayoutManager createInitialLayout(){

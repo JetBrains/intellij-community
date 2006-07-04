@@ -18,8 +18,7 @@ package com.intellij.uiDesigner.lw;
 import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
 import org.jdom.Element;
 
-import javax.swing.*;
-import java.awt.LayoutManager;
+import java.awt.*;
 
 /**
  * @author Anton Katilin
@@ -29,8 +28,8 @@ public final class LwSplitPane extends LwContainer{
   public static final String POSITION_LEFT = "left";
   public static final String POSITION_RIGHT = "right";
 
-  public LwSplitPane() throws Exception{
-    super(JSplitPane.class.getName());
+  public LwSplitPane(String className) {
+    super(className);
   }
 
   protected LayoutManager createInitialLayout(){

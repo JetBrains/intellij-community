@@ -45,12 +45,12 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   private int mySelectedIndex = -1;
   private IntrospectedProperty mySelectedIndexProperty = null;
 
-  public RadTabbedPane(final Module module, final String id){
-    super(module, JTabbedPane.class, id);
+  public RadTabbedPane(final Module module, Class componentClass, final String id){
+    super(module, componentClass, id);
   }
 
-  public RadTabbedPane(@NotNull final String id, final Palette palette) {
-    super(JTabbedPane.class, id, palette);
+  public RadTabbedPane(Class componentClass, @NotNull final String id, final Palette palette) {
+    super(componentClass, id, palette);
   }
 
   @Override protected RadLayoutManager createInitialLayoutManager() {
@@ -168,9 +168,10 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   }
 
   public void write(final XmlWriter writer) {
-    writer.startElement("tabbedpane");
+    writer.startElement(UIFormXmlConstants.ELEMENT_TABBEDPANE);
     try{
       writeId(writer);
+      writeClassIfDifferent(writer, JTabbedPane.class.getName());
       writeBinding(writer);
 
       // Constraints and properties
@@ -186,6 +187,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
 
   @NotNull
   private static HashMap<String, LwTabbedPane.Constraints> getId2Constraints(final RadComponent component){
+    //noinspection unchecked
     HashMap<String, LwTabbedPane.Constraints> id2Constraints = (HashMap<String, LwTabbedPane.Constraints>)component.getClientProperty(CLIENT_PROP_ID_2_CONSTRAINTS);
     if(id2Constraints == null){
       id2Constraints = new HashMap<String,LwTabbedPane.Constraints>();

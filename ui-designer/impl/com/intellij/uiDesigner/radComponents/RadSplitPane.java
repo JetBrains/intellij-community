@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -24,12 +25,12 @@ import java.awt.event.KeyEvent;
 public final class RadSplitPane extends RadContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadSplitPane");
 
-  public RadSplitPane(final Module module, final String id) {
-    super(module, JSplitPane.class, id);
+  public RadSplitPane(final Module module, final Class componentClass, final String id) {
+    super(module, componentClass, id);
   }
 
-  public RadSplitPane(@NotNull final String id, final Palette palette) {
-    super(JSplitPane.class, id, palette);
+  public RadSplitPane(Class componentClass, @NotNull final String id, final Palette palette) {
+    super(componentClass, id, palette);
   }
 
   @Override protected RadLayoutManager createInitialLayoutManager() {
@@ -79,9 +80,10 @@ public final class RadSplitPane extends RadContainer {
   }
 
   public void write(final XmlWriter writer) {
-    writer.startElement("splitpane");
+    writer.startElement(UIFormXmlConstants.ELEMENT_SPLITPANE);
     try {
       writeId(writer);
+      writeClassIfDifferent(writer, JSplitPane.class.getName());
       writeBinding(writer);
 
       // Constraints and properties

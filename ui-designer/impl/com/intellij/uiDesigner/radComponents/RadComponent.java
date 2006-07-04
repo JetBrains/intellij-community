@@ -531,6 +531,12 @@ public abstract class RadComponent implements IComponent {
     writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_CLASS, getComponentClass().getName());
   }
 
+  protected final void writeClassIfDifferent(final XmlWriter writer, String defaultClassName) {
+    if (!getComponentClassName().equals(defaultClassName)) {
+      writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_CLASS, getComponentClass().getName());
+    }
+  }
+
   protected final void writeBinding(final XmlWriter writer){
     // Binding
     if (getBinding() != null){
@@ -677,13 +683,14 @@ public abstract class RadComponent implements IComponent {
       result = container;
     }
     else {
-      final Class<? extends RadComponent> radClass = InsertComponentProcessor.getRadComponentClass(componentClass.getName());
+      final Class<? extends RadComponent> radClass = InsertComponentProcessor.getRadComponentClass(componentClass);
       if (radClass == null) {
         result = new RadAtomicComponent(componentClass, id, context.getPalette());
       }
       else {
         try {
-          result = radClass.getConstructor(String.class, Palette.class).newInstance(id, context.getPalette());
+          final Constructor<? extends RadComponent> constructor = radClass.getConstructor(Class.class, String.class, Palette.class);
+          result = constructor.newInstance(componentClass, id, context.getPalette());
         }
         catch(Exception ex) {
           throw new RuntimeException(ex);

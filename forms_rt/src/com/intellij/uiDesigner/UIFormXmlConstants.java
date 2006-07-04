@@ -84,6 +84,8 @@ public class UIFormXmlConstants {
   public static final String ELEMENT_ITEM = "item";
   public static final String ELEMENT_CONSTRAINTS = "constraints";
   public static final String ELEMENT_TABBEDPANE = "tabbedpane";
+  public static final String ELEMENT_SPLITPANE = "splitpane";
+  public static final String ELEMENT_SCROLLPANE = "scrollpane";
   public static final String ELEMENT_TOOLTIP = "tooltip";
   public static final String ELEMENT_ROWSPEC = "rowspec";
   public static final String ELEMENT_COLSPEC = "colspec";

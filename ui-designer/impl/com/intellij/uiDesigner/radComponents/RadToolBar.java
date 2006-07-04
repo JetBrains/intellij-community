@@ -19,12 +19,12 @@ import java.awt.*;
  * @author yole
  */
 public class RadToolBar extends RadContainer {
-  public RadToolBar(final Module module, final String id) {
-    super(module, JToolBar.class, id);
+  public RadToolBar(final Module module, final Class componentClass, final String id) {
+    super(module, componentClass, id);
   }
 
-  public RadToolBar(final String id, final Palette palette) {
-    super(JToolBar.class, id, palette);
+  public RadToolBar(Class componentClass, final String id, final Palette palette) {
+    super(componentClass, id, palette);
   }
 
   @Override @Nullable
@@ -35,7 +35,7 @@ public class RadToolBar extends RadContainer {
   public void write(final XmlWriter writer) {
     writer.startElement(UIFormXmlConstants.ELEMENT_TOOLBAR);
     try {
-      writeNoLayout(writer);
+      writeNoLayout(writer, JToolBar.class.getName());
     } finally {
       writer.endElement();
     }

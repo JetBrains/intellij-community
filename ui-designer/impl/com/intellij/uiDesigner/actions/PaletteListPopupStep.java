@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
@@ -27,10 +28,12 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
   private final ComponentItem myInitialSelection;
   private final Processor<ComponentItem> myRunnable;
   private String myTitle;
+  private Project myProject;
 
   PaletteListPopupStep(GuiEditor editor, ComponentItem initialSelection, final Processor<ComponentItem> runnable, final String title) {
     myInitialSelection = initialSelection;
     myRunnable = runnable;
+    myProject = editor.getProject();
     Palette palette = Palette.getInstance(editor.getProject());
     for(GroupItem group: palette.getToolWindowGroups()) {
       Collections.addAll(myItems, group.getItems());
@@ -131,7 +134,7 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
   public void hideNonAtomic() {
     for(int i=myItems.size()-1; i >= 0; i--) {
       ComponentItem item = myItems.get(i);
-      if (InsertComponentProcessor.getRadComponentClass(item.getClassName()) != null || item.getBoundForm() != null) {
+      if (InsertComponentProcessor.getRadComponentClass(myProject, item.getClassName()) != null || item.getBoundForm() != null) {
         myItems.remove(i);
       }
     }

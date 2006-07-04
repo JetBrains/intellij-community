@@ -421,7 +421,13 @@ public class RadContainer extends RadComponent implements IContainer {
     if (myBorderTitle != null) {
       oldTitle = myBorderTitle.getResolvedValue();
       myBorderTitle.setResolvedValue(null);
-      title = StringDescriptorManager.getInstance(getModule()).resolve(this, myBorderTitle);
+      // NOTE: the explicit getValue() check is required for SnapShooter operation
+      if (myBorderTitle.getValue() != null) {
+        title = myBorderTitle.getValue();
+      }
+      else {
+        title = StringDescriptorManager.getInstance(getModule()).resolve(this, myBorderTitle);
+      }
     }
     Font font = (myBorderTitleFont != null) ? myBorderTitleFont.getResolvedFont(getDelegee().getFont()) : null;
     Color titleColor = (myBorderTitleColor != null) ? myBorderTitleColor.getResolvedColor() : null;
@@ -528,9 +534,7 @@ public class RadContainer extends RadComponent implements IContainer {
     }
     try{
       writeId(writer);
-      if (!getComponentClass().equals(JPanel.class)) {
-        writeClass(writer);
-      }
+      writeClassIfDifferent(writer, JPanel.class.getName());
       writeBinding(writer);
 
       if (myLayoutManager != null) {
@@ -568,8 +572,9 @@ public class RadContainer extends RadComponent implements IContainer {
     return true;
   }
 
-  protected void writeNoLayout(final XmlWriter writer) {
+  protected void writeNoLayout(final XmlWriter writer, final String defaultClassName) {
     writeId(writer);
+    writeClassIfDifferent(writer, defaultClassName);
     writeBinding(writer);
 
     // Constraints and properties

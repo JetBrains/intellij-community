@@ -387,17 +387,17 @@ public class CreateSnapShotAction extends AnAction {
           JOptionPane.showMessageDialog(myRootPanel, UIDesignerBundle.message("error.form.already.exists", getFormName()));
           return;
         }
-        if (!checkUnknownLayoutManagers()) return;
+        if (!checkUnknownLayoutManagers(myDirectory.getProject())) return;
         close(OK_EXIT_CODE);
       }
     }
 
-    private boolean checkUnknownLayoutManagers() {
+    private boolean checkUnknownLayoutManagers(Project project) {
       Set<String> layoutManagerClasses = new TreeSet<String>();
       SnapShotRemoteComponent rc = (SnapShotRemoteComponent) myComponentTree.getSelectionPath().getLastPathComponent();
       assert rc != null;
       try {
-        collectUnknownLayoutManagerClasses(rc, layoutManagerClasses);
+        collectUnknownLayoutManagerClasses(project, rc, layoutManagerClasses);
       }
       catch (IOException e) {
         Messages.showErrorDialog(myRootPanel, UIDesignerBundle.message("snapshot.connection.broken"), UIDesignerBundle.message("snapshot.title"));
@@ -415,8 +415,9 @@ public class CreateSnapShotAction extends AnAction {
       return true;
     }
 
-    private void collectUnknownLayoutManagerClasses(final SnapShotRemoteComponent rc, final Set<String> layoutManagerClasses) throws IOException {
-      Class radClass = InsertComponentProcessor.getRadComponentClass(rc.getClassName());
+    private void collectUnknownLayoutManagerClasses(final Project project, final SnapShotRemoteComponent rc,
+                                                    final Set<String> layoutManagerClasses) throws IOException {
+      Class radClass = InsertComponentProcessor.getRadComponentClass(project, rc.getClassName());
       if (RadContainer.class.equals(radClass) && rc.getLayoutManager().length() > 0 &&
           !LayoutManagerRegistry.isKnownLayoutClass(rc.getLayoutManager())) {
         layoutManagerClasses.add(rc.getLayoutManager());
@@ -426,7 +427,7 @@ public class CreateSnapShotAction extends AnAction {
         rc.setChildren(myClient.listChildren(rc.getId()));
       }
       for(SnapShotRemoteComponent child: rc.getChildren()) {
-        collectUnknownLayoutManagerClasses(child, layoutManagerClasses);
+        collectUnknownLayoutManagerClasses(project, child, layoutManagerClasses);
       }
     }
 

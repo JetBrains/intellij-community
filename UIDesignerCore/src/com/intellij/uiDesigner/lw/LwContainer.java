@@ -280,23 +280,24 @@ public class LwContainer extends LwComponent implements IContainer{
       component = new LwHSpacer();
     }
     else if("xy".equals(name) || "grid".equals(name)){
-      String className = LwXmlReader.getString(child, UIFormXmlConstants.ATTRIBUTE_CLASS);
-      if (className == null) {
-        className = JPanel.class.getName();
-      }
+      String className = LwXmlReader.getOptionalString(child, UIFormXmlConstants.ATTRIBUTE_CLASS, JPanel.class.getName());
       component = new LwContainer(className);
     }
-    else if("scrollpane".equals(name)){
-      component = new LwScrollPane();
+    else if(UIFormXmlConstants.ELEMENT_SCROLLPANE.equals(name)) {
+      String className = LwXmlReader.getOptionalString(child, UIFormXmlConstants.ATTRIBUTE_CLASS, JScrollPane.class.getName());
+      component = new LwScrollPane(className);
     }
-    else if("tabbedpane".equals(name)){
-      component = new LwTabbedPane();
+    else if(UIFormXmlConstants.ELEMENT_TABBEDPANE.equals(name)){
+      String className = LwXmlReader.getOptionalString(child, UIFormXmlConstants.ATTRIBUTE_CLASS, JTabbedPane.class.getName());
+      component = new LwTabbedPane(className);
     }
-    else if("splitpane".equals(name)){
-      component = new LwSplitPane();
+    else if(UIFormXmlConstants.ELEMENT_SPLITPANE.equals(name)){
+      String className = LwXmlReader.getOptionalString(child, UIFormXmlConstants.ATTRIBUTE_CLASS, JSplitPane.class.getName());
+      component = new LwSplitPane(className);
     }
     else if (UIFormXmlConstants.ELEMENT_TOOLBAR.equals(name)) {
-      component = new LwToolBar();
+      String className = LwXmlReader.getOptionalString(child, UIFormXmlConstants.ATTRIBUTE_CLASS, JToolBar.class.getName());
+      component = new LwToolBar(className);
     }
     else{
       throw new UnexpectedFormElementException("unexpected element: "+child);

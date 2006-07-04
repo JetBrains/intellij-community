@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -37,6 +38,7 @@ import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.lang.reflect.Constructor;
 
 /**
  * @author Anton Katilin
@@ -427,10 +429,12 @@ public final class InsertComponentProcessor extends EventProcessor {
     RadComponent result;
     final String id = FormEditingUtil.generateId(editor.getRootContainer());
 
-    Class radComponentClass = getRadComponentClass(item.getClassName());
+    Class radComponentClass = getRadComponentClass(editor.getProject(), item.getClassName());
+    final ClassLoader loader = LoaderFactory.getInstance(editor.getProject()).getLoader(editor.getFile());
     if (radComponentClass != null) {
       try {
-        result = (RadComponent) radComponentClass.getConstructor(Module.class, String.class).newInstance(editor.getModule(), id);
+        final Constructor constructor = radComponentClass.getConstructor(Module.class, Class.class, String.class);
+        result = (RadComponent) constructor.newInstance(editor.getModule(), Class.forName(item.getClassName(), true, loader), id);
       }
       catch (Exception e) {
         LOG.error(e);
@@ -457,7 +461,6 @@ public final class InsertComponentProcessor extends EventProcessor {
         }
       }
       else {
-        final ClassLoader loader = LoaderFactory.getInstance(editor.getProject()).getLoader(editor.getFile());
         try {
           final Class aClass = Class.forName(item.getClassName(), true, loader);
           if (item.isContainer()) {
@@ -492,8 +495,25 @@ public final class InsertComponentProcessor extends EventProcessor {
     return result;
   }
 
-  public static Class<? extends RadComponent> getRadComponentClass(final String className) {
-    return myComponentClassMap.get(className);
+  public static Class<? extends RadComponent> getRadComponentClass(Project project, final String className) {
+    ClassLoader loader = LoaderFactory.getInstance(project).getProjectClassLoader();
+    Class componentClass;
+    try {
+      componentClass = Class.forName(className, false, loader);
+    }
+    catch (ClassNotFoundException e) {
+      return myComponentClassMap.get(className);
+    }
+    return getRadComponentClass(componentClass);
+  }
+
+  public static Class<? extends RadComponent> getRadComponentClass(Class componentClass) {
+    while(componentClass != null) {
+      Class<? extends RadComponent> c = myComponentClassMap.get(componentClass.getName());
+      if (c != null) return c;
+      componentClass = componentClass.getSuperclass();
+    }
+    return null;
   }
 
   private void checkBindTopLevelPanel() {

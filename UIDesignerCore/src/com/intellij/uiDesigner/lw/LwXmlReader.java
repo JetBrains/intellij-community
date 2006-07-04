@@ -65,6 +65,11 @@ public final class LwXmlReader {
     }
   }
 
+  public static String getOptionalString(final Element element, final String attributeName, final String defaultValue) {
+    final String value = element.getAttributeValue(attributeName);
+    return value != null ? value.trim() : defaultValue;
+  }
+
   public static int getRequiredInt(final Element element, final String attributeName) {
     final String str = getRequiredString(element, attributeName);
     try {
