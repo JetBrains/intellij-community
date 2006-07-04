@@ -16,12 +16,11 @@
 
 package com.intellij.psi;
 
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,7 +86,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     return false;
   }
 
-  public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, final XmlElement resolveTo) {
+  public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, final PsiElement resolveTo) {
 
     return new PsiReferenceBase<T>(element) {
 

@@ -15,8 +15,8 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author peter
  */
-public class DomMetaData implements PsiWritableMetaData, PsiPresentableMetaData {
-  private DomElement myElement;
+public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, PsiPresentableMetaData {
+  private T myElement;
   private GenericDomValue myNameElement;
 
   public final PsiElement getDeclaration() {
@@ -39,10 +39,14 @@ public class DomMetaData implements PsiWritableMetaData, PsiPresentableMetaData 
   }
 
   public void init(PsiElement element) {
-    myElement = DomManager.getDomManager(element.getProject()).getDomElement((XmlTag)element);
+    myElement = (T) DomManager.getDomManager(element.getProject()).getDomElement((XmlTag)element);
     assert myElement != null : element;
-    myNameElement = myElement.getGenericInfo().getNameDomElement(myElement);
+    myNameElement = getNameElement(myElement);
     assert myNameElement != null : element;
+  }
+
+  protected GenericDomValue getNameElement(final T t) {
+    return myElement.getGenericInfo().getNameDomElement(t);
   }
 
   public Object[] getDependences() {
