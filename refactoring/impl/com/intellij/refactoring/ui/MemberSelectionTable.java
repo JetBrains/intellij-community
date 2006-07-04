@@ -43,7 +43,7 @@ public class MemberSelectionTable extends Table {
   private MemberInfo[] myMemberInfos;
   private final boolean myAbstractEnabled;
   private MemberInfoModel myMemberInfoModel;
-  private MyTableModel myMyTableModel;
+  private MyTableModel myTableModel;
 
 
   private static class DefaultMemberInfoModel implements MemberInfoModel {
@@ -92,7 +92,7 @@ public class MemberSelectionTable extends Table {
     super();
     myAbstractEnabled = abstractColumnHeader != null;
     myAbstractColumnHeader = abstractColumnHeader;
-    myMyTableModel = new MyTableModel();
+    myTableModel = new MyTableModel();
 
     myMemberInfos = memberInfos;
     if (memberInfoModel != null) {
@@ -102,39 +102,37 @@ public class MemberSelectionTable extends Table {
       myMemberInfoModel = defaultMemberInfoModel;
     }
 
-    setModel(myMyTableModel);
+    setModel(myTableModel);
 
 //    myTable.setTableHeader(null);
 //    this.setDefaultRenderer(Boolean.class, new MyBooleanRenderer());
-    TableColumnModel columnModel = this.getColumnModel();
-    columnModel.getColumn(DISPLAY_NAME_COLUMN).setCellRenderer(new MyTableRenderer());
-    columnModel.getColumn(CHECKED_COLUMN).setCellRenderer(new MyBooleanRenderer());
+    TableColumnModel model = getColumnModel();
+    model.getColumn(DISPLAY_NAME_COLUMN).setCellRenderer(new MyTableRenderer());
+    model.getColumn(CHECKED_COLUMN).setCellRenderer(new MyBooleanRenderer());
     final int checkBoxWidth = new JCheckBox().getPreferredSize().width;
-    columnModel.getColumn(CHECKED_COLUMN).setMaxWidth(checkBoxWidth);
-    columnModel.getColumn(CHECKED_COLUMN).setMinWidth(checkBoxWidth);
+    model.getColumn(CHECKED_COLUMN).setMaxWidth(checkBoxWidth);
+    model.getColumn(CHECKED_COLUMN).setMinWidth(checkBoxWidth);
 
     if (myAbstractEnabled) {
       int width =
-        (int)(1.3 *
-              this.getFontMetrics(this.getFont()).charsWidth(myAbstractColumnHeader.toCharArray(), 0,
+        (int)(1.3 * getFontMetrics(getFont()).charsWidth(myAbstractColumnHeader.toCharArray(), 0,
                                                              myAbstractColumnHeader.length()));
-      columnModel.getColumn(ABSTRACT_COLUMN).setMaxWidth(width);
-      columnModel.getColumn(ABSTRACT_COLUMN).setPreferredWidth(width);
-      columnModel.getColumn(ABSTRACT_COLUMN).setCellRenderer(new MyBooleanRenderer());
+      model.getColumn(ABSTRACT_COLUMN).setMaxWidth(width);
+      model.getColumn(ABSTRACT_COLUMN).setPreferredWidth(width);
+      model.getColumn(ABSTRACT_COLUMN).setCellRenderer(new MyBooleanRenderer());
     }
 
-    this.setPreferredScrollableViewportSize(new Dimension(400, this.getRowHeight() * 12));
-    this.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    this.setShowGrid(false);
-    this.setIntercellSpacing(new Dimension(0, 0));
+    setPreferredScrollableViewportSize(new Dimension(400, getRowHeight() * 12));
+    getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    setShowGrid(false);
+    setIntercellSpacing(new Dimension(0, 0));
 
     new MyEnableDisableAction().register();
   }
 
   public MemberInfo[] getSelectedMemberInfos() {
     ArrayList<MemberInfo> list = new ArrayList<MemberInfo>(myMemberInfos.length);
-    for (int idx = 0; idx < myMemberInfos.length; idx++) {
-      MemberInfo info = myMemberInfos[idx];
+    for (MemberInfo info : myMemberInfos) {
       final boolean memberEnabled = myMemberInfoModel.isMemberEnabled(info);
       if ((memberEnabled && info.isChecked()) || (!memberEnabled && myMemberInfoModel.isCheckedWhenDisabled(info))) {
 //      if (info.isChecked() || (!myMemberInfoModel.isMemberEnabled(info) && myMemberInfoModel.isCheckedWhenDisabled(info))) {
@@ -153,13 +151,13 @@ public class MemberSelectionTable extends Table {
   }
 
   public void fireExternalDataChange() {
-    myMyTableModel.fireTableDataChanged();
+    myTableModel.fireTableDataChanged();
   }
 
   public void setMemberInfos(MemberInfo[] memberInfos) {
     myMemberInfos = memberInfos;
     fireMemberInfoChange(memberInfos);
-    myMyTableModel.fireTableDataChanged();
+    myTableModel.fireTableDataChanged();
   }
 
   public void addMemberInfoChangeListener(MemberInfoChangeListener l) {
@@ -170,9 +168,9 @@ public class MemberSelectionTable extends Table {
     Object[] list = listenerList.getListenerList();
 
     MemberInfoChange event = new MemberInfoChange(changedMembers);
-    for (int i = 0; i < list.length; i++) {
-      if (list[i] instanceof MemberInfoChangeListener) {
-        ((MemberInfoChangeListener)list[i]).memberInfoChanged(event);
+    for (Object element : list) {
+      if (element instanceof MemberInfoChangeListener) {
+        ((MemberInfoChangeListener)element).memberInfoChanged(event);
       }
     }
   }
@@ -206,7 +204,7 @@ public class MemberSelectionTable extends Table {
             return memberInfo.isChecked() ? Boolean.TRUE : Boolean.FALSE;
           }
           else {
-            return Boolean.valueOf(myMemberInfoModel.isCheckedWhenDisabled(memberInfo));
+            return myMemberInfoModel.isCheckedWhenDisabled(memberInfo);
           }
         case MemberSelectionTable.ABSTRACT_COLUMN:
           {
@@ -220,7 +218,7 @@ public class MemberSelectionTable extends Table {
             }
 
             if (!myMemberInfoModel.isAbstractEnabled(memberInfo)) {
-              return Boolean.valueOf(myMemberInfoModel.isAbstractWhenDisabled(memberInfo));
+              return myMemberInfoModel.isAbstractWhenDisabled(memberInfo);
             }
             else {
               return memberInfo.isToAbstract() ? Boolean.TRUE : Boolean.FALSE;
@@ -289,7 +287,7 @@ public class MemberSelectionTable extends Table {
 
       final int modelColumn = convertColumnIndexToModel(column);
       final MemberInfo memberInfo = myMemberInfos[row];
-      this.setToolTipText(myMemberInfoModel.getTooltipText(memberInfo));
+      setToolTipText(myMemberInfoModel.getTooltipText(memberInfo));
       PsiElement member = memberInfo.getMember();
       switch (modelColumn) {
         case MemberSelectionTable.DISPLAY_NAME_COLUMN:
@@ -318,12 +316,12 @@ public class MemberSelectionTable extends Table {
               icon.setIcon(IconUtilEx.getEmptyIcon(true), 1);
             }
             icon.setIcon(overrideIcon, 2);
-            MyTableRenderer.this.setIcon(icon);
+            setIcon(icon);
             break;
           }
         default:
           {
-            MyTableRenderer.this.setIcon(null);
+            setIcon(null);
           }
       }
       final boolean cellEditable = myMemberInfoModel.isMemberEnabled(memberInfo);
@@ -386,7 +384,9 @@ public class MemberSelectionTable extends Table {
         changedInfo[idx] = memberInfo;
       }
       fireMemberInfoChange(changedInfo);
-      myMyTableModel.fireTableDataChanged();
+      final int selectedRow = getSelectedRow();
+      myTableModel.fireTableDataChanged();
+      setRowSelectionInterval(selectedRow, selectedRow);
     }
 
     protected boolean isRowChecked(final int row) {

@@ -112,6 +112,7 @@ public class PullUpDialog extends DialogWrapper {
     myClassCombo = new JComboBox(mySuperClasses.toArray());
     myClassCombo.setRenderer(new ClassCellRenderer());
     classComboLabel.setText(RefactoringBundle.message("pull.up.members.to", UsageViewUtil.getLongName(myClass)));
+    classComboLabel.setLabelFor(myClassCombo);
 //    myClassCombo.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     PsiClass nearestBase = RefactoringHierarchyUtil.getNearestBaseClass(myClass, false);
