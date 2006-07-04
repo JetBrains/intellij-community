@@ -44,5 +44,13 @@ public interface AntStructuredElement extends AntElement {
 
   boolean canContainFileReference();
 
+  /**
+  /* Returns true if is instance of a type defined by the <typedef> or <taskdef> task.
+  */
+  boolean isTypeDefined();
+
+  /**
+  /* Returns true if is instance of a type defined by the <presetdef> task.
+  */
   boolean isPresetDefined();
 }

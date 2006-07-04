@@ -38,10 +38,6 @@ public class AntPresetDefImpl extends AntAllTasksContainerImpl implements AntPre
     }
   }
 
-  public AntStructuredElement getAntParent() {
-    return (AntStructuredElement)super.getAntParent();
-  }
-
   public AntTypeDefinition getPresetDefinition() {
     return myPresetDefinition;
   }

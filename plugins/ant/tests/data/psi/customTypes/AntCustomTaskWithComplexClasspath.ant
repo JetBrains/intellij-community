@@ -1,0 +1,7 @@
+<project default="customTaskTarget">
+  <target name="customTaskTarget">
+    <taskdef name="customtask" classpath="some/fake/classpath/:../../../../../../out/classes/test/ant/com/intellij/lang/ant/"
+             classname="com.intellij.lang.ant.typedefs.AntCustomTask"/>
+    <customtask/>
+  </target>
+</project>

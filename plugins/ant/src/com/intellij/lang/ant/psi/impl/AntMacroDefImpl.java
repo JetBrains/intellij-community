@@ -41,10 +41,6 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
     }
   }
 
-  public AntStructuredElement getAntParent() {
-    return (AntStructuredElement)super.getAntParent();
-  }
-
   public AntTypeDefinition getMacroDefinition() {
     return myMacroDefinition;
   }

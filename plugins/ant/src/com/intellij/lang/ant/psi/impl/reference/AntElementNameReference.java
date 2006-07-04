@@ -71,16 +71,15 @@ public class AntElementNameReference extends AntGenericReference {
     final AntStructuredElement element = getElement();
     final AntTypeDefinition elementDef = element.getTypeDefinition();
     if (elementDef != null) {
-      if (element.isPresetDefined()) {
-        return elementDef.getDefiningElement();
+      final PsiElement definingElement = elementDef.getDefiningElement();
+      if (element.isPresetDefined() || element.isTypeDefined()) {
+        return definingElement;
       }
       if (!(element instanceof AntTask)) {
-        final PsiElement nestedMacroElement = elementDef.getDefiningElement();
-        return (nestedMacroElement == null) ? findClass(elementDef, element) : nestedMacroElement;
+        return (definingElement == null) ? findClass(elementDef, element) : definingElement;
       }
       AntTask task = (AntTask)element;
       if (task.isMacroDefined()) {
-        final PsiElement definingElement = elementDef.getDefiningElement();
         final XmlAttribute attr = getAttribute();
         if (definingElement != null && attr != null) {
           for (PsiElement child : definingElement.getChildren()) {

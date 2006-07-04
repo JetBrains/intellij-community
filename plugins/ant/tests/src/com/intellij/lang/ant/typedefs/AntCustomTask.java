@@ -12,16 +12,27 @@ public class AntCustomTask extends Task {
   private int myInteger;
   private boolean myBoolean;
 
-
   public void setString(final String string) {
     myString = string;
+  }
+
+  public String getString() {
+    return myString;
   }
 
   public void setInteger(final int integer) {
     myInteger = integer;
   }
 
+  public int getInteger() {
+    return myInteger;
+  }
+
   public void setBoolean(final boolean aBoolean) {
     myBoolean = aBoolean;
+  }
+
+  public boolean getBoolean() {
+    return myBoolean;
   }
 }

@@ -256,6 +256,10 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     return false;
   }
 
+  public boolean isTypeDefined() {
+    return myDefinition != null && myDefinition.getDefiningElement() instanceof AntTypeDefImpl;
+  }
+
   public boolean isPresetDefined() {
     return myDefinition != null && myDefinition.getClassName().startsWith(AntPresetDefImpl.ANT_PRESETDEF_NAME);
   }

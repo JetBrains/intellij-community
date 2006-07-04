@@ -43,10 +43,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   private AntTypeDefinition[] myTypeDefinitionArray;
   private AntTypeDefinition myTargetDefinition;
   /**
-   * Set of classnames of custom definitions.
-   */
-  private Set<String> myCustomDefinitions;
-  /**
    * Map of nested elements specially for the project element.
    * It's updated together with the set of custom definitons.
    */
@@ -104,13 +100,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       myPrologElement = null;
       myProject = null;
       myEpilogueElement = null;
-      if (myCustomDefinitions != null) {
-        for (final String classname : myCustomDefinitions) {
-          myTypeDefinitions.remove(classname);
-        }
-        myCustomDefinitions.clear();
-        myTypeDefinitionArray = null;
-      }
       myTargetDefinition = null;
     }
   }
@@ -195,7 +184,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     synchronized (PsiLock.LOCK) {
       if (myTypeDefinitions == null) {
         myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
-        myCustomDefinitions = new HashSet<String>();
         myProjectElements = new HashMap<AntTypeId, String>();
         myAntProject = new Project();
         myAntProject.init();
@@ -235,7 +223,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       myTypeDefinitionArray = null;
       final String classname = def.getClassName();
       myTypeDefinitions.put(classname, def);
-      myCustomDefinitions.add(classname);
       myProjectElements.put(def.getTypeId(), classname);
       if (myTargetDefinition != null && myTargetDefinition != def) {
         myTargetDefinition = null;
@@ -248,7 +235,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       myTypeDefinitionArray = null;
       final String classname = def.getClassName();
       myTypeDefinitions.remove(classname);
-      myCustomDefinitions.remove(classname);
       myProjectElements.remove(def.getTypeId());
       if (myTargetDefinition != null && myTargetDefinition != def) {
         myTargetDefinition = null;

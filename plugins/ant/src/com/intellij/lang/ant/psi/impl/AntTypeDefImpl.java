@@ -1,12 +1,11 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.AntTypeDef;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
+import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.apache.tools.ant.Task;
@@ -15,21 +14,16 @@ import org.jetbrains.annotations.NonNls;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.psi.impl.AntTypeDefImpl");
-  private AntTypeDefinition myNewDefinition;
+  private AntTypeDefinitionImpl myNewDefinition;
 
-  public AntTypeDefImpl(final AntElement parent,
-                        final XmlElement sourceElement,
-                        final AntTypeDefinition definition) {
+  public AntTypeDefImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
-    final String classname = getClassName();
-    if (classname == null) return;
-    myNewDefinition = getAntFile().getBaseTypeDefinition(classname);
-    if (myNewDefinition == null) {
-      loadClass(classname);
-    }
+    getDefinition();
   }
 
   public String toString() {
@@ -38,9 +32,9 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       builder.append("AntTypeDef[");
       builder.append(getSourceElement().getName());
       builder.append("]");
-      if (myNewDefinition != null) {
+      if (getDefinition() != null) {
         builder.append(" class=");
-        builder.append(myNewDefinition.getClassName());
+        builder.append(getDefinition().getClassName());
       }
       return builder.toString();
     }
@@ -77,7 +71,21 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     return getSourceElement().getAttributeValue("uri");
   }
 
+  public void clearCaches() {
+    super.clearCaches();
+    if (myNewDefinition != null) {
+      getAntParent().unregisterCustomType(myNewDefinition);
+      myNewDefinition = null;
+    }
+  }
+
   public AntTypeDefinition getDefinition() {
+    if (myNewDefinition == null) {
+      final String classname = getClassName();
+      if (classname != null) {
+        loadClass(classname);
+      }
+    }
     return myNewDefinition;
   }
 
@@ -87,7 +95,18 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     ClassLoader loader = null;
     if (classpath != null) {
       try {
-        loader = new URLClassLoader(new URL[]{new URL("file://" + classpath)}, getClass().getClassLoader());
+        URL[] urls;
+        if (classpath.indexOf(':') < 0) {
+          urls = new URL[]{new URL("file://" + classpath)};
+        }
+        else {
+          final List<URL> urlList = new ArrayList<URL>();
+          for (String url : classpath.split(":")) {
+            urlList.add(new URL("file://" + url));
+          }
+          urls = urlList.toArray(new URL[urlList.size()]);
+        }
+        loader = new URLClassLoader(urls, getClass().getClassLoader());
       }
       catch (MalformedURLException e) {
         LOG.error(e);
@@ -112,11 +131,9 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       myNewDefinition = null;
     }
     else {
-      myNewDefinition = AntFileImpl.createTypeDefinition(id, clazz, Task.class.isAssignableFrom(clazz));
-      final AntStructuredElement se = PsiTreeUtil.getParentOfType(this, AntStructuredElementImpl.class);
-      if (se != null) {
-        se.registerCustomType(myNewDefinition);
-      }
+      myNewDefinition = (AntTypeDefinitionImpl)AntFileImpl.createTypeDefinition(id, clazz, Task.class.isAssignableFrom(clazz));
+      myNewDefinition.setDefiningElement(this);
+      getAntParent().registerCustomType(myNewDefinition);
     }
   }
 }
