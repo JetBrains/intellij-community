@@ -4,15 +4,24 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.projectWizard.ProjectJdkListRenderer;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.ui.SimpleTextAttributes;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collection;
 
 /**
@@ -47,6 +56,43 @@ class JdkComboBox extends JComboBox{
         }
       }
     });
+  }
+
+  public JButton createSetupButton(final Project project, final ProjectJdksModel jdksModel, final JdkComboBoxItem firstItem) {
+    return createSetupButton(project, jdksModel, firstItem, null);
+  }
+
+
+  public JButton createSetupButton(final Project project,
+                                   final ProjectJdksModel jdksModel,
+                                   final JdkComboBoxItem firstItem,
+                                   final Condition<ProjectJdk> additionalSetup) {
+    final FixedSizeButton setUpButton = new FixedSizeButton(this);
+    setUpButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final ProjectRootConfigurable configurable = ProjectRootConfigurable.getInstance(project);
+        DefaultActionGroup group = new DefaultActionGroup();
+        jdksModel.createAddActions(group, JdkComboBox.this, new Condition<ProjectJdk>() {
+          public boolean value(final ProjectJdk jdk) {
+            configurable.addJdkNode(jdk);
+            reloadModel(firstItem, project);
+            setSelectedJdk(jdk); //restore selection
+            if (additionalSetup != null) {
+              if (additionalSetup.value(jdk)) { //leave old selection
+                setSelectedJdk(firstItem.getJdk());
+              }
+            }
+            return false;
+          }
+        });
+        JBPopupFactory.getInstance()
+          .createActionGroupPopup(ProjectBundle.message("project.roots.set.up.jdk.title"), group,
+                                  DataManager.getInstance().getDataContext(), JBPopupFactory.ActionSelectionAid.MNEMONICS, false)
+          .showUnderneathOf(setUpButton);
+      }
+    });
+    ComponentWithBrowseButton.MyDoClickAction.addTo(setUpButton, this);
+    return setUpButton;
   }
 
   public JdkComboBoxItem getSelectedItem() {

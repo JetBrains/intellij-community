@@ -234,9 +234,9 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, type);
     newJdk.setHomePath(home);
     type.setupSdkPaths(newJdk);
-    mySdkEventsDispatcher.getMulticaster().sdkAdded(newJdk);
     myProjectJdks.put(newJdk, newJdk);
     updateTree.value(newJdk);
+    mySdkEventsDispatcher.getMulticaster().sdkAdded(newJdk);
     myModified = true;
   }
 
@@ -249,6 +249,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
 
   @Nullable
   public ProjectJdk getProjectJdk() {
+    if (!myProjectJdks.containsValue(myProjectJdk)) return null;
     return myProjectJdk;
   }
 

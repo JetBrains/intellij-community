@@ -5,10 +5,16 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,13 +33,29 @@ public class ModuleJdkConfigurable implements Disposable {
   private ClasspathEditor myModuleEditor;
   private ProjectJdksModel myJdksModel;
   private boolean myFreeze = false;
+  private SdkModel.Listener myListener = new SdkModel.Listener() {
+    public void sdkAdded(Sdk sdk) {
+      reloadModel();
+    }
 
-  public ModuleJdkConfigurable(ClasspathEditor moduleEditor,
-                               ModifiableRootModel model,
-                               ProjectJdksModel jdksModel) {
+    public void beforeSdkRemove(Sdk sdk) {
+      reloadModel();
+    }
+
+    public void sdkChanged(Sdk sdk, String previousName) {
+      reloadModel();
+    }
+
+    public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
+      reloadModel();
+    }
+  };
+
+  public ModuleJdkConfigurable(ClasspathEditor moduleEditor, ModifiableRootModel model, ProjectJdksModel jdksModel) {
     myModuleEditor = moduleEditor;
     myRootModel = model;
     myJdksModel = jdksModel;
+    myJdksModel.addListener(myListener);
     init();
   }
 
@@ -45,17 +67,19 @@ public class ModuleJdkConfigurable implements Disposable {
   }
 
   public boolean isInheritJdk() {
-    return myCbModuleJdk.getSelectedItem() instanceof JdkComboBox.ProjectJdkComboBoxItem;
+    return myCbModuleJdk.getSelectedItem()instanceof JdkComboBox.ProjectJdkComboBoxItem;
   }
 
   public JComponent createComponent() {
+    return myJdkPanel;
+  }
+
+  private void reloadModel() {
     myFreeze = true;
     final ProjectJdk projectJdk = myCbModuleJdk.getSelectedJdk();
-    myCbModuleJdk.reloadModel(new JdkComboBox.ProjectJdkComboBoxItem(),
-                              myRootModel.getModule().getProject());
+    myCbModuleJdk.reloadModel(new JdkComboBox.ProjectJdkComboBoxItem(), myRootModel.getModule().getProject());
     myCbModuleJdk.setSelectedJdk(projectJdk);    //restore selection
     myFreeze = false;
-    return myJdkPanel;
   }
 
   private void init() {
@@ -69,14 +93,40 @@ public class ModuleJdkConfigurable implements Disposable {
         final ProjectJdk selectedModuleJdk = getSelectedModuleJdk();
         if (selectedModuleJdk != null) {
           myRootModel.setJdk(selectedModuleJdk);
-        } else {
+        }
+        else {
           myRootModel.inheritJdk();
         }
         myModuleEditor.flushChangesToModel();
       }
     });
-    myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.module.radio")), new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(12, 6, 12, 0), 0, 0));
-    myJdkPanel.add(myCbModuleJdk, new GridBagConstraints(1, 0, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(6, 6, 12, 0), 0, 0));
+    myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.module.radio")),
+                   new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(12, 6, 12, 0), 0, 0));
+    myJdkPanel.add(myCbModuleJdk, new GridBagConstraints(1, 0, 1, 1, 0, 1.0,
+                                                         GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                         new Insets(6, 6, 12, 0), 0, 0));
+    final Project project = myRootModel.getModule().getProject();
+    final JButton setUpButton = myCbModuleJdk
+      .createSetupButton(project, myJdksModel, new JdkComboBox.ProjectJdkComboBoxItem(), new Condition<ProjectJdk>(){
+        public boolean value(ProjectJdk jdk) {
+          final ProjectJdk projectJdk = myJdksModel.getProjectJdk();
+          if (projectJdk == null){
+            final int res =
+              Messages.showYesNoDialog(myJdkPanel,
+                                       ProjectBundle.message("project.roots.no.jdk.on.project.message"),
+                                       ProjectBundle.message("project.roots.no.jdk.on.projecct.title"),
+                                       Messages.getInformationIcon());
+            if (res == DialogWrapper.OK_EXIT_CODE){
+              myJdksModel.setProjectJdk(jdk);
+              return true;
+            }
+          }
+          return false;
+        }
+      });
+    myJdkPanel.add(setUpButton, new GridBagConstraints(2, 0, 1, 1, 1.0, 1.0,
+                                                       GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                       new Insets(0, 4, 7, 0), 0, 0));
   }
 
   public void reset() {
@@ -85,7 +135,8 @@ public class ModuleJdkConfigurable implements Disposable {
     if (projectJdk != null && !myRootModel.isJdkInherited()) {
       mySelectedModuleJdk = (ProjectJdk)myJdksModel.findSdk(projectJdk.getName());
       myCbModuleJdk.setSelectedJdk(mySelectedModuleJdk);
-    } else {
+    }
+    else {
       myCbModuleJdk.setSelectedJdk(null);
     }
     myFreeze = false;
@@ -95,5 +146,6 @@ public class ModuleJdkConfigurable implements Disposable {
     myModuleEditor = null;
     myCbModuleJdk = null;
     myJdkPanel = null;
+    myJdksModel.removeListener(myListener);
   }
 }

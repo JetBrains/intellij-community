@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.javaee.JavaeeModuleProperties;
 import com.intellij.javaee.ex.JavaeeModulePropertiesEx;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -15,11 +16,11 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.EventDispatcher;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -143,8 +144,17 @@ public class ModuleEditor {
     setSelectedTabName(ourSelectedTabName);
 
     myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
+    myTabbedPane.addChangeListener(new javax.swing.event.ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        ourSelectedTabName = getSelectedTabName();
+      }
+    });
 
     return myPanel;
+  }
+
+  public static String getSelectedTab(){
+    return ourSelectedTabName;
   }
 
   private int getEditorTabIndex(final String editorName) {

@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
+import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurable;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
@@ -162,6 +163,15 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myApplicationServerLibrariesNode = createLibrariesNode(ApplicationServersManager.getInstance().getLibraryTable(), myApplicationServerLibrariesProvider, getApplicationServerLibrariesProvider());
 
     ((DefaultTreeModel)myTree.getModel()).reload();
+  }
+
+  protected void updateSelection(NamedConfigurable configurable) {
+    final String selectedTab = ModuleEditor.getSelectedTab();
+    super.updateSelection(configurable);
+    if (configurable instanceof ModuleConfigurable){
+      final ModuleConfigurable moduleConfigurable = (ModuleConfigurable)configurable;
+      moduleConfigurable.getModuleEditor().setSelectedTabName(selectedTab);
+    }
   }
 
   private MyNode createLibrariesNode(final LibraryTable table,
@@ -630,6 +640,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
   }
 
+  public void addJdkNode(final ProjectJdk jdk) {
+    addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel), true), myJdksNode);
+  }
+
   private class MyRemoveAction extends MyDeleteAction {
     public MyRemoveAction(final Condition<Object> availableCondition) {
       super(availableCondition);
@@ -674,7 +688,18 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
   }
 
-  private PopupStep createJdksStep(AnActionEvent e) {
+  public DefaultActionGroup createAddJdksGroup(){
+    DefaultActionGroup group = new DefaultActionGroup();
+    myJdksTreeModel.createAddActions(group, myTree, new Condition<ProjectJdk>() {
+      public boolean value(final ProjectJdk jdk) {
+        addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel), true), myJdksNode);
+        return false;
+      }
+    });
+    return group;
+  }
+
+  private PopupStep createJdksStep(DataContext dataContext) {
     DefaultActionGroup group = new DefaultActionGroup();
     myJdksTreeModel.createAddActions(group, myTree, new Condition<ProjectJdk>() {
       public boolean value(final ProjectJdk jdk) {
@@ -684,7 +709,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
     });
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    return popupFactory.createActionsStep(group, e.getDataContext(), false, false, ProjectBundle.message("add.new.jdk.title"), myTree, true);
+    return popupFactory.createActionsStep(group, dataContext, false, false, ProjectBundle.message("add.new.jdk.title"), myTree, true);
   }
 
   private PopupStep createLibrariesStep(AnActionEvent e) {
@@ -773,7 +798,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
             return createLibrariesStep(e);
           }
           else if (selectedValue.compareTo(jdkChoice) == 0) {
-            return createJdksStep(e);
+            return createJdksStep(e.getDataContext());
           }
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
