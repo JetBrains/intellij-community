@@ -75,6 +75,8 @@ public class InlineMethodTest extends CodeInsightTestCase {
 
   public void testIDEADEV5806() throws Exception { doTest(); }
 
+  public void testIDEADEV6807() throws Exception { doTest(); }
+
   public void testVarargs() throws Exception { doTest(); }
 
   private void doTest() throws Exception {

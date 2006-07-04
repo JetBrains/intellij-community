@@ -322,7 +322,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       /*PsiElement first = statements[0];
       PsiElement last = statements[statements.length - 1];*/
 
-      if (statements.length > 0 && statements[statements.length - 1] instanceof PsiReturnStatement) {
+      if (statements.length > 0 && statements[statements.length - 1]instanceof PsiReturnStatement) {
         last--;
       }
 
@@ -350,7 +350,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         final PsiStatement lastStatement = statements[statements.length - 1];
         if (lastStatement instanceof PsiReturnStatement) {
           final PsiExpression returnValue = ((PsiReturnStatement)lastStatement).getReturnValue();
-          while(returnValue instanceof PsiReferenceExpression) ((PsiReferenceExpression)returnValue).getQualifierExpression();
+          while (returnValue instanceof PsiReferenceExpression) ((PsiReferenceExpression)returnValue).getQualifierExpression();
           if (returnValue != null && PsiUtil.isStatement(returnValue)) {
             PsiExpressionStatement exprStatement = (PsiExpressionStatement)myFactory.createStatementFromText("a;", null);
             exprStatement.getExpression().replace(returnValue);
@@ -360,7 +360,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    if (methodCall.getParent() instanceof PsiExpressionStatement) {
+    if (methodCall.getParent()instanceof PsiExpressionStatement) {
       methodCall.getParent().delete();
     }
     else {
@@ -374,9 +374,17 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
 
     PsiClass thisClass = myMethod.getContainingClass();
-    PsiExpression thisAccessExpr = thisVar != null
-                                   ? myFactory.createExpressionFromText(thisVar.getName(), null)
-                                   : null;
+    PsiExpression thisAccessExpr;
+    if (thisVar != null) {
+      if (!canInlineParmOrThisVariable(thisVar, false)) {
+        thisAccessExpr = myFactory.createExpressionFromText(thisVar.getName(), null);
+      } else {
+        thisAccessExpr = thisVar.getInitializer();
+      }
+    }
+    else {
+      thisAccessExpr = null;
+    }
     ChangeContextUtil.decodeContextInfo(anchorParent, thisClass, thisAccessExpr);
 
     if (thisVar != null) {
@@ -636,19 +644,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void inlineParmOrThisVariable(PsiLocalVariable variable, boolean strictlyFinal)
-    throws IncorrectOperationException {
-    PsiReference[] refs = myManager.getSearchHelper().findReferences(variable,
-                                                                     GlobalSearchScope.projectScope(myProject),
-                                                                     false);
-
-    if (refs.length == 0) {
-      variable.getParent().delete(); //Q: side effects?
-      return;
-    }
-
-
+  private boolean canInlineParmOrThisVariable(PsiLocalVariable variable, boolean strictlyFinal) {
     boolean isAccessedForWriting = false;
+    final Collection<PsiReference> refs = ReferencesSearch.search(variable).findAll();
     for (PsiReference ref : refs) {
       PsiElement refElement = ref.getElement();
       if (refElement instanceof PsiExpression) {
@@ -660,7 +658,33 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     PsiExpression initializer = variable.getInitializer();
     boolean shouldBeFinal = variable.hasModifierProperty(PsiModifier.FINAL) && strictlyFinal;
-    if (canInlineParmOrThisVariable(initializer, shouldBeFinal, strictlyFinal, refs.length, isAccessedForWriting)) {
+    return canInlineParmOrThisVariable(initializer, shouldBeFinal, strictlyFinal, refs.size(), isAccessedForWriting);
+  }
+
+  private void inlineParmOrThisVariable(PsiLocalVariable variable, boolean strictlyFinal)
+    throws IncorrectOperationException {
+    PsiReference firstRef = ReferencesSearch.search(variable).findFirst();
+
+    if (firstRef == null) {
+      variable.getParent().delete(); //Q: side effects?
+      return;
+    }
+
+
+    boolean isAccessedForWriting = false;
+    final Collection<PsiReference> refs = ReferencesSearch.search(variable).findAll();
+    for (PsiReference ref : refs) {
+      PsiElement refElement = ref.getElement();
+      if (refElement instanceof PsiExpression) {
+        if (PsiUtil.isAccessedForWriting((PsiExpression)refElement)) {
+          isAccessedForWriting = true;
+        }
+      }
+    }
+
+    PsiExpression initializer = variable.getInitializer();
+    boolean shouldBeFinal = variable.hasModifierProperty(PsiModifier.FINAL) && strictlyFinal;
+    if (canInlineParmOrThisVariable(initializer, shouldBeFinal, strictlyFinal, refs.size(), isAccessedForWriting)) {
       if (shouldBeFinal) {
         declareUsedLocalsFinal(initializer, strictlyFinal);
       }
