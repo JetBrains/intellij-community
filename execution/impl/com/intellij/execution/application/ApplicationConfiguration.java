@@ -1,6 +1,7 @@
 package com.intellij.execution.application;
 
 import com.intellij.coverage.CoverageDataManager;
+import com.intellij.coverage.CoverageSuite;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
@@ -206,6 +207,8 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
   }
 
   private class MyJavaCommandLineState extends JavaCommandLineState {
+    private CoverageSuite myCurrentCoverageSuite;
+
     public MyJavaCommandLineState(final RunnerSettings runnerSettings, final ConfigurationPerRunnerSettings configurationSettings) {
       super(runnerSettings, configurationSettings);
     }
@@ -257,7 +260,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
         final long lastCoverageTime = System.currentTimeMillis();
         String name = getName();
         if (name == null) name = getGeneratedName();
-        CoverageDataManager.getInstance(getProject()).addCoverageSuite(name, coverageFileName, getCoveragePatterns(),
+        myCurrentCoverageSuite = CoverageDataManager.getInstance(getProject()).addCoverageSuite(name, coverageFileName, getCoveragePatterns(),
                                                                        lastCoverageTime, !isMergeWithPreviousResults());
         ApplicationConfiguration.this.appendCoverageArgument(params);
       }
@@ -273,6 +276,13 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
         handler.addProcessListener(new ProcessAdapter() {
           public void startNotified(final ProcessEvent event) {
             notifyRunnable.run();
+          }
+
+          public void processTerminated(final ProcessEvent event) {
+            final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(getProject());
+            if (myCurrentCoverageSuite != null && myCurrentCoverageSuite.equals(coverageDataManager.getCurrentSuite())) {
+              coverageDataManager.chooseSuite(myCurrentCoverageSuite);
+            }
           }
         });
       }
