@@ -13,6 +13,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.net.URL;
@@ -57,12 +59,15 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addInternalResource(J2EE_1_3 +   "ejb-jar_2_0.dtd", "ejb-jar_2_0.dtd");
     addInternalResource(J2EE_1_3 +   "logger.dtd", "logger.dtd");
     addInternalResource(J2EE_1_3 +   "web-facesconfig_1_1.dtd", "web-facesconfig_1_1.dtd");
+    addInternalResource(J2EE_1_3 +   "web-facesconfig_1_0.dtd", "web-facesconfig_1_0.dtd");
 
     addInternalResource(J2EE_1_2 +  "application-client_1_2.dtd", "application-client_1_2.dtd");
     addInternalResource(J2EE_1_2 +  "application_1_2.dtd", "application_1_2.dtd");
     addInternalResource(J2EE_1_2 +  "ejb-jar_1_1.dtd","ejb-jar_1_1.dtd");
     addInternalResource(J2EE_1_2 +  "web-app_2_2.dtd","web-app_2_2.dtd");
+    addInternalResource(J2EE_1_2 +  "web-app_2_3.dtd", "web-app_2_3.dtd");
     addInternalResource(J2EE_1_2 +  "web-jsptaglibrary_1_1.dtd","web-jsptaglibrary_1_1.dtd");
+
     addInternalResource(IBM_NS + "j2ee_web_services_client_1_1.xsd","j2ee_web_services_client_1_1.xsd");
 
     addInternalResource(XmlUtil.XSLT_URI,"xslt-1_0.xsd");
@@ -113,6 +118,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     myPathMacros = pathMacros;
   }
 
+  @Nullable
   private static String getFile(String name, Class klass) {
     final URL resource = klass.getResource(name);
     if (resource == null) return null;
@@ -283,6 +289,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     macroReplacements.substitute(element, SystemInfo.isFileSystemCaseSensitive);
   }
 
+  @NotNull
   public String getComponentName() {
     return "ExternalResourceManagerImpl";
   }
