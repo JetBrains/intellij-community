@@ -76,6 +76,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     if (myNewDefinition != null) {
       getAntParent().unregisterCustomType(myNewDefinition);
       myNewDefinition = null;
+      getAntFile().clearCaches();
     }
   }
 
