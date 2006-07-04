@@ -11,5 +11,9 @@ import java.lang.annotation.ElementType;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface SubTagList {
+
+  /**
+   * Tag name
+   */
   String value() default "";
 }

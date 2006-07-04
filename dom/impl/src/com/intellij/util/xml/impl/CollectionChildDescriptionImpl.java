@@ -97,7 +97,8 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   public String getCommonPresentableName(DomNameStrategy strategy) {
-    return StringUtil.capitalizeWords(StringUtil.pluralize(strategy.splitIntoWords(getXmlElementName())), true);
+    String words = strategy.splitIntoWords(getXmlElementName());
+    return StringUtil.capitalizeWords(words.endsWith("es") ? words: StringUtil.pluralize(words), true);
   }
 
   @Nullable
