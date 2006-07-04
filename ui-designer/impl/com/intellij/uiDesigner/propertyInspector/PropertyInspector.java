@@ -33,6 +33,7 @@ public final class PropertyInspector extends JPanel{
   @NonNls private static final String INSPECTOR_CARD = "inspector";
   @NonNls private static final String EMPTY_CARD = "empty";
   @NonNls private static final String CUSTOM_CARD = "column";
+  private JScrollPane myCustomPropertiesScrollPane = new JScrollPane();
   private CustomPropertiesPanel myCustomPropertiesPanel;
   private ChangeListener myCustomPropertiesChangeListener;
   private RadContainer myPropertiesPanelContainer;
@@ -73,6 +74,7 @@ public final class PropertyInspector extends JPanel{
     label.setOpaque(true);
     label.setHorizontalAlignment(SwingConstants.CENTER);
     add(label, EMPTY_CARD);
+    add(myCustomPropertiesScrollPane, CUSTOM_CARD);
 
     myComponentSelectionListener = new MyComponentSelectionListener();
     synchWithTree(false);
@@ -154,12 +156,11 @@ public final class PropertyInspector extends JPanel{
   private void showCustomPropertiesPanel(final CustomPropertiesPanel propertiesPanel) {
     if (!Comparing.equal(propertiesPanel, myCustomPropertiesPanel)) {
       if (myCustomPropertiesPanel != null) {
-        remove(myCustomPropertiesPanel.getComponent());
         myCustomPropertiesPanel.removeChangeListener(myCustomPropertiesChangeListener);
       }
       myCustomPropertiesPanel = propertiesPanel;
       myCustomPropertiesPanel.addChangeListener(myCustomPropertiesChangeListener);
-      add(myCustomPropertiesPanel.getComponent(), CUSTOM_CARD);
+      myCustomPropertiesScrollPane.getViewport().setView(myCustomPropertiesPanel.getComponent());
     }
     final CardLayout cardLayout = (CardLayout)getLayout();
     cardLayout.show(this, CUSTOM_CARD);
