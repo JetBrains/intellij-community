@@ -799,8 +799,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     final RefCountHolder refCountHolder = myRefCountHolder;  // To make sure it doesn't get null in multi-threaded envir.
     if (refCountHolder != null &&
-        attributeDescriptor.hasIdType() &&
-        tag.getUserData(DO_NOT_VALIDATE_KEY) == null
+        attributeDescriptor.hasIdType()
       ) {
       final String unquotedValue = getUnquotedValue(value, tag);
 
