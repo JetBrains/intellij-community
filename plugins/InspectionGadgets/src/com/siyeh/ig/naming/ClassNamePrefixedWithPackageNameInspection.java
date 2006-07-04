@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
@@ -58,10 +59,12 @@ public class ClassNamePrefixedWithPackageNameInspection
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down into inner classes
             final String className = aClass.getName();
-            final String qualifiedName = aClass.getQualifiedName();
             if (className == null) {
                 return;
             }
+            final PsiClass outerClass =
+                    ClassUtils.getOutermostContainingClass(aClass);
+            final String qualifiedName = outerClass.getQualifiedName();
             if (qualifiedName == null) {
                 return;
             }
