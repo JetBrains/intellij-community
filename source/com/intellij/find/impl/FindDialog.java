@@ -206,20 +206,26 @@ final class FindDialog extends DialogWrapper {
   }
 
   private void validateFindButton() {
-    if (getStringToFind() == null || getStringToFind().length() == 0){
-      setOKActionEnabled(false);
-      if (myFindAllAction != null) {
-        myFindAllAction.setEnabled(false);
-      }
+    final String toFind = getStringToFind();
+
+    if (toFind == null || toFind.length() == 0){
+      setOKStatus(false);
       return;
     }
+
     if (myRbDirectory != null && myRbDirectory.isSelected() &&
       (getDirectory() == null || getDirectory().length() == 0)){
-      setOKActionEnabled(false);
+      setOKStatus(false);
       return;
     }
-    setOKActionEnabled(true);
-    if (myFindAllAction != null) myFindAllAction.setEnabled(true);
+    setOKStatus(true);
+  }
+
+  private void setOKStatus(boolean value) {
+    setOKActionEnabled(value);
+    if (myFindAllAction != null) {
+      myFindAllAction.setEnabled(value);
+    }
   }
 
   public JComponent createCenterPanel() {
@@ -334,11 +340,17 @@ final class FindDialog extends DialogWrapper {
     if (validateModel.isRegularExpressions()) {
       String toFind = validateModel.getStringToFind();
       try {
+        Pattern pattern;
+
         if (validateModel.isCaseSensitive()){
-          Pattern.compile(toFind, Pattern.MULTILINE);
+          pattern = Pattern.compile(toFind, Pattern.MULTILINE);
         }
         else{
-          Pattern.compile(toFind, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+          pattern = Pattern.compile(toFind, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+        }
+
+        if (pattern.matcher("").matches()) {
+          throw new PatternSyntaxException("Matching empty string",toFind,0);
         }
       }
       catch(PatternSyntaxException e){
