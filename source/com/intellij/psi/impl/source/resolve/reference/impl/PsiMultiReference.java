@@ -39,6 +39,19 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     myReferences = ArrayUtil.append(myReferences, reference);
   }
 
+  public TextRange getMinimumRangeInElement() {
+    int start = 0;
+    int end = Integer.MAX_VALUE;
+    for (PsiReference ref: myReferences) {
+      final TextRange range = ref.getRangeInElement();
+      start = Math.max(start, range.getStartOffset());
+      end = Math.min(end, range.getEndOffset());
+    }
+    return new TextRange(start, end);
+  }
+
+
+
   private PsiReference chooseReference(){
     if(myChoosenOne != -1){
       return myReferences[myChoosenOne];
@@ -149,4 +162,5 @@ public class PsiMultiReference implements PsiPolyVariantReference {
 
     return result.toArray(new ResolveResult[result.size()]);
   }
+
 }
