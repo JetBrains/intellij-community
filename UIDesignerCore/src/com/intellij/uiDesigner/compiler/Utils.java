@@ -281,7 +281,7 @@ public final class Utils {
       if (componentClass.equals(JComponent.class)) {
         return JPanel.class;
       }
-      if ((componentClass.getModifiers() & Modifier.ABSTRACT) != 0) {
+      if ((componentClass.getModifiers() & (Modifier.ABSTRACT | Modifier.PRIVATE)) != 0) {
         continue;
       }
       try {

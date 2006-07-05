@@ -369,14 +369,19 @@ public class AsmCodeGenerator {
 
       if (myIgnoreCustomCreation) {
         boolean creatable = true;
-        try {
-          final Constructor constructor = componentClass.getConstructor(new Class[0]);
-          if ((constructor.getModifiers() & Modifier.PUBLIC) == 0) {
+        if ((componentClass.getModifiers() & Modifier.PRIVATE) != 0) {
+          creatable = false;
+        }
+        else {
+          try {
+            final Constructor constructor = componentClass.getConstructor(new Class[0]);
+            if ((constructor.getModifiers() & Modifier.PUBLIC) == 0) {
+              creatable = false;
+            }
+          }
+          catch(NoSuchMethodException ex) {
             creatable = false;
           }
-        }
-        catch(NoSuchMethodException ex) {
-          creatable = false;
         }
         if (!creatable) {
           componentClass = Utils.suggestReplacementClass(componentClass);
