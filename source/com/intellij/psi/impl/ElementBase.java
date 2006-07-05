@@ -17,7 +17,6 @@ import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IconUtil;
@@ -131,7 +130,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       if (element.hasModifierProperty(PsiModifier.ABSTRACT) && !((PsiClass)element).isInterface()) {
         flags |= FLAGS_ABSTRACT;
       }
-      if (JUnitUtil.isTestClass(aClass)) {
+      int kind = getClassKind(aClass);
+      if (kind == CLASS_KIND_JUNIT_TEST) {
         flags |= FLAGS_JUNIT_TEST;
       }
     }
@@ -171,7 +171,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (value == null) {
       value = aClass.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<Integer>() {
         public Result<Integer> compute() {
-          return new Result<Integer>(new Integer(getClassKindImpl(aClass)), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+          return Result.createSingleDependency(new Integer(getClassKindImpl(aClass)), aClass);
         }
       }, false);
       aClass.putUserData(CLASS_KIND_KEY, value);
@@ -205,8 +205,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       return CLASS_KIND_EXCEPTION;
     }
 
-    final PsiClass testClass = aClass.getManager().findClass("junit.framework.TestCase", aClass.getResolveScope());
-    if (testClass != null && InheritanceUtil.isInheritorOrSelf(aClass, testClass, true)) {
+    if (JUnitUtil.isTestClass(aClass)) {
       return CLASS_KIND_JUNIT_TEST;
     }
     return CLASS_KIND_CLASS;
