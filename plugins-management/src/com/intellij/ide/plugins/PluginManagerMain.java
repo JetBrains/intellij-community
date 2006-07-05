@@ -247,8 +247,7 @@ public class PluginManagerMain
           list = RepositoryHelper.Process(mySynchStatus);
         }
         catch (Exception e) {
-          Messages
-            .showErrorDialog(getMainPanel(), IdeBundle.message("error.list.of.plugins.was.not.loaded"), IdeBundle.message("title.plugins"));
+          Messages.showErrorDialog(IdeBundle.message("error.list.of.plugins.was.not.loaded"), IdeBundle.message("title.plugins"));
         }
         return list;
       }
