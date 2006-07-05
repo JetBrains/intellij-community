@@ -331,7 +331,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         myBlockSupport.reparseRange(file, startOffset, psiEndOffset, endOffset - psiEndOffset, chars);
         //checkConsistency(file, document);
         //file.setModificationStamp(document.getModificationStamp());
-        InjectedLanguageUtil.commitAllInjectedDocuments(this, document);
+        InjectedLanguageUtil.commitAllInjectedDocuments(file);
       }
 
       textBlock.clear();

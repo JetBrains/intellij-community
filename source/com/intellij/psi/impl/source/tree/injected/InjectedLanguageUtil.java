@@ -44,9 +44,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author cdr
@@ -77,6 +75,8 @@ public class InjectedLanguageUtil {
                                                                                       @NotNull String suffix) {
     final ParserDefinition parserDefinition = language.getParserDefinition();
     if (parserDefinition == null) return null;
+    PsiFile hostFile = host.getContainingFile();
+    if (hostFile == null) return null;
     PsiManager psiManager = host.getManager();
     final Project project = psiManager.getProject();
 
@@ -107,7 +107,7 @@ public class InjectedLanguageUtil {
     parsedNode.putUserData(TreeElement.MANAGER_KEY, psiManager);
     SingleRootFileViewProvider viewProvider = createViewProvider(project, virtualFile);
     PsiFile psiFile = parserDefinition.createFile(viewProvider);
-    psiFile = (PsiFile)registerDocumentRange(documentRange, psiFile);
+    psiFile = (PsiFile)registerDocumentRange(hostFile, documentRange, psiFile);
     SrcRepositoryPsiElement repositoryPsiElement = (SrcRepositoryPsiElement)psiFile;
     ((FileElement)parsedNode).setPsiElement(repositoryPsiElement);
     repositoryPsiElement.setTreeElement(parsedNode);
@@ -130,7 +130,6 @@ public class InjectedLanguageUtil {
         text = StringUtil.trimEnd(text, documentRange.getSuffix());
         PsiLanguageInjectionHost injectionHost = (PsiLanguageInjectionHost)psiFile.getContext();
         PsiFile hostFile = injectionHost.getContainingFile();
-        String hostFileText = hostFile.getText();
         TextRange hostTextRange = injectionHost.getTextRange();
         RangeMarker documentWindow = documentRange.getTextRange();
         TextRange rangeInsideHost = new TextRange(documentWindow.getStartOffset(), documentWindow.getEndOffset()).shiftRight(-hostTextRange.getStartOffset());
@@ -173,6 +172,12 @@ public class InjectedLanguageUtil {
         return null;
       }
     };
+  }
+
+  @NotNull
+  public static Collection<PsiFile> getInjectedFiles(PsiFile hostFile) {
+    Map<RangeMarker, PsiFile> map = hostFile.getUserData(INJECTED_FILES_KEY);
+    return map == null ? Collections.<PsiFile>emptyList() : map.values();
   }
 
   private static <T extends PsiLanguageInjectionHost> void patchLeafs(final ASTNode parsedNode,
@@ -380,11 +385,10 @@ public class InjectedLanguageUtil {
   }
 
 
-  private static final Key<Map<RangeMarker,PsiFile>> INJECTED_DOCUMENTS_KEY = Key.create("INJECTED_DOCUMENTS_KEY");
-  public static void commitAllInjectedDocuments(PsiDocumentManager documentManager, Document document) {
-    Map<RangeMarker, PsiFile> injected = document.getUserData(INJECTED_DOCUMENTS_KEY);
+  private static final Key<Map<RangeMarker,PsiFile>> INJECTED_FILES_KEY = Key.create("INJECTED_FILES_KEY");
+  public static void commitAllInjectedDocuments(PsiFile psiFile) {
+    Map<RangeMarker, PsiFile> injected = psiFile.getUserData(INJECTED_FILES_KEY);
     if (injected == null) return;
-    PsiFile psiFile = documentManager.getPsiFile(document);
     ArrayList<RangeMarker> oldInjected = new ArrayList<RangeMarker>(injected.keySet());
     for (RangeMarker documentRange : oldInjected) {
       final PsiFileImpl oldFile = (PsiFileImpl)injected.get(documentRange);
@@ -398,9 +402,8 @@ public class InjectedLanguageUtil {
       injectionHost.getInjectedPsi();
     }
   }
-  private static PsiElement registerDocumentRange(final DocumentRange documentRange, final PsiFile injectedPsi) {
-    DocumentEx document = documentRange.getDelegate();
-    Map<RangeMarker, PsiFile> injected = document.getUserData(INJECTED_DOCUMENTS_KEY);
+  private static PsiElement registerDocumentRange(final PsiFile hostFile, final DocumentRange documentRange, final PsiFile injectedPsi) {
+    Map<RangeMarker, PsiFile> injected = hostFile.getUserData(INJECTED_FILES_KEY);
 
     if (injected == null) {
       injected = new THashMap<RangeMarker, PsiFile>(new TObjectHashingStrategy<RangeMarker>() {
@@ -412,7 +415,7 @@ public class InjectedLanguageUtil {
           return o1.getStartOffset() == o2.getStartOffset() && o1.getEndOffset() == o2.getEndOffset();
         }
       });
-      document.putUserData(INJECTED_DOCUMENTS_KEY, injected);
+      hostFile.putUserData(INJECTED_FILES_KEY, injected);
     }
 
     RangeMarker marker = documentRange.getTextRange();
