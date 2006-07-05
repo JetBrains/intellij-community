@@ -11,6 +11,10 @@ import com.intellij.psi.PsiFile;
 
 public class HighlightUsagesAction extends AnAction {
 
+  public HighlightUsagesAction() {
+    setInjectedContext(true);
+  }
+
   public void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
