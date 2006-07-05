@@ -16,27 +16,29 @@ import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.findUsages.FindUsagesUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -56,6 +58,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     myContext = context; LOG.assertTrue(targetMethod != null);
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("change.method.signature.from.usage.text",
                                   HighlightUtil.formatMethod(myTargetMethod),
@@ -68,7 +71,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     try {
       for (ParameterInfo info : infos) {
         PsiType type = info.getTypeWrapper().getType(context, context.getManager());
-        if (!result.equals("")) {
+        if (result.length() != 0) {
           result += ", ";
         }
         result += type.getPresentableText();
@@ -80,6 +83,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     return result;
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("change.method.signature.from.usage.family");
   }
@@ -236,9 +240,10 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
                                                               PsiExpression expression,
                                                               PsiType exprType,
                                                               Set<String> existingNames) {
-    int suffix =0;
     SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, expression, exprType);
-    String[] names = nameInfo.names;
+    @NonNls String[] names = nameInfo.names;
+    if (names.length == 0) names = new String[]{"param"};
+    int suffix = 0;
     while (true) {
       for (String name : names) {
         String suggested = name + (suffix == 0 ? "" : String.valueOf(suffix));
