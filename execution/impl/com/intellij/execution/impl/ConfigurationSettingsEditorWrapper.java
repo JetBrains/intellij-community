@@ -4,6 +4,7 @@ import com.intellij.execution.RunManagerConfig;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,6 +28,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
 
   public ConfigurationSettingsEditorWrapper(final RunnerAndConfigurationSettingsImpl settings) {
     myEditor = new ConfigurationSettingsEditor(settings);
+    Disposer.register(this, myEditor);
 
     final DefaultComboBoxModel comboBoxModel = (DefaultComboBoxModel)myCompileMethod.getModel();
     for (String method : RunManagerConfig.METHODS) {
@@ -65,7 +67,6 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   }
 
   protected void disposeEditor() {
-    myEditor.disposeEditor();
   }
 
   public void resetEditorFrom(final RunnerAndConfigurationSettingsImpl settings) {
@@ -85,8 +86,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   }
 
   public RunnerAndConfigurationSettingsImpl getSnapshot() throws ConfigurationException {
-    RunnerAndConfigurationSettingsImpl settings = myEditor.getSnapshot();
-    return settings;
+    return myEditor.getSnapshot();
   }
 
 
