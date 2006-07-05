@@ -6,10 +6,11 @@ import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.DefaultRoleFinder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.RoleFinder;
+import org.jetbrains.annotations.NotNull;
 
 public interface XmlChildRole {
   RoleFinder START_TAG_NAME_FINDER = new RoleFinder() {
-    public ASTNode findChild(ASTNode parent) {
+    public ASTNode findChild(@NotNull ASTNode parent) {
       //LOG.assertTrue(parent.getElementType() == XmlElementType.XML_TAG);
       ASTNode current = parent.getFirstChildNode();
       IElementType elementType;

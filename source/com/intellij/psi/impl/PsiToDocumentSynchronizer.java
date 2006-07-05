@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -25,13 +26,16 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     myPsiDocumentManager = psiDocumentManager;
   }
 
+  @Nullable
   public DocumentChangeTransaction getTransaction(final Document document) {
     final Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(document);
     return pair != null ? pair.getFirst() : null;
   }
 
   public boolean isInSynchronization(final Document document) {
-    return mySyncDocument == document;
+    synchronized (PsiLock.LOCK) {
+      return mySyncDocument == document;
+    }
   }
 
   private static interface DocSyncAction {
@@ -158,6 +162,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     }
   }
 
+  @Nullable
   private DocumentEx getCachedDocument(PsiFile file) {
     return (DocumentEx)myPsiDocumentManager.getCachedDocument(file);
   }
@@ -169,9 +174,9 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   public void startTransaction(Document doc, PsiElement scope) {
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
     if(pair == null)
-      pair = new Pair<DocumentChangeTransaction, Integer>(new DocumentChangeTransaction(doc, scope != null ? scope.getContainingFile() : null), new Integer(0));
-    else
-      pair = new Pair<DocumentChangeTransaction, Integer>(pair.getFirst(), new Integer(pair.getSecond().intValue() + 1));
+      pair = new Pair<DocumentChangeTransaction, Integer>(
+        new DocumentChangeTransaction(doc, scope != null ? scope.getContainingFile() : null), 0);
+    else pair = new Pair<DocumentChangeTransaction, Integer>(pair.getFirst(), pair.getSecond().intValue() + 1);
     myTransactionsMap.put(doc, pair);
   }
 
@@ -236,11 +241,12 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     }
   }
 
+  @Nullable
   public DocumentChangeTransaction removeTransaction(Document doc) {
-     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
+    Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
     if(pair == null) return null;
     if(pair.getSecond().intValue() > 0){
-      pair = new Pair<DocumentChangeTransaction, Integer>(pair.getFirst(), new Integer(pair.getSecond().intValue() - 1));
+      pair = new Pair<DocumentChangeTransaction, Integer>(pair.getFirst(), pair.getSecond().intValue() - 1);
       myTransactionsMap.put(doc, pair);
       return null;
     }
@@ -288,6 +294,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
           final int newStringLength = str.length();
           final String chars = getText(start, end);
           if(chars.equals(str)) return;
+
           int newStartInString = 0;
           int newEndInString = newStringLength;
           while (newStartInString < newStringLength &&
@@ -296,6 +303,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
             start++;
             newStartInString++;
           }
+
           while (end > start &&
                  newEndInString > newStartInString &&
                  str.charAt(newEndInString - 1) == chars.charAt(end - oldStart - 1)) {
@@ -343,9 +351,9 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
         if(range.getStartOffset() >= start){
           final int effectiveStart = Math.max(currentNewDocumentOffset, start);
-          text.append(myDocument.getChars(),
+          text.append(myDocument.getCharsSequence(),
                       effectiveStart - currentNewDocumentOffset + currentOldDocumentOffset,
-                      Math.min(range.getStartOffset(), end) - effectiveStart);
+                      Math.min(range.getStartOffset(), end) - currentNewDocumentOffset + currentOldDocumentOffset);
           if(end > range.getStartOffset()){
             text.append(buffer.substring(0, Math.min(end - range.getStartOffset(), buffer.length())));
           }
@@ -357,9 +365,9 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
       if(currentNewDocumentOffset < end){
         final int effectiveStart = Math.max(currentNewDocumentOffset, start);
-        text.append(myDocument.getChars(),
+        text.append(myDocument.getCharsSequence(),
                     effectiveStart - currentNewDocumentOffset + currentOldDocumentOffset,
-                    end - effectiveStart);
+                    end- currentNewDocumentOffset + currentOldDocumentOffset);
       }
 
       return text.toString();
@@ -386,9 +394,9 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
           if(effectiveFragmentEnd >= start){
             final int effectiveStart = Math.max(effectiveOffset, start);
             if(range.getStartOffset() > start){
-              fragmentBuffer.append(myDocument.getChars(),
+              fragmentBuffer.append(myDocument.getCharsSequence(),
                                     effectiveStart - effectiveOffset + documentOffset,
-                                    Math.min(range.getStartOffset(), end) - effectiveStart);
+                                    Math.min(range.getStartOffset(), end)- effectiveOffset + documentOffset);
             }
             if(end >= range.getStartOffset()){
               fragmentBuffer.append(buffer);
@@ -405,9 +413,9 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
         if(effectiveOffset < end){
           final int effectiveStart = Math.max(effectiveOffset, start);
-          fragmentBuffer.append(myDocument.getChars(),
+          fragmentBuffer.append(myDocument.getCharsSequence(),
                                 effectiveStart - effectiveOffset + documentOffset,
-                                end - effectiveStart);
+                                end- effectiveOffset + documentOffset);
         }
 
       }

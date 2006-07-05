@@ -1,9 +1,6 @@
 package com.intellij.psi;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -24,6 +21,7 @@ import com.intellij.psi.xml.XmlText;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.util.*;
@@ -65,11 +63,11 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   }
 
   protected CompositeLanguageFileViewProvider cloneInner() {
-    final CompositeLanguageFileViewProvider viewProvider = new CompositeLanguageFileViewProvider(getManager(), new LightVirtualFile(
+    return new CompositeLanguageFileViewProvider(getManager(), new LightVirtualFile(
       getVirtualFile().getName(), getVirtualFile().getFileType(), getContents(), getModificationStamp()), false);
-    return viewProvider;
   }
 
+  @Nullable
   protected PsiFile getPsiInner(Language target) {
     PsiFile file = super.getPsiInner(target);
     if (file != null) return file;
@@ -144,14 +142,14 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
   protected void reparseRoot(final Language lang, final PsiFile cachedRoot) {
     LOG.debug("JspxFile: reparseRoot " + getVirtualFile().getName());
-    final PsiFile psiFileImpl = cachedRoot;
-    final ASTNode oldFileTree = psiFileImpl.getNode();
+    final ASTNode oldFileTree = cachedRoot.getNode();
     if (oldFileTree == null || oldFileTree.getFirstChildNode()instanceof ChameleonElement) {
-      if (psiFileImpl instanceof PsiFileImpl) ((PsiFileImpl)psiFileImpl).setTreeElementPointer(null);
-      psiFileImpl.subtreeChanged();
+      if (cachedRoot instanceof PsiFileImpl) ((PsiFileImpl)cachedRoot).setTreeElementPointer(null);
+      cachedRoot.subtreeChanged();
       return;
     }
     final PsiFile fileForNewText = createFile(lang);
+    assert fileForNewText != null;
     final ASTNode newFileTree = fileForNewText.getNode();
     ChameleonTransforming.transformChildren(newFileTree, true);
     ChameleonTransforming.transformChildren(oldFileTree, true);
@@ -216,6 +214,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     }
   }
 
+  @Nullable
   public PsiElement findElementAt(int offset, Class<? extends Language> lang) {
     final PsiFile mainRoot = getPsi(getBaseLanguage());
     PsiElement ret = null;
@@ -233,10 +232,12 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     return ret;
   }
 
+  @Nullable
   public PsiElement findElementAt(int offset) {
     return findElementAt(offset, Language.class);
   }
 
+  @Nullable
   public PsiReference findReferenceAt(int offset) {
     TextRange minRange = new TextRange(0, getContents().length());
     PsiReference ret = null;
@@ -262,10 +263,15 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     return new LanguageExtension[0];
   }
 
+  @Nullable
   protected PsiFile createFile(Language lang) {
     final PsiFile psiFile = super.createFile(lang);
     if (psiFile != null) return psiFile;
-    if (getRelevantLanguages().contains(lang)) return lang.getParserDefinition().createFile(this);
+    if (getRelevantLanguages().contains(lang)) {
+      final ParserDefinition parserDefinition = lang.getParserDefinition();
+      assert parserDefinition != null;
+      return parserDefinition.createFile(this);
+    }
     return null;
   }
 
@@ -289,12 +295,15 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
       if (element == null) return;
       do {
         if (element instanceof OuterLanguageElement) {
+          currentDecodedBuffer = new StringBuffer();
+          currentBuffer = new StringBuffer();
           javaFragments.add(Pair.create((OuterLanguageElement)element,
-                                        Pair.create(currentBuffer = new StringBuffer(), currentDecodedBuffer = new StringBuffer())));
+                                        Pair.create(currentBuffer, currentDecodedBuffer)));
         }
         else {
           final String text = element.getText();
           final String decoded = language != StdLanguages.JSP ? XmlUtil.decode(text) : text;
+          assert currentDecodedBuffer != null;
           currentDecodedBuffer.append(decoded);
           currentBuffer.append(text);
         }

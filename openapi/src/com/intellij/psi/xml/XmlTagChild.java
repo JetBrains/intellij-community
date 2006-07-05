@@ -15,10 +15,16 @@
  */
 package com.intellij.psi.xml;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 public interface XmlTagChild extends XmlElement{
   XmlTagChild[] EMPTY_ARRAY = new XmlTagChild[0];
+  @NotNull
   XmlTag getParentTag();
 
+  @Nullable
   XmlTagChild getNextSiblingInTag();
+  @Nullable
   XmlTagChild getPrevSiblingInTag();
 }

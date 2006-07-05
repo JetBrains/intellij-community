@@ -21,8 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
+import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
@@ -91,6 +92,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     }
   }
 
+  @Nullable
   protected PsiFile getPsiInner(final Language target) {
     if (target != getBaseLanguage()) {
       return null;
@@ -235,6 +237,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     return vFile.getLength();
   }
 
+  @Nullable
   protected PsiFile createFile(Language lang) {
     if (lang != getBaseLanguage()) return null;
     final ParserDefinition parserDefinition = lang.getParserDefinition();
@@ -324,6 +327,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     return psiFile != null ? findElementAt(psiFile, offset) : null;
   }
 
+  @Nullable
   public PsiReference findReferenceAt(final int offset, final Language language) {
     final PsiFile psiFile = getPsi(language);
     return psiFile != null ? findReferenceAt(psiFile, offset) : null;
@@ -341,6 +345,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     return component.isViewProviderLocked(this);
   }
 
+  @Nullable
   protected static PsiReference findReferenceAt(final PsiFile psiFile, final int offset) {
     int offsetInElement = offset;
     PsiElement child = psiFile.getFirstChild();
@@ -366,6 +371,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     return findElementAt(offset);
   }
 
+  @Nullable
   protected static PsiElement findElementAt(final PsiElement psiFile, final int offset) {
     int offsetInElement = offset;
     PsiElement child = psiFile.getFirstChild();

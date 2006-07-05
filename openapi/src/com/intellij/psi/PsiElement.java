@@ -139,6 +139,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @param offset the relative offset for which the PSI element is requested.
    * @return the element at the offset, or null if none is found.
    */
+  @Nullable
   PsiElement findElementAt(int offset);
 
   /**
@@ -471,6 +472,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the AST node instance.
    */
+  @Nullable
   ASTNode getNode();
 
   /**

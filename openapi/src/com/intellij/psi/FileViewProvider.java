@@ -33,13 +33,17 @@ public interface FileViewProvider extends Cloneable{
   void contentsSynchronized();
   FileViewProvider clone();
 
+  @Nullable
   PsiElement findElementAt(final int offset);
+  @Nullable
   PsiReference findReferenceAt(final int offset);
 
   @Nullable
   PsiElement findElementAt(final int offset, final Language language);
 
+  @Nullable
   PsiElement findElementAt(int offset, Class<? extends Language> lang);
+  @Nullable
   PsiReference findReferenceAt(final int offsetInElement, final Language language);
   Lexer createLexer(final Language language);
 

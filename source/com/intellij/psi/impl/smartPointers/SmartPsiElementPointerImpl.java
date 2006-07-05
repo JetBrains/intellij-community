@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -14,6 +15,7 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.Nullable;
 
 class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
   private static final Logger LOG = Logger.getInstance(
@@ -28,6 +30,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
     void documentAndPsiInSync();
 
+    @Nullable
     PsiElement restoreElement();
   }
 
@@ -107,6 +110,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
   }
 
+  @Nullable
   private static PsiElement getAnchor(PsiElement element) {
     LOG.assertTrue(element.isValid());
     PsiElement anchor = null;
@@ -125,7 +129,10 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       anchor = ((PsiVariable)element).getNameIdentifier();
     }
     else if (element instanceof XmlTag) {
-      anchor = SourceTreeToPsiMap.treeElementToPsi(XmlChildRole.START_TAG_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(element)));
+      final ASTNode astNode = SourceTreeToPsiMap.psiElementToTree(element);
+      if (astNode != null) {
+        anchor = SourceTreeToPsiMap.treeElementToPsi(XmlChildRole.START_TAG_NAME_FINDER.findChild(astNode));
+      }
     }
     return anchor;
   }
@@ -251,6 +258,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       mySyncEndOffset = myMarker.getEndOffset();
     }
 
+    @Nullable
     public PsiElement restoreElement() {
       if (!mySyncMarkerIsValid) return null;
       if (!myFile.isValid()) return null;

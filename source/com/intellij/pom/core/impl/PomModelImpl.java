@@ -45,7 +45,6 @@ import com.intellij.pom.PomProject;
 import com.intellij.pom.PomTransaction;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
-import com.intellij.pom.tree.TreeAspect;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -60,6 +59,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -69,7 +69,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   private Map<Class<? extends PomModelAspect>, PomModelAspect> myAspects = new HashMap<Class<? extends PomModelAspect>, PomModelAspect>();
   private Map<PomModelAspect, List<PomModelAspect>> myIncidence = new HashMap<PomModelAspect, List<PomModelAspect>>();
   private Map<PomModelAspect, List<PomModelAspect>> myInvertedIncidence = new HashMap<PomModelAspect, List<PomModelAspect>>();
-  private List<PomModelListener> myListeners = new ArrayList<PomModelListener>();
+  private final List<PomModelListener> myListeners = new ArrayList<PomModelListener>();
 
   public PomModelImpl(Project project) {
     myPomProject = new PomProjectImpl(this, project);
@@ -80,6 +80,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   public <T extends PomModelAspect> T getModelAspect(Class<T> aClass) {
+    //noinspection unchecked
     return (T)myAspects.get(aClass);
   }
 
@@ -190,6 +191,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
   }
 
+  @Nullable
   private Pair<PomModelAspect,PomTransaction> getBlockingTransaction(final PomModelAspect aspect, PomTransaction transaction) {
     final List<PomModelAspect> allDependants = getAllDependants(aspect);
     for (final PomModelAspect pomModelAspect : allDependants) {
@@ -217,7 +219,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     if (containingFileByTree != null) {
       document = manager.getCachedDocument(containingFileByTree);
     }
-    if (document != null && transaction.getAccumulatedEvent().getChangeSet(getModelAspect(TreeAspect.class)) != null) {
+    if (document != null) {
       synchronizer.commitTransaction(document);
     }
     if(progressIndicator != null) progressIndicator.finishNonCancelableSection();
@@ -237,9 +239,12 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     if(containingFileByTree != null) {
       document = manager.getCachedDocument(containingFileByTree);
     }
-    if(document != null) synchronizer.startTransaction(document, transaction.getChangeScope());
+    if(document != null) {
+      synchronizer.startTransaction(document, transaction.getChangeScope());
+    }
   }
 
+  @Nullable
   private static PsiFile getContainingFileByTree(final PsiElement changeScope) {
     // there could be pseudo phisical trees (JSPX/JSP/etc.) which must not translate
     // any changes to document and not to fire any PSI events
