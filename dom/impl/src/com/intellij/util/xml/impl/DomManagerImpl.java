@@ -611,12 +611,17 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
     private Result<DomFileElementImpl> saveResult(final DomFileDescription description) {
       myFileDescription = description;
-      DomFileElementImpl fileElement = description == null ? null : new DomFileElementImpl(myXmlFile, myFileDescription.getRootElementClass(), myFileDescription.getRootTagName(), DomManagerImpl.this);
-      final Result<DomFileElementImpl> result = new Result<DomFileElementImpl>(fileElement, myXmlFile);
-      if (description != null) {
-        myOldResult = result;
+      if (description == null) {
+        final Set<Object> deps = new HashSet<Object>();
+        deps.add(myXmlFile);
+        for (final DomFileDescription fileDescription : myFileDescriptions) {
+          deps.addAll(Arrays.asList(fileDescription.getDependencyItems(myXmlFile)));
+        }
+        return new Result<DomFileElementImpl>(null, deps.toArray());
       }
-      return result;
+
+      DomFileElementImpl fileElement = new DomFileElementImpl(myXmlFile, description.getRootElementClass(), description.getRootTagName(), DomManagerImpl.this);
+      return myOldResult = new Result<DomFileElementImpl>(fileElement, description.getDependencyItems(myXmlFile));
     }
   }
 

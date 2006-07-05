@@ -83,6 +83,10 @@ public abstract class DomFileDescription<T> {
     return false;
   }
 
+  public Object[] getDependencyItems(XmlFile file) {
+    return new Object[]{file};
+  }
+
   @NotNull
   public DomElement getResolveScope(GenericDomValue<?> reference) {
     final DomElement annotation = getScopeFromAnnotation(reference);
