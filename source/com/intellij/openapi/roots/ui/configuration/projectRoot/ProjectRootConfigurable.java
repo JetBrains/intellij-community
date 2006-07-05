@@ -124,21 +124,28 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   protected ArrayList<AnAction> getAdditionalActions() {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
     result.add(new MyRenameAction() {
-      public void update(AnActionEvent e) {
-        super.update(e);
+      protected String getRenameTitleSuffix() {
         final Object selectedObject = getSelectedObject();
-        if (selectedObject instanceof Library && ((Library)selectedObject).getTable() == null){
-          e.getPresentation().setEnabled(false);
+        if (selectedObject instanceof Module){
+          return ProjectBundle.message("add.new.module.text");
+        } else if (selectedObject instanceof Library){
+          return ProjectBundle.message("add.new.library.text");
+        } else if (selectedObject instanceof ProjectJdk){
+          return ProjectBundle.message("add.new.jdk.text");
         }
+        return null;
       }
     });
     final AnAction findUsages = new AnAction(ProjectBundle.message("find.usages.action.text")) {
       public void update(AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
-        final Object selectedObject = getSelectedObject();
-        presentation.setEnabled(selectedObject instanceof Module ||
-                                selectedObject instanceof Library ||
-                                selectedObject instanceof ProjectJdk);
+        final TreePath selectionPath = myTree.getSelectionPath();
+        if (selectionPath != null){
+          final MyNode node = (MyNode)selectionPath.getLastPathComponent();
+          presentation.setEnabled(!node.isDisplayInBold());
+        } else {
+          presentation.setEnabled(false);
+        }
       }
 
       public void actionPerformed(AnActionEvent e) {
@@ -241,7 +248,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
           final Library library = orderEntry.getLibrary();
           final LibraryConfigurable libraryConfigurable =
             new LibraryConfigurable(libraryTableModelProvider, library, trancateModuleLibraryName(orderEntry), myProject);
-          addNode(new MyNode(libraryConfigurable, true), moduleNode);
+          addNode(new MyNode(libraryConfigurable, false, false), moduleNode);
         }
       }
     }

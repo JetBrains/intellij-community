@@ -13,7 +13,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.profile.Profile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.AutoScrollToSourceHandler;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashSet;
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.util.*;
@@ -247,9 +245,15 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
           setText(node.getDisplayName());
           final Icon icon = node.getConfigurable().getIcon();
           setIcon(icon);
-          setLeafIcon(icon);
+          if (leaf) {
+            setLeafIcon(icon);
+          } else if (expanded) {
+            setOpenIcon(icon);
+          } else {
+            setClosedIcon(icon);
+          }
           final Font font = getFont();
-          if (!node.isNameEditable()) {
+          if (node.isDisplayInBold()) {
             setFont(font.deriveFont(Font.BOLD));
           }
           else {
@@ -332,7 +336,9 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null){
       MyNode node = (MyNode)selectionPath.getLastPathComponent();
-      return node.getConfigurable().getEditableObject();
+      final NamedConfigurable configurable = node.getConfigurable();
+      LOG.assertTrue(configurable != null, "already disposed");
+      return configurable.getEditableObject();
     }
     return null;
   }
@@ -406,15 +412,29 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     public void actionPerformed(AnActionEvent e) {
       MyNode node = (MyNode)myTree.getSelectionPath().getLastPathComponent();
       final NamedConfigurable namedConfigurable = node.getConfigurable();
+      final String type = getRenameTitleSuffix();
       final String newName = Messages.showInputDialog(myTree,
                                                       RefactoringBundle.message("copy.files.new.name.label"),
-                                                      RefactoringBundle.message("rename.title"),
-                                                      Messages.getInformationIcon());
+                                                      RefactoringBundle.message("rename.title") + (type != null ? " " + type : ""),
+                                                      Messages.getQuestionIcon(),
+                                                      namedConfigurable.getDisplayName(),
+                                                      new InputValidator() {
+                                                        public boolean checkInput(String inputString) {
+                                                          return inputString != null && inputString.trim().length() > 0;
+                                                        }
+
+                                                        public boolean canClose(String inputString) {
+                                                          return checkInput(inputString);
+                                                        }
+                                                      });
       if (newName != null){
         namedConfigurable.setDisplayName(newName);
-        ((DefaultTreeModel)myTree.getModel()).reload();
-        selectNodeInTree(node);
+        ((DefaultTreeModel)myTree.getModel()).reload(node);
       }
+    }
+
+    protected String getRenameTitleSuffix(){
+      return null;
     }
   }
 
@@ -456,12 +476,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     public MyNamedConfigurableEditor(JTextField textField) {
       super(textField);
       myTextField = textField;
-      myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-        protected void textChanged(DocumentEvent e) {
-          myNode.setDisplayName(myTextField.getText());
-        }
-      });
-      myTextField.setBorder(null);
+      myTextField.setBorder(BorderFactory.createLineBorder(Color.black, 1));
     }
 
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
@@ -482,6 +497,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
 
 
     public boolean stopCellEditing() {
+      myNode.setDisplayName(myTextField.getText());
       fireItemsChangedExternally();
       return super.stopCellEditing();
     }
@@ -497,10 +513,19 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
 
   protected static class MyNode extends DefaultMutableTreeNode {
     private boolean myEditName;
+    private boolean myDisplayInBold;
 
     public MyNode(final NamedConfigurable userObject, boolean showName) {
       super(userObject);
       myEditName = showName;
+      myDisplayInBold = !myEditName;
+    }
+
+
+    public MyNode(NamedConfigurable userObject, boolean editName, boolean displayInBold) {
+      super(userObject);
+      myEditName = editName;
+      myDisplayInBold = displayInBold;
     }
 
     public String getDisplayName() {
@@ -509,6 +534,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     }
 
     public void setDisplayName(String name) {
+      if (name == null || name.trim().length() == 0) return; //can't be empty string as a name
       final NamedConfigurable configurable = ((NamedConfigurable)getUserObject());
       if (configurable != null) {
         configurable.setDisplayName(name);
@@ -521,6 +547,10 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
 
     public boolean isNameEditable() {
       return myEditName;
+    }
+
+    public boolean isDisplayInBold(){
+      return myDisplayInBold;
     }
   }
 

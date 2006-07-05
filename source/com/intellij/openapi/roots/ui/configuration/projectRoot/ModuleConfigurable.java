@@ -37,6 +37,7 @@ public class ModuleConfigurable implements NamedConfigurable<Module> {
 
   public void setDisplayName(final String name) {
     final ModifiableModuleModel modifiableModuleModel = myConfigurator.getModuleModel();
+    if (Comparing.strEqual(name, myModuleName)) return; //nothing changed
     try {
       modifiableModuleModel.renameModule(myModule, name);
     }
