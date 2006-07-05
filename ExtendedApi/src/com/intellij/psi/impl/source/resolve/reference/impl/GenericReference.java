@@ -12,6 +12,7 @@ import com.intellij.psi.scope.processor.ConflictFilterProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -46,6 +47,7 @@ public abstract class GenericReference implements PsiReference, EmptyResolveMess
     return resolveInner();
   }
 
+  @Nullable
   public PsiElement resolveInner(){
     final List resultSet = new ArrayList();
     final ConflictFilterProcessor processor;
@@ -93,9 +95,23 @@ public abstract class GenericReference implements PsiReference, EmptyResolveMess
     }
   }
 
-  protected static ElementManipulator<PsiElement> getManipulator(PsiElement currentElement){
+  @Nullable
+  protected static <T extends PsiElement> ElementManipulator<T> getManipulator(T currentElement){
     return ReferenceProvidersRegistry.getInstance(currentElement.getProject()).getManipulator(currentElement);
   }
+
+  @Nullable
+  public PsiElement handleElementRename(String string) throws IncorrectOperationException {
+    final PsiElement element = getElement();
+    if (element != null) {
+      ElementManipulator<PsiElement> man = ReferenceProvidersRegistry.getInstance(element.getProject()).getManipulator(element);
+      if (man != null) {
+        return man.handleContentChange(element, getRangeInElement(), string);
+      }
+    }
+    return element;
+  }
+
 
   public String getUnresolvedMessagePattern(){
     final ReferenceType type = getType();
@@ -111,6 +127,7 @@ public abstract class GenericReference implements PsiReference, EmptyResolveMess
 
   private static class MyResolver implements ResolveCache.Resolver {
     static MyResolver INSTANCE = new MyResolver();
+    @Nullable
     public PsiElement resolve(PsiReference ref, boolean incompleteCode) {
       return ((GenericReference)ref).resolveInner();
     }
