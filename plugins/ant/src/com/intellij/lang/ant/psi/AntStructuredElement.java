@@ -1,7 +1,6 @@
 package com.intellij.lang.ant.psi;
 
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
@@ -38,10 +37,6 @@ public interface AntStructuredElement extends AntElement {
   boolean hasNameElement();
 
   boolean hasIdElement();
-
-  boolean isNameElement(PsiElement element);
-
-  boolean isIdElement(PsiElement element);
 
   @NonNls @Nullable
   String getFileReferenceAttribute();

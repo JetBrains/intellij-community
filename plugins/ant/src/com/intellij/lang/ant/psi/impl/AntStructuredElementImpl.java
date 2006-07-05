@@ -235,19 +235,11 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public boolean hasNameElement() {
-    return !isNameElement(ourNull);
+    return getNameElement() != ourNull;
   }
 
   public boolean hasIdElement() {
-    return !isIdElement(ourNull);
-  }
-
-  public boolean isNameElement(PsiElement element) {
-    return getNameElement() == element;
-  }
-
-  public boolean isIdElement(PsiElement element) {
-    return getIdElement() == element;
+    return getIdElement() != ourNull;
   }
 
   public String getFileReferenceAttribute() {
@@ -255,7 +247,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public boolean isTypeDefined() {
-    return myDefinition != null && myDefinition.getDefiningElement() instanceof AntTypeDefImpl;
+    return myDefinition != null && myDefinition.getDefiningElement()instanceof AntTypeDefImpl;
   }
 
   public boolean isPresetDefined() {
@@ -399,4 +391,10 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     }
     return value;
   }
+
+  private boolean isIdElement(PsiElement element) {
+    return getIdElement() == element;
+  }
+
+
 }
