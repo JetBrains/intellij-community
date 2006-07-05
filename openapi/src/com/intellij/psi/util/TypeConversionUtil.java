@@ -908,14 +908,25 @@ public class TypeConversionUtil {
    * see JLS 5.6.2
    */
   public static PsiType binaryNumericPromotion(PsiType type1, PsiType type2) {
-    if (isDoubleType(type1)) return type1;
-    if (isDoubleType(type2)) return type2;
-    if (isFloatType(type1)) return type1;
-    if (isFloatType(type2)) return type2;
-    if (isLongType(type1)) return type1;
-    if (isLongType(type2)) return type2;
+    if (isDoubleType(type1)) return unbox(type1);
+    if (isDoubleType(type2)) return unbox(type2);
+    if (isFloatType(type1)) return unbox(type1);
+    if (isFloatType(type2)) return unbox(type2);
+    if (isLongType(type1)) return unbox(type1);
+    if (isLongType(type2)) return unbox(type2);
 
     return PsiType.INT;
+  }
+
+  private static PsiType unbox(PsiType type) {
+    if (type instanceof PsiPrimitiveType) return type;
+    if (type instanceof PsiClassType) {
+      type = PsiPrimitiveType.getUnboxedType(type);
+      LOG.assertTrue(type != null);
+      return type;
+    }
+    LOG.assertTrue(false, "Invalid type for unboxing");
+    return type;
   }
 
   private static final Set<String> INTEGER_NUMBER_TYPES = new HashSet<String>();
