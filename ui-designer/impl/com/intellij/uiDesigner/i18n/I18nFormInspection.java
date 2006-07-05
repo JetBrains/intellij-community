@@ -8,13 +8,11 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.inspections.EditorQuickFixProvider;
 import com.intellij.uiDesigner.inspections.FormErrorCollector;
@@ -24,7 +22,8 @@ import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
-import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -80,8 +79,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
       }
 
       collector.addError(getID(), prop,
-                         CodeInsightBundle.message("inspection.i18n.message.in.form",
-                                                   JDOMUtil.escapeText(descriptor.getValue())),
+                         CodeInsightBundle.message("inspection.i18n.message.in.form", descriptor.getValue()),
                          provider);
     }
   }

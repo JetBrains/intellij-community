@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.codeInspection.*;
 import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.JDOMUtil;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ public class FormFileErrorCollector extends FormErrorCollector {
                        @Nullable IProperty prop,
                        @NotNull String errorMessage,
                        @Nullable EditorQuickFixProvider editorQuickFixProvider) {
-    myProblems.add(myManager.createProblemDescriptor(myFile, errorMessage,
+    myProblems.add(myManager.createProblemDescriptor(myFile, JDOMUtil.escapeText(errorMessage),
                                                      (LocalQuickFix)null,
                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
   }
