@@ -15,8 +15,9 @@ public class FindMethodUsagesDialog extends FindUsagesDialog {
   private StateRestoringCheckBox myCbOverridingMethods;
   private boolean myHasFindWhatPanel;
 
-  public FindMethodUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions, FindUsagesManager manager, boolean isSingleFile) {
-    super(element, project, findUsagesOptions, manager, isSingleFile);
+  public FindMethodUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions, boolean toShowInNewTab,
+                                     boolean mustOpenInNewTab,boolean isSingleFile) {
+    super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
   }
 
   @Nullable

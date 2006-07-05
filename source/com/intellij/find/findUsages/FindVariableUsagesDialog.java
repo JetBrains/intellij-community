@@ -10,8 +10,9 @@ import javax.swing.*;
 public class FindVariableUsagesDialog extends FindUsagesDialog {
 
   public FindVariableUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions,
-                                  FindUsagesManager manager, boolean isSingleFile){
-    super(element, project, findUsagesOptions, manager, isSingleFile);
+                                  boolean toShowInNewTab,
+                                     boolean mustOpenInNewTab, boolean isSingleFile){
+    super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
   }
 
   public JComponent getPreferredFocusedControl() {

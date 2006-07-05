@@ -20,9 +20,10 @@ public class FindThrowUsagesDialog extends FindUsagesDialog {
   public FindThrowUsagesDialog(final PsiElement element, 
                                final Project project,
                                final FindUsagesOptions findUsagesOptions, 
-                               FindUsagesManager manager,
+                               boolean toShowInNewTab,
+                                     boolean mustOpenInNewTab,
                                boolean isSingleFile){
-    super(element, project, findUsagesOptions, manager, isSingleFile);
+    super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
   }
 
   protected void init () {

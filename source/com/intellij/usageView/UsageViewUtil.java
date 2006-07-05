@@ -37,6 +37,10 @@ public class UsageViewUtil {
 
       if (metaData != null) {
         name = metaData.getName();
+        if (metaData instanceof PsiPresentableMetaData) {
+          return ((PsiPresentableMetaData)metaData).getTypeName() + " " + name;
+        }
+
       }
       else {
         name = xmlTag.getName();

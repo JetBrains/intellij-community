@@ -1,12 +1,9 @@
 package com.intellij.find.findUsages;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
 import static com.intellij.find.findUsages.FindUsagesManager.FileSearchScope.*;
-import com.intellij.ide.util.SuperMethodWarningUtil;
-import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -20,19 +17,12 @@ import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.search.ThrowSearchUtil;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -41,9 +31,9 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -52,6 +42,7 @@ import java.util.List;
 
 public class FindUsagesManager implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findParameterUsages.FindUsagesManager");
+  private DefaultFindUsagesHandler myDefaultFindUsagesHandler;
 
   enum FileSearchScope {
     FROM_START,
@@ -65,13 +56,9 @@ public class FindUsagesManager implements JDOMExternalizable {
   private Project myProject;
   private com.intellij.usages.UsageViewManager myAnotherManager;
   private boolean myToOpenInNewTab = false;
-  private FindUsagesOptions myFindPackageOptions;
-  private FindUsagesOptions myFindClassOptions;
-  private FindUsagesOptions myFindMethodOptions;
-  private FindUsagesOptions myFindVariableOptions;
-  private FindUsagesOptions myFindPointcutOptions;
+  private final List<FindUsagesHandler> myHandlers = new ArrayList<FindUsagesHandler>();
 
-  private class LastSearchData {
+  private static class LastSearchData {
     public SmartPsiElementPointer[] myLastSearchElements = null;
     public FindUsagesOptions myLastOptions = null;
   }
@@ -81,40 +68,28 @@ public class FindUsagesManager implements JDOMExternalizable {
   public FindUsagesManager(Project project, com.intellij.usages.UsageViewManager anotherManager) {
     myProject = project;
     myAnotherManager = anotherManager;
-
-    myFindPackageOptions = createFindUsagesOptions(project);
-    myFindClassOptions = createFindUsagesOptions(project);
-    myFindMethodOptions = createFindUsagesOptions(project);
-    myFindVariableOptions = createFindUsagesOptions(project);
-    myFindPointcutOptions = createFindUsagesOptions(project);
+    myDefaultFindUsagesHandler = new DefaultFindUsagesHandler(project);
+    myHandlers.add(myDefaultFindUsagesHandler);
   }
 
   public static FindUsagesProvider getFindHandler(PsiElement elt) {
     return elt.getLanguage().getFindUsagesProvider();
   }
 
-  public FindUsagesOptions getFindClassOptions() {
-    return myFindClassOptions;
+  public Project getProject() {
+    return myProject;
   }
 
-  private FindUsagesOptions createFindUsagesOptions(Project project) {
-    FindUsagesOptions findUsagesOptions = new FindUsagesOptions(project);
-    findUsagesOptions.isUsages = true;
-    findUsagesOptions.isIncludeOverloadUsages = false;
-    findUsagesOptions.isIncludeSubpackages = true;
-    findUsagesOptions.isReadAccess = true;
-    findUsagesOptions.isWriteAccess = true;
-    findUsagesOptions.isCheckDeepInheritance = true;
-    findUsagesOptions.isSearchForTextOccurences = true;
-    return findUsagesOptions;
+  public void registerFindUsagesHandler(FindUsagesHandler handler) {
+    myHandlers.add(0, handler);
+  }
+
+  public FindUsagesOptions getFindClassOptions() {
+    return myDefaultFindUsagesHandler.getFindClassOptions();
   }
 
   public boolean canFindUsages(final PsiElement element) {
-    if (element == null) return false;
-    if (element instanceof PsiFile) return ((PsiFile)element).getVirtualFile() != null;
-    final Language language = element.getLanguage();
-    final FindUsagesProvider provider = language.getFindUsagesProvider();
-    return provider.canFindUsagesFor(element);
+    return getHandler(element) != null;
   }
 
   public void clearFindingNextUsageInFile() {
@@ -203,96 +178,32 @@ public class FindUsagesManager implements JDOMExternalizable {
     return true;
   }
 
+  @Nullable
+  private FindUsagesHandler getHandler(PsiElement element) {
+    for (final FindUsagesHandler handler : myHandlers) {
+      if (handler.canFindUsages(element)) {
+        return handler;
+      }
+    }
+    return null;
+  }
+
   public void findUsages(PsiElement psiElement, final PsiFile scopeFile, final FileEditor editor) {
-    PsiElement[] elementsToSearch = null;
-    PsiElement[] secondaryElementsToSearch = null;
-    if (!canFindUsages(psiElement)) {
-      return;
-    }
+    final FindUsagesHandler handler = getHandler(psiElement);
+    if (handler == null) return;
 
-    if (psiElement instanceof PsiDirectory) {
-      PsiPackage psiPackage = ((PsiDirectory)psiElement).getPackage();
-      if (psiPackage == null) {
-        return;
-      }
-      psiElement = psiPackage;
-    }
+    final AbstractFindUsagesDialog dialog = handler.getFindUsagesDialog(scopeFile != null, shouldOpenInNewTab(), mustOpenInNewTab());
+    dialog.show();
+    if (!dialog.isOK()) return;
 
-    final String actionString = FindBundle.message("find.super.method.warning.action.verb");
-    if (psiElement instanceof PsiMethod) {
-      final PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods((PsiMethod)psiElement, actionString);
-      if (methods.length > 1) {
-        elementsToSearch = methods;
-      }
-      else if (methods.length == 1) {
-        psiElement = methods[0];
-      }
-      else {
-        return;
-      }
-    }
-
-    if (psiElement == null) {
-      return;
-    }
-
-    final FindUsagesDialog dialog = getFindUsagesDialog(psiElement, scopeFile != null);
-    if (!showDialog(dialog)) return;
+    setOpenInNewTab(dialog.isShowInSeparateWindow());
 
     FindUsagesOptions findUsagesOptions = dialog.calcFindUsagesOptions();
 
     clearFindingNextUsageInFile();
-    LOG.assertTrue(psiElement.isValid());
-    if (psiElement instanceof PsiParameter) {
-      final PsiParameter parameter = (PsiParameter)psiElement;
-      final PsiElement scope = parameter.getDeclarationScope();
-      if (scope instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)scope;
-        if (PsiUtil.canBeOverriden(method)) {
-          final PsiClass aClass = method.getContainingClass();
-          LOG.assertTrue(aClass != null); //Otherwise can not be overriden
-          if (aClass.isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-              shouldSearchForParameterInOverridingMethods(psiElement, parameter)) {
-            elementsToSearch = getParameterElementsToSearch(parameter);
-          }
-        }
-      }
-    }
-    else if (psiElement instanceof PsiField) {
-      final PsiField field = (PsiField)psiElement;
-      if (field.getContainingClass() != null) {
-        final String propertyName =
-          field.getManager().getCodeStyleManager().variableNameToPropertyName(field.getName(), VariableKind.FIELD);
-        PsiMethod getter = PropertyUtil.
-          findPropertyGetterWithType(propertyName, field.hasModifierProperty(PsiModifier.STATIC), field.getType(),
-                                     ContainerUtil.iterate(field.getContainingClass().getMethods()));
-        PsiMethod setter = PropertyUtil.
-          findPropertySetterWithType(propertyName, field.hasModifierProperty(PsiModifier.STATIC), field.getType(),
-                                     ContainerUtil.iterate(field.getContainingClass().getMethods()));
-        if (getter != null || setter != null) {
-          if (Messages.showDialog(FindBundle.message("find.field.accessors.prompt", field.getName()),
-                                  FindBundle.message("find.field.accessors.title"),
-                                  new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 0,
-                                  Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
-            final List<PsiElement> elements = new ArrayList<PsiElement>();
-            if (getter != null) {
-              elements.addAll(Arrays.asList(SuperMethodWarningUtil.checkSuperMethods(getter, actionString)));
-            }
-            if (setter != null) {
-              elements.addAll(Arrays.asList(SuperMethodWarningUtil.checkSuperMethods(setter, actionString)));
-            }
-            secondaryElementsToSearch = elements.toArray(new PsiElement[elements.size()]);
-          }
-        }
-      }
-    }
-
-    if (elementsToSearch == null) {
-      elementsToSearch = new PsiElement[]{psiElement};
-    }
 
     final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor =
-      new UsageInfoToUsageConverter.TargetElementsDescriptor(elementsToSearch, secondaryElementsToSearch);
+      new UsageInfoToUsageConverter.TargetElementsDescriptor(handler.getPrimaryElements(), handler.getSecondaryElements());
     if (scopeFile == null) {
       findUsages(descriptor, dialog.isSkipResultsWhenOneUsage(), dialog.isShowInSeparateWindow(), findUsagesOptions);
     }
@@ -306,13 +217,6 @@ public class FindUsagesManager implements JDOMExternalizable {
     }
   }
 
-  private static boolean shouldSearchForParameterInOverridingMethods(final PsiElement psiElement, final PsiParameter parameter) {
-    return Messages.showDialog(psiElement.getProject(),
-                               FindBundle.message("find.parameter.usages.in.overriding.methods.prompt", parameter.getName()),
-                               FindBundle.message("find.parameter.usages.in.overriding.methods.title"),
-                               new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 0,
-                               Messages.getQuestionIcon()) == 0;
-  }
 
   private void setOpenInNewTab(final boolean toOpenInNewTab) {
     if (!mustOpenInNewTab()) {
@@ -329,21 +233,6 @@ public class FindUsagesManager implements JDOMExternalizable {
     return selectedContent != null && selectedContent.isPinned();
   }
 
-  private PsiElement[] getParameterElementsToSearch(final PsiParameter parameter) {
-    final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
-    PsiSearchHelper helper = parameter.getManager().getSearchHelper();
-    PsiMethod[] overrides = helper.findOverridingMethods(method, GlobalSearchScope.allScope(myProject), true);
-    for (int i = 0; i < overrides.length; i++) {
-      overrides[i] = (PsiMethod)overrides[i].getNavigationElement();
-    }
-    PsiElement[] elementsToSearch = new PsiElement[overrides.length + 1];
-    elementsToSearch[0] = parameter;
-    int idx = method.getParameterList().getParameterIndex(parameter);
-    for (int i = 0; i < overrides.length; i++) {
-      elementsToSearch[i + 1] = overrides[i].getParameterList().getParameters()[idx];
-    }
-    return elementsToSearch;
-  }
 
   private static UsageSearcher createUsageSearcher(final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor,
                                             final FindUsagesOptions options,
@@ -559,7 +448,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     return foundUsage[0];
   }
 
-  private void convertToUsageTarget(final List<PsiElement2UsageTargetAdapter> targets, PsiElement elementToSearch) {
+  private static void convertToUsageTarget(final List<PsiElement2UsageTargetAdapter> targets, PsiElement elementToSearch) {
     if (elementToSearch instanceof NavigationItem) {
       targets.add(new PsiElement2UsageTargetAdapter(elementToSearch));
     }
@@ -617,30 +506,5 @@ public class FindUsagesManager implements JDOMExternalizable {
     return element.getLanguage().getFindUsagesProvider().getHelpId(element);
   }
 
-  private FindUsagesDialog getFindUsagesDialog(PsiElement element,
-                                               boolean isSingleFile) {
-    if (element instanceof PsiPackage) {
-      return new FindPackageUsagesDialog(element, myProject, myFindPackageOptions, this, isSingleFile);
-    }
-    else if (element instanceof PsiClass) {
-      return new FindClassUsagesDialog(element, myProject, myFindClassOptions, this, isSingleFile);
-    }
-    else if (element instanceof PsiMethod) {
-      return new FindMethodUsagesDialog(element, myProject, myFindMethodOptions, this, isSingleFile);
-    }
-    else if (element instanceof PsiVariable) {
-      return new FindVariableUsagesDialog(element, myProject, myFindVariableOptions, this, isSingleFile);
-    }
-    else if (ThrowSearchUtil.isSearchable(element)) {
-      return new FindThrowUsagesDialog(element, myProject, myFindPointcutOptions, this, isSingleFile);
-    }
-    else {
-      FindUsagesProvider handler = getFindHandler(element);
-      if (handler != null) {
-        return new CommonFindUsagesDialog(element, myProject, createFindUsagesOptions(myProject), this, isSingleFile);
-      }
-      return null;
-    }
-  }
 
 }

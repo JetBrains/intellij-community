@@ -16,7 +16,6 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,7 +50,6 @@ public abstract class NodeDescriptor<E> {
 
   public abstract boolean update();
 
-  @Nullable
   public abstract E getElement();
 
   public String toString() {

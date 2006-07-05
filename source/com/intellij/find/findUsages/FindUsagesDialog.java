@@ -20,9 +20,10 @@ public abstract class FindUsagesDialog extends AbstractFindUsagesDialog {
   protected FindUsagesDialog(PsiElement element,
                              Project project,
                              FindUsagesOptions findUsagesOptions,
-                             FindUsagesManager manager,
+                             boolean toShowInNewTab,
+                             boolean mustOpenInNewTab,
                              boolean isSingleFile) {
-    super(project, findUsagesOptions, manager, isSingleFile, isSearchForTextOccurencesAvailable(element, isSingleFile),
+    super(project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, isSearchForTextOccurencesAvailable(element, isSingleFile),
           !isSingleFile && !element.getManager().isInProject(element));
     myPsiElement = element;
     myIncludeOverloadedMethodsAvailable = element instanceof PsiMethod && MethodSignatureUtil.hasOverloads((PsiMethod)element);

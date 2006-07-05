@@ -16,9 +16,12 @@
  */
 package com.intellij.psi.meta;
 
+import javax.swing.*;
+
 /**
  * @author peter
  */
 public interface PsiPresentableMetaData extends PsiMetaData {
   String getTypeName();
+  Icon getIcon();
 }

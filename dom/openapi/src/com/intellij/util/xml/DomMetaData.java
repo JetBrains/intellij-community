@@ -12,6 +12,8 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
+
 /**
  * @author peter
  */
@@ -59,5 +61,9 @@ public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, P
 
   public String getTypeName() {
     return ElementPresentationManager.getTypeName(myElement.getClass());
+  }
+
+  public Icon getIcon() {
+    return ElementPresentationManager.getIcon(myElement);
   }
 }
