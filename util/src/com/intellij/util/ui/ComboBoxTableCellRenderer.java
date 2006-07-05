@@ -20,12 +20,26 @@ import com.intellij.util.ListWithSelection;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.util.Iterator;
+import java.util.Arrays;
 
 public class ComboBoxTableCellRenderer extends JPanel implements TableCellRenderer {
 
   public final static ComboBoxTableCellRenderer INSTANCE = new ComboBoxTableCellRenderer();
+
+  /**
+   * DefaultTableCellRenderer, that displays JComboBox on selected value
+   */
+  public final static TableCellRenderer COMBO_WHEN_SELECTED_RENDERER = new DefaultTableCellRenderer() {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      if (isSelected) {
+        return INSTANCE.getTableCellRendererComponent(table, new ListWithSelection(Arrays.asList(value)), isSelected, hasFocus, row, column);
+      }
+      return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+    }
+  };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.ComboBoxTableCellRenderer");
   private final JComboBox myCombo = new JComboBox();
@@ -37,7 +51,7 @@ public class ComboBoxTableCellRenderer extends JPanel implements TableCellRender
                                new Insets(0, 0, 0, 0), 0, 0));
   }
 
-  public Component getTableCellRendererComponent(JTable table,
+  public JComponent getTableCellRendererComponent(JTable table,
                                                  Object value,
                                                  boolean isSelected,
                                                  boolean hasFocus,
