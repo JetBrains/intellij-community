@@ -169,6 +169,19 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
     component.getConstraints().setColSpan(curWidth);
     component.getConstraints().setRowSpan(curHeight);
 
+    if (constraints.weightx >= 1.0) {
+      component.getConstraints().setHSizePolicy(GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_WANT_GROW);
+    }
+    else {
+      component.getConstraints().setHSizePolicy(0);
+    }
+    if (constraints.weighty >= 1.0) {
+      component.getConstraints().setVSizePolicy(GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_WANT_GROW);
+    }
+    else {
+      component.getConstraints().setVSizePolicy(0);      
+    }
+
     component.getConstraints().setAnchor(convertAnchor(constraints));
     component.getConstraints().setFill(convertFill(constraints));
     container.addComponent(component);
