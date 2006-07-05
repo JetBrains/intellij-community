@@ -32,6 +32,15 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
                                    final LayoutManager layout) {
     Dimension gridSize = getGridBagSize(parent, layout);
 
+    boolean gridHGrow = true;
+    boolean gridVGrow = true;
+    if (parent.getParent().getLayout() instanceof GridBagLayout) {
+      final GridBagLayout parentLayout = (GridBagLayout)parent.getParent().getLayout();
+      GridBagConstraints gbc = parentLayout.getConstraints(parent);
+      if (gbc.weightx < 0.01) gridHGrow = false;
+      if (gbc.weighty < 0.01) gridVGrow = false;
+    }
+
     boolean haveHGrow = false;
     boolean haveVGrow = false;
     GridBagLayout gridBag = (GridBagLayout) layout;
@@ -41,19 +50,19 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
       if (constraints.weighty > 0.01) haveVGrow = true;
     }
 
-    if (!haveHGrow) {
+    if (gridHGrow && !haveHGrow) {
       gridSize.width++;
     }
-    if (!haveVGrow) {
+    if (gridVGrow && !haveVGrow) {
       gridSize.height++;
     }
 
     container.setLayout(new GridLayoutManager(gridSize.height, gridSize.width));
 
-    if (!haveHGrow) {
+    if (gridHGrow && !haveHGrow) {
       container.addComponent(new RadHSpacer(context.newId(), gridSize.width-1));
     }
-    if (!haveVGrow) {
+    if (gridVGrow && !haveVGrow) {
       container.addComponent(new RadVSpacer(context.newId(), gridSize.height-1));
     }
   }
