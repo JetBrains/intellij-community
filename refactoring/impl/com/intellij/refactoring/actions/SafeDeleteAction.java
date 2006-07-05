@@ -1,15 +1,12 @@
 
 package com.intellij.refactoring.actions;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
-import com.intellij.lang.Language;
-import com.intellij.javaee.model.common.ejb.CmrField;
-import com.intellij.javaee.model.common.ejb.CmpField;
-import com.intellij.javaee.model.common.JavaeeCommonConstants;
 
 public class SafeDeleteAction extends BaseRefactoringAction {
   public boolean isAvailableInEditorOnly() {
@@ -31,10 +28,4 @@ public class SafeDeleteAction extends BaseRefactoringAction {
     return new SafeDeleteHandler();
   }
 
-  protected boolean isEnabledOnDataContext(DataContext dataContext) {
-    final Object ejbElement = dataContext.getData(JavaeeCommonConstants.SELECTED_ELEMENT);
-    // CMP/CMR fields should be deleted from Ejb View
-    if (ejbElement instanceof CmpField || ejbElement instanceof CmrField) return false;
-    return super.isEnabledOnDataContext(dataContext);
-  }
 }
