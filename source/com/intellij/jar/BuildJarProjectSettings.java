@@ -23,12 +23,21 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.refactoring.listeners.RefactoringListenerManager;
+import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
+import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiClass;
+import com.intellij.execution.util.RefactoringElementListenerComposite;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.jar.Attributes;
@@ -36,7 +45,7 @@ import java.util.jar.Attributes;
 /**
  * @author cdr
  */
-public class BuildJarProjectSettings implements JDOMExternalizable, ProjectComponent {
+public class BuildJarProjectSettings implements JDOMExternalizable, ProjectComponent, RefactoringElementListenerProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.jar.BuildJarProjectSettings");
 
   public boolean BUILD_JARS_ON_MAKE = false;
@@ -69,15 +78,36 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
       CompilerManager compilerManager = CompilerManager.getInstance(myProject);
       compilerManager.addCompiler(JarCompiler.getInstance());
     }
+    RefactoringListenerManager.getInstance(myProject).addListenerProvider(this);
   }
 
   public void projectClosed() {
-
+    RefactoringListenerManager.getInstance(myProject).removeListenerProvider(this);
   }
 
-
+  @NonNls @NotNull
   public String getComponentName() {
     return "BuildJarProjectSettings";
+  }
+
+  public RefactoringElementListener getListener(PsiElement element) {
+    if (element instanceof PsiClass) {
+      String className = ((PsiClass)element).getQualifiedName();
+      final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+      RefactoringElementListenerComposite listener = null;
+      for (Module module : modules) {
+        final BuildJarSettings settings = BuildJarSettings.getInstance(module);
+        final String mainClass = settings.getMainClass();
+        if (className.equals(mainClass)) {
+          if (listener == null) {
+            listener = new RefactoringElementListenerComposite();
+          }
+          listener.addListener(new MainClassRefactoringListener(settings));
+        }
+      }
+      return listener;
+    }
+    return null;
   }
 
   public void initComponent() {
@@ -207,5 +237,21 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
     ModuleLink[] modules = moduleContainer.getContainingModules();
     MakeUtil.getInstance().addJavaModuleOutputs(module, modules, buildRecipe, compileContext, null);
     return buildRecipe;
+  }
+
+  private static class MainClassRefactoringListener implements RefactoringElementListener {
+    private final BuildJarSettings mySettings;
+
+    public MainClassRefactoringListener(final BuildJarSettings settings) {
+      mySettings = settings;
+    }
+
+    public void elementMoved(PsiElement newElement) {
+      mySettings.setMainClass(((PsiClass)newElement).getQualifiedName());
+    }
+
+    public void elementRenamed(PsiElement newElement) {
+      mySettings.setMainClass(((PsiClass)newElement).getQualifiedName());
+    }
   }
 }

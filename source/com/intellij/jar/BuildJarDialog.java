@@ -93,7 +93,9 @@ public class BuildJarDialog extends DialogWrapper {
     for (Map.Entry<Module, SettingsEditor> entry : mySettings.entrySet()) {
       try {
         final BuildJarDialog.SettingsEditor editor = entry.getValue();
-        editor.saveUI();
+        if (editor.myModule == myCurrentModule) {
+          editor.saveUI();
+        }
         editor.checkSettings();
       }
       catch (RuntimeConfigurationException e) {
@@ -156,6 +158,7 @@ public class BuildJarDialog extends DialogWrapper {
         }
 
         Module selectedModule = myElementsChooser.getSelectedElement();
+        myCurrentModule = selectedModule;
         if (selectedModule != null) {
           BuildJarSettings buildJarSettings = BuildJarSettings.getInstance(selectedModule);
           BuildJarDialog.SettingsEditor settingsEditor = mySettings.get(selectedModule);
@@ -170,7 +173,6 @@ public class BuildJarDialog extends DialogWrapper {
           titledBorder.setTitle(IdeBundle.message("jar.build.module.0.jar.settings", selectedModule.getName()));
           myModuleSettingsPanel.repaint();
         }
-        myCurrentModule = selectedModule;
       }
     });
     myElementsChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<Module>() {
