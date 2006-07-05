@@ -35,7 +35,7 @@ public class AntReferenceProvidersRegistry {
     ourProviders.put(AntPresetDefImpl.class, ourProviders.get(AntStructuredElementImpl.class));
     ourProviders.put(AntTypeDefImpl.class, ourProviders.get(AntStructuredElementImpl.class));
     ourProviders.put(AntImportImpl.class, new GenericReferenceProvider[]{fileProvider, propProvider, nameProvider, attrProvider});
-    ourProviders.put(AntAntImpl.class, ourProviders.get(AntImportImpl.class));
+    ourProviders.put(AntAntImpl.class, new GenericReferenceProvider[]{fileProvider, propProvider, nameProvider, attrProvider, targetProvider});
     ourProviders.put(AntCallImpl.class, new GenericReferenceProvider[]{targetProvider, propProvider, refIdProvider, nameProvider,
       attrProvider, macroParamsProvider});
 

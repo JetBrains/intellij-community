@@ -1,12 +1,15 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.misc.AntPsiUtil;
 import com.intellij.lang.ant.psi.*;
+import com.intellij.lang.ant.psi.impl.AntAntImpl;
 import com.intellij.lang.ant.quickfix.AntCreateTargetAction;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
@@ -65,13 +68,28 @@ public class AntTargetReference extends AntGenericReference {
 
   public PsiElement resolve() {
     final String name = getCanonicalText();
-    AntProject project = getElement().getAntProject();
+    AntElement element = getElement();
+    AntProject project = element.getAntProject();
     AntTarget result = project.getTarget(name);
     if (result == null) {
       for (AntFile imported : AntPsiUtil.getImportedFiles(project)) {
         if ((result = imported.getAntProject().getTarget(name)) != null) {
           break;
         }
+      }
+    }
+    if (result == null && element instanceof AntAntImpl) {
+      AntAntImpl ant = (AntAntImpl)element;
+      final PsiFile psiFile = ant.findFileByName(ant.getFileName());
+      if (psiFile != null) {
+        AntFile antFile;
+        if (psiFile instanceof AntFile) {
+          antFile = (AntFile)psiFile;
+        }
+        else {
+          antFile = (AntFile)psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
+        }
+        result = antFile.getAntProject().getTarget(name);
       }
     }
     return result;

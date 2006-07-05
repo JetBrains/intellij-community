@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi.impl.reference.providers;
 
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.impl.AntAntImpl;
 import com.intellij.lang.ant.psi.impl.AntCallImpl;
 import com.intellij.lang.ant.psi.impl.AntProjectImpl;
 import com.intellij.lang.ant.psi.impl.reference.AntTargetReference;
@@ -25,6 +26,7 @@ public class AntSingleTargetReferenceProvider extends AntTargetReferenceProvider
     ourTypesToAttributeNames = new HashMap<Class, String>();
     ourTypesToAttributeNames.put(AntProjectImpl.class, "default");
     ourTypesToAttributeNames.put(AntCallImpl.class, "target");
+    ourTypesToAttributeNames.put(AntAntImpl.class, "target");
   }
 
   @NotNull
