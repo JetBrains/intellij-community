@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -51,8 +52,8 @@ import java.util.Iterator;
 import java.util.List;
 
 
-public class VcsUtil {
-
+public class VcsUtil
+{
   public static void markFileAsUpToDate(VirtualFile file, Project project) {
     markAsUpToDate(project, file.isDirectory(), file.getPath());
     FileStatusManager.getInstance(project).fileStatusChanged(file);
@@ -277,5 +278,23 @@ public class VcsUtil {
   public static FilePath getFilePath( String path )
   {
     return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn( new File( path ) );
+  }
+
+  /**
+   * @param  "Change" description.
+   * @return Return true if the "Change" object is created for "Rename" operation:
+   * in this case name of files for "before" and "after" revisions must not
+   * coniside.
+   */
+  public static boolean isRenameChange( Change change )
+  {
+    boolean isRenamed = false;
+    if( change.getBeforeRevision() != null && change.getAfterRevision() != null )
+    {
+      String prevFile = change.getBeforeRevision().getFile().getPath();
+      String newFile  = change.getAfterRevision().getFile().getPath();
+      isRenamed = !prevFile.equals( newFile );
+    }
+    return isRenamed;
   }
 }
