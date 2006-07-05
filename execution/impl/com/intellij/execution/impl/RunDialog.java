@@ -61,6 +61,7 @@ public class RunDialog extends DialogWrapper {
       return;
     }
     super.doOKAction();
+    myConfigurable.disposeUIResources();
   }
 
   protected JComponent createCenterPanel() {
