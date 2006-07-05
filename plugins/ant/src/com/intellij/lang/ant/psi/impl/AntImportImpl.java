@@ -31,8 +31,8 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
     }
   }
 
-  public boolean canContainFileReference() {
-    return true;
+  public String getFileReferenceAttribute() {
+    return "file";
   }
 
   @Nullable

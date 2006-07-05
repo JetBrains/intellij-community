@@ -178,6 +178,11 @@ public class AntElementFactory {
           return new AntImportImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(ImportTask.class.getName()));
         }
       });
+      ourAntTypeToKnownAntElementCreatorMap.put(Ant.class.getName(), new AntElementCreator() {
+        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+          return new AntAntImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Ant.class.getName()));
+        }
+      });
     }
   }
 

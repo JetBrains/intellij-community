@@ -69,8 +69,8 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     }
   }
 
-  public boolean canContainFileReference() {
-    return true;
+  public String getFileReferenceAttribute() {
+    return "file";
   }
 
   @Nullable

@@ -25,18 +25,19 @@ public class AntReferenceProvidersRegistry {
     final AntSingleTargetReferenceProvider targetProvider = new AntSingleTargetReferenceProvider();
 
     ourProviders.put(AntProjectImpl.class, new GenericReferenceProvider[]{targetProvider, nameProvider, attrProvider});
-    ourProviders.put(AntTargetImpl.class,
-                     new GenericReferenceProvider[]{new AntTargetListReferenceProvider(), propProvider, refIdProvider, nameProvider, attrProvider});
-    ourProviders.put(AntStructuredElementImpl.class,
-                     new GenericReferenceProvider[]{fileProvider, propProvider, refIdProvider, nameProvider, attrProvider, macroParamsProvider});
+    ourProviders.put(AntTargetImpl.class, new GenericReferenceProvider[]{new AntTargetListReferenceProvider(), propProvider, refIdProvider,
+      nameProvider, attrProvider});
+    ourProviders.put(AntStructuredElementImpl.class, new GenericReferenceProvider[]{fileProvider, propProvider, refIdProvider, nameProvider,
+      attrProvider, macroParamsProvider});
     ourProviders.put(AntTaskImpl.class, ourProviders.get(AntStructuredElementImpl.class));
     ourProviders.put(AntPropertyImpl.class, ourProviders.get(AntStructuredElementImpl.class));
     ourProviders.put(AntMacroDefImpl.class, ourProviders.get(AntStructuredElementImpl.class));
     ourProviders.put(AntPresetDefImpl.class, ourProviders.get(AntStructuredElementImpl.class));
     ourProviders.put(AntTypeDefImpl.class, ourProviders.get(AntStructuredElementImpl.class));
     ourProviders.put(AntImportImpl.class, new GenericReferenceProvider[]{fileProvider, propProvider, nameProvider, attrProvider});
-    ourProviders.put(AntCallImpl.class,
-                     new GenericReferenceProvider[]{targetProvider, propProvider, refIdProvider, nameProvider, attrProvider, macroParamsProvider});
+    ourProviders.put(AntAntImpl.class, ourProviders.get(AntImportImpl.class));
+    ourProviders.put(AntCallImpl.class, new GenericReferenceProvider[]{targetProvider, propProvider, refIdProvider, nameProvider,
+      attrProvider, macroParamsProvider});
 
   }
 

@@ -252,8 +252,8 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     return getIdElement() == element;
   }
 
-  public boolean canContainFileReference() {
-    return false;
+  public String getFileReferenceAttribute() {
+    return null;
   }
 
   public boolean isTypeDefined() {

@@ -4,6 +4,7 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,8 @@ public interface AntStructuredElement extends AntElement {
 
   boolean isIdElement(PsiElement element);
 
-  boolean canContainFileReference();
+  @NonNls @Nullable
+  String getFileReferenceAttribute();
 
   /**
   /* Returns true if is instance of a type defined by the <typedef> or <taskdef> task.

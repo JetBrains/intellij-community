@@ -1,0 +1,8 @@
+<project default="A">
+  <target name="A"/>
+  <ant antfile="subproject/property_based_subbuild.xml">
+    <property name="param1" value="version 1.x"/>
+    <property file="config/subproject/default.properties"/>
+  </ant>
+  <ant/>
+</project>

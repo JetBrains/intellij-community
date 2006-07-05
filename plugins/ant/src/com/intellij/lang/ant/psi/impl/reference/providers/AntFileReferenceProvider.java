@@ -16,10 +16,11 @@ public class AntFileReferenceProvider extends GenericReferenceProvider {
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
     AntStructuredElement antElement = (AntStructuredElement)element;
-    if (!antElement.canContainFileReference()) {
+    final String referenceAttribute = antElement.getFileReferenceAttribute();
+    if (referenceAttribute == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    final XmlAttribute attr = antElement.getSourceElement().getAttribute("file", null);
+    final XmlAttribute attr = antElement.getSourceElement().getAttribute(referenceAttribute, null);
     if (attr == null) {
       return PsiReference.EMPTY_ARRAY;
     }

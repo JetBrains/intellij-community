@@ -132,4 +132,8 @@ public class AntParsingTest extends ParsingTestCase {
   public void testJarLibResolve() throws Exception {
     doTest(true);
   }
+
+  public void testAntTask() throws Exception {
+    doTest(true);
+  }
 }
