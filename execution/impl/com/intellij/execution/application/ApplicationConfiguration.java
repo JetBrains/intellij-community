@@ -180,6 +180,10 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
     return new ApplicationConfiguration(getName(), getProject(), ApplicationConfigurationType.getInstance());
   }
 
+  protected boolean isMergeDataByDefault() {
+    return true;
+  }
+
   public void readExternal(final Element element) throws InvalidDataException {
     super.readExternal(element);
     DefaultJDOMExternalizer.readExternal(this, element);
