@@ -17,7 +17,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -74,7 +73,7 @@ public class RenameUtil {
         PsiElement referenceElement = ref.getElement();
         result.add(new MoveRenameUsageInfo(referenceElement, ref, ref.getRangeInElement().getStartOffset(),
                                            ref.getRangeInElement().getEndOffset(), element,
-                                           referenceElement instanceof XmlElement));
+                                           false));
 
 
         if (element instanceof PsiClass) {
