@@ -43,9 +43,9 @@
       <interface-class>com.intellij.openapi.editor.HectorComponentPanelsProvider</interface-class>
       <implementation-class>com.intellij.jsp.impl.contextchooser.JspContextChooserPanelProvider</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.jsp.impl.browserprofile.BrowserProfileProvider</implementation-class>
-    </component>
+    <!--<component>-->
+      <!--<implementation-class>com.intellij.jsp.impl.browserprofile.BrowserProfileProvider</implementation-class>-->
+    <!--</component>-->
     <component>
       <interface-class>com.intellij.openapi.editor.impl.DocumentMarkupModelManager</interface-class>
       <implementation-class>com.intellij.openapi.editor.impl.DocumentMarkupModelManager</implementation-class>
