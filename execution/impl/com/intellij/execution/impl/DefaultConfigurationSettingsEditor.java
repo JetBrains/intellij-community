@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -32,16 +33,18 @@ public class DefaultConfigurationSettingsEditor implements Configurable {
   private JTree myTree = new JTree(myRoot);
   private Project myProject;
   private Map<ConfigurationType, Configurable> myStoredComponents = new HashMap<ConfigurationType, Configurable>();
+  private ConfigurationType mySelection;
 
-  public DefaultConfigurationSettingsEditor(Project project) {
+  public DefaultConfigurationSettingsEditor(Project project, ConfigurationType selection) {
     myProject = project;
+    mySelection = selection;
   }
 
   public JComponent createComponent() {
     final JPanel wholePanel = new JPanel(new BorderLayout());
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    pane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
+    pane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 6));
     wholePanel.add(pane, BorderLayout.WEST);
     final JPanel rightPanel = new JPanel(new BorderLayout());
     wholePanel.add(rightPanel, BorderLayout.CENTER);
@@ -102,6 +105,19 @@ public class DefaultConfigurationSettingsEditor implements Configurable {
     RunConfigurable.sortTree(myRoot);
     ((DefaultTreeModel)myTree.getModel()).reload();
     TreeUtil.selectFirstNode(myTree);
+    TreeUtil.traverse(myRoot, new TreeUtil.Traverse() {
+      public boolean accept(Object node) {
+        if (node instanceof DefaultMutableTreeNode){
+          final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
+          final Object o = treeNode.getUserObject();
+          if (Comparing.equal(o, mySelection)){
+            TreeUtil.selectInTree(treeNode, true, myTree);
+            return false;
+          }
+        }
+        return true;
+      }
+    });
     return wholePanel;
   }
 

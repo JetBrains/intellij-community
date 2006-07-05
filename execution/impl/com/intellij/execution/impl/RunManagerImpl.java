@@ -3,9 +3,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.RunManagerConfig;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.util.RefactoringElementListenerComposite;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.ProjectComponent;
@@ -20,6 +18,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -31,7 +30,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   private Map<String, ConfigurationType> myTypesByName = new LinkedHashMap<String, ConfigurationType>();
 
-  private Map<String, RunnerAndConfigurationSettingsImpl> myConfigurations = new TreeMap<String, RunnerAndConfigurationSettingsImpl>(); // template configurations are not included here
+  private Map<String, RunnerAndConfigurationSettingsImpl> myConfigurations = new LinkedHashMap<String, RunnerAndConfigurationSettingsImpl>(); // template configurations are not included here
   private Map<String, Boolean> mySharedConfigurations = new TreeMap<String, Boolean>();
   private Map<String, String> myMethod2CompileBeforeRun = new TreeMap<String, String>();
 
@@ -167,7 +166,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public RunnerAndConfigurationSettingsImpl[] getConfigurationSettings(final ConfigurationType type) {
     LOG.assertTrue(type != null);
 
-    final TreeSet<RunnerAndConfigurationSettings> array = new TreeSet<RunnerAndConfigurationSettings>();
+    final LinkedHashSet<RunnerAndConfigurationSettings> array = new LinkedHashSet<RunnerAndConfigurationSettings>();
     for (RunnerAndConfigurationSettingsImpl configuration : myConfigurations.values()) {
       if (type.equals(configuration.getType())) {
         array.add(configuration);
@@ -187,7 +186,9 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   public void addConfiguration(RunnerAndConfigurationSettingsImpl settings, boolean shared, String method) {
     final String configName = getUniqueName(settings.getConfiguration());
-    myConfigurations.put(configName, settings);
+    if (!myConfigurations.containsKey(configName)){ //do not add shared configuration twice
+      myConfigurations.put(configName, settings);
+    }
     mySharedConfigurations.put(configName, shared);
     myMethod2CompileBeforeRun.put(configName, method);
   }
@@ -257,9 +258,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
     final Collection<RunnerAndConfigurationSettingsImpl> configurations = getStableConfigurations().values();
     for (RunnerAndConfigurationSettingsImpl configuration : configurations) {
-      if (!isConfigurationShared(configuration)){
-        addConfigurationElement(parentNode, configuration);
-      }
+      addConfigurationElement(parentNode, configuration); //write shared configurations twice to save order     
     }
     if (mySelectedConfiguration != null){
       parentNode.setAttribute(SELECTED_ATTR, getUniqueName(mySelectedConfiguration.getConfiguration()));
@@ -317,8 +316,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     if (factoryName == null) {
       factoryName = type != null ? type.getConfigurationFactories()[0].getName() : null;
     }
-    final ConfigurationFactory factory = findFactoryOfTypeNameByName(typeName, factoryName);
-    return factory;
+    return findFactoryOfTypeNameByName(typeName, factoryName);
   }
 
 
@@ -335,6 +333,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return null;
   }
 
+  @NotNull
   public String getComponentName() {
     return "RunManager";
   }
@@ -353,7 +352,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public Map<String, RunnerAndConfigurationSettingsImpl> getStableConfigurations() {
-    final TreeMap<String,RunnerAndConfigurationSettingsImpl> result = new TreeMap<String, RunnerAndConfigurationSettingsImpl>(myConfigurations);
+    final Map<String,RunnerAndConfigurationSettingsImpl> result = new LinkedHashMap<String, RunnerAndConfigurationSettingsImpl>(myConfigurations);
     if (myTempConfiguration != null) {
       result.remove(getUniqueName(myTempConfiguration.getConfiguration()));
     }

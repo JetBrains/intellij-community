@@ -42,7 +42,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Enumeration;
 
 class RunConfigurable extends BaseConfigurable {
   private static final Icon ICON = IconLoader.getIcon("/general/configurableRunDebug.png");
@@ -199,9 +202,6 @@ class RunConfigurable extends BaseConfigurable {
         if (userObject1 instanceof ConfigurationType && userObject2 instanceof ConfigurationType){
           return ((ConfigurationType)userObject1).getDisplayName().compareTo(((ConfigurationType)userObject2).getDisplayName());
         }
-        if (userObject1 instanceof SingleConfigurationConfigurable && userObject2 instanceof SingleConfigurationConfigurable){
-          return ((SingleConfigurationConfigurable)userObject1).getNameText().compareTo(((SingleConfigurationConfigurable)userObject2).getNameText());
-        }
         return 0;
       }
     });
@@ -289,10 +289,22 @@ class RunConfigurable extends BaseConfigurable {
                            ExecutionBundle.message("run.configuration.edit.default.configuration.settings.button"),
                            EDIT_DEFUALTS_ICON){
       public void actionPerformed(final AnActionEvent e) {
-        new SingleConfigurableEditor(getProject(), new DefaultConfigurationSettingsEditor(myProject)).show();
+        new SingleConfigurableEditor(getProject(),
+                                     new DefaultConfigurationSettingsEditor(myProject,
+                                                                            getSelectedConfigurationType())).show();
       }
     });
+    group.add(new MyMoveAction(ExecutionBundle.message("move.up.action.name"), null, IconLoader.getIcon("/actions/moveUp.png"), -1));
+    group.add(new MyMoveAction(ExecutionBundle.message("move.down.action.name"), null, IconLoader.getIcon("/actions/moveDown.png"), 1));
     return group;
+  }
+
+  @Nullable
+  private ConfigurationType getSelectedConfigurationType() {
+    final TreePath selectionPath = myTree.getSelectionPath();
+    if (selectionPath == null) return null;
+    final DefaultMutableTreeNode configurationTypeNode = getSelectedConfigurationTypeNode();
+    return configurationTypeNode != null ? (ConfigurationType)configurationTypeNode.getUserObject() : null;
   }
 
   public JComponent createComponent() {
@@ -447,20 +459,18 @@ class RunConfigurable extends BaseConfigurable {
          !Comparing.strEqual(mySelectedConfigurable.getNameText(), settings.getConfiguration().getName()))){
       return true;
     }
-    final RunConfiguration[] allConfigurations = runManager.getAllConfigurations();
-    final Set<RunConfiguration> currentConfigurations = new HashSet<RunConfiguration>();
     for(int i = 0; i < myRoot.getChildCount(); i++){
       DefaultMutableTreeNode typeNode = (DefaultMutableTreeNode)myRoot.getChildAt(i);
+      final RunnerAndConfigurationSettingsImpl[] configurationSettings =
+        runManager.getConfigurationSettings((ConfigurationType)typeNode.getUserObject());
+      if (configurationSettings.length != typeNode.getChildCount()) return true;
       for(int j= 0; j < typeNode.getChildCount(); j++){
         SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)((DefaultMutableTreeNode)typeNode.getChildAt(j)).getUserObject();
-        if (ArrayUtil.find(allConfigurations, configurable.getConfiguration()) == -1) return true;
+        if (!Comparing.strEqual(configurationSettings[j].getConfiguration().getName(), configurable.getConfiguration().getName())) return true;
         if (configurable.isModified()) return true;
-        currentConfigurations.add(configurable.getConfiguration());
       }
     }
-    for (RunConfiguration configuration : allConfigurations) {
-      if (!currentConfigurations.contains(configuration)) return true;
-    }
+
     return false;
   }
 
@@ -747,7 +757,6 @@ class RunConfigurable extends BaseConfigurable {
 
   private class MySaveAction extends AnAction {
 
-
     public MySaveAction() {
       super(ExecutionBundle.message("action.name.save.configuration"), null, SAVE_ICON);
     }
@@ -772,6 +781,42 @@ class RunConfigurable extends BaseConfigurable {
       final boolean enabled = configuration != null && getRunManager().isTemporary(configuration.getSettings());
       presentation.setEnabled(enabled);
       presentation.setVisible(enabled);
+    }
+  }
+
+  private class MyMoveAction extends AnAction {
+    private int myDirection;
+
+    protected MyMoveAction(String text, String description, Icon icon, int direction) {
+      super(text, description, icon);
+      myDirection = direction;
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      final TreePath selectionPath = myTree.getSelectionPath();
+      final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+      final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)treeNode.getParent();
+      final int idx = parent.getIndex(treeNode);
+      parent.remove(treeNode);
+      parent.insert(treeNode, idx + myDirection);
+      ((DefaultTreeModel)myTree.getModel()).reload(parent);
+      TreeUtil.selectNode(myTree, treeNode);
+    }
+
+    public void update(final AnActionEvent e) {
+      final Presentation presentation = e.getPresentation();
+      presentation.setEnabled(false);
+      final TreePath selectionPath = myTree.getSelectionPath();
+      if (selectionPath != null){
+        final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+        if (treeNode.getUserObject() instanceof SingleConfigurationConfigurable){
+          if (myDirection < 0){
+            presentation.setEnabled(treeNode.getPreviousSibling() != null);
+          } else {
+            presentation.setEnabled(treeNode.getNextSibling() != null);
+          }
+        }
+      }
     }
   }
 }
