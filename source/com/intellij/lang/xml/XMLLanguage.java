@@ -9,6 +9,7 @@ import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.MetaDataDocumentationProvider;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
@@ -26,7 +27,6 @@ import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.formatter.xml.XmlPolicy;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.XmlValueProvider;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
@@ -51,21 +51,7 @@ public class XMLLanguage extends CompositeLanguage {
   protected static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
   private final FormattingModelBuilder myFormattingModelBuilder;
   private XmlFindUsagesProvider myXmlFindUsagesProvider;
-  private final DocumentationProvider myDocumentationProvider = new DocumentationProvider() {
-
-    public String getQuickNavigateInfo(PsiElement element) {
-      if (!(element instanceof PsiFile)) {
-        String value = XmlValueProvider.getProvider(element).getValue(element);
-        if (value != null) {
-          PsiFile file = element.getContainingFile();
-          if (file != null) {
-            return value + " [" + file.getName() + "]";
-          }
-        }
-      }
-      return null;
-    }
-  };
+  private final DocumentationProvider myDocumentationProvider = new MetaDataDocumentationProvider();
 
   public XMLLanguage() {
     this("XML", "text/xml");

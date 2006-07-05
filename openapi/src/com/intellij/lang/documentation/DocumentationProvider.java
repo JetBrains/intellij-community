@@ -18,7 +18,10 @@
 package com.intellij.lang.documentation;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 public interface DocumentationProvider {
+
+  @Nullable
   String getQuickNavigateInfo(PsiElement element);
 }
