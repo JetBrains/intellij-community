@@ -42,10 +42,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Enumeration;
+import java.util.*;
 
 class RunConfigurable extends BaseConfigurable {
   private static final Icon ICON = IconLoader.getIcon("/general/configurableRunDebug.png");
@@ -276,7 +273,20 @@ class RunConfigurable extends BaseConfigurable {
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     leftPanel.add(pane, BorderLayout.CENTER);
+    final JButton editDefaultsButton = new JButton(ExecutionBundle.message("run.configuration.edit.default.configuration.settings.button"));
+    editDefaultsButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        editDefaultsConfiguration();
+      }
+    });
+    leftPanel.add(editDefaultsButton, BorderLayout.SOUTH);
     return leftPanel;
+  }
+
+  private void editDefaultsConfiguration() {
+    new SingleConfigurableEditor(getProject(),
+                                 new DefaultConfigurationSettingsEditor(myProject,
+                                                                        getSelectedConfigurationType())).show();
   }
 
   private DefaultActionGroup createActionsGroup() {
@@ -289,9 +299,7 @@ class RunConfigurable extends BaseConfigurable {
                            ExecutionBundle.message("run.configuration.edit.default.configuration.settings.button"),
                            EDIT_DEFUALTS_ICON){
       public void actionPerformed(final AnActionEvent e) {
-        new SingleConfigurableEditor(getProject(),
-                                     new DefaultConfigurationSettingsEditor(myProject,
-                                                                            getSelectedConfigurationType())).show();
+        editDefaultsConfiguration();
       }
     });
     group.add(new MyMoveAction(ExecutionBundle.message("move.up.action.name"), null, IconLoader.getIcon("/actions/moveUp.png"), -1));
@@ -459,6 +467,8 @@ class RunConfigurable extends BaseConfigurable {
          !Comparing.strEqual(mySelectedConfigurable.getNameText(), settings.getConfiguration().getName()))){
       return true;
     }
+    final RunConfiguration[] allConfigurations = runManager.getAllConfigurations();
+    final Set<RunConfiguration> currentConfigurations = new HashSet<RunConfiguration>();
     for(int i = 0; i < myRoot.getChildCount(); i++){
       DefaultMutableTreeNode typeNode = (DefaultMutableTreeNode)myRoot.getChildAt(i);
       final RunnerAndConfigurationSettingsImpl[] configurationSettings =
@@ -468,9 +478,12 @@ class RunConfigurable extends BaseConfigurable {
         SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)((DefaultMutableTreeNode)typeNode.getChildAt(j)).getUserObject();
         if (!Comparing.strEqual(configurationSettings[j].getConfiguration().getName(), configurable.getConfiguration().getName())) return true;
         if (configurable.isModified()) return true;
+        currentConfigurations.add(configurable.getConfiguration());
       }
     }
-
+    for (RunConfiguration configuration : allConfigurations) {
+      if (!currentConfigurations.contains(configuration)) return true;
+    }
     return false;
   }
 

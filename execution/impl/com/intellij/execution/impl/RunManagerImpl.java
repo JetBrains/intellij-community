@@ -342,8 +342,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     LOG.assertTrue(tempConfiguration != null);
     myConfigurations = getStableConfigurations();
     myTempConfiguration = tempConfiguration;
-    final RunnerAndConfigurationSettingsImpl template = getConfigurationTemplate(tempConfiguration.getFactory());
-    addConfiguration(myTempConfiguration, isConfigurationShared(template), getCompileMethodBeforeRun(template.getConfiguration()));
+    addConfiguration(myTempConfiguration, isConfigurationShared(tempConfiguration), getCompileMethodBeforeRun(tempConfiguration.getConfiguration()));
     setActiveConfiguration(myTempConfiguration);
   }
 
@@ -383,12 +382,20 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
 
   public boolean isConfigurationShared(final RunnerAndConfigurationSettingsImpl settings){
-    final Boolean shared = mySharedConfigurations.get(getUniqueName(settings.getConfiguration()));
+    Boolean shared = mySharedConfigurations.get(getUniqueName(settings.getConfiguration()));
+    if (shared == null) {
+      final RunnerAndConfigurationSettingsImpl template = getConfigurationTemplate(settings.getFactory());
+      shared = mySharedConfigurations.get(getUniqueName(template.getConfiguration()));
+    }
     return shared != null && shared.booleanValue();
   }
 
   public String getCompileMethodBeforeRun(final RunConfiguration settings){
-    final String method = myMethod2CompileBeforeRun.get(getUniqueName(settings));
+    String method = myMethod2CompileBeforeRun.get(getUniqueName(settings));
+    if (method == null) {
+      final RunnerAndConfigurationSettingsImpl template = getConfigurationTemplate(settings.getFactory());
+      method = myMethod2CompileBeforeRun.get(getUniqueName(template.getConfiguration()));
+    }
     return method != null ? method : RunManagerConfig.MAKE;
   }
 

@@ -79,15 +79,10 @@ public class RunDialog extends DialogWrapper {
 
   public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettingsImpl configuration, final String title) {
     final SingleConfigurationConfigurable<RunConfiguration> configurable = SingleConfigurationConfigurable.editSettings(configuration);
-    try {
-      final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable);
-      dialog.setTitle(title);
-      dialog.show();
-      return dialog.isOK();
-    }
-    finally {
-      configurable.disposeUIResources();
-    }
+    final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable);
+    dialog.setTitle(title);
+    dialog.show();
+    return dialog.isOK();
   }
 
   private class ApplyAction extends AbstractAction {
