@@ -49,13 +49,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
     return lang;
   }
 
-  public void invoke(final Project project, final Editor editor, PsiFile file, Surrounder surrounder){
-    if (!file.isWritable()){
-      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)){
-        return;
-      }
-    }
-
+  public static void invoke(final Project project, final Editor editor, PsiFile file, Surrounder surrounder){
     if (!editor.getSelectionModel().hasSelection()) {
       editor.getSelectionModel().selectLineAtCaret();
     }
@@ -104,6 +98,13 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
   }
 
   static void doSurround(final Project project, final Editor editor, final Surrounder surrounder, final PsiElement[] elements) {
+    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (!file.isWritable()){
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)){
+        return;
+      }
+    }
+
     try {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       int col = editor.getCaretModel().getLogicalPosition().column;
