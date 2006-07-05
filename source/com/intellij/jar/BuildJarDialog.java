@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +33,9 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.io.FileTypeFilter;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -41,19 +44,21 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.DocumentEvent;
 import javax.swing.filechooser.FileView;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.*;
+import java.text.MessageFormat;
 
 /**
  * @author cdr
  */
 public class BuildJarDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.jar.BuildJarDialog");
-
+  @NonNls private static final String WARNING_TEMPLATE = "<html><body><b>{0}: </b>{1}</body><body>";
   private final Project myProject;
   private JPanel myModulesPanel;
   private JPanel myEditorPanel;
@@ -67,6 +72,7 @@ public class BuildJarDialog extends DialogWrapper {
   private LabeledComponent<TextFieldWithBrowseButton> myMainClassComponent;
   private LabeledComponent<TextFieldWithBrowseButton> myJarFilePathComponent;
   private JCheckBox myBuildJarsOnMake;
+  private JLabel myWarningLabel;
   private final SplitterProportionsData mySplitterProportionsData = new SplitterProportionsData();
 
   protected BuildJarDialog(Project project) {
@@ -80,6 +86,25 @@ public class BuildJarDialog extends DialogWrapper {
     mySplitterProportionsData.restoreSplitterProportions(myPanel);
     getOKAction().putValue(Action.NAME, IdeBundle.message("jar.build.button"));
     init();
+    updateWarning();
+  }
+
+  private void updateWarning() {
+    for (Map.Entry<Module, SettingsEditor> entry : mySettings.entrySet()) {
+      try {
+        final BuildJarDialog.SettingsEditor editor = entry.getValue();
+        editor.saveUI();
+        editor.checkSettings();
+      }
+      catch (RuntimeConfigurationException e) {
+        myWarningLabel.setText(MessageFormat.format(WARNING_TEMPLATE, entry.getKey().getName(), e.getMessage()));
+        myWarningLabel.setVisible(true);
+        repaint();
+        return;
+      }
+    }
+    repaint();
+    myWarningLabel.setVisible(false);
   }
 
   protected void doHelpAction() {
@@ -107,6 +132,8 @@ public class BuildJarDialog extends DialogWrapper {
   }
 
   private void setupControls() {
+    myWarningLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
+
     myBuildJarsOnMake.setSelected(BuildJarProjectSettings.getInstance(myProject).isBuildJarOnMake());
 
     myJarPath = myJarFilePathComponent.getComponent();
@@ -198,6 +225,12 @@ public class BuildJarDialog extends DialogWrapper {
         if (psiClass != null && psiClass.getQualifiedName() != null) {
           myMainClass.setText(psiClass.getQualifiedName());
         }
+        updateWarning();
+      }
+    });
+    myMainClass.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        updateWarning();
       }
     });
 
@@ -324,6 +357,11 @@ public class BuildJarDialog extends DialogWrapper {
       boolean isBuildJar = myElementsChooser.getMarkedElements().contains(myModule);
       myModifiedBuildJarSettings.setBuildJar(isBuildJar);
       myModifiedBuildJarSettings.setMainClass(myMainClass.getText());
+    }
+
+
+    public void checkSettings() throws RuntimeConfigurationException {
+      myModifiedBuildJarSettings.checkSettings();
     }
   }
 

@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import javax.swing.*;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ApplicationConfigurationType implements LocatableConfigurationType {
   private final ConfigurationFactory myFactory;
@@ -109,6 +110,7 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
   }
 
 
+  @NotNull @NonNls
   public String getComponentName() {
     return "Application";
   }
@@ -117,4 +119,7 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
     return ApplicationManager.getApplication().getComponent(ApplicationConfigurationType.class);
   }
 
+  public static boolean hasMainMethod(final PsiClass psiClass) {
+    return findMainMethod(psiClass.findMethodsByName("main", true)) != null;
+  }
 }

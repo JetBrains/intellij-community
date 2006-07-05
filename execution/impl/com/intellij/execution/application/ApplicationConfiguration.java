@@ -134,7 +134,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
     }
     final RunConfigurationModule configurationModule = getConfigurationModule();
     final PsiClass psiClass = configurationModule.checkModuleAndClassName(MAIN_CLASS_NAME, ExecutionBundle.message("no.main.class.specified.error.text"));
-    if (ApplicationConfigurationType.findMainMethod(psiClass.findMethodsByName("main", true)) == null) {
+    if (!ApplicationConfigurationType.hasMainMethod(psiClass)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", MAIN_CLASS_NAME));
     }
   }
