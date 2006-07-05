@@ -15,17 +15,15 @@
  */
 package com.intellij.uiDesigner.lw;
 
-import org.jdom.Element;
 import com.intellij.uiDesigner.UIFormXmlConstants;
-
-import java.awt.*;
+import org.jdom.Element;
 
 /**
  * @author yole
  */
 public class LwIntroComponentProperty extends LwIntrospectedProperty {
-  public LwIntroComponentProperty(final String name) {
-    super(name, Component.class.getName());
+  public LwIntroComponentProperty(final String name, final String propertyClassName) {
+    super(name, propertyClassName);
   }
 
   public Object read(Element element) throws Exception {

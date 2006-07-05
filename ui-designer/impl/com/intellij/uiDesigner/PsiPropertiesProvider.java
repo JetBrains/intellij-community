@@ -125,7 +125,7 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
           PsiClass componentClass = psiManager.findClass(Component.class.getName(), scope);
           PsiClass listModelClass = psiManager.findClass(ListModel.class.getName(), scope);
           if (componentClass != null && InheritanceUtil.isInheritorOrSelf(propClass, componentClass, true)) {
-            property = new LwIntroComponentProperty(name);
+            property = new LwIntroComponentProperty(name, propertyClassName);
           }
           else if (componentClass != null && listModelClass != null && InheritanceUtil.isInheritorOrSelf(propClass, listModelClass, true)) {
             property = new LwIntroListModelProperty(name, propertyClassName);

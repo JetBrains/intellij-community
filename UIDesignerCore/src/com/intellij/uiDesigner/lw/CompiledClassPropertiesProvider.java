@@ -136,7 +136,7 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
       property = new LwIntroIconProperty(name);
     }
     else if (Component.class.isAssignableFrom(propertyType)) {
-      property = new LwIntroComponentProperty(name);
+      property = new LwIntroComponentProperty(name, propertyType.getName());
     }
     else if (ListModel.class.isAssignableFrom(propertyType)) {
       property = new LwIntroListModelProperty(name, propertyType.getName());
