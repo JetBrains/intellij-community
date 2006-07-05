@@ -21,6 +21,7 @@ public abstract class LwIntrospectedProperty implements IProperty {
 
   private final String myName;
   private final String myPropertyClassName;
+  private String myDeclaringClassName;
 
   public LwIntrospectedProperty(
     final String name,
@@ -53,6 +54,14 @@ public abstract class LwIntrospectedProperty implements IProperty {
   
   public final String getWriteMethodName() {
     return "set" + Character.toUpperCase(myName.charAt(0)) + myName.substring(1);
+  }
+
+  public String getDeclaringClassName() {
+    return myDeclaringClassName;
+  }
+
+  public void setDeclaringClassName(final String definingClassName) {
+    myDeclaringClassName = definingClassName;
   }
 
   /**

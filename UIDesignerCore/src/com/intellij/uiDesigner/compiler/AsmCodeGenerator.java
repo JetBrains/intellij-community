@@ -535,8 +535,10 @@ public class AsmCodeGenerator {
           setterArgType = typeFromClassName(property.getPropertyClassName());
         }
 
-        Type componentType = Type.getType(componentClass);
-        generator.invokeVirtual(componentType, new Method(property.getWriteMethodName(),
+        Type declaringType = (property.getDeclaringClassName() != null)
+                             ? typeFromClassName(property.getDeclaringClassName())
+                             : Type.getType(componentClass);
+        generator.invokeVirtual(declaringType, new Method(property.getWriteMethodName(),
                                                           Type.VOID_TYPE, new Type[] { setterArgType } ));
       }
 
@@ -596,7 +598,6 @@ public class AsmCodeGenerator {
       int componentLocal = ((Integer) myIdToLocalMap.get(component.getId())).intValue();
       final LayoutCodeGenerator layoutCodeGenerator = getComponentCodeGenerator(component.getParent());
       Class componentClass = getComponentClass(layoutCodeGenerator.mapComponentClass(component.getComponentClassName()), myLoader);
-      final Type componentType = Type.getType(componentClass);
 
       final LwIntrospectedProperty[] introspectedProperties = component.getAssignedIntrospectedProperties();
       for (int i = 0; i < introspectedProperties.length; i++) {
@@ -611,7 +612,10 @@ public class AsmCodeGenerator {
               int targetLocal = targetLocalInt.intValue();
               generator.loadLocal(componentLocal);
               generator.loadLocal(targetLocal);
-              generator.invokeVirtual(componentType,
+              Type declaringType = (property.getDeclaringClassName() != null)
+                                   ? typeFromClassName(property.getDeclaringClassName())
+                                   : Type.getType(componentClass);
+              generator.invokeVirtual(declaringType,
                                       new Method(property.getWriteMethodName(),
                                                  Type.VOID_TYPE, new Type[] { typeFromClassName(property.getPropertyClassName()) } ));
             }

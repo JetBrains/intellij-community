@@ -91,6 +91,7 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
       final LwIntrospectedProperty property = propertyFromClass(descriptor.getPropertyType(), name);
 
       if (property != null) {
+        property.setDeclaringClassName(descriptor.getReadMethod().getDeclaringClass().getName());
         result.put(name, property);
       }
     }
