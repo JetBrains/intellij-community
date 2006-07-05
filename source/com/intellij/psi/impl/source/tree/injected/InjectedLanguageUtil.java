@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
@@ -30,12 +31,12 @@ import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
+import com.intellij.psi.impl.source.xml.XmlAttributeValueImpl;
 import com.intellij.psi.impl.source.xml.XmlTextImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
@@ -120,15 +121,31 @@ public class InjectedLanguageUtil {
 
   private static <T extends PsiLanguageInjectionHost> SingleRootFileViewProvider createViewProvider(final Project project, final VirtualFileDelegate virtualFile) {
     return new SingleRootFileViewProvider(PsiManager.getInstance(project), virtualFile) {
-
       public void rootChanged(PsiFile psiFile) {
         super.rootChanged(psiFile);
         PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
         DocumentRange documentRange = (DocumentRange)documentManager.getDocument(psiFile);
-        DocumentEx document = documentRange.getDelegate();
-        if (!documentManager.isUncommited(document)) {
-          document.replaceString(0,0,""); // change document outside commit
+        String text = psiFile.getText();
+        text = StringUtil.trimStart(text, documentRange.getPrefix());
+        text = StringUtil.trimEnd(text, documentRange.getSuffix());
+        PsiLanguageInjectionHost injectionHost = (PsiLanguageInjectionHost)psiFile.getContext();
+        PsiFile hostFile = injectionHost.getContainingFile();
+        String hostFileText = hostFile.getText();
+        TextRange hostTextRange = injectionHost.getTextRange();
+        RangeMarker documentWindow = documentRange.getTextRange();
+        TextRange rangeInsideHost = new TextRange(documentWindow.getStartOffset(), documentWindow.getEndOffset()).shiftRight(-hostTextRange.getStartOffset());
+        String newHostText = StringUtil.replaceSubstring(injectionHost.getText(), rangeInsideHost, text);
+        if (!newHostText.equals(injectionHost.getText())) {
+          injectionHost.fixText(newHostText);
+
+          PsiDocumentManagerImpl.checkConsistency(psiFile, documentRange);
+          PsiDocumentManagerImpl.checkConsistency(hostFile, documentRange.getDelegate());
         }
+
+        //DocumentEx document = documentRange.getDelegate();
+        //if (!documentManager.isUncommited(document)) {
+        //  document.replaceString(0,0,""); // change document outside commit
+        //}
       }
 
       public FileViewProvider clone() {
@@ -322,6 +339,10 @@ public class InjectedLanguageUtil {
     public int getOffsetInSource(int offsetInDecoded) {
       return outSourceOffsets[offsetInDecoded];
     }
+
+
+
+
   }
 
   public static class XmlTextLiteralEscaper implements LiteralTextEscaper<XmlTextImpl> {
@@ -340,11 +361,11 @@ public class InjectedLanguageUtil {
       return myXmlText.displayToPhysical(offsetInDecoded);
     }
   }
-  public static class XmlAttributeLiteralEscaper implements LiteralTextEscaper<XmlAttributeValue> {
+  public static class XmlAttributeLiteralEscaper implements LiteralTextEscaper<XmlAttributeValueImpl> {
     public static final XmlAttributeLiteralEscaper INSTANCE = new XmlAttributeLiteralEscaper();
     private XmlAttribute myXmlAttribute;
 
-    public boolean decode(XmlAttributeValue host, final TextRange rangeInsideHost, StringBuilder outChars) {
+    public boolean decode(XmlAttributeValueImpl host, final TextRange rangeInsideHost, StringBuilder outChars) {
       myXmlAttribute = (XmlAttribute)host.getParent();
       TextRange valueTextRange = myXmlAttribute.getValueTextRange();
       int startInDecoded = myXmlAttribute.physicalToDisplay(rangeInsideHost.getStartOffset() - valueTextRange.getStartOffset());

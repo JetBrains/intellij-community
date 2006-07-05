@@ -152,10 +152,12 @@ public class CodeInsightUtil {
     return getElementsInRange(root, startOffset, endOffset, true);
   }
 
+  @NotNull
   public static List<PsiElement> getElementsInRange(PsiElement root, final int startOffset, final int endOffset) {
     return getElementsInRange(root, startOffset, endOffset, false);
   }
 
+  @NotNull
   public static List<PsiElement> getElementsInRange(final PsiElement root, final int startOffset, final int endOffset, boolean includeAllParents) {
     PsiElement commonParent = findCommonParent(root, startOffset, endOffset);
     if (commonParent == null) return Collections.emptyList();

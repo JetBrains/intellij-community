@@ -33,15 +33,12 @@ public class CommentBreakerEnterProcessor implements EnterProcessor {
     return false;
   }
 
-  private void plainEnter(Editor editor) {
+  private static void plainEnter(Editor editor) {
     getEnterHandler().execute(editor, ((EditorEx) editor).getDataContext());
   }
 
-  private EditorActionHandler getEnterHandler() {
-    EditorActionHandler enterHandler = EditorActionManager.getInstance().getActionHandler(
-        IdeActions.ACTION_EDITOR_START_NEW_LINE
-    );
-    return enterHandler;
+  private static EditorActionHandler getEnterHandler() {
+    return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
   }
 
 }

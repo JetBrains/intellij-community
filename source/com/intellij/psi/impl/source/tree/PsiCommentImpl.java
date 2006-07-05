@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
@@ -30,5 +31,13 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiJav
   @Nullable
   public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
     return InjectedLanguageUtil.getInjectedPsiFiles(this, null);
+  }
+
+  public void fixText(final String text) {
+    ChangeUtil.changeElementInPlace(this, new ChangeUtil.ChangeAction() {
+      public void makeChange(TreeChangeEvent destinationTreeChange) {
+        setText(text);
+      }
+    });
   }
 }

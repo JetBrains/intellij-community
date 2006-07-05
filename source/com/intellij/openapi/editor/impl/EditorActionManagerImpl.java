@@ -22,7 +22,7 @@ public class EditorActionManagerImpl extends EditorActionManager implements Appl
   }
 
   public EditorActionHandler setActionHandler(String actionId, EditorActionHandler handler) {
-    EditorAction action = ((EditorAction) myActionManager.getAction(actionId));
+    EditorAction action = (EditorAction)myActionManager.getAction(actionId);
     return action.setupHandler(handler);
   }
 
@@ -47,6 +47,7 @@ public class EditorActionManagerImpl extends EditorActionManager implements Appl
   }
 
 
+  @NotNull
   public String getComponentName() {
     return "EditorActionManager";
   }

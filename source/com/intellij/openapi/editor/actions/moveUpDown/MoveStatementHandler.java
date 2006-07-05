@@ -49,6 +49,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
     final LineRange range = mover.whatToMove;
     if (range.startLine <= 1 && !isDown) return false;
+    //
     return range.endLine < maxLine - 1 || !isDown;
   }
 

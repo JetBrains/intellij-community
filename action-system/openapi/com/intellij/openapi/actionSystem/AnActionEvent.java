@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 
@@ -33,6 +35,7 @@ public final class AnActionEvent {
   private final String myPlace;
   private final Presentation myPresentation;
   private final int myModifiers;
+  private boolean myWorksInInjected;
 
   /**
    * @throws java.lang.IllegalArgumentException <code>dataContext</code> is <code>null</code> or
@@ -73,6 +76,14 @@ public final class AnActionEvent {
     return myInputEvent;
   }
 
+  @NonNls
+  public static String injectedId(String dataId) {
+    return "$injected$." + dataId;
+  }
+  @NonNls
+  public static String uninjectedId(String dataId) {
+    return StringUtil.trimStart(dataId, "$injected$.");
+  }
   /**
    * Returns the context which allows to retrieve information about the state of IDEA related to
    * the action invocation (active editor, selection and so on).
@@ -80,7 +91,17 @@ public final class AnActionEvent {
    * @return the data context instance.
    */
   public DataContext getDataContext() {
-    return myDataContext;
+    if (!myWorksInInjected) {
+      return myDataContext;
+    }
+    return new DataContext() {
+      @Nullable
+      public Object getData(@NonNls String dataId) {
+        Object injected = myDataContext.getData(injectedId(dataId));
+        if (injected != null) return injected;
+        return myDataContext.getData(dataId);
+      }
+    };
   }
 
   /**
@@ -114,5 +135,12 @@ public final class AnActionEvent {
 
   public ActionManager getActionManager() {
     return myActionManager;
+  }
+  public void setInjectedContext(boolean worksInInjected) {
+    myWorksInInjected = worksInInjected;
+  }
+
+  public boolean isInInjectedContext() {
+    return myWorksInInjected;
   }
 }

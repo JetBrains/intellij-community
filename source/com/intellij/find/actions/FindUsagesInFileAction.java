@@ -15,6 +15,10 @@ import com.intellij.CommonBundle;
 
 public class FindUsagesInFileAction extends AnAction {
 
+  public FindUsagesInFileAction() {
+    setInjectedContext(true);
+  }
+
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
@@ -39,30 +43,31 @@ public class FindUsagesInFileAction extends AnAction {
 
   public void update(AnActionEvent event){
     updateFindUsagesAction(event);
-
   }
 
-  public static void updateFindUsagesAction(AnActionEvent event) {
-    Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
+  public static boolean isEnabled(DataContext dataContext) {
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if (project == null) {
-      presentation.setEnabled(false);
-      return;
+      return false;
     }
 
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     if (editor != null) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
-      boolean enabled = file != null && !(file.getLanguage().getFindUsagesProvider() instanceof EmptyFindUsagesProvider);
-      presentation.setVisible(enabled);
-      presentation.setEnabled(enabled);
+      return file != null && !(file.getLanguage().getFindUsagesProvider() instanceof EmptyFindUsagesProvider);
     }
     else {
       UsageTarget[] target = (UsageTarget[])dataContext.getData(UsageView.USAGE_TARGETS);
-      presentation.setVisible(true);
-      presentation.setEnabled(target != null && target.length > 0);
+      return target != null && target.length > 0;
     }
+  }
+
+  public static void updateFindUsagesAction(AnActionEvent event) {
+    Presentation presentation = event.getPresentation();
+    DataContext dataContext = event.getDataContext();
+    boolean enabled = isEnabled(dataContext);
+    presentation.setVisible(true);
+    presentation.setEnabled(enabled);
   }
 }

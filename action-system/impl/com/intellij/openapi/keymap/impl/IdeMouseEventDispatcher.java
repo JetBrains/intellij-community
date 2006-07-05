@@ -3,7 +3,6 @@ package com.intellij.openapi.keymap.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -46,7 +45,7 @@ public final class IdeMouseEventDispatcher{
           }
         }
         // once we've found a proper local shortcut(s), we exit
-        if (myActions.size() > 0) {
+        if (!myActions.isEmpty()) {
           return;
         }
       }
@@ -111,7 +110,7 @@ public final class IdeMouseEventDispatcher{
       action.beforeActionPerformedUpdate(actionEvent);
       if(presentation.isEnabled()){
         actionManager.fireBeforeActionPerformed(action, dataContext);
-        Component c = (Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT);
+        Component c = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
         if (c != null && !c.isShowing()) {
           continue;
         }

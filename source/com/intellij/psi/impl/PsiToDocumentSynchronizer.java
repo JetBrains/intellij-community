@@ -5,6 +5,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.impl.injected.DocumentRange;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -37,13 +38,11 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     void syncDocument(Document document, PsiTreeChangeEventImpl event);
   }
   private void doSync(PsiTreeChangeEvent event, DocSyncAction syncAction) {
-    if (!toProcessPsiEvent()) {
-      return;
-    }
+    if (!toProcessPsiEvent()) return;
     PsiFile psiFile = event.getFile();
     if (psiFile == null || psiFile.getLanguage() != psiFile.getViewProvider().getBaseLanguage()) return;
     DocumentEx document = getCachedDocument(psiFile);
-    if (document == null) return;
+    if (document == null || document instanceof DocumentRange) return;
 
     TextBlock textBlock = getTextBlock(document);
     if (!textBlock.isEmpty()) {

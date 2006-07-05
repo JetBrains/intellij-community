@@ -132,6 +132,7 @@ public class ButtonToolbarImpl extends JPanel {
         ActionManager.getInstance(),
         0
       );
+      event.setInjectedContext(myAction.isInInjectedContext());
       myAction.update(event);
       setVisible(event.getPresentation().isVisible());
       setEnabled(event.getPresentation().isEnabled());

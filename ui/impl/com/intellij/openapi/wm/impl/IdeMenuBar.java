@@ -133,6 +133,7 @@ public class IdeMenuBar extends JMenuBar{
       final AnActionEvent e = new AnActionEvent(null, context, ActionPlaces.MAIN_MENU, presentation,
                                                 actionManager,
                                                 0);
+      e.setInjectedContext(action.isInInjectedContext());
       action.update(e);
       if (presentation.isVisible()) { // add only visible items
         newVisibleActions.add(action);

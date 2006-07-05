@@ -13,11 +13,11 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.CommonBundle;
 
 public class EnterAction extends EditorAction {
   public EnterAction() {
     super(new Handler());
+    setInjectedContext(true);
   }
 
   private static class Handler extends EditorWriteActionHandler {

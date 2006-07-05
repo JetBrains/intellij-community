@@ -66,6 +66,7 @@ public abstract class AnAction {
 
   private static final ShortcutSet ourEmptyShortcutSet = new CustomShortcutSet(new Shortcut[0]);
   private boolean myIsDefaultIcon = true;
+  private boolean myWorksInInjected;
 
   /**
    * Creates a new action with its text, description and icon set to <code>null</code>.
@@ -125,9 +126,9 @@ public abstract class AnAction {
   public final void registerCustomShortcutSet(ShortcutSet shortcutSet, JComponent component){
     myShortcutSet = shortcutSet;
     if (component != null){
-      ArrayList actionList = (ArrayList)component.getClientProperty(ourClientProperty);
+      ArrayList<AnAction> actionList = (ArrayList<AnAction>)component.getClientProperty(ourClientProperty);
       if (actionList == null){
-        actionList = new ArrayList(1);
+        actionList = new ArrayList<AnAction>(1);
         component.putClientProperty(ourClientProperty, actionList);
       }
       if (!actionList.contains(this)){
@@ -138,7 +139,7 @@ public abstract class AnAction {
 
   public final void unregisterCustomShortcutSet(JComponent component){
     if (component != null){
-      ArrayList actionList = (ArrayList)component.getClientProperty(ourClientProperty);
+      ArrayList<AnAction> actionList = (ArrayList<AnAction>)component.getClientProperty(ourClientProperty);
       if (actionList != null){
         actionList.remove(this);
       }
@@ -195,6 +196,7 @@ public abstract class AnAction {
    * @param e
    */
   public void beforeActionPerformedUpdate(AnActionEvent e) {
+    e.setInjectedContext(isInInjectedContext());
     update(e);
   }
 
@@ -248,5 +250,13 @@ public abstract class AnAction {
    */
   public boolean isDefaultIcon() {
     return myIsDefaultIcon;
+  }
+
+  public void setInjectedContext(boolean worksInInjected) {
+    myWorksInInjected = worksInInjected;
+  }
+
+  public boolean isInInjectedContext() {
+    return myWorksInInjected;
   }
 }

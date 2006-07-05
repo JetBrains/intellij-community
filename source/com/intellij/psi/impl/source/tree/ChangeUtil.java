@@ -5,7 +5,6 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
@@ -21,19 +20,23 @@ import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.light.LightTypeElement;
-import com.intellij.psi.impl.source.*;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
-import com.intellij.psi.impl.source.parsing.*;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
+import com.intellij.psi.impl.source.parsing.ExpressionParsing;
+import com.intellij.psi.impl.source.parsing.ParseUtil;
+import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ChangeUtil implements Constants {
+public class ChangeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.ChangeUtil");
 
   private ChangeUtil() { }
@@ -232,9 +235,6 @@ public class ChangeUtil implements Constants {
         public void makeChange(TreeChangeEvent destinationTreeChange) {
           remove(destinationTreeChange, first, last);
           repairRemovedElement(fileElement, oldCharTab, first);
-
-          final FileElement treeElement = new DummyHolder(fileElement.getManager(), oldCharTab, false).getTreeElement();
-          TreeUtil.addChildren(treeElement, first);
         }
       }, first.getTreeParent());
     }
@@ -243,11 +243,26 @@ public class ChangeUtil implements Constants {
     }
   }
 
-  private static interface ChangeAction{
+  public static void changeElementInPlace(final ASTNode element, final ChangeAction action){
+    prepareAndRunChangeAction(new ChangeAction() {
+      public void makeChange(TreeChangeEvent destinationTreeChange) {
+        destinationTreeChange.addElementaryChange(element, ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, element));
+        action.makeChange(destinationTreeChange);
+      }
+    }, (TreeElement) element);
+    ASTNode node = element;
+    while (node != null) {
+      ASTNode parent = node.getTreeParent();
+      ((TreeElement) node).clearCaches();
+      node = parent;
+    }
+  }
+
+  public static interface ChangeAction{
     void makeChange(TreeChangeEvent destinationTreeChange);
   }
 
-  private static void prepareAndRunChangeAction(final ChangeAction action, final CompositeElement changedElement){
+  private static void prepareAndRunChangeAction(final ChangeAction action, final TreeElement changedElement){
     final FileElement changedFile = TreeUtil.getFileElement(changedElement);
     final PsiManager manager = changedFile.getManager();
     final PomModel model = manager.getProject().getModel();
@@ -258,7 +273,7 @@ public class ChangeUtil implements Constants {
           final PomModelEvent event = new PomModelEvent(model);
           final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);
           event.registerChangeSet(treeAspect, destinationTreeChange);
-          final PsiManagerImpl psiManager = ((PsiManagerImpl)manager);
+          final PsiManagerImpl psiManager = (PsiManagerImpl) manager;
           RepositoryManager repositoryManager = psiManager.getRepositoryManager();
           final PsiFile file = (PsiFile)changedFile.getPsi();
           if (repositoryManager != null) {
@@ -271,7 +286,9 @@ public class ChangeUtil implements Constants {
           }
           psiManager.invalidateFile(file);
           TreeUtil.clearCaches(changedElement);
-          changedElement.subtreeChanged();
+          if (changedElement instanceof CompositeElement) {
+            ((CompositeElement) changedElement).subtreeChanged();
+          }
           return event;
         }
       });
@@ -287,13 +304,14 @@ public class ChangeUtil implements Constants {
 
   private static void encodeInformation(TreeElement element, ASTNode original) {
     if (original instanceof CompositeElement) {
-      if (original.getElementType() == ElementType.JAVA_CODE_REFERENCE || original.getElementType() == ElementType.REFERENCE_EXPRESSION) {
+      if (original.getElementType() == JavaElementType.JAVA_CODE_REFERENCE || original.getElementType() == JavaElementType
+        .REFERENCE_EXPRESSION) {
         encodeInformationInRef(element, original);
       }
-      else if (original.getElementType() == ElementType.MODIFIER_LIST) {
-        if ((original.getTreeParent().getElementType() == ElementType.FIELD ||
-             original.getTreeParent().getElementType() == ElementType.METHOD)
-            && original.getTreeParent().getTreeParent().getElementType() == ElementType.CLASS &&
+      else if (original.getElementType() == JavaElementType.MODIFIER_LIST) {
+        if ((original.getTreeParent().getElementType() == JavaElementType.FIELD ||
+             original.getTreeParent().getElementType() == JavaElementType.METHOD)
+            && original.getTreeParent().getTreeParent().getElementType() == JavaElementType.CLASS &&
             ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(original.getTreeParent().getTreeParent())).isInterface()) {
           element.putUserData(INTERFACE_MODIFIERS_FLAG_KEY, Boolean.TRUE);
         }
@@ -312,25 +330,23 @@ public class ChangeUtil implements Constants {
   }
 
   private static void encodeInformationInRef(TreeElement ref, ASTNode original) {
-    if (original.getElementType() == REFERENCE_EXPRESSION) {
-      if (original.getTreeParent().getElementType() != REFERENCE_EXPRESSION) return; // cannot refer to class (optimization)
+    if (original.getElementType() == JavaElementType.REFERENCE_EXPRESSION) {
+      if (original.getTreeParent().getElementType() != JavaElementType.REFERENCE_EXPRESSION) return; // cannot refer to class (optimization)
       PsiElement target = ((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(original)).resolve();
       if (target instanceof PsiClass) {
         ref.putCopyableUserData(REFERENCED_CLASS_KEY, (PsiClass)target);
       }
     }
-    else if (original.getElementType() == JAVA_CODE_REFERENCE) {
+    else if (original.getElementType() == JavaElementType.JAVA_CODE_REFERENCE) {
       switch (((PsiJavaCodeReferenceElementImpl)original).getKind()) {
       case PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND:
       case PsiJavaCodeReferenceElementImpl.CLASS_OR_PACKAGE_NAME_KIND:
       case PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND:
-             {
-               final PsiElement target = ((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(original)).resolve();
-               if (target instanceof PsiClass) {
-                 ref.putCopyableUserData(REFERENCED_CLASS_KEY, (PsiClass)target);
-               }
-             }
-             break;
+        final PsiElement target = ((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(original)).resolve();
+        if (target instanceof PsiClass) {
+          ref.putCopyableUserData(REFERENCED_CLASS_KEY, (PsiClass)target);
+        }
+        break;
 
       case PsiJavaCodeReferenceElementImpl.PACKAGE_NAME_KIND:
       case PsiJavaCodeReferenceElementImpl.CLASS_FQ_NAME_KIND:
@@ -355,7 +371,8 @@ public class ChangeUtil implements Constants {
         child = child.getTreeNext();
       }
 
-      if (element.getElementType() == ElementType.JAVA_CODE_REFERENCE || element.getElementType() == ElementType.REFERENCE_EXPRESSION) {
+      if (element.getElementType() == JavaElementType.JAVA_CODE_REFERENCE || element.getElementType() == JavaElementType
+        .REFERENCE_EXPRESSION) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(element);
         final PsiClass refClass = element.getCopyableUserData(REFERENCED_CLASS_KEY);
         if (refClass != null) {
@@ -382,17 +399,17 @@ public class ChangeUtil implements Constants {
           }
         }
       }
-      else if (element.getElementType() == ElementType.MODIFIER_LIST) {
+      else if (element.getElementType() == JavaElementType.MODIFIER_LIST) {
         if (element.getUserData(INTERFACE_MODIFIERS_FLAG_KEY) != null) {
           element.putUserData(INTERFACE_MODIFIERS_FLAG_KEY, null);
           try {
             PsiModifierList modifierList = (PsiModifierList)SourceTreeToPsiMap.treeElementToPsi(element);
-            if (element.getTreeParent().getElementType() == ElementType.FIELD) {
+            if (element.getTreeParent().getElementType() == JavaElementType.FIELD) {
               modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
               modifierList.setModifierProperty(PsiModifier.STATIC, true);
               modifierList.setModifierProperty(PsiModifier.FINAL, true);
             }
-            else if (element.getTreeParent().getElementType() == ElementType.METHOD) {
+            else if (element.getTreeParent().getElementType() == JavaElementType.METHOD) {
               modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
               modifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
             }
@@ -448,7 +465,7 @@ public class ChangeUtil implements Constants {
     }
     else if (original instanceof PsiIdentifier) {
       final String text = original.getText();
-      return createLeafFromText(text, table, manager, original, IDENTIFIER);
+      return createLeafFromText(text, table, manager, original, JavaTokenType.IDENTIFIER);
     }
     else if (original instanceof PsiKeyword) {
       final String text = original.getText();
@@ -519,10 +536,10 @@ public class ChangeUtil implements Constants {
           table,
         manager);
         if (componentTypeCopy == null) return null;
-        CompositeElement element = Factory.createCompositeElement(TYPE);
+        CompositeElement element = Factory.createCompositeElement(JavaElementType.TYPE);
         CodeEditUtil.setNodeGenerated(element, generated);
         TreeUtil.addChildren(element, componentTypeCopy);
-        TreeUtil.addChildren(element, createLeafFromText("...", table, manager, original,ELLIPSIS));
+        TreeUtil.addChildren(element, createLeafFromText("...", table, manager, original, JavaTokenType.ELLIPSIS));
         return element;
       }
       else if (type instanceof PsiArrayType) {
@@ -531,11 +548,11 @@ public class ChangeUtil implements Constants {
           table,
         manager);
         if (componentTypeCopy == null) return null;
-        CompositeElement element = Factory.createCompositeElement(TYPE);
+        CompositeElement element = Factory.createCompositeElement(JavaElementType.TYPE);
         CodeEditUtil.setNodeGenerated(element, generated);
         TreeUtil.addChildren(element, componentTypeCopy);
-        TreeUtil.addChildren(element, createLeafFromText("[", table, manager, original, LBRACKET));
-        TreeUtil.addChildren(element, createLeafFromText("]", table, manager, original, LBRACKET));
+        TreeUtil.addChildren(element, createLeafFromText("[", table, manager, original, JavaTokenType.LBRACKET));
+        TreeUtil.addChildren(element, createLeafFromText("]", table, manager, original, JavaTokenType.LBRACKET));
         return element;
       }
       else if (type instanceof PsiPrimitiveType) {
@@ -545,14 +562,14 @@ public class ChangeUtil implements Constants {
         lexer.start(text.toCharArray());
         TreeElement keyword = ParseUtil.createTokenElement(lexer, table);
         CodeEditUtil.setNodeGenerated(keyword, generated);
-        CompositeElement element = Factory.createCompositeElement(TYPE);
+        CompositeElement element = Factory.createCompositeElement(JavaElementType.TYPE);
         CodeEditUtil.setNodeGenerated(element, generated);
         TreeUtil.addChildren(element, keyword);
         return element;
       }
       else if (type instanceof PsiWildcardType) {
         char[] buffer = original.getText().toCharArray();
-        final CompositeElement element = DeclarationParsing.parseTypeText(original.getManager(), buffer, 0, buffer.length, table);
+        final CompositeElement element = Parsing.parseTypeText(original.getManager(), buffer, 0, buffer.length, table);
         if(generated) element.getTreeParent().acceptTree(new GeneratedMarkerVisitor());
         return element;
       }
@@ -564,14 +581,14 @@ public class ChangeUtil implements Constants {
         }
         else {
           final CompositeElement reference = createReference(original.getManager(), classType.getPresentableText(), table, generated);
-          final CompositeElement immediateTypeElement = Factory.createCompositeElement(TYPE);
+          final CompositeElement immediateTypeElement = Factory.createCompositeElement(JavaElementType.TYPE);
           CodeEditUtil.setNodeGenerated(immediateTypeElement, generated);
           TreeUtil.addChildren(immediateTypeElement, reference);
           encodeInfoInTypeElement(immediateTypeElement, classType);
           return immediateTypeElement;
         }
 
-        CompositeElement element = Factory.createCompositeElement(TYPE);
+        CompositeElement element = Factory.createCompositeElement(JavaElementType.TYPE);
         CodeEditUtil.setNodeGenerated(element, generated);
         TreeUtil.addChildren(element, _copyToElement(ref, table,manager));
         return element;
@@ -604,30 +621,28 @@ public class ChangeUtil implements Constants {
 
   private static void encodeInfoInTypeElement(ASTNode typeElement, PsiType type) {
     if (type instanceof PsiPrimitiveType) return;
-    LOG.assertTrue(typeElement.getElementType() == TYPE);
+    LOG.assertTrue(typeElement.getElementType() == JavaElementType.TYPE);
     if (type instanceof PsiArrayType) {
       final ASTNode firstChild = typeElement.getFirstChildNode();
-      LOG.assertTrue(firstChild.getElementType() == TYPE);
+      LOG.assertTrue(firstChild.getElementType() == JavaElementType.TYPE);
       encodeInfoInTypeElement(firstChild, ((PsiArrayType)type).getComponentType());
-      return;
     }
     else if (type instanceof PsiWildcardType) {
       final PsiType bound = ((PsiWildcardType)type).getBound();
       if (bound == null) return;
       final ASTNode lastChild = typeElement.getLastChildNode();
-      if (lastChild.getElementType() != TYPE) return;
+      if (lastChild.getElementType() != JavaElementType.TYPE) return;
       encodeInfoInTypeElement(lastChild, bound);
     }
     else if (type instanceof PsiCapturedWildcardType) {
       final PsiType bound = ((PsiCapturedWildcardType)type).getWildcard().getBound();
       if (bound == null) return;
       final ASTNode lastChild = typeElement.getLastChildNode();
-      if (lastChild.getElementType() != TYPE) return;
+      if (lastChild.getElementType() != JavaElementType.TYPE) return;
       encodeInfoInTypeElement(lastChild, bound);
     }
     else if (type instanceof PsiIntersectionType) {
       encodeInfoInTypeElement(typeElement, ((PsiIntersectionType)type).getRepresentative());
-      return;
     }
     else {
       LOG.assertTrue(type instanceof PsiClassType);
@@ -640,7 +655,7 @@ public class ChangeUtil implements Constants {
       }
       else {
         final ASTNode reference = typeElement.getFirstChildNode();
-        LOG.assertTrue(reference.getElementType() == JAVA_CODE_REFERENCE);
+        LOG.assertTrue(reference.getElementType() == JavaElementType.JAVA_CODE_REFERENCE);
 
         encodeClassTypeInfoInReference((CompositeElement)reference, resolveResult.getElement(), resolveResult.getSubstitutor());
       }
@@ -657,7 +672,7 @@ public class ChangeUtil implements Constants {
     final ASTNode referenceParameterList = reference.findChildByRole(ChildRole.REFERENCE_PARAMETER_LIST);
     int index = 0;
     for (ASTNode child = referenceParameterList.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      if (child.getElementType() == TYPE) {
+      if (child.getElementType() == JavaElementType.TYPE) {
         final PsiType substitutedType = substitutor.substitute(typeParameters[index]);
         if (substitutedType != null) {
           encodeInfoInTypeElement(child, substitutedType);
@@ -690,28 +705,28 @@ public class ChangeUtil implements Constants {
     }
   }
 
-  public static int checkTextRanges(PsiElement root) {
-    if (true) return 0;
-    TextRange range = root.getTextRange();
-    int off = range.getStartOffset();
-    PsiElement[] children = root.getChildren();
-    if (children.length != 0) {
-      for (PsiElement child : children) {
-        off += checkTextRanges(child);
-      }
-    }
-    else {
-      off += root.getTextLength();
-    }
-    LOG.assertTrue(off == range.getEndOffset());
-
-    String fileText = root.getContainingFile().getText();
-    LOG.assertTrue(root.getText().equals(fileText.substring(range.getStartOffset(), range.getEndOffset())));
-    if (root instanceof XmlTag) {
-      XmlTagValue value = ((XmlTag)root).getValue();
-      TextRange textRange = value.getTextRange();
-      LOG.assertTrue(value.getText().equals(fileText.substring(textRange.getStartOffset(), textRange.getEndOffset())));
-    }
-    return range.getLength();
-  }
+//  public static int checkTextRanges(PsiElement root) {
+//    if (true) return 0;
+//    TextRange range = root.getTextRange();
+//    int off = range.getStartOffset();
+//    PsiElement[] children = root.getChildren();
+//    if (children.length != 0) {
+//      for (PsiElement child : children) {
+//        off += checkTextRanges(child);
+//      }
+//    }
+//    else {
+//      off += root.getTextLength();
+//    }
+//    LOG.assertTrue(off == range.getEndOffset());
+//
+//    String fileText = root.getContainingFile().getText();
+//    LOG.assertTrue(root.getText().equals(fileText.substring(range.getStartOffset(), range.getEndOffset())));
+//    if (root instanceof XmlTag) {
+//      XmlTagValue value = ((XmlTag)root).getValue();
+//      TextRange textRange = value.getTextRange();
+//      LOG.assertTrue(value.getText().equals(fileText.substring(textRange.getStartOffset(), textRange.getEndOffset())));
+//    }
+//    return range.getLength();
+//  }
 }

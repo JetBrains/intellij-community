@@ -38,8 +38,9 @@ public abstract class EditorAction extends AnAction {
   }
 
   public final void actionPerformed(AnActionEvent e) {
-    final Editor editor = (Editor) e.getDataContext().getData(DataConstants.EDITOR);
-    actionPerformed(editor, e.getDataContext());
+    DataContext dataContext = e.getDataContext();
+    Editor editor = (Editor) dataContext.getData(DataConstants.EDITOR);
+    actionPerformed(editor, dataContext);
   }
 
   public final void actionPerformed(final Editor editor, final DataContext dataContext) {
@@ -73,7 +74,7 @@ public abstract class EditorAction extends AnAction {
     }
   }
 
-  public static DataContext getProjectAwareDataContext(final Editor editor, final DataContext original) {
+  private static DataContext getProjectAwareDataContext(final Editor editor, final DataContext original) {
     if (original.getData(DataConstants.PROJECT) == editor.getProject()) return original;
 
     return new DataContext() {

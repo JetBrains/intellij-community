@@ -36,6 +36,7 @@ public class ActionGroupUtil {
                                                 presentation,
                                                 ActionManager.getInstance(),
                                                 e.getModifiers());
+        event.setInjectedContext(action.isInInjectedContext());
         action.update(event);
         final boolean enabled = presentation.isEnabled() && presentation.isVisible();
         if (enabled) {

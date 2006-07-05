@@ -14,6 +14,10 @@ import com.intellij.CommonBundle;
 
 public class FindUsagesAction extends AnAction {
 
+  public FindUsagesAction() {
+    setInjectedContext(true);
+  }
+
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);

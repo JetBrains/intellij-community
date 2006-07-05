@@ -1,15 +1,12 @@
 package com.intellij.refactoring.actions;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseRefactoringAction extends AnAction {
@@ -105,7 +102,7 @@ public abstract class BaseRefactoringAction extends AnAction {
   }
 
   public static PsiElement[] getPsiElementArray(DataContext dataContext) {
-    PsiElement[] psiElements = (PsiElement[]) dataContext.getData(DataConstantsEx.PSI_ELEMENT_ARRAY);
+    PsiElement[] psiElements = (PsiElement[]) dataContext.getData(DataConstants.PSI_ELEMENT_ARRAY);
     if (psiElements == null || psiElements.length == 0) {
       PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
       if (element != null) {

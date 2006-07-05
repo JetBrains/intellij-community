@@ -35,7 +35,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     if (myEditor.isRendererMode()) return null;
 
     if (DataConstants.EDITOR.equals(dataId)) {
-      // for 'big' editors return null to allow injected editors (see com.intellij.openapi.fileEditor.impl.text.TextEditorComponent.getOutsideVisibleEditor())
+      // for 'big' editors return null to allow injected editors (see com.intellij.openapi.fileEditor.impl.text.TextEditorComponent.getData())
       return myEditor.getVirtualFile() == null ? myEditor : null;
     }
     if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {

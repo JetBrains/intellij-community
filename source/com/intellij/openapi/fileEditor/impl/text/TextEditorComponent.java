@@ -31,6 +31,8 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.EditorPopupHandler;
@@ -273,18 +275,20 @@ final class TextEditorComponent extends JPanel implements DataProvider{
     if (dataId.equals(DataConstants.EDITOR)) {
       return myEditor;
     }
+    if (dataId.equals(AnActionEvent.injectedId(DataConstants.EDITOR))) {
+      return InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, getPsiFile());
+    }
+    if (dataId.equals(AnActionEvent.injectedId(DataConstants.PSI_ELEMENT))) {
+      return getPsiElementIn((Editor)getData(AnActionEvent.injectedId(DataConstants.EDITOR)));
+    }
     if (DataConstants.PSI_ELEMENT.equals(dataId)){
-      final PsiFile psiFile = getPsiFile();
-      if (psiFile == null) return null;
-      final Editor editor = myEditor;
-
-      return TargetElementUtil.findTargetElement(editor,
-                                            TargetElementUtil.THROW_STATEMENT_ACCEPTED |
-                                            TargetElementUtil.THROWS_ACCEPTED |
-                                            TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
-                                            TargetElementUtil.ELEMENT_NAME_ACCEPTED |
-                                            TargetElementUtil.NEW_AS_CONSTRUCTOR |
-                                            TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
+      return getPsiElementIn(myEditor);
+    }
+    if (dataId.equals(AnActionEvent.injectedId(DataConstants.LANGUAGE))) {
+      PsiFile psiFile = (PsiFile)getData(AnActionEvent.injectedId(DataConstants.PSI_FILE));
+      Editor editor = (Editor)getData(AnActionEvent.injectedId(DataConstants.EDITOR));
+      if (psiFile == null || editor == null) return null;
+      return PsiUtil.getLanguageAtOffset(psiFile, editor.getCaretModel().getOffset());
     }
     if (DataConstants.LANGUAGE.equals(dataId)) {
       final Editor editor = myEditor;
@@ -292,10 +296,20 @@ final class TextEditorComponent extends JPanel implements DataProvider{
       if (psiFile == null) return null;
       return PsiUtil.getLanguageAtOffset(psiFile, editor.getCaretModel().getOffset());
     }
-    if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
+    if (dataId.equals(AnActionEvent.injectedId(DataConstants.VIRTUAL_FILE))) {
+      PsiFile psiFile = (PsiFile)getData(AnActionEvent.injectedId(DataConstants.PSI_FILE));
+      if (psiFile == null) return null;
+      return psiFile.getVirtualFile();
+    }
+    if (dataId.equals(DataConstants.VIRTUAL_FILE)) {
       return myFile.isValid()? myFile : null;  // fix for SCR 40329
     }
-    if (DataConstants.PSI_FILE.equals(dataId)) {
+    if (dataId.equals(AnActionEvent.injectedId(DataConstants.PSI_FILE))) {
+      Editor editor = (Editor)getData(AnActionEvent.injectedId(DataConstants.EDITOR));
+      if (editor == null) return null;
+      return PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+    }
+    if (dataId.equals(DataConstants.PSI_FILE)) {
       return getPsiFile();
     }
     if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
@@ -322,6 +336,18 @@ final class TextEditorComponent extends JPanel implements DataProvider{
       return null;
     }
     return null;
+  }
+
+  private Object getPsiElementIn(final Editor editor) {
+    final PsiFile psiFile = getPsiFile();
+    if (psiFile == null) return null;
+    return TargetElementUtil.findTargetElement(editor,
+                                          TargetElementUtil.THROW_STATEMENT_ACCEPTED |
+                                          TargetElementUtil.THROWS_ACCEPTED |
+                                          TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
+                                          TargetElementUtil.ELEMENT_NAME_ACCEPTED |
+                                          TargetElementUtil.NEW_AS_CONSTRUCTOR |
+                                          TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
   }
 
   private PsiFile getPsiFile() {

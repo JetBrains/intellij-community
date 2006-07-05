@@ -5,14 +5,12 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 
 public class PsiFileRule implements GetDataRule {
   public Object getData(DataProvider dataProvider) {
     final PsiElement element = (PsiElement)dataProvider.getData(DataConstants.PSI_ELEMENT);
     if (element != null){
-      if (element instanceof PsiFile) return element;
       return element.getContainingFile();
     }
     Project project = (Project)dataProvider.getData(DataConstants.PROJECT);

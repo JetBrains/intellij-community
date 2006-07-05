@@ -17,6 +17,7 @@ package com.intellij.openapi.util.text;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -901,6 +902,10 @@ public class StringUtil {
       }
     }
     return -1;
+  }
+
+  public static String replaceSubstring(String string, TextRange range, String replacement) {
+    return string.substring(0, range.getStartOffset()) + replacement + string.substring(range.getEndOffset());
   }
 
 }

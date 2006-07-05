@@ -5,9 +5,6 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -42,8 +39,7 @@ public class TargetElementUtil {
   public static PsiReference findReference(Editor editor, int offset) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
-    Project project = (Project) dataContext.getData(DataConstants.PROJECT);
+    Project project = editor.getProject();
     if (project == null) return null;
 
     Document document = editor.getDocument();
@@ -63,8 +59,7 @@ public class TargetElementUtil {
   public static PsiElement findTargetElement(Editor editor, int flags, int offset) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
-    Project project = (Project) dataContext.getData(DataConstants.PROJECT);
+    Project project = editor.getProject();
     if (project == null) return null;
 
     Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();

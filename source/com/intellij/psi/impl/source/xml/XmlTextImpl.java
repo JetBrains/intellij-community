@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomModel;
@@ -16,6 +17,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.xml.behavior.DefaultXmlPsiPolicy;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -28,12 +30,13 @@ import java.util.Arrays;
 import java.util.List;
 
 public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageInjectionHost {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTextImpl");
   private String myDisplayText = null;
   private int[] myGapDisplayStarts = null;
   private int[] myGapPhysicalStarts = null;
 
   public XmlTextImpl() {
-    super(XML_TEXT);
+    super(XmlElementType.XML_TEXT);
   }
 
   public String toString() {
@@ -52,7 +55,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
 
   public String getValue() {
     if (myDisplayText != null) return myDisplayText;
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     ASTNode child = getFirstChildNode();
     final TIntArrayList gapsStarts = new TIntArrayList();
     final TIntArrayList gapsShifts = new TIntArrayList();
@@ -66,9 +69,8 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
       else if (elementType == XmlTokenType.XML_CHAR_ENTITY_REF) {
         buffer.append(XmlUtil.getCharFromEntityRef(child.getText()));
       }
-      else if (elementType == XmlTokenType.XML_WHITE_SPACE
-               || elementType == XmlTokenType.XML_DATA_CHARACTERS
-               || elementType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
+      else if (elementType == XmlTokenType.XML_WHITE_SPACE || elementType == XmlTokenType.XML_DATA_CHARACTERS || elementType == XmlTokenType
+        .XML_ATTRIBUTE_VALUE_TOKEN) {
         buffer.append(child.getText());
       }
       else if (elementType == JavaElementType.ERROR_ELEMENT) {
@@ -134,7 +136,11 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   }
 
   public void setValue(String s) throws IncorrectOperationException {
-    final ASTNode firstEncodedElement = getPolicy().encodeXmlTextContents(s, this, SharedImplUtil.findCharTableByTree(this));
+    doSetValue(s, getPolicy());
+  }
+
+  private void doSetValue(final String s, XmlPsiPolicy policy) throws IncorrectOperationException {
+    final ASTNode firstEncodedElement = policy.encodeXmlTextContents(s, this, SharedImplUtil.findCharTableByTree(this));
 
     if(firstEncodedElement == null){
       delete();
@@ -227,4 +233,12 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     return InjectedLanguageUtil.getInjectedPsiFiles(this, InjectedLanguageUtil.XmlTextLiteralEscaper.INSTANCE);
   }
 
+  public void fixText(final String text) {
+    try {
+      doSetValue(text, new DefaultXmlPsiPolicy());
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+  }
 }

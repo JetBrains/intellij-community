@@ -38,16 +38,16 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttributeImpl");
 
   public XmlAttributeImpl() {
-    super(XML_ATTRIBUTE);
+    super(XmlElementType.XML_ATTRIBUTE);
   }
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == XML_NAME) {
+    if (i == XmlTokenType.XML_NAME) {
       return ChildRole.XML_NAME;
     }
-    else if (i == XML_ATTRIBUTE_VALUE) {
+    else if (i == XmlElementType.XML_ATTRIBUTE_VALUE) {
       return ChildRole.XML_ATTRIBUTE_VALUE;
     }
     else {

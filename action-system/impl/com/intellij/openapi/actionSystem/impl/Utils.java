@@ -64,6 +64,7 @@ public class Utils{
 
       presentation=presentationFactory.getPresentation(child);
       AnActionEvent e1 = new AnActionEvent(null,context, place, presentation, actionManager, 0);
+      e1.setInjectedContext(child.isInInjectedContext());
       try{
         child.update(e1);
       } catch(Exception exc){
@@ -94,7 +95,9 @@ public class Utils{
   }
 
   public static boolean hasVisibleChildren(ActionGroup group, PresentationFactory factory, DataContext context, String place) {
-    AnAction[] children = group.getChildren(new AnActionEvent(null, context, place, factory.getPresentation(group),ActionManager.getInstance(), 0));
+    AnActionEvent event = new AnActionEvent(null, context, place, factory.getPresentation(group), ActionManager.getInstance(), 0);
+    event.setInjectedContext(group.isInInjectedContext());
+    AnAction[] children = group.getChildren(event);
     for (AnAction anAction : children) {
       if (anAction instanceof Separator) {
         continue;
@@ -108,7 +111,9 @@ public class Utils{
         // popup menu must be visible itself
         if (childGroup.isPopup()) {
           try {
-            childGroup.update(new AnActionEvent(null, context, place, factory.getPresentation(childGroup), ActionManager.getInstance(), 0));
+            AnActionEvent event1 = new AnActionEvent(null, context, place, factory.getPresentation(childGroup), ActionManager.getInstance(), 0);
+            event1.setInjectedContext(childGroup.isInInjectedContext());
+            childGroup.update(event1);
           }
           catch (Exception exc) {
             handleUpdateException(childGroup, factory.getPresentation(childGroup), exc);
@@ -124,7 +129,9 @@ public class Utils{
       }
       else {
         try {
-          anAction.update(new AnActionEvent(null, context, place, factory.getPresentation(anAction), ActionManager.getInstance(), 0));
+          AnActionEvent event1 = new AnActionEvent(null, context, place, factory.getPresentation(anAction), ActionManager.getInstance(), 0);
+          event1.setInjectedContext(anAction.isInInjectedContext());
+          anAction.update(event1);
         }
         catch (Exception exc) {
           handleUpdateException(anAction, factory.getPresentation(anAction), exc);

@@ -4,9 +4,10 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
@@ -23,33 +24,33 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
   private static final Class<PsiLiteralExpression> ourHintClazz = PsiLiteralExpression.class;
 
   public PsiLiteralExpressionImpl() {
-    super(LITERAL_EXPRESSION);
+    super(JavaElementType.LITERAL_EXPRESSION);
   }
 
   public PsiType getType() {
     IElementType i = getFirstChildNode().getElementType();
-    if (i == INTEGER_LITERAL) {
+    if (i == JavaTokenType.INTEGER_LITERAL) {
       return PsiType.INT;
     }
-    if (i == LONG_LITERAL) {
+    if (i == JavaTokenType.LONG_LITERAL) {
       return PsiType.LONG;
     }
-    if (i == FLOAT_LITERAL) {
+    if (i == JavaTokenType.FLOAT_LITERAL) {
       return PsiType.FLOAT;
     }
-    if (i == DOUBLE_LITERAL) {
+    if (i == JavaTokenType.DOUBLE_LITERAL) {
       return PsiType.DOUBLE;
     }
-    if (i == CHARACTER_LITERAL) {
+    if (i == JavaTokenType.CHARACTER_LITERAL) {
       return PsiType.CHAR;
     }
-    if (i == STRING_LITERAL) {
+    if (i == JavaTokenType.STRING_LITERAL) {
       return PsiType.getJavaLangString(getManager(), getResolveScope());
     }
-    if (i == TRUE_KEYWORD || i == FALSE_KEYWORD) {
+    if (i == JavaTokenType.TRUE_KEYWORD || i == JavaTokenType.FALSE_KEYWORD) {
       return PsiType.BOOLEAN;
     }
-    if (i == NULL_KEYWORD) {
+    if (i == JavaTokenType.NULL_KEYWORD) {
       return PsiType.NULL;
     }
     return null;
@@ -63,7 +64,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     String text = getFirstChildNode().getText();
     int textLength = text.length();
     IElementType i = getFirstChildNode().getElementType();
-    if (i == INTEGER_LITERAL) {
+    if (i == JavaTokenType.INTEGER_LITERAL) {
       try {
         if (text.startsWith(HEXPREFIX) || text.startsWith(HEXPREFIX2)) {
           // should fit in 32 bits
@@ -86,7 +87,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
         return null;
       }
     }
-    if (i == LONG_LITERAL) {
+    if (i == JavaTokenType.LONG_LITERAL) {
       if (StringUtil.endsWithChar(text, 'L') || StringUtil.endsWithChar(text, 'l')) {
         text = text.substring(0, textLength - 1);
         textLength = text.length();
@@ -108,7 +109,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
         return null;
       }
     }
-    if (i == FLOAT_LITERAL) {
+    if (i == JavaTokenType.FLOAT_LITERAL) {
       try {
         return Float.valueOf(text);
       }
@@ -116,7 +117,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
         return null;
       }
     }
-    if (i == DOUBLE_LITERAL) {
+    if (i == JavaTokenType.DOUBLE_LITERAL) {
       try {
         return Double.valueOf(text);
       }
@@ -124,7 +125,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
         return null;
       }
     }
-    if (i == CHARACTER_LITERAL) {
+    if (i == JavaTokenType.CHARACTER_LITERAL) {
       if (StringUtil.endsWithChar(text, '\'')) {
         if (textLength == 1) return null;
         text = text.substring(1, textLength - 1);
@@ -137,7 +138,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
       if (s.length() != 1) return null;
       return new Character(s.charAt(0));
     }
-    if (i == STRING_LITERAL) {
+    if (i == JavaTokenType.STRING_LITERAL) {
       if (StringUtil.endsWithChar(text, '\"')) {
         if (textLength == 1) return null;
         text = text.substring(1, textLength - 1);
@@ -152,13 +153,13 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
       }
       return internedParseStringCharacters(text);
     }
-    if (i == TRUE_KEYWORD) {
+    if (i == JavaTokenType.TRUE_KEYWORD) {
       return Boolean.TRUE;
     }
-    if (i == FALSE_KEYWORD) {
+    if (i == JavaTokenType.FALSE_KEYWORD) {
       return Boolean.FALSE;
     }
-    if (i == NULL_KEYWORD) {
+    if (i == JavaTokenType.NULL_KEYWORD) {
       return null;
     }
     return null;
@@ -181,7 +182,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     final Object value = getValue();
     String text = getFirstChildNode().getText();
     IElementType i = getFirstChildNode().getElementType();
-    if (i == INTEGER_LITERAL) {
+    if (i == JavaTokenType.INTEGER_LITERAL) {
       text = text.toLowerCase();
       //literal 2147483648 may appear only as the operand of the unary negation operator -.
       if (!(text.equals(_2_IN_31)
@@ -193,7 +194,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
         }
       }
     }
-    else if (i == LONG_LITERAL) {
+    else if (i == JavaTokenType.LONG_LITERAL) {
       text = text.toLowerCase();
       //literal 9223372036854775808L may appear only as the operand of the unary negation operator -.
       if (!(text.equals(_2_IN_63_L)
@@ -205,15 +206,15 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
         }
       }
     }
-    else if (i == FLOAT_LITERAL || i == DOUBLE_LITERAL) {
+    else if (i == JavaTokenType.FLOAT_LITERAL || i == JavaTokenType.DOUBLE_LITERAL) {
       if (value == null) {
         return JavaErrorMessages.message("malformed.floating.point.literal");
       }
     }
-    else if (i == TRUE_KEYWORD || i == FALSE_KEYWORD || i == NULL_KEYWORD) {
+    else if (i == JavaTokenType.TRUE_KEYWORD || i == JavaTokenType.FALSE_KEYWORD || i == JavaTokenType.NULL_KEYWORD) {
       // TODO
     }
-    else if (i == CHARACTER_LITERAL) {
+    else if (i == JavaTokenType.CHARACTER_LITERAL) {
       if (value == null) {
         if (StringUtil.endsWithChar(text, '\'')) {
           if (text.length() == 1) return JavaErrorMessages.message("illegal.line.end.in.character.literal");
@@ -230,7 +231,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
         else if (s.length() == 0) return JavaErrorMessages.message("empty.character.literal");
       }
     }
-    else if (i == STRING_LITERAL) {
+    else if (i == JavaTokenType.STRING_LITERAL) {
       if (value == null) {
         if (StringUtil.endsWithChar(text, '\"')) {
           if (text.length() == 1) return JavaErrorMessages.message("illegal.line.end.in.string.literal");
@@ -417,6 +418,16 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     if (!(value instanceof String)) return null;
 
     return InjectedLanguageUtil.getInjectedPsiFiles(this, InjectedLanguageUtil.StringLiteralEscaper.INSTANCE);
+  }
+
+  public void fixText(final String text) {
+    ChangeUtil.changeElementInPlace(this, new ChangeUtil.ChangeAction() {
+      public void makeChange(TreeChangeEvent destinationTreeChange) {
+        TreeElement valueNode = getFirstChildNode();
+        assert valueNode != null;
+        ((LeafPsiElement)valueNode).setText(text);
+      }
+    });
   }
 }
 

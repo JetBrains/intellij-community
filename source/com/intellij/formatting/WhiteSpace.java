@@ -2,7 +2,11 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 
 import java.util.ArrayList;
 
@@ -50,7 +54,7 @@ class WhiteSpace {
     myTextRange = new TextRange(myTextRange.getStartOffset(), newEndOffset);
     myInitial = model.getText(myTextRange);
     
-    if (myInitial != null && myInitial.toString().trim().length() > 0) {
+    if (!coveredByBlock(model)) {
       InitialInfoBuilder.assertInvalidRanges(
         myTextRange.getStartOffset(),
         myTextRange.getEndOffset(),
@@ -78,6 +82,17 @@ class WhiteSpace {
 
     myInitialLineFeeds = myLineFeeds;
     myInitialSpaces = getTotalSpaces();
+  }
+
+  private boolean coveredByBlock(final FormattingDocumentModel model) {
+    if (myInitial == null) return true;
+    if (myInitial.toString().trim().length() == 0) return true;
+    if (!(model instanceof FormattingDocumentModelImpl)) return false;
+    PsiFile psiFile = ((FormattingDocumentModelImpl)model).getFile();
+    if (psiFile == null) return false;
+    PsiElement start = psiFile.findElementAt(myTextRange.getStartOffset());
+    PsiElement end = psiFile.findElementAt(myTextRange.getEndOffset()-1);
+    return start == end && start instanceof PsiWhiteSpace; // there maybe non-white text inside CDATA-encoded elements
   }
 
   public String generateWhiteSpace(CodeStyleSettings.IndentOptions options) {

@@ -6,6 +6,7 @@ import com.intellij.ide.impl.dataRules.*;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -17,6 +18,7 @@ import com.intellij.usages.UsageView;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -85,7 +87,26 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   }
 
   public GetDataRule getDataRule(String dataId) {
-    return myDataConstantToRuleMap.get(dataId);
+    GetDataRule rule = myDataConstantToRuleMap.get(dataId);
+    if (rule != null) {
+      return rule;
+    }
+
+    final GetDataRule plainRule = myDataConstantToRuleMap.get(AnActionEvent.uninjectedId(dataId));
+    if (plainRule != null) {
+      return new GetDataRule() {
+        public Object getData(final DataProvider dataProvider) {
+          return plainRule.getData(new DataProvider() {
+            @Nullable
+            public Object getData(@NonNls String dataId) {
+              return dataProvider.getData(AnActionEvent.injectedId(dataId));
+            }
+          });
+        }
+      };
+    }
+
+    return null;
   }
 
   private static Object validated(Object data, String dataId, Object dataSource) {
@@ -182,6 +203,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     myDataConstantToRuleMap.put(DataConstants.NAVIGATABLE_ARRAY, new NavigatableArrayRule());    
   }
 
+  @NotNull
   public String getComponentName() {
     return "DataManager";
   }

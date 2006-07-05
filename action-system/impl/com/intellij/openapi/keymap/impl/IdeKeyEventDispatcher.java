@@ -340,7 +340,6 @@ public final class IdeKeyEventDispatcher {
       final AnActionEvent actionEvent = new AnActionEvent(e, dataContext, ActionPlaces.MAIN_MENU, presentation,
                                                           ActionManager.getInstance(),
                                                           0);
-
       action.beforeActionPerformedUpdate(actionEvent);
       if (!presentation.isEnabled()) {
         continue;
@@ -351,7 +350,7 @@ public final class IdeKeyEventDispatcher {
 
       ((DataManagerImpl.MyDataContext)dataContext).setEventCount(IdeEventQueue.getInstance().getEventCount());
       actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext());
-      Component component = ((Component)actionEvent.getDataContext().getData(DataConstantsEx.CONTEXT_COMPONENT));
+      Component component = (Component)actionEvent.getDataContext().getData(DataConstantsEx.CONTEXT_COMPONENT);
       if (component != null && !component.isShowing()) {
         return true;
       }

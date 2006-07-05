@@ -31,7 +31,7 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
     return dummyParent.getFirstChildNode();
   }
 
-  private LeafElement createNextToken(final int startOffset,
+  private static LeafElement createNextToken(final int startOffset,
                                       final int endOffset,
                                       final boolean isWhitespace,
                                       final FileElement dummyParent,
