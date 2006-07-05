@@ -10,11 +10,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.*;
 import com.intellij.psi.tree.TokenSet;
@@ -26,6 +24,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.StringSearcher;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -240,6 +239,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     });
   }
 
+  @NotNull
   public PsiClass[] findInheritors(PsiClass aClass, SearchScope searchScope, boolean checkDeep) {
     LOG.assertTrue(searchScope != null);
 
@@ -272,16 +272,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   public TodoItem[] findTodoItems(PsiFile file) {
-    return findTodoItems(file, null);
+    return doFindTodoItems(file);
   }
 
   public TodoItem[] findTodoItems(PsiFile file, int startOffset, int endOffset) {
-    return findTodoItems(file, new TextRange(startOffset, endOffset));
+    return doFindTodoItems(file);
   }
 
-  private TodoItem[] findTodoItems(final PsiFile file, TextRange range) {
+  private static TodoItem[] doFindTodoItems(final PsiFile file) {
     final Collection<IndexPatternOccurrence> occurrences = IndexPatternSearch.search(file, TodoConfiguration.getInstance()).findAll();
-    if (occurrences.size() == 0) {
+    if (occurrences.isEmpty()) {
       return EMPTY_TODO_ITEMS;
     }
 
@@ -349,10 +349,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return processElementsWithWord(processor1, searchScope, identifier, searchContext, true);
   }
 
-  private static final TokenSet COMMENT_BIT_SET = TokenSet.create(ElementType.DOC_COMMENT_DATA,
-                                                                    ElementType.DOC_TAG_VALUE_TOKEN,
-                                                                    ElementType.C_STYLE_COMMENT,
-                                                                    ElementType.END_OF_LINE_COMMENT);
+  private static final TokenSet COMMENT_BIT_SET = TokenSet.create(JavaDocTokenType.DOC_COMMENT_DATA, JavaDocTokenType.DOC_TAG_VALUE_TOKEN,
+                                                                  JavaTokenType.C_STYLE_COMMENT, JavaTokenType.END_OF_LINE_COMMENT);
 
   public PsiElement[] findCommentsContainingIdentifier(String identifier, SearchScope searchScope) {
     LOG.assertTrue(searchScope != null);
@@ -501,7 +499,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       PsiElement[] scopeElements = _scope.getScope();
 
       for (final PsiElement scopeElement : scopeElements) {
-        if (!processElementsWithWordInScopeElement(scopeElement, processor, text, caseSensitively, searchContext)) return false;
+        if (!processElementsWithWordInScopeElement(scopeElement, processor, text, caseSensitively)) return false;
       }
       return true;
     }
@@ -510,8 +508,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static boolean processElementsWithWordInScopeElement(PsiElement scopeElement,
                                                                TextOccurenceProcessor processor,
                                                                String word,
-                                                               boolean caseSensitive,
-                                                               final short searchContext) {
+                                                               boolean caseSensitive) {
     StringSearcher searcher = new StringSearcher(word);
     searcher.setCaseSensitive(caseSensitive);
 
@@ -535,10 +532,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       String[] words = StringUtil.getWordsIn(searcher.getPattern()).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
       if(words.length == 0) return true;
 
-      Set<PsiFile> fileSet = new HashSet<PsiFile>();
-      fileSet.addAll(Arrays.asList(myManager.getCacheManager().getFilesWithWord(words[0], searchContext, scope, caseSensitively)));
-      for (int i = 1; i < words.length; i++) {
-        fileSet.retainAll(Arrays.asList(myManager.getCacheManager().getFilesWithWord(words[i], searchContext, scope, caseSensitively)));
+      Set<PsiFile> fileSet = new THashSet<PsiFile>();
+      for (String word : words) {
+        List<PsiFile> psiFiles = Arrays.asList(myManager.getCacheManager().getFilesWithWord(word, searchContext, scope, caseSensitively));
+        if (fileSet.isEmpty()) {
+          fileSet.addAll(psiFiles);
+        }
+        else {
+          fileSet.retainAll(psiFiles);
+        }
+        if (fileSet.isEmpty()) break;
       }
       PsiFile[] files = fileSet.toArray(new PsiFile[fileSet.size()]);
 

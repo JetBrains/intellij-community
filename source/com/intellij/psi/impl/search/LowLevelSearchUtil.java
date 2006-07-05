@@ -3,13 +3,19 @@ package com.intellij.psi.impl.search;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.util.text.StringSearcher;
+
+import java.util.List;
 
 public class LowLevelSearchUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.LowLevelSearchUtil");
@@ -17,6 +23,17 @@ public class LowLevelSearchUtil {
   private LowLevelSearchUtil() {
   }
 
+  private static boolean processInjectedFile(PsiElement element, final TextOccurenceProcessor processor, final StringSearcher searcher) {
+    PsiLanguageInjectionHost injectionHost = InjectedLanguageUtil.findInjectionHost(element);
+    if (injectionHost == null) return true;
+    List<Pair<PsiElement,TextRange>> list = injectionHost.getInjectedPsi();
+    if (list == null) return true;
+    for (Pair<PsiElement, TextRange> pair : list) {
+      PsiElement injected = pair.getFirst();
+      if (!processElementsContainingWordInElement(processor, injected, searcher)) return false;
+    }
+    return true;
+  }
   public static boolean processElementsContainingWordInElement(TextOccurenceProcessor processor,
                                                                PsiElement scope,
                                                                StringSearcher searcher) {
@@ -27,57 +44,55 @@ public class LowLevelSearchUtil {
     final int patternLength = searcher.getPatternLength();
 
     final int scopeStartOffset = scope.getTextRange().getStartOffset();
+    final ASTNode scopeNode = scope.getNode();
     do {
       int i = searchWord(buffer, startOffset, endOffset, searcher);
       if (i >= 0) {
-        final ASTNode node = scope.getNode();
-        if (node != null) {
-          LeafElement leafNode = (LeafElement) node.findLeafElementAt(i);
+        if (scopeNode != null) {
+          LeafElement leafNode = (LeafElement)scopeNode.findLeafElementAt(i);
           if (leafNode == null) return true;
           int start = i - leafNode.getStartOffset() + scopeStartOffset;
           LOG.assertTrue(start >= 0);
           boolean contains = leafNode.getTextLength() - start >= patternLength;
-          if (contains) {
-            if (!processor.execute(leafNode.getPsi(), start)) return false;
-          }
-
+          if (contains && !processor.execute(leafNode.getPsi(), start)) return false;
+          if (!processInjectedFile(leafNode.getPsi(), processor, searcher)) return false;
           TreeElement prev = leafNode;
           CompositeElement run = leafNode.getTreeParent();
           while (run != null) {
             start += prev.getStartOffsetInParent();
             contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
-            if (contains) {
-              if (!processor.execute(run.getPsi(), start)) return false;
-            }
+            if (contains && !processor.execute(run.getPsi(), start)) return false;
+            if (!processInjectedFile(run.getPsi(), processor, searcher)) return false;
             prev = run;
-            if (run == node) break;
+            if (run == scopeNode) break;
             run = run.getTreeParent();
           }
-          assert run == node;
-        } else {
+          assert run == scopeNode;
+        }
+        else {
           PsiElement leafElement;
-          if (scope instanceof PsiFile)
-            leafElement = ((PsiFile) scope).getViewProvider().findElementAt(i, scope.getLanguage());
-          else
+          if (scope instanceof PsiFile) {
+            leafElement = ((PsiFile)scope).getViewProvider().findElementAt(i, scope.getLanguage());
+          }
+          else {
             leafElement = scope.findElementAt(i);
+          }
           if (leafElement == null) return true;
           int start = i - leafElement.getTextRange().getStartOffset() + scopeStartOffset;
           if (start < 0) {
-            LOG.assertTrue(start >= 0, "i=" + i + " scopeStartOffset=" + scopeStartOffset + " leafElement=" + leafElement.toString() +" " + leafElement.getTextRange().getStartOffset() + " scope=" + scope.toString());
+            LOG.assertTrue(start >= 0, "i=" + i + " scopeStartOffset=" + scopeStartOffset + " leafElement=" + leafElement.toString() + " " +
+                                       leafElement.getTextRange().getStartOffset() + " scope=" + scope.toString());
           }
           boolean contains = leafElement.getTextLength() - start >= patternLength;
-          if (contains) {
-            if (!processor.execute(leafElement, start)) return false;
-          }
-
+          if (contains && !processor.execute(leafElement, start)) return false;
+          if (!processInjectedFile(leafElement, processor, searcher)) return false;
           PsiElement prev = leafElement;
           PsiElement run = leafElement.getParent();
           while (run != null) {
             start += prev.getStartOffsetInParent();
             contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
-            if (contains) {
-              if (!processor.execute(run, start)) return false;
-            }
+            if (contains && !processor.execute(run, start)) return false;
+            if (!processInjectedFile(run, processor, searcher)) return false;
             prev = run;
             if (run == scope) break;
             run = run.getParent();

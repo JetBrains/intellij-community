@@ -15,6 +15,8 @@
  */
 package com.intellij.util.text;
 
+import java.util.Arrays;
+
 /**
  *
  */
@@ -45,13 +47,13 @@ public class StringSearcher {
     myPattern = pattern;
     myPatternArray = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase().toCharArray();
     myPatternLength = myPatternArray.length;
-    java.util.Arrays.fill(mySearchTable, -1);
+    Arrays.fill(mySearchTable, -1);
   }
   
   public void setCaseSensitive(boolean value){
     myCaseSensitive = value;
     myPatternArray = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase().toCharArray();
-    java.util.Arrays.fill(mySearchTable, -1);
+    Arrays.fill(mySearchTable, -1);
   }
 
   public boolean isCaseSensitive() {
@@ -60,7 +62,7 @@ public class StringSearcher {
 
   public void setForwardDirection(boolean value) {
     myForwardDirection = value;
-    java.util.Arrays.fill(mySearchTable, -1);
+    Arrays.fill(mySearchTable, -1);
   }
 
   public boolean isForwardDirection() {
