@@ -8,6 +8,7 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Util;
 
 import javax.swing.*;
 import java.awt.*;
@@ -172,14 +173,17 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
     if (constraints.weightx >= 1.0) {
       component.getConstraints().setHSizePolicy(GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_WANT_GROW);
     }
-    else {
+    else {                                                                
       component.getConstraints().setHSizePolicy(0);
     }
     if (constraints.weighty >= 1.0) {
       component.getConstraints().setVSizePolicy(GridConstraints.SIZEPOLICY_CAN_GROW | GridConstraints.SIZEPOLICY_WANT_GROW);
     }
     else {
-      component.getConstraints().setVSizePolicy(0);      
+      component.getConstraints().setVSizePolicy(0);
+    }
+    if (constraints.insets.right == 0 && constraints.insets.top == 0 && constraints.insets.bottom == 0) {
+      component.getConstraints().setIndent(constraints.insets.left / Util.DEFAULT_INDENT);
     }
 
     component.getConstraints().setAnchor(convertAnchor(constraints));
