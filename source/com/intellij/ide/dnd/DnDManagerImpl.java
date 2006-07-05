@@ -95,10 +95,12 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
 
   public void unregisterSource(AdvancedDnDSource source) {
     final JComponent c = source.getComponent();
-    final DnDEnabler enabler = (DnDEnabler) c.getClientProperty(DnDEnabler.KEY);
-    if (enabler != null) {
-      Disposer.dispose(enabler);
-      c.putClientProperty(DnDEnabler.KEY, null);
+    if (c != null) {
+      final DnDEnabler enabler = (DnDEnabler)c.getClientProperty(DnDEnabler.KEY);
+      if (enabler != null) {
+        Disposer.dispose(enabler);
+        c.putClientProperty(DnDEnabler.KEY, null);
+      }
     }
 
     unregisterSource(source, c);
@@ -475,8 +477,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
           }
 
           // mac osx fix: it will draw a border with size of the dragged component if there is no image provided.
-          dge.startDrag(DragSource.DefaultCopyDrop, pair.first, pair.second, myCurrentEvent,
-                        new MyDragSourceListener(source));
+          dge.startDrag(DragSource.DefaultCopyDrop, pair.first, pair.second, myCurrentEvent, new MyDragSourceListener(source));
 
           // check if source is also a target
           //        DnDTarget target = getTarget(dge.getComponent());
@@ -491,10 +492,10 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
   private static DnDAction getDnDActionForPlatformAction(int platformAction) {
     DnDAction action = null;
     switch (platformAction) {
-      case DnDConstants.ACTION_COPY :
+      case DnDConstants.ACTION_COPY:
         action = DnDAction.COPY;
         break;
-      case DnDConstants.ACTION_MOVE :
+      case DnDConstants.ACTION_MOVE:
         action = DnDAction.MOVE;
         break;
       case DnDConstants.ACTION_LINK:
