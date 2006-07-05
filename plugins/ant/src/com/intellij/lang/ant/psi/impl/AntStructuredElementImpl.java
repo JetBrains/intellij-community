@@ -3,7 +3,6 @@ package com.intellij.lang.ant.psi.impl;
 import com.intellij.lang.ant.misc.PsiElementHashSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
@@ -166,7 +165,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   @Nullable
   public PsiFile findFileByName(final String name) {
     if (name == null) return null;
-    AntFileImpl antFile = PsiTreeUtil.getParentOfType(this, AntFileImpl.class);
+    final AntFileImpl antFile = PsiTreeUtil.getParentOfType(this, AntFileImpl.class);
     if (antFile == null) return null;
     VirtualFile vFile = antFile.getVirtualFile();
     if (vFile == null) return null;
@@ -177,8 +176,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     if (!file.isAbsolute()) {
       file = new File(vFile.getPath(), fileName);
       if (!file.exists()) {
-        AntProject project = antFile.getAntProject();
-        file = new File(project.getBaseDir(), fileName);
+        file = new File(antFile.getAntProject().getBaseDir(), fileName);
       }
     }
     vFile = LocalFileSystem.getInstance().findFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));

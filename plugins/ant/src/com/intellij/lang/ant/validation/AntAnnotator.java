@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.ant.misc.AntPsiUtil;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.reference.AntGenericReference;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
@@ -65,7 +64,7 @@ public class AntAnnotator implements Annotator {
     final AntProject project = se.getAntProject();
     annotation.registerFix(new AntCreateMacroDefAction(se));
     annotation.registerFix(new AntCreatePresetDefAction(se));
-    for (AntFile antFile : AntPsiUtil.getImportedFiles(project)) {
+    for (final AntFile antFile : project.getImportedFiles()) {
       annotation.registerFix(new AntCreateMacroDefAction(se, antFile));
       annotation.registerFix(new AntCreatePresetDefAction(se, antFile));
     }
@@ -73,7 +72,7 @@ public class AntAnnotator implements Annotator {
 
   private static void checkValidAttributes(AntStructuredElement se, AntTypeDefinition def, AnnotationHolder holder) {
     final XmlTag sourceElement = se.getSourceElement();
-    for (XmlAttribute attr : sourceElement.getAttributes()) {
+    for (final XmlAttribute attr : sourceElement.getAttributes()) {
       final String name = attr.getName();
       final AntAttributeType type = def.getAttributeType(name);
       if (type == null) {
@@ -95,7 +94,7 @@ public class AntAnnotator implements Annotator {
 
   private static void checkReferences(AntElement element, @NonNls AnnotationHolder holder) {
     PsiReference[] refs = element.getReferences();
-    for (PsiReference ref : refs) {
+    for (final PsiReference ref : refs) {
       if (ref instanceof AntGenericReference) {
         AntGenericReference genRef = (AntGenericReference)ref;
         if (genRef.isCompletionOnlyReference()) continue;

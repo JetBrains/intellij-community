@@ -2,7 +2,6 @@ package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntSupport;
-import com.intellij.lang.ant.misc.AntPsiUtil;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntAntImpl;
 import com.intellij.lang.ant.quickfix.AntCreateTargetAction;
@@ -72,7 +71,7 @@ public class AntTargetReference extends AntGenericReference {
     AntProject project = element.getAntProject();
     AntTarget result = project.getTarget(name);
     if (result == null) {
-      for (AntFile imported : AntPsiUtil.getImportedFiles(project)) {
+      for (final AntFile imported : project.getImportedFiles()) {
         if ((result = imported.getAntProject().getTarget(name)) != null) {
           break;
         }
@@ -114,7 +113,7 @@ public class AntTargetReference extends AntGenericReference {
   @NotNull
   public IntentionAction[] getFixes() {
     final AntProject project = getElement().getAntProject();
-    final AntFile[] importedFiles = AntPsiUtil.getImportedFiles(project);
+    final AntFile[] importedFiles = project.getImportedFiles();
     IntentionAction[] result = new IntentionAction[importedFiles.length + 1];
     result[0] = new AntCreateTargetAction(this);
     for (int i = 0; i < importedFiles.length; ++i) {

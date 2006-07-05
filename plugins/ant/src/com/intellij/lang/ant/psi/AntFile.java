@@ -5,6 +5,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface AntFile extends AntElement {
+
+  AntFile[] NO_FILES = new AntFile[0];
+
   @NotNull
   AntTypeDefinition[] getBaseTypeDefinitions();
 

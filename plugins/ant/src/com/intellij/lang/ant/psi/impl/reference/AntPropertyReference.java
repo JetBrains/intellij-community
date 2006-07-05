@@ -1,7 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.ant.misc.AntPsiUtil;
 import com.intellij.lang.ant.misc.StringSetSpinAllocator;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntElementImpl;
@@ -94,11 +93,11 @@ public class AntPropertyReference extends AntGenericReference {
     final Set<String> variants = StringSetSpinAllocator.alloc();
     try {
       final AntProject project = getElement().getAntProject();
-      for (AntProperty property : project.getProperties()) {
+      for (final AntProperty property : project.getProperties()) {
         variants.add(property.getName());
       }
       getVariants(project, variants);
-      for (AntFile imported : AntPsiUtil.getImportedFiles(project)) {
+      for (final AntFile imported : project.getImportedFiles()) {
         getVariants(imported.getAntProject(), variants);
       }
       return variants.toArray(new String[variants.size()]);
@@ -113,7 +112,7 @@ public class AntPropertyReference extends AntGenericReference {
     List<IntentionAction> result = new ArrayList<IntentionAction>();
     final AntProject project = getElement().getAntProject();
     result.add(new AntCreatePropertyAction(this));
-    for (PsiElement child : project.getChildren()) {
+    for (final PsiElement child : project.getChildren()) {
       if (child instanceof AntProperty) {
         PropertiesFile propFile = ((AntProperty)child).getPropertiesFile();
         if (propFile != null) {
@@ -125,7 +124,7 @@ public class AntPropertyReference extends AntGenericReference {
   }
 
   private static void getVariants(final AntStructuredElement element, final Set<String> variants) {
-    for (PsiElement child : element.getChildren()) {
+    for (final PsiElement child : element.getChildren()) {
       if (child instanceof AntStructuredElement) {
         getVariants((AntStructuredElement)child, variants);
         if (child instanceof AntProperty) {
@@ -138,7 +137,7 @@ public class AntPropertyReference extends AntGenericReference {
             }
           }
           else {
-            for (Property importedProp : propertiesFile.getProperties()) {
+            for (final Property importedProp : propertiesFile.getProperties()) {
               final String name = importedProp.getKey();
               if (name != null) {
                 variants.add(name);

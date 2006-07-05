@@ -41,9 +41,13 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
   }
 
   public AntFile getImportedFile() {
-    final String name = getFileName();
+    return getImportedFile(getFileName(), this);
+  }
+
+  @Nullable
+  static AntFile getImportedFile(final String name, final AntStructuredElementImpl element) {
     if (name == null) return null;
-    PsiFile psiFile = findFileByName(name);
+    PsiFile psiFile = element.findFileByName(name);
     if (psiFile != null) {
       if (psiFile instanceof AntFile) return (AntFile)psiFile;
       if (psiFile instanceof XmlFile) {

@@ -1,6 +1,5 @@
 package com.intellij.lang.ant.psi.impl;
 
-import com.intellij.lang.ant.misc.AntPsiUtil;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntStructuredElement;
@@ -65,7 +64,7 @@ public class AntElementFactory {
     }
     boolean importedType = false;
     if (typeDef == null) {
-      for (AntFile imported : AntPsiUtil.getImportedFiles(parent.getAntProject())) {
+      for (final AntFile imported : parent.getAntProject().getImportedFiles()) {
         imported.getAntProject().getChildren();
         for (AntTypeDefinition def : imported.getBaseTypeDefinitions()) {
           if (id.equals(def.getTypeId())) {

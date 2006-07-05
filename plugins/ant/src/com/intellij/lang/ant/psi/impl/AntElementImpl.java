@@ -4,7 +4,6 @@ import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ant.AntLanguage;
 import com.intellij.lang.ant.AntSupport;
-import com.intellij.lang.ant.misc.AntPsiUtil;
 import com.intellij.lang.ant.misc.PsiElementHashSetSpinAllocator;
 import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
 import com.intellij.lang.ant.psi.*;
@@ -267,7 +266,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     if ((result = resolvePropertyInProject(project, propName)) != null) {
       return result;
     }
-    for (AntFile file : AntPsiUtil.getImportedFiles(project)) {
+    for (final AntFile file : project.getImportedFiles()) {
       final AntProject importedProject = file.getAntProject();
       importedProject.getChildren();
       if ((result = resolvePropertyInProject(importedProject, propName)) != null) {

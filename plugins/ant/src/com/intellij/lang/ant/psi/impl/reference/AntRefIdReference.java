@@ -1,7 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.ant.misc.AntPsiUtil;
 import com.intellij.lang.ant.misc.StringSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
@@ -53,8 +52,7 @@ public class AntRefIdReference extends AntGenericReference {
     final String id = getCanonicalText();
     AntElement refId = element.getElementByRefId(id);
     if (refId == null) {
-      final AntElement anchor = AntPsiUtil.getSubProjectElement(element);
-      for (final AntFile file : AntPsiUtil.getImportedFiles(element.getAntProject(), anchor)) {
+      for (final AntFile file : element.getAntProject().getImportedFiles()) {
         final AntProject importedProject = file.getAntProject();
         importedProject.getChildren();
         refId = importedProject.getElementByRefId(id);
@@ -71,7 +69,7 @@ public class AntRefIdReference extends AntGenericReference {
     try {
       final AntProject project = getElement().getAntProject();
       getVariants(project, variants);
-      for (AntFile imported : AntPsiUtil.getImportedFiles(project)) {
+      for (final AntFile imported : project.getImportedFiles()) {
         getVariants(imported.getAntProject(), variants);
       }
       return variants.toArray(new String[variants.size()]);
@@ -87,10 +85,10 @@ public class AntRefIdReference extends AntGenericReference {
   }
 
   private static void getVariants(final AntStructuredElement element, final Set<String> variants) {
-    for (String str : element.getRefIds()) {
+    for (final String str : element.getRefIds()) {
       variants.add(str);
     }
-    for (PsiElement child : element.getChildren()) {
+    for (final PsiElement child : element.getChildren()) {
       if (child instanceof AntStructuredElement) {
         getVariants((AntStructuredElement)child, variants);
       }

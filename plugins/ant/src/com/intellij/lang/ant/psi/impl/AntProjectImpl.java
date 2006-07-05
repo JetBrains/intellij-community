@@ -4,7 +4,6 @@ import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -25,7 +24,7 @@ import java.util.*;
 public class AntProjectImpl extends AntStructuredElementImpl implements AntProject {
   final static AntTarget[] EMPTY_TARGETS = new AntTarget[0];
   private AntTarget[] myTargets;
-  private AntImport[] myImports;
+  private AntFile[] myImports;
   private List<AntProperty> myPredefinedProps = new ArrayList<AntProperty>();
   @NonNls private List<String> myEnvPrefixes;
   @NonNls private static final String myDefaultEnvPrefix = "env.";
@@ -106,19 +105,22 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   }
 
   @NotNull
-  public AntImport[] getImports() {
+  public AntFile[] getImportedFiles() {
     if (myImports == null) {
-      // this is necessary to avoid recurrent getImports() and stack overflow
-      myImports = AntImport.EMPTY_ARRAY;
-      List<AntImport> imports = new ArrayList<AntImport>();
-      for (PsiElement child : getChildren()) {
-        if (child instanceof AntImport) {
-          imports.add((AntImport)child);
+      // this is necessary to avoid recurrent getImportedFiles() and stack overflow
+      myImports = AntFile.NO_FILES;
+      List<AntFile> imports = new ArrayList<AntFile>();
+      for (XmlTag tag : getSourceElement().getSubTags()) {
+        if ("import".equals(tag.getName())) {
+          AntFile imported = AntImportImpl.getImportedFile(tag.getAttributeValue("file"), this);
+          if (imported != null) {
+            imports.add(imported);
+          }
         }
       }
       final int importedFiles = imports.size();
       if (importedFiles > 0) {
-        myImports = imports.toArray(new AntImport[importedFiles]);
+        myImports = imports.toArray(new AntFile[importedFiles]);
       }
     }
     return myImports;
