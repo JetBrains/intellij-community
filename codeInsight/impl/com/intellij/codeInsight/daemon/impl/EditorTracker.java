@@ -214,9 +214,6 @@ public class EditorTracker {
     setActiveEditors(editors);
   }
 
-  /**
-   * @fabrique *
-   */
   protected Editor[] editorsByWindow(Window window) {
     List<Editor> list = myWindowToEditorsMap.get(window);
     if (list == null) return EMPTY_EDITOR_ARRAY;
