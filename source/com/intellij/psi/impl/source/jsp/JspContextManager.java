@@ -32,7 +32,7 @@ public abstract class JspContextManager {
 
   public abstract void setContextFile(@NotNull JspFile file, @NotNull JspFile contextFile);
 
-  public abstract @Nullable JspFile getContextFile(final JspFile jspFile);
+  public abstract @Nullable JspFile getContextFile(final @NotNull JspFile jspFile);
 
   public abstract @Nullable JspFile getConfiguredContextFile(JspFile file);
 }
