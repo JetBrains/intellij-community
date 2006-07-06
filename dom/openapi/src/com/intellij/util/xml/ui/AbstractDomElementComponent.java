@@ -3,6 +3,8 @@ package com.intellij.util.xml.ui;
 import com.intellij.util.xml.DomElement;
 import com.intellij.openapi.Disposable;
 
+import java.awt.*;
+
 /**
  * User: Sergey.Vasiliev
  * Date: Nov 18, 2005
@@ -18,5 +20,12 @@ public abstract class AbstractDomElementComponent<T extends DomElement> extends 
     return myDomElement;
   }
 
-
+  protected static void setEnabled(Component component, boolean enabled) {
+    component.setEnabled(enabled);
+    if (component instanceof Container) {
+      for (Component child : ((Container)component).getComponents()) {
+        setEnabled(child, enabled);
+      }
+    }
+  }
 }
