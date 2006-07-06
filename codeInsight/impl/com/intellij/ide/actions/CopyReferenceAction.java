@@ -4,6 +4,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.IdeBundle;
@@ -34,9 +35,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -56,16 +57,9 @@ public class CopyReferenceAction extends AnAction {
   }
 
   private static boolean isEnabled(final DataContext dataContext) {
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    if (project == null) return false;
-    if (dataContext.getData(DataConstants.PSI_ELEMENT) != null) return true;
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    if (editor == null) return false;
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (file == null) return false;
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-
-    PsiElement member = findElementToCopy(element);
+    PsiElement element = getElementToCopy(editor, dataContext);
+    PsiElement member = getMember(element);
     return member != null;
   }
 
@@ -73,13 +67,9 @@ public class CopyReferenceAction extends AnAction {
     DataContext dataContext = e.getDataContext();
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
-    if (element == null && editor != null) {
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      element = file.findElementAt(editor.getCaretModel().getOffset());
-    }
+    PsiElement element = getElementToCopy(editor, dataContext);
 
-    PsiElement member = findElementToCopy(element);
+    PsiElement member = getMember(element);
     if (member == null) return;
 
     doCopy(member, project);
@@ -93,8 +83,30 @@ public class CopyReferenceAction extends AnAction {
     }
   }
 
-  private static PsiElement findElementToCopy(final PsiElement element) {
+  private static PsiElement getElementToCopy(final Editor editor, final DataContext dataContext) {
+    PsiElement element = null;
+    if (editor != null) {
+      PsiReference reference = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
+      if (reference != null) {
+        element = reference.getElement();
+      }
+    }
+
+    if (element == null) {
+      element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    }
+    if (element != null && !(element instanceof PsiMember) && element.getParent() instanceof PsiMember) {
+      element = element.getParent();
+    }
+    return element;
+  }
+
+  private static PsiElement getMember(final PsiElement element) {
     if (element instanceof PsiMember || element instanceof PsiFile) return element;
+    if (element instanceof PsiReference) {
+      PsiElement resolved = ((PsiReference)element).resolve();
+      if (resolved instanceof PsiMember) return resolved;
+    }
     if (!(element instanceof PsiIdentifier)) return null;
     final PsiElement parent = element.getParent();
     PsiMember member = null;
@@ -124,7 +136,7 @@ public class CopyReferenceAction extends AnAction {
   }
 
   private static void insert(final String fqn, final PsiNamedElement element, final Editor editor) {
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(editor.getProject());
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(editor.getProject());
     documentManager.commitDocument(editor.getDocument());
     final PsiFile file = documentManager.getPsiFile(editor.getDocument());
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
@@ -135,6 +147,9 @@ public class CopyReferenceAction extends AnAction {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             try {
+              Document document = editor.getDocument();
+              documentManager.doPostponedOperationsAndUnblockDocument(document);
+              documentManager.commitDocument(document);
               EditorModificationUtil.deleteSelectedText(editor);
               doInsert(fqn, element, editor, project);
             }
@@ -151,11 +166,12 @@ public class CopyReferenceAction extends AnAction {
   }
 
   private static void doInsert(String fqn,
-                               PsiNamedElement element,
+                               PsiNamedElement elementToInsert,
                                final Editor editor,
                                final Project project) throws IncorrectOperationException {
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     Document document = editor.getDocument();
+
     final PsiFile file = documentManager.getPsiFile(document);
 
     final int offset = editor.getCaretModel().getOffset();
@@ -165,12 +181,9 @@ public class CopyReferenceAction extends AnAction {
     fqn = fqn.replace('#', '.');
     String toInsert;
     String suffix = "";
-    if (element == null) {
-      toInsert = fqn;
-    }
-    else if (element instanceof PsiMethod && PsiTreeUtil.getParentOfType(elementAtCaret, PsiDocComment.class) != null) {
+    if (elementToInsert instanceof PsiMethod && PsiTreeUtil.getParentOfType(elementAtCaret, PsiDocComment.class) != null) {
       // fqn#methodName(ParamType)
-      PsiMethod method = (PsiMethod)element;
+      PsiMethod method = (PsiMethod)elementToInsert;
       PsiClass aClass = method.getContainingClass();
       String className = aClass == null ? "" : aClass.getQualifiedName();
       toInsert = className == null ? "" : className;
@@ -179,37 +192,47 @@ public class CopyReferenceAction extends AnAction {
       PsiParameter[] parameters = method.getParameterList().getParameters();
       for (int i = 0; i < parameters.length; i++) {
         PsiParameter parameter = parameters[i];
-        if (i!=0) toInsert += ", ";
+        if (i != 0) toInsert += ", ";
         toInsert += parameter.getType().getCanonicalText();
       }
       toInsert += ")";
     }
+    else if (elementToInsert == null ||
+             PsiTreeUtil.getNonStrictParentOfType(elementAtCaret, PsiLiteralExpression.class, PsiComment.class) != null ||
+             PsiTreeUtil.getNonStrictParentOfType(elementAtCaret, PsiJavaFile.class) == null) {
+      toInsert = fqn;
+    }
     else {
-      toInsert = element.getName();
-      if (element instanceof PsiMethod) {
+      toInsert = elementToInsert.getName();
+      if (elementToInsert instanceof PsiMethod) {
         suffix = "()";
       }
       final PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
-      final PsiExpression expression = factory.createExpressionFromText(toInsert+suffix, file.findElementAt(offset));
-      final PsiReferenceExpression referenceExpression=expression instanceof PsiMethodCallExpression ?
-        ((PsiMethodCallExpression)expression).getMethodExpression() :  expression instanceof PsiReferenceExpression ?
-        (PsiReferenceExpression)expression : null;
-      if (referenceExpression == null || referenceExpression.advancedResolve(true).getElement() != element) {
+      final PsiExpression expression = factory.createExpressionFromText(toInsert + suffix, elementAtCaret);
+      final PsiReferenceExpression referenceExpression = expression instanceof PsiMethodCallExpression
+                                                         ? ((PsiMethodCallExpression)expression).getMethodExpression()
+                                                         : expression instanceof PsiReferenceExpression
+                                                           ? (PsiReferenceExpression)expression
+                                                           : null;
+      if (referenceExpression == null || referenceExpression.advancedResolve(true).getElement() != elementToInsert) {
         toInsert = fqn;
       }
     }
+    if (toInsert == null) toInsert = "";
 
     document.insertString(offset, toInsert+suffix);
     documentManager.commitDocument(document);
     int endOffset = offset + toInsert.length() + suffix.length();
     RangeMarker rangeMarker = document.createRangeMarker(endOffset, endOffset);
-    PsiElement elementAt = file.findElementAt(offset);
+    elementAtCaret = file.findElementAt(offset);
 
-    shortenReference(elementAt);
+    if (elementAtCaret != null) {
+      shortenReference(elementAtCaret);
+    }
     CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
 
     int caretOffset = rangeMarker.getEndOffset();
-    if (element instanceof PsiMethod) {
+    if (elementToInsert instanceof PsiMethod) {
       caretOffset --;
     }
     editor.getCaretModel().moveToOffset(caretOffset);
@@ -234,7 +257,6 @@ public class CopyReferenceAction extends AnAction {
       final String fqn = getCopiedFqn();
       PsiNamedElement element = fqnToElement(project, fqn);
       insert(fqn, element, editor);
-
     }
 
     public boolean isPastePossible(DataContext dataContext) {
