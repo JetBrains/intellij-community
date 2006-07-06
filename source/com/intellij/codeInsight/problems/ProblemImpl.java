@@ -27,6 +27,27 @@ public class ProblemImpl implements Problem {
     return isSyntax;
   }
 
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final ProblemImpl problem = (ProblemImpl)o;
+
+    if (isSyntax != problem.isSyntax) return false;
+    if (!highlightInfo.equals(problem.highlightInfo)) return false;
+    if (!virtualFile.equals(problem.virtualFile)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = virtualFile.hashCode();
+    result = 31 * result + highlightInfo.hashCode();
+    result = 31 * result + (isSyntax ? 1 : 0);
+    return result;
+  }
+
   @NonNls
   public String toString() {
     return "Problem: " + highlightInfo;

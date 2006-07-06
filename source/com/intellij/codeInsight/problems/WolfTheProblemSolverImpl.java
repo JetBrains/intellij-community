@@ -83,6 +83,25 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private static class ProblemFileInfo {
     Collection<Problem> problems = new SmartList<Problem>();
     boolean hasSyntaxErrors;
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final ProblemFileInfo that = (ProblemFileInfo)o;
+
+      if (hasSyntaxErrors != that.hasSyntaxErrors) return false;
+      if (!problems.equals(that.problems)) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      int result;
+      result = problems.hashCode();
+      result = 31 * result + (hasSyntaxErrors ? 1 : 0);
+      return result;
+    }
   }
 
   public WolfTheProblemSolverImpl(Project project, PsiManager psiManager) {
@@ -399,7 +418,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
     if (!isToBeHighlighted(file)) return;
     synchronized (myProblems) {
-      boolean hasProblemsBefore = myProblems.remove(file) != null;
+      final ProblemFileInfo oldInfo = myProblems.remove(file);
+      boolean hasProblemsBefore = oldInfo != null;
       ProblemFileInfo storedProblems = new ProblemFileInfo();
       myProblems.put(file, storedProblems);
       for (Problem problem : problems) {
@@ -409,7 +429,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       }
       if (!hasProblemsBefore) {
         fireProblemListeners.problemsAppeared(file);
-      } else {
+      } else if (!oldInfo.equals(storedProblems)) {
         fireProblemListeners.problemsChanged(file);
       }
     }

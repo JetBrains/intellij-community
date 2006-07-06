@@ -86,7 +86,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
 
     myDomManager.addDomEventListener(new DomChangeAdapter() {
       protected void elementChanged(DomElement element) {
-        queueUpdate(null);
+        queueUpdate(element.getRoot().getFile().getVirtualFile());
       }
     }, this);
     WolfTheProblemSolver.getInstance(myDomManager.getProject()).addProblemListener(new WolfTheProblemSolver.ProblemListener() {
@@ -114,9 +114,9 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
   private void queueUpdate(final VirtualFile file) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if ((file == null || isRightFile(file)) && myTree.isShowing()) {
-      myBuilder.queueUpdate();
-    }
+        if (isRightFile(file) && myTree.isShowing()) {
+          myBuilder.queueUpdate();
+        }
       }
     });
   }
