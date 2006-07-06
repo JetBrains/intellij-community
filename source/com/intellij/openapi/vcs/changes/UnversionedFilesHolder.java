@@ -24,6 +24,7 @@ public class UnversionedFilesHolder {
   public synchronized void cleanScope(final VcsDirtyScope scope) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         final List<VirtualFile> currentFiles = new ArrayList<VirtualFile>(myFiles);
         for (VirtualFile file : currentFiles) {
           if (fileDropped(file) || scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
