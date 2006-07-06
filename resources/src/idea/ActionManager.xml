@@ -167,6 +167,8 @@
       <action id="CreateServletAction" class="com.intellij.javaee.module.view.web.servlet.CreateServletAction" icon="/nodes/servlet.png"/>
       <action id="CreateFilterAction" class="com.intellij.javaee.module.view.web.filter.CreateFilterAction" icon="/ant/filter.png"/>
       <action id="CreateListenerAction" class="com.intellij.javaee.module.view.web.listener.CreateListenerAction" icon="/ant/filter.png"/>
+      <action id="Faces.CreateFacesConfigAction" class="com.intellij.jsf.actions.CreateFacesConfigAction" icon="/fileTypes/facesConfig.png"/>
+
     </group>
     <group id="GenerateGroup">
       <action id="GenerateConstructor" class="com.intellij.codeInsight.generation.actions.GenerateConstructorAction"/>
