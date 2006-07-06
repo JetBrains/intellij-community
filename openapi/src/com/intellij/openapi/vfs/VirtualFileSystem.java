@@ -223,6 +223,10 @@ public abstract class VirtualFileSystem {
     }
   }
 
+  public void forceRefreshFile(final boolean asynchronous, @NotNull VirtualFile file) {
+    forceRefreshFiles(asynchronous, file);
+  }
+
   /**
    * Reloads files from disk regardless of their changed timestamp/contents
    *
