@@ -71,7 +71,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   }
 
   public FileTemplateManagerImpl(VirtualFileManager virtualFileManager, FileTypeManagerEx fileTypeManagerEx) {
-    this("fileTemplates", ".", virtualFileManager, fileTypeManagerEx);
+    this(".", "fileTemplates", virtualFileManager, fileTypeManagerEx);
 
     myInternalTemplatesManager = new FileTemplateManagerImpl(INTERNAL_DIR,
                                                              myTemplatesDir + File.separator + INTERNAL_DIR, myVirtualFileManager, myTypeManager);
