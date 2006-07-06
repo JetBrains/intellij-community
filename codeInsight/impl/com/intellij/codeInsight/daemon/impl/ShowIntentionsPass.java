@@ -108,7 +108,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       ProgressManager.getInstance().checkCanceled();
 
       HighlightInfo highlight = visibleHighlights[i];
-      elements[i] = myFile.findElementAt(highlight.startOffset);
+      final PsiElement elementAt = myFile.findElementAt(highlight.startOffset);
+      LOG.assertTrue(elementAt == null || elementAt.isValid(), "Invalid element: " + elementAt);
+      elements[i] = elementAt;
     }
 
     int caretOffset = myEditor.getCaretModel().getOffset();
