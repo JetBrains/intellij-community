@@ -163,6 +163,12 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
         } else {
           tokenType = (getState()!=0)?XmlTokenType.TAG_WHITE_SPACE:XmlTokenType.XML_REAL_WHITE_SPACE;
         }
+      } else if (tokenType == XmlTokenType.XML_CHAR_ENTITY_REF ||
+               tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN
+              ) {
+        // we need to convert char entity ref & entity ref in comments as comment chars 
+        final int state = getState() & BASE_STATE_MASK;
+        if (state == _HtmlLexer.COMMENT) return XmlTokenType.XML_COMMENT_CHARACTERS;
       }
       return tokenType;
     }

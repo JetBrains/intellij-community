@@ -77,6 +77,10 @@ public class XmlHighlightingLexer extends LexerBase {
         default:
           tokenType = XmlTokenType.XML_REAL_WHITE_SPACE; break;
       }
+    } else if (tokenType == XmlTokenType.XML_CHAR_ENTITY_REF ||
+               tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN
+              ) {
+      if (state == __XmlLexer.COMMENT) return XmlTokenType.XML_COMMENT_CHARACTERS;
     }
     return tokenType;
   }
