@@ -121,11 +121,6 @@ public class RedundantCastUtil {
       }
     }
 
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
-      super.visitConditionalExpression(expression);
-      // Do not go inside conditional expression because branches are required to be exactly the same type, not assignable.
-    }
-
     public void visitAssignmentExpression(PsiAssignmentExpression expression) {
       processPossibleTypeCast(expression.getRExpression(), expression.getLExpression().getType());
     }
@@ -238,7 +233,9 @@ public class RedundantCastUtil {
       processCall(expression);
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) { }
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      expression.acceptChildren(this);
+    }
 
     private void processCall(PsiCallExpression expression){
       PsiExpressionList argumentList = expression.getArgumentList();
