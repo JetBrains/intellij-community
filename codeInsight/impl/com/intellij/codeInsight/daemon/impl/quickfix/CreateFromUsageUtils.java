@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -258,7 +259,7 @@ public class CreateFromUsageUtils {
       PsiPackage aPackage = sourceDir.getPackage();
       CreateClassDialog dialog = new CreateClassDialog(project, title, name,
                                                        aPackage != null ? aPackage.getQualifiedName() : "",
-                                                       classKind, false);
+                                                       classKind, false, ModuleUtil.findModuleForPsiElement(sourceFile));
       dialog.show();
       if (dialog.getExitCode() != CreateClassDialog.OK_EXIT_CODE) return null;
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -60,8 +61,7 @@ public class ImplementAbstractClassAction implements IntentionAction {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
 
-    PsiFile sourceFile = psiClass.getContainingFile();
-    PsiDirectory sourceDir = sourceFile.getContainingDirectory();
+    PsiDirectory sourceDir = file.getContainingDirectory();
 
     final PsiPackage aPackage = sourceDir.getPackage();
     final CreateClassDialog dialog = new CreateClassDialog(
@@ -69,7 +69,7 @@ public class ImplementAbstractClassAction implements IntentionAction {
       myText,
       psiClass.getName() + IMPL_SUFFIX,
       aPackage != null ? aPackage.getQualifiedName() : "",
-      CreateClassKind.CLASS, true);
+      CreateClassKind.CLASS, true, ModuleUtil.findModuleForPsiElement(file));
     dialog.show();
     if (!dialog.isOK()) return;
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();

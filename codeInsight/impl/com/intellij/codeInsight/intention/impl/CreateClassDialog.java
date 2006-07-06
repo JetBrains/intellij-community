@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -35,15 +36,18 @@ public class CreateClassDialog extends DialogWrapper {
   private PsiDirectory myTargetDirectory;
   private String myClassName;
   private final boolean myClassNameEditable;
+  private final Module myModule;
 
   public CreateClassDialog(Project project,
                            String title,
                            String targetClassName,
                            String targetPackageName,
                            CreateClassKind kind,
-                           boolean classNameEditable) {
+                           boolean classNameEditable,
+                           Module defaultModule) {
     super(project, true);
     myClassNameEditable = classNameEditable;
+    myModule = defaultModule;
     init();
     myClassName = targetClassName;
     myProject = project;
@@ -157,7 +161,8 @@ public class CreateClassDialog extends DialogWrapper {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         try {
-          myTargetDirectory = PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, null, true);
+          final PsiDirectory baseDir = myModule == null? null : PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName);
+          myTargetDirectory = PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, baseDir, true);
           if (myTargetDirectory == null) {
             errorString[0] = ""; // message already reported by PackageUtil
             return;

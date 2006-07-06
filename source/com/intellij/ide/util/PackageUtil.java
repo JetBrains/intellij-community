@@ -25,6 +25,7 @@ import com.intellij.util.ActionRunner;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -32,6 +33,33 @@ import java.util.List;
 
 public class PackageUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.util.PackageUtil");
+
+  @Nullable
+  public static PsiDirectory findPossiblePackageDirectoryInModule(Module module, String packageName) {
+    PsiDirectory psiDirectory = null;
+    if (!"".equals(packageName)) {
+      PsiPackage rootPackage = findLongestExistingPackage(module.getProject(), packageName);
+      if (rootPackage != null) {
+        final PsiDirectory[] psiDirectories = getPackageDirectoriesInModule(rootPackage, module);
+        if (psiDirectories.length > 0) {
+          psiDirectory = psiDirectories[0];
+        }
+      }
+    }
+    if (psiDirectory == null) {
+      if (checkSourceRootsConfigured(module)) {
+        final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
+        for (VirtualFile sourceRoot : sourceRoots) {
+          final PsiDirectory directory = PsiManager.getInstance(module.getProject()).findDirectory(sourceRoot);
+          if (directory != null) {
+            psiDirectory = directory;
+            break;
+          }
+        }
+      }
+    }
+    return psiDirectory;
+  }
 
   /**
    * @deprecated
