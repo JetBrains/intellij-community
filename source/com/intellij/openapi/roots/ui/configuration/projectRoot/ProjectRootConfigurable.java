@@ -124,6 +124,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   protected ArrayList<AnAction> getAdditionalActions() {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
     result.add(new MyRenameAction() {
+      @Nullable
       protected String getRenameTitleSuffix() {
         final Object selectedObject = getSelectedObject();
         if (selectedObject instanceof Module){
@@ -246,6 +247,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         final LibraryOrderEntry orderEntry = (LibraryOrderEntry)entry;
         if (orderEntry.isModuleLevel()) {
           final Library library = orderEntry.getLibrary();
+          if (library.getName() == null && orderEntry.getPresentableName() == null) continue;
           final LibraryConfigurable libraryConfigurable =
             new LibraryConfigurable(libraryTableModelProvider, library, trancateModuleLibraryName(orderEntry), myProject);
           addNode(new MyNode(libraryConfigurable, false, false), moduleNode);
@@ -561,6 +563,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     return result;
   }
 
+  @Nullable
   public ProjectJdk getSelectedJdk() {
     final Object object = getSelectedObject();
     if (object instanceof ProjectJdk){
@@ -617,6 +620,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     return myProject;
   }
 
+  @Nullable
   public Library getLibrary(final Library library) {
     final String level = library.getTable().getTableLevel();
     if (level == LibraryTablesRegistrar.PROJECT_LEVEL) {
@@ -628,6 +632,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     return findLibraryModel(library, myApplicationServerLibrariesProvider);
   }
 
+  @Nullable
   private static Library findLibraryModel(final Library library, LibrariesModifiableModel tableModel) {
     if (tableModel == null) return library;
     if (tableModel.wasLibraryRemoved(library)) return null;

@@ -20,6 +20,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -219,6 +220,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     myRoot.removeAllChildren();
   }
 
+  @Nullable
   protected ArrayList<AnAction> createActions() {
     return null;
   }
@@ -285,6 +287,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     }
   }
 
+  @Nullable
   protected ArrayList<AnAction> getAdditionalActions() {
     return null;
   }
@@ -332,6 +335,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     });
   }
 
+  @Nullable
   public Object getSelectedObject(){
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null){
@@ -433,6 +437,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
       }
     }
 
+    @Nullable
     protected String getRenameTitleSuffix(){
       return null;
     }
@@ -528,9 +533,11 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
       myDisplayInBold = displayInBold;
     }
 
+    @NotNull
     public String getDisplayName() {
       final NamedConfigurable configurable = ((NamedConfigurable)getUserObject());
-      return configurable != null ? configurable.getDisplayName() : null;
+      LOG.assertTrue(configurable != null, "Tree was already disposed");
+      return configurable.getDisplayName();
     }
 
     public void setDisplayName(String name) {
@@ -554,6 +561,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     }
   }
 
+  @SuppressWarnings({"ConstantConditions"})
   private static class MyRootNode extends MyNode {
     public MyRootNode() {
       super(new NamedConfigurable() {

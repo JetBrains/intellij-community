@@ -267,6 +267,7 @@ public class LibraryTableEditor implements Disposable {
     return myTableModifiableModel.getLibraries();
   }
 
+  @Nullable
   private Object getSelectedElement() {
     final TreePath selectionPath = myTreeBuilder.getTree().getSelectionPath();
     return getPathElement(selectionPath);
@@ -287,6 +288,7 @@ public class LibraryTableEditor implements Disposable {
     return elements.toArray(new Object[elements.size()]);
   }
 
+  @Nullable
   private static Object getPathElement(final TreePath selectionPath) {
     if (selectionPath == null) {
       return null;
@@ -306,6 +308,7 @@ public class LibraryTableEditor implements Disposable {
     return element;
   }
 
+  @Nullable
   private Library getSelectedLibrary() {
     if (myTreeBuilder.getTreeStructure() instanceof LibraryTreeStructure) {
       return ((LibraryTreeStructure)myTreeBuilder.getTreeStructure()).getLibrary();
@@ -326,6 +329,7 @@ public class LibraryTableEditor implements Disposable {
     return libs.toArray(new Library[libs.size()]);
   }
 
+  @Nullable
   private static Library convertElementToLibrary(Object selectedElement) {
     LibraryElement libraryElement = null;
     if (selectedElement instanceof LibraryElement) {
@@ -762,6 +766,12 @@ public class LibraryTableEditor implements Disposable {
       else {
         myRemoveButton.setText(ProjectBundle.message("library.remove.action"));
       }
+      if (myEditingModuleLibraries){
+        if (selectedElements.length > 0 && selectedElements[0] instanceof ItemElement){
+          final OrderRootType rootType = ((ItemElement)selectedElements[0]).getRootType();
+          myRemoveButton.setEnabled(rootType == OrderRootType.SOURCES || rootType == OrderRootType.JAVADOC);
+        }
+      }
       boolean attachActionsEnabled = selectedElements.length == 1 || getSelectedLibrary() != null;
       myAttachClassesButton.setEnabled(attachActionsEnabled);
       myAttachJavadocsButton.setEnabled(attachActionsEnabled);
@@ -769,6 +779,7 @@ public class LibraryTableEditor implements Disposable {
       myAttachSourcesButton.setEnabled(attachActionsEnabled);
     }
 
+    @Nullable
     private Class<? extends Object> getElementsClass(Object[] elements) {
       if (elements.length == 0) {
         return null;
