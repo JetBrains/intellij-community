@@ -26,6 +26,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -39,7 +40,7 @@ public class JavadocEditor extends ModuleElementsEditor {
   private JButton myRemoveButton;
 
   public static final String NAME = ProjectBundle.message("module.javadoc.title");
-  public static final Icon ICON = IconLoader.getIcon("/nodes/javaDocFolder.png");
+  public static final Icon ICON = IconLoader.getIcon("/modules/javadoc.png");
 
   public JavadocEditor(Project project, ModifiableRootModel model) {
     super(project, model);
@@ -90,7 +91,7 @@ public class JavadocEditor extends ModuleElementsEditor {
     myRemoveButton = new JButton(ProjectBundle.message("module.javadoc.remove.button"));
     myRemoveButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final java.util.List removedItems = TableUtil.removeSelectedItems(myTable);
+        final List removedItems = TableUtil.removeSelectedItems(myTable);
         if (removedItems.size() > 0) {
           saveData();
         }
@@ -146,7 +147,7 @@ public class JavadocEditor extends ModuleElementsEditor {
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
       setPaintFocusBorder(false);
       setFocusBorderAroundIcon(true);
-      this.setBorder(NO_FOCUS_BORDER);
+      setBorder(NO_FOCUS_BORDER);
 
       final TableItem tableItem = ((TableItem)value);
       tableItem.getCellAppearance().customize(this);

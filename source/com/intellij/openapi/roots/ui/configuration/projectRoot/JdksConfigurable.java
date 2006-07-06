@@ -7,6 +7,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.awt.*;
 public class JdksConfigurable implements NamedConfigurable<ProjectJdksModel> {
   private ProjectJdksModel myJdkTableConfigurable;
   public static final String JDKS = ProjectBundle.message("jdks.node.display.name");
+  public static final Icon ICON = IconLoader.getIcon("/modules/jdks.png");
 
 
   public JdksConfigurable(final ProjectJdksModel jdksTreeModel) {
@@ -43,7 +45,7 @@ public class JdksConfigurable implements NamedConfigurable<ProjectJdksModel> {
   }
 
   public Icon getIcon() {
-    return null;
+    return ICON;
   }
 
   @Nullable

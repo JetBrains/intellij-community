@@ -34,7 +34,7 @@ import java.util.List;
  */
 public class ClasspathEditor extends ModuleElementsEditor {
   public static final String NAME = ProjectBundle.message("modules.classpath.title");
-  public static final Icon ICON = IconLoader.getIcon("/modules/order.png"); // todo: specific icon?
+  public static final Icon ICON = IconLoader.getIcon("/modules/classpath.png");
 
   private ClasspathPanel myPanel;
   private ModulesProvider myModulesProvider;

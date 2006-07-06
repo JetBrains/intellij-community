@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -53,7 +54,7 @@ import java.util.Map;
 public class ContentEntriesEditor extends ModuleElementsEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor");
   public static final String NAME = ProjectBundle.message("module.paths.title");
-  public static final Icon ICON = IconLoader.getIcon("/modules/paths.png");
+  public static final Icon ICON = IconLoader.getIcon("/modules/sources.png");
   private static final Color BACKGROUND_COLOR = UIUtil.getListBackground();
   private static final Icon ADD_CONTENT_ENTRY_ICON = IconLoader.getIcon("/modules/addContentEntry.png");
 
@@ -252,16 +253,12 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     }
   }
 
+  @Nullable
   private ContentEntry getNextContentEntry(ContentEntry contentEntry) {
     return getAdjacentContentEntry(contentEntry, 1);
   }
 
-  /*
-  private ContentEntry getPreviousContentEntry(ContentEntry contentEntry) {
-    return getAdjacentContentEntry(contentEntry, -1);
-  }
-  */
-
+  @Nullable
   private ContentEntry getAdjacentContentEntry(ContentEntry contentEntry, int delta) {
     final ContentEntry[] contentEntries = myModel.getContentEntries();
     for (int idx = 0; idx < contentEntries.length; idx++) {

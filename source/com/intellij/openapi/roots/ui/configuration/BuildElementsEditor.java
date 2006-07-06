@@ -15,6 +15,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class BuildElementsEditor extends ModuleElementsEditor {
+  private static final Icon ICON = IconLoader.getIcon("/modules/output.png");
   private JRadioButton myInheritCompilerOutput;
   @SuppressWarnings({"FieldCanBeLocal"})
   private JRadioButton myPerModuleCompilerOutput;
@@ -207,7 +209,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   }
 
   public Icon getIcon() {
-    return null;
+    return ICON;
   }
 
   @Nullable
