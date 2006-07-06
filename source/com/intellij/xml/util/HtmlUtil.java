@@ -165,12 +165,13 @@ public class HtmlUtil {
     String entitiesString = getEntitiesString(context, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE);
     if (entitiesString == null) return XmlAttributeDescriptor.EMPTY;
 
-    StringTokenizer tokenizer = new StringTokenizer(entitiesString);
+    StringTokenizer tokenizer = new StringTokenizer(entitiesString,",");
     XmlAttributeDescriptor[] descriptors = new XmlAttributeDescriptor[tokenizer.countTokens()];
     int index = 0;
 
     while(tokenizer.hasMoreElements()) {
       final String customName = tokenizer.nextToken();
+      if (customName.length() == 0) continue;
 
       descriptors[index++] = new XmlAttributeDescriptorImpl() {
         public String getName(PsiElement context) {
@@ -190,12 +191,14 @@ public class HtmlUtil {
     String entitiesString = getEntitiesString(context, XmlEntitiesInspection.UNKNOWN_TAG);
     if (entitiesString == null) return XmlElementDescriptor.EMPTY_ARRAY;
 
-    StringTokenizer tokenizer = new StringTokenizer(entitiesString);
+    StringTokenizer tokenizer = new StringTokenizer(entitiesString, ",");
     XmlElementDescriptor[] descriptors = new XmlElementDescriptor[tokenizer.countTokens()];
     int index = 0;
 
     while(tokenizer.hasMoreElements()) {
       final String tagName = tokenizer.nextToken();
+      if (tagName.length() == 0) continue;
+
       descriptors[index++] = new XmlElementDescriptorImpl(null) {
         public String getName(PsiElement context) {
           return tagName;
