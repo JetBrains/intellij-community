@@ -65,6 +65,10 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory imple
     };
   }
 
+  public AddSupportStep createLoadJarsStep(AddSupportContext context, String title, Icon icon) {
+    return new LoadJarsStep<AddSupportContext>(context, title, icon);
+  }
+
   public void registerAddSupportProvider(final ModuleType moduleType, AddSupportStepsProvider provider) {
     myStepsProviders.putValue(moduleType, provider);
   }

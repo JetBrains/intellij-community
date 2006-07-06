@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.wizard.AbstractWizard");
@@ -341,7 +342,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return mySteps.size();
   }
 
-  @NonNls protected abstract String getHelpID();
+  @Nullable
+  @NonNls
+  protected abstract String getHelpID();
 
   protected boolean isCurrentStep(final T step) {
     return step != null && getCurrentStepComponent() == step.getComponent();

@@ -49,6 +49,7 @@ public class LibraryUtil {
     return child != null && findInFile(child, tokenizer);
   }
 
+  @Nullable
   private static Library findInTable(LibraryTable table, String fqn) {
     for (Library library : table.getLibraries()) {
       if (isClassAvailableInLibrary(library, fqn)) {
@@ -58,4 +59,12 @@ public class LibraryUtil {
     return null;
   }
 
+  public static Library createLibrary(final LibraryTable libraryTable, @NonNls final String baseName) {
+    String name = baseName;
+    int count = 2;
+    while (libraryTable.getLibraryByName(name) != null) {
+      name = baseName + " (" + count++ + ")";
+    }
+    return libraryTable.createLibrary(name);
+  }
 }

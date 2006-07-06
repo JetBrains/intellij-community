@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.jsf.actions;
+package com.intellij.ide.util.projectWizard;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -13,6 +13,7 @@ import java.util.Arrays;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.ide.util.projectWizard.LibraryInfo;
 
 /**
  * @author nik

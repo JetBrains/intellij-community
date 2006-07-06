@@ -104,7 +104,6 @@ public abstract class ModuleBuilder {
     moduleModel.commit();
 
     final Runnable runnable = new Runnable() {
-
       public void run() {
          addSupport(module);
       }

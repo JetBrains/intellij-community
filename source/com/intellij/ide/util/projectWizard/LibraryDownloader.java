@@ -2,9 +2,10 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.jsf.actions;
+package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.projectWizard.LibraryInfo;
 import com.intellij.javaee.J2EEBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
