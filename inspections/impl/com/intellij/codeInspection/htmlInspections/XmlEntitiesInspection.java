@@ -17,4 +17,5 @@ public interface XmlEntitiesInspection {
   
   IntentionAction getIntentionAction(PsiElement psiElement, String name, int type);
   String getAdditionalEntries(int type);
+  void setAdditionalEntries(int type, String additionalEntries);
 }
