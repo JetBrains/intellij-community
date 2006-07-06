@@ -23,12 +23,18 @@ import java.util.Set;
 public class PsiMultiReference implements PsiPolyVariantReference {
   private PsiReference[] myReferences;
   private final PsiElement myElement;
+  private final boolean mySoft;
 
   private int myChoosenOne = -1;
 
   public PsiMultiReference(@NotNull PsiReference[] references, PsiElement element){
+    this(references, element, false);
+  }
+
+  public PsiMultiReference(@NotNull PsiReference[] references, PsiElement element, boolean soft){
     myReferences = references;
     myElement = element;
+    mySoft = soft;
   }
 
   public PsiReference[] getReferences() {
@@ -141,7 +147,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   }
 
   public boolean isSoft(){
-    return false;
+    return mySoft;
   }
 
   @NotNull
