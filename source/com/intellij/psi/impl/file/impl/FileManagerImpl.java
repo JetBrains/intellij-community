@@ -668,8 +668,11 @@ public class FileManagerImpl implements FileManager {
           continue;
         }
 
-        if (!psiFile1.getClass().equals(view.getPsi(view.getBaseLanguage()).getClass()))
+        if (!psiFile1.getClass().equals(view.getPsi(view.getBaseLanguage()).getClass()) ||
+             psiFile1.getViewProvider().getBaseLanguage() != view.getBaseLanguage() // e.g. JSP <-> JSPX
+           ) {
           iterator.remove();
+        }
       }
     }
     myVFileToPsiFileMap = fileToPsiFileMap;
