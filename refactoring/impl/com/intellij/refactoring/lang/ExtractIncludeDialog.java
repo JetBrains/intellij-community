@@ -4,24 +4,22 @@ import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.lang.jsp.extractInclude.ExtractJspIncludeFileHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.lang.jsp.extractInclude.ExtractJspIncludeFileHandler;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.io.File;
 
 /**
@@ -65,8 +63,8 @@ public class ExtractIncludeDialog extends DialogWrapper {
 
     myNameField = new JTextField();
     nameLabel.setLabelFor(myNameField);
-    myNameField.addKeyListener(new KeyAdapter() {
-      public void keyPressed(KeyEvent e) {
+    myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
         validateOKButton();
       }
     });
