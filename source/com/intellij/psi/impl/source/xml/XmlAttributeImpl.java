@@ -12,6 +12,7 @@ import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -19,9 +20,11 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.util.HtmlUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -317,7 +320,15 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       if (parentDescriptor != null){
         final XmlTag declarationTag = getParent();
         final XmlAttribute[] attributes = declarationTag.getAttributes();
-        final XmlAttributeDescriptor[] descriptors = parentDescriptor.getAttributesDescriptors();
+        XmlAttributeDescriptor[] descriptors = parentDescriptor.getAttributesDescriptors();
+
+        if (declarationTag instanceof HtmlTag) {
+          descriptors = ArrayUtil.mergeArrays(
+            descriptors,
+            HtmlUtil.getCustomAttributeDescriptors(XmlAttributeImpl.this),
+            XmlAttributeDescriptor.class
+          );
+        }
         outer:
         for (XmlAttributeDescriptor descriptor : descriptors) {
           for (final XmlAttribute attribute : attributes) {

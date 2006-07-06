@@ -36,10 +36,12 @@ import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -296,6 +298,21 @@ public class XmlCompletionData extends CompletionData {
       FileType fileType = tag.getContainingFile().getFileType();
       boolean htmlCode = fileType == StdFileTypes.HTML || fileType == StdFileTypes.XHTML;
       boolean jspCode = fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX;
+      Set<String> notRequiredAttributes = Collections.emptySet();
+
+      if (tag instanceof HtmlTag) {
+        final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
+        LocalInspectionToolWrapper localInspectionToolWrapper = (LocalInspectionToolWrapper) profile.getInspectionTool(RequiredAttributesInspection.SHORT_NAME);
+        RequiredAttributesInspection inspection = localInspectionToolWrapper != null ?
+          (RequiredAttributesInspection) localInspectionToolWrapper.getTool(): null;
+
+        if (inspection != null) {
+          StringTokenizer tokenizer = new StringTokenizer(inspection.getAdditionalEntries(0));
+          notRequiredAttributes = new HashSet<String>(1);
+
+          while(tokenizer.hasMoreElements()) notRequiredAttributes.add(tokenizer.nextToken());
+        }
+      }
 
       boolean toReformat = true;
       if (htmlCode || jspCode) {
@@ -309,10 +326,12 @@ public class XmlCompletionData extends CompletionData {
         String attributeName = attributeDecl.getName(tag);
 
         if (attributeDecl.isRequired()) {
-          template.addTextSegment(" " + attributeName + "=\"");
-          Expression expression = new MacroCallNode(MacroFactory.createMacro("complete"));
-          template.addVariable(attributeName, expression, expression, true);
-          template.addTextSegment("\"");
+          if (!notRequiredAttributes.contains(attributeName)) {
+            template.addTextSegment(" " + attributeName + "=\"");
+            Expression expression = new MacroCallNode(MacroFactory.createMacro("complete"));
+            template.addVariable(attributeName, expression, expression, true);
+            template.addTextSegment("\"");
+          }
         }
         else if (attributeDecl.isFixed() && attributeDecl.getDefaultValue() != null && !htmlCode) {
           template.addTextSegment(" " + attributeName + "=\"" + attributeDecl.getDefaultValue() + "\"");

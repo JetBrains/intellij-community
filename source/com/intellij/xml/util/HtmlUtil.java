@@ -7,14 +7,24 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
+import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
+import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 /**
  * Created by IntelliJ IDEA.
@@ -151,4 +161,65 @@ public class HtmlUtil {
     return HtmlDescriptorsTable.getHtmlTagNames();
   }
 
+  public static XmlAttributeDescriptor[] getCustomAttributeDescriptors(XmlElement context) {
+    String entitiesString = getEntitiesString(context, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE);
+    if (entitiesString == null) return XmlAttributeDescriptor.EMPTY;
+
+    StringTokenizer tokenizer = new StringTokenizer(entitiesString);
+    XmlAttributeDescriptor[] descriptors = new XmlAttributeDescriptor[tokenizer.countTokens()];
+    int index = 0;
+
+    while(tokenizer.hasMoreElements()) {
+      final String customName = tokenizer.nextToken();
+
+      descriptors[index++] = new XmlAttributeDescriptorImpl() {
+        public String getName(PsiElement context) {
+          return customName;
+        }
+
+        public String getName() {
+          return customName;
+        }
+      };
+    }
+
+    return descriptors;
+  }
+
+  public static XmlElementDescriptor[] getCustomTagDescriptors(XmlElement context) {
+    String entitiesString = getEntitiesString(context, XmlEntitiesInspection.UNKNOWN_TAG);
+    if (entitiesString == null) return XmlElementDescriptor.EMPTY_ARRAY;
+
+    StringTokenizer tokenizer = new StringTokenizer(entitiesString);
+    XmlElementDescriptor[] descriptors = new XmlElementDescriptor[tokenizer.countTokens()];
+    int index = 0;
+
+    while(tokenizer.hasMoreElements()) {
+      final String tagName = tokenizer.nextToken();
+      descriptors[index++] = new XmlElementDescriptorImpl(null) {
+        public String getName(PsiElement context) {
+          return tagName;
+        }
+      };
+    }
+
+    return descriptors;
+  }
+
+  public static @Nullable
+  String getEntitiesString(XmlElement context, int type) {
+    if (context == null) return null;
+    PsiFile containingFile = context.getContainingFile();
+    if (containingFile.getOriginalFile() != null) containingFile = containingFile.getOriginalFile();
+
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getInspectionProfile(containingFile);
+    LocalInspectionToolWrapper localInspectionToolWrapper = (LocalInspectionToolWrapper) profile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME);
+    HtmlStyleLocalInspection inspection = localInspectionToolWrapper != null ?
+      (HtmlStyleLocalInspection) localInspectionToolWrapper.getTool(): null;
+
+    if (inspection != null) {
+      return inspection.getAdditionalEntries(type);
+    }
+    return null;
+  }
 }
