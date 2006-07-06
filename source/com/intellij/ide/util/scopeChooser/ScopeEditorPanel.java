@@ -65,7 +65,7 @@ public class ScopeEditorPanel {
     myProject = project;
     myButtonsPanel.add(createActionsPanel());
 
-    myPackageTree = new Tree();
+    myPackageTree = new Tree(new RootNode());
     myTreePanel.setLayout(new BorderLayout());
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myPackageTree), BorderLayout.CENTER);
 
@@ -102,8 +102,6 @@ public class ScopeEditorPanel {
         myCaretPositionLabel.setVisible(false);
       }
     });
-
-    updateTreeModel();
 
     initTree(myPackageTree);
   }
@@ -449,16 +447,18 @@ public class ScopeEditorPanel {
                                                   int row,
                                                   boolean hasFocus) {
       super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-      PackageDependenciesNode node = (PackageDependenciesNode)value;
-      if (expanded) {
-        setIcon(node.getOpenIcon());
-      }
-      else {
-        setIcon(node.getClosedIcon());
-      }
+      if (value instanceof PackageDependenciesNode) {
+        PackageDependenciesNode node = (PackageDependenciesNode)value;
+        if (expanded) {
+          setIcon(node.getOpenIcon());
+        }
+        else {
+          setIcon(node.getClosedIcon());
+        }
 
-      if (!sel && node.hasMarked() && !DependencyUISettings.getInstance().UI_FILTER_LEGALS) {
-        setForeground(node.hasUnmarked() ? PARTIAL_INCLUDED : WHOLE_INCLUDED);
+        if (!sel && node.hasMarked() && !DependencyUISettings.getInstance().UI_FILTER_LEGALS) {
+          setForeground(node.hasUnmarked() ? PARTIAL_INCLUDED : WHOLE_INCLUDED);
+        }
       }
 
       return this;
