@@ -80,7 +80,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   }
 
   @Nullable
-  public final <T extends Annotation> T getAnnotation(Class<? extends T> annotationClass) {
+  public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return getAnnotation(0, annotationClass);
   }
 

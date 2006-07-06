@@ -26,5 +26,5 @@ public interface DomChildrenDescription {
   DomGenericInfo getChildGenericInfo(Project project);
 
   @Nullable
-  <T extends Annotation> T getAnnotation(Class<? extends T> annotationClass);
+  <T extends Annotation> T getAnnotation(Class<T> annotationClass);
 }

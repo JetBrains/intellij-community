@@ -36,7 +36,7 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   }
 
   @Nullable
-  public final <T extends Annotation> T getAnnotation(Class<? extends T> annotationClass) {
+  public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return getGetterMethod().findAnnotation(annotationClass, myDeclaringClass);
   }
 

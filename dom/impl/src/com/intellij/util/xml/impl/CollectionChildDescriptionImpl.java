@@ -102,7 +102,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   @Nullable
-  public <T extends Annotation> T getAnnotation(Class<? extends T> annotationClass) {
+  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return DomReflectionUtil.findAnnotationDFS(getGetterMethod(), annotationClass);
   }
 
