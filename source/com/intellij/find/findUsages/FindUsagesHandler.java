@@ -19,7 +19,7 @@ public abstract class FindUsagesHandler {
 
   @NotNull
   public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
-    return new CommonFindUsagesDialog(myPsiElement, getProject(), createFindUsagesOptions(), toShowInNewTab, mustOpenInNewTab, isSingleFile);
+    return new CommonFindUsagesDialog(myPsiElement, getProject(), createFindUsagesOptions(getProject()), toShowInNewTab, mustOpenInNewTab, isSingleFile);
   }
 
   public final PsiElement getPsiElement() {
@@ -38,10 +38,6 @@ public abstract class FindUsagesHandler {
   @NotNull
   public PsiElement[] getSecondaryElements() {
     return PsiElement.EMPTY_ARRAY;
-  }
-
-  protected FindUsagesOptions createFindUsagesOptions() {
-    return createFindUsagesOptions(getProject());
   }
 
   public static FindUsagesOptions createFindUsagesOptions(final Project project) {
