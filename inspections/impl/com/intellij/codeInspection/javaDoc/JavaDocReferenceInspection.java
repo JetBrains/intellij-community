@@ -41,6 +41,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
     return checkMember(psiMethod, manager);
   }
 
+  @Nullable
   private ProblemDescriptor[] checkMember(final PsiDocCommentOwner docCommentOwner, final InspectionManager manager) {
     ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
     final PsiDocComment docComment = docCommentOwner.getDocComment();
@@ -160,7 +161,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
   }
 
   public String getShortName() {
-    return JavaDocReferenceInspection.SHORT_NAME;
+    return SHORT_NAME;
   }
 
   public HighlightDisplayLevel getDefaultLevel() {

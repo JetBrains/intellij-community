@@ -22,7 +22,6 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -49,6 +48,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -216,6 +216,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
   }
 
+  @Nullable
   private HighlightInfo[] getVisibleHighlights(int startOffset, int endOffset) {
     HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(myEditor.getDocument(), myProject);
     if (highlights == null) return null;
@@ -243,7 +244,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       return showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
     }
     else if (info.type == HighlightInfoType.JAVADOC_WRONG_REF) {
-      HighlightDisplayKey javadocKey = HighlightDisplayKey.find(JavaDocLocalInspection.SHORT_NAME);
+      HighlightDisplayKey javadocKey = HighlightDisplayKey.find(JavaDocReferenceInspection.SHORT_NAME);
       if (javadocKey == null){
         HighlightDisplayKey.register(JavaDocReferenceInspection.SHORT_NAME, JavaDocReferenceInspection.DISPLAY_NAME);
       }
