@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.SplittingUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -101,10 +102,9 @@ public class LineTooltipRenderer implements TooltipRenderer {
     return hint;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static boolean isRichHtml(final String text) {
+  private static boolean isRichHtml(@NonNls final String text) {
     if (!text.startsWith("<html>") || !text.endsWith("</html>")) return false;
-    int idx = "<html>".length();
+    @NonNls int idx = "<html>".length();
     idx = text.indexOf("<body>", idx);
     if (idx == -1) return false;
     idx += "<body>".length();
@@ -124,7 +124,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
     String[] lines = SplittingUtil.splitText(text, fontMetrics, widthLimit, ' ');
 
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i];
       if (i > 0) {

@@ -33,9 +33,7 @@ public class HighlightMethodUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
   public static String createClashMethodMessage(PsiMethod method1, PsiMethod method2, boolean showContainingClasses) {
-    @NonNls String pattern = showContainingClasses ?
-                                                       "clash.methods.message.show.classes" :
-                                                       "clash.methods.message";
+    @NonNls String pattern = showContainingClasses ? "clash.methods.message.show.classes" : "clash.methods.message";
 
     return JavaErrorMessages.message(pattern,
                                      HighlightUtil.formatMethod(method1),
@@ -498,12 +496,11 @@ public class HighlightMethodUtil {
     return containingClass == null ? method.getContainingFile().getName() : HighlightUtil.formatClass(containingClass, false);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String createAmbiguousMethodHtmlTooltipMethodRow(final MethodCandidateInfo methodCandidate) {
     PsiMethod method = methodCandidate.getElement();
     PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiSubstitutor substitutor = methodCandidate.getSubstitutor();
-    String ms = "<td><b>" + method.getName() + "</b></td>";
+    @NonNls String ms = "<td><b>" + method.getName() + "</b></td>";
 
     for (int j = 0; j < parameters.length; j++) {
       PsiParameter parameter = parameters[j];
@@ -535,33 +532,31 @@ public class HighlightMethodUtil {
     PsiExpression[] expressions = list.getExpressions();
     int cols = Math.max(parameters.length, expressions.length);
 
-    //noinspection HardCodedStringLiteral
+    @NonNls String parensizedName = methodName + (parameters.length == 0 ? "(&nbsp;)&nbsp;" : "");
     return JavaErrorMessages.message(
       "argument.mismatch.html.tooltip",
-      new Integer(cols - parameters.length + 1),
-      methodName + (parameters.length == 0 ? "(&nbsp;)&nbsp;" : ""),
+      new Integer(cols - parameters.length + 1), parensizedName,
       HighlightUtil.formatClass(aClass, false),
       createMismatchedArgsHtmlTooltipParamsRow(parameters, substitutor, expressions),
       createMismatchedArgsHtmlTooltipExpressionsRow(expressions, parameters, substitutor, cols)
     );
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String createMismatchedArgsHtmlTooltipExpressionsRow(final PsiExpression[] expressions, final PsiParameter[] parameters,
                                                                       final PsiSubstitutor substitutor, final int cols) {
-    String ms = "";
+    @NonNls String ms = "";
     for (int i = 0; i < expressions.length; i++) {
       PsiExpression expression = expressions[i];
       PsiType type = expression.getType();
 
-      String mismatchColor = showShortType(i, parameters, expressions, substitutor) ? null : "red";
-      ms += "<td> " + "<b>" + (i == 0 ? "(" : "")
-            + "<font " + (mismatchColor == null ? "" : "color=" + mismatchColor) + '>' +
+      @NonNls String mismatchColor = showShortType(i, parameters, expressions, substitutor) ? null : "red";
+      ms += "<td> " + "<b><nobr>" + (i == 0 ? "(" : "")
+            + "<font " + (mismatchColor == null ? "" : "color=" + mismatchColor) + ">" +
             XmlUtil.escapeString(showShortType(i, parameters, expressions, substitutor)
                                  ? type.getPresentableText()
                                  : HighlightUtil.formatType(type))
             + "</font>"
-            + (i == expressions.length - 1 ? ")" : ",") + "</b></td>";
+            + (i == expressions.length - 1 ? ")" : ",") + "</nobr></b></td>";
     }
     for (int i = expressions.length; i < cols + 1; i++) {
       ms += "<td>" + (i == 0 ? "<b>()</b>" : "") +
@@ -570,19 +565,18 @@ public class HighlightMethodUtil {
     return ms;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String createMismatchedArgsHtmlTooltipParamsRow(final PsiParameter[] parameters,
                                                                  final PsiSubstitutor substitutor,
                                                                  final PsiExpression[] expressions) {
-    String ms = "";
+    @NonNls String ms = "";
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       PsiType type = substitutor.substituteAndCapture(parameter.getType());
-      ms += "<td><b>" + (i == 0 ? "(" : "") +
+      ms += "<td><b><nobr>" + (i == 0 ? "(" : "") +
             XmlUtil.escapeString(showShortType(i, parameters, expressions, substitutor)
                                  ? type.getPresentableText()
                                  : HighlightUtil.formatType(type))
-            + (i == parameters.length - 1 ? ")" : ",") + "</b></td>";
+            + (i == parameters.length - 1 ? ")" : ",") + "</nobr></b></td>";
     }
     return ms;
   }

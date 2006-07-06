@@ -1716,7 +1716,6 @@ public class HighlightUtil {
     return null;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static HighlightInfo createIncompatibleTypeHighlightInfo(final PsiType lType, final PsiType rType, final TextRange textRange) {
     PsiType lType1 = lType;
     PsiType rType1 = rType;
@@ -1751,16 +1750,16 @@ public class HighlightUtil {
 
 
     int typeParamColumns = Math.max(lTypeParams.length, rTypeParams.length);
-    String requredRow = "";
-    String foundRow = "";
+    @NonNls String requredRow = "";
+    @NonNls String foundRow = "";
     for (int i = 0; i < typeParamColumns; i++) {
       PsiTypeParameter lTypeParameter = i >= lTypeParams.length ? null : lTypeParams[i];
       PsiTypeParameter rTypeParameter = i >= rTypeParams.length ? null : rTypeParams[i];
       PsiType lSubstedType = lTypeParameter == null ? null : lTypeSubstitutor.substitute(lTypeParameter);
       PsiType rSubstedType = rTypeParameter == null ? null : rTypeSubstitutor.substitute(rTypeParameter);
       boolean matches = Comparing.equal(lSubstedType, rSubstedType);
-      String openBrace = i == 0 ? "&lt;" : "";
-      String closeBrace = i == typeParamColumns - 1 ? "&gt;" : ",";
+      @NonNls String openBrace = i == 0 ? "&lt;" : "";
+      @NonNls String closeBrace = i == typeParamColumns - 1 ? "&gt;" : ",";
       requredRow += "<td>" + (lTypeParams.length == 0 ? "" : openBrace) + redIfNotMatch(lSubstedType, matches) +
                     (i < lTypeParams.length ? closeBrace : "") + "</td>";
       foundRow += "<td>" + (rTypeParams.length == 0 ? "" : openBrace) + redIfNotMatch(rSubstedType, matches) +
