@@ -227,27 +227,37 @@ public class GenerateMembersUtil {
       Map<PsiType,Pair<String,Integer>> m = new HashMap<PsiType, Pair<String,Integer>>();
       for (int i = 0; i < parameters.length; i++) {
         PsiParameter parameter = parameters[i];
-        PsiType paramType = substituteType(substitutor, parameter.getType(), isRaw);
+        final PsiType parameterType = parameter.getType();
+        PsiType substituted = substituteType(substitutor, parameterType, isRaw);
         @NonNls String paramName = parameter.getName();
-        if (paramName == null || !paramType.equals(parameter.getType())) {
-          Pair<String, Integer> pair = m.get(paramType);
+        final String[] baseSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, parameterType).names;
+        boolean isBaseNameGenerated = false;
+        for (String s : baseSuggestions) {
+          if (s.equals(paramName)) {
+            isBaseNameGenerated = true;
+            break;
+          }
+        }
+        
+        if (paramName == null || isBaseNameGenerated && !substituted.equals(parameterType)) {
+          Pair<String, Integer> pair = m.get(substituted);
           if (pair != null) {
             paramName = pair.first + pair.second;
-            m.put(paramType, Pair.create(pair.first, pair.second.intValue() + 1));
+            m.put(substituted, Pair.create(pair.first, pair.second.intValue() + 1));
           }
           else {
-            String[] names = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, paramType).names;
+            String[] names = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, substituted).names;
             if (names.length > 0) {
               paramName = names[0];
             } else paramName = "p" + i;
 
-            m.put(paramType, new Pair<String, Integer>(paramName, 1));
+            m.put(substituted, new Pair<String, Integer>(paramName, 1));
           }
         }
 
         if (paramName == null) paramName = "p" + i;
 
-        PsiParameter newParameter = factory.createParameter(paramName, paramType);
+        PsiParameter newParameter = factory.createParameter(paramName, substituted);
         newMethod.getParameterList().add(newParameter);
       }
 
