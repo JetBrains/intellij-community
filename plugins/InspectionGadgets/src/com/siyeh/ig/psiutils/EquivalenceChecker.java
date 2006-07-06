@@ -727,6 +727,25 @@ public class EquivalenceChecker{
     private static boolean referenceExpressionsAreEquivalent(
             PsiReferenceExpression referenceExpression1,
             PsiReferenceExpression referenceExpression2) {
+        final PsiExpression qualifier1 =
+                referenceExpression1.getQualifierExpression();
+        final PsiExpression qualifier2 =
+                referenceExpression2.getQualifierExpression();
+        if (qualifier1 != null &&
+                !(qualifier1 instanceof PsiThisExpression ||
+                        qualifier1 instanceof PsiSuperExpression)) {
+            if (qualifier2 == null) {
+                return false;
+            } else if (!expressionsAreEquivalent(qualifier1, qualifier2)) {
+                return false;
+            }
+        } else {
+            if (qualifier2 != null &&
+                    !(qualifier2 instanceof PsiThisExpression ||
+                            qualifier2 instanceof PsiSuperExpression)) {
+                return false;
+            }
+        }
         final PsiElement element1 = referenceExpression1.resolve();
         final PsiElement element2 = referenceExpression2.resolve();
         if (element1 instanceof PsiField) {
