@@ -4,124 +4,85 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.CommonBundle;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.find.FindBundle;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author peter
  */
 public class DefaultFindUsagesHandler extends FindUsagesHandler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findUsages.DefaultFindUsagesHandler");
-  @NonNls private static final String ACTION_STRING = FindBundle.message("find.super.method.warning.action.verb");
+  @NonNls static final String ACTION_STRING = FindBundle.message("find.super.method.warning.action.verb");
 
-  private PsiElement[] myElementsToSearch = null;
-  private PsiElement myPsiElement = null;
-  private FindUsagesOptions myFindPackageOptions;
-  private FindUsagesOptions myFindClassOptions;
-  private FindUsagesOptions myFindMethodOptions;
-  private FindUsagesOptions myFindVariableOptions;
-  private FindUsagesOptions myFindPointcutOptions;
-  private final Project myProject;
+  private final PsiElement[] myElementsToSearch;
+  private final FindUsagesOptions myFindPackageOptions;
+  private final FindUsagesOptions myFindClassOptions;
+  private final FindUsagesOptions myFindMethodOptions;
+  private final FindUsagesOptions myFindVariableOptions;
+  private final FindUsagesOptions myFindPointcutOptions;
 
-  public FindUsagesOptions getFindClassOptions() {
-    return myFindClassOptions;
+  public DefaultFindUsagesHandler(final PsiElement psiElement,
+                                final FindUsagesOptions findClassOptions,
+                                final FindUsagesOptions findMethodOptions,
+                                final FindUsagesOptions findPackageOptions,
+                                final FindUsagesOptions findPointcutOptions,
+                                final FindUsagesOptions findVariableOptions) {
+    this(psiElement, null, findClassOptions, findMethodOptions, findPackageOptions, findPointcutOptions, findVariableOptions);
   }
 
-  public DefaultFindUsagesHandler(Project project) {
-    myProject = project;
-    myFindPackageOptions = createFindUsagesOptions(project);
-    myFindClassOptions = createFindUsagesOptions(project);
-    myFindMethodOptions = createFindUsagesOptions(project);
-    myFindVariableOptions = createFindUsagesOptions(project);
-    myFindPointcutOptions = createFindUsagesOptions(project);
+
+  public DefaultFindUsagesHandler(final PsiElement psiElement, final PsiElement[] elementsToSearch,
+                                  final FindUsagesOptions findClassOptions,
+                                  final FindUsagesOptions findMethodOptions,
+                                  final FindUsagesOptions findPackageOptions,
+                                  final FindUsagesOptions findPointcutOptions,
+                                  final FindUsagesOptions findVariableOptions) {
+    super(psiElement);
+    myElementsToSearch = elementsToSearch;
+    myFindClassOptions = findClassOptions;
+    myFindMethodOptions = findMethodOptions;
+    myFindPackageOptions = findPackageOptions;
+    myFindPointcutOptions = findPointcutOptions;
+    myFindVariableOptions = findVariableOptions;
   }
 
-  public boolean canFindUsages(PsiElement element) {
-    if (!super.canFindUsages(element)) {
-      return false;
-    }
-
-    if (element instanceof PsiDirectory) {
-      PsiPackage psiPackage = ((PsiDirectory)element).getPackage();
-      if (psiPackage == null) {
-        return false;
-      }
-      element = psiPackage;
-    }
-
-    if (element instanceof PsiMethod) {
-      final PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, ACTION_STRING);
-      if (methods.length > 1) {
-        myElementsToSearch = methods;
-      }
-      else if (methods.length == 1) {
-        element = methods[0];
-      }
-      else {
-        return false;
-      }
-    }
-
-    if (element == null) {
-      return false;
-    }
-
-    myPsiElement = element;
-    return true;
-  }
-
-  public FindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab,
+  @NotNull
+  public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab,
                                      boolean mustOpenInNewTab) {
-
-    if (myPsiElement instanceof PsiPackage) {
-      return new FindPackageUsagesDialog(myPsiElement, myProject, myFindPackageOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
+    PsiElement element = getPsiElement();
+    if (element instanceof PsiPackage) {
+      return new FindPackageUsagesDialog(element, getProject(), myFindPackageOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
     }
-    else if (myPsiElement instanceof PsiClass) {
-      return new FindClassUsagesDialog(myPsiElement, myProject, myFindClassOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
+    if (element instanceof PsiClass) {
+      return new FindClassUsagesDialog(element, getProject(), myFindClassOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
     }
-    else if (myPsiElement instanceof PsiMethod) {
-      return new FindMethodUsagesDialog(myPsiElement, myProject, myFindMethodOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
+    if (element instanceof PsiMethod) {
+      return new FindMethodUsagesDialog(element, getProject(), myFindMethodOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
     }
-    else if (myPsiElement instanceof PsiVariable) {
-      return new FindVariableUsagesDialog(myPsiElement, myProject, myFindVariableOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
+    if (element instanceof PsiVariable) {
+      return new FindVariableUsagesDialog(element, getProject(), myFindVariableOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
     }
-    else if (ThrowSearchUtil.isSearchable(myPsiElement)) {
-      return new FindThrowUsagesDialog(myPsiElement, myProject, myFindPointcutOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
+    if (ThrowSearchUtil.isSearchable(element)) {
+      return new FindThrowUsagesDialog(element, getProject(), myFindPointcutOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
     }
-    else {
-      return new CommonFindUsagesDialog(myPsiElement, myProject, createFindUsagesOptions(myProject), toShowInNewTab, mustOpenInNewTab, isSingleFile);
-    }
-
-  }
-
-  private static FindUsagesOptions createFindUsagesOptions(Project project) {
-    FindUsagesOptions findUsagesOptions = new FindUsagesOptions(project);
-    findUsagesOptions.isUsages = true;
-    findUsagesOptions.isIncludeOverloadUsages = false;
-    findUsagesOptions.isIncludeSubpackages = true;
-    findUsagesOptions.isReadAccess = true;
-    findUsagesOptions.isWriteAccess = true;
-    findUsagesOptions.isCheckDeepInheritance = true;
-    findUsagesOptions.isSearchForTextOccurences = true;
-    return findUsagesOptions;
+    return super.getFindUsagesDialog(isSingleFile, toShowInNewTab, mustOpenInNewTab);
   }
 
   private static boolean shouldSearchForParameterInOverridingMethods(final PsiElement psiElement, final PsiParameter parameter) {
@@ -135,7 +96,7 @@ public class DefaultFindUsagesHandler extends FindUsagesHandler{
   private PsiElement[] getParameterElementsToSearch(final PsiParameter parameter) {
     final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
     PsiSearchHelper helper = parameter.getManager().getSearchHelper();
-    PsiMethod[] overrides = helper.findOverridingMethods(method, GlobalSearchScope.allScope(myProject), true);
+    PsiMethod[] overrides = helper.findOverridingMethods(method, GlobalSearchScope.allScope(getProject()), true);
     for (int i = 0; i < overrides.length; i++) {
       overrides[i] = (PsiMethod)overrides[i].getNavigationElement();
     }
@@ -151,9 +112,9 @@ public class DefaultFindUsagesHandler extends FindUsagesHandler{
 
   @NotNull
   public PsiElement[] getPrimaryElements() {
-    LOG.assertTrue(myPsiElement.isValid());
-    if (myPsiElement instanceof PsiParameter) {
-      final PsiParameter parameter = (PsiParameter)myPsiElement;
+    final PsiElement element = getPsiElement();
+    if (element instanceof PsiParameter) {
+      final PsiParameter parameter = (PsiParameter)element;
       final PsiElement scope = parameter.getDeclarationScope();
       if (scope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)scope;
@@ -161,19 +122,20 @@ public class DefaultFindUsagesHandler extends FindUsagesHandler{
           final PsiClass aClass = method.getContainingClass();
           LOG.assertTrue(aClass != null); //Otherwise can not be overriden
           if (aClass.isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-              shouldSearchForParameterInOverridingMethods(myPsiElement, parameter)) {
+              shouldSearchForParameterInOverridingMethods(element, parameter)) {
             return getParameterElementsToSearch(parameter);
           }
         }
       }
     }
-    return myElementsToSearch == null ? new PsiElement[]{myPsiElement} : myElementsToSearch;
+    return myElementsToSearch == null ? new PsiElement[]{element} : myElementsToSearch;
   }
 
   @NotNull
   public PsiElement[] getSecondaryElements() {
-    if (myPsiElement instanceof PsiField) {
-      final PsiField field = (PsiField)myPsiElement;
+    PsiElement element = getPsiElement();
+    if (element instanceof PsiField) {
+      final PsiField field = (PsiField)element;
       if (field.getContainingClass() != null) {
         final String propertyName =
           field.getManager().getCodeStyleManager().variableNameToPropertyName(field.getName(), VariableKind.FIELD);

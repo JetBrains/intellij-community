@@ -7,7 +7,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.*;
 import com.intellij.find.findUsages.FindUsagesManager;
-import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -92,10 +91,6 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
     final Element findUsages = new Element(FIND_USAGES_MANAGER_ELEMENT);
     element.addContent(findUsages);
     myFindUsagesManager.writeExternal(findUsages);
-  }
-
-  public void registerFindUsagesHandler(FindUsagesHandler handler) {
-    myFindUsagesManager.registerFindUsagesHandler(handler);
   }
 
   public int showPromptDialog(final FindModel model, String title) {

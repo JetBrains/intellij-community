@@ -31,6 +31,8 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.Function;
+import com.intellij.ide.util.SuperMethodWarningUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +58,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   private Project myProject;
   private com.intellij.usages.UsageViewManager myAnotherManager;
   private boolean myToOpenInNewTab = false;
-  private final List<FindUsagesHandler> myHandlers = new ArrayList<FindUsagesHandler>();
+  private final List<Function<PsiElement,FindUsagesHandler>> myHandlers = new ArrayList<Function<PsiElement, FindUsagesHandler>>();
 
   private static class LastSearchData {
     public SmartPsiElementPointer[] myLastSearchElements = null;
@@ -65,11 +67,40 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   private LastSearchData myLastSearchData = new LastSearchData();
 
-  public FindUsagesManager(Project project, com.intellij.usages.UsageViewManager anotherManager) {
+  public FindUsagesManager(final Project project, com.intellij.usages.UsageViewManager anotherManager) {
     myProject = project;
     myAnotherManager = anotherManager;
-    myDefaultFindUsagesHandler = new DefaultFindUsagesHandler(project);
-    myHandlers.add(myDefaultFindUsagesHandler);
+    final FindUsagesOptions findClassOptions = FindUsagesHandler.createFindUsagesOptions(project);
+    final FindUsagesOptions findMethodOptions = FindUsagesHandler.createFindUsagesOptions(project);
+    final FindUsagesOptions findPackageOptions = FindUsagesHandler.createFindUsagesOptions(project);
+    final FindUsagesOptions findPointcutOptions = FindUsagesHandler.createFindUsagesOptions(project);
+    final FindUsagesOptions findVariableOptions = FindUsagesHandler.createFindUsagesOptions(project);
+
+    myHandlers.add(new Function<PsiElement, FindUsagesHandler>() {
+      @Nullable
+      public FindUsagesHandler fun(final PsiElement element) {
+        if (element instanceof PsiFile && ((PsiFile)element).getVirtualFile() == null) return null;
+        if (!element.getLanguage().getFindUsagesProvider().canFindUsagesFor(element)) return null;
+        if (element instanceof PsiDirectory) {
+          PsiPackage psiPackage = ((PsiDirectory)element).getPackage();
+          return psiPackage == null ? null : new DefaultFindUsagesHandler(psiPackage, findClassOptions, findMethodOptions,
+                                                                          findPackageOptions, findPointcutOptions, findVariableOptions);
+        }
+
+        if (element instanceof PsiMethod) {
+          final PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, DefaultFindUsagesHandler.ACTION_STRING);
+          if (methods.length > 1) {
+            return new DefaultFindUsagesHandler(element, methods, findClassOptions, findMethodOptions, findPackageOptions, findPointcutOptions, findVariableOptions);
+          }
+          if (methods.length == 1) {
+            return new DefaultFindUsagesHandler(methods[0], findClassOptions, findMethodOptions, findPackageOptions, findPointcutOptions, findVariableOptions);
+          }
+          return null;
+        }
+
+        return new DefaultFindUsagesHandler(element, findClassOptions, findMethodOptions, findPackageOptions, findPointcutOptions, findVariableOptions);
+      }
+    });
   }
 
   public static FindUsagesProvider getFindHandler(PsiElement elt) {
@@ -80,12 +111,8 @@ public class FindUsagesManager implements JDOMExternalizable {
     return myProject;
   }
 
-  public void registerFindUsagesHandler(FindUsagesHandler handler) {
+  public void registerFindUsagesHandler(Function<PsiElement,FindUsagesHandler> handler) {
     myHandlers.add(0, handler);
-  }
-
-  public FindUsagesOptions getFindClassOptions() {
-    return myDefaultFindUsagesHandler.getFindClassOptions();
   }
 
   public boolean canFindUsages(final PsiElement element) {
@@ -180,8 +207,10 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   @Nullable
   private FindUsagesHandler getHandler(PsiElement element) {
-    for (final FindUsagesHandler handler : myHandlers) {
-      if (handler.canFindUsages(element)) {
+    if (element == null) return null;
+    for (final Function<PsiElement,FindUsagesHandler> function : myHandlers) {
+      final FindUsagesHandler handler = function.fun(element);
+      if (handler != null) {
         return handler;
       }
     }
@@ -201,7 +230,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     FindUsagesOptions findUsagesOptions = dialog.calcFindUsagesOptions();
 
     clearFindingNextUsageInFile();
-
+    LOG.assertTrue(handler.getPsiElement().isValid());
     final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor =
       new UsageInfoToUsageConverter.TargetElementsDescriptor(handler.getPrimaryElements(), handler.getSecondaryElements());
     if (scopeFile == null) {
@@ -234,9 +263,8 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
 
-  private static UsageSearcher createUsageSearcher(final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor,
-                                            final FindUsagesOptions options,
-                                            final PsiFile scopeFile) {
+  private static UsageSearcher createUsageSearcher(final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor, final FindUsagesOptions options,
+                                                   final PsiFile scopeFile) {
     return new UsageSearcher() {
       public void generate(final Processor<Usage> processor) {
         if (scopeFile != null) {

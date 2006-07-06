@@ -3,36 +3,56 @@
  */
 package com.intellij.find.findUsages;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public abstract class FindUsagesHandler {
+  private final PsiElement myPsiElement;
 
-  public boolean canFindUsages(final PsiElement element) {
-    if (element == null) return false;
-    if (element instanceof PsiFile) return ((PsiFile)element).getVirtualFile() != null;
-    final Language language = element.getLanguage();
-    final FindUsagesProvider provider = language.getFindUsagesProvider();
-    return provider.canFindUsagesFor(element);
+  protected FindUsagesHandler(final PsiElement psiElement) {
+    myPsiElement = psiElement;
   }
 
   @NotNull
-  public abstract AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab);
+  public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
+    return new CommonFindUsagesDialog(myPsiElement, getProject(), createFindUsagesOptions(), toShowInNewTab, mustOpenInNewTab, isSingleFile);
+  }
 
+  public final PsiElement getPsiElement() {
+    return myPsiElement;
+  }
+
+  protected final Project getProject() {
+    return myPsiElement.getManager().getProject();
+  }
 
   @NotNull
   public PsiElement[] getPrimaryElements() {
-    return PsiElement.EMPTY_ARRAY;
+    return new PsiElement[]{myPsiElement};
   }
 
   @NotNull
   public PsiElement[] getSecondaryElements() {
     return PsiElement.EMPTY_ARRAY;
+  }
+
+  protected FindUsagesOptions createFindUsagesOptions() {
+    return createFindUsagesOptions(getProject());
+  }
+
+  public static FindUsagesOptions createFindUsagesOptions(final Project project) {
+    FindUsagesOptions findUsagesOptions = new FindUsagesOptions(project);
+    findUsagesOptions.isUsages = true;
+    findUsagesOptions.isIncludeOverloadUsages = false;
+    findUsagesOptions.isIncludeSubpackages = true;
+    findUsagesOptions.isReadAccess = true;
+    findUsagesOptions.isWriteAccess = true;
+    findUsagesOptions.isCheckDeepInheritance = true;
+    findUsagesOptions.isSearchForTextOccurences = true;
+    return findUsagesOptions;
   }
 }
