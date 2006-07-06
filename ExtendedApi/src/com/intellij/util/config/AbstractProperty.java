@@ -1,10 +1,9 @@
 package com.intellij.util.config;
 
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Comparator;
-
-import org.jetbrains.annotations.NonNls;
 
 public abstract class AbstractProperty<T> {
   public static final Comparator<AbstractProperty> NAME_COMPARATOR = new Comparator<AbstractProperty>() {
