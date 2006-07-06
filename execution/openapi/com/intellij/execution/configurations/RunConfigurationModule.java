@@ -46,6 +46,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
   @NonNls private static final String ELEMENT = "module";
   @NonNls private static final String ATTRIBUTE = "name";
   private Module myModule = null;
+  private String myModuleName;
   private final Project myProject;
   private final boolean myClassesInLibraries;
 
@@ -62,7 +63,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
       final Element module = modules.get(0);
       final String moduleName = module.getAttributeValue(ATTRIBUTE);  //we are unable to set 'null' module from 'not null' one
       if (moduleName != null && moduleName.length() > 0){
-        myModule = findModule(moduleName);
+        myModuleName = moduleName;
       }
     }
   }
@@ -83,7 +84,12 @@ public class RunConfigurationModule implements JDOMExternalizable {
 
   public Project getProject() { return myProject; }
 
+  @Nullable
   public Module getModule() {
+    if (myModuleName != null) { //caching
+      myModule = findModule(myModuleName);
+      myModuleName = null;
+    }
     return myModule;
   }
 
@@ -96,8 +102,9 @@ public class RunConfigurationModule implements JDOMExternalizable {
     myModule = module;
   }
 
-  public String getModuleName() { 
-    return myModule != null ? myModule.getName() : "";
+  public String getModuleName() {
+    final Module module = getModule();
+    return module != null ? module.getName() : "";
   }
 
   private ModuleManager getModuleManager() {
@@ -140,12 +147,13 @@ public class RunConfigurationModule implements JDOMExternalizable {
   }
 
   public void checkForWarning() throws RuntimeConfigurationException {
-    if (myModule != null) {
-      if (ModuleRootManager.getInstance(myModule).getJdk() == null) {
-        throw new RuntimeConfigurationWarning(ExecutionBundle.message("no.jdk.specified.for.module.warning.text", myModule.getName()));
+    final Module module = getModule();
+    if (module != null) {
+      if (ModuleRootManager.getInstance(module).getJdk() == null) {
+        throw new RuntimeConfigurationWarning(ExecutionBundle.message("no.jdk.specified.for.module.warning.text", module.getName()));
       }
-      if (myModule.isDisposed()){
-        throw new RuntimeConfigurationError(ExecutionBundle.message("module.doesn.t.exist.in.project.error.text", myModule.getName()));
+      if (module.isDisposed()){
+        throw new RuntimeConfigurationError(ExecutionBundle.message("module.doesn.t.exist.in.project.error.text", module.getName()));
       }
     }
     else {

@@ -40,6 +40,7 @@ public class ConfigurationModuleSelector {
         if (value instanceof Module) {
           final Module module = (Module)value;
           setIcon(module.getModuleType().getNodeIcon(true));
+          setText(module.getName());
         }
         return component;
       }
