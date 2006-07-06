@@ -1,8 +1,7 @@
 package com.intellij.openapi.roots.ui.util;
 
-import com.intellij.ide.IconUtilEx;
-import com.intellij.util.Icons;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Icons;
 
 import javax.swing.*;
 

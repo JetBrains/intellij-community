@@ -24,7 +24,7 @@ import javax.swing.*;
 public class IconUtilEx {
   public static Icon getEmptyIcon(boolean showVisibility) {
     RowIcon baseIcon = new RowIcon(2);
-    EmptyIcon emptyIcon = Icons.CLASS_ICON != null
+    Icon emptyIcon = Icons.CLASS_ICON != null
                           ? new EmptyIcon(Icons.CLASS_ICON.getIconWidth(), Icons.CLASS_ICON.getIconHeight())
                           : null;
     baseIcon.setIcon(emptyIcon, 0);

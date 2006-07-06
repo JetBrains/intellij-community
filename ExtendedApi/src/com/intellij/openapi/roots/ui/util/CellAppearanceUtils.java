@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.LightFilePointer;
 import com.intellij.openapi.util.IconLoader;
@@ -39,6 +38,9 @@ public class CellAppearanceUtils {
   public static final CellAppearance EMPTY = new EmptyAppearance();
   public static final Icon GENERIC_JDK_ICON = IconLoader.getIcon("/general/jdk.png");
   public static final String NO_JDK = ProjectBundle.message("jdk.missing.item");
+
+  private CellAppearanceUtils() {
+  }
 
   public static SimpleTextAttributes createSimpleCellAttributes(boolean isSelected){
     return isSelected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES;
@@ -227,7 +229,7 @@ public class CellAppearanceUtils {
   }
 
   public static CellAppearance forProjectJdk(final Project project) {
-    final ProjectRootManager projectRootManager = ProjectRootManagerEx.getInstance(project);
+    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
     final ProjectJdk projectJdk = projectRootManager.getProjectJdk();
     final CellAppearance appearance;
     if (projectJdk != null) {

@@ -1,6 +1,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.extapi.psi.PsiElementBase;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.util.Icons;
@@ -85,13 +86,13 @@ public class RowIcon implements Icon {
   public static RowIcon createLayeredIcon(Icon icon, int flags) {
     if (flags != 0) {
       List<Icon> iconLayers = new SmartList<Icon>();
-      if ((flags & ElementBase.FLAGS_STATIC) != 0) {
+      if ((flags & PsiElementBase.FLAGS_STATIC) != 0) {
         iconLayers.add(STATIC_MARK_ICON);
       }
-      if ((flags & ElementBase.FLAGS_LOCKED) != 0) {
+      if ((flags & PsiElementBase.FLAGS_LOCKED) != 0) {
         iconLayers.add(Icons.LOCKED_ICON);
       }
-      if ((flags & ElementBase.FLAGS_EXCLUDED) != 0) {
+      if ((flags & PsiElementBase.FLAGS_EXCLUDED) != 0) {
         iconLayers.add(Icons.EXCLUDED_FROM_COMPILE_ICON);
       }
       final boolean isFinal = (flags & ElementBase.FLAGS_FINAL) != 0;

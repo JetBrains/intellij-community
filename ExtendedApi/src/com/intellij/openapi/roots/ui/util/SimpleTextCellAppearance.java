@@ -3,7 +3,7 @@ package com.intellij.openapi.roots.ui.util;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 
-import javax.swing.Icon;
+import javax.swing.*;
 
 public class SimpleTextCellAppearance implements ModifiableCellAppearance {
   private Icon myIcon;
