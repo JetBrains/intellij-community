@@ -3,10 +3,9 @@ package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-
-import org.jetbrains.annotations.NonNls;
 
 public abstract class Macro {
   public static final class ExecutionCancelledException extends Exception {
