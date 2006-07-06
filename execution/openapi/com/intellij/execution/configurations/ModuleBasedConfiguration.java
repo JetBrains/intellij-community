@@ -43,10 +43,6 @@ public abstract class ModuleBasedConfiguration extends RuntimeConfiguration {
 
   public abstract Collection<Module> getValidModules();
 
-  public void setModuleName(final String moduleName) {
-    myModule.setModuleName(moduleName);
-  }
-
   public RunConfigurationModule getConfigurationModule() {
     return myModule;
   }
@@ -100,6 +96,7 @@ public abstract class ModuleBasedConfiguration extends RuntimeConfiguration {
 
   public Module[] getModules() {
     return ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
+      @SuppressWarnings({"ConstantConditions"})
       public Module[] compute() {
         final Module module = getConfigurationModule().getModule();
         return module == null ? null : new Module[] {module};

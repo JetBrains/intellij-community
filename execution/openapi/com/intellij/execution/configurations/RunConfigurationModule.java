@@ -34,6 +34,7 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,7 +45,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.RunConfigurationModule");
   @NonNls private static final String ELEMENT = "module";
   @NonNls private static final String ATTRIBUTE = "name";
-  private String myModuleName = "";
+  private Module myModule = null;
   private final Project myProject;
   private final boolean myClassesInLibraries;
 
@@ -53,6 +54,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
     myClassesInLibraries = classesInLibs;
   }
 
+  @SuppressWarnings({"unchecked"})
   public void readExternal(final Element element) throws InvalidDataException {
     final List<Element> modules = (List<Element>)element.getChildren(ELEMENT);
     LOG.assertTrue(modules.size() <= 1);
@@ -60,7 +62,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
       final Element module = modules.get(0);
       final String moduleName = module.getAttributeValue(ATTRIBUTE);  //we are unable to set 'null' module from 'not null' one
       if (moduleName != null && moduleName.length() > 0){
-        myModuleName = moduleName;
+        myModule = findModule(moduleName);
       }
     }
   }
@@ -74,27 +76,35 @@ public class RunConfigurationModule implements JDOMExternalizable {
   public void init() {
     if (getModuleName().trim().length() > 0) return;
     final Module[] modules = getModuleManager().getModules();
-    if (modules.length > 0) setModuleName(modules[0].getName());
+    if (modules.length > 0){
+      setModule(modules[0]);
+    }
   }
 
   public Project getProject() { return myProject; }
 
-  public Module getModule() { return findModule(getModuleName()); }
+  public Module getModule() {
+    return myModule;
+  }
 
-  public Module findModule(final String moduleName) { return getModuleManager().findModuleByName(moduleName); }
+  @Nullable
+  public Module findModule(final String moduleName) {
+    return getModuleManager().findModuleByName(moduleName);
+  }
 
-  public void setModule(final Module module) { setModuleName(module.getName()); }
+  public void setModule(final Module module) {
+    myModule = module;
+  }
 
-  public String getModuleName() { return myModuleName != null ? myModuleName : ""; }
-
-  public void setModuleName(final String moduleName) {
-    myModuleName = moduleName != null ? moduleName : "";
+  public String getModuleName() { 
+    return myModule != null ? myModule.getName() : "";
   }
 
   private ModuleManager getModuleManager() {
     return ModuleManager.getInstance(myProject);
   }
 
+  @Nullable
   public PsiClass findClass(final String qualifiedName) {
     if (qualifiedName == null) return null;
     final Module module = getModule();
@@ -130,19 +140,16 @@ public class RunConfigurationModule implements JDOMExternalizable {
   }
 
   public void checkForWarning() throws RuntimeConfigurationException {
-    final Module module = getModule();
-    if (module != null) {
-      if (ModuleRootManager.getInstance(module).getJdk() == null) {
-        throw new RuntimeConfigurationWarning(ExecutionBundle.message("no.jdk.specified.for.module.warning.text", module.getName()));
+    if (myModule != null) {
+      if (ModuleRootManager.getInstance(myModule).getJdk() == null) {
+        throw new RuntimeConfigurationWarning(ExecutionBundle.message("no.jdk.specified.for.module.warning.text", myModule.getName()));
+      }
+      if (myModule.isDisposed()){
+        throw new RuntimeConfigurationError(ExecutionBundle.message("module.doesn.t.exist.in.project.error.text", myModule.getName()));
       }
     }
     else {
-      if (myModuleName == null || myModuleName.trim().length() == 0) {
-        throw new RuntimeConfigurationError(ExecutionBundle.message("module.not.specified.error.text"));
-      }
-      else {
-        throw new RuntimeConfigurationError(ExecutionBundle.message("module.doesn.t.exist.in.project.error.text", myModuleName));
-      }
+      throw new RuntimeConfigurationError(ExecutionBundle.message("module.not.specified.error.text"));
     }
   }
 
