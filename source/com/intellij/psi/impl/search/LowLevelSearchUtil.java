@@ -23,16 +23,18 @@ public class LowLevelSearchUtil {
   private LowLevelSearchUtil() {
   }
 
-  private static boolean processInjectedFile(PsiElement element, final TextOccurenceProcessor processor, final StringSearcher searcher) {
+  // TRUE/FALSE -> injected psi has been discovered and processor returned true/false;
+  // null -> there were nothing injected found
+  private static Boolean processInjectedFile(PsiElement element, final TextOccurenceProcessor processor, final StringSearcher searcher) {
     PsiLanguageInjectionHost injectionHost = InjectedLanguageUtil.findInjectionHost(element);
-    if (injectionHost == null) return true;
+    if (injectionHost == null) return null;
     List<Pair<PsiElement,TextRange>> list = injectionHost.getInjectedPsi();
-    if (list == null) return true;
+    if (list == null) return null;
     for (Pair<PsiElement, TextRange> pair : list) {
       PsiElement injected = pair.getFirst();
-      if (!processElementsContainingWordInElement(processor, injected, searcher)) return false;
+      if (!processElementsContainingWordInElement(processor, injected, searcher)) return Boolean.FALSE;
     }
-    return true;
+    return Boolean.TRUE;
   }
   public static boolean processElementsContainingWordInElement(TextOccurenceProcessor processor,
                                                                PsiElement scope,
@@ -55,14 +57,20 @@ public class LowLevelSearchUtil {
           LOG.assertTrue(start >= 0);
           boolean contains = leafNode.getTextLength() - start >= patternLength;
           if (contains && !processor.execute(leafNode.getPsi(), start)) return false;
-          if (!processInjectedFile(leafNode.getPsi(), processor, searcher)) return false;
+          Boolean result = processInjectedFile(leafNode.getPsi(), processor, searcher);
+          if (result != null && !result.booleanValue()) return false;
+          boolean injectedFound = result != null;
           TreeElement prev = leafNode;
           CompositeElement run = leafNode.getTreeParent();
           while (run != null) {
             start += prev.getStartOffsetInParent();
             contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
             if (contains && !processor.execute(run.getPsi(), start)) return false;
-            if (!processInjectedFile(run.getPsi(), processor, searcher)) return false;
+            if (!injectedFound) {
+              result = processInjectedFile(run.getPsi(), processor, searcher);
+              if (result != null && !result.booleanValue()) return false;
+              injectedFound = result != null;
+            }
             prev = run;
             if (run == scopeNode) break;
             run = run.getTreeParent();
@@ -85,14 +93,20 @@ public class LowLevelSearchUtil {
           }
           boolean contains = leafElement.getTextLength() - start >= patternLength;
           if (contains && !processor.execute(leafElement, start)) return false;
-          if (!processInjectedFile(leafElement, processor, searcher)) return false;
+          Boolean result = processInjectedFile(leafElement, processor, searcher);
+          if (result != null && !result.booleanValue()) return false;
+          boolean injectedFound = result != null;
           PsiElement prev = leafElement;
           PsiElement run = leafElement.getParent();
           while (run != null) {
             start += prev.getStartOffsetInParent();
             contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
             if (contains && !processor.execute(run, start)) return false;
-            if (!processInjectedFile(run, processor, searcher)) return false;
+            if (!injectedFound) {
+              result = processInjectedFile(run, processor, searcher);
+              if (result != null && !result.booleanValue()) return false;
+              injectedFound = result != null;
+            }
             prev = run;
             if (run == scope) break;
             run = run.getParent();
