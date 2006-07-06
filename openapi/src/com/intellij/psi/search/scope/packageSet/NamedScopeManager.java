@@ -15,16 +15,17 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class NamedScopeManager extends NamedScopesHolder implements ProjectComponent {
   public static NamedScopeManager getInstance(Project project) {
     return project.getComponent(NamedScopeManager.class);
   }
 
-  public NamedScopeManager() {}
-
+  @NotNull
   public String getComponentName() {
     return "NamedScopeManager";
   }
@@ -33,4 +34,8 @@ public class NamedScopeManager extends NamedScopesHolder implements ProjectCompo
   public void disposeComponent() {}
   public void projectOpened() {}
   public void projectClosed() {}
+
+  public String getDisplayName() {
+    return IdeBundle.message("local.scopes.node.text");
+  }
 }

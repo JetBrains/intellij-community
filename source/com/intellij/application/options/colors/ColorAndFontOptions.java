@@ -28,7 +28,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
@@ -244,8 +244,11 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     Collection<NamedScope> namedScopes = new THashSet<NamedScope>();
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
-      NamedScope[] scopes = NamedScopeManager.getInstance(project).getScopes();
-      namedScopes.addAll(Arrays.asList(scopes));
+      final NamedScopesHolder[] holders = project.getComponents(NamedScopesHolder.class);
+      for (NamedScopesHolder holder : holders) {
+        NamedScope[] scopes = holder.getEditableScopes();
+        namedScopes.addAll(Arrays.asList(scopes));
+      }
     }
     for (NamedScope namedScope : namedScopes) {
       String name = namedScope.getName();

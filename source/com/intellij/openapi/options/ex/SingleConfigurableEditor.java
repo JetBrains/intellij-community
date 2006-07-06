@@ -1,5 +1,6 @@
 package com.intellij.openapi.options.ex;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
@@ -11,7 +12,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.Alarm;
-import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,7 +26,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
   private JComponent myCenterPanel;
   private String myDimensionKey;
 
-  public SingleConfigurableEditor(Project project, Configurable configurable, String dimensionKey) {
+  public SingleConfigurableEditor(Project project, Configurable configurable, @NonNls String dimensionKey) {
     super(project, true);
     myDimensionKey = dimensionKey;
     setTitle(createTitleString(configurable));

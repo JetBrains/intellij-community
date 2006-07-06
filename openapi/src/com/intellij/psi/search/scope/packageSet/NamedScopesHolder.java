@@ -20,8 +20,8 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +32,8 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
   @NonNls private static final String SCOPE_TAG = "scope";
   @NonNls private static final String NAME_ATT = "name";
   @NonNls private static final String PATTERN_ATT = "pattern";
+
+  public abstract String getDisplayName();
 
   public static interface ScopeListener {
     void scopesChanged();

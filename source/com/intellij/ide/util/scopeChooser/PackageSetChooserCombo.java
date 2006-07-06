@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,14 +23,20 @@ public class PackageSetChooserCombo extends ComboboxWithBrowseButton {
     myProject = project;
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        NamedScope scope = (NamedScope)combo.getSelectedItem();
-        ScopeChooserDialog dlg = new ScopeChooserDialog(myProject, DependencyValidationManager.getInstance(project));
-        if (scope != null) {
-          dlg.setSelectedScope(scope.getName());
+        final NamedScope scope = (NamedScope)combo.getSelectedItem();
+        final ScopeChooserConfigurable configurable = ScopeChooserConfigurable.getInstance(myProject);
+        final EditScopesDialog dlg = EditScopesDialog.editConfigurable(myProject, new Runnable() {
+          public void run() {
+            configurable.selectNodeInTree(scope.getName());
+          }
+        });
+        if (dlg.isOK()){
+          rebuild();
+          final NamedScope namedScope = dlg.getSelectedScope();
+          if (namedScope != null) {
+            selectScope(namedScope.getName());
+          }
         }
-        dlg.show();
-        rebuild();
-        selectScope(dlg.getSelectedScope());
       }
     });
 
@@ -69,6 +76,7 @@ public class PackageSetChooserCombo extends ComboboxWithBrowseButton {
     return new DefaultComboBoxModel(manager.getScopes());
   }
 
+  @Nullable
   public NamedScope getSelectedScope() {
     JComboBox combo = getComboBox();
     int idx = combo.getSelectedIndex();

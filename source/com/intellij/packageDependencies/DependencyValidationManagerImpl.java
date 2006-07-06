@@ -10,11 +10,13 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -22,7 +24,6 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.problems.WolfTheProblemSolver;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +76,8 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
       final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
       myProjectTestScope = new NamedScope(IdeBundle.message("predifined.scope.tests.name"), new PackageSet() {
         public boolean contains(PsiFile file, NamedScopesHolder holder) {
-          return file.getProject() == myProject && index.isInTestSourceContent(file.getVirtualFile());
+          final VirtualFile virtualFile = file.getVirtualFile();
+          return file.getProject() == myProject && virtualFile != null && index.isInTestSourceContent(virtualFile);
         }
 
         public PackageSet createCopy() {
@@ -129,6 +131,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return myRules.size() > 0;
   }
 
+  @Nullable
   public DependencyRule getViolatorDependencyRule(PsiFile from, PsiFile to) {
     for (DependencyRule dependencyRule : myRules) {
       if (dependencyRule.isForbiddenToUse(from, to)) return dependencyRule;
@@ -211,6 +214,10 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return "DependencyValidationManager";
   }
 
+  public String getDisplayName() {
+    return IdeBundle.message("shared.scopes.node.text");
+  }
+
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     super.readExternal(element);
@@ -236,6 +243,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     }
   }
 
+  @Nullable
   private static Element writeRule(DependencyRule rule) {
     NamedScope fromScope = rule.getFromScope();
     NamedScope toScope = rule.getToScope();
@@ -247,6 +255,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return ruleElement;
   }
 
+  @Nullable
   private DependencyRule readRule(Element ruleElement) {
     String fromScope = ruleElement.getAttributeValue(FROM_SCOPE_KEY);
     String toScope = ruleElement.getAttributeValue(TO_SCOPE_KEY);

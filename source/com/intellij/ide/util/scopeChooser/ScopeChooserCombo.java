@@ -19,12 +19,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.rules.PsiElementUsage;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -87,14 +88,22 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
   protected ActionListener createScopeChooserListener() {
     return new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        ScopeChooserDialog dlg = new ScopeChooserDialog(myProject, NamedScopeManager.getInstance(myProject));
-        String selection = getSelectedScopeName();
-        if (selection != null) {
-          dlg.setSelectedScope(selection);
+        final String selection = getSelectedScopeName();
+        final ScopeChooserConfigurable chooserConfigurable = ScopeChooserConfigurable.getInstance(myProject);
+        final EditScopesDialog dlg = EditScopesDialog.editConfigurable(myProject, new Runnable() {
+          public void run() {
+            if (selection != null) {
+              chooserConfigurable.selectNodeInTree(selection);
+            }
+          }
+        });
+        if (dlg.isOK()){
+          rebuildModel();
+          final NamedScope namedScope = dlg.getSelectedScope();
+          if (namedScope != null) {
+            selectScope(namedScope.getName());
+          }
         }
-        dlg.show();
-        rebuildModel();
-        selectScope(dlg.getSelectedScope());
       }
     };
   }
@@ -123,10 +132,12 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     DefaultComboBoxModel model = new DefaultComboBoxModel();
     createPredefinedScopeDescriptors(model);
 
-    NamedScopeManager scopeManager = NamedScopeManager.getInstance(myProject);
-    NamedScope[] scopes = scopeManager.getScopes();
-    for (NamedScope scope : scopes) {
-      model.addElement(new ScopeDescriptor(GlobalSearchScope.filterScope(myProject, scope, true)));
+    final NamedScopesHolder[] holders = myProject.getComponents(NamedScopesHolder.class);
+    for (NamedScopesHolder holder : holders) {
+      NamedScope[] scopes = holder.getEditableScopes(); //predefined scopes already included
+      for (NamedScope scope : scopes) {
+        model.addElement(new ScopeDescriptor(GlobalSearchScope.filterScope(myProject, scope, true)));
+      }
     }
 
     return model;
@@ -242,6 +253,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
       return IdeBundle.message("scope.class.hierarchy");
     }
 
+    @Nullable
     public SearchScope getScope() {
       if (myCachedScope == null) {
         TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject()).createAllProjectScopeChooser(IdeBundle.message("prompt.choose.base.class.of.the.hierarchy"));
@@ -271,6 +283,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     }
   }
 
+  @Nullable
   public SearchScope getSelectedScope() {
     JComboBox combo = getComboBox();
     int idx = combo.getSelectedIndex();
@@ -278,6 +291,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     return ((ScopeDescriptor)combo.getSelectedItem()).getScope();
   }
 
+  @Nullable
   public String getSelectedScopeName() {
     JComboBox combo = getComboBox();
     int idx = combo.getSelectedIndex();

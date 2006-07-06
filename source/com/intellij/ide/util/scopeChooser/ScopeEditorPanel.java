@@ -6,6 +6,9 @@ package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -20,6 +23,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
@@ -36,7 +40,6 @@ import java.awt.event.FocusListener;
 public class ScopeEditorPanel {
   public static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private JPanel myButtonsPanel;
-  private JTextField myNameField;
   private JTextField myPatternField;
   private JPanel myTreeToolbar;
   private Tree myPackageTree;
@@ -52,10 +55,11 @@ public class ScopeEditorPanel {
   private boolean myIsInUpdate = false;
   private String myErrorMessage;
   private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-  private ScopeChooserPanel.ScopeDescriptor myDescriptor;
+
   private boolean myIsFirstUpdate = true;
   private JLabel myCaretPositionLabel;
   private int myCaretPosition = 0;
+  private boolean myCanceled = false;
 
   public ScopeEditorPanel(Project project, final NamedScopesHolder holder) {
     myProject = project;
@@ -134,6 +138,7 @@ public class ScopeEditorPanel {
       try {
         myCurrentScope = PackageSetFactory.getInstance().compile(myPatternField.getText());
         myErrorMessage = null;
+        myCanceled = true;
         rebuild(false);
       }
       catch (Exception e) {
@@ -214,6 +219,7 @@ public class ScopeEditorPanel {
     rebuild(true);
   }
 
+  @Nullable
   private PackageSet getSelectedSet(boolean recursively) {
     int[] rows = myPackageTree.getSelectionRows();
     if (rows == null || rows.length != 1) return null;
@@ -267,6 +273,7 @@ public class ScopeEditorPanel {
     return new PatternPackageSet(scope != PatternPackageSet.SCOPE_FILE ? pattern : null, scope, modulePattern, scope == PatternPackageSet.SCOPE_FILE ? pattern : null);
   }
 
+  @Nullable
   private static String getSelectedModulePattern(PackageDependenciesNode node) {
     ModuleNode moduleParent = getModuleParent(node);
     String modulePattern = null;
@@ -295,12 +302,14 @@ public class ScopeEditorPanel {
     return scope;
   }
 
+  @Nullable
   private static GeneralGroupNode getGroupParent(PackageDependenciesNode node) {
     if (node instanceof GeneralGroupNode) return (GeneralGroupNode)node;
     if (node == null || node instanceof RootNode) return null;
     return getGroupParent((PackageDependenciesNode)node.getParent());
   }
 
+  @Nullable
   private static ModuleNode getModuleParent(PackageDependenciesNode node) {
     if (node instanceof ModuleNode) return (ModuleNode)node;
     if (node == null || node instanceof RootNode) return null;
@@ -360,20 +369,38 @@ public class ScopeEditorPanel {
   }
 
   private void updateTreeModel() {
-    myTreeExpansionMonitor.freeze();
-    TreeModelBuilder.TreeModel model = TreeModelBuilder.createTreeModel(myProject, myIsFirstUpdate, false, myTreeMarker);
-    myIsFirstUpdate = false;
+    Runnable updateModel = new Runnable(){
+      public void run() {
+        try {
+          myTreeExpansionMonitor.freeze();
+          TreeModelBuilder.TreeModel model = TreeModelBuilder.createTreeModel(myProject, myIsFirstUpdate, false, myTreeMarker);
+          myIsFirstUpdate = false;
 
-    if (myErrorMessage == null) {
-      myMatchingCountLabel.setText(IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount()));
-      myMatchingCountLabel.setForeground(new JLabel().getForeground());
-    }
-    else {
-      showErrorMessage();
-    }
+          if (myErrorMessage == null) {
+            myMatchingCountLabel.setText(IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount()));
+            myMatchingCountLabel.setForeground(new JLabel().getForeground());
+          }
+          else {
+            showErrorMessage();
+          }
 
-    myPackageTree.setModel(model);
-    myTreeExpansionMonitor.restore();
+          myPackageTree.setModel(model);
+          myTreeExpansionMonitor.restore();
+        }
+        finally {
+          myCanceled = false;
+        }
+      }
+    };
+    if (myIsFirstUpdate) {
+      updateModel.run();
+    } else {
+      ProgressManager.getInstance().runProcess(updateModel, new ProgressIndicatorBase() {
+        public boolean isCanceled() {
+          return myCanceled;
+        }
+      });
+    }
   }
 
   public int getMarkedFileCount(){
@@ -394,25 +421,17 @@ public class ScopeEditorPanel {
     return true;
   }
 
-  public boolean commit() {
-    if (!checkCurrentScopeValid(true)) return false;
-
-    rebuild(false);
-    myDescriptor.setName(myNameField.getText());
-    myDescriptor.setSet(myCurrentScope);
-    return true;
+  public void apply() throws ConfigurationException {
+    if (myCurrentScope == null) {
+      throw new ConfigurationException(IdeBundle.message("error.correct.pattern.syntax.errors.first"));
+    }
   }
 
-  public void reset(ScopeChooserPanel.ScopeDescriptor descriptor) {
-    myDescriptor = descriptor;
-    myNameField.setText(descriptor.getName());
-    myCurrentScope = descriptor.getSet();
-    myPatternField.setText(myCurrentScope == null ? "" : myCurrentScope.getText());
-    rebuild(false);
+  public PackageSet getCurrentScope() {
+    return myCurrentScope;
   }
 
   public void reset(PackageSet packageSet, Runnable runnable){
-    myDescriptor = null;
     myCurrentScope = packageSet;
     myPatternField.setText(myCurrentScope == null ? "" : myCurrentScope.getText());
     rebuild(false, runnable);

@@ -22,6 +22,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -143,13 +144,14 @@ public class TreeModelBuilder {
     boolean isMarked(PsiFile file);
   }
 
-  public static TreeModel createTreeModel(Project project, boolean showProgress, Set<PsiFile> files, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
+  public static synchronized TreeModel createTreeModel(Project project, boolean showProgress, Set<PsiFile> files, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
     return new TreeModelBuilder(project, true, marker, settings).build(files, showProgress);
   }
 
-  public static TreeModel createTreeModel(Project project, boolean showProgress,
-                                          boolean showIndividualLibs,
-                                          Marker marker) {
+  public static synchronized TreeModel createTreeModel(Project project,
+                                                       boolean showProgress,
+                                                       boolean showIndividualLibs,
+                                                       Marker marker) {
     return new TreeModelBuilder(project, showIndividualLibs, marker, new DependenciesPanel.DependencyPanelSettings()).build(project, showProgress);
   }
 
@@ -227,7 +229,7 @@ public class TreeModelBuilder {
     };
 
     if (showProgress) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(buildingRunnable, AnalysisScopeBundle.message("package.dependencies.build.process.title"), false, project);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(buildingRunnable, AnalysisScopeBundle.message("package.dependencies.build.process.title"), true, project);
     }
     else {
       buildingRunnable.run();
@@ -356,21 +358,8 @@ public class TreeModelBuilder {
     }
   }
 
+  @Nullable
   public DefaultMutableTreeNode removeNode(final PsiElement element, PsiDirectory parent) {
-    if (false && element != null && element.isValid()) {
-      boolean isMarked = false;
-      if (element instanceof PsiFile) {
-        isMarked = myMarker.isMarked((PsiFile)element);
-      }
-      else if (element instanceof PsiDirectory) {
-        final PsiDirectory psiDirectory = (PsiDirectory)element;
-        final PsiFile[] psiFiles = psiDirectory.getFiles();
-        for (PsiFile psiFile : psiFiles) {
-          isMarked |= myMarker.isMarked(psiFile);
-        }
-      }
-      if (!isMarked) return null;
-    }
     Module module = myFileIndex.getModuleForFile(parent.getVirtualFile());
     DefaultMutableTreeNode dirNode = getModuleDirNode(parent, module, ScopeType.SOURCE, null);
     if (dirNode == null) return null;
@@ -415,6 +404,7 @@ public class TreeModelBuilder {
     return parentNode;
   }
 
+  @Nullable
   public DefaultMutableTreeNode addFileNode(final PsiFile file){
     boolean isMarked = myMarker != null && myMarker.isMarked(file);
     if (!isMarked) return null;
@@ -432,12 +422,14 @@ public class TreeModelBuilder {
     return rootToReload;
   }
 
+  @Nullable
   public PackageDependenciesNode findNode(PsiFile file) {
     PackageDependenciesNode parent = getFileParentNode(file);
     PackageDependenciesNode[] nodes = findNodeForPsiElement(parent, file);
     return nodes == null || nodes.length == 0 ? null : nodes[0];
   }
 
+  @Nullable
   private static PackageDependenciesNode[] findNodeForPsiElement(PackageDependenciesNode parent, PsiElement element){
     final Set<PackageDependenciesNode> result = new HashSet<PackageDependenciesNode>();
     for (int i = 0; i < parent.getChildCount(); i++){
@@ -463,6 +455,7 @@ public class TreeModelBuilder {
   }
 
 
+  @Nullable
   private PsiPackage getFilePackage(PsiJavaFile file) {
     VirtualFile vFile = file.getVirtualFile();
     if (vFile != null && myFileIndex.isInLibrarySource(vFile)) {
@@ -483,6 +476,7 @@ public class TreeModelBuilder {
     return ScopeType.SOURCE;
   }
 
+  @Nullable
   private OrderEntry getLibraryForFile(PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
@@ -614,6 +608,7 @@ public class TreeModelBuilder {
   }
 
 
+  @Nullable
   private PackageDependenciesNode getModuleNode(Module module, ScopeType scopeType) {
     if (module == null || !myShowModules) {
       return getRootNode(scopeType);
@@ -673,6 +668,7 @@ public class TreeModelBuilder {
   }
 
 
+  @NotNull
   public PackageDependenciesNode getRootNode(ScopeType scopeType) {
     if (!myGroupByScopeType) {
       return myRoot;
@@ -684,11 +680,10 @@ public class TreeModelBuilder {
       else if (scopeType == ScopeType.SOURCE) {
         return mySourceRoot;
       }
-      else if (scopeType == ScopeType.LIB) {
+      else {
         return myLibsRoot;
       }
     }
-    return null;
   }
 
   public TreeNode getRootNode() {

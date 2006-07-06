@@ -110,6 +110,10 @@
       <implementation-class>com.intellij.openapi.vcs.configurable.VcsManagerConfigurable</implementation-class>
       <skipForDummyProject/>
     </component>
+    <component>
+      <implementation-class>com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
     <!--<component>-->
     <!--  <implementation-class>com.intellij.j2ee.web.WebConfigurable</implementation-class>-->
     <!--</component>-->
