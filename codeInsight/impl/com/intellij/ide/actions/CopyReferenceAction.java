@@ -5,6 +5,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PasteProvider;
 import com.intellij.javaee.web.WebModuleProperties;
@@ -72,11 +73,8 @@ public class CopyReferenceAction extends AnAction {
     DataContext dataContext = e.getDataContext();
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    PsiElement element;
-    if (editor == null) {
-      element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
-    }
-    else {
+    PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    if (element == null && editor != null) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       element = file.findElementAt(editor.getCaretModel().getOffset());
     }
@@ -89,7 +87,9 @@ public class CopyReferenceAction extends AnAction {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     if (editor != null) {
-      highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{element}, attributes, true, null);
+      PsiElement toHighlight = HighlightUsagesHandler.getNameIdentifier(element);
+      if (toHighlight == null) toHighlight = element;
+      highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{toHighlight}, attributes, true, null);
     }
   }
 

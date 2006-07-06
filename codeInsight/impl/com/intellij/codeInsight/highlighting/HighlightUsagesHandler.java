@@ -117,14 +117,13 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     model.setStringToFind(text);
     model.setSearchHighlighters(true);
     int offset = 0;
-    FindResult result;
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
     int count = 0;
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     while (true) {
-      result = findManager.findString(editor.getDocument().getCharsSequence(), offset, model);
+      FindResult result = findManager.findString(editor.getDocument().getCharsSequence(), offset, model);
       if (!result.isStringFound()) break;
       highlightManager.addRangeHighlight(editor, result.getStartOffset(), result.getEndOffset(), attributes, false, highlighters);
       offset = result.getEndOffset();
@@ -511,10 +510,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     Document document = editor.getDocument();
     highlightManager.addOccurrenceHighlights(editor, elements, attributes, false, highlighters);
-
-    int idx = 0;
-    for (Iterator<RangeHighlighter> iterator = highlighters.iterator(); iterator.hasNext(); idx++) {
-      RangeHighlighter highlighter = iterator.next();
+    for (int idx = 0; idx < highlighters.size(); idx++) {
+      RangeHighlighter highlighter = highlighters.get(idx);
       int offset = elements[idx].getTextRange().getStartOffset();
       setLineTextErrorStripeTooltip(document, offset, highlighter);
     }
@@ -528,15 +525,14 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     Document document = editor.getDocument();
     PsiReference[] refArray = refs.toArray(new PsiReference[refs.size()]);
     highlightManager.addOccurrenceHighlights(editor, refArray, attributes, false, highlighters);
-    int idx = 0;
-    for (Iterator<RangeHighlighter> iterator = highlighters.iterator(); iterator.hasNext(); idx++) {
-      RangeHighlighter highlighter = iterator.next();
+    for (int idx = 0; idx < highlighters.size(); idx++) {
+      RangeHighlighter highlighter = highlighters.get(idx);
       int offset = refArray[idx].getElement().getTextRange().getStartOffset() + refArray[idx].getRangeInElement().getStartOffset();
       setLineTextErrorStripeTooltip(document, offset, highlighter);
     }
   }
 
-  private static PsiElement getNameIdentifier(PsiElement element) {
+  public static PsiElement getNameIdentifier(PsiElement element) {
     if (element instanceof PsiClass) {
       return ((PsiClass)element).getNameIdentifier();
     }
