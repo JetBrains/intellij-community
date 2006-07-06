@@ -16,12 +16,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.Iterator;
 import java.util.Collection;
-
-import org.jetbrains.annotations.NotNull;
+import java.util.Iterator;
 
 public final class MacroManager implements ApplicationComponent {
   private final HashMap<String, Macro> myMacrosMap = new HashMap<String, Macro>();

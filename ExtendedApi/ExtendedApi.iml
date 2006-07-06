@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="inspections-impl" exported="" />
     <orderEntry type="module" module-name="inspections-openapi" />
     <orderEntry type="module" module-name="j2ee-openapi" />
+    <orderEntry type="module" module-name="action-system-impl" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
