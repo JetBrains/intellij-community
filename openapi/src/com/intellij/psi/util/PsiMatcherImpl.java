@@ -36,8 +36,8 @@ public class PsiMatcherImpl implements PsiMatcher {
 
   public PsiMatcher firstChild(PsiMatcherExpression e) {
     final PsiElement[] children = myElement.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      myElement = children[i];
+    for (PsiElement child : children) {
+      myElement = child;
       if (e == null || e.match(myElement) == Boolean.TRUE) {
         return this;
       }
@@ -59,12 +59,13 @@ public class PsiMatcherImpl implements PsiMatcher {
 
   public PsiMatcher descendant(PsiMatcherExpression e) {
     final PsiElement[] children = myElement.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      myElement = children[i];
-      final Boolean res = e==null ? Boolean.TRUE : e.match(myElement);
+    for (PsiElement child : children) {
+      myElement = child;
+      final Boolean res = e == null ? Boolean.TRUE : e.match(myElement);
       if (res == Boolean.TRUE) {
         return this;
-      } else if (res == Boolean.FALSE) {
+      }
+      else if (res == Boolean.FALSE) {
         final PsiMatcher grandChild = descendant(e);
         if (grandChild != NullPsiMatcherImpl.INSTANCE) return grandChild;
       }
@@ -73,7 +74,7 @@ public class PsiMatcherImpl implements PsiMatcher {
   }
 
   public PsiMatcher dot(PsiMatcherExpression e) {
-    return e == null || e.match(myElement) == Boolean.TRUE ? (PsiMatcher) this : NullPsiMatcherImpl.INSTANCE;
+    return e == null || e.match(myElement) == Boolean.TRUE ? this : NullPsiMatcherImpl.INSTANCE;
   }
 
 
@@ -113,8 +114,7 @@ public class PsiMatcherImpl implements PsiMatcher {
   public static PsiMatcherExpression hasClass(final Class[] classes) {
     return new PsiMatcherExpression() {
       public Boolean match(PsiElement element) {
-        for (int i = 0; i < classes.length; i++) {
-          Class aClass = classes[i];
+        for (Class aClass : classes) {
           if (aClass.isAssignableFrom(element.getClass())) return Boolean.TRUE;
         }
         return Boolean.FALSE;
@@ -142,7 +142,7 @@ public class PsiMatcherImpl implements PsiMatcher {
   public static PsiMatcherExpression isConstructor(final boolean shouldBe) {
     return new PsiMatcherExpression() {
       public Boolean match(PsiElement element) {
-        return Boolean.valueOf((element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) == shouldBe);
+        return element instanceof PsiMethod && ((PsiMethod)element).isConstructor() == shouldBe;
       }
     };
   }
