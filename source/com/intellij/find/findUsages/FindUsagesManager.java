@@ -80,8 +80,12 @@ public class FindUsagesManager implements JDOMExternalizable {
     myHandlers.add(new Function<PsiElement, Factory<FindUsagesHandler>>() {
       @Nullable
       public Factory<FindUsagesHandler> fun(final PsiElement element) {
-        if (element instanceof PsiFile && ((PsiFile)element).getVirtualFile() == null) return null;
-        if (!element.getLanguage().getFindUsagesProvider().canFindUsagesFor(element)) return null;
+        if (element instanceof PsiFile) {
+          if (((PsiFile)element).getVirtualFile() == null) return null;
+        } else if (!element.getLanguage().getFindUsagesProvider().canFindUsagesFor(element)) {
+          return null;
+        }
+        
         if (element instanceof PsiDirectory) {
           final PsiPackage psiPackage = ((PsiDirectory)element).getPackage();
           return psiPackage == null ? null : new Factory<FindUsagesHandler>() {
