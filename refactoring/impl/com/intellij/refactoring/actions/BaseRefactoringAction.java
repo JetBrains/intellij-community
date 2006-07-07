@@ -6,8 +6,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public abstract class BaseRefactoringAction extends AnAction {
   protected abstract boolean isAvailableInEditorOnly();
@@ -73,7 +79,7 @@ public abstract class BaseRefactoringAction extends AnAction {
           element = file.findElementAt(element.getTextRange().getStartOffset() - 1);
         }
       }
-      presentation.setEnabled(element != null && isAvailableForLanguage(element.getLanguage()));
+      presentation.setEnabled(element != null && !isSyntheticJsp(element) && isAvailableForLanguage(element.getLanguage()));
 
     } else {
       if (isAvailableInEditorOnly()) {
@@ -93,6 +99,10 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
   }
 
+  private static boolean isSyntheticJsp(final PsiElement element) {
+    return element instanceof JspHolderMethod || element instanceof JspClass;
+  }
+
   protected boolean isAvailableForLanguage(Language language) {
     return language.equals(StdFileTypes.JAVA.getLanguage());
   }
@@ -109,7 +119,17 @@ public abstract class BaseRefactoringAction extends AnAction {
         psiElements = new PsiElement[]{element};
       }
     }
-    return psiElements;
+
+    List<PsiElement> filtered = null;
+    if (psiElements != null) {
+      for (PsiElement element : psiElements) {
+        if (isSyntheticJsp(element)) {
+          if (filtered == null) filtered = new ArrayList<PsiElement>(Arrays.asList(element));
+          filtered.remove(element);
+        }
+      }
+    }
+    return filtered == null ? psiElements : filtered.toArray(new PsiElement[filtered.size()]);
   }
 
 }
