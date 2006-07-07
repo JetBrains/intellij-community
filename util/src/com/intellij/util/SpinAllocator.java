@@ -18,8 +18,8 @@ public class SpinAllocator<T> {
     void disposeInstance(T instance);
   }
 
-  private AtomicBoolean myEmployed[] = new AtomicBoolean[MAX_SIMULTANEOUS_ALLOCATIONS];
-  private Object myObjects[] = new Object[MAX_SIMULTANEOUS_ALLOCATIONS];
+  private AtomicBoolean[] myEmployed = new AtomicBoolean[MAX_SIMULTANEOUS_ALLOCATIONS];
+  private Object[] myObjects = new Object[MAX_SIMULTANEOUS_ALLOCATIONS];
   protected final ICreator<T> myCreator;
   protected final IDisposer<T> myDisposer;
 
@@ -41,7 +41,7 @@ public class SpinAllocator<T> {
         return result;
       }
     }
-    throw new RuntimeException("SpinAllocator has exhausted! Check its usages, most likely it is leaking.");
+    throw new RuntimeException("SpinAllocator has exhausted! Too many threads or you're going to get StackOverflow.");
   }
 
   public void dispose(T instance) {
