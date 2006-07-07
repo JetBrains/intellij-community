@@ -187,24 +187,38 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
         final Iterator<OuterLanguageElement> iterator = languageElements.iterator();
         XmlText prevText = null;
+        int outerCount = 0;
+
         while (iterator.hasNext()) {
           final OuterLanguageElement outerElement = iterator.next();
-          if (outerElement == null) {
-            iterator.remove();
-            continue;
-          }
-          final FileElement file = TreeUtil.getFileElement(outerElement);
-          if (file == null || file.getPsi() != psiFile) {
-            iterator.remove();
-            continue;
-          }
+//  TODO: it seems we invalid elements during merge, but if some more exit then this code should be uncommented
+//          final FileElement file = TreeUtil.getFileElement(outerElement);
+//
+//          if (file == null || file.getPsi() != psiFile) {
+//            iterator.remove(); // remove invalid texts (e.g. merged)
+//            continue;
+//          }
+
           final XmlText nextText = outerElement.getFollowingText();
-          final TextRange textRange = new TextRange(prevText != null ? prevText.getTextRange().getEndOffset() : 0,
-                                                    nextText != null ? nextText.getTextRange().getStartOffset() : getContents().length());
+
+          final TextRange textRange = new TextRange(
+            prevText != null ?
+              prevText.getTextRange().getEndOffset() :
+              outerCount != 0 ?
+                outerElement.getTextRange().getStartOffset():
+                0,
+            nextText != null ?
+              nextText.getTextRange().getStartOffset() :
+              iterator.hasNext() ?
+                outerElement.getTextRange().getEndOffset():
+                getContents().length()
+          );
+
           if (!textRange.equals(outerElement.getTextRange())) {
             outerElement.setRange(textRange);
           }
           prevText = nextText;
+          ++outerCount;
         }
       }
       finally {
@@ -341,7 +355,10 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   private void normalizeOuterLanguageElementsInner(final PsiFile lang) {
     final SoftReference<Set<OuterLanguageElement>> outerElements = myOuterLanguageElements.get(lang);
     if (outerElements == null || outerElements.get() == null) return;
-    final Iterator<OuterLanguageElement> iterator = outerElements.get().iterator();
+    final Set<OuterLanguageElement> languageElements = outerElements.get();
+    final Iterator<OuterLanguageElement> iterator = languageElements.iterator();
+    final List<OuterLanguageElement> toRemove = new ArrayList<OuterLanguageElement>();
+
     OuterLanguageElement prev = null;
     while (iterator.hasNext()) {
       final OuterLanguageElement outer = iterator.next();
@@ -353,11 +370,25 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
       if (prev != null && prev.getFollowingText() == null && outer.getTextRange().getStartOffset() == prev.getTextRange().getEndOffset()) {
         final CompositeElement prevParent = prev.getTreeParent();
+        final JspWhileStatement outerWhile = PsiTreeUtil.getParentOfType(outer, JspWhileStatement.class);
+
         if (prevParent != null && prevParent.getElementType() == JspElementType.JSP_TEMPLATE_EXPRESSION ||
-            PsiTreeUtil.getParentOfType(outer, JspWhileStatement.class) != null) {
-          prev = mergeOuterLanguageElements(outer, prev);
+            outerWhile != null) {
+
+          final JspWhileStatement prevWhile = PsiTreeUtil.getParentOfType(prev, JspWhileStatement.class);
+
+          if (prevWhile == null ||
+              prevWhile == outerWhile ||
+              prevWhile.getStartOffset() != prev.getStartOffset()
+             ) {
+            toRemove.add(prev);
+            prev = mergeOuterLanguageElements(outer, prev);
+          } else {
+            prev = outer;
+          }
         }
         else {
+          toRemove.add(outer);
           prev = mergeOuterLanguageElements(prev, outer);
         }
       }
@@ -365,6 +396,8 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
         prev = outer;
       }
     }
+
+    languageElements.removeAll(toRemove);
   }
 
   private static OuterLanguageElement mergeOuterLanguageElements(final OuterLanguageElement prev, final OuterLanguageElement outer) {
