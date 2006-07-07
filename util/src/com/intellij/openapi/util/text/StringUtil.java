@@ -603,6 +603,11 @@ public class StringUtil {
     return s == null || s.length() == 0;
   }
 
+  @NotNull
+  public static String notNullize(final String s) {
+    return s == null ? "" : s;
+  }
+
   public static boolean isEmptyOrSpaces(final String s) {
     return s == null || s.trim().length() == 0;
   }

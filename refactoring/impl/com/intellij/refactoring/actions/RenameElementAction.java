@@ -13,6 +13,10 @@ import com.intellij.xml.util.XmlUtil;
 
 public class RenameElementAction extends BaseRefactoringAction {
 
+  public RenameElementAction() {
+    setInjectedContext(true);
+  }
+
   public boolean isAvailableInEditorOnly() {
     return false;
   }
