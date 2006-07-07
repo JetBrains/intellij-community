@@ -755,7 +755,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           name = getUniqueName();
         }
 
-        final LocalChangeList list = addChangeList(name, dlg.getDescription());
+        addChangeList(name, dlg.getDescription());
       }
     }
 
@@ -877,7 +877,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public class RollbackAction extends AnAction {
     public RollbackAction() {
-      super("Rollback", "Rollback selected changes",
+      super(VcsBundle.message("changes.action.rollback.text"), VcsBundle.message("changes.action.rollback.description"),
             IconLoader.getIcon("/actions/rollback.png"));
     }
 
@@ -897,11 +897,12 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public class ScheduleForAdditionAction extends AnAction {
     public ScheduleForAdditionAction() {
-      super("Add to VCS", "Schedule selected files to be added to VCS",
+      super(VcsBundle.message("changes.action.add.text"), VcsBundle.message("changes.action.add.description"),
             IconLoader.getIcon("/actions/include.png"));
     }
 
     public void update(AnActionEvent e) {
+      //noinspection unchecked
       List<VirtualFile> files = (List<VirtualFile>)e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
       boolean enabled = files != null && !files.isEmpty();
       e.getPresentation().setEnabled(enabled);
@@ -909,6 +910,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
 
     public void actionPerformed(AnActionEvent e) {
+      //noinspection unchecked
       final List<VirtualFile> files = (List<VirtualFile>)e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
       if (files == null) return;
 
@@ -932,11 +934,12 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public class ScheduleForRemovalAction extends AnAction {
     public ScheduleForRemovalAction() {
-      super("Remove from VCS", "Schedule selected files to be removed from VCS",
+      super(VcsBundle.message("changes.action.remove.text"), VcsBundle.message("changes.action.remove.description"),
             IconLoader.getIcon("/actions/exclude.png"));
     }
 
     public void update(AnActionEvent e) {
+      //noinspection unchecked
       List<File> files = (List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
       boolean enabled = files != null && !files.isEmpty();
       e.getPresentation().setEnabled(enabled);
@@ -944,6 +947,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
 
     public void actionPerformed(AnActionEvent e) {
+      //noinspection unchecked
       final List<File> files = (List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
       if (files == null) return;
 
@@ -1140,7 +1144,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
-  private VirtualFile[] collectFiles(final List<FilePath> paths) {
+  private static VirtualFile[] collectFiles(final List<FilePath> paths) {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (FilePath path : paths) {
       if (path.getVirtualFile() != null) {
