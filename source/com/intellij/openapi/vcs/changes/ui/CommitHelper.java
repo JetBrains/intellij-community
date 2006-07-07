@@ -30,17 +30,11 @@ public class CommitHelper {
   private final String myActionName;
   private final String myCommitMessage;
   
-  private final CommitSession mySession;
   private final List<CheckinHandler> myHandlers;
   private final boolean myAllOfDefaultChangeListChangesIncluded;
 
 
-  public CommitHelper(final Project project,
-                      final ChangeList changeList,
-                      final List<Change> includedChanges,
-                      final String actionName,
-                      final String commitMessage,
-                      final CommitSession session,
+  public CommitHelper(final Project project, final ChangeList changeList, final List<Change> includedChanges, final String actionName, final String commitMessage,
                       final List<CheckinHandler> handlers,
                       final boolean allOfDefaultChangeListChangesIncluded) {
     myProject = project;
@@ -48,7 +42,6 @@ public class CommitHelper {
     myIncludedChanges = includedChanges;
     myActionName = actionName;
     myCommitMessage = commitMessage;
-    mySession = session;
     myHandlers = handlers;
     myAllOfDefaultChangeListChangesIncluded = allOfDefaultChangeListChangesIncluded;
   }
@@ -62,14 +55,6 @@ public class CommitHelper {
   }
 
   private Runnable checkinAction(final List<VcsException> vcsExceptions, final List<Change> changesFailedToCommit, final ChangeList changeList) {
-    if (mySession != null) {
-      return new Runnable() {
-        public void run() {
-          mySession.execute(myIncludedChanges, myCommitMessage);
-        }
-      };
-    }
-
     return new Runnable() {
       public void run() {
         performCommit(vcsExceptions, changesFailedToCommit, changeList);

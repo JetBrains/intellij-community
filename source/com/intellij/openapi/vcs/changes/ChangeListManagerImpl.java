@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -23,7 +24,6 @@ import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
@@ -39,9 +39,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -183,15 +181,17 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     final RenameChangeListAction renameAction = new RenameChangeListAction();
     renameAction.registerCustomShortcutSet(CommonShortcuts.getRename(), panel);
 
-    final CommitAction commitAction = new CommitAction();
+    final CommitAction commitAction = new CommitAction(myExecutors);
     final RollbackAction rollbackAction = new RollbackAction();
 
     modelActionsGroup.add(refreshAction);
     modelActionsGroup.add(commitAction);
 
+    /*
     for (CommitExecutor executor : myExecutors) {
       modelActionsGroup.add(new CommitUsingExecutorAction(executor));
     }
+    */
 
     modelActionsGroup.add(rollbackAction);
     modelActionsGroup.add(newChangeListAction);
@@ -222,9 +222,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     menuGroup.add(refreshAction);
 
     menuGroup.add(commitAction);
+    /*
     for (CommitExecutor executor : myExecutors) {
       menuGroup.add(new CommitUsingExecutorAction(executor));
     }
+    */
 
     menuGroup.add(rollbackAction);
     menuGroup.add(newChangeListAction);
@@ -833,32 +835,13 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     return selectedList;
   }
 
-  private class CommitUsingExecutorAction extends AnAction {
-    private CommitExecutor myExecutor;
-
-    public CommitUsingExecutorAction(CommitExecutor executor) {
-      super(executor.getActionText(), executor.getActionDescription(), executor.getActionIcon());
-      myExecutor = executor;
-    }
-
-    public void update(AnActionEvent e) {
-      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      e.getPresentation().setEnabled(getChangeListIfOnlyOne(changes) != null);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      final ChangeList list = getChangeListIfOnlyOne(changes);
-      if (list == null) return;
-
-      CommitChangeListDialog.commitChanges(myProject, Arrays.asList(changes), myExecutor);
-    }
-  }
-
   public class CommitAction extends AnAction {
-    public CommitAction() {
+    private final List<CommitExecutor> myExecutors;
+
+    public CommitAction(final List<CommitExecutor> executors) {
       super(VcsBundle.message("changes.action.commit.text"), VcsBundle.message("changes.action.commit.description"),
             IconLoader.getIcon("/actions/execute.png"));
+      myExecutors = executors;
     }
 
     public void update(AnActionEvent e) {
@@ -871,7 +854,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       final ChangeList list = getChangeListIfOnlyOne(changes);
       if (list == null) return;
 
-      CommitChangeListDialog.commitChanges(myProject, Arrays.asList(changes));
+      CommitChangeListDialog.commitChanges(myProject, Arrays.asList(changes), myExecutors);
     }
   }
 
@@ -1031,8 +1014,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public void commitChanges(LocalChangeList changeList, List<Change> changes) {
-    new CommitHelper(myProject, changeList, changes, changeList.getName(), 
-                     changeList.getComment(), null, new ArrayList<CheckinHandler>(), false).doCommit();
+    new CommitHelper(myProject, changeList, changes, changeList.getName(),
+                     changeList.getComment(), new ArrayList<CheckinHandler>(), false).doCommit();
   }
 
   @SuppressWarnings({"unchecked"})
@@ -1144,7 +1127,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
-  private static VirtualFile[] collectFiles(final List<FilePath> paths) {
+  public List<CommitExecutor> getRegisteredExecutors() {
+    return Collections.unmodifiableList(myExecutors);
+  }
+
+  private VirtualFile[] collectFiles(final List<FilePath> paths) {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (FilePath path : paths) {
       if (path.getVirtualFile() != null) {
