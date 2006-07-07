@@ -11,6 +11,7 @@ public interface AntElement extends PsiNamedElement {
   @NotNull
   XmlElement getSourceElement();
 
+  @Nullable
   AntElement getAntParent();
 
   AntFile getAntFile();

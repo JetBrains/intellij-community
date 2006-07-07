@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi;
 
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,4 +21,8 @@ public interface AntFile extends AntElement {
   void registerCustomType(final AntTypeDefinition def);
 
   void unregisterCustomType(final AntTypeDefinition def);
+
+  VirtualFile getVirtualFile();
+
+  void setProperty(@NotNull final String name, @NotNull final String value);
 }

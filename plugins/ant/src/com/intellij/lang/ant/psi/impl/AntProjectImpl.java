@@ -168,7 +168,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   }
 
   @SuppressWarnings({"UseOfObsoleteCollectionType"})
-  void loadPredefinedProperties(Project project) {
+  void loadPredefinedProperties(final Project project, final Map<String, String> externalProps) {
     Hashtable ht = project.getProperties();
     final Enumeration props = ht.keys();
     @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
@@ -184,13 +184,23 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
         builder.append("\"/>");
       }
       final Map<String, String> envMap = System.getenv();
-      for (String name : envMap.keySet()) {
+      for (final String name : envMap.keySet()) {
         final String value = envMap.get(name);
         builder.append("<property name=\"");
         builder.append(name);
         builder.append("\" value=\"");
         builder.append(value);
         builder.append("\"/>");
+      }
+      if (externalProps != null) {
+        for (final String name : externalProps.keySet()) {
+          final String value = externalProps.get(name);
+          builder.append("<property name=\"");
+          builder.append(name);
+          builder.append("\" value=\"");
+          builder.append(value);
+          builder.append("\"/>");
+        }
       }
       String basedir = getBaseDir();
       if (basedir == null) {

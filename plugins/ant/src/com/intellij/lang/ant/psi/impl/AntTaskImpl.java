@@ -7,6 +7,7 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public class AntTaskImpl extends AntStructuredElementImpl implements AntTask {
 
@@ -34,6 +35,7 @@ public class AntTaskImpl extends AntStructuredElementImpl implements AntTask {
     }
   }
 
+  @Nullable
   public AntStructuredElement getAntParent() {
     return (AntStructuredElement)super.getAntParent();
   }

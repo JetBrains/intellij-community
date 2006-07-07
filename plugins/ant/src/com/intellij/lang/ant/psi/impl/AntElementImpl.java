@@ -76,6 +76,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     throw new IncorrectOperationException("Can't rename ant element");
   }
 
+  @Nullable
   public AntElement getAntParent() {
     return myParent;
   }

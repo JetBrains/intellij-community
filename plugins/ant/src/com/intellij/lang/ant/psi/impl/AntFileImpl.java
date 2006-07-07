@@ -37,6 +37,10 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   private PsiElement[] myChildren;
   private Project myAntProject;
   /**
+   * Map of propeties set outside.
+   */
+  private Map<String, String> myExternalProperties;
+  /**
    * Map of class names to task definitions.
    */
   private Map<String, AntTypeDefinition> myTypeDefinitions;
@@ -59,6 +63,15 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   public VirtualFile getVirtualFile() {
     return getSourceElement().getVirtualFile();
+  }
+
+  public void setProperty(@NotNull final String name, @NotNull final String value) {
+    synchronized (PsiLock.LOCK) {
+      if (myExternalProperties == null) {
+        myExternalProperties = new HashMap<String, String>();
+      }
+      myExternalProperties.put(name, value);
+    }
   }
 
   @NotNull
@@ -113,6 +126,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return (XmlFile)getViewProvider().getPsi(StdLanguages.XML);
   }
 
+  @Nullable
   public AntElement getAntParent() {
     return null;
   }
@@ -140,7 +154,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         myEpilogueElement = new AntOuterProjectElement(this, projectEnd, fileText.substring(projectEnd));
       }
       myProject = new AntProjectImpl(this, tag, createProjectDefinition());
-      ((AntProjectImpl)myProject).loadPredefinedProperties(myAntProject);
+      ((AntProjectImpl)myProject).loadPredefinedProperties(myAntProject, myExternalProperties);
       return myProject;
     }
   }
@@ -151,6 +165,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   public void setProperty(final String name, final AntProperty element) {
+    throw new RuntimeException("Invoke AntProject.setProperty() instead.");
   }
 
   @NotNull
@@ -295,6 +310,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return new AntTypeDefinitionImpl(new AntTypeId("project"), Project.class.getName(), false, projectAttrs, myProjectElements);
   }
 
+  @Nullable
   static AntTypeDefinition createTypeDefinition(final AntTypeId id, final Class typeClass, final boolean isTask) {
     final IntrospectionHelper helper = getHelperExceptionSafe(typeClass);
     if (helper == null) return null;
@@ -323,6 +339,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return new AntTypeDefinitionImpl(id, typeClass.getName(), isTask, attributes, nestedDefinitions);
   }
 
+  @Nullable
   private static IntrospectionHelper getHelperExceptionSafe(Class c) {
     try {
       return IntrospectionHelper.getHelper(c);
