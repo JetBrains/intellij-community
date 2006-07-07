@@ -606,7 +606,7 @@
       <keyboard-shortcut first-keystroke="control alt P"/>
     </action>
     <action id="NextOccurence">
-      <keyboard-shortcut first-keystroke="control alt DOWN"/>
+      <keyboard-shortcut first-keystroke="CONTEXT_MENU"/>
     </action>
     <action id="EditorCodeBlockEndWithSelection">
       <keyboard-shortcut first-keystroke="control shift CLOSE_BRACKET"/>
@@ -654,7 +654,9 @@
     <action id="HideAllWindows">
       <keyboard-shortcut first-keystroke="control shift F12"/>
     </action>
-    <action id="ShowPopupMenu"/>
+    <action id="ShowPopupMenu">
+      <keyboard-shortcut first-keystroke="CONTEXT_MENU"/>
+    </action>
     <action id="EditorLineStartWithSelection">
       <keyboard-shortcut first-keystroke="shift HOME"/>
     </action>

@@ -2,7 +2,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 
@@ -19,10 +18,12 @@ public class ShowPopupMenuAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final RelativePoint relPoint = getPopupLocation(e.getDataContext());
+    final RelativePoint relPoint = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
 
-    Component focusOwner = relPoint.getComponent();
-    Point popupMenuPoint = relPoint.getPoint();
+    KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    Component focusOwner = focusManager.getFocusOwner();
+
+    Point popupMenuPoint = relPoint.getPoint(focusOwner);
 
     focusOwner.dispatchEvent(
       new MouseEvent(
@@ -35,10 +36,6 @@ public class ShowPopupMenuAction extends AnAction {
         true
       )
     );
-  }
-
-  private RelativePoint getPopupLocation(final DataContext dataContext) {
-    return JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
   }
 
   public void update(AnActionEvent e) {
