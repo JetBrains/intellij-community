@@ -20,6 +20,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   private final SmartPointerManagerImpl mySmartPointerManager;
   private PsiDocumentManagerImpl myPsiDocumentManager;
   private Document mySyncDocument = null;
+  private final Object mySyncLock = this;
 
   public PsiToDocumentSynchronizer(PsiDocumentManagerImpl psiDocumentManager, SmartPointerManagerImpl smartPointerManager) {
     mySmartPointerManager = smartPointerManager;
@@ -33,7 +34,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public boolean isInSynchronization(final Document document) {
-    synchronized (PsiLock.LOCK) {
+    synchronized (mySyncLock) {
       return mySyncDocument == document;
     }
   }
@@ -183,7 +184,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   public void commitTransaction(Document document){
     final DocumentChangeTransaction documentChangeTransaction = removeTransaction(document);
     if(documentChangeTransaction == null) return;
-    synchronized(PsiLock.LOCK){
+    synchronized(mySyncLock){
       try {
         mySyncDocument = document;
         //if(documentChangeTransaction.getAffectedFragments().size() == 0) return; // Nothing to do
