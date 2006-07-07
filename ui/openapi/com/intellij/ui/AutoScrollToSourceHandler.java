@@ -69,6 +69,12 @@ public abstract class AutoScrollToSourceHandler {
     });
   }
 
+  public void cancelAllRequests(){
+    if (myAutoScrollAlarm != null) {
+      myAutoScrollAlarm.cancelAllRequests();
+    }
+  }
+
   private void onMouseClicked(final Component component) {
     myAutoScrollAlarm.cancelAllRequests();
     if (isAutoScrollMode()){

@@ -53,10 +53,11 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
 
   public String myLastEditedConfigurable = null;
   private boolean myHasDeletedItems;
+  private AutoScrollToSourceHandler myAutoScrollHandler;
 
   protected MasterDetailsComponent() {
     myOptionsPanel.setLayout(new BorderLayout());
-    AutoScrollToSourceHandler handler = new AutoScrollToSourceHandler() {
+    myAutoScrollHandler = new AutoScrollToSourceHandler() {
       protected boolean isAutoScrollMode() {
         return true;
       }
@@ -79,7 +80,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
       }
 
     };
-    handler.install(myTree);
+    myAutoScrollHandler.install(myTree);
 
     final ArrayList<AnAction> actions = createActions();
     if (actions != null) {
@@ -203,6 +204,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
   }
 
   public void disposeUIResources() {
+    myAutoScrollHandler.cancelAllRequests();
     myOptionsPanel.removeAll();
     myInitializedConfigurables.clear();
     TreeUtil.traverseDepth((TreeNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
