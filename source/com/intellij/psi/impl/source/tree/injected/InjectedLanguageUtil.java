@@ -224,6 +224,7 @@ public class InjectedLanguageUtil {
   }
 
   public static Editor getEditorForInjectedLanguage(final Editor editor, final PsiFile file, final int offset) {
+    if (editor == null || file == null || editor instanceof EditorDelegate) return editor;
     PsiLanguageInjectionHost injectionHost = findInjectionHost(file.findElementAt(offset));
     if (injectionHost == null && offset != 0) {
       injectionHost = findInjectionHost(file.findElementAt(offset-1));
