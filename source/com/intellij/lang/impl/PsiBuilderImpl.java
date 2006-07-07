@@ -334,7 +334,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
     }
 
-    LOG.assertTrue(curToken == myLexems.size(), "Not all of the tokens inserted to the tree");
+    final boolean allTokensInserted = curToken == myLexems.size();
+    if (!allTokensInserted) {
+      LOG.assertTrue(false, "Not all of the tokens inserted to the tree, parsed text:\n" + myText);
+    }
+
     LOG.assertTrue(curNode == null, "Unbalanced tree");
 
     return rootNode;
