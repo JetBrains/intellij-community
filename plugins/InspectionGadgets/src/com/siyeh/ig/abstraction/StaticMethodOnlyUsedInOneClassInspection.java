@@ -5,24 +5,26 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.siyeh.ig.MethodInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.InspectionGadgetsBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.util.Query;
-import com.intellij.util.Processor;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.refactoring.RefactoringActionHandlerFactory;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.ide.DataManager;
+import com.intellij.refactoring.RefactoringActionHandlerFactory;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.util.Query;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,6 +66,7 @@ public class StaticMethodOnlyUsedInOneClassInspection
     private static class StaticMethodOnlyUsedInOneClassFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "static.method.only.used.in.one.class.quickfix");
@@ -136,6 +139,9 @@ public class StaticMethodOnlyUsedInOneClassInspection
         private PsiClass usageClass = null;
 
         public boolean process(PsiReference reference) {
+            final ProgressManager progressManager =
+                    ProgressManager.getInstance();
+            progressManager.checkCanceled();
             final PsiElement element = reference.getElement();
             final PsiClass usageClass = PsiTreeUtil.getParentOfType(element,
                     PsiClass.class);
@@ -156,14 +162,47 @@ public class StaticMethodOnlyUsedInOneClassInspection
         public PsiClass getUsageClass(final PsiMethod method) {
             final ProgressManager progressManager =
                     ProgressManager.getInstance();
+            final PsiManager manager = method.getManager();
+            final PsiSearchHelper searchHelper = manager.getSearchHelper();
+            final String name = method.getName();
+            final GlobalSearchScope scope =
+                    GlobalSearchScope.allScope(method.getProject());
+            final FindUsagesCostProcessor costProcessor =
+                    new FindUsagesCostProcessor();
+            searchHelper.processAllFilesWithWord(name, scope,
+                    costProcessor, true);
+            if (costProcessor.isCostTooHigh()) {
+                return null;
+            }
             progressManager.runProcess(new Runnable() {
                 public void run() {
                     final Query<PsiReference> query =
-                            ReferencesSearch.search(method);
+                            MethodReferencesSearch.search(method);
                     query.forEach(UsageProcessor.this);
                 }
             }, null);
             return usageClass;
+        }
+
+        private static class FindUsagesCostProcessor
+                implements Processor<PsiFile> {
+
+            private int counter = 0;
+            private boolean costTooHigh = true;
+
+            public boolean process(PsiFile psiFile) {
+                counter++;
+                if (counter < 10) {
+                    costTooHigh = false;
+                    return true;
+                }
+                costTooHigh = true;
+                return false;
+            }
+
+            public boolean isCostTooHigh() {
+                return costTooHigh;
+            }
         }
     }
 }
