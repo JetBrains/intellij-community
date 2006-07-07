@@ -1,7 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.ant.misc.StringSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntAllTasksContainer;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntMacroDef;
@@ -13,6 +12,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericRefe
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.StringSetSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;

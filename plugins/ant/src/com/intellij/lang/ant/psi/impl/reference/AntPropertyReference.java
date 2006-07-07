@@ -1,7 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.ant.misc.StringSetSpinAllocator;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntElementImpl;
 import com.intellij.lang.ant.quickfix.AntCreatePropertyAction;
@@ -17,6 +16,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.StringSetSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

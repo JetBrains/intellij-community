@@ -36,9 +36,11 @@ public final class AnActionEvent {
   private final Presentation myPresentation;
   private final int myModifiers;
   private boolean myWorksInInjected;
+  @NonNls private static final String ourInjectedId = "$injected$.";
+  private static final StringBuilder ourIdBuilder = new StringBuilder(ourInjectedId);
 
   /**
-   * @throws java.lang.IllegalArgumentException <code>dataContext</code> is <code>null</code> or
+   * @throws IllegalArgumentException <code>dataContext</code> is <code>null</code> or
    * <code>place</code> is <code>null</code> or <code>presentation</code> is <code>null</code>
    */
   public AnActionEvent(
@@ -78,11 +80,15 @@ public final class AnActionEvent {
 
   @NonNls
   public static String injectedId(String dataId) {
-    return "$injected$." + dataId;
+    synchronized(ourIdBuilder) {
+      ourIdBuilder.setLength(ourInjectedId.length());
+      ourIdBuilder.append(dataId);
+      return ourIdBuilder.toString();
+    }
   }
   @NonNls
   public static String uninjectedId(String dataId) {
-    return StringUtil.trimStart(dataId, "$injected$.");
+    return StringUtil.trimStart(dataId, ourInjectedId);
   }
   /**
    * Returns the context which allows to retrieve information about the state of IDEA related to
