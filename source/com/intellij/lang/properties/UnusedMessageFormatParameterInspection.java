@@ -43,6 +43,8 @@ public class UnusedMessageFormatParameterInspection extends BaseLocalInspectionT
     final List<Property> properties = propertiesFile.getProperties();
     List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
     for (Property property : properties) {
+      @NonNls String name = property.getName();
+      if (name != null && name.startsWith("log4j")) continue;
       String value = property.getValue();
       Set<Integer> parameters = new HashSet<Integer>();
       if (value != null) {
