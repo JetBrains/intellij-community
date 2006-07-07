@@ -343,7 +343,8 @@ public class PluginManager {
         if ("file".equals(protocol)) {
           final File file = new File(url.getFile());
           final String canonicalPath = file.getCanonicalPath();
-          if (!canonicalPath.startsWith(homePath) || canonicalPath.endsWith(".jar")) continue;
+          //if (!canonicalPath.startsWith(homePath) || canonicalPath.endsWith(".jar")) continue;
+          if (!canonicalPath.startsWith(homePath)) continue;
           final IdeaPluginDescriptorImpl pluginDescriptor = loadDescriptor(file);
           if (pluginDescriptor != null && !result.contains(pluginDescriptor)) {
             result.add(pluginDescriptor);
