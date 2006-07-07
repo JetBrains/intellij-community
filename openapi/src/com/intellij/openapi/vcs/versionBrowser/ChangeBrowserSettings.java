@@ -23,6 +23,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -48,7 +49,7 @@ public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizab
   public String DATE_BEFORE = "";
   public String DATE_AFTER = "";
 
-  public String CHANGE_BEFORE = "";
+  @NonNls public String CHANGE_BEFORE = "";
   public String CHANGE_AFTER = "";
 
   public boolean USE_USER_FILTER = false;
@@ -120,6 +121,7 @@ public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizab
 
   public Long getChangeBeforeFilter() {
     if (USE_CHANGE_BEFORE_FILTER && CHANGE_BEFORE.length() > 0) {
+      if (CHANGE_BEFORE.equals("HEAD")) return null;
       return Long.parseLong(CHANGE_BEFORE);      
     }
     return null;
