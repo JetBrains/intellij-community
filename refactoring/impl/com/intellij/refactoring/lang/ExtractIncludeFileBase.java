@@ -103,7 +103,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
     }
   }
 
-  private void highlightInEditor(final Project project, final Pair<PsiElement, PsiElement> pair, final Editor editor) {
+  private static void highlightInEditor(final Project project, final Pair<PsiElement, PsiElement> pair, final Editor editor) {
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
@@ -120,7 +120,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
   @NotNull
   protected abstract Language getLanguageForExtract(PsiElement firstExtracted);
 
-  private FileType getFileType(final Language language) {
+  private static FileType getFileType(final Language language) {
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (FileType fileType : fileTypes) {
       if (fileType instanceof LanguageFileType && language.equals(((LanguageFileType)fileType).getLanguage())) return fileType;
@@ -175,11 +175,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
                 final XmlTagChild first = children.getFirst();
                 final XmlTagChild second = children.getSecond();
                 PsiEquivalenceUtil.findChildRangeDuplicates(first, second, duplicates, file);
-                final String includePath = doExtract(targetDirectory, targetfileName, first, second,
-                                                     file.getLanguage());
-
-                LOG.assertTrue(includePath != null);
-                doReplaceRange(includePath, first, second);
+                final String includePath = processPrimaryFragment(first, second, targetDirectory, targetfileName, file);
 
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                   public void run() {
@@ -198,5 +194,18 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
       }, REFACTORING_NAME, null);
 
     }
+  }
+
+  public String processPrimaryFragment(final XmlTagChild firstToExtract,
+                                       final XmlTagChild lastToExtract,
+                                       final PsiDirectory targetDirectory,
+                                       final String targetfileName,
+                                       final PsiFile srcFile) throws IncorrectOperationException {
+    final String includePath = doExtract(targetDirectory, targetfileName, firstToExtract, lastToExtract,
+                                         srcFile.getLanguage());
+
+    LOG.assertTrue(includePath != null);
+    doReplaceRange(includePath, firstToExtract, lastToExtract);
+    return includePath;
   }
 }
