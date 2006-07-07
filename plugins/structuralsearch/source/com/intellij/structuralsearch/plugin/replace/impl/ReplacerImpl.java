@@ -296,7 +296,14 @@ public class ReplacerImpl {
             !(replacement.getLastChild() instanceof PsiJavaToken)
            ) {
           // assert w/o ;
-          elementParent.addRangeBefore(replacement.getFirstChild(),replacement.getLastChild().getPrevSibling(),el);
+          final PsiElement prevLastChildInParent = replacement.getLastChild().getPrevSibling();
+
+          if (prevLastChildInParent != null) {
+            elementParent.addRangeBefore(replacement.getFirstChild(), prevLastChildInParent,el);
+          } else {
+            elementParent.addBefore(replacement.getFirstChild(), el);
+          }
+
           el.delete();
         } else {
           // preserve comments
