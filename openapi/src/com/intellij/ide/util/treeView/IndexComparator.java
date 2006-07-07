@@ -5,8 +5,6 @@
  */
 package com.intellij.ide.util.treeView;
 
-import com.intellij.ide.util.treeView.NodeDescriptor;
-
 import java.util.Comparator;
 
 public class IndexComparator implements Comparator<NodeDescriptor> {
