@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -109,11 +110,14 @@ public class CtrlMouseHandler implements ProjectComponent {
         return;
       }
 
+
       MouseEvent mouseEvent = e.getMouseEvent();
 
       Editor editor = e.getEditor();
-      Point point = mouseEvent.getPoint();
-      LogicalPosition pos = editor.xyToLogicalPosition(new Point(point.x, point.y));
+      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      Point point = new Point(mouseEvent.getPoint());
+      editor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile, editor.logicalPositionToOffset(editor.xyToLogicalPosition(point)));
+      LogicalPosition pos = editor.xyToLogicalPosition(point);
       int offset = editor.logicalPositionToOffset(pos);
       int selStart = editor.getSelectionModel().getSelectionStart();
       int selEnd = editor.getSelectionModel().getSelectionEnd();
