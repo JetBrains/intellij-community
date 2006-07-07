@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -182,6 +183,11 @@ public class LocalChangeList implements Cloneable, ChangeList {
 
   public int hashCode() {
     return myName.hashCode();
+  }
+
+  @Override @NonNls
+  public String toString() {
+    return "LocalChangeList[name=" + myName + "]";
   }
 
   public synchronized LocalChangeList clone() {

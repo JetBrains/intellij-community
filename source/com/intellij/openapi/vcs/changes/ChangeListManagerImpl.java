@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
@@ -51,6 +52,8 @@ import java.util.concurrent.TimeUnit;
  * @author max
  */
 public class ChangeListManagerImpl extends ChangeListManager implements ProjectComponent, ChangeListOwner, JDOMExternalizable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
+
   private Project myProject;
   private static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
 
@@ -82,6 +85,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private final Object myPendingUpdatesLock = new Object();
   private boolean myUpdateInProgress = false;
+  private VcsDirtyScope myCurrentlyUpdatingScope = null;
 
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
   @NonNls private static final String NODE_LIST = "list";
@@ -295,7 +299,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         }
 
         synchronized (myPendingUpdatesLock) {
-          scheduleUpdate(10);
+          scheduleUpdate(10, true);
           while (myCurrentUpdate != null && !myCurrentUpdate.isDone() || myUpdateInProgress) {
             if (indicator != null && indicator.isCanceled()) break;
 
@@ -319,7 +323,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private static class DisposedException extends RuntimeException {}
 
-  private void scheduleUpdate(int millis) {
+  private void scheduleUpdate(int millis, final boolean updateUnversionedFiles) {
     cancelUpdates();
     myCurrentUpdate = ourUpdateAlarm.schedule(new Runnable() {
       public void run() {
@@ -345,6 +349,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
             final AbstractVcs vcs = scope.getVcs();
             if (vcs == null) continue;
 
+            myCurrentlyUpdatingScope = scope;
             updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()));
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
@@ -357,17 +362,31 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
               }
             });
 
-            final UnversionedFilesHolder unversionedHolder = myUnversionedFilesHolder.copy();
-            unversionedHolder.cleanScope(scope);
 
-            final DeletedFilesHolder deletedHolder = myDeletedFilesHolder.copy();
-            deletedHolder.cleanScope(scope);
+            final UnversionedFilesHolder unversionedHolder;
+            final DeletedFilesHolder deletedHolder;
+
+            if (updateUnversionedFiles) {
+              unversionedHolder = myUnversionedFilesHolder.copy();
+              unversionedHolder.cleanScope(scope);
+
+              deletedHolder = myDeletedFilesHolder.copy();
+              deletedHolder.cleanScope(scope);
+            }
+            else {
+              unversionedHolder = myUnversionedFilesHolder;
+              deletedHolder = myDeletedFilesHolder;
+            }
 
             try {
               final ChangeProvider changeProvider = vcs.getChangeProvider();
               if (changeProvider != null) {
                 changeProvider.getChanges(scope, new ChangelistBuilder() {
                   public void processChange(final Change change) {
+                    processChangeInList(change, null);
+                  }
+
+                  public void processChangeInList(final Change change, final ChangeList changeList) {
                     if (myDisposed) throw new DisposedException();
 
                     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -375,12 +394,17 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                         if (isUnder(change, scope)) {
                           try {
                             synchronized (myChangeLists) {
-                              for (LocalChangeList list : myChangeLists) {
-                                if (list == myDefaultChangelist) continue;
-                                if (list.processChange(change)) return;
+                              if (changeList instanceof LocalChangeList) {
+                                ((LocalChangeList) changeList).addChange(change);
                               }
+                              else {
+                                for (LocalChangeList list : myChangeLists) {
+                                  if (list == myDefaultChangelist) continue;
+                                  if (list.processChange(change)) return;
+                                }
 
-                              myDefaultChangelist.processChange(change);
+                                myDefaultChangelist.processChange(change);
+                              }
                             }
                           }
                           finally {
@@ -392,7 +416,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                   }
 
                   public void processUnversionedFile(VirtualFile file) {
-                    if (file == null) return;
+                    if (file == null || !updateUnversionedFiles) return;
                     if (myDisposed) throw new DisposedException();
                     if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
                       unversionedHolder.addFile(file);
@@ -401,6 +425,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                   }
 
                   public void processLocallyDeletedFile(File file) {
+                    if (!updateUnversionedFiles) return;
                     if (myDisposed) throw new DisposedException();
                     if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
                       deletedHolder.addFile(file);
@@ -413,10 +438,15 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                     if (myDisposed) throw new DisposedException();
                     //TODO:
                   }
+
+                  public boolean isUpdatingUnversionedFiles() {
+                    return updateUnversionedFiles;
+                  }
                 }, null); // TODO: make real indicator
               }
             }
             finally {
+              myCurrentlyUpdatingScope = null;
               if (!myDisposed) {
                 synchronized (myChangeLists) {
                   for (LocalChangeList list : myChangeLists) {
@@ -428,13 +458,18 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
               }
             }
 
-            myUnversionedFilesHolder = unversionedHolder;
-            myDeletedFilesHolder = deletedHolder;
+            if (updateUnversionedFiles) {
+              myUnversionedFilesHolder = unversionedHolder;
+              myDeletedFilesHolder = deletedHolder;
+            }
             scheduleRefresh();
           }
         }
         catch (DisposedException e) {
           // OK, we're finishing all the stuff now.
+        }
+        catch(Exception ex) {
+          LOG.error(ex);
         }
         finally {
           updateProgressText("");
@@ -454,7 +489,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public void scheduleUpdate() {
-    scheduleUpdate(300);
+    scheduleUpdate(300, true);
+  }
+
+  public void scheduleUpdate(boolean updateUnversionedFiles) {
+    scheduleUpdate(300, updateUnversionedFiles);
   }
 
   private void scheduleRefresh() {
@@ -557,6 +596,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       list.setComment(comment);
       myChangeLists.add(list);
       myListeners.getMulticaster().changeListAdded(list);
+
+      // handle changelists created during the update process
+      if (myCurrentlyUpdatingScope != null) {
+        list.startProcessingChanges(myCurrentlyUpdatingScope);
+      }
       scheduleRefresh();
       return list;
     }

@@ -15,5 +15,5 @@ public abstract class VcsDirtyScopeManager {
   public abstract void markEverythingDirty();
   public abstract void fileDirty(VirtualFile file);
   public abstract void fileDirty(FilePath file);
-  public abstract void dirDirtyRecursively(VirtualFile dir);
+  public abstract void dirDirtyRecursively(VirtualFile dir, final boolean scheduleUpdate);
 }

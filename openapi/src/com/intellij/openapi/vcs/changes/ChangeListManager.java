@@ -20,6 +20,7 @@ public abstract class ChangeListManager {
   }
 
   public abstract void scheduleUpdate();
+  public abstract void scheduleUpdate(boolean updateUnversionedFiles);
   public abstract boolean ensureUpToDate(boolean canBeCanceled);
 
   @NotNull

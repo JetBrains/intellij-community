@@ -9,7 +9,10 @@ import java.io.File;
  */
 public interface ChangelistBuilder {
   void processChange(Change change);
+  void processChangeInList(Change change, ChangeList changeList);
   void processUnversionedFile(VirtualFile file);
   void processLocallyDeletedFile(File file);
   void processModifiedWithoutEditing(VirtualFile file);
+
+  boolean isUpdatingUnversionedFiles();
 }

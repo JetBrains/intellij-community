@@ -75,7 +75,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
       VirtualFile[] roots = rootManager.getContentRoots();
       for (VirtualFile root : roots) {
-        dirDirtyRecursively(root);
+        dirDirtyRecursively(root, true);
       }
     }
   }
@@ -111,7 +111,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
-  public void dirDirtyRecursively(final VirtualFile dir) {
+  public void dirDirtyRecursively(final VirtualFile dir, final boolean scheduleUpdate) {
     if (!myIsInitialized || myIsDisposed) return;
 
     final VirtualFile root = myIndex.getContentRootForFile(dir);
