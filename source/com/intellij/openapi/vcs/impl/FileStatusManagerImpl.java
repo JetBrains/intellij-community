@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -68,6 +69,10 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
 
       public void changeListChanged(ChangeList list) {
         fileStatusesChanged();
+      }
+
+      public void changeMoved(Change change, ChangeList fromList, ChangeList toList) {
+        // Moving a change should NOT cause file status invalidation
       }
 
       public void defaultListChanged(ChangeList newDefaultList) {

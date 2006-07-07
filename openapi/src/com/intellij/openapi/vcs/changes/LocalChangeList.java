@@ -87,9 +87,12 @@ public class LocalChangeList implements Cloneable, ChangeList {
     myChanges.add(change);
   }
 
-  synchronized void removeChange(Change change) {
-    myReadChangesCache = null;
-    myChanges.remove(change);
+  synchronized boolean removeChange(Change change) {
+    boolean wasRemoved = myChanges.remove(change);
+    if (wasRemoved) {
+      myReadChangesCache = null;
+    }
+    return wasRemoved;
   }
 
   synchronized void startProcessingChanges(final VcsDirtyScope scope) {

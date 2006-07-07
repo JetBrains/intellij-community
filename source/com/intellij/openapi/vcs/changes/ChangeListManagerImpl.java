@@ -568,7 +568,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
       final Collection<Change> changes = list.getChanges();
       for (Change change : changes) {
-        addChangeToList(change, myDefaultChangelist);
+        myDefaultChangelist.addChange(change);
+        myListeners.getMulticaster().changeMoved(change, list, myDefaultChangelist);
       }
       myChangeLists.remove(list);
       myListeners.getMulticaster().changeListRemoved(list);
@@ -579,11 +580,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private void addChangeToList(final Change change, final LocalChangeList list) {
     list.addChange(change);
-    myListeners.getMulticaster().changeListChanged(list);
-  }
-
-  private void removeChangeFromList(final Change change, final LocalChangeList list) {
-    list.removeChange(change);
     myListeners.getMulticaster().changeListChanged(list);
   }
 
@@ -962,12 +958,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       list = findRealByCopy(list);
       for (LocalChangeList existingList : getChangeLists()) {
         for (Change change : changes) {
-          removeChangeFromList(change, existingList);
+          if (existingList.removeChange(change)) {
+            list.addChange(change);
+            myListeners.getMulticaster().changeMoved(change, existingList, list);
+          }
         }
-      }
-
-      for (Change change : changes) {
-        addChangeToList(change, list);
       }
     }
 
