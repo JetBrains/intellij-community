@@ -606,7 +606,7 @@
       <keyboard-shortcut first-keystroke="control alt P"/>
     </action>
     <action id="NextOccurence">
-      <keyboard-shortcut first-keystroke="CONTEXT_MENU"/>
+      <keyboard-shortcut first-keystroke="control alt DOWN"/>
     </action>
     <action id="EditorCodeBlockEndWithSelection">
       <keyboard-shortcut first-keystroke="control shift CLOSE_BRACKET"/>
