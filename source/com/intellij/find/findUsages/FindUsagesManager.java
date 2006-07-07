@@ -4,6 +4,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
 import static com.intellij.find.findUsages.FindUsagesManager.FileSearchScope.*;
+import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -30,9 +31,9 @@ import com.intellij.usageView.UsageViewManager;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.Function;
-import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +133,11 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   public boolean canFindUsages(final PsiElement element) {
-    return getHandler(element) != null;
+    return element != null && !ContainerUtil.mapNotNull(myHandlers, new Function<Function<PsiElement, Factory<FindUsagesHandler>>, Factory<FindUsagesHandler>>() {
+      public Factory<FindUsagesHandler> fun(final Function<PsiElement, Factory<FindUsagesHandler>> function) {
+        return function.fun(element);
+      }
+    }).isEmpty();
   }
 
   public void clearFindingNextUsageInFile() {
@@ -222,22 +227,21 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   @Nullable
-  private Factory<FindUsagesHandler> getHandler(PsiElement element) {
-    if (element == null) return null;
+  private FindUsagesHandler findHandler(PsiElement element) {
     for (final Function<PsiElement,Factory<FindUsagesHandler>> function : myHandlers) {
-      final Factory<FindUsagesHandler> handler = function.fun(element);
-      if (handler != null) {
-        return handler;
+      final Factory<FindUsagesHandler> factory = function.fun(element);
+      if (factory != null) {
+        final FindUsagesHandler handler = factory.create();
+        if (handler != null) {
+          return handler;
+        }
       }
     }
     return null;
   }
 
   public void findUsages(PsiElement psiElement, final PsiFile scopeFile, final FileEditor editor) {
-    final Factory<FindUsagesHandler> factory = getHandler(psiElement);
-    if (factory == null) return;
-
-    final FindUsagesHandler handler = factory.create();
+    final FindUsagesHandler handler = findHandler(psiElement);
     if (handler == null) return;
 
     final AbstractFindUsagesDialog dialog = handler.getFindUsagesDialog(scopeFile != null, shouldOpenInNewTab(), mustOpenInNewTab());
