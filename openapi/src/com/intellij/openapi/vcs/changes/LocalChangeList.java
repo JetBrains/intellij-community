@@ -3,8 +3,13 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * @author max
@@ -21,7 +26,7 @@ public class LocalChangeList implements Cloneable, ChangeList {
   private boolean myIsReadOnly = false;
   private Collection<Change> myOutdatedChanges;
   private boolean myIsInUpdate = false;
-  private Set<Change> myChangesBeforeUpdate;
+  private ChangeHashSet myChangesBeforeUpdate;
 
   public static LocalChangeList createEmptyChangeList(String description) {
     return new LocalChangeList(description);
@@ -88,7 +93,7 @@ public class LocalChangeList implements Cloneable, ChangeList {
   }
 
   synchronized void startProcessingChanges(final VcsDirtyScope scope) {
-    myChangesBeforeUpdate = new HashSet<Change>(myChanges);
+    myChangesBeforeUpdate = new ChangeHashSet(myChanges);
     myOutdatedChanges = new ArrayList<Change>();
     for (Change oldBoy : myChangesBeforeUpdate) {
       final ContentRevision before = oldBoy.getBeforeRevision();
@@ -140,10 +145,9 @@ public class LocalChangeList implements Cloneable, ChangeList {
   }
 
   private Change findOldChange(final Change newChange) {
-    for (Change oldChange : myChangesBeforeUpdate) {
-      if (oldChange.equals(newChange) && sameBeforeRevision(oldChange, newChange)) {
-        return oldChange;
-      }
+    Change oldChange = myChangesBeforeUpdate.getEqualChange(newChange);
+    if (oldChange != null && sameBeforeRevision(oldChange, newChange)) {
+      return oldChange;
     }
     return null;
   }
@@ -186,7 +190,7 @@ public class LocalChangeList implements Cloneable, ChangeList {
       }
 
       if (myChangesBeforeUpdate != null) {
-        copy.myChangesBeforeUpdate = new HashSet<Change>(myChangesBeforeUpdate);
+        copy.myChangesBeforeUpdate = new ChangeHashSet(myChangesBeforeUpdate);
       }
 
       if (myOutdatedChanges != null) {
@@ -201,6 +205,18 @@ public class LocalChangeList implements Cloneable, ChangeList {
     }
     catch (CloneNotSupportedException e) {
       LOG.error(e);
+      return null;
+    }
+  }
+
+  private static class ChangeHashSet extends THashSet<Change> {
+    public ChangeHashSet(final Collection<? extends Change> changes) {
+      super(changes);
+    }
+
+    @Nullable Change getEqualChange(Change other) {
+      int aIndex = index(other);
+      if (aIndex >= 0) return (Change)_set [aIndex];
       return null;
     }
   }
