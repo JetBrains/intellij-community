@@ -45,16 +45,17 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author cdr
  */
 public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
-  private final Map<VirtualFile,  ProblemFileInfo> myProblems = new THashMap<VirtualFile, ProblemFileInfo>();
+  private final Map<VirtualFile, ProblemFileInfo> myProblems = new THashMap<VirtualFile, ProblemFileInfo>();
   private final CopyOnWriteArrayList<VirtualFile> myCheckingQueue = new CopyOnWriteArrayList<VirtualFile>();
 
   private final Project myProject;
   private final List<ProblemListener> myProblemListeners = new CopyOnWriteArrayList<ProblemListener>();
-  private final List<Condition<VirtualFile>> myFilters = new CopyOnWriteArrayList<Condition<VirtualFile>>(Arrays.asList(new Condition<VirtualFile>() {
-    public boolean value(final VirtualFile object) {
-      return ProjectRootManager.getInstance(myProject).getFileIndex().isJavaSourceFile(object);
-    }
-  }));
+  private final List<Condition<VirtualFile>> myFilters =
+    new CopyOnWriteArrayList<Condition<VirtualFile>>(Arrays.asList(new Condition<VirtualFile>() {
+      public boolean value(final VirtualFile object) {
+        return ProjectRootManager.getInstance(myProject).getFileIndex().isJavaSourceFile(object);
+      }
+    }));
   private final ProblemListener fireProblemListeners = new ProblemListener() {
 
     public void problemsAppeared(VirtualFile file) {
@@ -180,7 +181,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
           orderVincentToCleanTheCar(virtualFile, progress);
         }
         else {
-          synchronized(myProblems) {
+          synchronized (myProblems) {
             myProblems.remove(virtualFile);
             myCheckingQueue.remove(virtualFile);
           }
@@ -217,13 +218,13 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     try {
       if (statusBar != null) {
-        statusBar.setInfo("Checking '"+file.getPresentableUrl()+"'");
+        statusBar.setInfo("Checking '" + file.getPresentableUrl() + "'");
       }
 
-      GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false, true){
+      GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false, true) {
         protected HighlightInfoHolder createInfoHolder() {
           final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
-          return new HighlightInfoHolder(psiFile, filters){
+          return new HighlightInfoHolder(psiFile, filters) {
             public boolean add(HighlightInfo info) {
               if (info != null && info.getSeverity() == HighlightSeverity.ERROR) {
                 throw new HaveGotErrorException(info, myHasErrorElement);
@@ -269,24 +270,27 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       public boolean value(final VirtualFile virtualFile) {
         return scope.contains(virtualFile)
                // in case of flattened packages, when package node a.b.c contains error file, node a.b might not.
-               && (scope.getValue() instanceof PsiElement && PsiUtil.getVirtualFile((PsiElement)scope.getValue()) == virtualFile || scope.someChildContainsFile(virtualFile));
+               && (scope.getValue()instanceof PsiElement && PsiUtil.getVirtualFile((PsiElement)scope.getValue()) == virtualFile ||
+                   scope.someChildContainsFile(virtualFile));
       }
     });
   }
 
-  private boolean hasProblemFilesBeneath(Condition<VirtualFile> condition){
+  private boolean hasProblemFilesBeneath(Condition<VirtualFile> condition) {
     if (!myProject.isOpen()) return false;
     synchronized (myProblems) {
-      Set<VirtualFile> problemFiles = myProblems.keySet();
-      for (VirtualFile problemFile : problemFiles) {
-        if (condition.value(problemFile)) return true;
+      if (myProblems.size() > 0) {
+        Set<VirtualFile> problemFiles = myProblems.keySet();
+        for (VirtualFile problemFile : problemFiles) {
+          if (condition.value(problemFile)) return true;
+        }
       }
       return false;
     }
   }
 
   public boolean hasProblemFilesBeneath(final PsiElement scope) {
-    return hasProblemFilesBeneath(new Condition<VirtualFile>(){
+    return hasProblemFilesBeneath(new Condition<VirtualFile>() {
       public boolean value(final VirtualFile virtualFile) {
         if (scope instanceof PsiDirectory) {
           final PsiDirectory directory = (PsiDirectory)scope;
@@ -393,7 +397,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       }
     }
     if (virtualFile == null) return null;
-    HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>(){
+    HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>() {
       public HighlightInfo compute() {
         return HighlightInfo.createHighlightInfo(convertToHighlightInfoType(message), getTextRange(message), message.getMessage());
       }
@@ -403,9 +407,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   public Problem convertToProblem(final VirtualFile virtualFile, final int line, final int column, final String[] message) {
     if (virtualFile == null) return null;
-    HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>(){
+    HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>() {
       public HighlightInfo compute() {
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, getTextRange(virtualFile, line, column), StringUtil.join(message, "\n"));
+        return HighlightInfo
+          .createHighlightInfo(HighlightInfoType.ERROR, getTextRange(virtualFile, line, column), StringUtil.join(message, "\n"));
       }
     });
     return new ProblemImpl(virtualFile, info, false);
@@ -429,7 +434,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       }
       if (!hasProblemsBefore) {
         fireProblemListeners.problemsAppeared(file);
-      } else if (!oldInfo.equals(storedProblems)) {
+      }
+      else if (!oldInfo.equals(storedProblems)) {
         fireProblemListeners.problemsChanged(file);
       }
     }
@@ -447,16 +453,20 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       int offset = ((OpenFileDescriptor)navigatable).getOffset();
       return new TextRange(offset, offset);
     }
-    return new TextRange(0,0);
+    return new TextRange(0, 0);
   }
 
   private static HighlightInfoType convertToHighlightInfoType(final CompilerMessage message) {
     CompilerMessageCategory category = message.getCategory();
-    switch(category) {
-      case ERROR: return HighlightInfoType.ERROR;
-      case WARNING: return HighlightInfoType.WARNING;
-      case INFORMATION: return HighlightInfoType.INFORMATION;
-      case STATISTICS: return HighlightInfoType.INFORMATION;
+    switch (category) {
+      case ERROR:
+        return HighlightInfoType.ERROR;
+      case WARNING:
+        return HighlightInfoType.WARNING;
+      case INFORMATION:
+        return HighlightInfoType.INFORMATION;
+      case STATISTICS:
+        return HighlightInfoType.INFORMATION;
     }
     return null;
   }
