@@ -76,7 +76,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
     public void setElementAt(int i, int startOffset, int endOffset, int data) {
       super.setElementAt(i, startOffset, endOffset, data);
-      myRanges = relocateArray(myRanges, i+1);
+      myRanges = reallocateArray(myRanges, i+1);
       final MappedRange range = myRanges[i];
       if (range != null) {
         range.mapper.removeMapping(range);

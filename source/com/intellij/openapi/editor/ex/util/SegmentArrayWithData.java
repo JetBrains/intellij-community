@@ -10,7 +10,7 @@ public class SegmentArrayWithData extends SegmentArray {
   public void setElementAt(int i, int startOffset, int endOffset, int data) {
     if (data < 0 && data > Short.MAX_VALUE) throw new IndexOutOfBoundsException("data out of short range" + data);
     super.setElementAt(i, startOffset, endOffset);
-    myData = relocateArray(myData, i+1);
+    myData = reallocateArray(myData, i+1);
     myData[i] = (short)data;
   }
 

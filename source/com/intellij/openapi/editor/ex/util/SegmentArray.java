@@ -2,6 +2,8 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 
+import java.lang.reflect.Array;
+
 public class SegmentArray {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.SegmentArray");
   protected SegmentArray() {
@@ -20,10 +22,10 @@ public class SegmentArray {
     if(i >= mySegmentCount) {
       mySegmentCount = i+1;
     }
-    myStarts = relocateArray(myStarts, i);
+    myStarts = reallocateArray(myStarts, i);
     myStarts[i] = startOffset;
 
-    myEnds = relocateArray(myEnds, i);
+    myEnds = reallocateArray(myEnds, i);
     myEnds[i] = endOffset;
   }
 
@@ -32,7 +34,7 @@ public class SegmentArray {
     System.arraycopy(data.myEnds, 0, myEnds, startOffset, len);
   }
 
-  protected static int[] relocateArray(int[] array, int index) {
+  protected static int[] reallocateArray(int[] array, int index) {
     if(index < array.length)
       return array;
 
@@ -48,8 +50,8 @@ public class SegmentArray {
     return newArray;
   }
 
-  @SuppressWarnings({"unchecked", "UnnecessaryFullyQualifiedName"})
-  protected static <T> T[] relocateArray(T[] array, int index) {
+  @SuppressWarnings({"unchecked"})
+  protected static <T> T[] reallocateArray(T[] array, int index) {
     if(index < array.length)
       return array;
 
@@ -61,13 +63,13 @@ public class SegmentArray {
       newArraySize = (newArraySize * 120) / 100;
     }
 
-    T[] newArray = (T[])java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), newArraySize);
+    T[] newArray = (T[])Array.newInstance(array.getClass().getComponentType(), newArraySize);
 
     System.arraycopy(array, 0, newArray, 0, array.length);
     return newArray;
   }
 
-  protected static short[] relocateArray(short[] array, int index) {
+  protected static short[] reallocateArray(short[] array, int index) {
     if(index < array.length)
       return array;
 
@@ -177,7 +179,7 @@ public class SegmentArray {
   }
 
   protected int[] insert(int[] array, int[] insertArray, int startIndex, int insertLength) {
-    int[] newArray = relocateArray(array, mySegmentCount + insertLength);
+    int[] newArray = reallocateArray(array, mySegmentCount + insertLength);
     if(startIndex < mySegmentCount) {
       System.arraycopy(newArray, startIndex, newArray, startIndex+insertLength, mySegmentCount-startIndex);
     }
@@ -186,7 +188,7 @@ public class SegmentArray {
   }
 
   protected <T> T[] insert(T[] array, T[] insertArray, int startIndex, int insertLength) {
-    T[] newArray = relocateArray(array, mySegmentCount + insertLength);
+    T[] newArray = reallocateArray(array, mySegmentCount + insertLength);
     if(startIndex < mySegmentCount) {
       System.arraycopy(newArray, startIndex, newArray, startIndex+insertLength, mySegmentCount-startIndex);
     }
@@ -195,7 +197,7 @@ public class SegmentArray {
   }
 
   protected short[] insert(short[] array, short[] insertArray, int startIndex, int insertLength) {
-    short[] newArray = relocateArray(array, mySegmentCount + insertLength);
+    short[] newArray = reallocateArray(array, mySegmentCount + insertLength);
     if(startIndex < mySegmentCount) {
       System.arraycopy(newArray, startIndex, newArray, startIndex+insertLength, mySegmentCount-startIndex);
     }
