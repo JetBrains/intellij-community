@@ -191,13 +191,13 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
         while (iterator.hasNext()) {
           final OuterLanguageElement outerElement = iterator.next();
-//  TODO: it seems we invalid elements during merge, but if some more exit then this code should be uncommented
-//          final FileElement file = TreeUtil.getFileElement(outerElement);
-//
-//          if (file == null || file.getPsi() != psiFile) {
-//            iterator.remove(); // remove invalid texts (e.g. merged)
-//            continue;
-//          }
+
+          final FileElement file = TreeUtil.getFileElement(outerElement);
+
+          if (file == null || file.getPsi() != psiFile) {
+            iterator.remove(); // remove invalid texts
+            continue;
+          }
 
           final XmlText nextText = outerElement.getFollowingText();
 
