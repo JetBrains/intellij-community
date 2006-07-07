@@ -318,7 +318,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
             final Pair configurableWithMnemonics = ((Pair)userObject);
             final Configurable configurable = (Configurable)configurableWithMnemonics.first;
             setIcon(configurable.getIcon());
-            append(configurable.getDisplayName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            append(configurable.getDisplayName().replaceAll("\n", " "), SimpleTextAttributes.REGULAR_ATTRIBUTES);
             append(" ( " + configurableWithMnemonics.second + " )", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           } else if (userObject instanceof String){
             setIcon(null);
