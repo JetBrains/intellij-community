@@ -77,8 +77,8 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
 
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
-        PsiElement resolved = reference.resolve();
-        if (resolved == null) {
+        JavaResolveResult result = reference.advancedResolve(false);
+        if (result.getElement() == null && !result.isPackagePrefixPackageReference()) {
           refMessage[0] = InspectionsBundle.message("inspection.javadoc.problem.cannot.resolve", "<code>" + reference.getText() + "</code>");
           references[0] = reference;
         }
