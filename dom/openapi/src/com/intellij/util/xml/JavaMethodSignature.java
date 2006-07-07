@@ -115,15 +115,20 @@ public class JavaMethodSignature {
   public static JavaMethodSignature getSignature(Method method) {
     JavaMethodSignature methodSignature = ourSignatures.get(method);
     if (methodSignature == null) {
-      final Pair<String, Class[]> key = new Pair<String, Class[]>(method.getName(), method.getParameterTypes());
-      JavaMethodSignature oldSignature = ourSignatures2.get(key);
-      if (oldSignature == null) {
-        oldSignature = new JavaMethodSignature(method.getName(), method.getParameterTypes());
-        ourSignatures2.put(key, oldSignature);
-      }
-      methodSignature = oldSignature;
-      ourSignatures.put(method, methodSignature);
+      ourSignatures.put(method, methodSignature = getSignature(method.getName(), method.getParameterTypes()));
     }
+    return methodSignature;
+  }
+
+  public static JavaMethodSignature getSignature(final String name, final Class<?>... parameterTypes) {
+    final JavaMethodSignature methodSignature;
+    final Pair<String, Class[]> key = new Pair<String, Class[]>(name, parameterTypes);
+    JavaMethodSignature oldSignature = ourSignatures2.get(key);
+    if (oldSignature == null) {
+      oldSignature = new JavaMethodSignature(name, parameterTypes);
+      ourSignatures2.put(key, oldSignature);
+    }
+    methodSignature = oldSignature;
     return methodSignature;
   }
 
