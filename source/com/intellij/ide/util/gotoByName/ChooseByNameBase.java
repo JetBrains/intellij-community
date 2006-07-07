@@ -709,9 +709,11 @@ public abstract class ChooseByNameBase{
     ensureNamesLoaded(checkBoxState);
     final String[] names = checkBoxState ? myNames[1] : myNames[0];
     Object uniqueElement = null;
+
     for (int i = 0; names != null && i < names.length; i++) {
       final String name = names[i];
-      if (name.equalsIgnoreCase(text)) {
+
+      if (name != null && name.equalsIgnoreCase(text)) {
         final Object[] elements = myModel.getElementsByName(name, checkBoxState);
         if (elements.length > 1) return null;
         if (elements.length == 0) continue;
