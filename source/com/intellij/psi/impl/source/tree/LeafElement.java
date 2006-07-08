@@ -78,7 +78,16 @@ public abstract class LeafElement extends TreeElement {
     return null;
   }
 
+  public int hc() {
+    final CharSequence text = getInternedText();
 
+    int hc = 0;
+    for (int i = 0; i < text.length(); i++) {
+      hc += text.charAt(i);
+    }
+
+    return hc;
+  }
 
   public TreeElement getFirstChildNode() {
     return null;

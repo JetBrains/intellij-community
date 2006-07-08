@@ -26,6 +26,8 @@ public class CompositeElement extends TreeElement implements Cloneable {
   private int myStartOffset = 0;
   private int myModificationsCount = 0;
   private PsiElement myWrapper = null;
+  private int myCachedLength = -1;
+  private int myHC = -1;
 
   public CompositeElement(@NotNull IElementType type) {
     this.type = type;
@@ -132,8 +134,10 @@ public class CompositeElement extends TreeElement implements Cloneable {
 
   public void clearCaches() {
     setCachedLength(-1);
+
     myModificationsCount++;
     myParentModifications = -1;
+    myHC = -1;
   }
 
   public void acceptTree(TreeElementVisitor visitor) {
@@ -317,8 +321,6 @@ public class CompositeElement extends TreeElement implements Cloneable {
     CodeEditUtil.replaceChild(this, child, newElement);
   }
 
-  private int myCachedLength = -1;
-
   public int getTextLength() {
     if (myCachedLength < 0) {
       myCachedLength = getLengthInner();
@@ -335,6 +337,21 @@ public class CompositeElement extends TreeElement implements Cloneable {
 
   public int getCachedLength() {
     return myCachedLength;
+  }
+
+
+  public int hc() {
+    if (myHC == -1) {
+      int hc = 0;
+      TreeElement child = firstChild;
+      while (child != null) {
+        hc += child.hc();
+        child = child.next;
+      }
+      myHC = hc;
+    }
+
+    return myHC;
   }
 
   protected int getLengthInner() {

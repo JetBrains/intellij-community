@@ -13,10 +13,12 @@ import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
+import com.intellij.util.diff.DiffTreeStructure;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -165,7 +167,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   public IElementType getTokenType() {
     final Token lex = getCurrentToken();
     if (lex == null) return null;
-    
+
     final IElementType tokenType = lex.getTokenType();
     LOG.assertTrue(!whitespaceOrComment(tokenType));
     return tokenType;
@@ -342,6 +344,25 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     LOG.assertTrue(curNode == null, "Unbalanced tree");
 
     return rootNode;
+  }
+
+  private class MyTreeStructure implements DiffTreeStructure<Object> {
+    private List<Object> EMPTY = Collections.emptyList();
+
+    public Object prepareForGetChildren(final Object o) {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public Object getRoot() {
+      return myProduction.get(0);
+    }
+
+    public List<Object> getChildren(final Object item) {
+      if (item instanceof Token || item instanceof ErrorItem) return EMPTY;
+
+
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
   }
 
   public void setDebugMode(boolean dbgMode) {

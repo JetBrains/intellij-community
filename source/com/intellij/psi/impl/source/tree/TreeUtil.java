@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.tree.IElementType;
@@ -14,7 +13,6 @@ import java.util.List;
 import java.util.Set;
 
 public class TreeUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.TreeUtil");
 
   public static ASTNode findChild(ASTNode parent, IElementType type) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
@@ -172,7 +170,7 @@ public class TreeUtil {
       if(parent != null) parent.firstChild = firstNew;
       while(true){
         final TreeElement treeNext = firstNew.getTreeNext();
-        LOG.assertTrue(treeNext != anchor, "Attempt to create cycle");
+        assert treeNext != anchor : "Attempt to create cycle";
         firstNew.setTreeParent(parent);
         if(treeNext == null) break;
         firstNew = treeNext;
@@ -195,7 +193,7 @@ public class TreeUtil {
     anchor.setTreeNext(firstNew);
     while(true){
       final TreeElement next = firstNew.getTreeNext();
-      LOG.assertTrue(next != anchor, "Attempt to create cycle");
+      assert next != anchor : "Attempt to create cycle";
       firstNew.setTreeParent(parent);
       if(next == null) break;
       firstNew = next;
@@ -255,7 +253,8 @@ public class TreeUtil {
     final CompositeElement parent = start.getTreeParent();
     final TreeElement startPrev = start.getTreePrev();
     final TreeElement endPrev = end != null ? end.getTreePrev() : null;
-    LOG.assertTrue(end == null || end.getTreeParent() == parent, "Trying to remove non-child");
+
+    assert end == null || end.getTreeParent() == parent : "Trying to remove non-child";
 
     if (parent != null){
       if (start == parent.getFirstChildNode()){

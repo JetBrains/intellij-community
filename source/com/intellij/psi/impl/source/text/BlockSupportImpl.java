@@ -10,10 +10,16 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.pom.PomModel;
+import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.impl.PomTransactionBase;
+import com.intellij.pom.tree.TreeAspect;
+import com.intellij.pom.tree.TreeAspectEvent;
+import com.intellij.pom.tree.events.ChangeInfo;
+import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
+import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
+import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
@@ -21,6 +27,7 @@ import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.CodeFragmentElement;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.parsing.tabular.ParsingUtil;
 import com.intellij.psi.impl.source.parsing.tabular.grammar.Grammar;
 import com.intellij.psi.impl.source.parsing.tabular.grammar.GrammarUtil;
@@ -30,6 +37,8 @@ import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IErrorCounterChameleonElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.diff.DiffTree;
+import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.text.CharArrayCharSequence;
 
 import java.util.Set;
@@ -186,20 +195,9 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
         }
 
         final Grammar grammarByFileType = GrammarUtil.getGrammarByFileType(fileType);
-        if(grammarByFileType != null){
-          Set<String> newTaglibPrefixes = null;
-          if(file.getLanguage() == StdLanguages.JSP){
-            newTaglibPrefixes = ((JspFileViewProvider)file.getViewProvider()).getKnownTaglibPrefixes();
-          }
-
-          if (!unparseableChameleonDetected && (newTaglibPrefixes == null || newTaglibPrefixes.equals(oldTaglibPrefixes))) {
-            ParsingUtil.reparse(grammarByFileType, treeFileElement.getCharTable(), treeFileElement, newFileText, startOffset, endOffset,
-                                lengthShift, file.getViewProvider());
-          }
-          else {
-            ParsingUtil.reparse(grammarByFileType, treeFileElement.getCharTable(), treeFileElement, newFileText, 0, textLength,
-                                lengthShift, file.getViewProvider());
-          }
+        if(grammarByFileType != null && file.getLanguage() != StdLanguages.JSP){
+          ParsingUtil.reparse(grammarByFileType, treeFileElement.getCharTable(), treeFileElement, newFileText, startOffset, endOffset,
+                              lengthShift, file.getViewProvider());
         }
         else{
           makeFullParse(parent, newFileText, textLength, fileImpl, fileType);
@@ -258,19 +256,137 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
       final ASTNode newFileElement = newFile.getNode();
       final RepositoryManager repositoryManager = manager.getRepositoryManager();
       final FileElement fileElement = (FileElement)fileImpl.getNode();
-      final int oldLength = fileElement.getTextLength();
-      sendPsiBeforeEvent(fileImpl);
-      if(repositoryManager != null) repositoryManager.beforeChildAddedOrRemoved(fileImpl, fileElement);
-      if(fileElement.getFirstChildNode() != null)
-        TreeUtil.removeRange(fileElement.getFirstChildNode(), null);
-      final ASTNode firstChildNode = newFileElement.getFirstChildNode();
-      if (firstChildNode != null)
-        TreeUtil.addChildren(fileElement, (TreeElement)firstChildNode);
-      fileImpl.getTreeElement().setCharTable(newFile.getTreeElement().getCharTable());
-      if(repositoryManager != null) repositoryManager.beforeChildAddedOrRemoved(fileImpl, fileElement);
-      manager.invalidateFile(fileImpl);
-      fileElement.subtreeChanged();
-      sendPsiAfterEvent(fileImpl, oldLength);
+
+
+      if (fileImpl.getLanguage() != StdLanguages.JSP) {
+        final int oldLength = fileElement.getTextLength();
+        sendPsiBeforeEvent(fileImpl);
+        if(repositoryManager != null) repositoryManager.beforeChildAddedOrRemoved(fileImpl, fileElement);
+        if(fileElement.getFirstChildNode() != null)
+          TreeUtil.removeRange(fileElement.getFirstChildNode(), null);
+        final ASTNode firstChildNode = newFileElement.getFirstChildNode();
+        if (firstChildNode != null)
+          TreeUtil.addChildren(fileElement, (TreeElement)firstChildNode);
+        fileImpl.getTreeElement().setCharTable(newFile.getTreeElement().getCharTable());
+        if(repositoryManager != null) repositoryManager.beforeChildAddedOrRemoved(fileImpl, fileElement);
+        manager.invalidateFile(fileImpl);
+        fileElement.subtreeChanged();
+        sendPsiAfterEvent(fileImpl, oldLength);
+      }
+      else {
+        printDiff(fileImpl, fileElement, newFileElement);
+      }
+    }
+  }
+
+  public static class DiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
+    RepositoryManager myManager;
+    private TreeChangeEventImpl myEvent;
+
+
+    public DiffBuilder(final PsiFileImpl fileImpl) {
+      final PsiManagerImpl manager = (PsiManagerImpl)fileImpl.getManager();
+      myManager = manager.getRepositoryManager();
+      myEvent = new TreeChangeEventImpl(fileImpl.getProject().getModel().getModelAspect(TreeAspect.class), fileImpl.getTreeElement());
+    }
+
+    public void nodeReplaced(final ASTNode oldNode, final ASTNode newNode) {
+      TreeUtil.remove((TreeElement)newNode);
+      TreeUtil.replaceWithList((TreeElement)oldNode, (TreeElement)newNode);
+
+      final ReplaceChangeInfoImpl change = (ReplaceChangeInfoImpl)ChangeInfoImpl.create(ChangeInfo.REPLACE, newNode);
+      change.setReplaced(oldNode);
+      myEvent.addElementaryChange(newNode, change);
+      ((TreeElement)newNode).clearCaches();
+      ((CompositeElement)newNode.getTreeParent()).subtreeChanged();
+
+      //System.out.println("REPLACED: " + oldNode + " to " + newNode);
+    }
+
+    public void nodeDeleted(ASTNode parent, final ASTNode child) {
+      myEvent.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.REMOVED, child));
+      TreeUtil.remove((TreeElement)child);
+      ((CompositeElement)parent).subtreeChanged();
+
+      //System.out.println("DELETED from " + parent + ": " + child);
+    }
+
+    public void nodeInserted(final ASTNode oldParent, final ASTNode node, final int pos) {
+      ASTNode anchor = null;
+      for (int i = 0; i < pos; i++) {
+        if (anchor == null) {
+          anchor = oldParent.getFirstChildNode();
+        }
+        else {
+          anchor = anchor.getTreeNext();
+        }
+      }
+
+      TreeUtil.remove((TreeElement)node);
+      if (anchor != null) {
+        TreeUtil.insertAfter((TreeElement)anchor, (TreeElement)node);
+      }
+      else {
+        if (oldParent.getFirstChildNode() != null) {
+          TreeUtil.insertBefore((TreeElement)oldParent.getFirstChildNode(), (TreeElement)node);
+        }
+        else {
+          TreeUtil.addChildren((CompositeElement)oldParent, (TreeElement)node);
+        }
+      }
+
+      myEvent.addElementaryChange(node, ChangeInfoImpl.create(ChangeInfo.ADD, node));
+
+      ((TreeElement)node).clearCaches();
+      ((CompositeElement)oldParent).subtreeChanged();
+
+
+      //System.out.println("INSERTED to " + oldParent + ": " + node + " at " + pos);
+    }
+
+
+    public TreeChangeEventImpl getEvent() {
+      return myEvent;
+    }
+  }
+
+  private static void printDiff(final PsiFileImpl file, final ASTNode oldRoot, final ASTNode newRoot) {
+    //System.out.println("---------------------------------------------------");
+    synchronized (PsiLock.LOCK) {
+      RepositoryManager repositoryManager = ((PsiManagerImpl)file.getManager()).getRepositoryManager();
+      if (repositoryManager != null) {
+        repositoryManager.beforeChildAddedOrRemoved(file, oldRoot);
+      }
+
+      ((FileElement)newRoot).setCharTable(((FileElement)oldRoot).getCharTable());
+      ChameleonTransforming.transformChildren(newRoot);
+
+      final PomModel model = file.getProject().getModel();
+      try {
+        model.runTransaction(new PomTransactionBase(file, model.getModelAspect(TreeAspect.class)) {
+          public PomModelEvent runInner() throws IncorrectOperationException {
+
+            final DiffBuilder builder = new DiffBuilder(file);
+            DiffTree.diff(new ASTDiffTreeStructure(oldRoot), new ASTDiffTreeStructure(newRoot), new ASTShallowComparator(), builder);
+            file.subtreeChanged();
+
+            return new TreeAspectEvent(model, builder.getEvent());
+          }
+        });
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      catch(Throwable th){
+        LOG.error(th);
+      }
+      finally{
+        if (repositoryManager != null) {
+          repositoryManager.beforeChildAddedOrRemoved(file, oldRoot);
+        }
+
+        ((PsiManagerImpl)file.getManager()).invalidateFile(file);
+      }
     }
   }
 

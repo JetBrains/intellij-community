@@ -194,6 +194,8 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
     return super.hashCode();
   }
 
+  public abstract int hc(); // Used in tree diffing
+
   public ASTNode getTransformedFirstOrSelf() {
     return this;
   }
