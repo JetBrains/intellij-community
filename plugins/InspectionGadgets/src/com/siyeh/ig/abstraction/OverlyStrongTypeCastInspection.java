@@ -53,6 +53,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
 
     private static class OverlyStrongCastFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "overly.strong.type.cast.weaken.quickfix");

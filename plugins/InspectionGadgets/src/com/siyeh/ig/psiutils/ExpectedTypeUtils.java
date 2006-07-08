@@ -519,12 +519,15 @@ public class ExpectedTypeUtils{
                 return null;
             }
             final PsiParameter parameter = parameters[parameterPosition];
+            final PsiType parameterType = parameter.getType();
             if(parameter.isVarArgs()){
                 final PsiArrayType arrayType =
-                        (PsiArrayType)parameter.getType();
-                return substitutor.substitute(arrayType.getComponentType());
+                        (PsiArrayType)parameterType;
+                final PsiType type =
+                        substitutor.substitute(arrayType.getComponentType());
+                return type.createArrayType();
             }
-            return substitutor.substitute(parameter.getType());
+            return substitutor.substitute(parameterType);
         }
     }
 }
