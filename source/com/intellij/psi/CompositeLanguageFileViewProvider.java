@@ -185,20 +185,23 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
           languageElements = outerSet.get();
         }
 
-        final Iterator<OuterLanguageElement> iterator = languageElements.iterator();
-        XmlText prevText = null;
-        int outerCount = 0;
+        Iterator<OuterLanguageElement> iterator = languageElements.iterator();
 
         while (iterator.hasNext()) {
           final OuterLanguageElement outerElement = iterator.next();
-
           final FileElement file = TreeUtil.getFileElement(outerElement);
 
           if (file == null || file.getPsi() != psiFile) {
-            iterator.remove(); // remove invalid texts
-            continue;
+            iterator.remove();
           }
+        }
 
+        XmlText prevText = null;
+        int outerCount = 0;
+        iterator = languageElements.iterator();
+
+        while (iterator.hasNext()) {
+          final OuterLanguageElement outerElement = iterator.next();
           final XmlText nextText = outerElement.getFollowingText();
 
           final TextRange textRange = new TextRange(
