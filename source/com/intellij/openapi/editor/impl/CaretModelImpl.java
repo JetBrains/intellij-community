@@ -365,7 +365,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
       int oldEndOffset = startOffset + e.getOldLength();
 
       int newOffset = myOffset;
-      VisualPosition oldPosition = getVisualPosition();
 
       if (myOffset > oldEndOffset || myOffset == oldEndOffset && needToShiftWhitespaces(e)) {
         newOffset += e.getNewLength() - e.getOldLength();
