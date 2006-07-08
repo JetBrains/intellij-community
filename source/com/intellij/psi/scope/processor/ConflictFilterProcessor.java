@@ -23,8 +23,8 @@ import java.util.List;
 public class ConflictFilterProcessor extends FilterScopeProcessor
  implements NameHint{
   protected final PsiConflictResolver[] myResolvers;
-  private JavaResolveResult[] myCachedResult = null;
-  private String myName;
+  protected JavaResolveResult[] myCachedResult = null;
+  protected String myName;
 
   public ConflictFilterProcessor(String name, PsiElement element, ElementFilter filter, PsiConflictResolver[] resolvers, List container){
     super(filter, element, container);
@@ -37,10 +37,8 @@ public class ConflictFilterProcessor extends FilterScopeProcessor
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor){
-    if(myCachedResult != null){
-      if (myCachedResult.length == 1)
-        if(!(myCachedResult[0].getElement() instanceof PsiField) || myCachedResult[0].isAccessible())
-          return false;
+    if(myCachedResult != null && myCachedResult.length == 1 && myCachedResult[0].isAccessible()) {
+      return false;
     }
 
     if(myName == null || PsiUtil.checkName(element, myName)){

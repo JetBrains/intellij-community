@@ -82,4 +82,13 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   public boolean shouldProcess(Class elementClass) {
     return PsiVariable.class.isAssignableFrom(elementClass);
   }
+
+  public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+    if (!(element instanceof PsiField) && (myName == null || PsiUtil.checkName(element, myName))) {
+      super.execute(element, substitutor);
+      return false;
+    }
+
+    return super.execute(element, substitutor);
+  }
 }

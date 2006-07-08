@@ -43,21 +43,14 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private PsiImportListImpl myRepositoryImportList = null;
   private String myCachedPackageName = null;
   protected PsiClass[] myCachedClasses = null;
-  private final Map<PsiJavaFile,Map<String, SoftReference<JavaResolveResult[]>>> myGuessCache = ResolveCache.getOrCreateWeakMap(myManager, CACHED_CLASSES_MAP_KEY, false);
+  private final Map<PsiJavaFile,Map<String, SoftReference<JavaResolveResult[]>>> myGuessCache;
 
   private static final @NonNls String[] IMPLICIT_IMPORTS = new String[]{ "java.lang" };
   private LanguageLevel myLanguageLevel;
 
-  //protected PsiJavaFileBaseImpl(Project project,
-  //                              IElementType elementType,
-  //                              IElementType contentElementType,
-  //                              String name,
-  //                              CharSequence text) {
-  //  super(project, elementType, contentElementType, name, text);
-  //}
-
   protected PsiJavaFileBaseImpl(IElementType elementType, IElementType contentElementType, FileViewProvider viewProvider) {
     super(elementType, contentElementType, viewProvider);
+    myGuessCache = myManager.getResolveCache().getOrCreateWeakMap(myManager, CACHED_CLASSES_MAP_KEY, false);
   }
 
   public void subtreeChanged() {

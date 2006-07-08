@@ -27,7 +27,7 @@ public class ResolveCache {
 
   private final WeakHashMap[] myPolyVariantResolveMaps = new WeakHashMap[4];
   private final WeakHashMap[] myResolveMaps = new WeakHashMap[4];
-  private static int ourClearCount = 0;
+  private int myClearCount = 0;
 
 
   public static interface PolyVariantResolver {
@@ -58,7 +58,7 @@ public class ResolveCache {
 
   public void clearCache() {
     synchronized (PsiLock.LOCK) {
-      ourClearCount++;
+      myClearCount++;
       getOrCreateWeakMap(myManager, JAVA_RESOLVE_MAP, true).clear();
       getOrCreateWeakMap(myManager, JAVA_RESOLVE_MAP_INCOMPLETE, true).clear();
       getOrCreateWeakMap(myManager, JAVA_RESOLVE_MAP, false).clear();
@@ -78,7 +78,7 @@ public class ResolveCache {
 
     int clearCountOnStart;
     synchronized (PsiLock.LOCK) {
-      clearCountOnStart = ourClearCount;
+      clearCountOnStart = myClearCount;
     }
 
     boolean physical = ref.getElement().isPhysical();
@@ -144,7 +144,7 @@ public class ResolveCache {
 
   private void setCachedResolve(PsiReference ref, PsiElement results, boolean physical, boolean incompleteCode, final int clearCountOnStart) {
     synchronized (PsiLock.LOCK) {
-      if (clearCountOnStart != ourClearCount && results != null) return;
+      if (clearCountOnStart != myClearCount && results != null) return;
 
       int index = getIndex(physical, incompleteCode);
       myResolveMaps[index].put(ref, new SoftReference<PsiElement>(results));
@@ -154,10 +154,10 @@ public class ResolveCache {
   //for Visual Fabrique
   public void clearResolveCaches(PsiReference ref) {
     synchronized (PsiLock.LOCK) {
-      ourClearCount++;
+      myClearCount++;
       final boolean physical = ref.getElement().isPhysical();
-      setCachedPolyVariantResolve(ref, null, physical, false, ourClearCount);
-      setCachedPolyVariantResolve(ref, null, physical, true, ourClearCount);
+      setCachedPolyVariantResolve(ref, null, physical, false, myClearCount);
+      setCachedPolyVariantResolve(ref, null, physical, true, myClearCount);
     }
   }
 
@@ -178,7 +178,7 @@ public class ResolveCache {
 
     int clearCountOnStart;
     synchronized (PsiLock.LOCK) {
-      clearCountOnStart = ourClearCount;
+      clearCountOnStart = myClearCount;
     }
 
     boolean physical = ref.getElement().isPhysical();
@@ -211,7 +211,7 @@ public class ResolveCache {
 
   private void setCachedPolyVariantResolve(PsiReference ref, ResolveResult[] result, boolean physical, boolean incomplete, int clearCountOnStart){
     synchronized (PsiLock.LOCK) {
-      if (clearCountOnStart != ourClearCount && result != null) return;
+      if (clearCountOnStart != myClearCount && result != null) return;
       int index = getIndex(physical, incomplete);
       myPolyVariantResolveMaps[index].put(ref, new SoftReference<ResolveResult[]>(result));
     }
@@ -244,7 +244,7 @@ public class ResolveCache {
     return result;
   }
 
-  public static <K,V> WeakHashMap<K,V> getOrCreateWeakMap(final PsiManagerImpl manager, final Key<MapPair<K, V>> key, boolean forPhysical) {
+  public <K,V> WeakHashMap<K,V> getOrCreateWeakMap(final PsiManagerImpl manager, final Key<MapPair<K, V>> key, boolean forPhysical) {
     MapPair<K, V> pair = manager.getUserData(key);
     if (pair == null){
       pair = new MapPair<K,V>();
@@ -255,7 +255,7 @@ public class ResolveCache {
         new Runnable() {
           public void run() {
             synchronized (PsiLock.LOCK) {
-              ourClearCount++;
+              myClearCount++;
               _pair.physicalMap.clear();
             }
           }
@@ -265,7 +265,7 @@ public class ResolveCache {
         new Runnable() {
           public void run() {
             synchronized (PsiLock.LOCK) {
-              ourClearCount++;
+              myClearCount++;
               _pair.nonPhysicalMap.clear();
             }
           }
