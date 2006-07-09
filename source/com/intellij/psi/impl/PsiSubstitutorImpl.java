@@ -174,7 +174,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
             }
           }
           PsiWildcardType wildcardType = (PsiWildcardType)substituted;
-          if (substitutedBoundType != null && !substitutedBoundType.equalsToText("java.lang.Object")) {
+          if (substitutedBoundType != null && !(substitutedBoundType instanceof PsiWildcardType) && !substitutedBoundType.equalsToText("java.lang.Object")) {
             if (originalBound == null || !substitutedBoundType.isAssignableFrom(originalBound)) {
               if (wildcardType.isExtends()) {
                 final PsiType glb = GenericsUtil.getGreatestLowerBound(wildcardType.getBound(), substitutedBoundType);
