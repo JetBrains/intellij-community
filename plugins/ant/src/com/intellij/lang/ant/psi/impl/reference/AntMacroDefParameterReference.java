@@ -90,7 +90,7 @@ public class AntMacroDefParameterReference extends AntGenericReference {
         }
       }
       final int count = variants.size();
-      return (count == 0) ? ourEmptyIntentions : variants.toArray(new String[count]);
+      return (count == 0) ? EMPTY_ARRAY : variants.toArray(new String[count]);
     }
     finally {
       StringSetSpinAllocator.dispose(variants);

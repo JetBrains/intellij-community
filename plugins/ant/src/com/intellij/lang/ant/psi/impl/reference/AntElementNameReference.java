@@ -9,10 +9,12 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringSetSpinAllocator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -60,6 +62,7 @@ public class AntElementNameReference extends AntGenericReference {
     return element;
   }
 
+  @Nullable
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
     if (element instanceof AntStructuredElement) {
       return handleElementRename(((AntStructuredElement)element).getName());
@@ -97,11 +100,14 @@ public class AntElementNameReference extends AntGenericReference {
 
   public Object[] getVariants() {
     AntStructuredElement parent = (AntStructuredElement)getElement().getAntParent();
+    if( parent == null) {
+      return EMPTY_ARRAY;
+    }
     AntTypeDefinition def = parent.getTypeDefinition();
     if (def == null) {
       def = parent.getAntProject().getTypeDefinition();
       if (def == null) {
-        return ourEmptyIntentions;
+        return EMPTY_ARRAY;
       }
     }
     final Set<String> ids = StringSetSpinAllocator.alloc();
@@ -121,9 +127,9 @@ public class AntElementNameReference extends AntGenericReference {
     return super.getFixes();
   }
 
+  @Nullable
   private static PsiElement findClass(final AntTypeDefinition elementDef, final AntStructuredElement element) {
-    return element;
-    /*final String clazz = elementDef.getClassName();
-    return element.getManager().findClass(clazz, GlobalSearchScope.allScope(element.getProject()));*/
+    final String clazz = elementDef.getClassName();
+    return element.getManager().findClass(clazz, GlobalSearchScope.allScope(element.getProject()));
   }
 }
