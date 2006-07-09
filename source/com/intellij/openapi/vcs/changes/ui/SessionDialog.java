@@ -13,6 +13,7 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
 public class SessionDialog extends DialogWrapper {
@@ -21,6 +22,8 @@ public class SessionDialog extends DialogWrapper {
 
   private final Alarm myOKButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final String myCommitMessage;
+
+  private final JPanel myCenterPanel = new JPanel(new BorderLayout());
 
   public SessionDialog(String title, Project project,
                        CommitSession session, List<Change> changes,
@@ -37,7 +40,8 @@ public class SessionDialog extends DialogWrapper {
 
   @Nullable
   protected JComponent createCenterPanel() {
-    return mySession.getAdditionalConfigurationUI();
+    myCenterPanel.add(mySession.getAdditionalConfigurationUI(), BorderLayout.CENTER);
+    return myCenterPanel;
   }
 
   private void updateButtons() {
@@ -47,7 +51,7 @@ public class SessionDialog extends DialogWrapper {
       public void run() {
         updateButtons();
       }
-    }, 300, ModalityState.stateForComponent(getOwner()));
+    }, 300, ModalityState.stateForComponent(myCenterPanel));
   }
 
   protected void dispose() {
