@@ -16,16 +16,15 @@
 package com.intellij.codeInspection.sillyAssignment;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * User: anna
@@ -50,42 +49,35 @@ public class SillyAssignmentInspection extends LocalInspectionTool {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkFile(PsiFile file, final InspectionManager manager, boolean isOnTheFly) {
-    final Set<ProblemDescriptor> problems = new HashSet<ProblemDescriptor>();
-    file.accept(new PsiRecursiveElementVisitor() {
+  public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
+    return new PsiRecursiveElementVisitor() {
       public void visitElement(PsiElement element) {
         super.visitElement(element);
       }
 
       public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-        final ProblemDescriptor[] problemDescriptors = checkSillyAssignment(expression, manager);
-        if (problemDescriptors != null){
-          problems.addAll(Arrays.asList(problemDescriptors));
-        }
+        checkSillyAssignment(expression, holder);
       }
 
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitElement(expression);
       }
-    });
-    return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
+    };
   }
 
-
-  @Nullable
-  private static ProblemDescriptor[] checkSillyAssignment(PsiAssignmentExpression assignment, InspectionManager inspectionManager) {
-    if (assignment.getOperationSign().getTokenType() != JavaTokenType.EQ) return null;
+  private static void checkSillyAssignment(PsiAssignmentExpression assignment, ProblemsHolder holder) {
+    if (assignment.getOperationSign().getTokenType() != JavaTokenType.EQ) return;
     PsiExpression lExpression = assignment.getLExpression();
     PsiExpression rExpression = assignment.getRExpression();
-    if (rExpression == null) return null;
+    if (rExpression == null) return;
     lExpression = PsiUtil.deparenthesizeExpression(lExpression);
     rExpression = PsiUtil.deparenthesizeExpression(rExpression);
-    if (!(lExpression instanceof PsiReferenceExpression) || !(rExpression instanceof PsiReferenceExpression)) return null;
+    if (!(lExpression instanceof PsiReferenceExpression) || !(rExpression instanceof PsiReferenceExpression)) return;
     PsiReferenceExpression lRef = (PsiReferenceExpression)lExpression;
     PsiReferenceExpression rRef = (PsiReferenceExpression)rExpression;
     PsiManager manager = assignment.getManager();
-    if (!sameInstanceReferences(lRef, rRef, manager)) return null;
-    return new ProblemDescriptor[]{inspectionManager.createProblemDescriptor(assignment, JavaErrorMessages.message("assignment.to.itself"), (LocalQuickFix [])null, ProblemHighlightType.LIKE_UNUSED_SYMBOL)};
+    if (!sameInstanceReferences(lRef, rRef, manager)) return;
+    holder.registerProblem(assignment, JavaErrorMessages.message("assignment.to.itself"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, (LocalQuickFix[])null);
   }
 
   /**
