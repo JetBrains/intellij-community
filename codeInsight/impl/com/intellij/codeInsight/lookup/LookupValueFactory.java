@@ -47,6 +47,10 @@ public class LookupValueFactory {
     public Icon getIcon(int flags) {
       return myIcon;
     }
+
+    public boolean equals(Object a) {
+      return a instanceof PresentableLookupValue && ((PresentableLookupValue)a).getPresentation().equals(myName);
+    }
   }
 
   public static class LookupValueWithIconAndHint extends LookupValueWithIcon implements LookupValueWithUIHint {
@@ -62,6 +66,7 @@ public class LookupValueFactory {
       return myHint;
     }
 
+    @Nullable
     public Color getColorHint() {
       return null;
     }
