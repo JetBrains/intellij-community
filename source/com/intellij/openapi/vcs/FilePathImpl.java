@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +19,7 @@ public class FilePathImpl implements FilePath {
   private VirtualFile myVirtualFile;
   private VirtualFile myVirtualParent;
   private final String myName;
-  private final File myFile;
+  @NotNull private final File myFile;
 
   public FilePathImpl(VirtualFile virtualParent, String name) {
     myVirtualParent = virtualParent;
@@ -111,7 +112,7 @@ public class FilePathImpl implements FilePath {
     return myVirtualParent;
   }
 
-  public File getIOFile() {
+  @NotNull public File getIOFile() {
     return myFile;
   }
 

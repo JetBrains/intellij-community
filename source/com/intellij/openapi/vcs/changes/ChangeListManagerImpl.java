@@ -592,6 +592,17 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     return myUnversionedFilesHolder.containsFile(file);
   }
 
+  public LocalChangeList findChangeList(final String name) {
+    LocalChangeList result = null;
+    final List<LocalChangeList> changeLists = getChangeLists();
+    for(LocalChangeList changeList: changeLists) {
+      if (changeList.getName().equals(name)) {
+        result = changeList;
+      }
+    }
+    return result;
+  }
+
   public LocalChangeList addChangeList(String name, final String comment) {
     synchronized (myChangeLists) {
       final LocalChangeList list = LocalChangeList.createEmptyChangeList(name);

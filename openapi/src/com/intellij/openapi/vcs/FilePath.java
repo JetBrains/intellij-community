@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -25,7 +26,8 @@ import java.nio.charset.Charset;
 public interface FilePath {
   VirtualFile getVirtualFile();
   VirtualFile getVirtualFileParent();
-  File getIOFile();
+
+  @NotNull File getIOFile();
 
   String getName();
 

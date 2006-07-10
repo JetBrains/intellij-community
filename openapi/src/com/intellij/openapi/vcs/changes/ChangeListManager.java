@@ -31,6 +31,7 @@ public abstract class ChangeListManager {
   public abstract List<VirtualFile> getAffectedFiles();
   public abstract boolean isFileAffected(final VirtualFile file);
 
+  public abstract LocalChangeList findChangeList(final String name);
   public abstract LocalChangeList addChangeList(@NotNull String name, final String comment);
   public abstract void setDefaultChangeList(@NotNull LocalChangeList list);
   public abstract LocalChangeList getDefaultChangeList();

@@ -3,6 +3,9 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 /**
  * @author max
@@ -52,10 +55,12 @@ public class Change {
     return Type.MODIFICATION;
   }
 
+  @Nullable
   public ContentRevision getBeforeRevision() {
     return myBeforeRevision;
   }
 
+  @Nullable
   public ContentRevision getAfterRevision() {
     return myAfterRevision;
   }
@@ -90,5 +95,11 @@ public class Change {
   private static int revisionHashCode(ContentRevision rev) {
     if (rev == null) return 0;
     return rev.getFile().hashCode();
+  }
+
+  public boolean affectsFile(File ioFile) {
+    if (myBeforeRevision != null && myBeforeRevision.getFile().getIOFile().equals(ioFile)) return true;
+    if (myAfterRevision != null && myAfterRevision.getFile().getIOFile().equals(ioFile)) return true;
+    return false;
   }
 }
