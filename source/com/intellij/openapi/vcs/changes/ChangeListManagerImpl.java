@@ -132,6 +132,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     myDisposed = true;
     cancelUpdates();
     myRepaintAlarm.cancelAllRequests();
+    synchronized(myPendingUpdatesLock) {
+      waitForUpdateDone(null);
+    }
 
     ToolWindowManager.getInstance(myProject).unregisterToolWindow(TOOLWINDOW_ID);
   }
@@ -302,16 +305,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
         synchronized (myPendingUpdatesLock) {
           scheduleUpdate(10, true);
-          while (myCurrentUpdate != null && !myCurrentUpdate.isDone() || myUpdateInProgress) {
-            if (indicator != null && indicator.isCanceled()) break;
-
-            try {
-              myPendingUpdatesLock.wait(100);
-            }
-            catch (InterruptedException e) {
-              break;
-            }
-          }
+          waitForUpdateDone(indicator);
         }
       }
     }, VcsBundle.message("commit.wait.util.synced.title"), canBeCanceled, myProject);
@@ -321,6 +315,19 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
 
     return ok;
+  }
+
+  private void waitForUpdateDone(@Nullable final ProgressIndicator indicator) {
+    while (myCurrentUpdate != null && !myCurrentUpdate.isDone() || myUpdateInProgress) {
+      if (indicator != null && indicator.isCanceled()) break;
+
+      try {
+        myPendingUpdatesLock.wait(100);
+      }
+      catch (InterruptedException e) {
+        break;
+      }
+    }
   }
 
   private static class DisposedException extends RuntimeException {}
