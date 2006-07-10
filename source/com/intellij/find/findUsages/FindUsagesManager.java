@@ -85,34 +85,30 @@ public class FindUsagesManager implements JDOMExternalizable {
         } else if (!element.getLanguage().getFindUsagesProvider().canFindUsagesFor(element)) {
           return null;
         }
-        
+
         if (element instanceof PsiDirectory) {
           final PsiPackage psiPackage = ((PsiDirectory)element).getPackage();
           return psiPackage == null ? null : new Factory<FindUsagesHandler>() {
             public FindUsagesHandler create() {
-              return new DefaultFindUsagesHandler(psiPackage, findClassOptions, findMethodOptions,
-                                                                          findPackageOptions, findPointcutOptions, findVariableOptions);
+              return new DefaultFindUsagesHandler(psiPackage, findClassOptions, findMethodOptions, findPackageOptions, findPointcutOptions, findVariableOptions);
             }
           };
         }
 
         if (element instanceof PsiMethod) {
-          final PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, DefaultFindUsagesHandler.ACTION_STRING);
-          if (methods.length > 1) {
-            return new Factory<FindUsagesHandler>() {
-              public FindUsagesHandler create() {
+          return new Factory<FindUsagesHandler>() {
+            @Nullable
+            public FindUsagesHandler create() {
+              final PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, DefaultFindUsagesHandler.ACTION_STRING);
+              if (methods.length > 1) {
                 return new DefaultFindUsagesHandler(element, methods, findClassOptions, findMethodOptions, findPackageOptions, findPointcutOptions, findVariableOptions);
               }
-            };
-          }
-          if (methods.length == 1) {
-            return new Factory<FindUsagesHandler>() {
-              public FindUsagesHandler create() {
+              if (methods.length == 1) {
                 return new DefaultFindUsagesHandler(methods[0], findClassOptions, findMethodOptions, findPackageOptions, findPointcutOptions, findVariableOptions);
               }
-            };
-          }
-          return null;
+              return null;
+            }
+          };
         }
 
         return new Factory<FindUsagesHandler>() {
