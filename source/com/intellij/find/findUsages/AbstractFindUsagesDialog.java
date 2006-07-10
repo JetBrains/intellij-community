@@ -55,7 +55,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     myProject = project;
     myFindUsagesOptions = findUsagesOptions;
     myToShowInNewTab = toShowInNewTab;
-    myIsShowInNewTabEnabled = mustOpenInNewTab;
+    myIsShowInNewTabEnabled = !mustOpenInNewTab;
     myIsShowInNewTabVisible = !isSingleFile;
     mySearchForTextOccurencesAvailable = searchForTextOccurencesAvailable;
     mySearchInLibrariesAvailable = searchInLibrariesAvailable;
