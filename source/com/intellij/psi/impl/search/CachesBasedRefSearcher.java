@@ -38,6 +38,10 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
     }
     else if (refElement instanceof PsiNamedElement) {
       text = ((PsiNamedElement)refElement).getName();
+      if (refElement instanceof PsiMetaBaseOwner) {
+        final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)refElement).getMetaData();
+        if (metaData != null) text = metaData.getName();
+      }
     }
 
     if (text == null && refElement instanceof PsiMetaBaseOwner) {

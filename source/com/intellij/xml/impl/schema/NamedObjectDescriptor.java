@@ -3,7 +3,10 @@ package com.intellij.xml.impl.schema;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.meta.PsiWritableMetaData;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 
@@ -14,7 +17,7 @@ import com.intellij.util.IncorrectOperationException;
  * Time: 4:35:13 PM
  * To change this template use File | Settings | File Templates.
  */
-public class NamedObjectDescriptor implements PsiWritableMetaData {
+public class NamedObjectDescriptor implements PsiWritableMetaData, PsiMetaData {
   private XmlTag myDcl;
 
   public NamedObjectDescriptor() {}
@@ -53,5 +56,10 @@ public class NamedObjectDescriptor implements PsiWritableMetaData {
 
   public Object[] getDependences() {
     return new Object[] { myDcl };
+  }
+
+  public boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement,
+                                     PsiElement place) {
+    return true;
   }
 }
