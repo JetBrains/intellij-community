@@ -472,6 +472,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ConditionalExpressionWithIdenticalBranchesInspection.class);
         m_inspectionClasses.add(IfStatementWithIdenticalBranchesInspection.class);
         m_inspectionClasses.add(DuplicateConditionInspection.class);
+        m_inspectionClasses.add(DuplicateBooleanBranchInspection.class);
         m_inspectionClasses.add(IteratorNextDoesNotThrowNoSuchElementExceptionInspection.class);
         m_inspectionClasses.add(IteratorHasNextCallsIteratorNextInspection.class);
         m_inspectionClasses.add(ReturnNullInspection.class);
@@ -497,6 +498,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(SuspiciousSystemArraycopyInspection.class);
         m_inspectionClasses.add(SuspiciousToArrayCallInspection.class);
         m_inspectionClasses.add(ComparatorNotSerializableInspection.class);
+        m_inspectionClasses.add(ReplaceAllDotInspection.class);
     }
 
     private static boolean classExists(String className) {

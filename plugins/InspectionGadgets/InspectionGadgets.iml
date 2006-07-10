@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module version="4" relativePaths="true" type="PLUGIN_MODULE">
-  <component name="DevKit.ModuleBuildProperties">
-    <option name="myJarPlugin" value="false" />
-    <option name="myPluginXMLPath" value="$MODULE_DIR$" />
-  </component>
+  <component name="DevKit.ModuleBuildProperties" url="file://$MODULE_DIR$/META-INF/plugin.xml" />
   <component name="DevKit.ModuleSandboxManager">
     <option name="SANDBOX_NAME" value="3117-2" />
   </component>

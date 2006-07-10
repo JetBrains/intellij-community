@@ -3,7 +3,7 @@ package com.siyeh.igtest.bugs;
 public class DuplicateCondition {
     public void foo()
     {
-        if(bar())
+        if(bar()||bar())
         {
             System.out.println("1");
         }else if(bar()|| true)

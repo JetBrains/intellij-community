@@ -3,8 +3,8 @@
 <project name="InspectionGadgets" default="compile">
     <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="project.class.path"/>
     <property name="src.dir" value="src"/>
-    <property name="idea.dir" value="c:/Demetra"/>
-    <property name="idea.plugin.dir" value="C:\Documents and Settings\dgriffith\.IntelliJIdea60\config\plugins"/>
+    <property name="idea.dir" value="\Applications\Demetra"/>
+    <property name="idea.plugin.dir" value="\Users\dgriffith\Library\Application Support\IntelliJIdea60"/>
     <property name="debug" value="true"/>
     <property name="optimize" value="off"/>
     <property name="deprecation" value="off"/>
@@ -42,7 +42,7 @@
         <jar
             jarfile="${jar.file}">
             <fileset dir="${build.classes.dir}"/>
-            <fileset dir=".">
+            <fileset dir="${src.dir}">
                 <include name="META-INF/plugin.xml"/>
             </fileset>
 
@@ -70,21 +70,5 @@
         <delete failonerror="false"  file="${jar.file}"/>
     </target>
 
-    <target name="ship" depends="init" description="Makes jars for shipping">
-        <move file="${jar.file}" todir="C:\"  />
-        <delete dir="${build.classes.dir}"/>
-        <zip zipfile="c:\${project.fullname}.zip">
-            <fileset dir=".">
-                <include name="**/*"/>
-            </fileset>
-        </zip>
-    </target>
 
-    <target name="sync" depends="clean" description="Dump it to the watch">
-        <sync todir="E:\InspectionGadgets">
-        <fileset dir=".">
-            <include name="**/*"/>
-        </fileset>
-        </sync>
-    </target>
 </project>
