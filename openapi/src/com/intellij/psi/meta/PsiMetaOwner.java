@@ -21,10 +21,10 @@ import org.jetbrains.annotations.Nullable;
  * Created by IntelliJ IDEA.
  * User: ik
  * Date: 05.05.2003
- * Time: 2:33:05
- * To change this template use Options | File Templates.
+ *
+ * Use this if your meta data can have declaration processing functionality, i.e. it implements PsiMetaData
  */
-public interface PsiMetaOwner{
+public interface PsiMetaOwner extends PsiMetaBaseOwner{
   @Nullable
   PsiMetaData getMetaData();
   boolean isMetaEnough();

@@ -20,8 +20,8 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
@@ -179,13 +179,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     if(myNSDescriptorsMap == null) myNSDescriptorsMap = new HashMap<String, CachedValue<XmlNSDescriptor>>();
 
     XmlFile file = retrieveFile(fileLocation);
-    PsiMetaOwner owner = retrieveOwner(file, namespace);
+    PsiMetaBaseOwner owner = retrieveOwner(file, namespace);
 
     if (owner != null){
       myNSDescriptorsMap.put(namespace, getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
         public CachedValueProvider.Result<XmlNSDescriptor> compute() {
           XmlFile currentFile = retrieveFile(fileLocation);
-          PsiMetaOwner currentOwner = retrieveOwner(currentFile, namespace);
+          PsiMetaBaseOwner currentOwner = retrieveOwner(currentFile, namespace);
           if (currentOwner == null) return new Result<XmlNSDescriptor>(null, XmlTagImpl.this);
 
           final XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)currentOwner.getMetaData();
@@ -204,8 +204,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
                                ExternalResourceManager.getInstance().getResourceLocation(fileLocation));
   }
 
-  private PsiMetaOwner retrieveOwner(final XmlFile file, final String namespace) {
-    final PsiMetaOwner owner;
+  private PsiMetaBaseOwner retrieveOwner(final XmlFile file, final String namespace) {
+    final PsiMetaBaseOwner owner;
     if (file == null) {
       final String attributeValue = getAttributeValue("targetNamespace");
       if (namespace.equals(attributeValue)) {

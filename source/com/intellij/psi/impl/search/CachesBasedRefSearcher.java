@@ -4,19 +4,19 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.meta.PsiMetaBaseOwner;
+import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author max
@@ -26,7 +26,11 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
     final PsiElement refElement = p.getElementToSearch();
 
     String text = null;
-    if (refElement instanceof XmlAttributeValue) {
+    if (refElement instanceof PsiMetaBaseOwner) {
+      final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)refElement).getMetaData();
+      if (metaData != null) text = metaData.getName();
+    }
+    else if (refElement instanceof XmlAttributeValue) {
       text = ((XmlAttributeValue)refElement).getValue();
     }
     else if (refElement instanceof PsiFile) {
@@ -37,11 +41,6 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
     }
     else if (refElement instanceof PsiNamedElement) {
       text = ((PsiNamedElement)refElement).getName();
-
-      if (refElement instanceof PsiMetaOwner) {
-        final PsiMetaData metaData = ((PsiMetaOwner)refElement).getMetaData();
-        if (metaData != null) text = metaData.getName();
-      }
     }
 
     if (text == null) return true;

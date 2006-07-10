@@ -18,7 +18,6 @@ package com.intellij.psi.meta;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,16 +26,7 @@ import org.jetbrains.annotations.NonNls;
  * Time: 2:17:49
  * To change this template use Options | File Templates.
  */
-public interface PsiMetaData{
-  PsiElement getDeclaration();
+public interface PsiMetaData extends PsiMetaDataBase {
   boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement, PsiElement place);
-  @NonNls String getName(PsiElement context);
-  @NonNls String getName();
 
-  void init(PsiElement element);
-  /**
-   * @return objects this meta data depends on.
-   * @see com.intellij.psi.util.CachedValue
-   */
-  Object[] getDependences();
 }

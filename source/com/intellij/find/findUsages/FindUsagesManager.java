@@ -45,7 +45,6 @@ import java.util.List;
 
 public class FindUsagesManager implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findParameterUsages.FindUsagesManager");
-  private DefaultFindUsagesHandler myDefaultFindUsagesHandler;
 
   enum FileSearchScope {
     FROM_START,

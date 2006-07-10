@@ -12,7 +12,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -310,7 +310,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
                   final PsiElement psiElement = references[references.length - 1].resolve();
 
                   if (psiElement instanceof XmlFile) {
-                    final PsiMetaData metaData = ((XmlFile)psiElement).getDocument().getMetaData();
+                    final PsiMetaDataBase metaData = ((XmlFile)psiElement).getDocument().getMetaData();
                     if (metaData instanceof XmlNSDescriptorImpl) return (XmlNSDescriptorImpl)metaData;
                   }
                 }

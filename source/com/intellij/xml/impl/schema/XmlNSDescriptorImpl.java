@@ -4,7 +4,7 @@ import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -115,7 +115,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
           if (xmlFile != null) {
             final XmlDocument includedDocument = xmlFile.getDocument();
             if (includedDocument != null) {
-              final PsiMetaData data = includedDocument.getMetaData();
+              final PsiMetaDataBase data = includedDocument.getMetaData();
               if (data instanceof XmlNSDescriptorImpl) {
                 final XmlElementDescriptor elementDescriptor =
                   ((XmlNSDescriptorImpl)data).getElementDescriptor(localName, namespace, visited, reference);
@@ -204,7 +204,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
 
             final XmlDocument includedDocument = xmlFile.getDocument();
             if (includedDocument != null) {
-              final PsiMetaData data = includedDocument.getMetaData();
+              final PsiMetaDataBase data = includedDocument.getMetaData();
 
               if(data instanceof XmlNSDescriptorImpl){
                 final XmlAttributeDescriptorImpl attributeDescriptor = ((XmlNSDescriptorImpl)data).getAttributeImpl(localName, namespace,visited);

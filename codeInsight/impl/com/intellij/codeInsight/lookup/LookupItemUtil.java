@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -197,8 +197,8 @@ public class LookupItemUtil{
       }
       item.setAttribute(LookupItem.TYPE, type);
     }
-    else if (object instanceof PsiMetaData) {
-      s = ((PsiMetaData)object).getName();
+    else if (object instanceof PsiMetaDataBase) {
+      s = ((PsiMetaDataBase)object).getName();
     }
     else if (object instanceof String) {
       s = (String)object;

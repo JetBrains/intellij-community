@@ -24,6 +24,6 @@ import com.intellij.util.IncorrectOperationException;
  * Time: 2:41:47 PM
  * To change this template use File | Settings | File Templates.
  */
-public interface PsiWritableMetaData extends PsiMetaData {
+public interface PsiWritableMetaData extends PsiMetaDataBase {
   void setName(String name) throws IncorrectOperationException;
 }

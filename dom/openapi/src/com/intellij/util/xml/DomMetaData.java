@@ -8,6 +8,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.meta.PsiPresentableMetaData;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -17,12 +18,16 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, PsiPresentableMetaData {
+public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, PsiPresentableMetaData, PsiMetaData {
   private T myElement;
   private GenericDomValue myNameElement;
 
   public final PsiElement getDeclaration() {
     return myElement.getXmlTag();
+  }
+
+  public T getElement() {
+    return myElement;
   }
 
   public boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement,

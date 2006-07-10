@@ -1,13 +1,11 @@
 package com.intellij.xml.impl.schema;
 
-import com.intellij.psi.meta.PsiWritableMetaData;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.meta.PsiWritableMetaData;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,14 +37,6 @@ public class NamedObjectDescriptor implements PsiWritableMetaData {
 
   public PsiElement getDeclaration() {
     return myDcl;
-  }
-
-  public boolean processDeclarations(PsiElement context,
-                                     PsiScopeProcessor processor,
-                                     PsiSubstitutor substitutor,
-                                     PsiElement lastElement,
-                                     PsiElement place) {
-    return true;
   }
 
   public String getName(PsiElement context) {

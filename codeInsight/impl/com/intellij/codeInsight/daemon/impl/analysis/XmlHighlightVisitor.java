@@ -1,11 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.Expression;
-import com.intellij.codeInsight.template.macro.MacroFactory;
-import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -41,9 +36,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -55,7 +48,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.jsp.JspDirectiveKind;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
@@ -1228,7 +1221,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
           final XmlFile tldFileByUri = instance.getTldFileByUri(uri, jspFile);
           if (tldFileByUri == null) continue;
-          final PsiMetaData metaData = tldFileByUri.getDocument().getMetaData();
+          final PsiMetaDataBase metaData = tldFileByUri.getDocument().getMetaData();
 
           if (metaData instanceof TldDescriptor) {
             if ( ((TldDescriptor)metaData).getElementDescriptor(tag) != null) {
@@ -1253,7 +1246,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           final XmlFile xmlFile = XmlUtil.findXmlFile(file, url);
 
           if (xmlFile != null) {
-            final PsiMetaData metaData = xmlFile.getDocument().getMetaData();
+            final PsiMetaDataBase metaData = xmlFile.getDocument().getMetaData();
 
             if (metaData instanceof XmlNSDescriptorImpl) {
               XmlElementDescriptor elementDescriptor = ((XmlNSDescriptorImpl)metaData).getElementDescriptor(tag.getLocalName(),url);

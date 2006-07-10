@@ -21,7 +21,7 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public interface PsiPresentableMetaData extends PsiMetaData {
+public interface PsiPresentableMetaData extends PsiMetaDataBase {
   String getTypeName();
   Icon getIcon();
 }

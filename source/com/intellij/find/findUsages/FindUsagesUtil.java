@@ -7,9 +7,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
+import com.intellij.psi.meta.PsiMetaBaseOwner;
+import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -163,8 +163,8 @@ public class FindUsagesUtil {
     if (element instanceof PsiVariable){
       return ((PsiVariable)element).getName();
     }
-    if (element instanceof PsiMetaOwner){
-      final PsiMetaData metaData = ((PsiMetaOwner)element).getMetaData();
+    if (element instanceof PsiMetaBaseOwner){
+      final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)element).getMetaData();
       if (metaData != null) {
         return metaData.getName();
       }

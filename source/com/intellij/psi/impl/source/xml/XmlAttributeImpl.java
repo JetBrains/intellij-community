@@ -16,23 +16,23 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Mike
@@ -300,8 +300,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
     // TODO[ik]: namespace support
     public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-      if (element instanceof PsiMetaOwner){
-        final PsiMetaOwner owner = (PsiMetaOwner)element;
+      if (element instanceof PsiMetaBaseOwner){
+        final PsiMetaBaseOwner owner = (PsiMetaBaseOwner)element;
         if (owner.getMetaData() instanceof XmlElementDescriptor){
           setName(owner.getMetaData().getName());
         }

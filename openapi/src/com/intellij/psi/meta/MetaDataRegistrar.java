@@ -29,7 +29,7 @@ public abstract class MetaDataRegistrar {
    * @param filter on element for finding metadata matches
    * @param metadataDescriptorClass class of metadata, should be instantiable without parameters
    */
-  public abstract <T extends PsiMetaData> void registerMetaData(
+  public abstract <T extends PsiMetaDataBase> void registerMetaData(
     ElementFilter filter, Class<T> metadataDescriptorClass);
 
   public static MetaDataRegistrar getInstance() {

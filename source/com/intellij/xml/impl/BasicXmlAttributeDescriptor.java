@@ -8,13 +8,13 @@
  */
 package com.intellij.xml.impl;
 
+import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 
 public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescriptor {
   public String validateValue(XmlElement context, String value) {

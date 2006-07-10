@@ -5,10 +5,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiWritableMetaData;
+import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
@@ -20,7 +20,6 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.util.TextRange;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +29,7 @@ import java.util.List;
 /**
  * @author Mike
  */
-public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritableMetaData {
+public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiMetaData, PsiWritableMetaData {
   private XmlElementDecl myElementDecl;
   private XmlAttlistDecl[] myAttlistDecl;
 
@@ -47,7 +46,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   public boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement, PsiElement place){
     final ElementClassHint hint = processor.getHint(ElementClassHint.class);
     final XmlTag tag = (XmlTag)context;
-    final PsiMetaData meta = tag.getMetaData();
+    final PsiMetaDataBase meta = tag.getMetaData();
     if (meta == null) {
       return true;
     }
@@ -164,14 +163,10 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   public XmlAttributeDescriptor[] getAttributesDescriptors() {
     if (myAttributeDescriptors!=null) return myAttributeDescriptors;
 
-    final List<PsiMetaData> result = new ArrayList<PsiMetaData>();
-    final XmlAttlistDecl[] attlistDecls = findAttlistDecls(getName());
-
-    for (int i = 0; i < attlistDecls.length; i++) {
-      final XmlAttributeDecl[] attributeDecls = attlistDecls[i].getAttributeDecls();
-
-      for (int j = 0; j < attributeDecls.length; j++) {
-        result.add(attributeDecls[j].getMetaData());
+    final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
+    for (XmlAttlistDecl attlistDecl : findAttlistDecls(getName())) {
+      for (XmlAttributeDecl attributeDecl : attlistDecl.getAttributeDecls()) {
+        result.add((XmlAttributeDescriptor)attributeDecl.getMetaData());
       }
     }
 

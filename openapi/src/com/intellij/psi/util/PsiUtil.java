@@ -29,8 +29,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import static com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel.*;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.meta.PsiMetaBaseOwner;
+import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -763,8 +763,8 @@ public final class PsiUtil {
    */
   public static String getName(PsiElement element) {
     String name = null;
-    if (element instanceof PsiMetaOwner) {
-      final PsiMetaData data = ((PsiMetaOwner) element).getMetaData();
+    if (element instanceof PsiMetaBaseOwner) {
+      final PsiMetaDataBase data = ((PsiMetaBaseOwner) element).getMetaData();
       if (data != null)
         name = data.getName(element);
     }
@@ -1095,8 +1095,8 @@ public final class PsiUtil {
   }
 
   public static boolean checkName(PsiElement element, String name) {
-    if (element instanceof PsiMetaOwner) {
-      final PsiMetaData data = ((PsiMetaOwner) element).getMetaData();
+    if (element instanceof PsiMetaBaseOwner) {
+      final PsiMetaDataBase data = ((PsiMetaBaseOwner) element).getMetaData();
       if (data != null) return name.equals(data.getName(element));
     }
     if (element instanceof PsiNamedElement) {
@@ -1189,6 +1189,16 @@ public final class PsiUtil {
       return superClass == null || hasDefaultConstructor(superClass);
     }
     return false;
+  }
+
+  @NotNull
+  public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement) {
+    final PsiFile psiFile = psiElement.getContainingFile();
+    final PsiFile originalFile = psiFile.getOriginalFile();
+    if (originalFile == null) return psiElement;
+    final TextRange range = psiElement.getTextRange();
+    final PsiElement element = originalFile.findElementAt(range.getStartOffset());
+    return (T)PsiTreeUtil.getParentOfType(element, psiElement.getClass());
   }
 
 }

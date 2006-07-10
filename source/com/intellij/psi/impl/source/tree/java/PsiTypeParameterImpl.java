@@ -18,13 +18,12 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 /**
  *  @author dsl

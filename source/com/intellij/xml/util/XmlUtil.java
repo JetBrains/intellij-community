@@ -21,7 +21,7 @@ import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -569,7 +569,7 @@ public class XmlUtil {
   public static boolean isAntPropertyDefinition(XmlAttribute attr) {
     final XmlTag parentTag = attr.getParent();
     if (parentTag != null) {
-      final PsiMetaData data = parentTag.getMetaData();
+      final PsiMetaDataBase data = parentTag.getMetaData();
       if (data instanceof AntPropertyDeclaration) {
         if (data.getDeclaration() == attr.getValueElement()) return true;
       }

@@ -2,16 +2,17 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.cache.DeclarationView;
+import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.IndexedRepositoryPsiElement;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,11 +92,8 @@ public class PsiAnnotationImpl extends IndexedRepositoryPsiElement implements Ps
     visitor.visitAnnotation(this);
   }
 
-  public PsiMetaData getMetaData() {
-    return MetaRegistry.getMeta(this);
+  public PsiMetaDataBase getMetaData() {
+    return MetaRegistry.getMetaBase(this);
   }
 
-  public boolean isMetaEnough() {
-    return false;
-  }
 }

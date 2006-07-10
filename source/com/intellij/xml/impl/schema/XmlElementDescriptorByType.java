@@ -1,12 +1,10 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.xml.*;
-import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -27,10 +25,6 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
 
   public PsiElement getDeclaration(){
     return myDescriptorTag;
-  }
-
-  public boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement, PsiElement place){
-    return true;
   }
 
   public String getName(PsiElement context){

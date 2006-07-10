@@ -1,6 +1,5 @@
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.ant.impl.dom.xmlBridge.AntDOMNSDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
