@@ -6,12 +6,14 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.findUsages.PropertiesFindUsagesProvider;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.parsing.PropertiesParserDefinition;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.structureView.PropertiesFileStructureViewComponent;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -20,11 +22,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,6 +37,21 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PropertiesLanguage extends Language {
   private static final Annotator ANNOTATOR = new PropertiesAnnotator();
+  private final DocumentationProvider myDocumentationProvider = new DocumentationProvider() {
+
+    @Nullable
+    public String getQuickNavigateInfo(PsiElement element) {
+      if (element instanceof Property) {
+        @NonNls String info = "\n\"" + ((Property)element).getValue() + "\"";
+        PsiFile file = element.getContainingFile();
+        if (file != null) {
+          info = info + " [" + file.getName() + "]";
+        }
+        return info;
+      }
+      return null;
+    }
+  };
 
   public PropertiesLanguage() {
     super("Properties", "text/properties");
@@ -57,7 +74,7 @@ public class PropertiesLanguage extends Language {
     if (myReadableTextContainerElements == null) {
       myReadableTextContainerElements = TokenSet.orSet(
         super.getReadableTextContainerElements(),
-        TokenSet.create(new IElementType[] { PropertiesElementTypes.PROPERTY })
+        TokenSet.create(PropertiesElementTypes.PROPERTY)
       );
     }
     return myReadableTextContainerElements;
@@ -96,5 +113,9 @@ public class PropertiesLanguage extends Language {
         return null;
       }
     };
+  }
+
+  public DocumentationProvider getDocumentationProvider() {
+    return myDocumentationProvider;
   }
 }
