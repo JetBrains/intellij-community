@@ -29,6 +29,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -633,8 +634,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       final Collection<Change> changes = list.getChanges();
       for (Change change : changes) {
         myDefaultChangelist.addChange(change);
-        myListeners.getMulticaster().changeMoved(change, list, myDefaultChangelist);
       }
+      myListeners.getMulticaster().changesMoved(changes, list, myDefaultChangelist);
       myChangeLists.remove(list);
       myListeners.getMulticaster().changeListRemoved(list);
 
@@ -1005,13 +1006,19 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public void moveChangesTo(LocalChangeList list, final Change[] changes) {
     synchronized (myChangeLists) {
       list = findRealByCopy(list);
+
+      MultiMap<LocalChangeList, Change> map = new MultiMap<LocalChangeList, Change>();
       for (LocalChangeList existingList : getChangeLists()) {
         for (Change change : changes) {
           if (existingList.removeChange(change)) {
             list.addChange(change);
-            myListeners.getMulticaster().changeMoved(change, existingList, list);
+            map.putValue(existingList, change);
           }
         }
+      }
+      for(LocalChangeList fromList: map.keySet()) {
+        final List<Change> changesInList = map.get(fromList);
+        myListeners.getMulticaster().changesMoved(changesInList, fromList, list);
       }
     }
 

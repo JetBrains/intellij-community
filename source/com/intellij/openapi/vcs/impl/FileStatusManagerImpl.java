@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Collection;
 
 /**
  * @author mike
@@ -71,7 +72,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
         fileStatusesChanged();
       }
 
-      public void changeMoved(Change change, ChangeList fromList, ChangeList toList) {
+      public void changesMoved(Collection<Change> change, ChangeList fromList, ChangeList toList) {
         // Moving a change should NOT cause file status invalidation
       }
 

@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 import gnu.trove.THashMap;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author peter
@@ -47,5 +48,9 @@ public abstract class FactoryMap<T,V> {
 
   public void put(T key, V value) {
     myMap.put(key, value);
+  }
+
+  public Set<T> keySet() {
+    return myMap.keySet();
   }
 }
