@@ -20,39 +20,39 @@ final class JavadocConfigurable implements Configurable {
   }
 
   public void applyTo(JavadocConfiguration configuration) {
-    final JavadocConfiguration javadocConfiguration = configuration;
-    javadocConfiguration.OUTPUT_DIRECTORY = toSystemIndependentFormat(myPanel.myTfOutputDir.getText());
-    javadocConfiguration.OTHER_OPTIONS = convertString(myPanel.myOtherOptionsField.getText());
-    javadocConfiguration.HEAP_SIZE = convertString(myPanel.myHeapSizeField.getText());
-    javadocConfiguration.OPEN_IN_BROWSER = myPanel.myOpenInBrowserCheckBox.isSelected();
-    javadocConfiguration.OPTION_SCOPE = convertString(myPanel.getScope());
-    javadocConfiguration.OPTION_HIERARCHY = myPanel.myHierarchy.isSelected();
-    javadocConfiguration.OPTION_NAVIGATOR = myPanel.myNavigator.isSelected();
-    javadocConfiguration.OPTION_INDEX = myPanel.myIndex.isSelected();
-    javadocConfiguration.OPTION_SEPARATE_INDEX = myPanel.mySeparateIndex.isSelected();
-    javadocConfiguration.OPTION_DOCUMENT_TAG_USE = myPanel.myTagUse.isSelected();
-    javadocConfiguration.OPTION_DOCUMENT_TAG_AUTHOR = myPanel.myTagAuthor.isSelected();
-    javadocConfiguration.OPTION_DOCUMENT_TAG_VERSION = myPanel.myTagVersion.isSelected();
-    javadocConfiguration.OPTION_DOCUMENT_TAG_DEPRECATED = myPanel.myTagDeprecated.isSelected();
-    javadocConfiguration.OPTION_DEPRECATED_LIST = myPanel.myDeprecatedList.isSelected();
+    configuration.OUTPUT_DIRECTORY = toSystemIndependentFormat(myPanel.myTfOutputDir.getText());
+    configuration.OTHER_OPTIONS = convertString(myPanel.myOtherOptionsField.getText());
+    configuration.HEAP_SIZE = convertString(myPanel.myHeapSizeField.getText());
+    configuration.LOCALE = convertString(myPanel.myLocaleTextField.getText());
+    configuration.OPEN_IN_BROWSER = myPanel.myOpenInBrowserCheckBox.isSelected();
+    configuration.OPTION_SCOPE = convertString(myPanel.getScope());
+    configuration.OPTION_HIERARCHY = myPanel.myHierarchy.isSelected();
+    configuration.OPTION_NAVIGATOR = myPanel.myNavigator.isSelected();
+    configuration.OPTION_INDEX = myPanel.myIndex.isSelected();
+    configuration.OPTION_SEPARATE_INDEX = myPanel.mySeparateIndex.isSelected();
+    configuration.OPTION_DOCUMENT_TAG_USE = myPanel.myTagUse.isSelected();
+    configuration.OPTION_DOCUMENT_TAG_AUTHOR = myPanel.myTagAuthor.isSelected();
+    configuration.OPTION_DOCUMENT_TAG_VERSION = myPanel.myTagVersion.isSelected();
+    configuration.OPTION_DOCUMENT_TAG_DEPRECATED = myPanel.myTagDeprecated.isSelected();
+    configuration.OPTION_DEPRECATED_LIST = myPanel.myDeprecatedList.isSelected();
   }
 
   public void loadFrom(JavadocConfiguration configuration) {
-    final JavadocConfiguration javadocConfiguration = configuration;
-    myPanel.myTfOutputDir.setText(toUserSystemFormat(javadocConfiguration.OUTPUT_DIRECTORY));
-    myPanel.myOtherOptionsField.setText(javadocConfiguration.OTHER_OPTIONS);
-    myPanel.myHeapSizeField.setText(javadocConfiguration.HEAP_SIZE);
-    myPanel.myOpenInBrowserCheckBox.setSelected(javadocConfiguration.OPEN_IN_BROWSER);
-    myPanel.setScope(javadocConfiguration.OPTION_SCOPE);
-    myPanel.myHierarchy.setSelected(javadocConfiguration.OPTION_HIERARCHY);
-    myPanel.myNavigator.setSelected(javadocConfiguration.OPTION_NAVIGATOR);
-    myPanel.myIndex.setSelected(javadocConfiguration.OPTION_INDEX);
-    myPanel.mySeparateIndex.setSelected(javadocConfiguration.OPTION_SEPARATE_INDEX);
-    myPanel.myTagUse.setSelected(javadocConfiguration.OPTION_DOCUMENT_TAG_USE);
-    myPanel.myTagAuthor.setSelected(javadocConfiguration.OPTION_DOCUMENT_TAG_AUTHOR);
-    myPanel.myTagVersion.setSelected(javadocConfiguration.OPTION_DOCUMENT_TAG_VERSION);
-    myPanel.myTagDeprecated.setSelected(javadocConfiguration.OPTION_DOCUMENT_TAG_DEPRECATED);
-    myPanel.myDeprecatedList.setSelected(javadocConfiguration.OPTION_DEPRECATED_LIST);
+    myPanel.myTfOutputDir.setText(toUserSystemFormat(configuration.OUTPUT_DIRECTORY));
+    myPanel.myOtherOptionsField.setText(configuration.OTHER_OPTIONS);
+    myPanel.myHeapSizeField.setText(configuration.HEAP_SIZE);
+    myPanel.myLocaleTextField.setText(configuration.LOCALE);
+    myPanel.myOpenInBrowserCheckBox.setSelected(configuration.OPEN_IN_BROWSER);
+    myPanel.setScope(configuration.OPTION_SCOPE);
+    myPanel.myHierarchy.setSelected(configuration.OPTION_HIERARCHY);
+    myPanel.myNavigator.setSelected(configuration.OPTION_NAVIGATOR);
+    myPanel.myIndex.setSelected(configuration.OPTION_INDEX);
+    myPanel.mySeparateIndex.setSelected(configuration.OPTION_SEPARATE_INDEX);
+    myPanel.myTagUse.setSelected(configuration.OPTION_DOCUMENT_TAG_USE);
+    myPanel.myTagAuthor.setSelected(configuration.OPTION_DOCUMENT_TAG_AUTHOR);
+    myPanel.myTagVersion.setSelected(configuration.OPTION_DOCUMENT_TAG_VERSION);
+    myPanel.myTagDeprecated.setSelected(configuration.OPTION_DOCUMENT_TAG_DEPRECATED);
+    myPanel.myDeprecatedList.setSelected(configuration.OPTION_DEPRECATED_LIST);
 
     myPanel.mySeparateIndex.setEnabled(myPanel.myIndex.isSelected());
     myPanel.myDeprecatedList.setEnabled(myPanel.myTagDeprecated.isSelected());

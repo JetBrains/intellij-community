@@ -57,6 +57,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
   public boolean OPTION_DEPRECATED_LIST = true;
   public String OTHER_OPTIONS = "";
   public String HEAP_SIZE;
+  public String LOCALE;
   public boolean OPEN_IN_BROWSER = true;
 
   private final Project myProject;
@@ -176,6 +177,11 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
 
     private void setupProgramParameters(final ProjectJdk jdk, final GeneralCommandLine cmdLine) throws CantRunException {
       @NonNls final ParametersList parameters = cmdLine.getParametersList();
+
+      if (LOCALE != null && LOCALE.length() > 0) {
+        parameters.add("-locale");
+        parameters.add(LOCALE);
+      }
 
       if (OPTION_SCOPE != null) {
         parameters.add("-" + OPTION_SCOPE);

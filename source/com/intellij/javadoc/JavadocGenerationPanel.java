@@ -1,10 +1,9 @@
 package com.intellij.javadoc;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.psi.PsiKeyword;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -30,8 +29,9 @@ final class JavadocGenerationPanel extends JPanel {
   JCheckBox myTagDeprecated;
   JCheckBox myDeprecatedList;
   JCheckBox myOpenInBrowserCheckBox;
+  JTextField myLocaleTextField;
 
-    JavadocGenerationPanel() {
+  JavadocGenerationPanel() {
     myTfOutputDir.addBrowseFolderListener(JavadocBundle.message("javadoc.generate.output.directory.browse"), null, null, FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
 
@@ -51,7 +51,8 @@ final class JavadocGenerationPanel extends JPanel {
       }
    );
 
-    Hashtable labelTable = new Hashtable();
+    //noinspection UseOfObsoleteCollectionType
+    Hashtable<Integer, JLabel> labelTable = new Hashtable<Integer, JLabel>();
     labelTable.put(new Integer(1), new JLabel(PsiKeyword.PUBLIC));
     labelTable.put(new Integer(2), new JLabel(PsiKeyword.PROTECTED));
     labelTable.put(new Integer(3), new JLabel(PsiKeyword.PACKAGE));
