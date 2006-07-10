@@ -10,12 +10,19 @@ import com.intellij.psi.PsiMethodCallExpression;
  */
 public class MethodCallUsageInfo extends UsageInfo {
   private PsiMethodCallExpression myMethodCallExpression;
-  public MethodCallUsageInfo(final PsiReferenceExpression referenceExpression) {
+  private boolean myIsInternal;
+
+  public MethodCallUsageInfo(final PsiReferenceExpression referenceExpression, final boolean internal) {
     super(referenceExpression);
+    myIsInternal = internal;
     myMethodCallExpression = (PsiMethodCallExpression)referenceExpression.getParent();
   }
 
   public PsiMethodCallExpression getMethodCallExpression() {
     return myMethodCallExpression;
+  }
+
+  public boolean isInternal() {
+    return myIsInternal;
   }
 }

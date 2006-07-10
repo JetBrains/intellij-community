@@ -33,6 +33,12 @@ public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
 
   public void testNoThisParam() throws Exception { doTest(false, 0); }
 
+  public void testQualifierToArg1() throws Exception { doTest(true, 0); }
+
+  public void testQualifierToArg2() throws Exception { doTest(true, 0); }
+
+  public void testQualifierToArg3() throws Exception { doTest(true, 0); }
+
   private void doTest(boolean isTargetParameter, final int targetIndex) throws Exception {
     final String filePath = "/refactoring/moveInstanceMethod/" + getTestName(false) + ".java";
     configureByFile(filePath);

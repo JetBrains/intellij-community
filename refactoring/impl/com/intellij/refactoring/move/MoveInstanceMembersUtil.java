@@ -3,6 +3,7 @@ package com.intellij.refactoring.move;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.openapi.util.Pair;
 
 import java.util.Set;
 import java.util.Map;
@@ -26,10 +27,13 @@ public class MoveInstanceMembersUtil {
     if (scope instanceof PsiExpression) {
       final PsiExpression expression = (PsiExpression)scope;
       if (!(scope instanceof PsiReferenceExpression) || !((PsiReferenceExpression)scope).isReferenceTo(refMember)) {
-        final PsiMember member = getMemberReferencedByThis(expression);
-        if (member != null && member.getContainingClass() != null &&
-          !PsiTreeUtil.isAncestor(refMember, member, false)) {
-          addReferencedMember(map, member.getContainingClass(), member);
+        final Pair<PsiMember, PsiClass> pair = getMemberAndClassReferencedByThis(expression);
+        if (pair != null) {
+          PsiClass refClass = pair.getSecond();
+          PsiMember member = pair.getFirst();
+          if (refClass != null && !PsiTreeUtil.isAncestor(refMember, member, false)) {
+            addReferencedMember(map, refClass, member);
+          }
         }
 
         if (expression instanceof PsiThisExpression) {
@@ -57,13 +61,14 @@ public class MoveInstanceMembersUtil {
     members.add(member);
   }
 
-  private static PsiMember getMemberReferencedByThis(final PsiExpression expression) {
+  private static Pair<PsiMember, PsiClass> getMemberAndClassReferencedByThis(final PsiExpression expression) {
     if (expression instanceof PsiReferenceExpression) {
       final PsiExpression qualifier = ((PsiReferenceExpression)expression).getQualifierExpression();
       if (qualifier == null || qualifier instanceof PsiThisExpression) {
         final PsiElement resolved = ((PsiReferenceExpression)expression).resolve();
         if (resolved instanceof PsiMember && !((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) {
-          return (PsiMember)resolved;
+          PsiClass referencedClass = getReferencedClass((PsiMember)resolved, qualifier, expression);
+          return new Pair<PsiMember, PsiClass>((PsiMember)resolved, referencedClass);
         }
       }
     } else if (expression instanceof PsiNewExpression) {
@@ -80,7 +85,8 @@ public class MoveInstanceMembersUtil {
         if (classReference != null) {
           final PsiClass resolved = (PsiClass)classReference.resolve();
           if (resolved != null && !resolved.hasModifierProperty(PsiModifier.STATIC)) {
-            return resolved;
+            PsiClass referencedClass = getReferencedClass(resolved, qualifier, expression);
+            return new Pair<PsiMember, PsiClass>(resolved, referencedClass);
           }
         }
       }
@@ -89,11 +95,28 @@ public class MoveInstanceMembersUtil {
     return null;
   }
 
+  private static PsiClass getReferencedClass(final PsiMember member, final PsiExpression exprQualifier, final PsiExpression expression) {
+    PsiClass referencedClass = member.getContainingClass();
+    if (exprQualifier != null) {
+      final PsiType type = exprQualifier.getType();
+      if (type instanceof PsiClassType) {
+        referencedClass = ((PsiClassType)type).resolve();
+      }
+    }
+    else {
+      final PsiClass parentClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+      if (!PsiTreeUtil.isAncestor(referencedClass, parentClass, false)) {
+        referencedClass = parentClass;
+      }
+    }
+    return referencedClass;
+  }
+
   public static PsiClass getClassReferencedByThis(final PsiExpression expression) {
     PsiClass enclosingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
     if (enclosingClass == null) return null;
-    final PsiMember member = getMemberReferencedByThis(expression);
-    if (member != null) return member.getContainingClass();
+    final Pair<PsiMember, PsiClass> pair = getMemberAndClassReferencedByThis(expression);
+    if (pair != null) return pair.getSecond();
 
     if (expression instanceof PsiThisExpression) {
       final PsiJavaCodeReferenceElement thisQualifier = ((PsiThisExpression)expression).getQualifier();
