@@ -292,6 +292,7 @@ public class GuiUtils {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void enableComponent(Component component, boolean enabled) {
+    if (component.isEnabled() == enabled) return;
     component.setEnabled(enabled);
     if (component instanceof JPanel) {
       final Border border = ((JPanel)component).getBorder();
