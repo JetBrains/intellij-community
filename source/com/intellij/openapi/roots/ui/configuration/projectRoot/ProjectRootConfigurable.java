@@ -326,18 +326,20 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
     if (myJdksTreeModel.isModified() || modifiedJdks) myJdksTreeModel.apply();
     myJdksTreeModel.setProjectJdk(ProjectRootManager.getInstance(myProject).getProjectJdk());
+    if (isInitialized(myModulesConfigurable) && myModulesConfigurable.isModified()) myModulesConfigurable.apply();
+    if (myModulesConfigurator.isModified()) myModulesConfigurator.apply();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         myProjectLibrariesProvider.deferredCommit();
         myGlobalLibrariesProvider.deferredCommit();
         myApplicationServerLibrariesProvider.deferredCommit();
-        for (LibrariesModifiableModel model : myModule2LibrariesMap.values()) {
-          model.deferredCommit();
+        for (Module module : myModule2LibrariesMap.keySet()) {
+          if (!module.isDisposed()){ //do not update deleted modules
+            myModule2LibrariesMap.get(module).deferredCommit();
+          }
         }
       }
     });
-    if (isInitialized(myModulesConfigurable) && myModulesConfigurable.isModified()) myModulesConfigurable.apply();
-    if (myModulesConfigurator.isModified()) myModulesConfigurator.apply();
 
     //cleanup
     disposeUIResources();
@@ -479,7 +481,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       }
     } else { //module library
       Module module = (Module)getSelectedObject();
-      final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(module), library, presentableName, myProject);
+      final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(myModulesConfigurator.getModuleEditor(module).getModifiableRootModelProxy()), library, presentableName, myProject);
       final MyNode node = new MyNode(configurable, true);
       addNode(node, (MyNode)myTree.getSelectionPath().getLastPathComponent());
       return node;
@@ -589,17 +591,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   public DefaultMutableTreeNode createLibraryNode(final LibraryOrderEntry libraryOrderEntry, final ModifiableRootModel model) {
-    final LibraryConfigurable configurable = new LibraryConfigurable(new LibraryTableModifiableModelProvider() {
-      public LibraryTable.ModifiableModel getModifiableModel() {
-        final LibraryTable.ModifiableModel modifiableModel = model.getModuleLibraryTable().getModifiableModel();
-        myModule2LibrariesMap.put(model.getModule(), new LibrariesModifiableModel(modifiableModel));
-        return modifiableModel;
-      }
-
-      public String getTableLevel() {
-        return LibraryTableImplUtil.MODULE_LEVEL;
-      }
-    }, libraryOrderEntry.getLibrary(), trancateModuleLibraryName(libraryOrderEntry), myProject);
+    final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(model), libraryOrderEntry.getLibrary(), trancateModuleLibraryName(libraryOrderEntry), myProject);
     final MyNode node = new MyNode(configurable, true);
     addNode(node, findNodeByObject(myProjectNode, libraryOrderEntry.getOwnerModule()));
     return node;
@@ -747,7 +739,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     group.add(new AnAction(ProjectBundle.message("add.new.module.library.text")) {
       public void actionPerformed(AnActionEvent e) {
         Module module = (Module)getSelectedObject();
-        final LibraryTableModifiableModelProvider modifiableModelProvider = getModifiableModelProvider(module);
+        final LibraryTableModifiableModelProvider modifiableModelProvider = getModifiableModelProvider(myModulesConfigurator.getModuleEditor(module).getModifiableRootModelProxy());
         LibraryTableEditor.editLibraryTable(modifiableModelProvider, myProject).createAddLibraryAction(true, myWholePanel).actionPerformed(null);
       }
 
@@ -769,12 +761,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     return popupFactory.createActionsStep(group, e.getDataContext(), false, false, ProjectBundle.message("add.new.library.title"), myTree, true, defaultOptionIndex);
   }
 
-  private LibraryTableModifiableModelProvider getModifiableModelProvider(final Module module) {
-    final LibrariesModifiableModel model = myModule2LibrariesMap.get(module);
+  private LibraryTableModifiableModelProvider getModifiableModelProvider(final ModifiableRootModel model) {
     return new LibraryTableModifiableModelProvider() {
-
       public LibraryTable.ModifiableModel getModifiableModel() {
-        return model;
+        final LibraryTable.ModifiableModel modifiableModel = model.getModuleLibraryTable().getModifiableModel();
+        myModule2LibrariesMap.put(model.getModule(), new LibrariesModifiableModel(modifiableModel));
+        return modifiableModel;
       }
 
       public String getTableLevel() {
