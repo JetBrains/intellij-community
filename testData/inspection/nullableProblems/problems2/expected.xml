@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>23</line>
+    <text_range start="556" end="557" />
+    <method>
+      <name>String f()</name>
+      <display_name>f()</display_name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>CC</name>
+        <display_name>CC</display_name>
+      </class>
+    </method>
+    <description>Cannot annotate with both @Nullable and @NotNull</description>
+  </problem>
+
+
+  <problem>
+    <file>Test.java</file>
+    <line>16</line>
+    <text_range start="368" end="373" />
+    <method>
+      <name>C getC2()</name>
+      <display_name>getC2()</display_name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>CC</name>
+        <display_name>CC</display_name>
+      </class>
+    </method>
+    <description>Not annotated method overrides method annotated with @NotNull</description>
+  </problem>
+
+
+  <problem>
+    <file>Test.java</file>
+    <line>18</line>
+    <text_range start="417" end="418" />
+    <method>
+      <name>void f1(C p)</name>
+      <display_name>f1(C)</display_name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>CC</name>
+        <display_name>CC</display_name>
+      </class>
+    </method>
+    <description>Parameter annotated @NonNull must not override @Nullable parameter</description>
+  </problem>
+
+
+  <problem>
+    <file>Test.java</file>
+    <line>15</line>
+    <text_range start="338" end="342" />
+    <method>
+      <name>C getC()</name>
+      <display_name>getC()</display_name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>CC</name>
+        <display_name>CC</display_name>
+      </class>
+    </method>
+    <description>Method annotated with @Nullable must not override @NotNull method</description>
+  </problem>
+</problems>
+

@@ -16,4 +16,5 @@ public class NullableStuffInspectionTest extends InspectionTestCase {
   }
 
   public void testProblems() throws Exception{ doTest(); }
+  public void testProblems2() throws Exception{ doTest(); }
 }
