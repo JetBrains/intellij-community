@@ -83,16 +83,21 @@ class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
     }
     else if (object instanceof FilePath) {
       final FilePath path = (FilePath)object;
-      append(ChangesListView.getRelativePath(ChangesListView.safeCastToFilePath(((ChangesBrowserNode)node.getParent()).getUserObject()), path),
-             SimpleTextAttributes.REGULAR_ATTRIBUTES);
       if (path.isDirectory() || !node.isLeaf()) {
+        append(ChangesListView.getRelativePath(ChangesListView.safeCastToFilePath(((ChangesBrowserNode)node.getParent()).getUserObject()), path),
+               SimpleTextAttributes.REGULAR_ATTRIBUTES);
         appendCount(node);
         setIcon(expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON);
       }
       else {
         if (myShowFlatten) {
+          append(path.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           final FilePath parent = TreeModelBuilder.getParentPath(path);
           append(" (" + parent.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+        else {
+          append(ChangesListView.getRelativePath(ChangesListView.safeCastToFilePath(((ChangesBrowserNode)node.getParent()).getUserObject()), path),
+                 SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
         setIcon(path.getFileType().getIcon());
       }
