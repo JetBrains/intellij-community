@@ -18,6 +18,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.ContentIterator;
@@ -32,6 +33,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -61,14 +63,14 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
   private GenerationOptions myGenerationOptions;
 
   public static final class GenerationOptions {
-    public final String packageFQName;
-    public final PsiDirectory directoryFrom;
+    public final String myPackageFQName;
+    public final PsiDirectory myDirectory;
     public final boolean isGenerationForPackage;
     public final boolean isGenerationWithSubpackages;
 
     public GenerationOptions(String packageFQName, PsiDirectory directory, boolean generationForPackage, boolean generationWithSubpackages) {
-      this.packageFQName = packageFQName;
-      this.directoryFrom = directory;
+      myPackageFQName = packageFQName;
+      myDirectory = directory;
       isGenerationForPackage = generationForPackage;
       isGenerationWithSubpackages = generationWithSubpackages;
     }
@@ -103,6 +105,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
     return new JavadocConfigurable(this);
   }
 
+  @Nullable
   public Module[] getModules() {
     return null;
   }
@@ -134,7 +137,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
       final GeneralCommandLine cmdLine = new GeneralCommandLine();
       final ProjectJdk jdk = PathUtilEx.getAnyJdk(myProject);
       setupExeParams(jdk, cmdLine);
-      setupProgramParameters(cmdLine);
+      setupProgramParameters(jdk, cmdLine);
       return cmdLine;
     }
 
@@ -154,10 +157,24 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
         }
       }
       cmdLine.setWorkingDirectory(null);
-      cmdLine.setExePath(jdkPath.replace('/', File.separatorChar) + File.separator + (SystemInfo.isWindows ? "javadoc.exe" : "javadoc"));
+      @NonNls final String javadocExecutableName = File.separator + (SystemInfo.isWindows ? "javadoc.exe" : "javadoc");
+      @NonNls String exePath = jdkPath.replace('/', File.separatorChar) + javadocExecutableName;
+      if (new File(exePath).exists()) {
+        cmdLine.setExePath(exePath);
+      } else { //try to use wrapper jdk
+        exePath = new File(jdkPath).getParent().replace('/', File.separatorChar) + javadocExecutableName;
+        if (!new File(exePath).exists()){
+          final File parent = new File(System.getProperty("java.home")).getParentFile(); //try system jre
+          exePath = parent.getPath() + File.separator + "bin" + javadocExecutableName;
+          if (!new File(exePath).exists()){
+            throw new CantRunException(JavadocBundle.message("javadoc.generate.no.jdk.path"));
+          }
+        }
+        cmdLine.setExePath(exePath);
+      }
     }
 
-    private void setupProgramParameters(final GeneralCommandLine cmdLine) throws CantRunException {
+    private void setupProgramParameters(final ProjectJdk jdk, final GeneralCommandLine cmdLine) throws CantRunException {
       @NonNls final ParametersList parameters = cmdLine.getParametersList();
 
       if (OPTION_SCOPE != null) {
@@ -200,7 +217,9 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
 
       parameters.addParametersString(OTHER_OPTIONS);
 
-      String classPath = ProjectRootsTraversing.collectRoots(myProject, ProjectRootsTraversing.PROJECT_LIBRARIES).getPathsString();
+      final String classPath = jdk.getSdkType() instanceof JavaSdk
+                               ? ProjectRootsTraversing.collectRoots(myProject, ProjectRootsTraversing.PROJECT_LIBRARIES).getPathsString()
+                               : ProjectRootsTraversing.collectRoots(myProject, ProjectRootsTraversing.LIBRARIES_AND_JDK).getPathsString(); //libraries are included into jdk
       if (classPath.length() >0) {
         parameters.add("-classpath");
         parameters.add(classPath);
@@ -222,10 +241,10 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
             VirtualFile startingFile = null;
             if (myGenerationOptions.isGenerationForPackage) {
               if (!myGenerationOptions.isGenerationWithSubpackages) {
-                packages.add(myGenerationOptions.packageFQName);
+                packages.add(myGenerationOptions.myPackageFQName);
                 return;
               }
-              startingFile = myGenerationOptions.directoryFrom.getVirtualFile();
+              startingFile = myGenerationOptions.myDirectory.getVirtualFile();
             }
             MyContentIterator contentIterator = new MyContentIterator(myProject, packages);
             if (startingFile == null) {
@@ -297,10 +316,12 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
       return true;
     }
 
+    @Nullable
     private PsiDirectory getPsiDirectory(VirtualFile fileOrDir) {
       return fileOrDir != null ? myPsiManager.findDirectory(fileOrDir) : null;
     }
 
+    @Nullable
     private PsiPackage getPsiPackage(VirtualFile dir) {
       PsiDirectory directory = getPsiDirectory(dir);
       return directory != null ? directory.getPackage() : null;
