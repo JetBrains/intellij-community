@@ -31,10 +31,7 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
@@ -511,12 +508,12 @@ import java.util.Map;
   static {
     System.setProperty("jbdt.test.fixture", "com.intellij.designer.dt.IJTestFixture");
 
-    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+    ShutDownTracker.getInstance().registerShutdownThread(new Thread(new Runnable() {
       public void run() {
         try {
           SwingUtilities.invokeAndWait(new Runnable() {
             public void run() {
-              Disposer.dispose(ourProject);
+              ProjectUtil.closeProject(ourProject);
             }
           });
         }

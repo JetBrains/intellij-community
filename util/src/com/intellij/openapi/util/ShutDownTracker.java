@@ -18,13 +18,13 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class ShutDownTracker implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.ShutDownTracker");
   private static ShutDownTracker ourInstance;
   private List<Thread> myThreads = new ArrayList<Thread>();
+  private List<Thread> myShutdownTreads = new ArrayList<Thread>();
 
   private ShutDownTracker() {
     //noinspection HardCodedStringLiteral
@@ -57,11 +57,20 @@ public class ShutDownTracker implements Runnable {
       }
       threads = getStopperThreads();
     }
+
+    while (myShutdownTreads.size() > 0) {
+      final Thread thread = myShutdownTreads.remove(0);
+      thread.start();
+      try {
+        thread.join();
+      }
+      catch (InterruptedException e) { }
+    }
   }
 
   private synchronized boolean isRegistered(Thread thread) {
-    for (Iterator it = myThreads.iterator(); it.hasNext();) {
-      Thread t = (Thread)it.next();
+    for (final Thread myThread : myThreads) {
+      Thread t = (Thread)myThread;
       if (t.equals(thread)) {
         return true;
       }
@@ -81,4 +90,7 @@ public class ShutDownTracker implements Runnable {
     myThreads.remove(thread);
   }
 
+  public void registerShutdownThread(final Thread thread) {
+    myShutdownTreads.add(thread);
+  }
 }

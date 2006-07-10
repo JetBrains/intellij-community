@@ -124,7 +124,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private void registerShutdownHook() {
     ShutDownTracker.getInstance(); // Necessary to avoid creating an instance while already shutting down.
 
-    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+    ShutDownTracker.getInstance().registerShutdownThread(new Thread(new Runnable() {
       public void run() {
         try {
           SwingUtilities.invokeAndWait(new Runnable() {
