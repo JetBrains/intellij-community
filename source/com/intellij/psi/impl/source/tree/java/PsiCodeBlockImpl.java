@@ -163,28 +163,25 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
       return true;
     buildMaps();
     final NameHint hint = processor.getHint(NameHint.class);
-    if(hint != null && !myConflict){
+    if (hint != null && !myConflict) {
       final ElementClassHint elementClassHint = processor.getHint(ElementClassHint.class);
       final String name = hint.getName();
-      if(myClassesSet != null && (elementClassHint == null || elementClassHint.shouldProcess(PsiClass.class))){
-        if(myClassesSet.contains(name)){
+      if (myClassesSet != null && (elementClassHint == null || elementClassHint.shouldProcess(PsiClass.class))) {
+        if (myClassesSet.contains(name)) {
           return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
         }
       }
-      if(myVariablesSet != null && (elementClassHint == null || elementClassHint.shouldProcess(PsiVariable.class))){
-        if(myVariablesSet.contains(name)){
+      if (myVariablesSet != null && (elementClassHint == null || elementClassHint.shouldProcess(PsiVariable.class))) {
+        if (myVariablesSet.contains(name)) {
           return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
         }
       }
     }
-    else{
-      if(myConflict || (myVariablesSet != null || myClassesSet != null))
+    else {
+      if (myConflict || (myVariablesSet != null || myClassesSet != null)) {
         return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
+      }
     }
     return true;
-  }
-
-  public Class getLexerClass() {
-    return JavaLexer.class;
   }
 }
