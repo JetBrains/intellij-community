@@ -33,8 +33,8 @@ public class SessionDialog extends DialogWrapper {
     myChanges = changes;
     myCommitMessage = commitMessage;
     setTitle(title);
-    updateButtons();
     init();
+    updateButtons();
   }
 
 
