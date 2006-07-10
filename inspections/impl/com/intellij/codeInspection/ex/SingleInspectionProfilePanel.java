@@ -211,6 +211,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     updateOptionsAndDescriptionPanel(myTree.getSelectionPath());
   }
 
+  @Nullable
   public static ModifiableModel createNewProfile(final int initValue,
                                                  ModifiableModel selectedProfile,
                                                  Project project,
@@ -563,12 +564,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
       else {
         parent.isProperSetting = wasModified(parent);
-        if (parent.isProperSetting) {
-          myRoot.isProperSetting = true;
-        }
-        else {
-          myRoot.isProperSetting = wasModified(myRoot);
-        }
+        myRoot.isProperSetting = parent.isProperSetting || wasModified(myRoot);
       }
     }
   }
@@ -832,6 +828,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       ((InspectionProfileImpl)profile).getExpandedNodes().saveVisibleState(myTree);
       profile.save();
     }
+    myAlarm.cancelAllRequests();
     myProfileFilter.dispose();
     mySelectedProfile = null;
   }
