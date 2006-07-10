@@ -103,23 +103,23 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   }
 
   public boolean textMatches(CharSequence buffer, int startOffset, int endOffset) {
-    return textMatches(this, buffer, startOffset) == endOffset;
+    synchronized (PsiLock.LOCK) {
+      return textMatches(this, buffer, startOffset) == endOffset;
+    }
   }
 
   private static int textMatches(ASTNode element, CharSequence buffer, int startOffset) {
-    synchronized (PsiLock.LOCK) {
-      if (element instanceof LeafElement) {
-        final LeafElement leaf = (LeafElement)element;
-        return leaf.textMatches(buffer, startOffset);
+    if (element instanceof LeafElement) {
+      final LeafElement leaf = (LeafElement)element;
+      return leaf.textMatches(buffer, startOffset);
+    }
+    else {
+      int curOffset = startOffset;
+      for (TreeElement child = ((CompositeElement)element).firstChild; child != null; child = child.next) {
+        curOffset = textMatches(child, buffer, curOffset);
+        if (curOffset == -1) return -1;
       }
-      else {
-        int curOffset = startOffset;
-        for (ASTNode child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-          curOffset = textMatches(child, buffer, curOffset);
-          if (curOffset == -1) return -1;
-        }
-        return curOffset;
-      }
+      return curOffset;
     }
   }
 
