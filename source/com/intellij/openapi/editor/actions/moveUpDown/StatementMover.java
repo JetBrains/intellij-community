@@ -28,8 +28,8 @@ class StatementMover extends LineMover {
     if (statementToSurroundWithCodeBlock != null) {
       try {
         final Document document = PsiDocumentManager.getInstance(statementToSurroundWithCodeBlock.getProject()).getDocument(statementToSurroundWithCodeBlock.getContainingFile());
-        final int startOffset = document.getLineStartOffset(toMove.startLine);
-        final int endOffset = document.getLineEndOffset(toMove.endLine);
+        final int startOffset = document.getLineStartOffset(whatToMove.startLine);
+        final int endOffset = document.getLineEndOffset(whatToMove.endLine);
         final RangeMarker lineRangeMarker = document.createRangeMarker(startOffset, endOffset);
 
         final PsiElementFactory factory = statementToSurroundWithCodeBlock.getManager().getElementFactory();
@@ -39,10 +39,10 @@ class StatementMover extends LineMover {
         blockStatement.getCodeBlock().replace(codeBlock);
         PsiBlockStatement newStatement = (PsiBlockStatement)statementToSurroundWithCodeBlock.replace(blockStatement);
         newStatement = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(newStatement);
-        toMove = new LineRange(document.getLineNumber(lineRangeMarker.getStartOffset()),
+        whatToMove = new LineRange(document.getLineNumber(lineRangeMarker.getStartOffset()),
                                    document.getLineNumber(lineRangeMarker.getEndOffset()));
         PsiCodeBlock newCodeBlock = newStatement.getCodeBlock();
-        insertOffset = isDown ? newCodeBlock.getFirstBodyElement().getTextRange().getEndOffset() :
+        insertOffset = myIsDown ? newCodeBlock.getFirstBodyElement().getTextRange().getEndOffset() :
                        newCodeBlock.getRBrace().getTextRange().getStartOffset();
       }
       catch (IncorrectOperationException e) {
@@ -55,7 +55,7 @@ class StatementMover extends LineMover {
     //if (!(file instanceof PsiJavaFile)) return false;
     final boolean available = super.checkAvailable(editor, file);
     if (!available) return false;
-    LineRange range = toMove;
+    LineRange range = whatToMove;
 
     range = expandLineRangeToCoverPsiElements(range, editor, file);
     if (range == null) return false;
@@ -75,7 +75,7 @@ class StatementMover extends LineMover {
   }
 
   private boolean calcInsertOffset(PsiFile file, final Editor editor, LineRange range) {
-    int line = isDown ? range.endLine + 2 : range.startLine - 1;
+    int line = myIsDown ? range.endLine + 2 : range.startLine - 1;
     while (true) {
       final int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
       PsiElement element = firstNonWhiteElement(offset, file, true);
@@ -104,14 +104,14 @@ class StatementMover extends LineMover {
           }
           if (found) {
             statementToSurroundWithCodeBlock = elementToSurround;
-            toMove = range;
+            whatToMove = range;
             insertOffset = offset;
             return true;
           }
         }
         element = element.getParent();
       }
-      line += isDown ? 1 : -1;
+      line += myIsDown ? 1 : -1;
       if (line == 0 || line >= editor.getDocument().getLineCount()) {
         return false;
       }
