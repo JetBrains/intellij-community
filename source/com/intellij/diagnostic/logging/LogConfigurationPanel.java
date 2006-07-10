@@ -32,13 +32,13 @@ import java.util.List;
  * User: anna
  * Date: Apr 22, 2005
  */
-public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> {
+public class LogConfigurationPanel<T extends RunConfigurationBase> extends SettingsEditor<RunConfigurationBase> {
   private TableView myFilesTable;
   private ListTableModel myModel;
-  private JPanel myWholePanel = new JPanel(new BorderLayout());
+  private JPanel myWholePanel;
   private JButton myAddButton;
   private JButton myRemoveButton;
-  private JPanel myButtonsPanel;
+  private JPanel myScrollPanel;
 
 
   private final ColumnInfo<LogFileOptions, Boolean> IS_SHOW = new MyIsActiveColumnInfo();
@@ -106,9 +106,7 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     });
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myFilesTable);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-    myWholePanel.add(scrollPane, BorderLayout.CENTER);
-    myWholePanel.add(myButtonsPanel, BorderLayout.EAST);
-    myWholePanel.setBorder(BorderFactory.createTitledBorder(DiagnosticBundle.message("log.monitor.group")));
+    myScrollPanel.add(scrollPane, BorderLayout.CENTER);
     myWholePanel.setPreferredSize(new Dimension(-1, 150));
   }
 

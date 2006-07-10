@@ -2,6 +2,7 @@ package com.intellij.execution.application;
 
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
+import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
@@ -84,6 +85,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
     SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<ApplicationConfiguration>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ApplicationConfigurable2(getProject()));
     group.addEditor(ExecutionBundle.message("coverage.tab.title"), new ApplicationCoverageConfigurable(getProject()));
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel());
     return group;
   }
 

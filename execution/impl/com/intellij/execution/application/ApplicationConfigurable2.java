@@ -1,6 +1,5 @@
 package com.intellij.execution.application;
 
-import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.junit2.configuration.ClassBrowser;
 import com.intellij.execution.junit2.configuration.CommonJavaParameters;
 import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
@@ -10,11 +9,9 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -25,8 +22,6 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
   private JPanel myWholePanel;
 
   private final ConfigurationModuleSelector myModuleSelector;
-  private final LogConfigurationPanel myLogConfigurations;
-  private JPanel myLogsPanel;
   private AlternativeJREPanel myAlternativeJREPanel;
   private JCheckBox myShowSwingInspectorCheckbox;
 
@@ -37,17 +32,12 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
         myCommonJavaParameters.setModuleContext(myModuleSelector.getModule());
       }
     });
-    myLogConfigurations = new LogConfigurationPanel();
-    Disposer.register(this, myLogConfigurations);
-    myLogsPanel.setLayout(new BorderLayout());
-    myLogsPanel.add(myLogConfigurations.getLoggerComponent(), BorderLayout.CENTER);
     ClassBrowser.createApplicationClassBrowser(project, myModuleSelector).setField(getMainClassField());
   }
 
   public void applyEditorTo(final ApplicationConfiguration configuration) throws ConfigurationException {
     myCommonJavaParameters.applyTo(configuration);
     myModuleSelector.applyTo(configuration);
-    myLogConfigurations.applyTo(configuration);
     configuration.MAIN_CLASS_NAME = getMainClassField().getText();
     configuration.ALTERNATIVE_JRE_PATH = myAlternativeJREPanel.getPath();
     configuration.ALTERNATIVE_JRE_PATH_ENABLED = myAlternativeJREPanel.isPathEnabled();
@@ -57,7 +47,6 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
   public void resetEditorFrom(final ApplicationConfiguration configuration) {
     myCommonJavaParameters.reset(configuration);
     myModuleSelector.reset(configuration);
-    myLogConfigurations.resetFrom(configuration);
     getMainClassField().setText(configuration.MAIN_CLASS_NAME);
     myAlternativeJREPanel.init(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
     myShowSwingInspectorCheckbox.setSelected(configuration.ENABLE_SWING_INSPECTOR);

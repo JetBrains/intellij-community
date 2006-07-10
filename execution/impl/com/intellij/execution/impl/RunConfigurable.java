@@ -463,6 +463,7 @@ class RunConfigurable extends BaseConfigurable {
       return settings != null;
     }
     if (settings == null ||
+        mySelectedConfigurable.getConfiguration().getType() != settings.getType() ||
         (mySelectedConfigurable.getConfiguration().getType() == settings.getType() &&
          !Comparing.strEqual(mySelectedConfigurable.getNameText(), settings.getConfiguration().getName()))){
       return true;

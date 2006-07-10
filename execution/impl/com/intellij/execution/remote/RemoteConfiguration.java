@@ -6,13 +6,14 @@ package com.intellij.execution.remote;
 import com.intellij.debugger.engine.RemoteStateState;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.diagnostic.logging.LogConfigurationPanel;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -59,7 +60,10 @@ public class RemoteConfiguration extends ModuleBasedConfiguration {
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new RemoteConfigurable();
+    SettingsEditorGroup<RemoteConfiguration> group = new SettingsEditorGroup<RemoteConfiguration>();
+    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new RemoteConfigurable());
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel());
+    return group;
   }
 
   protected ModuleBasedConfiguration createInstance() {
