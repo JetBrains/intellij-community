@@ -26,11 +26,8 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
     final PsiElement refElement = p.getElementToSearch();
 
     String text = null;
-    if (refElement instanceof PsiMetaBaseOwner) {
-      final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)refElement).getMetaData();
-      if (metaData != null) text = metaData.getName();
-    }
-    else if (refElement instanceof XmlAttributeValue) {
+
+    if (refElement instanceof XmlAttributeValue) {
       text = ((XmlAttributeValue)refElement).getValue();
     }
     else if (refElement instanceof PsiFile) {
@@ -41,6 +38,11 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
     }
     else if (refElement instanceof PsiNamedElement) {
       text = ((PsiNamedElement)refElement).getName();
+    }
+
+    if (text == null && refElement instanceof PsiMetaBaseOwner) {
+      final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)refElement).getMetaData();
+      if (metaData != null) text = metaData.getName();
     }
 
     if (text == null) return true;
