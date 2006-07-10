@@ -38,17 +38,17 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     if(myChoosenOne != -1){
       return myReferences[myChoosenOne];
     }
-    boolean flag = false;
+    boolean nonSoftFound = false;
     myChoosenOne = 0;
     boolean strict = false;
     for(int i = 0; i < myReferences.length; i++){
       final PsiReference reference = myReferences[i];
-      if(reference.isSoft() && flag) continue;
-      if(!reference.isSoft() && !flag){
+      if(reference.isSoft() && nonSoftFound) continue;
+      if(!reference.isSoft() && !nonSoftFound){
         myChoosenOne = i;
-        flag = true;
-        continue;
+        nonSoftFound = true;
       }
+
       if(reference instanceof GenericReference){
         if(((GenericReference)reference).getContext() != null){
           myChoosenOne = i;
