@@ -76,6 +76,7 @@ public class AutoBoxingInspection extends ExpressionInspection {
 
     private static class AutoBoxingFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "auto.boxing.make.boxing.explicit.quickfix");
@@ -112,9 +113,9 @@ public class AutoBoxingInspection extends ExpressionInspection {
     private static class AutoBoxingVisitor extends BaseInspectionVisitor {
 
         public void visitElement(PsiElement element) {
-            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(element);
-            if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                    languageLevel.equals(LanguageLevel.JDK_1_4)) {
+            final LanguageLevel languageLevel =
+                    PsiUtil.getLanguageLevel(element);
+            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
             super.visitElement(element);

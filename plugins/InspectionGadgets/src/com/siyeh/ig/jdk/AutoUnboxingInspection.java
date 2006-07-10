@@ -76,32 +76,53 @@ public class AutoUnboxingInspection extends ExpressionInspection{
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
-        final PsiElement parent = location.getParent();
-        // if the value of the postfix expression is used in
-        // the same expression statement don't offer the
-        // quick fix to avoid breaking code
-        if (parent instanceof PsiPostfixExpression) {
-            final PsiReferenceExpression reference =
-                    (PsiReferenceExpression)location;
-            final PsiElement element = reference.resolve();
-            if (element != null) {
-                final PsiStatement statement =
-                        PsiTreeUtil.getParentOfType(parent,
-                                PsiStatement.class);
-                final LocalSearchScope scope = new LocalSearchScope(statement);
-                final Query<PsiReference> query =
-                        ReferencesSearch.search(element, scope);
-                final Collection<PsiReference> references = query.findAll();
-                if (references.size() > 1) {
-                    return null;
-                }
-            }
+        if (!isFixApplicable(location)) {
+            return null;
         }
         return new AutoUnboxingFix();
     }
 
+    private static boolean isFixApplicable(PsiElement location) {
+        // conservative check to see if the result value of the postfix
+        // expression is used later in the same expression statement.
+        // Applying the quick fix in such a case would break the code
+        // because the explicit unboxing code would split the expression in
+        // multiple statements.
+        final PsiElement parent = location.getParent();
+        if (!(parent instanceof PsiPostfixExpression)) {
+            return true;
+        }
+        final PsiReferenceExpression reference;
+        if (location instanceof PsiReferenceExpression) {
+            reference = (PsiReferenceExpression)location;
+        } else if (location instanceof PsiArrayAccessExpression) {
+            final PsiArrayAccessExpression arrayAccessExpression =
+                    (PsiArrayAccessExpression) location;
+            final PsiExpression expression =
+                    arrayAccessExpression.getArrayExpression();
+            if (!(expression instanceof PsiReferenceExpression)) {
+                return true;
+            }
+            reference = (PsiReferenceExpression) expression;
+        } else {
+           return true;
+        }
+        final PsiElement element = reference.resolve();
+        if (element == null) {
+            return true;
+        }
+        final PsiStatement statement =
+                PsiTreeUtil.getParentOfType(parent, PsiStatement.class);
+        final LocalSearchScope scope = new LocalSearchScope(statement);
+        final Query<PsiReference> query =
+                ReferencesSearch.search(element, scope);
+        final Collection<PsiReference> references = query.findAll();
+        return references.size() <= 1;
+    }
+
     private static class AutoUnboxingFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "auto.unboxing.make.unboxing.explicit.quickfix");
@@ -219,7 +240,8 @@ public class AutoUnboxingInspection extends ExpressionInspection{
     private static class AutoUnboxingVisitor extends BaseInspectionVisitor{
 
         public void visitElement(PsiElement element) {
-            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(element);
+            final LanguageLevel languageLevel =
+                    PsiUtil.getLanguageLevel(element);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
