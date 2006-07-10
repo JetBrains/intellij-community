@@ -12,6 +12,7 @@ import net.sf.cglib.proxy.AdvancedEnhancer;
 import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.Factory;
 import net.sf.cglib.proxy.InvocationHandler;
+import net.sf.cglib.core.CodeGenerationException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -75,6 +76,13 @@ public class AdvancedProxy {
 
       ourFactories.put(key, factory);
       return (T)factory;
+    }
+    catch (CodeGenerationException e) {
+      final Throwable throwable = e.getCause();
+      if (throwable instanceof ProcessCanceledException) {
+        throw(ProcessCanceledException)throwable;
+      }
+      throw e;
     }
     catch (ProcessCanceledException e) {
       throw e;
