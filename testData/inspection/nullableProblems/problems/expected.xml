@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+<problem>
+  <file>Test.java</file>
+  <line>14</line>
+  <method>
+    <name>void f(String p)</name>
+    <display_name>f(String)</display_name>
+    <package>&lt;default&gt;</package>
+    <class>
+      <name>Y</name>
+      <display_name>Y</display_name>
+    </class>
+  </method>
+  <description>Not annotated parameter overrides @NotNull parameter</description>
+</problem>
+
+
+<problem>
+  <file>Test.java</file>
+  <line>17</line>
+  <text_range start="361" end="363" />
+  <method>
+    <name>String nn(String param)</name>
+    <display_name>nn(String)</display_name>
+    <package>&lt;default&gt;</package>
+    <class>
+      <name>Y</name>
+      <display_name>Y</display_name>
+    </class>
+  </method>
+  <description>Not annotated method overrides method annotated with @NotNull</description>
+</problem>
+
+
+<problem>
+  <file>Test.java</file>
+  <line>17</line>
+  <text_range start="380" end="385" />
+  <method>
+    <name>String nn(String param)</name>
+    <display_name>nn(String)</display_name>
+    <package>&lt;default&gt;</package>
+    <class>
+      <name>Y</name>
+      <display_name>Y</display_name>
+    </class>
+  </method>
+  <description>Parameter annotated @NonNull must not override @Nullable parameter</description>
+</problem>
+
+
+<problem>
+  <file>Test.java</file>
+  <line>13</line>
+  <text_range start="291" end="292" />
+  <field>
+    <name>String s</name>
+    <display_name>s</display_name>
+    <package>&lt;default&gt;</package>
+    <class>
+      <name>Y</name>
+      <display_name>Y</display_name>
+    </class>
+  </field>
+  <description>Cannot annotate with both @Nullable and @NotNull</description>
+</problem>
+
+
+<problem>
+  <file>Test.java</file>
+  <line>20</line>
+  <text_range start="452" end="454" />
+  <method>
+    <name>void p(String p2)</name>
+    <display_name>p(String)</display_name>
+    <package>&lt;default&gt;</package>
+    <class>
+      <name>Y</name>
+      <display_name>Y</display_name>
+    </class>
+  </method>
+  <description>Cannot annotate with both @Nullable and @NotNull</description>
+</problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>23</line>
+    <text_range start="476" end="477" />
+    <field>
+      <name>int f</name>
+      <display_name>f</display_name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>Y</name>
+        <display_name>Y</display_name>
+      </class>
+    </field>
+    <description>Primitive type members cannot be Nullable/NotNull annotated</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>24</line>
+    <text_range start="492" end="496" />
+    <method>
+      <name>void vf()</name>
+      <display_name>vf()</display_name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>Y</name>
+        <display_name>Y</display_name>
+      </class>
+    </method>
+    <description>Primitive type members cannot be Nullable/NotNull annotated</description>
+  </problem>
+
+
+  <problem>
+    <file>Test.java</file>
+    <line>25</line>
+    <text_range start="531" end="532" />
+    <method>
+      <name>void t(double d)</name>
+      <display_name>t(double)</display_name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>Y</name>
+        <display_name>Y</display_name>
+      </class>
+    </method>
+    <description>Primitive type members cannot be Nullable/NotNull annotated</description>
+  </problem>
+</problems>
+

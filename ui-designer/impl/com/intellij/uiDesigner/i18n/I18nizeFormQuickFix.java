@@ -2,8 +2,8 @@ package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.i18n.I18nizeQuickFix;
-import com.intellij.codeInsight.i18n.I18nizeQuickFixDialog;
+import com.intellij.codeInspection.i18n.I18nizeQuickFix;
+import com.intellij.codeInspection.i18n.I18nizeQuickFixDialog;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;

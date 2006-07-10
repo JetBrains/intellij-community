@@ -44,7 +44,7 @@
       <implementation-class>com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.codeInsight.i18n.LastSelectedPropertiesFileStore</implementation-class>
+      <implementation-class>com.intellij.codeInspection.i18n.LastSelectedPropertiesFileStore</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.SeverityRegistrar</implementation-class>

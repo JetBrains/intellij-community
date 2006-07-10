@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.codeInspection.nullable.NullableStuffInspection.OptionsPanel">
-  <grid id="cc1c9" binding="myPanel" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="cc1c9" binding="myPanel" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="69" y="57" width="556" height="97"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+      <xy x="69" y="57" width="298" height="127"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <component id="32316" class="javax.swing.JCheckBox" binding="myNMethodOverridesNN">
         <constraints>
-          <xy x="0" y="0" width="320" height="22"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/InspectionsBundle" key="inspection.nullable.problems.parameter.overrides.option"/>
@@ -20,8 +18,7 @@
       </component>
       <component id="41568" class="javax.swing.JCheckBox" binding="myNAMethodOverridesNN">
         <constraints>
-          <xy x="0" y="27" width="262" height="22"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/InspectionsBundle" key="inspection.nullable.problems.method.overrides.option"/>
@@ -29,8 +26,7 @@
       </component>
       <component id="f4e37" class="javax.swing.JCheckBox" binding="myNNParameterOverridesN">
         <constraints>
-          <xy x="0" y="54" width="240" height="22"/>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/InspectionsBundle" key="inspection.nullable.problems.method.overrides.notnull.option"/>
@@ -38,10 +34,17 @@
       </component>
       <vspacer id="c3eef">
         <constraints>
-          <xy x="272" y="76" width="11" height="21"/>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
+      <component id="52f90" class="javax.swing.JCheckBox" binding="myNAParameterOverridesNN">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="report not annotated parameter &amp;overrides @NotNull"/>
+        </properties>
+      </component>
     </children>
   </grid>
 </form>

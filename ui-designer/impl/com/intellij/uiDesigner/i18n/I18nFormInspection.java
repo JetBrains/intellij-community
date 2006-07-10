@@ -2,7 +2,7 @@ package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.i18n.I18nInspection;
+import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;

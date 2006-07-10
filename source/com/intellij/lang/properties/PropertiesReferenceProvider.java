@@ -1,7 +1,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.i18n.I18nUtil;
+import com.intellij.codeInspection.i18n.I18nUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;

@@ -89,6 +89,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
           }
 
           rootModel.setJdk(jdk);
+
           rootModel.commit();
         } catch (Exception e) {
           LOG.error(e);

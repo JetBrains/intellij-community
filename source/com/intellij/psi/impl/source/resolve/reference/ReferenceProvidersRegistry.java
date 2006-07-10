@@ -2,7 +2,7 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlEncodingReferenceProvider;
-import com.intellij.codeInsight.i18n.I18nUtil;
+import com.intellij.codeInspection.i18n.I18nUtil;
 import com.intellij.javaee.web.WebUtil;
 import com.intellij.lang.properties.PropertiesReferenceProvider;
 import com.intellij.openapi.components.ProjectComponent;

@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInsight.i18n.I18nInspection;
-import com.intellij.codeInsight.i18n.InvalidPropertyKeyInspection;
+import com.intellij.codeInspection.i18n.I18nInspection;
+import com.intellij.codeInspection.i18n.InvalidPropertyKeyInspection;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;

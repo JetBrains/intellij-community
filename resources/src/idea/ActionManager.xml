@@ -528,7 +528,7 @@
         <separator/>
         <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
         <separator/>
-        <action id="I18nize" class="com.intellij.codeInsight.i18n.I18nizeAction"/>
+        <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction"/>
       </group>
 
       <!-- Build -->

@@ -1,10 +1,11 @@
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.intention.impl.AddAnnotationAction;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.intention.impl.AddAnnotationAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -13,7 +14,7 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.ide.util.SuperMethodWarningUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
 import java.util.List;
@@ -29,6 +30,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
     myAnnotation = fqn;
   }
 
+  @NotNull
   public String getName() {
     return MessageFormat.format(InspectionsBundle.message("inspection.annotate.quickfix.name"), ClassUtil.extractClassName(myAnnotation));
   }
@@ -58,6 +60,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
     annotateMethod(method);
   }
 
+  @NotNull
   public String getFamilyName() {
     return getName();
   }
