@@ -90,7 +90,13 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     }
     if (PsiClass.class.isAssignableFrom(clazz)) {
       ExtendClass extendClass = ((DomElement)domValue).getAnnotation(ExtendClass.class);
-      JavaClassReferenceProvider provider = extendClass == null ? new JavaClassReferenceProvider() : new JavaClassReferenceProvider(extendClass.value(), extendClass.instantiatable());
+      JavaClassReferenceProvider provider;
+      if (extendClass == null) {
+        provider = new JavaClassReferenceProvider();
+      }
+      else {
+        provider = new JavaClassReferenceProvider(extendClass.value(), extendClass.instantiatable());
+      }
       return provider.getReferencesByElement(psiElement);
     }
     if (Integer.class.isAssignableFrom(clazz)) {

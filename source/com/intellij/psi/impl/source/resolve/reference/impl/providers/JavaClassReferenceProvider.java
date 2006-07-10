@@ -62,13 +62,14 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     INSTANTIATABLE.putValue(myOptions, instantiatable);
   }
 
-  public JavaClassReferenceProvider(String[] extendClassNames) {
+  public JavaClassReferenceProvider(String[] extendClassNames, boolean instantiatable) {
     myOptions = new HashMap<CustomizationKey, Object>();
     EXTEND_CLASS_NAMES.putValue(myOptions, extendClassNames);
+    INSTANTIATABLE.putValue(myOptions, instantiatable);
   }
 
   public JavaClassReferenceProvider(@NotNull String extendClassName) {
-    this(new String[]{extendClassName});
+    this(new String[]{extendClassName}, true);
   }
 
   public JavaClassReferenceProvider() {
