@@ -153,6 +153,7 @@ public class VcsDirtyScope {
   }
 
   public static VirtualFile getRootFor(ProjectFileIndex index, FilePath file) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     VirtualFile parent = file.getVirtualFile();
     if (parent == null) {
       parent = file.getVirtualFileParent();
