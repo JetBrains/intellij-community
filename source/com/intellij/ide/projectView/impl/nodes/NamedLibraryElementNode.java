@@ -1,29 +1,28 @@
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement>{
 
@@ -61,7 +60,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
     return getValue().getName();
   }
 
-  public boolean contains(VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     return orderEntryContainsFile(getValue().getOrderEntry(), file);
 
   }
@@ -90,7 +89,10 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
     presentation.setClosedIcon(orderEntry instanceof JdkOrderEntry ? getJdkIcon((JdkOrderEntry)orderEntry, false) : LIB_ICON_CLOSED);
     if (orderEntry instanceof JdkOrderEntry) {
       final JdkOrderEntry jdkOrderEntry = (JdkOrderEntry)orderEntry;
-      presentation.setLocationString(FileUtil.toSystemDependentName(jdkOrderEntry.getJdk().getHomePath()));
+      final ProjectJdk projectJdk = jdkOrderEntry.getJdk();
+      if (projectJdk != null) { //jdk not specified
+        presentation.setLocationString(FileUtil.toSystemDependentName(projectJdk.getHomePath()));
+      }
     }
   }
 
