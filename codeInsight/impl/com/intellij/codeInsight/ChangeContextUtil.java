@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -21,6 +22,7 @@ public class ChangeContextUtil {
   private static final Key<Boolean> CAN_REMOVE_QUALIFIER_KEY = Key.create("CAN_REMOVE_QUALIFIER_KEY");
   private static final Key<PsiClass> REF_CLASS_KEY = Key.create("REF_CLASS_KEY");
   private static final Key<PsiClass> REF_MEMBER_THIS_CLASS_KEY = Key.create("REF_MEMBER_THIS_CLASS_KEY");
+  public static final Key<PsiFileSystemItem> REF_FILE_SYSTEM_ITEM_KEY = Key.create("REF_FILE_SYSTEM_ITEM_KEY");
 
   private ChangeContextUtil() {}
 
@@ -308,5 +310,43 @@ public class ChangeContextUtil {
     for(PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()){
       clearContextInfo(child);
     }
+  }
+
+  public static void encodeFileReferences(PsiElement element) {
+    element.accept(new PsiRecursiveElementVisitor() {
+      public void visitElement(PsiElement element) {
+        final PsiReference[] refs = element.getReferences();
+        if (refs.length > 0) {
+          final PsiElement resolved = refs[refs.length - 1].resolve();
+          if (resolved instanceof PsiFileSystemItem) {
+            element.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, ((PsiFileSystemItem)resolved));
+          }
+        }
+        element.acceptChildren(this);
+      }
+    });
+  }
+
+  public static void decodeFileReferences(PsiElement element) {
+    final PsiFile file = element.getContainingFile();
+
+    element.accept(new PsiRecursiveElementVisitor() {
+      public void visitElement(PsiElement element) {
+        final PsiFileSystemItem item = element.getCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY);
+        element.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, null);
+        if (item != null && item.isValid()) {
+          PsiReference[] refs = element.getReferences();
+          if (refs.length > 0) {
+            try {
+              element = refs[refs.length - 1].bindToElement(item);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+        }
+        element.acceptChildren(this);
+      }
+    });
   }
 }
