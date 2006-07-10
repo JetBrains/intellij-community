@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -12,7 +11,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 
@@ -92,10 +90,6 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     else {
       if (!actionShouldBeAvailable) {
         fail("Action '" + text + "' is available in test " + testFullPath);
-      }
-      final PsiFile htmlFile = getFile().getViewProvider().getPsi(StdLanguages.HTML);
-      if (htmlFile != null) {
-        System.out.println(DebugUtil.psiToString(htmlFile, false));
       }
       action.invoke(getProject(), getEditor(), getFile());
       if (!shouldBeAvailableAfterExecution()) {
