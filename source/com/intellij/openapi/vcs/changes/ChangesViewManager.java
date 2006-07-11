@@ -562,27 +562,44 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     public void update(AnActionEvent e) {
       Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
       ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
-      e.getPresentation().setEnabled(project != null && lists != null && lists.length == 1 &&
-                                     lists[0] instanceof LocalChangeList &&
-                                     !((LocalChangeList)lists[0]).isDefault() &&
-                                     !((LocalChangeList) lists [0]).isReadOnly());
+      e.getPresentation().setEnabled(canRemoveChangeLists(project, lists));
+    }
+
+    private static boolean canRemoveChangeLists(final Project project, final ChangeList[] lists) {
+      if (project == null || lists == null || lists.length == 0) return false;
+      for(ChangeList changeList: lists) {
+        if (!(changeList instanceof LocalChangeList)) return false;
+        LocalChangeList localChangeList = (LocalChangeList) changeList;
+        if (localChangeList.isReadOnly() || localChangeList.isDefault()) return false;
+      }
+      return true;
     }
 
     public void actionPerformed(AnActionEvent e) {
       Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
       final ChangeList[] lists = ((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS));
       assert lists != null;
-      final LocalChangeList list = (LocalChangeList)lists[0];
-      int rc = list.getChanges().size() == 0 ? DialogWrapper.OK_EXIT_CODE :
-               Messages.showYesNoDialog(project,
-                                        VcsBundle.message("changes.removechangelist.warning.text", list.getName()),
-                                        VcsBundle.message("changes.removechangelist.warning.title"),
-                                        Messages.getQuestionIcon());
+      int rc;
+      if (lists.length == 1) {
+        final LocalChangeList list = (LocalChangeList)lists[0];
+        rc = list.getChanges().size() == 0 ? DialogWrapper.OK_EXIT_CODE :
+                 Messages.showYesNoDialog(project,
+                                          VcsBundle.message("changes.removechangelist.warning.text", list.getName()),
+                                          VcsBundle.message("changes.removechangelist.warning.title"),
+                                          Messages.getQuestionIcon());
+      }
+      else {
+        rc = Messages.showYesNoDialog(project,
+                                      VcsBundle.message("changes.removechangelist.multiple.warning.text", lists.length),
+                                      VcsBundle.message("changes.removechangelist.warning.title"),
+                                      Messages.getQuestionIcon());
+      }
 
       if (rc == DialogWrapper.OK_EXIT_CODE) {
-        ChangeListManager.getInstance(project).removeChangeList(list);
+        for(ChangeList list: lists) {
+          ChangeListManager.getInstance(project).removeChangeList((LocalChangeList) list);
+        }
       }
     }
   }
-
 }
