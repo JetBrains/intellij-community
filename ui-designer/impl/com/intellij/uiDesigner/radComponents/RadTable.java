@@ -15,8 +15,8 @@ import javax.swing.table.DefaultTableModel;
  * @author yole
  */
 public class RadTable extends RadAtomicComponent {
-  public RadTable(final Module module, final String id) {
-    super(module, JTable.class, id);
+  public RadTable(final Module module, final Class componentClass, final String id) {
+    super(module, componentClass, id);
     initDefaultModel();
   }
 

@@ -78,8 +78,8 @@ public final class XmlReader {
         if (componentClass == null) {
           component = createErrorComponent(module, id, lwComponent, loader);
         }
-        else if (lwComponent.getComponentClassName().equals(JTable.class.getName())) {
-          component = new RadTable(module, id);
+        else if (JTable.class.isAssignableFrom(componentClass)) {
+          component = new RadTable(module, componentClass, id);
         }
         else {
           RadComponent component1;
