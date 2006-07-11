@@ -78,6 +78,14 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<File> files) {
+    return processMissingFiles(files, true);
+  }
+
+  public List<VcsException> rollbackMissingFileDeletion(List<File> files) {
+    return processMissingFiles(files, false);
+  }
+
+  private List<VcsException> processMissingFiles(final List<File> files, final boolean delete) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
     final SVNWCClient wcClient;
     try {
@@ -90,7 +98,12 @@ public class SvnChangeProvider implements ChangeProvider {
 
     for (File file : files) {
       try {
-        wcClient.doDelete(file, true, false);
+        if (delete) {
+          wcClient.doDelete(file, true, false);
+        }
+        else {
+          wcClient.doRevert(file, false);
+        }
       }
       catch (SVNException e) {
         exceptions.add(new VcsException(e));
