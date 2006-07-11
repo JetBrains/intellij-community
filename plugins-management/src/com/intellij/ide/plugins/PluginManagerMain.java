@@ -236,30 +236,29 @@ public class PluginManagerMain
    * Start a new thread which downloads new list of plugins from the site in
    * the background and updates a list of plugins in the table.
    */
-  private void loadPluginsFromHostInBackground() {
-    setDownloadStatus(true);
+  private void loadPluginsFromHostInBackground()
+  {
+    setDownloadStatus( true );
 
-    final SwingWorker worker = new SwingWorker() {
+    new SwingWorker() {
       ArrayList<IdeaPluginDescriptor> list = null;
+      Exception error;
 
       public Object construct() {
-        try {
-          list = RepositoryHelper.Process(mySynchStatus);
-        }
-        catch (Exception e) {
-          Messages.showErrorDialog(IdeBundle.message("error.list.of.plugins.was.not.loaded"), IdeBundle.message("title.plugins"));
-        }
+        try { list = RepositoryHelper.Process( mySynchStatus ); }
+        catch( Exception e ) { error = e; }
         return list;
       }
 
       public void finished() {
         if (list != null) {
-          modifyPluginsList(list);
+          modifyPluginsList( list );
         }
-        setDownloadStatus(false);
+        else if( error != null )
+          Messages.showErrorDialog( IdeBundle.message("error.list.of.plugins.was.not.loaded"), IdeBundle.message("title.plugins"));
+        setDownloadStatus( false );
       }
-    };
-    worker.start();
+    }.start();
   }
 
   private void setDownloadStatus( boolean what)
