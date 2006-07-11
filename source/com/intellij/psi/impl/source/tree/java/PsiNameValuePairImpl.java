@@ -116,7 +116,13 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
           return new TextRange(0, id.getTextLength());
         }
         else {
-          return new TextRange(0, getTextLength());
+          final TreeElement firstChildNode = getFirstChildNode();
+          if (firstChildNode != null && firstChildNode.getElementType() == REFERENCE_EXPRESSION) {
+            return new TextRange(0, getTextLength());
+          }
+          else {
+            return new TextRange(0, 0);
+          }
         }
       }
 

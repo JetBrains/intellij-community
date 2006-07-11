@@ -270,7 +270,7 @@ public class CompletionData {
       }
       
       if (ref.getElement() instanceof PsiNameValuePair && StringUtil.startsWithChar(result,'{')) {
-        result = ""; // PsiNameValuePair refarence without name span all content of the element
+        result = result.substring(1); // PsiNameValuePair reference without name span all content of the element
       }
       return result;
     }

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.scope.CompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
@@ -310,7 +311,12 @@ public class CompletionVariant {
                                          String prefix, CompletionVariantItem item){
     if(item.myCompletion instanceof ElementFilter){
       final CompletionProcessor processor = new CompletionProcessor(prefix, position, (ElementFilter)item.myCompletion);
-      if(reference instanceof PsiJavaReference){
+      if (reference instanceof PsiMultiReference) {
+        for (PsiReference ref : ((PsiMultiReference)reference).getReferences()) {
+          addReferenceCompletions(ref, position, set, prefix, item);
+        }
+      }
+      else if(reference instanceof PsiJavaReference){
         ((PsiJavaReference)reference).processVariants(processor);
       }
       else{
