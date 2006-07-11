@@ -45,6 +45,7 @@ public class ClsUtil {
   public final static int ACC_NATIVE = 0x0100;
   public final static int ACC_INTERFACE = 0x0200;
   public final static int ACC_ABSTRACT = 0x0400;
+  public final static int ACC_SYNTHETIC = 0x1000;
   public final static int ACC_ANNOTATION = 0x2000;
   public static final int ACC_ENUM = 0x4000;
 
@@ -345,6 +346,10 @@ public class ClsUtil {
 
   public static boolean isBridge(int flags) {
     return (ACC_BRIDGE & flags) != 0;
+  }
+
+  public static boolean isSynthetic(int flags) {
+    return (ACC_SYNTHETIC & flags) != 0;
   }
 
   public static boolean isAnnotation(int flags) {

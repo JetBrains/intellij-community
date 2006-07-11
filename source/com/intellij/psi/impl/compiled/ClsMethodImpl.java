@@ -312,6 +312,11 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
            myParent.getClassFileData().findAttribute(myStartOffset + 6, "Bridge") != null;
   }
 
+  boolean isSynthetic() throws ClsFormatException {
+    return ClsUtil.isSynthetic(getAccessFlags()) ||
+           myParent.getClassFileData().findAttribute(myStartOffset + 6, "Synthetic") != null;
+  }
+
   @NotNull
   public PsiParameterList getParameterList() {
     synchronized (PsiLock.LOCK) {
