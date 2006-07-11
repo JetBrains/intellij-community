@@ -24,6 +24,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.HashSet;
 
 /**
  * @author peter
@@ -47,10 +48,11 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
   }
 
   protected final DomElement getMergedRoot(DomElement element) {
-    final Set<XmlFile> files = getFilesToMerge(element);
+    Set<XmlFile> files = getFilesToMerge(element);
 
     final XmlFile xmlFile = element.getRoot().getFile();
     if (xmlFile != null) {
+      files = new HashSet<XmlFile>(files);
       files.add(xmlFile);
     }
 
