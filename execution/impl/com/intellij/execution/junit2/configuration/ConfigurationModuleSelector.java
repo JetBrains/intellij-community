@@ -8,6 +8,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ui.exclude.SortedComboBoxModel;
 import com.intellij.psi.PsiClass;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,14 @@ public class ConfigurationModuleSelector {
   public ConfigurationModuleSelector(final Project project, final JComboBox modulesList) {
     myProject = project;
     myModulesList = modulesList;
+    new ComboboxSpeedSearch(modulesList){
+      protected String getElementText(Object element) {
+        if (element instanceof Module){
+          return ((Module)element).getName();
+        }
+        return super.getElementText(element);
+      }
+    };
     myModulesList.setModel(myModules);
     myModulesList.setRenderer(new DefaultListCellRenderer(){
       public Component getListCellRendererComponent(final JList list, final Object value, final int index, final boolean isSelected, final boolean cellHasFocus) {
