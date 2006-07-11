@@ -128,7 +128,7 @@ public class XmlAspectImpl implements XmlAspect {
                 continue;
               }
             }*/
-            if (!(treeElement instanceof XmlTagChild)) {
+            if (!(treeElement.getPsi() instanceof XmlTagChild)) {
               visitElement(tag);
               return;
             }
