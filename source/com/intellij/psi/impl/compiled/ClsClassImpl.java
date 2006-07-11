@@ -575,8 +575,8 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
             for (int i = 0; i < count; i++) {
               ClsMethodImpl method = new ClsMethodImpl(this, ptr.offset);
               String name = method.getName();
-              if (!method.isBridge() && !method.isSynthetic()) { //skip bridge methods
-                if (myManager.getNameHelper().isIdentifier(name)) { // skip synthetic&obfuscated methods
+              if (!method.isBridge() && !method.isSynthetic()) { //skip bridge & synthetic methods
+                if (myManager.getNameHelper().isIdentifier(name)) {
                   array.add(method);
                 }
               }
