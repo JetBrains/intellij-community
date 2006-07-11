@@ -18,6 +18,7 @@
 package com.intellij.testFramework.builders;
 
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author mike
@@ -26,9 +27,9 @@ public interface JavaModuleFixtureBuilder extends ModuleFixtureBuilder {
 
   JavaModuleFixtureBuilder setLanguageLevel(LanguageLevel languageLevel);
 
-  JavaModuleFixtureBuilder addLibrary(String libraryName, String... classPath);
+  JavaModuleFixtureBuilder addLibrary(@NonNls String libraryName, @NonNls String... classPath);
 
-  JavaModuleFixtureBuilder addLibraryJars(String libraryName, String basePath, String... jarNames);
+  JavaModuleFixtureBuilder addLibraryJars(@NonNls String libraryName, @NonNls String basePath, @NonNls String... jarNames);
 
-  JavaModuleFixtureBuilder addJdk(String jdkPath);
+  JavaModuleFixtureBuilder addJdk(@NonNls String jdkPath);
 }
