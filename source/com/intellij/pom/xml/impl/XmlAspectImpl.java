@@ -147,22 +147,24 @@ public class XmlAspectImpl implements XmlAspect {
             }
             */
 
+            final PsiElement element = treeElement.getPsi();
+
             switch (changeType) {
               case ChangeInfo.ADD:
-                xmlChangeSet.add(new XmlTagChildAddImpl(tag, (XmlTagChild)treeElement));
+                xmlChangeSet.add(new XmlTagChildAddImpl(tag, (XmlTagChild) element));
                 break;
               case ChangeInfo.REMOVED:
                 treeElement.putUserData(CharTable.CHAR_TABLE_KEY, table);
-                xmlChangeSet.add(new XmlTagChildRemovedImpl(tag, (XmlTagChild)treeElement));
+                xmlChangeSet.add(new XmlTagChildRemovedImpl(tag, (XmlTagChild)element));
                 break;
               case ChangeInfo.CONTENTS_CHANGED:
-                xmlChangeSet.add(new XmlTagChildChangedImpl(tag, (XmlTagChild)treeElement));
+                xmlChangeSet.add(new XmlTagChildChangedImpl(tag, (XmlTagChild)element));
                 break;
               case ChangeInfo.REPLACE:
-                final XmlTagChild replaced = (XmlTagChild)((ReplaceChangeInfo)changeByChild).getReplaced();
+                final XmlTagChild replaced = (XmlTagChild)((ReplaceChangeInfo)changeByChild).getReplaced().getPsi();
                 replaced.putUserData(CharTable.CHAR_TABLE_KEY, table);
                 xmlChangeSet.add(new XmlTagChildRemovedImpl(tag, replaced));
-                xmlChangeSet.add(new XmlTagChildAddImpl(tag, (XmlTagChild)treeElement));
+                xmlChangeSet.add(new XmlTagChildAddImpl(tag, (XmlTagChild)element));
                 break;
             }
           }
