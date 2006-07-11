@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class SimplifiableConditionalExpressionInspection
@@ -62,16 +63,44 @@ public class SimplifiableConditionalExpressionInspection
         assert elseExpression != null;
 
         if (BoolUtils.isTrue(thenExpression)) {
-            return condition.getText() + " || " + elseExpression.getText();
+            final String elseExpressionText;
+            if (ParenthesesUtils.getPrecendence(elseExpression) >
+                    ParenthesesUtils.OR_PRECEDENCE) {
+                elseExpressionText = '(' + elseExpression.getText() + ')';
+            } else {
+                elseExpressionText = elseExpression.getText();
+            }
+            return condition.getText() + " || " + elseExpressionText;
         } else if (BoolUtils.isFalse(thenExpression)) {
+            final String elseExpressionText;
+            if (ParenthesesUtils.getPrecendence(elseExpression) >
+                    ParenthesesUtils.AND_PRECEDENCE) {
+                elseExpressionText = '(' + elseExpression.getText() + ')';
+            } else {
+                elseExpressionText = elseExpression.getText();
+            }
             return BoolUtils.getNegatedExpressionText(condition) + " && " +
-                    elseExpression.getText();
+                    elseExpressionText;
         }
         if (BoolUtils.isFalse(elseExpression)) {
-            return condition.getText() + " && " + thenExpression.getText();
+            final String thenExpressionText;
+            if (ParenthesesUtils.getPrecendence(thenExpression) >
+                    ParenthesesUtils.AND_PRECEDENCE) {
+                thenExpressionText = '(' + thenExpression.getText() + ')';
+            } else {
+                thenExpressionText = thenExpression.getText();
+            }
+            return condition.getText() + " && " + thenExpressionText;
         } else {
+            final String thenExpressionText;
+            if (ParenthesesUtils.getPrecendence(thenExpression) >
+                    ParenthesesUtils.OR_PRECEDENCE) {
+                thenExpressionText = '(' + thenExpression.getText() + ')';
+            } else {
+                thenExpressionText = thenExpression.getText();
+            }
             return BoolUtils.getNegatedExpressionText(condition) + " || " +
-                    thenExpression.getText();
+                    thenExpressionText;
         }
     }
 
@@ -82,6 +111,7 @@ public class SimplifiableConditionalExpressionInspection
     private static class SimplifiableConditionalFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "constant.conditional.expression.simplify.quickfix");
