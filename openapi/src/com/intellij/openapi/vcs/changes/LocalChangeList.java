@@ -174,7 +174,6 @@ public class LocalChangeList implements Cloneable, ChangeList {
     final LocalChangeList list = (LocalChangeList)o;
 
     if (myIsDefault != list.myIsDefault) return false;
-    if (!myChanges.equals(list.myChanges)) return false;
     if (!myName.equals(list.myName)) return false;
     if (myIsReadOnly != list.myIsReadOnly) return false;
 
