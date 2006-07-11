@@ -81,7 +81,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     String uniqueText = null;
     LookupItem item = null;
     boolean doNotAutocomplete = false;
-    boolean signatureSencetive = false;
+    boolean signatureSensitive = false;
 
     for (final LookupItem item1 : items) {
       if (item1.getAttribute(LookupItem.DO_NOT_AUTOCOMPLETE_ATTR) != null) {
@@ -91,7 +91,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
 
       if (item1.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null) {
-        signatureSencetive = true;
+        signatureSensitive = true;
       }
       if (uniqueText == null) {
         uniqueText = item1.getLookupString();
@@ -103,7 +103,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           break;
         }
         if (item.getObject()instanceof PsiMethod && item1.getObject()instanceof PsiMethod) {
-          if (!signatureSencetive) {
+          if (!signatureSensitive) {
             final PsiParameter[] parms = ((PsiMethod)item1.getObject()).getParameterList().getParameters();
             if (parms.length > 0) {
               item = item1;
