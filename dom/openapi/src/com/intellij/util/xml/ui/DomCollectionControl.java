@@ -270,6 +270,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
       }
     }
     myCollectionPanel.setErrorMessages(messages.toArray(new String[messages.size()]));
+    myCollectionPanel.repaint();
   }
 
   public void dispose() {
