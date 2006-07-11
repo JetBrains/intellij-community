@@ -21,6 +21,7 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.ChameleonElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.CharTable;
@@ -121,14 +122,8 @@ public class XmlAspectImpl implements XmlAspect {
 
         public void visitXmlTag(XmlTag tag) {
           ASTNode[] affectedChildren = shortenChange(myChange.getAffectedChildren(), changeSet);
-          ASTNode[] expandedChildren = shortenChange(myChange.getAffectedChildren(), changeSet);
-          for (int j = 0; j < affectedChildren.length; j++) {
-            if (affectedChildren[j] instanceof LeafElement) {
-              expandedChildren[j] = ChameleonTransforming.transform((LeafElement)affectedChildren[j]);
-            }
-          }
 
-          for (final ASTNode treeElement : expandedChildren) {
+          for (final ASTNode treeElement : affectedChildren) {
             /*final IElementType type = treeElement.getElementType();
             if (type == ElementType.WHITE_SPACE) continue;
             if (type == ElementType.XML_NAME) {
@@ -137,17 +132,15 @@ public class XmlAspectImpl implements XmlAspect {
               }
             }*/
 
-            if (!(treeElement.getPsi() instanceof XmlTagChild)) {
+            if (treeElement instanceof ChameleonElement ||
+                !(treeElement.getPsi() instanceof XmlTagChild)) {
               visitElement(tag);
               return;
             }
           }
 
-          for (int j = 0; j < affectedChildren.length; j++) {
-            ASTNode keyElement = affectedChildren[j];
-            ASTNode treeElement = expandedChildren[j];
-
-            final ChangeInfo changeByChild = myChange.getChangeByChild(keyElement);
+          for (final ASTNode treeElement : affectedChildren) {
+            final ChangeInfo changeByChild = myChange.getChangeByChild(treeElement);
             final int changeType = changeByChild.getChangeType();
             final IElementType type = treeElement.getElementType();
             if (type == ElementType.WHITE_SPACE) continue;
