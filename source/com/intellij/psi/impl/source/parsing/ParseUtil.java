@@ -395,7 +395,7 @@ public class ParseUtil implements Constants {
     }
 
     if (element.getElementType() == CLASS || element.getElementType() == FIELD || element.getElementType() == METHOD ||
-        element.getElementType() == ENUM_CONSTANT) {
+        element.getElementType() == ENUM_CONSTANT || element.getElementType() == ANNOTATION_METHOD) {
       TreeElement first = element.getFirstChildNode();
       if (startSpaces != null) {
         TreeUtil.removeRange(docComment, element);
