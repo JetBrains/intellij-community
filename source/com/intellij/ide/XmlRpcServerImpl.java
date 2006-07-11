@@ -6,10 +6,14 @@ package com.intellij.ide;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import org.apache.xmlrpc.WebServer;
+import org.apache.xmlrpc.XmlRpcContext;
+import org.apache.xmlrpc.XmlRpcRequestProcessor;
+import org.apache.xmlrpc.XmlRpcWorker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.BindException;
 import java.net.ServerSocket;
 
@@ -32,7 +36,37 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
     if (!checkPort()) return;
 
     try {
-      myWebServer = new WebServer(getPortNumber());
+      myWebServer = new WebServer(getPortNumber(), null, new org.apache.xmlrpc.XmlRpcServer(){
+        protected XmlRpcWorker createWorker() {
+          return new XmlRpcWorker(getHandlerMapping()){
+
+            public byte[] execute(InputStream inputStream, String string, String string1) {
+              try {
+                return super
+                  .execute(inputStream, string, string1);
+              }
+              finally {
+                resetRequestProcessor();
+              }
+            }
+
+            public byte[] execute(InputStream inputStream, XmlRpcContext xmlRpcContext) {
+              try {
+                return super
+                  .execute(inputStream, xmlRpcContext);
+              }
+              finally {
+                resetRequestProcessor();
+              }
+            }
+
+            private void resetRequestProcessor() {
+              requestProcessor = new XmlRpcRequestProcessor();
+            }
+          };
+        }
+
+      });
       myWebServer.start();
     }
     catch (Exception e) {
