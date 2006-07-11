@@ -82,7 +82,7 @@ public interface ModuleRootModel {
    * @return the array of content roots.
    * @see #getContentEntries()
    */
-  VirtualFile[] getContentRoots();
+  @NotNull VirtualFile[] getContentRoots();
 
   /**
    * Returns an array of content root urls from all content entries. A helper method.
@@ -90,7 +90,7 @@ public interface ModuleRootModel {
    * @return the array of content root URLs.
    * @see #getContentEntries()
    */
-  String[] getContentRootUrls();
+  @NotNull String[] getContentRootUrls();
 
   /**
    * Returns an array of exclude roots from all content entries. A helper method.
@@ -98,7 +98,7 @@ public interface ModuleRootModel {
    * @return the array of excluded roots.
    * @see #getContentEntries()
    */
-  VirtualFile[] getExcludeRoots();
+  @NotNull VirtualFile[] getExcludeRoots();
 
   /**
    * Returns an array of exclude root urls from all content entries. A helper method.
@@ -106,7 +106,7 @@ public interface ModuleRootModel {
    * @return the array of excluded root URLs.
    * @see #getContentEntries()
    */
-  String[] getExcludeRootUrls();
+  @NotNull String[] getExcludeRootUrls();
 
   /**
    * Returns an array of source roots from all content entries. A helper method.
@@ -114,7 +114,7 @@ public interface ModuleRootModel {
    * @return the array of source roots.
    * @see #getContentEntries()
    */
-  VirtualFile[] getSourceRoots();
+  @NotNull VirtualFile[] getSourceRoots();
 
   /**
    * Returns an array of source root urls from all content entries. A helper method.
@@ -122,7 +122,7 @@ public interface ModuleRootModel {
    * @return the array of source root URLs.
    * @see #getContentEntries()
    */
-  String[] getSourceRootUrls();
+  @NotNull String[] getSourceRootUrls();
 
   /**
    * Returns a compiler output path for production sources of the module, if it is valid.
@@ -187,19 +187,19 @@ public interface ModuleRootModel {
    *
    * @return the list of module names this module depends on.
    */
-  String[] getDependencyModuleNames();
+  @NotNull String[] getDependencyModuleNames();
 
   /**
    * Returns the list of javadoc roots for the module.
    *
    * @return the array of javadoc roots.
    */
-  VirtualFile[] getJavadocPaths();
+  @NotNull VirtualFile[] getJavadocPaths();
 
   /**
    * Returns the list of javadoc root URLs for the module.
    *
    * @return the array of javadoc root URLs.
    */
-  String[] getJavadocUrls();
+  @NotNull String[] getJavadocUrls();
 }

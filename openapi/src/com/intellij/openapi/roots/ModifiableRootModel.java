@@ -137,7 +137,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
    */
   String getCompilerOutputUrlForTests();
 
-  VirtualFile[] getOrderedRoots(OrderRootType type);
+  @NotNull VirtualFile[] getOrderedRoots(OrderRootType type);
 
   void setCompilerOutputPath(VirtualFile file);
 
@@ -153,7 +153,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   boolean isChanged();
 
-  String[] getOrderedRootUrls(OrderRootType type);
+  @NotNull String[] getOrderedRootUrls(OrderRootType type);
 
   boolean isExcludeOutput();
 
@@ -163,7 +163,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   void setExcludeExplodedDirectory(boolean excludeExplodedDir);
 
-  Module[] getModuleDependencies();
+  @NotNull Module[] getModuleDependencies();
 
   boolean isWritable();
 

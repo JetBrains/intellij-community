@@ -230,6 +230,7 @@ class RootModelImpl implements ModifiableRootModel {
     myJavadocPointerContainer.addAll(rootModel.myJavadocPointerContainer);
   }
 
+  @NotNull
   public VirtualFile[] getOrderedRoots(OrderRootType type) {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
 
@@ -239,6 +240,7 @@ class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
   }
 
+  @NotNull
   public String[] getOrderedRootUrls(OrderRootType type) {
     final ArrayList<String> result = new ArrayList<String>();
 
@@ -248,6 +250,7 @@ class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
+  @NotNull
   public VirtualFile[] getContentRoots() {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
 
@@ -260,6 +263,7 @@ class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
   }
 
+  @NotNull
   public String[] getContentRootUrls() {
     final ArrayList<String> result = new ArrayList<String>();
 
@@ -269,6 +273,7 @@ class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
+  @NotNull
   public String[] getExcludeRootUrls() {
     final ArrayList<String> result = new ArrayList<String>();
     for (ContentEntry contentEntry : myContent) {
@@ -280,6 +285,7 @@ class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
+  @NotNull
   public VirtualFile[] getExcludeRoots() {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (ContentEntry contentEntry : myContent) {
@@ -295,6 +301,7 @@ class RootModelImpl implements ModifiableRootModel {
   }
 
 
+  @NotNull
   public String[] getSourceRootUrls() {
     final ArrayList<String> result = new ArrayList<String>();
     for (ContentEntry contentEntry : myContent) {
@@ -319,6 +326,7 @@ class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
+  @NotNull
   public VirtualFile[] getSourceRoots() {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (ContentEntry contentEntry : myContent) {
@@ -1033,11 +1041,13 @@ class RootModelImpl implements ModifiableRootModel {
     }
   }
 
+  @NotNull
   public String[] getDependencyModuleNames() {
     List<String> result = processOrder(new CollectDependentModules(), new ArrayList<String>());
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
+  @NotNull
   public Module[] getModuleDependencies() {
     final List<Module> result = new ArrayList<Module>();
 
@@ -1071,10 +1081,12 @@ class RootModelImpl implements ModifiableRootModel {
   }
 
 
+  @NotNull
   public VirtualFile[] getJavadocPaths() {
     return myJavadocPointerContainer.getDirectories();
   }
 
+  @NotNull
   public String[] getJavadocUrls() {
     return myJavadocPointerContainer.getUrls();
   }

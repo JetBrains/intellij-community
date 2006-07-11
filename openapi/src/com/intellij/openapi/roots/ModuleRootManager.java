@@ -17,7 +17,6 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,7 +41,7 @@ public abstract class ModuleRootManager implements ModuleRootModel {
    * @param type the type of roots requested.
    * @return the list of roots.
    */
-  public abstract VirtualFile[] getFiles(OrderRootType type);
+  @NotNull public abstract VirtualFile[] getFiles(OrderRootType type);
 
   /**
    * Returns the list of URLs of roots of the specified type for the current module and all modules it depends on.
@@ -50,7 +49,7 @@ public abstract class ModuleRootManager implements ModuleRootModel {
    * @param type the type of roots requested.
    * @return the list of root URLs.
    */
-  public abstract String[] getUrls(OrderRootType type);
+  @NotNull public abstract String[] getUrls(OrderRootType type);
 
   /**
    * Returns the file index for the current module.
@@ -74,7 +73,7 @@ public abstract class ModuleRootManager implements ModuleRootModel {
    *
    * @return the list of module direct dependencies.
    */
-  public abstract Module[] getDependencies();
+  @NotNull public abstract Module[] getDependencies();
 
   /**
    * Checks if the current module directly depends on the specified module.

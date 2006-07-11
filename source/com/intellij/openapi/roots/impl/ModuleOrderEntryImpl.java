@@ -10,13 +10,12 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -90,6 +89,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     return getFiles(type, new HashSet<Module>());
   }
 
+  @NotNull
   VirtualFile[] getFiles(OrderRootType type, Set<Module> processed) {
     if (myModule != null && !processed.contains(myModule)) {
       processed.add(myModule);

@@ -24,6 +24,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -45,7 +46,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   private final ModuleFileIndexImpl myFileIndex;
   private boolean myIsDisposed = false;
   private boolean isModuleAdded = false;
-  private Map<OrderRootType, VirtualFile[]> myCachedFiles;
+  private final Map<OrderRootType, VirtualFile[]> myCachedFiles;
+  private final Map<OrderRootType, VirtualFile[]> myCachedExportedFiles;
 
   private @NonNls String LANGUAGE_LEVEL_ELEMENT_NAME = "LANGUAGE_LEVEL";
   private @Nullable LanguageLevel myLanguageLevel;
@@ -59,7 +61,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     myFilePointerManager = filePointerManager;
 
     myFileIndex = new ModuleFileIndexImpl(myModule, directoryIndex);
-    myCachedFiles = new HashMap<OrderRootType, VirtualFile[]>();
+    myCachedFiles = new THashMap<OrderRootType, VirtualFile[]>();
+    myCachedExportedFiles = new THashMap<OrderRootType, VirtualFile[]>();
     myRootModel = new RootModelImpl(this, myProjectRootManager, myFilePointerManager);
   }
 
@@ -73,6 +76,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myFileIndex;
   }
 
+  @NotNull
   public String getComponentName() {
     return "NewModuleRootManager";
   }
@@ -172,10 +176,12 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.getOrderEntries();
   }
 
+  @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
     return getFiles(type, new HashSet<Module>());
   }
 
+  @NotNull
   private VirtualFile[] getFiles(OrderRootType type, Set<Module> processed) {
     VirtualFile[] cachedFiles = myCachedFiles.get(type);
     if (cachedFiles == null) {
@@ -202,11 +208,12 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return cachedFiles;
   }
 
+  @NotNull
   public String[] getUrls(OrderRootType type) {
     return getUrls(type, new HashSet<Module>());
   }
 
-  private String[] getUrls(OrderRootType type, Set<Module> processed) {
+  @NotNull private String[] getUrls(OrderRootType type, Set<Module> processed) {
     final ArrayList<String> result = new ArrayList<String>();
     final Iterator orderIterator = myRootModel.getOrderIterator();
     while (orderIterator.hasNext()) {
@@ -290,6 +297,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return rootModels;
   }
 
+  @NotNull
   public Module[] getDependencies() {
     return myRootModel.getModuleDependencies();
   }
@@ -298,6 +306,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.isDependsOn(module);
   }
 
+  @NotNull
   public String[] getDependencyModuleNames() {
     return myRootModel.getDependencyModuleNames();
   }
@@ -354,52 +363,65 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     */
   }
 
-
+  @NotNull
   VirtualFile[] getFilesForOtherModules(OrderRootType rootType, Set<Module> processed) {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
-    if (OrderRootType.SOURCES.equals(rootType) || OrderRootType.COMPILATION_CLASSES.equals(rootType)) {
-      myRootModel.addExportedFiles(rootType, result, processed);
-      return result.toArray(new VirtualFile[result.size()]);
+    VirtualFile[] files = myCachedExportedFiles.get(rootType);
+    if (files == null) {
+      List<VirtualFile> result = new ArrayList<VirtualFile>();
+      if (OrderRootType.SOURCES.equals(rootType) || OrderRootType.COMPILATION_CLASSES.equals(rootType)) {
+        myRootModel.addExportedFiles(rootType, result, processed);
+        files = result.toArray(new VirtualFile[result.size()]);
+      }
+      else if (OrderRootType.JAVADOC.equals(rootType)) {
+        files = VirtualFile.EMPTY_ARRAY;
+      }
+      else if (OrderRootType.CLASSES.equals(rootType)) {
+        myRootModel.addExportedFiles(rootType, result, processed);
+        files = result.toArray(new VirtualFile[result.size()]);
+      }
+      else if (OrderRootType.CLASSES_AND_OUTPUT.equals(rootType)) {
+        files = getFiles(OrderRootType.CLASSES_AND_OUTPUT, processed);
+      }
+      else {
+        LOG.error("Unknown root type: " + rootType);
+        return null;
+      }
+      myCachedExportedFiles.put(rootType, files);
     }
-    else if (OrderRootType.JAVADOC.equals(rootType)) {
-      return VirtualFile.EMPTY_ARRAY;
-    }
-    else if (OrderRootType.CLASSES.equals(rootType)) {
-      myRootModel.addExportedFiles(rootType, result, processed);
-      return result.toArray(new VirtualFile[result.size()]);
-    }
-    else if (OrderRootType.CLASSES_AND_OUTPUT.equals(rootType)) {
-      return getFiles(OrderRootType.CLASSES_AND_OUTPUT, processed);
-    }
-    LOG.error("Unknown root type: " + rootType);
-    return null;
+    return files;
   }
 
+  @NotNull
   public VirtualFile[] getContentRoots() {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getContentRoots();
   }
 
+  @NotNull
   public String[] getContentRootUrls() {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getContentRootUrls();
   }
 
+  @NotNull
   public String[] getExcludeRootUrls() {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getExcludeRootUrls();
   }
 
+  @NotNull
   public VirtualFile[] getExcludeRoots() {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getExcludeRoots();
   }
 
+  @NotNull
   public String[] getSourceRootUrls() {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getSourceRootUrls();
   }
 
+  @NotNull
   public VirtualFile[] getSourceRoots() {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getSourceRoots();
@@ -491,16 +513,19 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
 
+  @NotNull
   public VirtualFile[] getJavadocPaths() {
     return myRootModel.getJavadocPaths();
   }
 
+  @NotNull
   public String[] getJavadocUrls() {
     return myRootModel.getJavadocUrls();
   }
 
   public void dropCaches() {
     myCachedFiles.clear();
+    myCachedExportedFiles.clear();
   }
 
   static void checkCircularDependencies(ModifiableRootModel[] _rootModels, ModifiableModuleModel moduleModel)
