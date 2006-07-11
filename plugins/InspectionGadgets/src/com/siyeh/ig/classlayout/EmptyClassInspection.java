@@ -31,8 +31,14 @@ public class EmptyClassInspection extends ClassInspection {
 
     @NotNull
     protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "empty.class.problem.descriptor");
+        final PsiClass aClass = (PsiClass)infos[0];
+        if (aClass instanceof PsiAnonymousClass) {
+            return InspectionGadgetsBundle.message(
+                     "empty.anonymous.class.problem.descriptor");
+        } else {
+            return InspectionGadgetsBundle.message(
+                    "empty.class.problem.descriptor");
+        }
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -66,7 +72,7 @@ public class EmptyClassInspection extends ClassInspection {
             if (fields.length > 0) {
                 return;
             }
-            registerClassError(aClass);
+            registerClassError(aClass, aClass);
         }
     }
 }
