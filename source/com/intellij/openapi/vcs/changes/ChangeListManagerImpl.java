@@ -1,46 +1,38 @@
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.TreeExpander;
-import com.intellij.ide.actions.DeleteAction;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.ui.CommitHelper;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
-import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -54,20 +46,16 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
 
   private Project myProject;
-  private static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private static ScheduledExecutorService ourUpdateAlarm = Executors.newSingleThreadScheduledExecutor();
 
-  private Alarm myRepaintAlarm;
   private ScheduledFuture<?> myCurrentUpdate = null;
 
   private boolean myInitialized = false;
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private boolean myDisposed = false;
-
-  private boolean SHOW_FLATTEN_MODE = true;
 
   private UnversionedFilesHolder myUnversionedFilesHolder;
   private DeletedFilesHolder myDeletedFilesHolder = new DeletedFilesHolder();
@@ -76,9 +64,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private LocalChangeList myDefaultChangelist;
 
-  private ChangesListView myView;
-  private JLabel myProgressLabel;
-
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
 
@@ -86,7 +71,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   private boolean myUpdateInProgress = false;
   private VcsDirtyScope myCurrentlyUpdatingScope = null;
 
-  @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
   @NonNls private static final String NODE_LIST = "list";
   @NonNls private static final String ATT_NAME = "name";
   @NonNls private static final String ATT_COMMENT = "comment";
@@ -99,12 +83,13 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @NonNls private static final String ATT_CHANGE_AFTER_PATH = "afterPath";
   private List<CommitExecutor> myExecutors = new ArrayList<CommitExecutor>();
 
+  static ChangeListManagerImpl getInstanceImpl(final Project project) {
+    return (ChangeListManagerImpl) project.getComponent(ChangeListManager.class);
+  }
+
   public ChangeListManagerImpl(final Project project) {
     myProject = project;
-    myView = new ChangesListView(project);
-    Disposer.register(project, myView);
     myUnversionedFilesHolder = new UnversionedFilesHolder(project);
-    myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
   }
 
   public void projectOpened() {
@@ -112,10 +97,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
-        final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-        if (toolWindowManager != null) {
-          toolWindowManager.registerToolWindow(TOOLWINDOW_ID, createChangeViewComponent(), ToolWindowAnchor.BOTTOM);
-        }
         myInitialized = true;
       }
     });
@@ -132,12 +113,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public void projectClosed() {
     myDisposed = true;
     cancelUpdates();
-    myRepaintAlarm.cancelAllRequests();
     synchronized(myPendingUpdatesLock) {
       waitForUpdateDone(null);
     }
-
-    ToolWindowManager.getInstance(myProject).unregisterToolWindow(TOOLWINDOW_ID);
   }
 
   private void cancelUpdates() {
@@ -158,142 +136,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public void disposeComponent() {
   }
 
-  private JComponent createChangeViewComponent() {
-    JPanel panel = new JPanel(new BorderLayout());
-    DefaultActionGroup modelActionsGroup = new DefaultActionGroup();
-
-    RefreshAction refreshAction = new RefreshAction();
-    refreshAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), panel);
-
-    AddChangeListAction newChangeListAction = new AddChangeListAction();
-    newChangeListAction.registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
-
-    final RemoveChangeListAction removeChangeListAction = new RemoveChangeListAction();
-    removeChangeListAction.registerCustomShortcutSet(CommonShortcuts.DELETE, panel);
-
-    final ShowDiffAction diffAction = new ShowDiffAction();
-    diffAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D,
-                                                                                      SystemInfo.isMac
-                                                                                      ? KeyEvent.META_DOWN_MASK
-                                                                                      : KeyEvent.CTRL_DOWN_MASK)),
-                                         panel);
-
-    final MoveChangesToAnotherListAction toAnotherListAction = new MoveChangesToAnotherListAction();
-    toAnotherListAction.registerCustomShortcutSet(CommonShortcuts.getMove(), panel);
-
-    final SetDefaultChangeListAction setDefaultChangeListAction = new SetDefaultChangeListAction();
-    final RenameChangeListAction renameAction = new RenameChangeListAction();
-    renameAction.registerCustomShortcutSet(CommonShortcuts.getRename(), panel);
-
-    final CommitAction commitAction = new CommitAction(myExecutors);
-    final RollbackAction rollbackAction = new RollbackAction();
-
-    modelActionsGroup.add(refreshAction);
-    modelActionsGroup.add(commitAction);
-
-    /*
-    for (CommitExecutor executor : myExecutors) {
-      modelActionsGroup.add(new CommitUsingExecutorAction(executor));
-    }
-    */
-
-    modelActionsGroup.add(rollbackAction);
-    modelActionsGroup.add(newChangeListAction);
-    modelActionsGroup.add(removeChangeListAction);
-    modelActionsGroup.add(setDefaultChangeListAction);
-    modelActionsGroup.add(toAnotherListAction);
-    modelActionsGroup.add(diffAction);
-
-    JPanel toolbarPanel = new JPanel(new BorderLayout());
-    toolbarPanel.add(createToolbarComponent(modelActionsGroup), BorderLayout.WEST);
-
-    DefaultActionGroup visualActionsGroup = new DefaultActionGroup();
-    final Expander expander = new Expander();
-    visualActionsGroup.add(CommonActionsManager.getInstance().createCollapseAllAction(expander));
-    visualActionsGroup.add(CommonActionsManager.getInstance().createExpandAllAction(expander));
-
-    ToggleShowFlattenAction showFlattenAction = new ToggleShowFlattenAction();
-    showFlattenAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P,
-                                                                                             SystemInfo.isMac
-                                                                                             ? KeyEvent.META_DOWN_MASK
-                                                                                             : KeyEvent.CTRL_DOWN_MASK)),
-                                                panel);
-    visualActionsGroup.add(showFlattenAction);
-    toolbarPanel.add(createToolbarComponent(visualActionsGroup), BorderLayout.CENTER);
-
-
-    DefaultActionGroup menuGroup = new DefaultActionGroup();
-    menuGroup.add(refreshAction);
-
-    menuGroup.add(commitAction);
-    /*
-    for (CommitExecutor executor : myExecutors) {
-      menuGroup.add(new CommitUsingExecutorAction(executor));
-    }
-    */
-
-    menuGroup.add(rollbackAction);
-    menuGroup.add(newChangeListAction);
-    menuGroup.add(removeChangeListAction);
-    menuGroup.add(setDefaultChangeListAction);
-    menuGroup.add(renameAction);
-    menuGroup.add(toAnotherListAction);
-    menuGroup.add(diffAction);
-    menuGroup.addSeparator();
-    menuGroup.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));
-    menuGroup.add(new DeleteAction());
-    menuGroup.add(new ScheduleForAdditionAction());
-    menuGroup.add(new ScheduleForRemovalAction());
-    menuGroup.addSeparator();
-    menuGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
-
-    myView.setMenuActions(menuGroup);
-
-    myView.setShowFlatten(SHOW_FLATTEN_MODE);
-
-    myProgressLabel = new JLabel();
-
-    panel.add(toolbarPanel, BorderLayout.WEST);
-    panel.add(new JScrollPane(myView), BorderLayout.CENTER);
-    panel.add(myProgressLabel, BorderLayout.SOUTH);
-
-    myView.installDndSupport(this);
-    return panel;
-  }
-
-  private static JComponent createToolbarComponent(final DefaultActionGroup group) {
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW, group, false).getComponent();
-  }
-
-  private class Expander implements TreeExpander {
-    public void expandAll() {
-      TreeUtil.expandAll(myView);
-    }
-
-    public boolean canExpand() {
-      return true;
-    }
-
-    public void collapseAll() {
-      TreeUtil.collapseAll(myView, 2);
-      TreeUtil.expand(myView, 1);
-    }
-
-    public boolean canCollapse() {
-      return true;
-    }
-  }
-
-  private void updateProgressText(final String text) {
-    if (myProgressLabel != null) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myProgressLabel.setText(text);
-        }
-      });
-    }
-  }
-
   public boolean ensureUpToDate(boolean canBeCanceled) {
     if (!myInitialized) return true;
 
@@ -312,7 +154,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }, VcsBundle.message("commit.wait.util.synced.title"), canBeCanceled, myProject);
 
     if (ok) {
-      refreshView();
+      ChangesViewManager.getInstance(myProject).refreshView();
     }
 
     return ok;
@@ -370,7 +212,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         if (vcs == null) continue;
 
         myCurrentlyUpdatingScope = scope;
-        updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()));
+        ChangesViewManager.getInstance(myProject).updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()));
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             synchronized (myChangeLists) {
@@ -428,7 +270,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                         }
                       }
                       finally {
-                        scheduleRefresh();
+                        ChangesViewManager.getInstance(myProject).scheduleRefresh();
                       }
                     }
                   }
@@ -440,7 +282,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                 if (myDisposed) throw new DisposedException();
                 if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
                   unversionedHolder.addFile(file);
-                  scheduleRefresh();
+                  ChangesViewManager.getInstance(myProject).scheduleRefresh();
                 }
               }
 
@@ -449,7 +291,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                 if (myDisposed) throw new DisposedException();
                 if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
                   deletedHolder.addFile(file);
-                  scheduleRefresh();
+                  ChangesViewManager.getInstance(myProject).scheduleRefresh();
                 }
               }
 
@@ -482,7 +324,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           myUnversionedFilesHolder = unversionedHolder;
           myDeletedFilesHolder = deletedHolder;
         }
-        scheduleRefresh();
+        ChangesViewManager.getInstance(myProject).scheduleRefresh();
       }
     }
     catch (DisposedException e) {
@@ -492,7 +334,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       LOG.error(ex);
     }
     finally {
-      updateProgressText("");
+      ChangesViewManager.getInstance(myProject).updateProgressText("");
       synchronized (myPendingUpdatesLock) {
         myUpdateInProgress = false;
         myPendingUpdatesLock.notifyAll();
@@ -506,24 +348,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     return before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile());
   }
 
-  private void scheduleRefresh() {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    myRepaintAlarm.cancelAllRequests();
-    myRepaintAlarm.addRequest(new Runnable() {
-      public void run() {
-        refreshView();
-      }
-    }, 100, ModalityState.NON_MMODAL);
-  }
-
-  private void refreshView() {
-    if (myDisposed || ApplicationManager.getApplication().isUnitTestMode()) return;
-    myView.updateModel(getChangeListsCopy(),
-                       new ArrayList<VirtualFile>(myUnversionedFilesHolder.getFiles()),
-                       new ArrayList<File>(myDeletedFilesHolder.getFiles()));
-  }
-
-  private List<LocalChangeList> getChangeListsCopy() {
+  List<LocalChangeList> getChangeListsCopy() {
     synchronized (myChangeLists) {
       List<LocalChangeList> copy = new ArrayList<LocalChangeList>(myChangeLists.size());
       for (LocalChangeList list : myChangeLists) {
@@ -587,6 +412,14 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     return files;
   }
 
+  List<VirtualFile> getUnversionedFiles() {
+    return new ArrayList<VirtualFile>(myUnversionedFilesHolder.getFiles());
+  }
+
+  List<File> getDeletedFiles() {
+    return new ArrayList<File>(myDeletedFilesHolder.getFiles());
+  }
+
   public boolean isFileAffected(final VirtualFile file) {
     synchronized (myChangeLists) {
       for (ChangeList list : myChangeLists) {
@@ -622,7 +455,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       if (myCurrentlyUpdatingScope != null) {
         list.startProcessingChanges(myCurrentlyUpdatingScope);
       }
-      scheduleRefresh();
       return list;
     }
   }
@@ -638,8 +470,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       myListeners.getMulticaster().changesMoved(changes, list, myDefaultChangelist);
       myChangeLists.remove(list);
       myListeners.getMulticaster().changeListRemoved(list);
-
-      scheduleRefresh();
     }
   }
 
@@ -655,7 +485,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       list.setDefault(true);
       myDefaultChangelist = list;
       myListeners.getMulticaster().defaultListChanged(list);
-      scheduleRefresh();
     }
   }
 
@@ -730,279 +559,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
-  public class ToggleShowFlattenAction extends ToggleAction {
-    public ToggleShowFlattenAction() {
-      super(VcsBundle.message("changes.action.show.directories.text"),
-            VcsBundle.message("changes.action.show.directories.description"),
-            Icons.DIRECTORY_CLOSED_ICON);
-    }
-
-    public boolean isSelected(AnActionEvent e) {
-      return !SHOW_FLATTEN_MODE;
-    }
-
-    public void setSelected(AnActionEvent e, boolean state) {
-      SHOW_FLATTEN_MODE = !state;
-      myView.setShowFlatten(SHOW_FLATTEN_MODE);
-      refreshView();
-    }
-  }
-
-  public class RefreshAction extends AnAction {
-    public RefreshAction() {
-      super(VcsBundle.message("changes.action.refresh.text"),
-            VcsBundle.message("changes.action.refresh.description"),
-            IconLoader.getIcon("/actions/sync.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    }
-  }
-
-  public class AddChangeListAction extends AnAction {
-    public AddChangeListAction() {
-      super(VcsBundle.message("changes.action.new.changelist.text"),
-            VcsBundle.message("changes.action.new.changelist.description"),
-            IconLoader.getIcon("/actions/include.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      NewChangelistDialog dlg = new NewChangelistDialog(myProject);
-      dlg.show();
-      if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-        String name = dlg.getName();
-        if (name.length() == 0) {
-          name = getUniqueName();
-        }
-
-        addChangeList(name, dlg.getDescription());
-      }
-    }
-
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private String getUniqueName() {
-      synchronized (myChangeLists) {
-        int unnamedcount = 0;
-        for (ChangeList list : getChangeLists()) {
-          if (list.getName().startsWith("Unnamed")) {
-            unnamedcount++;
-          }
-        }
-
-        return unnamedcount == 0 ? "Unnamed" : "Unnamed (" + unnamedcount + ")";
-      }
-    }
-  }
-
-  public class RenameChangeListAction extends AnAction {
-
-    public RenameChangeListAction() {
-      super(VcsBundle.message("changes.action.rename.text"),
-            VcsBundle.message("changes.action.rename.description"), null);
-    }
-
-    public void update(AnActionEvent e) {
-      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
-      e.getPresentation().setEnabled(lists != null && lists.length == 1 && lists[0] instanceof LocalChangeList &&
-                                     !((LocalChangeList) lists [0]).isReadOnly());
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
-      assert lists != null;
-      new EditChangelistDialog(myProject, findRealByCopy((LocalChangeList)lists[0])).show();
-    }
-  }
-
-  public class SetDefaultChangeListAction extends AnAction {
-    public SetDefaultChangeListAction() {
-      super(VcsBundle.message("changes.action.setdefaultchangelist.text"),
-            VcsBundle.message("changes.action.setdefaultchangelist.description"), IconLoader.getIcon("/actions/submit1.png"));
-    }
-
-
-    public void update(AnActionEvent e) {
-      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
-      e.getPresentation().setEnabled(lists != null && lists.length == 1 &&
-                                     lists[0] instanceof LocalChangeList && !((LocalChangeList)lists[0]).isDefault());
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      final ChangeList[] lists = ((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS));
-      assert lists != null;
-      setDefaultChangeList((LocalChangeList)lists[0]);
-    }
-  }
-
-  @Nullable
-  private ChangeList getChangeListIfOnlyOne(Change[] changes) {
-    if (changes == null || changes.length == 0) {
-      return null;
-    }
-
-    ChangeList selectedList = null;
-    for (Change change : changes) {
-      final ChangeList list = getChangeList(change);
-      if (selectedList == null) {
-        selectedList = list;
-      }
-      else if (selectedList != list) {
-        return null;
-      }
-    }
-    return selectedList;
-  }
-
-  public class CommitAction extends AnAction {
-    private final List<CommitExecutor> myExecutors;
-
-    public CommitAction(final List<CommitExecutor> executors) {
-      super(VcsBundle.message("changes.action.commit.text"), VcsBundle.message("changes.action.commit.description"),
-            IconLoader.getIcon("/actions/execute.png"));
-      myExecutors = executors;
-    }
-
-    public void update(AnActionEvent e) {
-      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      e.getPresentation().setEnabled(getChangeListIfOnlyOne(changes) != null);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      final ChangeList list = getChangeListIfOnlyOne(changes);
-      if (list == null) return;
-
-      CommitChangeListDialog.commitChanges(myProject, Arrays.asList(changes), myExecutors);
-    }
-  }
-
-  public class RollbackAction extends AnAction {
-    public RollbackAction() {
-      super(VcsBundle.message("changes.action.rollback.text"), VcsBundle.message("changes.action.rollback.description"),
-            IconLoader.getIcon("/actions/rollback.png"));
-    }
-
-    public void update(AnActionEvent e) {
-      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      e.getPresentation().setEnabled(getChangeListIfOnlyOne(changes) != null);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      final ChangeList list = getChangeListIfOnlyOne(changes);
-      if (list == null) return;
-
-      RollbackChangesDialog.rollbackChanges(myProject, Arrays.asList(changes));
-    }
-  }
-
-  public class ScheduleForAdditionAction extends AnAction {
-    public ScheduleForAdditionAction() {
-      super(VcsBundle.message("changes.action.add.text"), VcsBundle.message("changes.action.add.description"),
-            IconLoader.getIcon("/actions/include.png"));
-    }
-
-    public void update(AnActionEvent e) {
-      //noinspection unchecked
-      List<VirtualFile> files = (List<VirtualFile>)e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
-      boolean enabled = files != null && !files.isEmpty();
-      e.getPresentation().setEnabled(enabled);
-      e.getPresentation().setVisible(enabled);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      //noinspection unchecked
-      final List<VirtualFile> files = (List<VirtualFile>)e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
-      if (files == null) return;
-
-      ChangesUtil.processVirtualFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
-        public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
-          final ChangeProvider provider = vcs.getChangeProvider();
-          if (provider != null) {
-            provider.scheduleUnversionedFilesForAddition(files);
-          }
-        }
-      });
-
-      for (VirtualFile file : files) {
-        VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
-        FileStatusManager.getInstance(myProject).fileStatusChanged(file);
-      }
-
-      scheduleRefresh();
-    }
-  }
-
-  public class ScheduleForRemovalAction extends AnAction {
-    public ScheduleForRemovalAction() {
-      super(VcsBundle.message("changes.action.remove.text"), VcsBundle.message("changes.action.remove.description"),
-            IconLoader.getIcon("/actions/exclude.png"));
-    }
-
-    public void update(AnActionEvent e) {
-      //noinspection unchecked
-      List<File> files = (List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
-      boolean enabled = files != null && !files.isEmpty();
-      e.getPresentation().setEnabled(enabled);
-      e.getPresentation().setVisible(enabled);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      //noinspection unchecked
-      final List<File> files = (List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
-      if (files == null) return;
-
-      ChangesUtil.processIOFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<File>() {
-        public void process(final AbstractVcs vcs, final List<File> items) {
-          final ChangeProvider provider = vcs.getChangeProvider();
-          if (provider != null) {
-            provider.scheduleMissingFileForDeletion(files);
-          }
-        }
-      });
-
-      for (File file : files) {
-        FilePath path = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file);
-        VcsDirtyScopeManager.getInstance(myProject).fileDirty(path);
-      }
-      scheduleRefresh();
-    }
-  }
-
-  public static class RemoveChangeListAction extends AnAction {
-    public RemoveChangeListAction() {
-      super(VcsBundle.message("changes.action.removechangelist.text"),
-            VcsBundle.message("changes.action.removechangelist.description"),
-            IconLoader.getIcon("/actions/exclude.png"));
-    }
-
-    public void update(AnActionEvent e) {
-      Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
-      e.getPresentation().setEnabled(project != null && lists != null && lists.length == 1 &&
-                                     lists[0] instanceof LocalChangeList &&
-                                     !((LocalChangeList)lists[0]).isDefault() &&
-                                     !((LocalChangeList) lists [0]).isReadOnly());
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-      final ChangeList[] lists = ((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS));
-      assert lists != null;
-      final LocalChangeList list = (LocalChangeList)lists[0];
-      int rc = list.getChanges().size() == 0 ? DialogWrapper.OK_EXIT_CODE :
-               Messages.showYesNoDialog(project,
-                                        VcsBundle.message("changes.removechangelist.warning.text", list.getName()),
-                                        VcsBundle.message("changes.removechangelist.warning.title"),
-                                        Messages.getQuestionIcon());
-
-      if (rc == DialogWrapper.OK_EXIT_CODE) {
-        ChangeListManager.getInstance(project).removeChangeList(list);
-      }
-    }
-  }
-
   public void moveChangesTo(LocalChangeList list, final Change[] changes) {
     synchronized (myChangeLists) {
       list = findRealByCopy(list);
@@ -1021,8 +577,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         myListeners.getMulticaster().changesMoved(changesInList, fromList, list);
       }
     }
-
-    scheduleRefresh();
   }
 
   public void addChangeListListener(ChangeListListener listener) {
@@ -1045,8 +599,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   @SuppressWarnings({"unchecked"})
   public void readExternal(Element element) throws InvalidDataException {
-    SHOW_FLATTEN_MODE = Boolean.valueOf(element.getAttributeValue(ATT_FLATTENED_VIEW)).booleanValue();
-
     final List<Element> listNodes = (List<Element>)element.getChildren(NODE_LIST);
     for (Element listNode : listNodes) {
       LocalChangeList list = addChangeList(listNode.getAttributeValue(ATT_NAME), listNode.getAttributeValue(ATT_COMMENT));
@@ -1074,8 +626,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    element.setAttribute(ATT_FLATTENED_VIEW, String.valueOf(SHOW_FLATTEN_MODE));
-
     synchronized (myChangeLists) {
       for (LocalChangeList list : myChangeLists) {
         Element listNode = new Element(NODE_LIST);
