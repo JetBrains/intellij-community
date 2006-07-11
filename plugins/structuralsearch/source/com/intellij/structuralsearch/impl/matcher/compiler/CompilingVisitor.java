@@ -47,7 +47,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   }
 
   private List<PsiElement> buildDescendants(String className, boolean includeSelf) {
-    if (!context.findMatchingFiles) return Collections.<PsiElement>emptyList();
+    if (!context.findMatchingFiles) return Collections.emptyList();
     PsiShortNamesCache cache = PsiManager.getInstance(context.project).getShortNamesCache();
     SearchScope scope = context.options.getScope();
     PsiClass[] classes = cache.getClassesByName(className,(GlobalSearchScope)scope);
@@ -335,7 +335,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     super.visitLiteralExpression(expression);
   }
 
-  private String shieldSpecialChars(String word) {
+  private static String shieldSpecialChars(String word) {
     final StringBuffer buf = new StringBuffer(word.length());
 
     for(int i=0;i<word.length();++i) {
@@ -380,7 +380,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
         !(reference.getParent() instanceof PsiExpressionStatement)
        ) {
       // typed var for expression (but not top level)
-      SubstitutionHandler handler = (SubstitutionHandler) context.pattern.getHandler(reference);
+      Handler handler = context.pattern.getHandler(reference);
       setFilter( handler, ExpressionFilter.getInstance() );
     }
 
@@ -588,7 +588,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     context.pattern.getHandler(psiDocComment).setFilter( JavaDocFilter.getInstance() );
   }
 
-  private boolean needsSupers(final PsiElement element, final Handler handler) {
+  private static boolean needsSupers(final PsiElement element, final Handler handler) {
     if (element.getParent() instanceof PsiClass &&
         handler instanceof SubstitutionHandler
         )  {
