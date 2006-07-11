@@ -6,6 +6,7 @@ package com.intellij.util.xml.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.DomElement;
@@ -81,7 +82,9 @@ public class AddElementInCollectionAction extends AddDomElementAction {
 
     final DomElementsGroupNode groupNode = getDomElementsGroupNode(view);
 
-    return groupNode == null ? DomCollectionChildDescription.EMPTY_ARRAY : new DomCollectionChildDescription[]{groupNode.getChildDescription()};
+    return groupNode == null
+           ? DomCollectionChildDescription.EMPTY_ARRAY
+           : new DomCollectionChildDescription[]{groupNode.getChildDescription()};
   }
 
   protected DomElement getParentDomElement(final AnActionEvent e) {
@@ -153,7 +156,14 @@ public class AddElementInCollectionAction extends AddDomElementAction {
       }
 
       protected void afterAddition(final DomElement newElement) {
-        myView.setSelectedDomElement(newElement);
+        final DomElement copy = newElement.createStableCopy();
+
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            myView.setSelectedDomElement(copy);
+          }
+        });
+
       }
     };
   }
