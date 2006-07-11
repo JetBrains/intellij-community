@@ -117,7 +117,7 @@ public class CheckboxTree extends Tree {
     }
 
     public CheckboxTreeCellRenderer() {
-      this(false);
+      this(true);
     }
 
     public final Component getTreeCellRendererComponent(JTree tree,
