@@ -37,13 +37,11 @@ public abstract class IdeaTestFixtureFactory {
     return ourInstance;
   }
 
-  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {
-    return createFixtureBuilder(IdeaProjectTestFixture.class);
-  }
+  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder();
 
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder();
 
-  public abstract <T extends IdeaProjectTestFixture> TestFixtureBuilder<T> createFixtureBuilder(Class<T> clazz);
+  public abstract CodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture);
 
   public abstract TempDirTestFixture createTempDirTestFixture();
 }

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author Dmitry Avdeev
  */
-public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
+public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   @NonNls String CARET_MARKER = "<caret>";
   @NonNls String SELECTION_START_MARKER = "<selection>";
@@ -40,11 +40,11 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   String getTempDirPath();
 
-  void test(String filePath, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings);
+  void testHighlighting(String filePath, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings);
 
   /**
    * Runs highliting test for the given file
    * @param filePath path relative to the one set by {@link #setTestDataPath(String)}
    */
-  void test(String filePath);
+  void testHighlighting(String filePath);
 }
