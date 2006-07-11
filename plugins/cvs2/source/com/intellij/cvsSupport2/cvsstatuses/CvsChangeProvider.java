@@ -132,6 +132,17 @@ public class CvsChangeProvider implements ChangeProvider {
     return Collections.emptyList();
   }
 
+  public List<VcsException> rollbackMissingFileDeletion(List<File> files) {
+    final Project project = myVcs.getProject();
+    FilePath[] filePaths = new FilePath[files.size()];
+    for(int i=0; i<files.size(); i++) {
+      filePaths [i] = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(files.get(i));
+    }
+    final CvsHandler cvsHandler = CommandCvsHandler.createCheckoutFileHandler(filePaths, CvsConfiguration.getInstance(project));
+    final CvsOperationExecutor executor = new CvsOperationExecutor(project);
+    executor.performActionSync(cvsHandler, CvsOperationExecutorCallback.EMPTY);
+    return Collections.emptyList();
+  }
 
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
     final Project project = myVcs.getProject();
@@ -239,6 +250,7 @@ public class CvsChangeProvider implements ChangeProvider {
       return myPath;
     }
 
+    @NotNull
     public VcsRevisionNumber getRevisionNumber() {
       return myRevisionNumber;
     }

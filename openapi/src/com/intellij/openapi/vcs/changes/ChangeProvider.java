@@ -16,5 +16,6 @@ public interface ChangeProvider {
   List<VcsException> commit(List<Change> changes, String preparedComment);
   List<VcsException> rollbackChanges(List<Change> changes);
   List<VcsException> scheduleMissingFileForDeletion(List<File> files);
+  List<VcsException> rollbackMissingFileDeletion(List<File> files);
   List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files);
 }

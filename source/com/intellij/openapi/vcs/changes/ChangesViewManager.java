@@ -45,6 +45,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
   private static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
@@ -190,6 +191,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     menuGroup.add(new DeleteAction());
     menuGroup.add(new ScheduleForAdditionAction());
     menuGroup.add(new ScheduleForRemovalAction());
+    menuGroup.add(new RollbackDeletionAction());
     menuGroup.addSeparator();
     menuGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
 
@@ -460,7 +462,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
     public void update(AnActionEvent e) {
       //noinspection unchecked
-      java.util.List<VirtualFile> files = (java.util.List<VirtualFile>)e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
+      List<VirtualFile> files = (List<VirtualFile>)e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
       boolean enabled = files != null && !files.isEmpty();
       e.getPresentation().setEnabled(enabled);
       e.getPresentation().setVisible(enabled);
@@ -468,11 +470,11 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
     public void actionPerformed(AnActionEvent e) {
       //noinspection unchecked
-      final java.util.List<VirtualFile> files = (java.util.List<VirtualFile>)e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
+      final List<VirtualFile> files = (List<VirtualFile>)e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
       if (files == null) return;
 
       ChangesUtil.processVirtualFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
-        public void process(final AbstractVcs vcs, final java.util.List<VirtualFile> items) {
+        public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
           final ChangeProvider provider = vcs.getChangeProvider();
           if (provider != null) {
             provider.scheduleUnversionedFilesForAddition(files);
@@ -489,15 +491,15 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     }
   }
 
-  public class ScheduleForRemovalAction extends AnAction {
-    public ScheduleForRemovalAction() {
-      super(VcsBundle.message("changes.action.remove.text"), VcsBundle.message("changes.action.remove.description"),
-            IconLoader.getIcon("/actions/exclude.png"));
+  public abstract class AbstractMissingFilesAction extends AnAction {
+
+    protected AbstractMissingFilesAction(String text, String description, Icon icon) {
+      super(text, description, icon);
     }
 
     public void update(AnActionEvent e) {
       //noinspection unchecked
-      java.util.List<File> files = (java.util.List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
+      List<File> files = (List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
       boolean enabled = files != null && !files.isEmpty();
       e.getPresentation().setEnabled(enabled);
       e.getPresentation().setVisible(enabled);
@@ -505,14 +507,14 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
     public void actionPerformed(AnActionEvent e) {
       //noinspection unchecked
-      final java.util.List<File> files = (java.util.List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
+      final List<File> files = (List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
       if (files == null) return;
 
       ChangesUtil.processIOFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<File>() {
-        public void process(final AbstractVcs vcs, final java.util.List<File> items) {
+        public void process(final AbstractVcs vcs, final List<File> items) {
           final ChangeProvider provider = vcs.getChangeProvider();
           if (provider != null) {
-            provider.scheduleMissingFileForDeletion(files);
+            processFiles(provider, files);
           }
         }
       });
@@ -522,6 +524,31 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
         VcsDirtyScopeManager.getInstance(myProject).fileDirty(path);
       }
       scheduleRefresh();
+    }
+
+    protected abstract void processFiles(final ChangeProvider provider, final List<File> files);
+  }
+
+  public class ScheduleForRemovalAction extends AbstractMissingFilesAction {
+    public ScheduleForRemovalAction() {
+      super(VcsBundle.message("changes.action.remove.text"), VcsBundle.message("changes.action.remove.description"),
+            IconLoader.getIcon("/actions/exclude.png"));
+    }
+
+    protected void processFiles(final ChangeProvider provider, final List<File> files) {
+      provider.scheduleMissingFileForDeletion(files);
+    }
+  }
+
+  public class RollbackDeletionAction extends AbstractMissingFilesAction {
+    public RollbackDeletionAction() {
+      super(VcsBundle.message("changes.action.rollback.deletion.text"),
+            VcsBundle.message("changes.action.rollback.deletion.description"),
+            IconLoader.getIcon("/actions/rollback.png"));
+    }
+
+    protected void processFiles(final ChangeProvider provider, final List<File> files) {
+      provider.rollbackMissingFileDeletion(files);
     }
   }
 
