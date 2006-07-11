@@ -61,7 +61,7 @@ public class AntFileReference extends AntGenericReference {
   }
 
   public String getUnresolvedMessagePattern() {
-    return AntBundle.getMessage("file.doesnt.exist", getCanonicalText());
+    return AntBundle.message("file.doesnt.exist", getCanonicalText());
   }
 
   @NotNull

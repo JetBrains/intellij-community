@@ -107,7 +107,7 @@ public class AntTargetReference extends AntGenericReference {
   }
 
   public String getUnresolvedMessagePattern() {
-    return AntBundle.getMessage("cannot.resolve.target", getCanonicalText());
+    return AntBundle.message("cannot.resolve.target", getCanonicalText());
   }
 
   @NotNull

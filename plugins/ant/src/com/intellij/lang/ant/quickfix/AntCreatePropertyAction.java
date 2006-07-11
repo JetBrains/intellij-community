@@ -33,7 +33,7 @@ public class AntCreatePropertyAction extends BaseIntentionAction {
   @SuppressWarnings({"HardCodedStringLiteral"})
   @NotNull
   public String getFamilyName() {
-    final String i18nName = AntBundle.getMessage("intention.create.property.family.name");
+    final String i18nName = AntBundle.message("intention.create.property.family.name");
     return (i18nName == null) ? "Create property" : i18nName;
   }
 
@@ -47,7 +47,7 @@ public class AntCreatePropertyAction extends BaseIntentionAction {
       builder.append('\'');
       if (myPropFile != null) {
         builder.append(' ');
-        builder.append(AntBundle.getMessage("text.in.the.file", myPropFile.getName()));
+        builder.append(AntBundle.message("text.in.the.file", myPropFile.getName()));
       }
       return builder.toString();
     }

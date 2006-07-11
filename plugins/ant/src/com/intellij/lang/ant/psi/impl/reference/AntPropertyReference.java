@@ -86,7 +86,7 @@ public class AntPropertyReference extends AntGenericReference {
   }
 
   public String getUnresolvedMessagePattern() {
-    return AntBundle.getMessage("unknown.property", getCanonicalText());
+    return AntBundle.message("unknown.property", getCanonicalText());
   }
 
   public Object[] getVariants() {

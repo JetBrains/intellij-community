@@ -35,7 +35,7 @@ public class AntCreateMacroDefAction extends BaseIntentionAction {
   @SuppressWarnings({"HardCodedStringLiteral"})
   @NotNull
   public String getFamilyName() {
-    final String i18nName = AntBundle.getMessage("intention.create.macrodef.family.name");
+    final String i18nName = AntBundle.message("intention.create.macrodef.family.name");
     return (i18nName == null) ? "Create macrodef" : i18nName;
   }
 
@@ -49,7 +49,7 @@ public class AntCreateMacroDefAction extends BaseIntentionAction {
       builder.append('\'');
       if (myFile != null) {
         builder.append(' ');
-        builder.append(AntBundle.getMessage("text.in.the.file", myFile.getName()));
+        builder.append(AntBundle.message("text.in.the.file", myFile.getName()));
       }
       return builder.toString();
     }

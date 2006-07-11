@@ -34,7 +34,7 @@ public class AntCreatePresetDefAction extends BaseIntentionAction {
   @SuppressWarnings({"HardCodedStringLiteral"})
   @NotNull
   public String getFamilyName() {
-    final String i18nName = AntBundle.getMessage("intention.create.presetdef.family.name");
+    final String i18nName = AntBundle.message("intention.create.presetdef.family.name");
     return (i18nName == null) ? "Create presetdef" : i18nName;
   }
 
@@ -48,7 +48,7 @@ public class AntCreatePresetDefAction extends BaseIntentionAction {
       builder.append('\'');
       if (myFile != null) {
         builder.append(' ');
-        builder.append(AntBundle.getMessage("text.in.the.file", myFile.getName()));
+        builder.append(AntBundle.message("text.in.the.file", myFile.getName()));
       }
       return builder.toString();
     }

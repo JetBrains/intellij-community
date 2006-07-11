@@ -44,7 +44,7 @@ public class AntRefIdReference extends AntGenericReference {
   }
 
   public String getUnresolvedMessagePattern() {
-    return AntBundle.getMessage("cannot.resolve.refid", getCanonicalText());
+    return AntBundle.message("cannot.resolve.refid", getCanonicalText());
   }
 
   public PsiElement resolve() {

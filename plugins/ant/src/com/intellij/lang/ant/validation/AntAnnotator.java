@@ -30,7 +30,7 @@ public class AntAnnotator implements Annotator {
       AntTypeDefinition def = se.getTypeDefinition();
       final String name = se.getSourceElement().getName();
       if (def == null) {
-        final Annotation annotation = holder.createErrorAnnotation(se, AntBundle.getMessage("undefined.element", name));
+        final Annotation annotation = holder.createErrorAnnotation(se, AntBundle.message("undefined.element", name));
         boolean defined = false;
         while (!(parent instanceof AntFile)) {
           if (parent instanceof AntTask && ((AntTask)parent).isMacroDefined()) {
@@ -52,7 +52,7 @@ public class AntAnnotator implements Annotator {
           final AntTypeDefinition parentDef = pe.getTypeDefinition();
           if (parentDef != null && parentDef.getNestedClassName(def.getTypeId()) == null) {
             final TextRange textRange = new TextRange(0, name.length()).shiftRight(se.getSourceElement().getTextOffset());
-            holder.createErrorAnnotation(textRange, AntBundle.getMessage("nested.element.is.not.allowed.here", name));
+            holder.createErrorAnnotation(textRange, AntBundle.message("nested.element.is.not.allowed.here", name));
           }
         }
       }
@@ -76,7 +76,7 @@ public class AntAnnotator implements Annotator {
       final String name = attr.getName();
       final AntAttributeType type = def.getAttributeType(name);
       if (type == null) {
-        holder.createErrorAnnotation(attr, AntBundle.getMessage("attribute.is.not.allowed.here", name));
+        holder.createErrorAnnotation(attr, AntBundle.message("attribute.is.not.allowed.here", name));
       }
       else {
         final String value = attr.getValue();
@@ -85,7 +85,7 @@ public class AntAnnotator implements Annotator {
             Integer.parseInt(value);
           }
           catch (NumberFormatException e) {
-            holder.createErrorAnnotation(attr, AntBundle.getMessage("integer.attribute.has.invalid.value", name));
+            holder.createErrorAnnotation(attr, AntBundle.message("integer.attribute.has.invalid.value", name));
           }
         }
       }
