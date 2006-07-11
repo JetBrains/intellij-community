@@ -6,6 +6,8 @@ import java.util.List;
  * @author max
  */
 public class DiffTree<OT, NT> {
+  private static final int CHANGE_PARENT_VERSUS_CHILDREN_THRESHOLD = 20;
+
   private final DiffTreeStructure<OT> myOldTree;
   private final DiffTreeStructure<NT> myNewTree;
   private final ShallowNodeComparator<OT, NT> myComparator;
@@ -35,6 +37,11 @@ public class DiffTree<OT, NT> {
 
     final int oldSize = oldChildren.size();
     final int newSize = newChildren.size();
+
+    if (Math.abs(oldSize - newSize) > CHANGE_PARENT_VERSUS_CHILDREN_THRESHOLD) {
+      myConsumer.nodeReplaced(oldNode, newNode);
+      return;
+    }
 
     if (oldSize == 0 && newSize == 0) {
       if (!myComparator.hashcodesEqual(oldNode, newNode) || !myComparator.typesEqual(oldNode, newNode)) {

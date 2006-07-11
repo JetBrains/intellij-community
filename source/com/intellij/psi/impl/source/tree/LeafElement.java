@@ -45,6 +45,10 @@ public abstract class LeafElement extends TreeElement {
     return IElementType.find(sh);
   }
 
+  public short getTypeIndex() {
+    return (short)(myState & 0xFFFF);
+  }
+
   public int getState() {
     return ((myState >> 16) & 0x7FFF) - 1;
   }

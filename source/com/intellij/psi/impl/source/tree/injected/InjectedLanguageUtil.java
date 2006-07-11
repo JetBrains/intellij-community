@@ -36,6 +36,7 @@ import com.intellij.psi.impl.source.xml.XmlTextImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.SmartList;
@@ -56,6 +57,10 @@ public class InjectedLanguageUtil {
   @Nullable
   public static <T extends PsiLanguageInjectionHost> List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull T host,
                                                                                                            @Nullable LiteralTextEscaper<T> textEscaper) {
+    if (!host.isPhysical()) {
+      return new InjectedPsiProvider<T>(host, textEscaper).compute().getValue();
+    }
+    
     CachedValue<List<Pair<PsiElement, TextRange>>> cachedPsi = host.getUserData(INJECTED_PSI);
     if (cachedPsi == null) {
       CachedValueProvider<List<Pair<PsiElement, TextRange>>> provider = new InjectedPsiProvider<T>(host, textEscaper);
@@ -324,7 +329,7 @@ public class InjectedLanguageUtil {
       for (LanguageInjector injector : psiManager.getLanguageInjectors()) {
         injector.getLanguagesToInject(host, placesRegistrar);
       }
-      return new Result<List<Pair<PsiElement, TextRange>>>(result, host, host.getContainingFile());
+      return new Result<List<Pair<PsiElement, TextRange>>>(result, host, PsiModificationTracker.MODIFICATION_COUNT);
     }
   }
 

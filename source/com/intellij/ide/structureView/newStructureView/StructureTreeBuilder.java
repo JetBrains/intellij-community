@@ -62,11 +62,15 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     myDocumentsListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         if (PsiDocumentManager.getInstance(myProject).isUncommited(e.getDocument())) {
+          final boolean hasActiveRequests = myUpdateAlarm.getActiveRequestCount() > 0;
           myUpdateAlarm.cancelAllRequests();
           myUpdateEditorAlarm.cancelAllRequests();
           myUpdateEditorAlarm.addRequest(new Runnable() {
             public void run() {
               PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+              if (hasActiveRequests) {
+                setupUpdateAlarm();
+              }
             }
           }, 300, ModalityState.stateForComponent(myTree));
         }
@@ -142,17 +146,21 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     }
 
     private void childrenChanged() {
-      myUpdateAlarm.cancelAllRequests();
-      myUpdateAlarm.addRequest(new Runnable() {
-        public void run() {
-          addRootToUpdate();
-        }
-      }, 300, ModalityState.stateForComponent(myTree));
+      setupUpdateAlarm();
     }
 
     public void propertyChanged(PsiTreeChangeEvent event) {
       childrenChanged();
     }
+  }
+
+  private void setupUpdateAlarm() {
+    myUpdateAlarm.cancelAllRequests();
+    myUpdateAlarm.addRequest(new Runnable() {
+      public void run() {
+        addRootToUpdate();
+      }
+    }, 300, ModalityState.stateForComponent(myTree));
   }
 
   private void addRootToUpdate() {

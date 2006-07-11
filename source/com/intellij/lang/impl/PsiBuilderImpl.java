@@ -14,6 +14,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.diff.DiffTreeStructure;
+import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,6 +79,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public IElementType myType;
     public DoneMarker myDoneMarker = null;
     public Throwable myDebugAllocationPosition = null;
+    public List<Object> myChildren = null;
 
     public StartMarker(int idx) {
       super(idx);
@@ -346,11 +348,25 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return rootNode;
   }
 
+  private static class MyComparator implements ShallowNodeComparator<ASTNode, Object> {
+    public ThreeState deepEqual(final ASTNode oldNode, final Object newNode) {
+      return null;
+    }
+
+    public boolean typesEqual(final ASTNode oldNode, final Object newNode) {
+      return false;
+    }
+
+    public boolean hashcodesEqual(final ASTNode oldNode, final Object newNode) {
+      return false;
+    }
+  }
+
   private class MyTreeStructure implements DiffTreeStructure<Object> {
     private List<Object> EMPTY = Collections.emptyList();
 
     public Object prepareForGetChildren(final Object o) {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      return o;
     }
 
     public Object getRoot() {
@@ -359,9 +375,29 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     public List<Object> getChildren(final Object item) {
       if (item instanceof Token || item instanceof ErrorItem) return EMPTY;
+      List<Object> childern = new ArrayList<Object>();
+      StartMarker marker = (StartMarker)item;
+      DoneMarker done = marker.myDoneMarker;
 
+      int idx = myProduction.indexOf(marker) + 1;
+      int currentLex = marker.myLexemIndex;
+      while (true) {
+        ProductionMarker childMarker = myProduction.get(idx);
 
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+        while (currentLex < childMarker.myLexemIndex) {
+          childern.add(myLexems.get(currentLex++));
+        }
+
+        if (childMarker == done) break;
+
+        childern.add(childMarker);
+        if (childMarker instanceof StartMarker) {
+          DoneMarker doneChild = ((StartMarker)childMarker).myDoneMarker;
+          idx = myProduction.indexOf(doneChild) + 1;
+        }
+      }
+
+      return childern;
     }
   }
 

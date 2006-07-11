@@ -34,13 +34,21 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker {
     boolean changedInsideCodeBlock = false;
 
     switch (event.getCode()) {
-      case PsiManagerImpl.BEFORE_CHILD_ADDITION:
-      case PsiManagerImpl.BEFORE_CHILD_REMOVAL:
       case PsiManagerImpl.BEFORE_CHILDREN_CHANGE:
-      case PsiManagerImpl.CHILD_ADDED :
-      case PsiManagerImpl.CHILD_REMOVED :
+        if (event.getParent() instanceof PsiFile) {
+          changedInsideCodeBlock = true;
+          break; // May be caused by fake PSI event from PomTransaction. A real event will anyway follow.
+        }
+
       case PsiManagerImpl.CHILDREN_CHANGED :
         changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
+      break;
+
+      case PsiManagerImpl.BEFORE_CHILD_ADDITION:
+      case PsiManagerImpl.BEFORE_CHILD_REMOVAL:
+      case PsiManagerImpl.CHILD_ADDED :
+      case PsiManagerImpl.CHILD_REMOVED :
+        changedInsideCodeBlock = isInsideCodeBlock(event.getChild());
       break;
 
       case PsiManagerImpl.BEFORE_PROPERTY_CHANGE:
@@ -68,7 +76,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker {
   }
 
   public boolean isInsideCodeBlock(PsiElement element) {
-    if (element.getParent() == null) return true;
+    if (element == null || element.getParent() == null) return true;
     while(true){
       if (element instanceof PsiFile || element instanceof PsiDirectory || element == null){
         return false;

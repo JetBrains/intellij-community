@@ -26,24 +26,28 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
   }
 
   public void childAdded(PsiTreeChangeEvent event) {
-    updateByChange(event.getParent());
+    updateByChange(event.getParent(), true);
   }
 
   public void childRemoved(PsiTreeChangeEvent event) {
-    updateByChange(event.getParent());
+    updateByChange(event.getParent(), true);
   }
 
   public void childReplaced(PsiTreeChangeEvent event) {
-    updateByChange(event.getNewChild());
+    updateByChange(event.getNewChild(), typesEqual(event.getNewChild(), event.getOldChild()));
+  }
+
+  private static boolean typesEqual(final PsiElement newChild, final PsiElement oldChild) {
+    return newChild.getClass() == oldChild.getClass();
   }
 
   public void childrenChanged(PsiTreeChangeEvent event) {
-    updateByChange(event.getParent());
+    updateByChange(event.getParent(), true);
   }
 
   public void beforeChildMovement(PsiTreeChangeEvent event) {
-    updateByChange(event.getOldParent());
-    updateByChange(event.getNewParent());
+    updateByChange(event.getOldParent(), true);
+    updateByChange(event.getNewParent(), true);
   }
 
   public void propertyChanged(PsiTreeChangeEvent event) {
@@ -54,7 +58,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     }
   }
 
-  private void updateByChange(PsiElement child) {
+  private void updateByChange(PsiElement child, final boolean whitespaceOptimizationAllowed) {
     final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
     if (editor != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -72,10 +76,13 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     }
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
     if (document == null) return;
+
     // optimization
-    if (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiDocToken ||
-        child.getNode() != null && PropertiesTokenTypes.PROPERTIES_TYPES_TO_IGNORE.contains(child.getNode().getElementType())) {
-      return;
+    if (whitespaceOptimizationAllowed) {
+      if (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiDocToken ||
+          child.getNode() != null && PropertiesTokenTypes.PROPERTIES_TYPES_TO_IGNORE.contains(child.getNode().getElementType())) {
+        return;
+      }
     }
 
     if (file instanceof XmlFile) {

@@ -54,8 +54,8 @@ public class PsiEventWrapperAspect implements PomModelAspect{
         ASTNode changedElement = changedElements[i];
         TreeChange changesByElement = changeSet.getChangesByElement(changedElement);
         PsiElement psiParent = null;
-        while(changedElement != null && ((psiParent = changedElement.getPsi()) == null ||
-                                         !checkPsiForChildren(changesByElement.getAffectedChildren()))){
+
+        while(changedElement != null && ((psiParent = changedElement.getPsi()) == null || !checkPsiForChildren(changesByElement.getAffectedChildren()))){
           final ASTNode parent = changedElement.getTreeParent();
           final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, changedElement);
           changeInfo.compactChange(changedElement, changesByElement);
@@ -72,6 +72,7 @@ public class PsiEventWrapperAspect implements PomModelAspect{
           PsiTreeChangeEventImpl psiEvent = new PsiTreeChangeEventImpl(manager);
           psiEvent.setParent(psiParent);
           psiEvent.setFile(file);
+
           final PsiElement psiChild = treeElement.getPsi();
           psiEvent.setChild(psiChild);
 
@@ -119,8 +120,8 @@ public class PsiEventWrapperAspect implements PomModelAspect{
   private boolean checkPsiForChildren(final ASTNode[] affectedChildren) {
     for (int i = 0; i < affectedChildren.length; i++) {
       final ASTNode astNode = affectedChildren[i];
-      if(astNode instanceof LeafElement && ((LeafElement)astNode).isChameleon()) return false;
-      if(astNode.getPsi() == null) return false;
+      if (astNode instanceof LeafElement && ((LeafElement)astNode).isChameleon()) return false;
+      if (astNode.getPsi() == null) return false;
     }
     return true;
   }

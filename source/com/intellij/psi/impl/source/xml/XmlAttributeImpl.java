@@ -93,7 +93,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   }
 
   public XmlTag getParent(){
-    return (XmlTag)super.getParent();
+    final PsiElement parentTag = super.getParent();
+    return parentTag instanceof XmlTag ? (XmlTag)parentTag : null; // Invalid elements might belong to DummyHolder instead.
   }
 
   @NotNull
