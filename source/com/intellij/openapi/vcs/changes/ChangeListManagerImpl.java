@@ -212,6 +212,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         if (vcs == null) continue;
 
         myCurrentlyUpdatingScope = scope;
+        scope.refreshDirtyFiles();
         ChangesViewManager.getInstance(myProject).updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()));
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {

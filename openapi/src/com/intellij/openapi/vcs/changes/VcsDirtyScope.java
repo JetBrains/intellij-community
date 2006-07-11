@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -129,6 +130,33 @@ public class VcsDirtyScope {
           }
         }
       }
+    }
+  }
+
+  public void refreshDirtyFiles() {
+    boolean needRefreshVFS = false;
+    for(final FilePath file: myDirtyFiles) {
+      if (file.getVirtualFile() == null) {
+        needRefreshVFS = true;
+      }
+    }
+    if (needRefreshVFS) {
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              for(final FilePath file: myDirtyFiles) {
+                if (file.getVirtualFile() == null) {
+                  VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.getIOFile());
+                  if (vFile != null && file.isDirectory()) {
+                    vFile.refresh(false, true);
+                  }
+                }
+              }
+            }
+          });
+        }
+      }, ModalityState.defaultModalityState());
     }
   }
 
