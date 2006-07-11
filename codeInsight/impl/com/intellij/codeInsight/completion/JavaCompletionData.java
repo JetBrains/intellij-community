@@ -97,9 +97,7 @@ public class JavaCompletionData extends CompletionData{
     {
       final ElementFilter position = new OrFilter(
           END_OF_BLOCK,
-          new LeftNeighbour(new OrFilter(new SuperParentFilter(new ClassFilter(PsiAnnotation.class)),
-                                         new TextFilter(MODIFIERS_LIST))),
-          new StartElementFilter());
+          new LeftNeighbour(new OrFilter(new TextFilter(MODIFIERS_LIST))), new StartElementFilter());
 
       final CompletionVariant variant = new CompletionVariant(PsiJavaFile.class, position);
       variant.includeScopeClass(PsiClass.class);
@@ -239,7 +237,6 @@ public class JavaCompletionData extends CompletionData{
           END_OF_BLOCK,
           new LeftNeighbour(new OrFilter(
             new TextFilter(MODIFIERS_LIST),
-            new SuperParentFilter(new ClassFilter(PsiAnnotation.class)),
             new TokenTypeFilter(JavaTokenType.GT)))
         )));
 
@@ -567,6 +564,20 @@ public class JavaCompletionData extends CompletionData{
     }
 
     {
+// completion in annotation parameter list
+      final CompletionVariant variant = new CompletionVariant(TrueFilter.INSTANCE);
+      variant.includeScopeClass(PsiAnnotationParameterList.class, true);
+      variant.addCompletionFilterOnElement(
+        new OrFilter(new ClassFilter(PsiAnnotationMethod.class),
+                     new ClassFilter(PsiClass.class),
+                     new AndFilter (
+                       new ClassFilter(PsiField.class),
+                       new ModifierFilter(PsiModifier.STATIC, PsiModifier.FINAL))));
+
+      registerVariant(variant);
+    }
+
+    {
       // null completion
       final CompletionVariant variant = new CompletionVariant(new NotFilter(new LeftNeighbour(new TextFilter("."))));
       variant.addCompletion(PsiKeyword.NULL,TailType.NONE);
@@ -623,7 +634,12 @@ public class JavaCompletionData extends CompletionData{
     new AndFilter(
       new LeftNeighbour(
           new OrFilter(
-              new TextFilter(ourBlockFinalizers),
+              new AndFilter (
+                  new TextFilter(ourBlockFinalizers),
+                  new NotFilter (
+                    new SuperParentFilter(new ClassFilter(PsiAnnotation.class))
+                  )
+              ),
               new TextFilter("*/"),
               new TokenTypeFilter(JspElementType.HOLDER_TEMPLATE_DATA),
               new AndFilter(

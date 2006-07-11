@@ -37,7 +37,7 @@ public class ModifierFilter extends ClassFilter{
     addModiferRestriction(modifier, hasToBe);
   }
 
-  public ModifierFilter(String[] modifiers){
+  public ModifierFilter(String... modifiers){
     this();
     for (final String modifier : modifiers) {
       addModiferRestriction(modifier, true);

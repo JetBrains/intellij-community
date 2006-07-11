@@ -48,31 +48,6 @@ public class Java15CompletionData extends JavaCompletionData {
     }
 
     {
-      final ElementFilter position = new ElementFilter() {
-        public boolean isClassAcceptable(Class hintClass){
-          return true;
-        }
-      
-        public boolean isAcceptable(Object element, PsiElement context){
-          if (! (element instanceof PsiElement)) return false;
-          final PsiElement parent = ((PsiElement)element).getParent();
-  
-          final PsiElement grandparent = (parent != null)?parent.getParent():null;
-          return (parent instanceof PsiNameValuePair ||
-                  grandparent instanceof PsiNameValuePair
-                 );
-        }
-      };
-
-      final CompletionVariant variant = new CompletionVariant(PsiJavaFile.class, position);
-      variant.includeScopeClass(PsiNameValuePair.class);
-
-      variant.addCompletion(new AnnotationMethodsGetter(), TailType.NONE);
-      variant.addCompletionFilter(TrueFilter.INSTANCE, TailType.NONE);
-      registerVariant(variant);
-    }
-
-    {
       final ElementFilter position = new ScopeFilter(new ParentElementFilter(new AndFilter(
         new ClassFilter(PsiSwitchLabelStatement.class),
         new ParentElementFilter(
