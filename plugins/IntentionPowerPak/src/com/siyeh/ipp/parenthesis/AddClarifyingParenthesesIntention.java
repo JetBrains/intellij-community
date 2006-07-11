@@ -81,7 +81,9 @@ public class AddClarifyingParenthesesIntention extends Intention {
 			return '(' + createReplacementText(expression) + ')';
 		} else if (element instanceof PsiInstanceOfExpression) {
 			return '(' + element.getText() + ')';
-		}
+		} else if (element == null) {
+            return "";
+        }
 		return element.getText();
 	}
 }
