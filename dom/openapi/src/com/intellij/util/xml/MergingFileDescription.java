@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -48,7 +47,12 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
   }
 
   protected final DomElement getMergedRoot(DomElement element) {
-    final Collection<XmlFile> files = getFilesToMerge(element);
+    final Set<XmlFile> files = getFilesToMerge(element);
+
+    final XmlFile xmlFile = element.getRoot().getFile();
+    if (xmlFile != null) {
+      files.add(xmlFile);
+    }
 
     ArrayList<T> roots = new ArrayList<T>(files.size());
     for (XmlFile file: files) {
