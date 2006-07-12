@@ -311,12 +311,16 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         finally {
           myCurrentlyUpdatingScope = null;
           if (!myDisposed) {
+            List<ChangeList> changedLists = new ArrayList<ChangeList>();
             synchronized (myChangeLists) {
               for (LocalChangeList list : myChangeLists) {
                 if (list.doneProcessingChanges()) {
-                  myListeners.getMulticaster().changeListChanged(list);
+                  changedLists.add(list);
                 }
               }
+            }
+            for(ChangeList changeList: changedLists) {
+              myListeners.getMulticaster().changeListChanged(changeList);
             }
           }
         }
@@ -446,32 +450,35 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public LocalChangeList addChangeList(@NotNull String name, final String comment) {
+    final LocalChangeList list = LocalChangeList.createEmptyChangeList(name);
+    list.setComment(comment);
     synchronized (myChangeLists) {
-      final LocalChangeList list = LocalChangeList.createEmptyChangeList(name);
-      list.setComment(comment);
       myChangeLists.add(list);
-      myListeners.getMulticaster().changeListAdded(list);
-
-      // handle changelists created during the update process
-      if (myCurrentlyUpdatingScope != null) {
-        list.startProcessingChanges(myCurrentlyUpdatingScope);
-      }
-      return list;
     }
+    myListeners.getMulticaster().changeListAdded(list);
+
+    // handle changelists created during the update process
+    if (myCurrentlyUpdatingScope != null) {
+      list.startProcessingChanges(myCurrentlyUpdatingScope);
+    }
+    return list;
   }
 
   public void removeChangeList(LocalChangeList list) {
+    Collection<Change> changes;
     synchronized (myChangeLists) {
       if (list.isDefault()) throw new RuntimeException(new IncorrectOperationException("Cannot remove default changelist"));
 
-      final Collection<Change> changes = list.getChanges();
+      changes = list.getChanges();
       for (Change change : changes) {
         myDefaultChangelist.addChange(change);
       }
-      myListeners.getMulticaster().changesMoved(changes, list, myDefaultChangelist);
-      myChangeLists.remove(list);
-      myListeners.getMulticaster().changeListRemoved(list);
     }
+    myListeners.getMulticaster().changesMoved(changes, list, myDefaultChangelist);
+    synchronized (myChangeLists) {
+      myChangeLists.remove(list);
+    }
+    myListeners.getMulticaster().changeListRemoved(list);
   }
 
   private void addChangeToList(final Change change, final LocalChangeList list) {
@@ -485,8 +492,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       list = findRealByCopy(list);
       list.setDefault(true);
       myDefaultChangelist = list;
-      myListeners.getMulticaster().defaultListChanged(list);
     }
+    myListeners.getMulticaster().defaultListChanged(list);
   }
 
   public LocalChangeList getDefaultChangeList() {
@@ -561,10 +568,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public void moveChangesTo(LocalChangeList list, final Change[] changes) {
+    MultiMap<LocalChangeList, Change> map = new MultiMap<LocalChangeList, Change>();
     synchronized (myChangeLists) {
       list = findRealByCopy(list);
 
-      MultiMap<LocalChangeList, Change> map = new MultiMap<LocalChangeList, Change>();
       for (LocalChangeList existingList : getChangeLists()) {
         for (Change change : changes) {
           if (existingList.removeChange(change)) {
@@ -573,10 +580,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           }
         }
       }
-      for(LocalChangeList fromList: map.keySet()) {
-        final List<Change> changesInList = map.get(fromList);
-        myListeners.getMulticaster().changesMoved(changesInList, fromList, list);
-      }
+    }
+    for(LocalChangeList fromList: map.keySet()) {
+      final List<Change> changesInList = map.get(fromList);
+      myListeners.getMulticaster().changesMoved(changesInList, fromList, list);
     }
   }
 
