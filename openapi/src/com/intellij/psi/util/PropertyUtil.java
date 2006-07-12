@@ -103,13 +103,6 @@ public class PropertyUtil {
     }
   }
 
-  public static String getPropertyName(PsiMember member) {
-    if (member instanceof PsiMethod) {
-      return getPropertyName((PsiMethod)member);
-    }
-    return ((PsiField) member).getName();
-  }
-
   public static String getPropertyNameByGetter(PsiMethod getterMethod) {
     @NonNls String methodName = getterMethod.getName();
     return methodName.startsWith("get") ?
@@ -437,5 +430,16 @@ public class PropertyUtil {
       return suggestSetterName(name);
     }
     return null;
+  }
+
+  @Nullable
+  public static String getPropertyName(final PsiMember member) {
+    if (member instanceof PsiMethod) {
+      return getPropertyName((PsiMethod)member);
+    }
+    else if (member instanceof PsiField) {
+      return member.getName();
+    }
+    else return null;
   }
 }

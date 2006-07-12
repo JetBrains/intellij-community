@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public interface GenericDomValue<T> extends DomElement, GenericValue<T>{
+public interface GenericDomValue<T> extends DomElement, MutableGenericValue<T>{
 
   @NotNull
   Converter<T> getConverter();
