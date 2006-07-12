@@ -1192,13 +1192,13 @@ public final class PsiUtil {
   }
 
   @NotNull
-  public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement) {
+  public static <T extends PsiElement,V extends T> T getOriginalElement(@NotNull V psiElement, final Class<T> elementClass) {
     final PsiFile psiFile = psiElement.getContainingFile();
     final PsiFile originalFile = psiFile.getOriginalFile();
     if (originalFile == null) return psiElement;
     final TextRange range = psiElement.getTextRange();
     final PsiElement element = originalFile.findElementAt(range.getStartOffset());
-    return (T)PsiTreeUtil.getParentOfType(element, psiElement.getClass());
+    return PsiTreeUtil.getParentOfType(element, elementClass);
   }
 
 }
