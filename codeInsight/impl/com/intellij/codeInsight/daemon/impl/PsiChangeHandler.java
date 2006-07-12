@@ -38,6 +38,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
   }
 
   private static boolean typesEqual(final PsiElement newChild, final PsiElement oldChild) {
+    if (newChild == null || oldChild == null) return false;
     return newChild.getClass() == oldChild.getClass();
   }
 
