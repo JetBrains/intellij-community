@@ -16,10 +16,10 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NonNls;
@@ -843,6 +843,7 @@ public abstract class DialogWrapper {
     }
 
     public void actionPerformed(ActionEvent e) {
+      if (myClosed) return;
       doOKAction();
     }
   }
@@ -853,6 +854,7 @@ public abstract class DialogWrapper {
     }
 
     public void actionPerformed(ActionEvent e) {
+      if (myClosed) return;
       doCancelAction();
     }
   }
