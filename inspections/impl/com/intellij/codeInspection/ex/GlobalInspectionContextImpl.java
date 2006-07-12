@@ -311,17 +311,22 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        performInspectionsWithProgress(scope, runWithEditorSettings, manager);
+        performInspectionsWithProgress(scope, runWithEditorSettings, manager, outputPath);
+        @NonNls final String ext = ".xml";
         for (String toolName : myTools.keySet()) {
           final Element root = new Element(InspectionsBundle.message("inspection.problems"));
           final Document doc = new Document(root);
           final Set<InspectionTool> sameTools = myTools.get(toolName);
           boolean hasProblems = false;
           boolean isLocalTool = false;
+          boolean isDescriptorProvider = false;
           for (InspectionTool tool : sameTools) {
-            if (tool.hasReportedProblems()){
-              hasProblems = true;
+            if (tool instanceof DescriptorProviderInspection){
+              hasProblems = new File(outputPath, toolName + ext).exists();
               isLocalTool = tool instanceof LocalInspectionToolWrapper;
+              isDescriptorProvider = true;
+            } else if (tool.hasReportedProblems()){
+              hasProblems = true;
               tool.exportResults(root);
             }
           }
@@ -331,16 +336,20 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           OutputStream outStream = null;
           try {
             new File(outputPath).mkdirs();
-            @NonNls final String ext = ".xml";
             final File file = new File(outputPath, toolName + ext);
-            outStream = new BufferedOutputStream(new FileOutputStream(file));
-            ((ProjectEx)getProject()).getMacroReplacements().substitute(doc.getRootElement(), SystemInfo.isFileSystemCaseSensitive);
-            JDOMUtil.writeDocument(doc, outStream, "\n");
+            if (isDescriptorProvider) {
+              outStream = descriptorProviderFilePreparations(file, outStream, isLocalToolAttribute, isLocalTool);
+            }
+            else {
+              ((ProjectEx)getProject()).getMacroReplacements().substitute(doc.getRootElement(), SystemInfo.isFileSystemCaseSensitive);
+              outStream = new BufferedOutputStream(new FileOutputStream(file));
+              JDOMUtil.writeDocument(doc, outStream, "\n");
+            }
           }
           catch (IOException e) {
             LOG.error(e);
           }
-          finally {            
+          finally {
             if (outStream != null){
               try {
                 outStream.close();}
@@ -352,6 +361,32 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         }
       }
     });
+  }
+
+  private static OutputStream descriptorProviderFilePreparations(final File file,
+                                                                 OutputStream outStream,
+                                                                 final String localToolAttribute,
+                                                                 final boolean localTool) throws IOException {
+    BufferedReader reader = null;
+    try {
+      StringBuffer buf = new StringBuffer();
+      reader = new BufferedReader(new FileReader(file));
+      String line = reader.readLine();
+      while (line != null) {
+        buf.append(line).append("\n");
+        line = reader.readLine();
+      }
+      outStream = new BufferedOutputStream(new FileOutputStream(file));
+      outStream.write(("<" + InspectionsBundle.message("inspection.problems") + " " + localToolAttribute + "=\"" + localTool + "\">").getBytes());
+      outStream.write(buf.toString().getBytes());
+      outStream.write(("</" + InspectionsBundle.message("inspection.problems") + ">").getBytes());
+    }
+    finally {
+      if (reader != null){
+        reader.close();
+      }
+    }
+    return outStream;
   }
 
   public void processSearchRequests() {
@@ -688,7 +723,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
     Runnable runInspection = new Runnable() {
       public void run() {
-        performInspectionsWithProgress(scope, manager);
+        performInspectionsWithProgress(scope, manager, null);
       }
     };
 
@@ -708,29 +743,28 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
   }
 
-  private void performInspectionsWithProgress(final AnalysisScope scope, final InspectionManager manager) {
-    performInspectionsWithProgress(scope, RUN_WITH_EDITOR_PROFILE, manager);
+  private void performInspectionsWithProgress(final AnalysisScope scope, final InspectionManager manager, final String output) {
+    performInspectionsWithProgress(scope, RUN_WITH_EDITOR_PROFILE, manager, output);
   }
 
   private void performInspectionsWithProgress(final AnalysisScope scope,
                                               final boolean runWithEditorSettings,
-                                              final InspectionManager manager) {
+                                              final InspectionManager manager,
+                                              final String output) {
     try {
       myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           final PsiManager psiManager = PsiManager.getInstance(myProject);
           try {
+            InspectionTool.setOutputPath(output);
             psiManager.startBatchFilesProcessingMode();
-            //psiManager.performActionWithFormatterDisabled(new Runnable() {
-            //  public void run() {
-                ((RefManagerImpl)getRefManager()).inspectionReadActionStarted();
-                EntryPointsManager.getInstance(getProject()).resolveEntryPoints(getRefManager());
-                List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();
-                runTools(needRepeatSearchRequest, scope, runWithEditorSettings, manager);
-                performPostRunFindUsages(needRepeatSearchRequest, manager);
-            //  }
-            //});
+
+            ((RefManagerImpl)getRefManager()).inspectionReadActionStarted();
+            EntryPointsManager.getInstance(getProject()).resolveEntryPoints(getRefManager());
+            List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();
+            runTools(needRepeatSearchRequest, scope, runWithEditorSettings, manager);
+            performPostRunFindUsages(needRepeatSearchRequest, manager);
           }
           catch (ProcessCanceledException e) {
             cleanup();
@@ -740,6 +774,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           }
           finally {
             psiManager.finishBatchFilesProcessingMode();
+            InspectionTool.setOutputPath(null);
           }
         }
       });
@@ -807,6 +842,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
                 throw e;
               }
               catch (Exception e) {
+                //LOG.error("Problem file: " + file.getVirtualFile().getPresentableUrl());
                 LOG.error(e);
               }
               psiManager.dropResolveCaches();

@@ -5,7 +5,6 @@ import com.intellij.codeInspection.InspectionMain;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -14,7 +13,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
@@ -84,7 +82,7 @@ public class InspectionApplication {
 
 
       logMessage(1, InspectionsBundle.message("inspection.application.opening.project"));
-      myProject = ProjectManagerEx.getInstanceEx().loadProject(myProjectPath);
+      myProject = ProjectManagerEx.getInstanceEx().loadAndOpenProject(myProjectPath);
       logMessageLn(1, InspectionsBundle.message("inspection.done"));
       logMessage(1, InspectionsBundle.message("inspection.application.initializing.project"));
 
@@ -97,7 +95,6 @@ public class InspectionApplication {
 
       if (mySourceDirectory == null) {
         scope = new AnalysisScope(myProject);
-        runStartupActivity();
       }
       else {
         mySourceDirectory = mySourceDirectory.replace(File.separatorChar, '/');
@@ -108,7 +105,6 @@ public class InspectionApplication {
           InspectionMain.printHelp();
         }
 
-        runStartupActivity();
         PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(vfsDir);
         scope = new AnalysisScope(psiDirectory);
       }
@@ -165,10 +161,6 @@ public class InspectionApplication {
       LOG.error(e);
       System.exit(1);
     }
-  }
-
-  private void runStartupActivity() {
-    ((StartupManagerImpl)StartupManager.getInstance(myProject)).runStartupActivities();
   }
 
   public void setVerboseLevel(int verboseLevel) {

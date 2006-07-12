@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.reference.RefEntity;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Collects the results of a global inspection.
@@ -31,6 +32,7 @@ public interface ProblemDescriptionsProcessor {
    * @param refEntity the reference graph node.
    * @return the problems found for the specified node.
    */
+  @Nullable
   CommonProblemDescriptor[] getDescriptions(RefEntity refEntity);
 
   /**

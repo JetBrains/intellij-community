@@ -40,6 +40,7 @@ import java.util.Set;
 
 public abstract class InspectionTool extends InspectionProfileEntry {
   private GlobalInspectionContextImpl myContext;
+  public static String ourOutputPath;
 
   public void initialize(GlobalInspectionContextImpl context) {
     myContext = context;
@@ -189,7 +190,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     return null;
   }
 
-  protected String getTextAttributeKey(RefElement element, HighlightSeverity severity, ProblemHighlightType highlightType) {
+  protected String getTextAttributeKey(HighlightSeverity severity, ProblemHighlightType highlightType) {
     if (highlightType == ProblemHighlightType.LIKE_DEPRECATED) {
       return HighlightInfoType.DEPRECATED.getAttributesKey().getExternalName();
     }
@@ -207,4 +208,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     return SeverityRegistrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey().getExternalName();
   }
 
+  public static void setOutputPath(final String output) {
+    ourOutputPath = output;
+  }
 }

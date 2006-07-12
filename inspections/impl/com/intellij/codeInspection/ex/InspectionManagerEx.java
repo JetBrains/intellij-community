@@ -8,6 +8,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -62,15 +63,18 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
   public void projectOpened() {
     myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(new TabbedPaneContentUI(), true, myProject);
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    ToolWindow toolWindow =
-      toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, myContentManager.getComponent(), ToolWindowAnchor.BOTTOM);
-    toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowInspection.png"));
-    new ContentManagerWatcher(toolWindow, myContentManager);
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) { //headless environment
+      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+      ToolWindow toolWindow =
+        toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, myContentManager.getComponent(), ToolWindowAnchor.BOTTOM);
+      toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowInspection.png"));
+      new ContentManagerWatcher(toolWindow, myContentManager);
+    }
   }
 
 
   public void projectClosed() {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.INSPECTION);
   }
 

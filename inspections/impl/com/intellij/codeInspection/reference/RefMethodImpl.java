@@ -20,12 +20,16 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 
 public class RefMethodImpl extends RefElementImpl implements RefMethod {
+  private static final ArrayList<RefMethod> EMPTY_METHOD_LIST = new ArrayList<RefMethod>(0);
+  private static final RefParameter[] EMPTY_PARAMS_ARRAY = new RefParameter[0];
+
   private static final int IS_APPMAIN_MASK = 0x10000;
   private static final int IS_LIBRARY_OVERRIDE_MASK = 0x20000;
   private static final int IS_CONSTRUCTOR_MASK = 0x40000;
@@ -60,8 +64,6 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
   }
 
   protected void initialize() {
-    myDerivedMethods = new ArrayList<RefMethod>(0);
-
     final PsiMethod method = (PsiMethod)getElement();
 
     setConstructor(method.isConstructor());
@@ -85,8 +87,6 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     setAppMain(isAppMain(method, this));
     setLibraryOverride(method.hasModifierProperty(PsiModifier.NATIVE));
 
-    mySuperMethods = new ArrayList<RefMethod>(0);
-
     initializeSuperMethods(method);
     if (isExternalOverride()) {
       ((RefClassImpl)getOwnerClass()).addLibraryOverrideMethod(this);
@@ -98,10 +98,12 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     }
 
     PsiParameter[] paramList = method.getParameterList().getParameters();
-    myParameters = new RefParameterImpl[paramList.length];
-    for (int i = 0; i < paramList.length; i++) {
-      PsiParameter parameter = paramList[i];
+    if (paramList.length > 0){
+      myParameters = new RefParameterImpl[paramList.length];
+      for (int i = 0; i < paramList.length; i++) {
+        PsiParameter parameter = paramList[i];
         myParameters[i] = getRefManager().getParameterReference(parameter, i);
+      }
     }
 
     if (method.hasModifierProperty(PsiModifier.NATIVE)) {
@@ -164,24 +166,22 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     myOwnerClass = ownerClass;
     ((RefClassImpl)ownerClass).add(this);
 
-    myDerivedMethods = new ArrayList<RefMethod>(0);
-    mySuperMethods = new ArrayList<RefMethod>(0);
-
     addOutReference(getOwnerClass());
     ((RefClassImpl)getOwnerClass()).addInReference(this);
 
     setConstructor(true);
 
-    myParameters = new RefParameterImpl[0];
   }
 
   @NotNull
   public Collection<RefMethod> getSuperMethods() {
+    if (mySuperMethods == null) return EMPTY_METHOD_LIST;
     return mySuperMethods;
   }
 
   @NotNull
   public Collection<RefMethod> getDerivedMethods() {
+    if (myDerivedMethods == null) return EMPTY_METHOD_LIST;
     return myDerivedMethods;
   }
 
@@ -214,7 +214,10 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
 
   private void addSuperMethod(RefMethodImpl refSuperMethod) {
     if (!getSuperMethods().contains(refSuperMethod)) {
-      getSuperMethods().add(refSuperMethod);
+      if (mySuperMethods == null){
+        mySuperMethods = new ArrayList<RefMethod>(1);
+      }
+      mySuperMethods.add(refSuperMethod);
     }
   }
 
@@ -232,12 +235,17 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
   }
 
   private void markExtended(RefMethodImpl method) {
-    if (!myDerivedMethods.contains(method)) {
+    if (!getDerivedMethods().contains(method)) {
+      if (myDerivedMethods == null) {
+        myDerivedMethods = new ArrayList<RefMethod>(1);
+      }
       myDerivedMethods.add(method);
     }
   }
 
+  @NotNull
   public RefParameter[] getParameters() {
+    if (myParameters == null) return EMPTY_PARAMS_ARRAY;
     return myParameters;
   }
 
@@ -267,7 +275,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
                 roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_SETTER_DECL ||
                 roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMP_GETTER_DECL ||
                 roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_GETTER_DECL) {
-              for (RefParameter refParameter : myParameters) {
+              for (RefParameter refParameter : getParameters()) {
                 refParameter.parameterReferenced(false);
                 refParameter.parameterReferenced(true);
               }
@@ -307,7 +315,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
                 roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_SETTER_IMPL ||
                 roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_FINDER_IMPL ||
                 roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_SELECTOR_IMPL) {
-              for (RefParameter refParameter : myParameters) {
+              for (RefParameter refParameter : getParameters()) {
                 refParameter.parameterReferenced(false);
                 refParameter.parameterReferenced(true);
               }
@@ -633,9 +641,10 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
         ((RefMethodImpl)refSuper).updateParameterValues(args);
       }
     } else {
-      if (myParameters.length == args.length) {
-        for (int i = 0; i < myParameters.length; i++) {
-          RefParameter refParameter = myParameters[i];
+      final RefParameter[] params = getParameters();
+      if (params.length == args.length) {
+        for (int i = 0; i < params.length; i++) {
+          RefParameter refParameter = params[i];
           ((RefParameterImpl)refParameter).updateTemplateValue(args[i]);
         }
       }
@@ -671,6 +680,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     }
   }
 
+  @Nullable
   public PsiClassType[] getUnThrownExceptions() {
     if (myUnThrownExceptions == null) return null;
     return myUnThrownExceptions.toArray(new PsiClassType[myUnThrownExceptions.size()]);

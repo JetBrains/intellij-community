@@ -11,11 +11,14 @@ package com.intellij.codeInspection.reference;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.javaee.ejb.role.EjbClassRole;
 import com.intellij.javaee.ejb.role.EjbClassRoleEnum;
+import com.intellij.javaee.ejb.role.EjbRolesUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -23,6 +26,9 @@ import java.util.List;
 import java.util.Set;
 
 public class RefClassImpl extends RefElementImpl implements RefClass {
+  private static final HashSet<RefElement> EMPTY_SET = new HashSet<RefElement>(0);
+  private static final HashSet<RefClass> EMPTY_CLASS_SET = new HashSet<RefClass>(0);
+  private static final ArrayList<RefMethod> EMPTY_METHOD_LIST = new ArrayList<RefMethod>(0);
   private static final int IS_ANONYMOUS_MASK = 0x10000;
   private static final int IS_INTERFACE_MASK = 0x20000;
   private static final int IS_UTILITY_MASK   = 0x40000;
@@ -47,12 +53,6 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
   }
 
   protected void initialize() {
-    myConstructors = new ArrayList<RefMethod>(1);
-    mySubClasses = new HashSet<RefClass>(0);
-    myBases = new HashSet<RefClass>(0);
-    myOverridingMethods = new ArrayList<RefMethod>(2);
-    myInTypeReferences = new HashSet<RefElement>(0);
-    myInstanceReferences = new HashSet<RefElement>(0);
     myDefaultConstructor = null;
 
     final PsiClass psiClass = getElement();
@@ -131,7 +131,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
       }
     }
 
-    if (myConstructors.size() == 0 && !isInterface() && !isAnonymous()) {
+    if (getConstructors().size() == 0 && !isInterface() && !isAnonymous()) {
       RefImplicitConstructorImpl refImplicitConstructor = new RefImplicitConstructorImpl(this);
       setDefaultConstructor(refImplicitConstructor);
       addConstructor(refImplicitConstructor);
@@ -156,10 +156,10 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     if (!isSelfInheritor(psiClass)) {
       for (PsiClass psiSuperClass : psiClass.getSupers()) {
         if (RefUtil.getInstance().belongsToScope(psiSuperClass, getRefManager())) {
-          RefClass refClass = (RefClass)getRefManager().getReference(psiSuperClass);
+          RefClassImpl refClass = (RefClassImpl)getRefManager().getReference(psiSuperClass);
           if (refClass != null) {
-            myBases.add(refClass);
-            refClass.getSubClasses().add(this);
+            addBaseClass(refClass);
+            refClass.addSubClass(this);
           }
         }
       }
@@ -219,7 +219,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
         ((RefManagerImpl)getRefManager()).getMethodReference(this, psiMethod);
       }
 
-      EjbClassRole role = com.intellij.javaee.ejb.role.EjbRolesUtil.getEjbRolesUtil().getEjbRole(psiClass);
+      EjbClassRole role = EjbRolesUtil.getEjbRolesUtil().getEjbRole(psiClass);
       if (role != null) {
         setEjb(true);
         if (role.getType() == EjbClassRoleEnum.EJB_CLASS_ROLE_HOME_INTERFACE ||
@@ -242,35 +242,65 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     visitor.visitClass(this);
   }
 
+  @NotNull
   public HashSet<RefClass> getBaseClasses() {
+    if (myBases == null) return EMPTY_CLASS_SET;
     return myBases;
   }
 
+  private void addBaseClass(RefClass refClass){
+    if (myBases == null){
+      myBases = new HashSet<RefClass>(1);
+    }
+    myBases.add(refClass);
+  }
+
+  @NotNull
   public HashSet<RefClass> getSubClasses() {
+    if (mySubClasses == null) return EMPTY_CLASS_SET;
     return mySubClasses;
   }
 
+  private void addSubClass(RefClass refClass){
+    if (mySubClasses == null){
+      mySubClasses = new HashSet<RefClass>(1);
+    }
+    mySubClasses.add(refClass);
+  }
+
+  @NotNull
   public ArrayList<RefMethod> getConstructors() {
+    if (myConstructors == null) return EMPTY_METHOD_LIST;
     return myConstructors;
   }
 
+  @NotNull
   public Set<RefElement> getInTypeReferences() {
+    if (myInTypeReferences == null) return EMPTY_SET;
     return myInTypeReferences;
   }
 
   public void addTypeReference(RefElement from) {
     if (from != null) {
+      if (myInTypeReferences == null){
+        myInTypeReferences = new HashSet<RefElement>(1);
+      }
       myInTypeReferences.add(from);
       ((RefElementImpl)from).addOutTypeRefernce(this);
       ((RefManagerImpl)getRefManager()).fireNodeMarkedReferenced(this, from, false);
     }
   }
 
+  @NotNull
   public Set<RefElement> getInstanceReferences() {
+    if (myInstanceReferences == null) return EMPTY_SET;
     return myInstanceReferences;
   }
 
   public void addInstanceReference(RefElement from) {
+    if (myInstanceReferences == null){
+      myInstanceReferences = new HashSet<RefElement>(1);
+    }
     myInstanceReferences.add(from);
   }
 
@@ -279,14 +309,22 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
   }
 
   private void addConstructor(RefMethod refConstructor) {
+    if (myConstructors == null){
+      myConstructors = new ArrayList<RefMethod>(1);
+    }
     myConstructors.add(refConstructor);
   }
 
   public void addLibraryOverrideMethod(RefMethod refMethod) {
+    if (myOverridingMethods == null){
+      myOverridingMethods = new ArrayList<RefMethod>(2);
+    }
     myOverridingMethods.add(refMethod);
   }
 
+  @NotNull
   public List<RefMethod> getLibraryMethods() {
+    if (myOverridingMethods == null) return EMPTY_METHOD_LIST;
     return myOverridingMethods;
   }
 
@@ -299,8 +337,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
   }
 
   public boolean isSuspicious() {
-    if (isUtilityClass() && getOutReferences().isEmpty()) return false;
-    return super.isSuspicious();
+    return !(isUtilityClass() && getOutReferences().isEmpty()) && super.isSuspicious();
   }
 
   public boolean isUtilityClass() {
@@ -322,6 +359,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     return result[0];
   }
 
+  @Nullable
   public static RefClass classFromExternalName(RefManager manager, String externalName) {
     PsiClass psiClass = PsiManager.getInstance(manager.getProject()).findClass(externalName);
     RefClass refClass = null;

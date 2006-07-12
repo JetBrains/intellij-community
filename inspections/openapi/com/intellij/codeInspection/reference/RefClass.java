@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiClass;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -27,18 +28,25 @@ import java.util.Set;
  * Date: 27-Dec-2005
  */
 public interface RefClass extends RefElement {
+
+  @NotNull
   HashSet<RefClass> getBaseClasses();
 
+  @NotNull
   HashSet<RefClass> getSubClasses();
 
+  @NotNull
   ArrayList<RefMethod> getConstructors();
 
+  @NotNull
   Set<RefElement> getInTypeReferences();
 
+  @NotNull
   Set<RefElement> getInstanceReferences();
 
   RefMethod getDefaultConstructor();
 
+  @NotNull
   List<RefMethod> getLibraryMethods();
 
   boolean isAnonymous();

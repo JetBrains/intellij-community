@@ -1,43 +1,89 @@
 package com.intellij.codeInspection.ex;
 
+import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jdom.IllegalDataException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.*;
 import java.util.*;
 
 /**
  * @author max
  */
 public abstract class DescriptorProviderInspection extends InspectionTool implements ProblemDescriptionsProcessor {
-  private HashMap<RefEntity, CommonProblemDescriptor[]> myProblemElements;
+  private THashMap<RefEntity, CommonProblemDescriptor[]> myProblemElements;
   private HashMap<String, Set<RefElement>> myPackageContents = null;
   private HashSet<RefModule> myModulesProblems = null;
-  private HashMap<CommonProblemDescriptor,RefEntity> myProblemToElements;
+  private THashMap<CommonProblemDescriptor,RefEntity> myProblemToElements;
   private DescriptorComposer myComposer;
   private HashMap<RefEntity, Set<QuickFix>> myQuickFixActions;
   private HashMap<RefEntity, CommonProblemDescriptor[]> myIgnoredElements;
 
   private HashMap<RefEntity, CommonProblemDescriptor[]> myOldProblemElements = null;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorProviderInspection");
 
   public void addProblemElement(RefEntity refElement, CommonProblemDescriptor[] descriptions) {
     if (refElement == null) return;
     if (descriptions == null || descriptions.length == 0) return;
-    getProblemElements().put(refElement, descriptions);
-    for (CommonProblemDescriptor description : descriptions) {
-      getProblemToElements().put(description, refElement);
-      collectQuickFixes(description.getFixes(), refElement);
+    if (ourOutputPath == null) {
+      getProblemElements().put(refElement, descriptions);
+      for (CommonProblemDescriptor description : descriptions) {
+        getProblemToElements().put(description, refElement);
+        collectQuickFixes(description.getFixes(), refElement);
+      }
+    }
+    else {
+      writeOutput(descriptions, refElement);
+    }
+  }
+
+  private void writeOutput(final CommonProblemDescriptor[] descriptions, final RefEntity refElement) {
+    final Element parentNode = new Element(InspectionsBundle.message("inspection.problems"));
+    exportResults(descriptions, refElement, parentNode);
+    final List list = parentNode.getChildren();
+
+    @NonNls final String ext = ".xml";
+    final String fileName = ourOutputPath + File.separator + getShortName() + ext;
+    final ReplacePathToMacroMap replacements = ((ProjectEx)getContext().getProject()).getMacroReplacements();
+    PrintWriter printWriter = null;
+    try {
+      new File(ourOutputPath).mkdirs();
+      final File file = new File(fileName);
+      final CharArrayWriter writer = new CharArrayWriter();
+      for (Object o : list) {
+        final Element element = (Element)o;
+        replacements.substitute(element, SystemInfo.isFileSystemCaseSensitive);
+        JDOMUtil.writeElement(element, writer, "\n");
+      }
+      printWriter = new PrintWriter(new BufferedWriter(new FileWriter(file, true)));
+      printWriter.append("\n");
+      printWriter.append(writer.toString());
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    finally {
+      if (printWriter != null) {
+        printWriter.close();
+      }
     }
   }
 
@@ -139,6 +185,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     myOldProblemElements = null;
   }
 
+  @Nullable
   public CommonProblemDescriptor[] getDescriptions(RefEntity refEntity) {
     if (refEntity instanceof RefElement && !((RefElement)refEntity).isValid()) {
       ignoreElement(refEntity);
@@ -160,40 +207,45 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       public void visitElement(final RefEntity refEntity) {
         if (getProblemElements().containsKey(refEntity)) {
           CommonProblemDescriptor[] descriptions = getDescriptions(refEntity);
-          for (CommonProblemDescriptor description : descriptions) {
-            @NonNls final String template = description.getDescriptionTemplate();
-            int line = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
-            final String text = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement().getText() : "";
-            @NonNls String problemText = template.replaceAll("#ref", text.replaceAll("\\$", "\\\\\\$"));
-            problemText = problemText.replaceAll(" #loc ", " ");
-
-            Element element = XMLExportUtl.createElement(refEntity, parentNode, line, description instanceof ProblemDescriptorImpl ? ((ProblemDescriptorImpl)description).getTextRange() : null);
-            @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
-            problemClassElement.addContent(getDisplayName());
-            if (refEntity instanceof RefElement){
-              final RefElement refElement = (RefElement)refEntity;
-              final HighlightSeverity severity = getCurrentSeverity(refElement);
-              final String attributeKey = getTextAttributeKey(refElement, severity, description instanceof ProblemDescriptor
-                                                                                    ? ((ProblemDescriptor)description).getHighlightType()
-                                                                                    : ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-              problemClassElement.setAttribute("severity", severity.myName);
-              problemClassElement.setAttribute("attribute_key", attributeKey);
-            }
-            element.addContent(problemClassElement);
-            try {
-              Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
-              descriptionElement.addContent(problemText);
-              element.addContent(descriptionElement);
-            }
-            catch (IllegalDataException e) {
-              //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
-              System.out.println("Cannot save results for "
-                                 + refEntity.getName());
-            }
-          }
+          DescriptorProviderInspection.this.exportResults(descriptions, refEntity, parentNode);
         }
       }
     });
+  }
+
+  private void exportResults(final CommonProblemDescriptor[] descriptions, final RefEntity refEntity, final Element parentNode) {
+    for (CommonProblemDescriptor description : descriptions) {
+      @NonNls final String template = description.getDescriptionTemplate();
+      int line = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
+      final String text = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement().getText() : "";
+      @NonNls String problemText = template.replaceAll("#ref", text.replaceAll("\\$", "\\\\\\$"));
+      problemText = problemText.replaceAll(" #loc ", " ");
+
+      Element element = XMLExportUtl.createElement(refEntity, parentNode, line, description instanceof ProblemDescriptorImpl
+                                                                                ? ((ProblemDescriptorImpl)description).getTextRange() : null);
+      @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
+      problemClassElement.addContent(getDisplayName());
+      if (refEntity instanceof RefElement){
+        final RefElement refElement = (RefElement)refEntity;
+        final HighlightSeverity severity = getCurrentSeverity(refElement);
+        final String attributeKey = getTextAttributeKey(severity, description instanceof ProblemDescriptor
+                                                                              ? ((ProblemDescriptor)description).getHighlightType()
+                                                                              : ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        problemClassElement.setAttribute("severity", severity.myName);
+        problemClassElement.setAttribute("attribute_key", attributeKey);
+      }
+      element.addContent(problemClassElement);
+      try {
+        Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
+        descriptionElement.addContent(problemText);
+        element.addContent(descriptionElement);
+      }
+      catch (IllegalDataException e) {
+        //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
+        System.out.println("Cannot save results for "
+                           + refEntity.getName());
+      }
+    }
   }
 
   public boolean isGraphNeeded() {
@@ -286,7 +338,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
 
   private void buildTreeNode(final List<InspectionTreeNode> content,
                              final HashMap<String, Set<RefElement>> packageContents,
-                             final HashMap<RefEntity, CommonProblemDescriptor[]> problemElements) {
+                             final Map<RefEntity, CommonProblemDescriptor[]> problemElements) {
     final GlobalInspectionContextImpl context = getContext();
     Set<String> packages = packageContents.keySet();
     for (String p : packages) {
@@ -427,16 +479,16 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     return FileStatus.NOT_CHANGED;
   }
 
-  private HashMap<RefEntity, CommonProblemDescriptor[]> getProblemElements() {
+  private THashMap<RefEntity, CommonProblemDescriptor[]> getProblemElements() {
     if (myProblemElements == null) {
-      myProblemElements = new HashMap<RefEntity, CommonProblemDescriptor[]>();
+      myProblemElements = new THashMap<RefEntity, CommonProblemDescriptor[]>();
     }
     return myProblemElements;
   }
 
-  private HashMap<CommonProblemDescriptor, RefEntity> getProblemToElements() {
+  private THashMap<CommonProblemDescriptor, RefEntity> getProblemToElements() {
     if (myProblemToElements == null) {
-      myProblemToElements = new HashMap<CommonProblemDescriptor, RefEntity>();
+      myProblemToElements = new THashMap<CommonProblemDescriptor, RefEntity>();
     }
     return myProblemToElements;
   }

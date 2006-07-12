@@ -119,7 +119,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
             problemClassElement.addContent(InspectionsBundle.message("inspection.unused.parameter.export.results"));
 
             final HighlightSeverity severity = getCurrentSeverity(unusedParameter);
-            final String attributeKey = getTextAttributeKey(unusedParameter, severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+            final String attributeKey = getTextAttributeKey(severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
             problemClassElement.setAttribute("severity", severity.myName);
             problemClassElement.setAttribute("attribute_key", attributeKey);
 

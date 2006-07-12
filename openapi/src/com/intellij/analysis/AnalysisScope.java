@@ -28,6 +28,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProjectProfileManager;
 import com.intellij.psi.*;
@@ -164,7 +165,8 @@ public class AnalysisScope {
       fileIndex = null;
     }
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
+
+    return (PsiElementVisitor)new PsiRecursiveElementVisitor() {
       public void visitFile(PsiFile file) {
         if (/*file instanceof PsiJavaFile && */!(file instanceof PsiCompiledElement)) {
           final VirtualFile virtualFile = file.getVirtualFile();
@@ -182,8 +184,6 @@ public class AnalysisScope {
         }
       }
     };
-
-    return visitor;
   }
 
   public boolean contains(PsiElement psiElement) {
@@ -423,7 +423,7 @@ public class AnalysisScope {
           }
         }, ", ");
 
-        return AnalysisScopeBundle.message("scope.module.list", modules, new Integer(myModules.size()));
+        return AnalysisScopeBundle.message("scope.module.list", modules, myModules.size());
 
       case PROJECT:
         return AnalysisScopeBundle.message("scope.project", pathToName(myProject.getProjectFilePath()));
@@ -457,7 +457,7 @@ public class AnalysisScope {
             return module.getName();
           }
         }, ", ");
-        return AnalysisScopeBundle.message("scope.module.list", modules, new Integer(myModules.size()));
+        return AnalysisScopeBundle.message("scope.module.list", modules, myModules.size());
 
       case PROJECT:
         return AnalysisScopeBundle.message("scope.project", myProject.getName());
@@ -512,8 +512,14 @@ public class AnalysisScope {
     if (myType == PROJECT || myType == CUSTOM){
       final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myProject, Profile.INSPECTION);
       LOG.assertTrue(profileManager != null);
-      result.addAll(profileManager.getProfilesUsedInProject().values());
-      result.add(profileManager.getProjectProfile());
+      if (profileManager.useProjectLevelProfileSettings()) {
+        result.addAll(profileManager.getProfilesUsedInProject().values());
+        result.add(profileManager.getProjectProfile());
+      } else {
+        final ApplicationProfileManager applicationProfileManager = ApplicationProfileManager.getProfileManager(Profile.INSPECTION);
+        LOG.assertTrue(applicationProfileManager != null);
+        result.add(applicationProfileManager.getRootProfile().getName());
+      }
     } else if (myType == MODULE){
       processModule(result, myModule);
     } else if (myType == MODULES){

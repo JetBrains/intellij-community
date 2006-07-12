@@ -63,9 +63,11 @@ public class RunContentManagerImpl implements RunContentManager {
 
   public void init() {
     final JavaProgramRunner[] registeredRunners = ExecutionRegistry.getInstance().getRegisteredRunners();
-    for (int idx = 0; idx < registeredRunners.length; idx++) {
-      registerToolwindow(registeredRunners[idx]);
+    for (JavaProgramRunner registeredRunner : registeredRunners) {
+      registerToolwindow(registeredRunner);
     }
+
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
 
     // To ensure ToolwindowManager had already initialized in its projectOpened.
     SwingUtilities.invokeLater(new Runnable() {
@@ -114,6 +116,7 @@ public class RunContentManagerImpl implements RunContentManager {
   private void registerToolwindow(final JavaProgramRunner runner) {
     final String toolWindowId = runner.getInfo().getToolWindowId();
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return; //headless environment
     if (toolWindowManager.getToolWindow(toolWindowId) != null) {
       return;
     }

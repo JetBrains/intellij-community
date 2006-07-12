@@ -459,6 +459,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
     }
 
     public void show() {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
       if (myPopup != null) {
         myPopup.cancel();
       }

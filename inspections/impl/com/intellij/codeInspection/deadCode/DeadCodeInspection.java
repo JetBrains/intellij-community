@@ -47,6 +47,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 
 public class DeadCodeInspection extends FilteringInspectionTool {
   public boolean ADD_MAINS_TO_ENTRIES = true;
@@ -520,7 +521,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
           if (refEntity instanceof RefElement) {
             final RefElement refElement = (RefElement)refEntity;
             final HighlightSeverity severity = getCurrentSeverity(refElement);
-            final String attributeKey = getTextAttributeKey(refElement, severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+            final String attributeKey = getTextAttributeKey(severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
             problemClassElement.setAttribute("severity", severity.myName);
             problemClassElement.setAttribute("attribute_key", attributeKey);
           }
@@ -774,7 +775,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         ((RefClassImpl)refClass).setReachable(true);
         myInstantiatedClassesCount++;
 
-        final java.util.List<RefMethod> refMethods = refClass.getLibraryMethods();
+        final List<RefMethod> refMethods = refClass.getLibraryMethods();
         for (RefMethod refMethod : refMethods) {
           refMethod.accept(this);
         }

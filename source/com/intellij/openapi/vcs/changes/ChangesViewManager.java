@@ -77,6 +77,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
   public void projectOpened() {
     ChangeListManager.getInstance(myProject).addChangeListListener(myListener);
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
@@ -91,6 +92,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     ChangeListManager.getInstance(myProject).removeChangeListListener(myListener);
     myDisposed = true;
     myRepaintAlarm.cancelAllRequests();
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     ToolWindowManager.getInstance(myProject).unregisterToolWindow(TOOLWINDOW_ID);
   }
 

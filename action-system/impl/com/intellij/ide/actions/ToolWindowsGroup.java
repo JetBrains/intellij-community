@@ -1,9 +1,11 @@
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -12,15 +14,13 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.util.containers.HashMap;
-import com.intellij.ide.IdeBundle;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladimir Kondratyev
@@ -83,11 +83,14 @@ public final class ToolWindowsGroup extends ActionGroup{
 
   private final class MyProjectManagerListener extends ProjectManagerAdapter{
     public void projectClosed(Project project){
-      ToolWindowManagerEx.getInstanceEx(project).removeToolWindowManagerListener(myToolWindowManagerListener);
+      final ToolWindowManagerEx windowManagerEx = ToolWindowManagerEx.getInstanceEx(project);
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+      windowManagerEx.removeToolWindowManagerListener(myToolWindowManagerListener);
     }
 
     public void projectOpened(Project project){
       final ToolWindowManagerEx toolWindowManager=ToolWindowManagerEx.getInstanceEx(project);
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) return; //headless environment
       final String[] ids=toolWindowManager.getToolWindowIds();
       for(int i=0;i<ids.length;i++){
         addActionForToolWindow(ids[i]);

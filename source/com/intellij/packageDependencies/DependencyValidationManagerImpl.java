@@ -2,6 +2,7 @@ package com.intellij.packageDependencies;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -177,6 +178,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   public void projectOpened() {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
@@ -202,6 +204,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   public void projectClosed() {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.DEPENDENCIES);
   }
 

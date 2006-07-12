@@ -27,6 +27,8 @@ import java.util.HashSet;
 import java.util.Stack;
 
 public abstract class RefElementImpl extends RefEntityImpl implements RefElement {
+  private static final ArrayList<RefElement> EMPTY_REFERNCES_LIST = new ArrayList<RefElement>(0);
+  private static final HashSet<RefClass> EMPTY_TYPE_REFERENCES_LIST = new HashSet<RefClass>(0);
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefElement");
   private static final int ACCESS_MODIFIER_MASK = 0x03;
   private static final int ACCESS_PRIVATE = 0x00;
@@ -241,7 +243,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   @NotNull
   public Collection<RefElement> getOutReferences() {
     if (myOutReferences == null){
-      myOutReferences = new ArrayList<RefElement>();
+      return EMPTY_REFERNCES_LIST;
     }
     return myOutReferences;
   }
@@ -249,7 +251,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   @NotNull
   public Collection<RefElement> getInReferences() {
     if (myInReferences == null){
-      myInReferences = new ArrayList<RefElement>();
+      return EMPTY_REFERNCES_LIST;
     }
     return myInReferences;
   }
@@ -257,20 +259,26 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   @NotNull
   public Collection<RefClass> getOutTypeReferences() {
     if (myOutTypeReferences == null){
-      myOutTypeReferences = new HashSet<RefClass>();
+      return EMPTY_TYPE_REFERENCES_LIST;
     }
     return myOutTypeReferences;
   }
 
   public void addInReference(RefElement refElement) {
     if (!getInReferences().contains(refElement)) {
-      getInReferences().add(refElement);
+      if (myInReferences == null){
+        myInReferences = new ArrayList<RefElement>(1);
+      }
+      myInReferences.add(refElement);
     }
   }
 
   public void addOutReference(RefElement refElement) {
     if (!getOutReferences().contains(refElement)) {
-      getOutReferences().add(refElement);
+      if (myOutReferences == null){
+        myOutReferences = new ArrayList<RefElement>(1);
+      }
+      myOutReferences.add(refElement);
     }
   }
 

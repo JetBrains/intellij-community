@@ -231,7 +231,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
           @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
           final HighlightSeverity severity = getCurrentSeverity((RefElement)refEntity);
-          final String attributeKey = getTextAttributeKey((RefElement)refEntity, severity, null);
+          final String attributeKey = getTextAttributeKey(severity, null);
           problemClassElement.setAttribute("severity", severity.myName);
           problemClassElement.setAttribute("attribute_key", attributeKey);
           problemClassElement.addContent(InspectionsBundle.message("inspection.visibility.export.results.visibility"));

@@ -253,6 +253,17 @@ public class JDOMUtil {
     }
   }
 
+  public static void writeElement(Element element, Writer writer, String lineSeparator) throws IOException {
+    XMLOutputter xmlOutputter = createOutputter(lineSeparator);
+    try {
+      xmlOutputter.output(element, writer);
+    }
+    catch (NullPointerException ex) {
+      getLogger().error(ex);
+      printDiagnostics(element, "");
+    }
+  }
+
   public static void writeDocument(Document document, Writer writer, String lineSeparator) throws IOException {
     XMLOutputter xmlOutputter = createOutputter(lineSeparator);
     try {
