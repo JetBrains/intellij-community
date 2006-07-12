@@ -35,6 +35,7 @@
         <component>
             <interface-class>org.intellij.images.thumbnail.ThumbnailManager</interface-class>
             <implementation-class>org.intellij.images.thumbnail.impl.ThumbnailManagerImpl</implementation-class>
+            <headless-implementation-class></headless-implementation-class>
         </component>
     </application-components>
 
