@@ -9,7 +9,9 @@ import com.intellij.util.IncorrectOperationException;
  * @author Maxim.Mossienko
  */
 public class XmlTagValueManipulator extends AbstractElementManipulator<XmlTag> {
+
   public XmlTag handleContentChange(XmlTag tag, TextRange range, String newContent) throws IncorrectOperationException {
+    
     final StringBuffer replacement = new StringBuffer( tag.getValue().getText() );
     final int valueOffset = tag.getValue().getTextRange().getStartOffset() - tag.getTextOffset();
 
@@ -24,6 +26,16 @@ public class XmlTagValueManipulator extends AbstractElementManipulator<XmlTag> {
 
   public TextRange getRangeInElement(final XmlTag element) {
     TextRange valueRange = element.getValue().getTextRange();
-    return new TextRange(valueRange.getStartOffset() - element.getTextOffset(), valueRange.getEndOffset() - element.getTextOffset());
+    String url = element.getText();
+    int start = valueRange.getStartOffset() - element.getTextOffset();
+    while (url.charAt(start) <= ' ') {
+      start++;
+    }
+    int end = valueRange.getEndOffset() - element.getTextOffset();
+    while (end > start && url.charAt(end - 1) <= ' ') {
+      end--;
+    }
+
+    return new TextRange(start, end);
   }
 }

@@ -31,14 +31,25 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
   protected final T myElement;
   private TextRange myRange;
+  protected boolean mySoft;
 
-  public PsiReferenceBase(T element) {
-    myElement = element;
+  public PsiReferenceBase(T element, TextRange range, boolean soft) {
+    this(element, range);
+    mySoft = soft;
   }
 
   public PsiReferenceBase(T element, TextRange range) {
     this(element);
     myRange = range;
+  }
+
+  public PsiReferenceBase(T element, boolean soft) {
+    this(element);
+    mySoft = soft;
+  }
+
+  public PsiReferenceBase(T element) {
+    myElement = element;
   }
 
   public void setRangeInElement(TextRange range) {
@@ -82,10 +93,6 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     return element.getManager().areElementsEquivalent(element, resolve());
   }
 
-  public boolean isSoft() {
-    return false;
-  }
-
   public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, final PsiElement resolveTo) {
 
     return new PsiReferenceBase<T>(element) {
@@ -104,5 +111,9 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   @Nullable
   public Module getModule() {
     return ModuleUtil.findModuleForPsiElement(myElement);
+  }
+
+  public boolean isSoft() {
+    return mySoft;
   }
 }
