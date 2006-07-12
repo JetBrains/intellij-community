@@ -78,6 +78,9 @@ public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispat
         return false;
       }
 
+      if (!popup.canClose()){
+        return false;
+      }
       popup.cancel();
       if (ourInstance.myStack.isEmpty()) {
         return false;

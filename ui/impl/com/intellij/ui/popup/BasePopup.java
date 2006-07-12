@@ -277,6 +277,10 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
 
   protected abstract void requestFocus();
 
+  public boolean canClose() {
+    return true;
+  }
+
   public void cancel() {
     disposeChildren();
     dispose();

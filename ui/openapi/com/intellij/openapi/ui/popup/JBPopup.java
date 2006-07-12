@@ -23,6 +23,8 @@ public interface JBPopup {
 
   void cancel();
 
+  boolean canClose();
+
   boolean isVisible();
 
   Component getContent();
