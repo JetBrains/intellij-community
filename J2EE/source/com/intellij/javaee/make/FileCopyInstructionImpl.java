@@ -208,7 +208,7 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
       for (final VirtualFile child : children) {
         VirtualFile childFileInExploded = fileInExplodedPath == null ? null : explodedFilesMap.get(child.getName());
         addFileItemsRecursively(child,
-                                MakeUtil.appendToPath(outputRelativePath, child.getName()),
+                                MakeUtil.trimForwardSlashes(MakeUtil.appendToPath(outputRelativePath, child.getName())),
                                 childFileInExploded,
                                 items,
                                 targetModule,
