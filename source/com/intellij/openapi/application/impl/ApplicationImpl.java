@@ -964,7 +964,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void saveAll() {
-    if (myDoNotSave) return;
+    if (myDoNotSave || isUnitTestMode() || isHeadlessEnvironment()) return;
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
