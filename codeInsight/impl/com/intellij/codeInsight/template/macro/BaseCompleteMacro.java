@@ -10,9 +10,12 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.jsp.WebDirectoryElement;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class BaseCompleteMacro implements Macro {
@@ -137,7 +140,12 @@ public abstract class BaseCompleteMacro implements Macro {
             PsiMethod method = (PsiMethod)elements[0];
             goNextTab = method.getParameterList().getParameters().length == 0;
           }
-          else {
+          else if (elements[0] instanceof WebDirectoryElement) {
+            VirtualFile originalVirtualFile = ((WebDirectoryElement) elements[0]).getOriginalVirtualFile();
+            goNextTab = originalVirtualFile == null || !originalVirtualFile.isDirectory();
+          } else if (elements[0] instanceof PsiDirectory) {
+            goNextTab = false;
+          } else {
             goNextTab = true;
           }
         }
