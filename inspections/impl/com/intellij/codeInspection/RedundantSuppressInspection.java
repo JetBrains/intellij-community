@@ -127,6 +127,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
       Collection<CommonProblemDescriptor> descriptors;
       if (tool instanceof LocalInspectionToolWrapper) {
         LocalInspectionToolWrapper local = (LocalInspectionToolWrapper)tool;
+        if (local.getTool() instanceof UnfairLocalInspectionTool) continue; //cant't work with passes other than LocalInspectionPass
         local.processFile(psiElement.getContainingFile(), false, manager);
         descriptors = local.getProblemDescriptors();
       }
