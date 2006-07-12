@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
-import java.util.HashMap;
 
 public class RawUseOfParameterizedTypeInspection extends VariableInspection {
 
@@ -98,22 +97,7 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
             }
             final PsiJavaCodeReferenceElement classReference =
                     expression.getClassReference();
-            if (classReference == null) {
-                return;
-            }
-            final PsiType[] typeParameters = classReference.getTypeParameters();
-            if (typeParameters.length > 0) {
-                return;
-            }
-            final PsiElement referent = classReference.resolve();
-            if (!(referent instanceof PsiClass)) {
-                return;
-            }
-            final PsiClass referredClass = (PsiClass) referent;
-            if (!referredClass.hasTypeParameters()) {
-                return;
-            }
-            registerError(classReference);
+            checkReferenceElement(classReference);
         }
 
         public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
@@ -131,27 +115,9 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
                     != null) {
                 return;
             }
-            final PsiType type = typeElement.getType();
-            if(!(type instanceof PsiClassType)) {
-                return;
-            }
-            final PsiClassType classType = (PsiClassType) type;
-            if (classType.hasParameters()) {
-                return;
-            }
-            final PsiClass aClass = classType.resolve();
-            if (aClass == null) {
-                return;
-            }
-            if (!aClass.hasTypeParameters()) {
-                return;
-            }
-            final PsiElement typeNameElement =
+            final PsiJavaCodeReferenceElement referenceElement =
                     typeElement.getInnermostComponentReferenceElement();
-            if (typeNameElement == null) {
-                return;
-            }
-            registerError(typeNameElement);
+            checkReferenceElement(referenceElement);
         }
 
         public void visitReferenceElement(
@@ -165,6 +131,24 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
                     (PsiReferenceList)referenceParent;
             final PsiElement listParent = referenceList.getParent();
             if (!(listParent instanceof PsiClass)) {
+                return;
+            }
+            checkReferenceElement(reference);
+        }
+
+        private void checkReferenceElement(
+                @Nullable PsiJavaCodeReferenceElement reference) {
+            if (reference == null) {
+                return;
+            }
+            final PsiElement qualifier = reference.getQualifier();
+            if (qualifier instanceof PsiJavaCodeReferenceElement) {
+                final PsiJavaCodeReferenceElement qualifierReference =
+                        (PsiJavaCodeReferenceElement)qualifier;
+                checkReferenceElement(qualifierReference);
+            }
+            final PsiType[] typeParameters = reference.getTypeParameters();
+            if (typeParameters.length > 0) {
                 return;
             }
             final PsiElement element = reference.resolve();
