@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
+import java.util.HashMap;
 
 public class RawUseOfParameterizedTypeInspection extends VariableInspection {
 
@@ -75,11 +76,17 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
     private class RawUseOfParameterizedTypeVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(
-                @NotNull PsiNewExpression expression) {
-            if (!hasNeededLanguageLevel(expression)) {
+        public void visitElement(PsiElement element) {
+            final LanguageLevel languageLevel =
+                    PsiUtil.getLanguageLevel(element);
+            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
+            super.visitElement(element);
+        }
+
+        public void visitNewExpression(
+                @NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             if (ignoreObjectConstruction) {
                 return;
@@ -110,9 +117,6 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
         }
 
         public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
-            if (!hasNeededLanguageLevel(typeElement)) {
-                return;
-            }
             super.visitTypeElement(typeElement);
             final PsiElement parent = typeElement.getParent();
             if (parent instanceof PsiInstanceOfExpression ||
@@ -150,35 +154,28 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
             registerError(typeNameElement);
         }
 
-        //public void visitReferenceElement(
-        //        @NotNull PsiJavaCodeReferenceElement reference) {
-        //    super.visitReferenceElement(reference);
-        //    final PsiElement parent = reference.getParent();
-        //    if (!(parent instanceof PsiReferenceList)) {
-        //        return;
-        //    }
-        //    final PsiElement element = reference.resolve();
-        //    if (!(element instanceof PsiClass)) {
-        //        return;
-        //    }
-        //    final PsiClass aClass = (PsiClass)element;
-        //    if (!aClass.hasTypeParameters()) {
-        //        return;
-        //    }
-        //    final PsiTypeParameter[] classTypeParameters =
-        //            aClass.getTypeParameters();
-        //    final PsiType[] referenceTypeParameters =
-        //            reference.getTypeParameters();
-        //    if (classTypeParameters == referenceTypeParameters) {
-        //        return;
-        //    }
-        //    registerError(reference);
-        //}
-
-        private boolean hasNeededLanguageLevel(
-                @NotNull PsiElement element) {
-            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(element);
-            return languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
+        public void visitReferenceElement(
+                PsiJavaCodeReferenceElement reference) {
+            super.visitReferenceElement(reference);
+            final PsiElement referenceParent = reference.getParent();
+            if (!(referenceParent instanceof PsiReferenceList)) {
+                return;
+            }
+            final PsiReferenceList referenceList =
+                    (PsiReferenceList)referenceParent;
+            final PsiElement listParent = referenceList.getParent();
+            if (!(listParent instanceof PsiClass)) {
+                return;
+            }
+            final PsiElement element = reference.resolve();
+            if (!(element instanceof PsiClass)) {
+                return;
+            }
+            final PsiClass aClass = (PsiClass)element;
+            if (!aClass.hasTypeParameters()) {
+                return;
+            }
+            registerError(reference);
         }
     }
 }
