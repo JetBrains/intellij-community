@@ -104,8 +104,7 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
             super.visitTypeElement(typeElement);
             final PsiElement parent = typeElement.getParent();
             if (parent instanceof PsiInstanceOfExpression ||
-                    parent instanceof PsiClassObjectAccessExpression ||
-                    parent instanceof PsiReferenceParameterList) {
+                    parent instanceof PsiClassObjectAccessExpression) {
                 return;
             }
             if (ignoreTypeCasts && parent instanceof PsiTypeCastExpression) {
