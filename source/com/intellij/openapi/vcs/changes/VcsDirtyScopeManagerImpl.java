@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements ProjectComponent {
   private final ProjectFileIndex myIndex;
-  private final Map<AbstractVcs, VcsDirtyScope> myScopes = new HashMap<AbstractVcs, VcsDirtyScope>();
+  private final Map<AbstractVcs, VcsDirtyScopeImpl> myScopes = new HashMap<AbstractVcs, VcsDirtyScopeImpl>();
   private final VcsDirtyScopeManagerImpl.MyVfsListener myVfsListener;
   private final Project myProject;
   private final ProjectRootManager myRootManager;
@@ -86,7 +86,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
   }
 
-  @NonNls
+  @NotNull @NonNls
   public String getComponentName() {
     return "VcsDirtyScopeManager";
   }
@@ -123,12 +123,12 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   @NotNull
-  private VcsDirtyScope getScope(final VirtualFile root) {
+  private VcsDirtyScopeImpl getScope(final VirtualFile root) {
     synchronized (myScopes) {
       final AbstractVcs vcs = myVcsManager.getVcsFor(root);
-      VcsDirtyScope scope = myScopes.get(vcs);
+      VcsDirtyScopeImpl scope = myScopes.get(vcs);
       if (scope == null) {
-        scope = new VcsDirtyScope(vcs, myProject);
+        scope = new VcsDirtyScopeImpl(vcs, myProject);
         myScopes.put(vcs, scope);
       }
       return scope;
