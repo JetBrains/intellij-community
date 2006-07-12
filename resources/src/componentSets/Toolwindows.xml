@@ -17,21 +17,18 @@
     <component>
       <interface-class>com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration</interface-class>
       <implementation-class>com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.ide.structureView.StructureViewFactoryEx</interface-class>
       <implementation-class>com.intellij.ide.structureView.impl.StructureViewFactoryImpl</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.ide.projectView.ProjectView</interface-class>
       <implementation-class>com.intellij.ide.projectView.impl.ProjectViewImpl</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
@@ -39,41 +36,35 @@
     <component>
       <implementation-class>com.intellij.ide.projectView.impl.ClassesTreeStructureProvider</implementation-class>
       <headless-implementation-class></headless-implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <skipForDummyProject/>
     </component>
 
     <component>
       <interface-class>com.intellij.ide.commander.Commander</interface-class>
       <implementation-class>com.intellij.ide.commander.Commander</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.ide.SelectInManager</interface-class>
       <implementation-class>com.intellij.ide.SelectInManager</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.ide.hierarchy.HierarchyBrowserManager</interface-class>
       <implementation-class>com.intellij.ide.hierarchy.HierarchyBrowserManager</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.ui.content.MessageView</interface-class>
       <implementation-class>com.intellij.ui.content.impl.MessageViewImpl</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.ide.todo.TodoView</interface-class>
       <implementation-class>com.intellij.ide.todo.TodoView</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
@@ -81,14 +72,12 @@
     <component>
       <interface-class>com.intellij.usageView.UsageViewManager</interface-class>
       <implementation-class>com.intellij.usageView.impl.UsageViewManagerImpl</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <skipForDummyProject/>
     </component>
 
     <component>
       <interface-class>com.intellij.ide.palette.impl.PaletteManager</interface-class>
       <implementation-class>com.intellij.ide.palette.impl.PaletteManager</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <skipForDummyProject/>
     </component>
   </project-components>

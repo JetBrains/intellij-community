@@ -297,32 +297,27 @@
 
     <component>
       <implementation-class>com.intellij.ide.scopeView.ScopeViewPane</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesProjectViewPane</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.ide.projectView.impl.ProjectViewPane</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
     <component>
       <implementation-class>com.intellij.ide.projectView.impl.PackageViewPane</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
 
     <component>
       <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesManager</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>

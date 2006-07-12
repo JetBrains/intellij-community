@@ -22,7 +22,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.ide.TipOfTheDayManager</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateChecker</implementation-class>
@@ -103,7 +102,6 @@
     <component>
       <interface-class>com.intellij.ant.AntConfiguration</interface-class>
       <implementation-class>com.intellij.ant.impl.AntConfigurationImpl</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <skipForDummyProject/>
     </component>
     <component>
@@ -114,7 +112,6 @@
     <component>
       <interface-class>com.intellij.ant.impl.AntWorkspaceConfiguration</interface-class>
       <implementation-class>com.intellij.ant.impl.AntWorkspaceConfiguration</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
