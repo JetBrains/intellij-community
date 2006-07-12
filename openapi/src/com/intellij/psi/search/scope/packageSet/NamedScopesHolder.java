@@ -88,7 +88,8 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
   private static Element writeScope(NamedScope scope) {
     Element setElement = new Element(SCOPE_TAG);
     setElement.setAttribute(NAME_ATT, scope.getName());
-    setElement.setAttribute(PATTERN_ATT, scope.getValue().getText());
+    final PackageSet packageSet = scope.getValue();
+    setElement.setAttribute(PATTERN_ATT, packageSet != null ? packageSet.getText() : "");
     return setElement;
   }
 
