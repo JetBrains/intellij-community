@@ -9,7 +9,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.jsp.JspContextManager;
@@ -21,7 +20,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.Function;
-import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +45,7 @@ public class FileReferenceSet {
   public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiElement>> DEFAULT_PATH_EVALUATOR_OPTION =
     new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiElement>>(PsiBundle.message("default.path.evaluator.option"));
 
-  private final @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
+  private @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
 
   @Nullable
   public static FileReferenceSet createSet(PsiElement element, final boolean soft) {
@@ -234,6 +232,7 @@ public class FileReferenceSet {
     return result == null ? Collections.<PsiElement>emptyList() : Collections.singleton(result);
   }
 
+  @Nullable
   public static PsiElement getAbsoluteTopLevelDirLocation(final WebModuleProperties properties, final Project project, final PsiFile file) {
     PsiElement result = null;
 
@@ -258,6 +257,14 @@ public class FileReferenceSet {
     return ProcessorRegistry.getProcessorByType(type, result, null);
   }
 
+  public <Option> void addCustomization(CustomizableReferenceProvider.CustomizationKey<Option> key, Option value) {
+    if (myOptions == null) {
+      myOptions = new HashMap<CustomizableReferenceProvider.CustomizationKey, Object>(5);
+    }
+    myOptions.put(key,value);
+  }
+
+  
   public static class FileReferenceInfo {
 
     private String text;

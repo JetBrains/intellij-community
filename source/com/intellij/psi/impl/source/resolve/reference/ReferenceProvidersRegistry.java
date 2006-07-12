@@ -383,7 +383,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
 
     final NamespaceFilter webAppNSFilter = new NamespaceFilter(XmlUtil.WEB_XML_URIS);
     registerXmlTagReferenceProvider(
-      new String[]{"welcome-file","location","taglib-location"}, webAppNSFilter,
+      new String[]{"taglib-location"}, webAppNSFilter,
       true,
       webXmlPathReferenceProvider
     );
