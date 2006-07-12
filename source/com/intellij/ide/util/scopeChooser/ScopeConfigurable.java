@@ -21,20 +21,22 @@ import javax.swing.*;
  * Date: 01-Jul-2006
  */
 public class ScopeConfigurable implements NamedConfigurable<NamedScope> {
+  private Icon myIcon;
   private NamedScope myScope;
   private ScopeEditorPanel myPanel;
   private String myPackageSet;
 
-  public ScopeConfigurable(final NamedScope scope, final Project project, final NamedScopesHolder holder) {
+  public ScopeConfigurable(final NamedScope scope, final Project project, final NamedScopesHolder holder, final Icon icon) {
     myScope = scope;
     final PackageSet packageSet = scope.getValue();
     myPackageSet = packageSet != null ? packageSet.getText() : null;
     myPanel = new ScopeEditorPanel(project, holder);
+    myIcon = icon;
   }
 
   public void setDisplayName(final String name) {
     final PackageSet packageSet = myScope.getValue();
-    myScope = new NamedScope(name, packageSet.createCopy());
+    myScope = new NamedScope(name, packageSet != null ? packageSet.createCopy() : null);
   }
 
   public NamedScope getEditableObject() {
@@ -50,7 +52,7 @@ public class ScopeConfigurable implements NamedConfigurable<NamedScope> {
   }
 
   public Icon getIcon() {
-    return null;
+    return myIcon;
   }
 
   @Nullable

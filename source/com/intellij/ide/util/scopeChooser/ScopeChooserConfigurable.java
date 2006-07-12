@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
@@ -45,6 +46,9 @@ import java.util.List;
  * Date: 01-Jul-2006
  */
 public class ScopeChooserConfigurable extends MasterDetailsComponent implements ProjectComponent {
+  private static final Icon SHARED_SCOPES = IconLoader.getIcon("/ide/sharedScope.png");
+  private static final Icon LOCAL_SCOPES = IconLoader.getIcon("/ide/localScope.png");
+  private static final Icon SCOPES = IconLoader.getIcon("/ide/scopeConfigurable.png");
 
   private NamedScopeManager myLocalScopesManager;
   private DependencyValidationManager mySharedScopesManager;
@@ -139,20 +143,20 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void reloadTree() {
-    myLocalScopesNode = new MyNode(new ScopesGroupConfigurable(myLocalScopesManager), false);
-    loadScopes(myLocalScopesManager, myLocalScopesNode);
+    myLocalScopesNode = new MyNode(new ScopesGroupConfigurable(myLocalScopesManager, LOCAL_SCOPES), false);
+    loadScopes(myLocalScopesManager, myLocalScopesNode, LOCAL_SCOPES);
     myRoot.add(myLocalScopesNode);
 
-    mySharedScopesNode = new MyNode(new ScopesGroupConfigurable(mySharedScopesManager), false);
-    loadScopes(mySharedScopesManager, mySharedScopesNode);
+    mySharedScopesNode = new MyNode(new ScopesGroupConfigurable(mySharedScopesManager, SHARED_SCOPES), false);
+    loadScopes(mySharedScopesManager, mySharedScopesNode, SHARED_SCOPES);
     myRoot.add(mySharedScopesNode);
   }
 
-  private void loadScopes(final NamedScopesHolder holder, final MyNode localScopesNode) {
+  private void loadScopes(final NamedScopesHolder holder, final MyNode localScopesNode, final Icon icon) {
     final NamedScope[] scopes = holder.getScopes();
     for (NamedScope scope : scopes) {
       if (isPredefinedScope(scope)) continue;
-      localScopesNode.add(new MyNode(new ScopeConfigurable(scope, myProject, myLocalScopesManager), true));
+      localScopesNode.add(new MyNode(new ScopeConfigurable(scope, myProject, myLocalScopesManager, icon), true));
     }
   }
 
@@ -199,7 +203,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   public Icon getIcon() {
-    return Icons.DATASOURCE_REMOTE_INSTANCE;
+    return SCOPES;
   }
 
   @Nullable
@@ -263,9 +267,9 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
         .createWizardStep(new BaseListPopupStep<String>(IdeBundle.message("add.scope.popup.title"), new String[]{localScopeChoice, sharedScopeChoice}) {
           public PopupStep onChosen(final String s, final boolean finalChoice) {
             if (Comparing.strEqual(s, localScopeChoice)){
-              addScope(myLocalScopesManager, myLocalScopesNode);
+              addScope(myLocalScopesManager, myLocalScopesNode, LOCAL_SCOPES);
             } else {
-              addScope(mySharedScopesManager, mySharedScopesNode);
+              addScope(mySharedScopesManager, mySharedScopesNode, SHARED_SCOPES);
             }
             return PopupStep.FINAL_CHOICE;
           }
@@ -290,7 +294,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
         .showUnderneathOf(myNorthPanel);
     }
 
-    private void addScope(NamedScopesHolder holder, MyNode root) {
+    private void addScope(NamedScopesHolder holder, MyNode root, Icon icon) {
       final String newName = Messages.showInputDialog(myWholePanel,
                                                       IdeBundle.message("add.scope.name.label"),
                                                       IdeBundle.message("add.scope.dialog.title"), Messages.getInformationIcon(),
@@ -305,7 +309,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       });
       if (newName != null) {
         final NamedScope scope = new NamedScope(newName, null);
-        final MyNode nodeToAdd = new MyNode(new ScopeConfigurable(scope, myProject, holder), true);
+        final MyNode nodeToAdd = new MyNode(new ScopeConfigurable(scope, myProject, holder, icon), true);
         addNode(nodeToAdd, root);
         selectNodeInTree(nodeToAdd);
       }
