@@ -4,6 +4,7 @@
 package com.intellij.psi;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
+import com.intellij.ide.highlighter.GuiFormFileType;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
@@ -73,7 +74,8 @@ public class SingleRootFileViewProvider implements FileViewProvider {
       final LanguageFileType languageFileType = (LanguageFileType)fileType;
       return languageFileType.getLanguage();
     }
-    else if (fileType instanceof CustomFileType) {
+    else if (fileType instanceof CustomFileType ||
+             fileType instanceof GuiFormFileType) {
       return StdLanguages.TEXT;
     }
     return Language.ANY;
