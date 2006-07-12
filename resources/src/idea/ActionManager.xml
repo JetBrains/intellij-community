@@ -1524,10 +1524,12 @@
     <action id="Graph.Layout.OrthogonalLayouter" class="com.intellij.javaee.diagram.y.actions.layout.OrthogonalLayouterAction"
             text="Orthogonal">
     </action>
+    <action id="Graph.Layout.DirectedOrthogonalLayouter" class="com.intellij.javaee.diagram.y.actions.layout.DirectedOrthogonalLayouterAction"
+            text="Directed Orthogonal">
+    </action>
 
     <action id="Graph.Faces.OpenSelectedPages" class="com.intellij.jsf.yfilesGraph.actions.OpenSelectedPagesActon"
             text="Open Selected Pages" use-shortcut-of="EditSource" keymap="$default">
-
     </action>
 
     <group id="Graph.CommonLayoutGroup" text="Layout" popup="true">
@@ -1535,6 +1537,7 @@
       <reference ref="Graph.Layout.HierarchicGroupLayouter"/>
       <reference ref="Graph.Layout.OrganicLayouter"/>
       <reference ref="Graph.Layout.OrthogonalLayouter"/>
+      <reference ref="Graph.Layout.DirectedOrthogonalLayouter"/>
     </group>
 
     <group id="Graph.DefaultGraphPopup">
