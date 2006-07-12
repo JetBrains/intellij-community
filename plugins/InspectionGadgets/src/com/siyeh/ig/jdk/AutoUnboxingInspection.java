@@ -17,15 +17,16 @@ package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -36,9 +37,9 @@ import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Collection;
 
 public class AutoUnboxingInspection extends ExpressionInspection{
 
@@ -240,9 +241,8 @@ public class AutoUnboxingInspection extends ExpressionInspection{
     private static class AutoUnboxingVisitor extends BaseInspectionVisitor{
 
         public void visitElement(PsiElement element) {
-            final LanguageLevel languageLevel =
-                    PsiUtil.getLanguageLevel(element);
-            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+            if (element.getLanguage() != StdLanguages.JAVA ||
+                PsiUtil.getLanguageLevel(element).compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
             super.visitElement(element);
