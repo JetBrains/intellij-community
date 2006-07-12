@@ -152,7 +152,7 @@ public class ActionMenuItem extends JMenuItem {
   }
 
   private void updateIcon() {
-    if (myAction instanceof ToggleAction) {
+    if (myAction instanceof ToggleAction && myPresentation.getIcon() == null) {
       ToggleAction stateAction = (ToggleAction)myAction;
       if (stateAction.isSelected(myEvent)) {
         setIcon(ourCheckedIcon);
