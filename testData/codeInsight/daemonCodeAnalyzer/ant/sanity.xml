@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="Lexers" default="all_lexers">
+  <property name="flex.base" value="${basedir}/jflex-1.4"/>
+  <property name="idea.project.home" value="${basedir}/../../"/>
+  <property name="out.dir" value="${basedir}/out"/>
+  <macrodef name="flex">
+    <attribute name="flexfile"/>
+    <attribute name="destdir"/>
+    <sequential>
+      <delete dir="${out.dir}"/>
+      <mkdir dir="${out.dir}"/>
+      <java classname="JFlex.Main"
+            fork="true"
+            failonerror="true">
+        <arg value="-charat"/>
+        <arg value="-skel"/>
+        <arg value="idea-flex.skeleton"/>
+        <arg value="-d"/>
+        <arg value="${out.dir}"/>
+        <arg value="@{flexfile}"/>
+        <classpath>
+          <pathelement location="${flex.base}/lib/JFlex.jar"/>
+        </classpath>
+      </java>
+      <move todir="${idea.project.home}/@{destdir}">
+        <fileset dir="${out.dir}">
+          <include name="*.java"/>
+        </fileset>
+      </move>
+      <delete dir="${out.dir}"/>
+    </sequential>
+  </macrodef>
+
+  <target name="all_lexers"
+          depends="xml,oldxml,html,javascript,EL,DTD,java,javadoc,templateText,fileTemplateText,css,aspectj,properties,newJsp">
+  </target>
+
+  <target name="javascript">
+    <flex destdir="plugins/JavaScriptLanguage/src/com/intellij/lang/javascript"
+          flexfile="${idea.project.home}/plugins/JavaScriptLanguage/src/com/intellij/lang/javascript/JavaScript.flex"/>
+  </target>
+
+  <target name="properties">
+    <flex destdir="source/com/intellij/lang/properties/parsing"
+          flexfile="${idea.project.home}/source/com/intellij/lang/properties/parsing/Properties.flex"/>
+  </target>
+
+  <target name="xml">
+    <flex destdir="source/com/intellij/lexer"
+          flexfile="${basedir}/_XmlLexer.flex"/>
+  </target>
+  <target name="oldxml">
+    <flex destdir="source/com/intellij/lexer"
+          flexfile="${basedir}/_OldXmlLexer.flex"/>
+  </target>
+  <target name="html">
+    <flex destdir="source/com/intellij/lexer"
+          flexfile="${basedir}/_HtmlLexer.flex"/>
+  </target>
+  <target name="EL">
+    <flex destdir="source/com/intellij/lexer"
+          flexfile="${basedir}/_ELLexer.flex"/>
+  </target>
+  <target name="QL">
+    <flex destdir="EJB/QL/src/com/intellij/ql/psi/impl/lexer"
+          flexfile="${idea.project.home}/EJB/QL/src/com/intellij/ql/psi/impl/lexer/_QlLexer.flex"/>
+  </target>
+  <target name="DTD">
+    <flex destdir="source/com/intellij/lexer"
+          flexfile="${basedir}/_DTDLexer.flex"/>
+  </target>
+  <target name="newJsp">
+    <flex destdir="source/com/intellij/lexer"
+          flexfile="${basedir}/_NewJspLexer.flex"/>
+  </target>
+  <target name="jspDirective">
+    <flex destdir="source/com/intellij/lexer"
+          flexfile="${basedir}/_JspDirectiveLexer.flex"/>
+  </target>
+
+  <target name="java">
+    <flex destdir="source/com/intellij/lexer"
+          flexfile="${basedir}/_JavaLexer.flex"/>
+  </target>
+  <target name="javadoc">
+    <flex destdir="openapi/src/com/intellij/lexer"
+          flexfile="${basedir}/_JavaDocLexer.flex"/>
+  </target>
+  <target name="fileTemplateText">
+    <flex destdir="source/com/intellij/ide/fileTemplates/impl"
+          flexfile="${basedir}/FileTemplateTextLexer.flex"/>
+  </target>
+  <target name="templateText">
+    <flex destdir="source/com/intellij/codeInsight/template/impl"
+          flexfile="${basedir}/TemplateTextLexer.flex"/>
+  </target>
+  <target name="css">
+    <flex destdir="CSS/src/com/intellij/psi/css/impl/lexing"
+          flexfile="${idea.project.home}/CSS/src/com/intellij/psi/css/impl/lexing/CssLexer.flex"/>
+  </target>
+  <target name="aspectj">
+    <flex destdir="source/com/intellij/aspects/lexer"
+          flexfile="${idea.project.home}/source/com/intellij/aspects/_AspectjLexer.flex"/>
+  </target>
+  <target name="scopes">
+    <flex destdir="source/com/intellij/psi/search/scope/packageSet/lexer"
+          flexfile="${basedir}/_ScopesLexer.flex"/>
+  </target>
+</project>
