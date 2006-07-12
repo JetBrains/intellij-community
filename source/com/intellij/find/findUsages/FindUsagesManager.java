@@ -212,19 +212,6 @@ public class FindUsagesManager implements JDOMExternalizable {
     myLastSearchData.myLastOptions = findUsagesOptions;
   }
 
-  public final boolean showDialog(AbstractFindUsagesDialog dialog) {
-    if (dialog == null) {
-      return false;
-    }
-    dialog.show();
-    if (!dialog.isOK()) {
-      return false;
-    }
-
-    setOpenInNewTab(dialog.isShowInSeparateWindow());
-    return true;
-  }
-
   @Nullable
   private FindUsagesHandler findHandler(PsiElement element) {
     for (final Function<PsiElement,Factory<FindUsagesHandler>> function : myHandlers) {
@@ -276,7 +263,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   public final boolean shouldOpenInNewTab() {
-    return mustOpenInNewTab() || UsageViewManager.getInstance(myProject).getReusableContentsCount() == 0 || myToOpenInNewTab;
+    return mustOpenInNewTab() || myToOpenInNewTab;
   }
 
   public final boolean mustOpenInNewTab() {

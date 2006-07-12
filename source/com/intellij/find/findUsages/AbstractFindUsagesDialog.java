@@ -13,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.usageView.UsageViewManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -55,7 +56,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     myProject = project;
     myFindUsagesOptions = findUsagesOptions;
     myToShowInNewTab = toShowInNewTab;
-    myIsShowInNewTabEnabled = !mustOpenInNewTab;
+    myIsShowInNewTabEnabled = !mustOpenInNewTab && UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
     myIsShowInNewTabVisible = !isSingleFile;
     mySearchForTextOccurencesAvailable = searchForTextOccurencesAvailable;
     mySearchInLibrariesAvailable = searchInLibrariesAvailable;
