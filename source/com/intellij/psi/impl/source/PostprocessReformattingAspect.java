@@ -319,6 +319,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         protected boolean visitNode(TreeElement current) {
           if(nodesToProcess.contains(current)) return false;
           final boolean currentNodeGenerated = CodeEditUtil.isNodeGenerated(current);
+          CodeEditUtil.setNodeGenerated(current, false);
           if(currentNodeGenerated && !inGeneratedContext){
             rangesToProcess.put(document.createRangeMarker(current.getTextRange()), new ReformatAction());
             inGeneratedContext = true;
