@@ -2,6 +2,7 @@ package com.intellij.execution.application;
 
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
+import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
@@ -266,8 +267,14 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
         final long lastCoverageTime = System.currentTimeMillis();
         String name = getName();
         if (name == null) name = getGeneratedName();
-        myCurrentCoverageSuite = CoverageDataManager.getInstance(getProject()).addCoverageSuite(name, coverageFileName, getCoveragePatterns(),
-                                                                       lastCoverageTime, !isMergeWithPreviousResults());
+        final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(getProject());
+        myCurrentCoverageSuite = coverageDataManager.addCoverageSuite(
+          name,
+          new DefaultCoverageFileProvider(coverageFileName),
+          getCoveragePatterns(),
+          lastCoverageTime,
+          !isMergeWithPreviousResults()
+        );
         ApplicationConfiguration.this.appendCoverageArgument(params);
       }
 
