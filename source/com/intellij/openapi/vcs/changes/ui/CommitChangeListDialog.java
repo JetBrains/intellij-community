@@ -143,7 +143,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     boolean hasVcsOptions = false;
     Box vcsCommitOptions = Box.createVerticalBox();
-    hasVcsOptions = false;
     final List<AbstractVcs> vcses = getAffectedVcses();
     for (AbstractVcs vcs : vcses) {
       final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
@@ -264,7 +263,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
             }
           }
           catch (Throwable e) {
-            Messages.showErrorDialog("Error executing '" + commitExecutor.getActionText() + "': " + e.getLocalizedMessage(),
+            Messages.showErrorDialog(VcsBundle.message("error.executing.commit", commitExecutor.getActionText(), e.getLocalizedMessage()),
                                      commitExecutor.getActionText());
 
             for (CheckinHandler handler : myHandlers) {
@@ -492,9 +491,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     for (Change change: getIncludedChanges()) {
       final FilePath path = ChangesUtil.getFilePath(change);
       final File file = path.getIOFile();
-      if (file != null) {
-        result.add(file);
-      }
+      result.add(file);
     }
 
     return result;
