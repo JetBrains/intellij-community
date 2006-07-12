@@ -93,17 +93,16 @@ public class AntAnnotator implements Annotator {
   }
 
   private static void checkReferences(AntElement element, @NonNls AnnotationHolder holder) {
-    PsiReference[] refs = element.getReferences();
+    final PsiReference[] refs = element.getReferences();
     for (final PsiReference ref : refs) {
       if (ref instanceof AntGenericReference) {
-        AntGenericReference genRef = (AntGenericReference)ref;
-        if (genRef.isCompletionOnlyReference()) continue;
-        if (ref.resolve() == null) {
+        final AntGenericReference genRef = (AntGenericReference)ref;
+        if (!genRef.shouldBeSkippedByAnnotator() && ref.resolve() == null) {
           final TextRange absoluteRange = ref.getRangeInElement().shiftRight(ref.getElement().getTextRange().getStartOffset());
           final Annotation annotation = holder.createErrorAnnotation(absoluteRange, genRef.getUnresolvedMessagePattern());
           annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
           final IntentionAction[] intentionActions = genRef.getFixes();
-          for (IntentionAction action : intentionActions) {
+          for (final IntentionAction action : intentionActions) {
             annotation.registerFix(action);
           }
         }

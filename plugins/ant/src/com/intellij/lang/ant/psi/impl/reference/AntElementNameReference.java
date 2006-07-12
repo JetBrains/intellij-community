@@ -98,6 +98,11 @@ public class AntElementNameReference extends AntGenericReference {
     return null;
   }
 
+
+  public boolean shouldBeSkippedByAnnotator() {
+    return true;
+  }
+
   public Object[] getVariants() {
     AntStructuredElement parent = (AntStructuredElement)getElement().getAntParent();
     if( parent == null) {

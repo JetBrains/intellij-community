@@ -43,7 +43,7 @@ public class AntAttributeReference extends AntGenericReference {
   }
 
 
-  public boolean isCompletionOnlyReference() {
+  public boolean shouldBeSkippedByAnnotator() {
     return true;
   }
 }

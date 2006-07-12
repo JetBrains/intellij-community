@@ -75,7 +75,7 @@ public abstract class AntGenericReference extends GenericReference {
     return ourRefType;
   }
 
-  public boolean isCompletionOnlyReference() {
+  public boolean shouldBeSkippedByAnnotator() {
     return false;
   }
 
