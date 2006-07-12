@@ -31,7 +31,9 @@ public interface ApplicationEx extends Application {
 
   void doNotSave();
 
-  //used in Fabrique 
+  boolean isDoNotSave();
+
+  //used in Fabrique
   boolean isExceptionalThreadWithReadAccess(Thread thread);
 
   //force exit

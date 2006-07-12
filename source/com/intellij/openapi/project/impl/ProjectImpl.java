@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.BaseComponent;
@@ -443,6 +444,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
   }
 
   public void save() {
+    if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) return; //no need to save
     ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
 
     try {

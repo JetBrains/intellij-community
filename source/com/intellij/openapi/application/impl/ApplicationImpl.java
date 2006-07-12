@@ -980,4 +980,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public void doNotSave() {
     myDoNotSave = true;
   }
+
+
+  public boolean isDoNotSave() {
+    return myDoNotSave;
+  }
 }

@@ -11,8 +11,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
-import org.picocontainer.PicoContainer;
 import org.jetbrains.annotations.NotNull;
+import org.picocontainer.PicoContainer;
 
 import java.awt.*;
 import java.io.IOException;
@@ -135,6 +135,10 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
   }
 
   public void doNotSave() {
+  }
+
+  public boolean isDoNotSave() {
+    return false; 
   }
 
   public boolean runProcessWithProgressSynchronously(Runnable process,
