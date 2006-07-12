@@ -56,16 +56,6 @@ public abstract class AutomaticUsageRenamer<T> {
     return myRenames.isEmpty();
   }
 
-  public void findUsages(List<RenameableUsage> result, final boolean searchInStringsAndComments, final boolean searchInNonJavaFiles) {
-    for (Iterator<? extends T> iterator = myElements.iterator(); iterator.hasNext();) {
-      final T variable = iterator.next();
-      final boolean success = findUsagesForElement(variable, result, searchInStringsAndComments, searchInNonJavaFiles);
-      if (!success) {
-        iterator.remove();
-      }
-    }
-  }
-
   protected String getOldName() {
     return myOldName;
   }
@@ -81,8 +71,6 @@ public abstract class AutomaticUsageRenamer<T> {
   protected boolean isCheckedInitially(T element) {
     return false;
   }
-
-  public abstract boolean findUsagesForElement(T element, List<RenameableUsage> result, final boolean searchInStringsAndComments, final boolean searchInNonJavaFiles);
 
   protected boolean isNameAlreadySuggested(String newName) {
     return myRenames.values().contains(newName);
@@ -120,16 +108,6 @@ public abstract class AutomaticUsageRenamer<T> {
   @Nullable
   public String getErrorText(T element) {
     return null;
-  }
-
-  public void searchForUsages() {
-    for (final T element : myElements) {
-      if (isChecked(element)) {
-        final ArrayList<RenameableUsage> list = new ArrayList<RenameableUsage>();
-        findUsagesForElement(element, list, false, true);
-        myReferences.put(element, list);
-      }
-    }
   }
 
   public final void doRename() throws IncorrectOperationException {

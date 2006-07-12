@@ -72,10 +72,8 @@ public class RenameDialog extends RefactoringDialog {
     init();
 
     myNameLabel.setText(RefactoringBundle.message("rename.0.and.its.usages.to", getFullName()));
-    boolean toSearchInComments =
-      RefactoringSettings.getInstance().isToSearchInCommentsForRename(myPsiElement);
-    boolean toSearchForTextOccurences =
-      RefactoringSettings.getInstance().isToSearchForTextOccurencesForRename(myPsiElement);
+    boolean toSearchInComments = isToSearchInCommentsForRename();
+    boolean toSearchForTextOccurences = isToSearchForTextOccurencesForRename();
     myCbSearchInComments.setSelected(toSearchInComments);
 
     if (myCbSearchTextOccurences.isEnabled()) {
@@ -89,6 +87,14 @@ public class RenameDialog extends RefactoringDialog {
 
     validateButtons();
     myHelpID = helpID;
+  }
+
+  protected boolean isToSearchForTextOccurencesForRename() {
+    return RefactoringSettings.getInstance().isToSearchForTextOccurencesForRename(myPsiElement);
+  }
+
+  protected boolean isToSearchInCommentsForRename() {
+    return RefactoringSettings.getInstance().isToSearchInCommentsForRename(myPsiElement);
   }
 
   private String getFullName() {

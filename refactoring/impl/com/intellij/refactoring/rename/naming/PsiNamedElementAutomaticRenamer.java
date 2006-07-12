@@ -6,15 +6,8 @@ package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.RenameableUsage;
-import com.intellij.usages.UsageInfoToUsageConverter;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -29,23 +22,6 @@ public abstract class PsiNamedElementAutomaticRenamer<T extends PsiNamedElement>
 
   protected String getName(T element) {
     return element.getName();
-  }
-
-  public boolean findUsagesForElement(T element,
-                                      List<RenameableUsage> result,
-                                      final boolean searchInStringsAndComments,
-                                      final boolean searchInNonJavaFiles) {
-    final String newName = getNewElementName(element);
-    if (newName != null) {
-      final UsageInfo[] usages = RenameUtil.findUsages(element, newName, searchInStringsAndComments, searchInNonJavaFiles, getRenames());
-      for (final UsageInfo usage : usages) {
-        if (usage instanceof UnresolvableCollisionUsageInfo) return false;
-      }
-      final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor = new UsageInfoToUsageConverter.TargetElementsDescriptor(element);
-      result.addAll((Collection)Arrays.asList(UsageInfoToUsageConverter.convert(descriptor, usages)));
-
-    }
-    return true;
   }
 
   protected void doRenameElement(final T t) throws IncorrectOperationException {

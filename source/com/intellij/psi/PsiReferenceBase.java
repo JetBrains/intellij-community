@@ -72,7 +72,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     final ElementManipulator<T> manipulator = ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement);
     assert manipulator != null: "Cannot find manipulator for " + myElement;
     return manipulator.handleContentChange(myElement, getRangeInElement(), newElementName);
-  }
+  }                                                              
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException("Rebind cannot be performed");

@@ -8,4 +8,10 @@ package com.intellij.util;
  */
 public interface Function<Dom, Img> {
   Img fun(Dom s);
+
+  Function ID = new Function() {
+    public Object fun(final Object o) {
+      return o;
+    }
+  };
 }
