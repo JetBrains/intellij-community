@@ -5,10 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -23,11 +20,12 @@ import java.awt.*;
 class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
   private final boolean myShowFlatten;
   private final Project myProject;
-
+  private ChangeListDecorator[] myDecorators;
 
   public ChangeBrowserNodeRenderer(final Project project, final boolean showFlatten) {
     myShowFlatten = showFlatten;
     myProject = project;
+    myDecorators = myProject.getComponents(ChangeListDecorator.class);
   }
 
   public void customizeCellRenderer(JTree tree,
@@ -45,6 +43,9 @@ class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
         append(list.getName(),
                list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
         appendCount(node);
+        for(ChangeListDecorator decorator: myDecorators) {
+          decorator.decorateChangeList(list, this, selected, expanded, hasFocus);
+        }
         if (list.isInUpdate()) {
           append(" " + VcsBundle.message("changes.nodetitle.updating"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
