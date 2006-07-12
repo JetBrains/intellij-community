@@ -119,11 +119,12 @@ public class UsageViewUtil {
   public static String getShortName(final PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid());
     String ret = "";
+    if (psiElement instanceof PsiMetaBaseOwner) {
+      PsiMetaDataBase metaData = ((PsiMetaBaseOwner)psiElement).getMetaData();
+      if (metaData!=null) return metaData.getName();
+    }
+
     if (psiElement instanceof PsiNamedElement) {
-      if (psiElement instanceof XmlTag) {
-        PsiMetaDataBase metaData = ((XmlTag)psiElement).getMetaData();
-        if (metaData!=null) return metaData.getName();
-      }
       ret = ((PsiNamedElement)psiElement).getName();
     }
     else if (psiElement instanceof PsiThrowStatement) {
@@ -216,23 +217,24 @@ public class UsageViewUtil {
 
   public static String getDescriptiveName(final PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid());
-    String ret;
+
+    if (psiElement instanceof PsiMetaBaseOwner) {
+      final PsiMetaBaseOwner psiMetaBaseOwner = (PsiMetaBaseOwner)psiElement;
+      final PsiMetaDataBase metaData = psiMetaBaseOwner.getMetaData();
+      if (metaData != null) return metaData.getName();
+    }
 
     if (psiElement instanceof XmlTag) {
-      final PsiMetaDataBase metaData = ((XmlTag)psiElement).getMetaData();
-      if (metaData!=null) return metaData.getName();
-      ret = ((XmlTag)psiElement).getName();
-    }
-    else if (psiElement instanceof XmlAttributeValue) {
-      ret = ((XmlAttributeValue)psiElement).getValue();
-    }
-    else {
-      final Language lang = psiElement.getLanguage();
-      FindUsagesProvider provider = lang.getFindUsagesProvider();
-      return provider.getDescriptiveName(psiElement);
+      return ((XmlTag)psiElement).getName();
     }
 
-    return ret;
+    if (psiElement instanceof XmlAttributeValue) {
+      return ((XmlAttributeValue)psiElement).getValue();
+    }
+
+    final Language lang = psiElement.getLanguage();
+    FindUsagesProvider provider = lang.getFindUsagesProvider();
+    return provider.getDescriptiveName(psiElement);
   }
 
   public static boolean hasNonCodeUsages(UsageInfo[] usages) {

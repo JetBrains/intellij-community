@@ -26,6 +26,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaBaseOwner;
+import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
@@ -986,6 +988,13 @@ public class RefactoringUtil {
   }
 
   public static String getStringToSearch(PsiElement element, boolean nonJava) {
+    if (element instanceof PsiMetaBaseOwner) {
+      final PsiMetaBaseOwner psiMetaBaseOwner = (PsiMetaBaseOwner)element;
+      final PsiMetaDataBase metaData = psiMetaBaseOwner.getMetaData();
+      if (metaData != null) {
+        return metaData.getName();
+      }
+    }
     if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
       final PsiPackage aPackage = ((PsiDirectory)element).getPackage();
       if (aPackage != null) element = aPackage;

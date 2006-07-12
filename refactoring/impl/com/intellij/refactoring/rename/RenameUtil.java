@@ -410,6 +410,13 @@ public class RenameUtil {
   }
 
   private static String getStringToReplace(PsiElement element, String newName, boolean nonJava) {
+    if (element instanceof PsiMetaBaseOwner) {
+      final PsiMetaBaseOwner psiMetaBaseOwner = (PsiMetaBaseOwner)element;
+      final PsiMetaDataBase metaData = psiMetaBaseOwner.getMetaData();
+      if (metaData != null) {
+        return metaData.getName();
+      }
+    }
     if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
       element = ((PsiDirectory)element).getPackage();
     }
@@ -486,13 +493,10 @@ public class RenameUtil {
       else if (element instanceof PsiPackage) {
         final PsiPackage psiPackage = (PsiPackage)element;
         psiPackage.handleQualifiedNameChange(getQualifiedNameAfterRename(psiPackage.getQualifiedName(), newName));
-        doRenameGenericNamedElement((PsiNamedElement) element, newName, usages, listener);
-      }
-      else if (element instanceof PsiNamedElement) {
-        doRenameGenericNamedElement((PsiNamedElement) element, newName, usages, listener);
+        doRenameGenericNamedElement(element, newName, usages, listener);
       }
       else {
-        LOG.error("Unknown element type");
+        doRenameGenericNamedElement(element, newName, usages, listener);
       }
     }
     catch (final IncorrectOperationException e) {
@@ -510,25 +514,28 @@ public class RenameUtil {
     }
   }
 
-  private static void doRenameGenericNamedElement(PsiNamedElement namedElement, String newName, UsageInfo[] usages, RefactoringElementListener listener)
+  private static void doRenameGenericNamedElement(PsiElement namedElement, String newName, UsageInfo[] usages, RefactoringElementListener listener)
     throws IncorrectOperationException {
+    PsiWritableMetaData writableMetaData = null;
+    if (namedElement instanceof PsiMetaBaseOwner) {
+      final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)namedElement).getMetaData();
+      if (metaData instanceof PsiWritableMetaData) {
+        writableMetaData = (PsiWritableMetaData)metaData;
+      }
+    }
+    if (writableMetaData == null && !(namedElement instanceof PsiNamedElement)) {
+      LOG.error("Unknown element type");
+    }
+
     for (UsageInfo usage : usages) {
       rename(usage, newName);
     }
 
-    boolean hasWritableMetaData = false;
-
-    if (namedElement instanceof PsiMetaBaseOwner) {
-      final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)namedElement).getMetaData();
-
-      if (metaData instanceof PsiWritableMetaData) {
-        hasWritableMetaData = true;
-        ((PsiWritableMetaData)metaData).setName(newName);
-      }
+    if (writableMetaData != null) {
+      writableMetaData.setName(newName);
     }
-
-    if (!hasWritableMetaData) {
-      namedElement.setName(newName);
+    else {
+      ((PsiNamedElement)namedElement).setName(newName);
     }
 
     listener.elementRenamed(namedElement);
