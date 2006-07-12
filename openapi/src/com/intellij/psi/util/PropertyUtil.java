@@ -103,6 +103,13 @@ public class PropertyUtil {
     }
   }
 
+  public static String getPropertyName(PsiMember member) {
+    if (member instanceof PsiMethod) {
+      return getPropertyName((PsiMethod)member);
+    }
+    return ((PsiField) member).getName();
+  }
+
   public static String getPropertyNameByGetter(PsiMethod getterMethod) {
     @NonNls String methodName = getterMethod.getName();
     return methodName.startsWith("get") ?
