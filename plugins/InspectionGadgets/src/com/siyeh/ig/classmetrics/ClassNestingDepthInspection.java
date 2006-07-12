@@ -18,6 +18,7 @@ package com.siyeh.ig.classmetrics;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +66,9 @@ public class ClassNestingDepthInspection
      
         public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
-
+            if (aClass instanceof PsiTypeParameter) {
+                return;
+            }
             final int nestingLevel = getNestingLevel(aClass);
             if (nestingLevel <= getLimit()) {
                 return;
