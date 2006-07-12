@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Bas Leijdekkers
+ * Copyright 2003-2006 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -304,8 +304,6 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
     public MemberSignature[] getNonPrivateFields(){
         init();
         return nonPrivateFields.toArray(new MemberSignature[nonPrivateFields.size()]);
-        // todo need inspection for toArray method
-        // wrong example:  list1.toArary(new Object[array2.size()]);
     }
 
     public MemberSignature[] getNonPrivateMethodSignatures(){
@@ -460,7 +458,7 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
                         MemberSignature.createTypeSignature(type).replace('/',
                                                                           '.');
                 final String className = clazz.getQualifiedName();
-                final StringBuffer signatureBuffer = new StringBuffer("(");
+                final StringBuilder signatureBuffer = new StringBuilder("(");
                 if(!isStatic){
                     signatureBuffer.append('L').append(className).append(';');
                 }
@@ -523,7 +521,8 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
                     final String returnTypeSignature =
                             MemberSignature.createTypeSignature(method.getReturnType())
                                     .replace('/', '.');
-                    @NonNls final StringBuffer signatureBuffer = new StringBuffer();
+                    @NonNls final StringBuilder signatureBuffer =
+                            new StringBuilder();
                     signatureBuffer.append("(L");
                     signatureBuffer.append(clazz.getQualifiedName())
                             .append(';');

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 class ScopeUtils
 {
-    public static final Class[] TYPES =
+    public static final Class<PsiElement>[] TYPES =
             new Class[]{PsiCodeBlock.class, PsiForStatement.class};
 
     private ScopeUtils()
@@ -147,7 +147,7 @@ class ScopeUtils
 
     @Nullable
     public static PsiElement getParentOfTypes(@Nullable PsiElement element,
-                                              @NotNull Class[] classes)
+                                              @NotNull Class<PsiElement>[] classes)
     {
         if (element == null)
         {
@@ -156,7 +156,7 @@ class ScopeUtils
 
         while (element != null)
         {
-            for (Class clazz : classes)
+            for (Class<PsiElement> clazz : classes)
             {
                 if (clazz.isInstance(element))
                 {

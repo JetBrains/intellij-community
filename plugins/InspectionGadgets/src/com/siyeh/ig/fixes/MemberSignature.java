@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Bas Leijdekkers
+ * Copyright 2003-2006 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Modifier;
 
-import org.jetbrains.annotations.NonNls;
-
-public class MemberSignature implements Comparable
+public class MemberSignature implements Comparable<MemberSignature>
 {
     @NonNls private static final String CONSTRUCTOR_NAME = "<init>";
     @NonNls private static final String INITIALIZER_SIGNATURE = "()V";
@@ -118,9 +117,8 @@ public class MemberSignature implements Comparable
         return modifiers;
     }
 
-    public int compareTo(Object object)
+    public int compareTo(MemberSignature other)
     {
-        final MemberSignature other = (MemberSignature)object;
         final int result = name.compareTo(other.name);
         if (result != 0)
         {
@@ -133,7 +131,7 @@ public class MemberSignature implements Comparable
     {
         final PsiParameterList parameterList = method.getParameterList();
         final PsiParameter[] parameters = parameterList.getParameters();
-        final StringBuffer signatureBuffer = new StringBuffer();
+        final StringBuilder signatureBuffer = new StringBuilder();
         signatureBuffer.append('(');
         for(final PsiParameter parameter : parameters){
             final PsiType type = parameter.getType();
@@ -203,7 +201,7 @@ public class MemberSignature implements Comparable
 
     public static String createTypeSignature(PsiType type)
     {
-        final StringBuffer buffer = new StringBuffer();
+        final StringBuilder buffer = new StringBuilder();
         PsiType internalType = type;
         while (internalType instanceof PsiArrayType)
         {
@@ -260,9 +258,16 @@ public class MemberSignature implements Comparable
 
     public boolean equals(Object object)
     {
-        final MemberSignature other = (MemberSignature)object;
-        return name.equals(other.name) && signature.equals(other.signature) &&
-               modifiers == other.modifiers;
+        try {
+            final MemberSignature other = (MemberSignature)object;
+            return name.equals(other.name) &&
+                    signature.equals(other.signature) &&
+                    modifiers == other.modifiers;
+        } catch (ClassCastException e) {
+            return false;
+        } catch (NullPointerException e) {
+            return false;
+        }
     }
 
     public static MemberSignature getAssertionsDisabledFieldMemberSignature()
