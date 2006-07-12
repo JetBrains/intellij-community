@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
@@ -48,6 +49,8 @@ import java.util.Collection;
 import java.util.List;
 
 class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
+
   private static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
 
   private boolean SHOW_FLATTEN_MODE = true;
@@ -265,6 +268,10 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
       //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    public void changeListRenamed(ChangeList list, String oldName) {
+      scheduleRefresh();
+    }
+
     public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
       scheduleRefresh();
     }
@@ -372,7 +379,13 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     public void actionPerformed(AnActionEvent e) {
       ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
       assert lists != null;
-      new EditChangelistDialog(myProject, ChangeListManager.getInstance(myProject).findChangeList(lists[0].getName())).show();
+      final LocalChangeList list = ChangeListManager.getInstance(myProject).findChangeList(lists[0].getName());
+      if (list != null) {
+        new EditChangelistDialog(myProject, list).show();
+      }
+      else {
+        LOG.assertTrue(false, "Cannot find changelist " + lists [0].getName());
+      }
     }
   }
 

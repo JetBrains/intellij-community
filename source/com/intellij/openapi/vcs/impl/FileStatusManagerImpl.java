@@ -72,6 +72,9 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
         fileStatusesChanged();
       }
 
+      public void changeListRenamed(ChangeList list, String oldName) {
+      }
+
       public void changesMoved(Collection<Change> change, ChangeList fromList, ChangeList toList) {
         // Moving a change should NOT cause file status invalidation
       }

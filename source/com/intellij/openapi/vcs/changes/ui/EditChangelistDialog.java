@@ -4,6 +4,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -12,10 +15,12 @@ import javax.swing.*;
  */
 public class EditChangelistDialog extends DialogWrapper {
   private EditChangelistPanel myPanel;
+  private final Project myProject;
   private final LocalChangeList myList;
 
-  public EditChangelistDialog(Project project, LocalChangeList list) {
+  public EditChangelistDialog(Project project, @NotNull LocalChangeList list) {
     super(project, true);
+    myProject = project;
     myList = list;
     myPanel = new EditChangelistPanel();
     myPanel.setName(list.getName());
@@ -30,8 +35,13 @@ public class EditChangelistDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    myList.setName(myPanel.getName());
-    myList.setComment(myPanel.getDescription());
+    String oldName = myList.getName();
+    String oldComment = myList.getComment();
+    if (!Comparing.equal(oldName, myPanel.getName()) || !Comparing.equal(oldComment, myPanel.getDescription())) {
+      myList.setName(myPanel.getName());
+      myList.setComment(myPanel.getDescription());
+      ChangeListManagerImpl.getInstanceImpl(myProject).notifyChangeListRenamed(myList, oldName);
+    }
     super.doOKAction();
   }
 

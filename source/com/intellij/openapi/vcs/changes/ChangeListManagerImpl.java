@@ -83,7 +83,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @NonNls private static final String ATT_CHANGE_AFTER_PATH = "afterPath";
   private List<CommitExecutor> myExecutors = new ArrayList<CommitExecutor>();
 
-  static ChangeListManagerImpl getInstanceImpl(final Project project) {
+  public static ChangeListManagerImpl getInstanceImpl(final Project project) {
     return (ChangeListManagerImpl) project.getComponent(ChangeListManager.class);
   }
 
@@ -723,5 +723,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
     
     return result.toArray(new VirtualFile[result.size()]); 
+  }
+
+  public void notifyChangeListRenamed(final LocalChangeList list, final String oldName) {
+    myListeners.getMulticaster().changeListRenamed(list, oldName);
   }
 }
