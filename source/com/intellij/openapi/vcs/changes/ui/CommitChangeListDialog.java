@@ -1,7 +1,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -23,8 +23,10 @@ import com.intellij.openapi.vcs.ui.CheckinDialog;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
+import com.intellij.util.OpenSourceUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -127,6 +129,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         updateComment();
       }
     });
+    new EditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), myBrowser);
 
     myCommitMessageArea = new CommitMessage(false);
     setCommitMessage(CheckinDialog.getInitialMessage(getPaths(), project));
@@ -580,5 +583,19 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       return this;
     }
     return myBrowser.getData(dataId);
+  }
+
+  private class EditSourceAction extends AnAction {
+    public void actionPerformed(AnActionEvent e) {
+      final Navigatable[] navigatableArray = (Navigatable[]) e.getDataContext().getData(DataConstants.NAVIGATABLE_ARRAY);
+      if (navigatableArray != null && navigatableArray.length > 0) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            OpenSourceUtil.navigate(navigatableArray, true);
+          }
+        });
+        doCancelAction();
+      }
+    }
   }
 }

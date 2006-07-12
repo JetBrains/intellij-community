@@ -124,6 +124,9 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
       return getSelectedFiles();
     }
+    else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+      return ChangesUtil.getNavigatableArray(myProject, getSelectedFiles());
+    }
 
     return null;
   }

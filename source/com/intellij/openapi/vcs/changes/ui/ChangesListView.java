@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -160,12 +159,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       }
     }
     else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
-      final VirtualFile[] files = getSelectedFiles();
-      Navigatable[] navigatables = new Navigatable[files.length];
-      for (int i = 0; i < files.length; i++) {
-        navigatables[i] = new OpenFileDescriptor(myProject, files[i], 0);
-      }
-      return navigatables;
+      return ChangesUtil.getNavigatableArray(myProject, getSelectedFiles());
     }
     else if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return this;

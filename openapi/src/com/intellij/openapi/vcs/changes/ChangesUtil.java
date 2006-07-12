@@ -7,7 +7,9 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.peer.PeerFactory;
+import com.intellij.pom.Navigatable;
 
 import java.io.File;
 import java.util.*;
@@ -54,6 +56,14 @@ public class ChangesUtil {
       paths.add(getFilePath(change));
     }
     return paths;
+  }
+
+  public static Navigatable[] getNavigatableArray(final Project project, final VirtualFile[] selectedFiles) {
+    Navigatable[] navigatables = new Navigatable[selectedFiles.length];
+    for (int i = 0; i < selectedFiles.length; i++) {
+    navigatables[i] = new OpenFileDescriptor(project, selectedFiles[i], 0);
+  }
+    return navigatables;
   }
 
   public interface PerVcsProcessor<T> {
