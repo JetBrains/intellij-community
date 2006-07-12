@@ -108,7 +108,8 @@ public class MethodCandidateInfo extends CandidateInfo{
     PsiExpression[] arguments = myArgumentList == null ? PsiExpression.EMPTY_ARRAY : myArgumentList.getExpressions();
     PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
-    if (method.getSignature(partialSubstitutor).isRaw()) {
+    if (!method.hasModifierProperty(PsiModifier.STATIC) &&
+        PsiUtil.isRawSubstitutor(method.getContainingClass(), partialSubstitutor)) {
       return createRawSubstitutor(partialSubstitutor, typeParameters);
     }
 
