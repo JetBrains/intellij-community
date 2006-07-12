@@ -196,6 +196,8 @@ public class ExternalDocumentValidator {
                       )
                     );
                   }
+                } else {
+                  currentElement = PsiTreeUtil.getParentOfType(currentElement, XmlTag.class, false);
                 }
 
                 if (currentElement!=null) {
