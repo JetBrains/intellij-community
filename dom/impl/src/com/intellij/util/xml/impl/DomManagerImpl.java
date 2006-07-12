@@ -475,26 +475,39 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     }
 
     myFileDescriptions.add(description);
-    final MyElementFilter filter = new MyElementFilter(description);
 
-    myReferenceProvidersRegistry.registerReferenceProvider(filter, XmlTag.class, new DomLazyReferenceProvider(description) {
+    final DomLazyReferenceProvider tagReferenceProvider = new DomLazyReferenceProvider(description) {
       protected void registerTrueReferenceProvider(final String[] names) {
-        myReferenceProvidersRegistry.registerXmlTagReferenceProvider(names, filter, true, myGenericValueReferenceProvider);
+        myReferenceProvidersRegistry.registerXmlTagReferenceProvider(names, new MyElementFilter(description), true,
+                                                                     myGenericValueReferenceProvider);
       }
 
       protected Set<String> getReferenceElementNames(final GenericInfoImpl info) {
         return info.getReferenceTagNames();
       }
-    });
-    myReferenceProvidersRegistry.registerReferenceProvider(filter, XmlAttributeValue.class, new DomLazyReferenceProvider(description) {
+    };
+    myReferenceProvidersRegistry.registerReferenceProvider(new MyElementFilter(description) {
+      protected boolean isInitialized() {
+        return tagReferenceProvider.myInitialized;
+      }
+    }, XmlTag.class, tagReferenceProvider);
+
+
+    final DomLazyReferenceProvider attributeReferenceProvider = new DomLazyReferenceProvider(description) {
       protected void registerTrueReferenceProvider(final String[] names) {
-        myReferenceProvidersRegistry.registerXmlAttributeValueReferenceProvider(names, filter, true, myGenericValueReferenceProvider);
+        myReferenceProvidersRegistry.registerXmlAttributeValueReferenceProvider(names, new MyElementFilter(description), true,
+                                                                                myGenericValueReferenceProvider);
       }
 
       protected Set<String> getReferenceElementNames(final GenericInfoImpl info) {
         return info.getReferenceAttributeNames();
       }
-    });
+    };
+    myReferenceProvidersRegistry.registerReferenceProvider(new MyElementFilter(description) {
+      protected boolean isInitialized() {
+        return attributeReferenceProvider.myInitialized;
+      }
+    }, XmlAttributeValue.class, attributeReferenceProvider);
 
 
   }
@@ -564,12 +577,16 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       myDescription = description;
     }
 
+    protected boolean isInitialized() {
+      return false;
+    }
+
     public boolean isAcceptable(Object element, PsiElement context) {
-      return element instanceof XmlElement && getDomFileDescription((XmlElement)element) == myDescription;
+      return !isInitialized() && element instanceof XmlElement && getDomFileDescription((XmlElement)element) == myDescription;
     }
 
     public boolean isClassAcceptable(Class hintClass) {
-      return true;
+      return !isInitialized();
     }
   }
 
