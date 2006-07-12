@@ -125,11 +125,10 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   protected boolean isPsiUpToDate(VirtualFile vFile) {
-    final boolean b = myManager.findFile(vFile) == this;
-    if (!b) {
-      int a = 1;
-    }
-    return b;
+    final FileViewProvider viewProvider = myManager.findViewProvider(vFile);
+    final boolean isValid = viewProvider.getPsi(viewProvider.getBaseLanguage()) == this;
+
+    return isValid;
   }
 
   public boolean isContentsLoaded() {
