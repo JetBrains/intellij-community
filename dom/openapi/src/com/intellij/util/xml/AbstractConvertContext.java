@@ -6,7 +6,6 @@ package com.intellij.util.xml;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -28,7 +27,11 @@ public abstract class AbstractConvertContext extends ConvertContext {
       final PsiClass aClass = file.getManager().findClass(name, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
       if (aClass != null) return aClass;
     }
-    return file.getManager().findClass(name, file.getResolveScope());
+    final PsiClass aClass = file.getManager().findClass(name, file.getResolveScope());
+    if (aClass != null) {
+      assert aClass.isValid() : name;
+    }
+    return aClass;
   }
 
   public final XmlTag getTag() {
