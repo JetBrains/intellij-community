@@ -129,7 +129,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         try {
           SwingUtilities.invokeAndWait(new Runnable() {
             public void run() {
-              saveAll();
+              if (!myDoNotSave && !isUnitTestMode() && !isHeadlessEnvironment()) {
+                saveAll();
+              }
+
               dispose();
             }
           });
@@ -964,8 +967,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void saveAll() {
-    if (myDoNotSave || isUnitTestMode() || isHeadlessEnvironment()) return;
-
     FileDocumentManager.getInstance().saveAllDocuments();
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
