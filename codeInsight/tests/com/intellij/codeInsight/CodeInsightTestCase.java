@@ -27,6 +27,8 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Mike
  */
@@ -417,7 +419,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
   }
 
-  protected VirtualFile getVirtualFile(String filePath) {
+  protected VirtualFile getVirtualFile(@NonNls String filePath) {
     String fullPath = getTestDataPath() + filePath;
 
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
