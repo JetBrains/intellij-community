@@ -172,20 +172,22 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     myTree.requestFocus();
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if (myLastEditedConfigurable == null) return;
-        final Enumeration enumeration = myRoot.breadthFirstEnumeration();
-        while (enumeration.hasMoreElements()) {
-          final MyNode node = (MyNode)enumeration.nextElement();
-          final Object userObject = node.getUserObject();
-          if (userObject instanceof Configurable) {
-            final Configurable configurable = (Configurable)userObject;
-            if (Comparing.strEqual(configurable.getDisplayName(), myLastEditedConfigurable)) {
-              TreeUtil.selectInTree(node, true, myTree);
-              return;
+        if (myLastEditedConfigurable != null){
+          final Enumeration enumeration = myRoot.breadthFirstEnumeration();
+          while (enumeration.hasMoreElements()) {
+            final MyNode node = (MyNode)enumeration.nextElement();
+            final Object userObject = node.getUserObject();
+            if (userObject instanceof Configurable) {
+              final Configurable configurable = (Configurable)userObject;
+              if (Comparing.strEqual(configurable.getDisplayName(), myLastEditedConfigurable)) {
+                TreeUtil.selectInTree(node, true, myTree);
+                return;
+              }
             }
           }
+        } else {
+          TreeUtil.selectFirstNode(myTree);
         }
-        TreeUtil.selectFirstNode(myTree);
       }
     });
     //update tree size
