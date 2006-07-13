@@ -68,6 +68,7 @@ public class MoveClassTest extends CodeInsightTestCase {
     String rootAfter = root + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
     myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+    FileDocumentManager.getInstance().saveAllDocuments();
     IdeaTestUtil.assertDirectoriesEqual(rootDir2, rootDir, MultiFileTestCase.CVS_FILE_FILTER);
   }
 
