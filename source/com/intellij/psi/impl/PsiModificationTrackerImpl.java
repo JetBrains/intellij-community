@@ -48,7 +48,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker {
       case PsiManagerImpl.BEFORE_CHILD_REMOVAL:
       case PsiManagerImpl.CHILD_ADDED :
       case PsiManagerImpl.CHILD_REMOVED :
-        changedInsideCodeBlock = isInsideCodeBlock(event.getChild());
+        changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
       break;
 
       case PsiManagerImpl.BEFORE_PROPERTY_CHANGE:
@@ -58,7 +58,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker {
 
       case PsiManagerImpl.BEFORE_CHILD_REPLACEMENT:
       case PsiManagerImpl.CHILD_REPLACED :
-        changedInsideCodeBlock = isInsideCodeBlock(event.getOldChild());
+        changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
       break;
 
       case PsiManagerImpl.BEFORE_CHILD_MOVEMENT:
