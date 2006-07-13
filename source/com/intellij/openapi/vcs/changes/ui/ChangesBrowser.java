@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -277,6 +278,9 @@ public class ChangesBrowser extends JPanel implements DataProvider {
       myViewer);
 
     myToolBarGroup.add(directoriesAction);
+
+    myToolBarGroup.add(new RollbackAction());
+
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myToolBarGroup, true).getComponent();
   }
 
@@ -343,6 +347,25 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     public void setSelected(AnActionEvent e, boolean state) {
       PropertiesComponent.getInstance(myProject).setValue(FLATTEN_OPTION_KEY, String.valueOf(!state));
       myViewer.setShowFlatten(!state);
+    }
+  }
+
+  public class RollbackAction extends AnAction {
+    public RollbackAction() {
+      super(VcsBundle.message("changes.action.rollback.text"), VcsBundle.message("changes.action.rollback.description"),
+            IconLoader.getIcon("/actions/rollback.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+      RollbackChangesDialog.rollbackChanges(myProject, Arrays.asList(changes));
+      ChangeListManager.getInstance(myProject).ensureUpToDate(false);
+      rebuildList();
+    }
+
+    public void update(AnActionEvent e) {
+      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+      e.getPresentation().setEnabled(changes != null);
     }
   }
 }

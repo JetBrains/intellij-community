@@ -53,8 +53,8 @@ public class RollbackChangesDialog extends DialogWrapper {
     myBrowser = new ChangesBrowser(project, changeLists, changes, null, true, true);
 
 
-    setOKButtonText("Rollback");
-    setTitle("Rollback Changes");
+    setOKButtonText(VcsBundle.message("changes.action.rollback.text"));
+    setTitle(VcsBundle.message("changes.action.rollback.title"));
 
     init();
   }
@@ -98,7 +98,7 @@ public class RollbackChangesDialog extends DialogWrapper {
           }
         });
 
-        final LvcsAction lvcsAction = LocalVcs.getInstance(myProject).startAction("Rollback", "", true);
+        final LvcsAction lvcsAction = LocalVcs.getInstance(myProject).startAction(VcsBundle.message("changes.action.rollback.text"), "", true);
         VirtualFileManager.getInstance().refresh(true, new Runnable() {
           public void run() {
             lvcsAction.finish();
@@ -108,11 +108,11 @@ public class RollbackChangesDialog extends DialogWrapper {
             }
           }
         });
-        AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, "Rollback");
+        AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, VcsBundle.message("changes.action.rollback.text"));
       }
     };
 
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(rollbackAction, "Rollback", true, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(rollbackAction, VcsBundle.message("changes.action.rollback.text"), true, myProject);
   }
 
   public JComponent getPreferredFocusedComponent() {
