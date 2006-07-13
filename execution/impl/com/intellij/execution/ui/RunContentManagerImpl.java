@@ -67,7 +67,7 @@ public class RunContentManagerImpl implements RunContentManager {
       registerToolwindow(registeredRunner);
     }
 
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+    if (ToolWindowManager.getInstance(myProject) == null) return;
 
     // To ensure ToolwindowManager had already initialized in its projectOpened.
     SwingUtilities.invokeLater(new Runnable() {
@@ -116,7 +116,7 @@ public class RunContentManagerImpl implements RunContentManager {
   private void registerToolwindow(final JavaProgramRunner runner) {
     final String toolWindowId = runner.getInfo().getToolWindowId();
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return; //headless environment
+    if (toolWindowManager == null) return; //headless environment
     if (toolWindowManager.getToolWindow(toolWindowId) != null) {
       return;
     }
@@ -257,7 +257,7 @@ public class RunContentManagerImpl implements RunContentManager {
 
   public void showRunContent(final JavaProgramRunner requestor, final RunContentDescriptor descriptor) {
     if(ApplicationManager.getApplication().isUnitTestMode()) return;
-    
+
     final RunnerInfo runnerInfo = requestor.getInfo();
     LOG.assertTrue(runnerInfo != null);
     final ContentManager contentManager = getContentManagerForRunner(runnerInfo);
@@ -303,7 +303,7 @@ public class RunContentManagerImpl implements RunContentManager {
 
   public void showRunContent(JavaProgramRunner requestor, RunContentDescriptor descriptor, RunContentDescriptor contentToReuse) {
     if(contentToReuse != null) {
-      descriptor.setAttachedContent(contentToReuse.getAttachedContent());      
+      descriptor.setAttachedContent(contentToReuse.getAttachedContent());
     }
     showRunContent(requestor, descriptor);
   }

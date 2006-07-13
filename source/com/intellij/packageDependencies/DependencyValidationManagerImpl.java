@@ -2,7 +2,6 @@ package com.intellij.packageDependencies;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -178,11 +177,11 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   public void projectOpened() {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    if (toolWindowManager == null) return;
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
-        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.DEPENDENCIES,
                                                                      myContentManager.getComponent(),
                                                                      ToolWindowAnchor.BOTTOM);
@@ -204,8 +203,9 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   public void projectClosed() {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.DEPENDENCIES);
+    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    if (toolWindowManager == null) return;
+    toolWindowManager.unregisterToolWindow(ToolWindowId.DEPENDENCIES);
   }
 
   public void initComponent() {}

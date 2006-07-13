@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -84,16 +83,16 @@ public final class ToolWindowsGroup extends ActionGroup{
   private final class MyProjectManagerListener extends ProjectManagerAdapter{
     public void projectClosed(Project project){
       final ToolWindowManagerEx windowManagerEx = ToolWindowManagerEx.getInstanceEx(project);
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+      if (windowManagerEx == null) return;
       windowManagerEx.removeToolWindowManagerListener(myToolWindowManagerListener);
     }
 
     public void projectOpened(Project project){
       final ToolWindowManagerEx toolWindowManager=ToolWindowManagerEx.getInstanceEx(project);
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) return; //headless environment
+      if (toolWindowManager == null) return; //headless environment
       final String[] ids=toolWindowManager.getToolWindowIds();
-      for(int i=0;i<ids.length;i++){
-        addActionForToolWindow(ids[i]);
+      for (String id : ids) {
+        addActionForToolWindow(id);
       }
       toolWindowManager.addToolWindowManagerListener(myToolWindowManagerListener);
     }
