@@ -14,5 +14,5 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public interface HectorComponentPanelsProvider extends ProjectComponent {
-  @Nullable UnnamedConfigurable createConfigurable(@NotNull PsiFile file);
+  @Nullable HectorComponentPanel createConfigurable(@NotNull PsiFile file);
 }
