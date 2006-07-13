@@ -5,9 +5,9 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.editor.HectorComponentPanelsProvider;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -41,7 +41,7 @@ public class HectorComponent extends JPanel {
 
   private WeakReference<JBPopup> myHectorRef;
   private JCheckBox myImportPopupCheckBox = new JCheckBox(EditorBundle.message("hector.import.popup.checkbox"));
-  private ArrayList<UnnamedConfigurable> myAdditionalPanels;
+  private ArrayList<HectorComponentPanel> myAdditionalPanels;
   private Map<Language, JSlider> mySliders;
   private PsiFile myFile;
 
@@ -125,9 +125,9 @@ public class HectorComponent extends JPanel {
     gc.gridy = GridBagConstraints.RELATIVE;
     gc.weighty = 0;
     final HectorComponentPanelsProvider[] componentPanelsProviders = project.getComponents(HectorComponentPanelsProvider.class);
-    myAdditionalPanels = new ArrayList<UnnamedConfigurable>();
+    myAdditionalPanels = new ArrayList<HectorComponentPanel>();
     for (HectorComponentPanelsProvider provider : componentPanelsProviders) {
-      final UnnamedConfigurable componentPanel = provider.createConfigurable(file);
+      final HectorComponentPanel componentPanel = provider.createConfigurable(file);
       if (componentPanel != null) {
         myAdditionalPanels.add(componentPanel);
         add(componentPanel.createComponent(), gc);
@@ -172,6 +172,11 @@ public class HectorComponent extends JPanel {
       .setMovable(true)
       .setCancelCallback(new Computable<Boolean>() {
         public Boolean compute() {
+          for (HectorComponentPanel additionalPanel : myAdditionalPanels) {
+            if (!additionalPanel.canClose()) {
+              return Boolean.FALSE;
+            }
+          }
           onClose();
           return Boolean.TRUE;
         }
@@ -198,7 +203,7 @@ public class HectorComponent extends JPanel {
 
   private void onClose() {
     if (isModified()) {
-      for (UnnamedConfigurable panel : myAdditionalPanels) {
+      for (HectorComponentPanel panel : myAdditionalPanels) {
         try {
           panel.apply();
         }
@@ -244,7 +249,7 @@ public class HectorComponent extends JPanel {
         return true;
       }
     }
-    for (UnnamedConfigurable panel : myAdditionalPanels) {
+    for (HectorComponentPanel panel : myAdditionalPanels) {
       if (panel.isModified()) {
         return true;
       }
