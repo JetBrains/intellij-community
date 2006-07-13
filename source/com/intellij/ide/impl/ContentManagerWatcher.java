@@ -58,7 +58,7 @@ public class ContentManagerWatcher {
   private void updateTitle() {
     Content content = myContentManager.getSelectedContent();
     if (content != null){
-      myToolWindow.setTitle(content.getDisplayName());
+      myToolWindow.setTitle(content.getToolwindowTitle());
     }
   }
 }

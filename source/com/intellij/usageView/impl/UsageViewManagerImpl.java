@@ -52,6 +52,11 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
   }
 
   public Content addContent(String contentName, boolean reusable, final JComponent component, boolean toOpenInNewTab, boolean isLockable) {
+    return addContent(contentName, null, null, reusable, component, toOpenInNewTab, isLockable);
+  }
+
+  public Content addContent(String contentName, String tabName, String toolwindowTitle, boolean reusable, final JComponent component,
+                            boolean toOpenInNewTab, boolean isLockable) {
     Key<Boolean> contentKey = reusable ? REUSABLE_CONTENT_KEY : NOT_REUSABLE_CONTENT_KEY;
 
     if (!toOpenInNewTab && reusable) {
@@ -73,6 +78,8 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
       }
     }
     Content content = PeerFactory.getInstance().getContentFactory().createContent(component, contentName, isLockable);
+    content.setTabName(tabName);
+    content.setToolwindowTitle(toolwindowTitle);
     content.putUserData(contentKey, Boolean.TRUE);
 
     myFindContentManager.addContent(content);

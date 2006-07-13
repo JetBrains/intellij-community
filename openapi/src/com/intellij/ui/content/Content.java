@@ -17,11 +17,10 @@ package com.intellij.ui.content;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
-
-import org.jetbrains.annotations.NonNls;
 
 public interface Content extends UserDataHolder {
   @NonNls
@@ -43,6 +42,14 @@ public interface Content extends UserDataHolder {
   void setDisplayName(String displayName);
 
   String getDisplayName();
+
+  void setTabName(String tabName);
+
+  String getTabName();
+
+  void setToolwindowTitle(String toolwindowTitle);
+
+  String getToolwindowTitle();
 
   Disposable getDisposer();
 

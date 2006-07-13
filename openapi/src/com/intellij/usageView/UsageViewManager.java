@@ -27,6 +27,14 @@ public abstract class UsageViewManager {
 
   public abstract Content addContent(String contentName, boolean reusable, final JComponent component, boolean toOpenInNewTab, boolean isLockable);
 
+  public abstract Content addContent(String contentName,
+                                     String tabName,
+                                     String toolwindowTitle,
+                                     boolean reusable,
+                                     final JComponent component,
+                                     boolean toOpenInNewTab,
+                                     boolean isLockable);
+
   public abstract int getReusableContentsCount();
 
   public abstract Content getSelectedContent(boolean reusable);

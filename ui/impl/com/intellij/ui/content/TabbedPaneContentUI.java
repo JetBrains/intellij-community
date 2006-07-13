@@ -63,7 +63,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
       Content content = (Content)e.getSource();
       int index = myTabbedPaneWrapper.indexOfComponent(content.getComponent());
       if (index != -1) {
-        myTabbedPaneWrapper.setTitleAt(index, content.getDisplayName());
+        myTabbedPaneWrapper.setTitleAt(index, content.getTabName());
       }
     }
     else if (Content.PROP_DESCRIPTION.equals(e.getPropertyName())) {
@@ -382,7 +382,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
   private class MyContentManagerListener extends ContentManagerAdapter {
     public void contentAdded(ContentManagerEvent event) {
       Content content = event.getContent();
-      myTabbedPaneWrapper.insertTab(content.getDisplayName(),
+      myTabbedPaneWrapper.insertTab(content.getTabName(),
                                     content.getIcon(),
                                     content.getComponent(),
                                     content.getDescription(),

@@ -534,9 +534,12 @@ public class FindInProjectUtil {
   public static UsageViewPresentation setupViewPresentation(final boolean toOpenInNewTab, final FindModel findModelCopy) {
     final UsageViewPresentation presentation = new UsageViewPresentation();
 
-    presentation.setScopeText(getTitleForScope(findModelCopy));
-    presentation.setTabText(FindBundle.message("find.usage.view.tab.text", findModelCopy.getStringToFind()));
-    presentation.setUsagesString(FindBundle.message("find.usage.view.usages.text", findModelCopy.getStringToFind()));
+    final String scope = getTitleForScope(findModelCopy);
+    final String stringToFind = findModelCopy.getStringToFind();
+    presentation.setScopeText(scope);
+    presentation.setTabText(FindBundle.message("find.usage.view.tab.text", stringToFind));
+    presentation.setToolwindowTitle(FindBundle.message("find.usage.view.toolwindow.title", stringToFind, scope));
+    presentation.setUsagesString(FindBundle.message("find.usage.view.usages.text", stringToFind));
     presentation.setOpenInNewTab(toOpenInNewTab);
     presentation.setCodeUsages(false);
 

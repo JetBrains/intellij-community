@@ -79,6 +79,8 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
   private Content addContent(UsageViewImpl usageView, UsageViewPresentation presentation) {
     Content content = com.intellij.usageView.UsageViewManager.getInstance(myProject).addContent(
       presentation.getTabText(),
+      presentation.getTabName(),
+      presentation.getToolwindowTitle(),
       true,
       usageView.getComponent(),
       presentation.isOpenInNewTab(),

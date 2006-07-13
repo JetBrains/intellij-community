@@ -1,13 +1,13 @@
 
 package com.intellij.ui.content.impl;
 
+import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ide.IconUtilEx;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,6 +27,8 @@ public class ContentImpl implements Content {
   private boolean myPinnable = true;
   private Icon myLayeredIcon = new LayeredIcon(2);
   private Disposable myDisposer = null;
+  private String myTabName;
+  private String myToolwindowTitle;
 
   public ContentImpl(JComponent component, String displayName, boolean isPinnable) {
     myComponent = component;
@@ -67,6 +69,24 @@ public class ContentImpl implements Content {
   }
 
   public String getDisplayName() {
+    return myDisplayName;
+  }
+
+  public void setTabName(String tabName) {
+    myTabName = tabName;
+  }
+
+  public String getTabName() {
+    if (myTabName != null) return myTabName;
+    return myDisplayName;
+  }
+
+  public void setToolwindowTitle(String toolwindowTitle) {
+    myToolwindowTitle = toolwindowTitle;
+  }
+
+  public String getToolwindowTitle() {
+    if (myToolwindowTitle != null) return myToolwindowTitle;
     return myDisplayName;
   }
 

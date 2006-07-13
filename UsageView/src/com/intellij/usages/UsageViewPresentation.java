@@ -16,12 +16,11 @@
 package com.intellij.usages;
 
 import com.intellij.usageView.UsageViewBundle;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -43,7 +42,14 @@ public class UsageViewPresentation {
   private boolean myCodeUsages = true;
   private String myUsagesWord = UsageViewBundle.message("usage.name");
 
+  private String myTabName;
+  private String myToolwindowTitle;
+
   private List<Action> myNotFoundActions;
+
+
+  public UsageViewPresentation() {
+  }
 
   public String getTabText() {
     return myTabText;
@@ -141,6 +147,22 @@ public class UsageViewPresentation {
 
   public void setUsagesWord(final String usagesWord) {
     myUsagesWord = usagesWord;
+  }
+
+  public String getTabName() {
+    return myTabName;
+  }
+
+  public void setTabName(final String tabName) {
+    myTabName = tabName;
+  }
+
+  public String getToolwindowTitle() {
+    return myToolwindowTitle;
+  }
+
+  public void setToolwindowTitle(final String toolwindowTitle) {
+    myToolwindowTitle = toolwindowTitle;
   }
 }
 

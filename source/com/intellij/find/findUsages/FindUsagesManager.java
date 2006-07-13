@@ -297,7 +297,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     };
   }
 
-  private PsiElement2UsageTargetAdapter[] convertToUsageTargets(final PsiElement[] elementsToSearch) {
+  private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(final PsiElement[] elementsToSearch) {
     final ArrayList<PsiElement2UsageTargetAdapter> targets = new ArrayList<PsiElement2UsageTargetAdapter>();
     if (elementsToSearch != null) {
       for (PsiElement element : elementsToSearch) {
@@ -324,7 +324,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     }, !toSkipUsagePanelWhenOneUsage, true, createPresentation(primaryElements[0], findUsagesOptions, toOpenInNewTab), null);
   }
 
-  private UsageViewPresentation createPresentation(PsiElement psiElement,
+  private static UsageViewPresentation createPresentation(PsiElement psiElement,
                                                    final FindUsagesOptions findUsagesOptions,
                                                    boolean toOpenInNewTab) {
     UsageViewPresentation presentation = new UsageViewPresentation();
@@ -341,6 +341,7 @@ public class FindUsagesManager implements JDOMExternalizable {
       title = FindBundle.message("find.usages.of.element.panel.title", usagesString, UsageViewUtil.getShortName(psiElement));
     }
     presentation.setTabText(title);
+    presentation.setTabName(FindBundle.message("find.usages.of.element.tab.name", usagesString, UsageViewUtil.getShortName(psiElement)));
     presentation.setTargetsNodeText(UsageViewUtil.capitalize(UsageViewUtil.getType(psiElement)));
     presentation.setOpenInNewTab(toOpenInNewTab);
     return presentation;
@@ -377,7 +378,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     }
   }
 
-  private String getNoUsagesFoundMessage(PsiElement psiElement) {
+  private static String getNoUsagesFoundMessage(PsiElement psiElement) {
     String elementType = UsageViewUtil.getType(psiElement);
     String elementName = UsageViewUtil.getShortName(psiElement);
     return FindBundle.message("find.usages.of.element_type.element_name.not.found.message", elementType, elementName);
@@ -388,7 +389,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     statusBar.setInfo("");
   }
 
-  private String getSearchAgainMessage(PsiElement element, final FileSearchScope direction) {
+  private static String getSearchAgainMessage(PsiElement element, final FileSearchScope direction) {
     String message = getNoUsagesFoundMessage(element);
     if (direction == AFTER_CARET) {
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT);
@@ -424,7 +425,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     }
   }
 
-  private Usage findSiblingUsage(final UsageSearcher usageSearcher,
+  private static Usage findSiblingUsage(final UsageSearcher usageSearcher,
                                  FileSearchScope dir,
                                  final FileEditorLocation currentLocation,
                                  final boolean[] usagesWereFound,
@@ -531,7 +532,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     return usagesString;
   }
 
-  private void showEditorHint(String message, final Editor editor) {
+  private static void showEditorHint(String message, final Editor editor) {
     HintManager hintManager = HintManager.getInstance();
     JComponent component = HintUtil.createInformationLabel(message);
     final LightweightHint hint = new LightweightHint(component);
