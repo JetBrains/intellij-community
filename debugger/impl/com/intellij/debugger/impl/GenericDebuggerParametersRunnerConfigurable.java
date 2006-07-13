@@ -3,6 +3,7 @@ package com.intellij.debugger.impl;
 import com.intellij.debugger.settings.DebuggerConfigurable;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -121,6 +122,20 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
     }
   }
 
+  private void checkPort() throws ConfigurationException {
+    if (isSocket() && myPortField.getText().length() > 0) {
+      try {
+        final int port = Integer.parseInt(myPortField.getText());
+        if (port < 0 || port > 0xffff) {
+          throw new NumberFormatException();
+        }
+      }
+      catch (NumberFormatException e) {
+        throw new ConfigurationException(DebuggerBundle.message("error.text.invalid.port.0", myPortField.getText()));
+      }
+    }
+  }
+
   private void setTransport(int transport) {
     mySocketTransport.setSelected(transport == DebuggerSettings.SOCKET_TRANSPORT);
     myShmemTransport.setSelected (transport != DebuggerSettings.SOCKET_TRANSPORT);
@@ -144,6 +159,8 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
   public void applyEditorTo(GenericDebuggerRunnerSettings runnerSettings) throws ConfigurationException {
     runnerSettings.LOCAL = myIsLocal;
     runnerSettings.setTransport(getTransport());
+    checkPort();
     runnerSettings.setDebugPort(getPort());
   }
+
 }
