@@ -64,7 +64,7 @@ public class InjectedLanguageUtil {
     
     CachedValue<List<Pair<PsiElement, TextRange>>> cachedPsi = host.getUserData(INJECTED_PSI);
     if (cachedPsi == null) {
-      CachedValueProvider<List<Pair<PsiElement, TextRange>>> provider = new InjectedPsiProvider<T>(host, textEscaper);
+      InjectedPsiProvider<T> provider = new InjectedPsiProvider<T>(host, textEscaper);
       cachedPsi = host.getManager().getCachedValuesManager().createCachedValue(provider, false);
       host.putUserData(INJECTED_PSI, cachedPsi);
     }
@@ -284,22 +284,37 @@ public class InjectedLanguageUtil {
 
 
   private static class InjectedPsiProvider<T extends PsiLanguageInjectionHost> implements CachedValueProvider<List<Pair<PsiElement, TextRange>>> {
-    private final SmartPsiElementPointer myHost;
+    private SmartPsiElementPointer myHostPointer;
     private final LiteralTextEscaper<T> myTextEscaper;
+    private T myHost;
 
     public InjectedPsiProvider(final T host, @Nullable LiteralTextEscaper<T> textEscaper) {
+      myHost = host;
       LOG.assertTrue(host.isValid());
-      myHost = host.isPhysical() ? SmartPointerManager.getInstance(host.getProject()).createSmartPsiElementPointer(host) : new SmartPsiElementPointer() {
-        public PsiElement getElement() {
-          return host;
-        }
-      };
       myTextEscaper = textEscaper;
     }
 
+    private void fastenMyBelts(final T host) {
+      if (myHostPointer == null) {
+        myHostPointer = host.isPhysical() ? SmartPointerManager.getInstance(host.getProject()).createSmartPsiElementPointer(host) : new SmartPsiElementPointer() {
+          public PsiElement getElement() {
+            return host;
+          }
+        };
+        myHost = null;
+      }
+    }
+
     public Result<List<Pair<PsiElement, TextRange>>> compute() {
-      final T host = (T)myHost.getElement();
+      final T host = myHostPointer == null ? myHost : (T)myHostPointer.getElement();
       if (host == null) return null;
+      final List<Pair<PsiElement, TextRange>> result = queryInjectionHostForPsi(host);
+      if (result == null) return null;
+      fastenMyBelts(host); // create smart pointer only if necessary
+      return new Result<List<Pair<PsiElement, TextRange>>>(result, host, PsiModificationTracker.MODIFICATION_COUNT);
+    }
+
+    private List<Pair<PsiElement, TextRange>> queryInjectionHostForPsi(final T host) {
       final TextRange hostRange = host.getTextRange();
       PsiFile hostPsiFile = host.getContainingFile();
       VirtualFile virtualFile = hostPsiFile.getVirtualFile();
@@ -330,7 +345,7 @@ public class InjectedLanguageUtil {
       for (LanguageInjector injector : psiManager.getLanguageInjectors()) {
         injector.getLanguagesToInject(host, placesRegistrar);
       }
-      return new Result<List<Pair<PsiElement, TextRange>>>(result, host, PsiModificationTracker.MODIFICATION_COUNT);
+      return result;
     }
   }
 
