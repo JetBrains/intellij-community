@@ -14,7 +14,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,10 +32,10 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   private Collection<Change> myAllChanges;
   private final Map<Change, LocalChangeList> myChangeListsMap = new HashMap<Change, LocalChangeList>();
   private Project myProject;
-  @Nullable private final ActionGroup myAdditionalToolbarActions;
   private EventDispatcher<SelectedListChangeListener> myDispatcher = EventDispatcher.create(SelectedListChangeListener.class);
   private final JPanel myHeaderPanel;
   private boolean myReadOnly;
+  private DefaultActionGroup myToolBarGroup;
 
   public void setChangesToDisplay(final List<Change> changes) {
     myViewer.setChangesToDisplay(changes);
@@ -57,14 +56,11 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
   public ChangesBrowser(final Project project, List<? extends ChangeList> changeLists, final List<Change> changes,
-                        ChangeList initialListSelection,
-                        final @Nullable ActionGroup additionalToolbarActions,
-                        final boolean showChangelistChooser,
+                        ChangeList initialListSelection, final boolean showChangelistChooser,
                         final boolean capableOfExcludingChanges) {
     super(new BorderLayout());
 
     myProject = project;
-    myAdditionalToolbarActions = additionalToolbarActions;
     myAllChanges = new ArrayList<Change>();
     myReadOnly = !showChangelistChooser;
 
@@ -100,7 +96,18 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     myHeaderPanel.add(createToolbar(), BorderLayout.WEST);
     add(myHeaderPanel, BorderLayout.NORTH);
 
+    myViewer.installPopupHandler(myToolBarGroup);
+
     myViewer.setShowFlatten(PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY));
+  }
+
+  public void addToolbarAction(AnAction action) {
+    myToolBarGroup.add(action);
+  }
+
+  public void addToolbarActions(ActionGroup group) {
+    myToolBarGroup.addSeparator();
+    myToolBarGroup.add(group);
   }
 
   public JPanel getHeaderPanel() {
@@ -240,7 +247,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   }
 
   private JComponent createToolbar() {
-    DefaultActionGroup toolBarGroup = new DefaultActionGroup();
+    myToolBarGroup = new DefaultActionGroup();
     final ShowDiffAction diffAction = new ShowDiffAction() {
       public void actionPerformed(AnActionEvent e) {
         showDiff();
@@ -250,7 +257,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     diffAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
       myViewer);
-    toolBarGroup.add(diffAction);
+    myToolBarGroup.add(diffAction);
 
     if (!myReadOnly) {
       final MoveChangesToAnotherListAction moveAction = new MoveChangesToAnotherListAction() {
@@ -261,7 +268,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
       };
 
       moveAction.registerCustomShortcutSet(CommonShortcuts.getMove(), myViewer);
-      toolBarGroup.add(moveAction);
+      myToolBarGroup.add(moveAction);
     }
 
     ToggleShowDirectoriesAction directoriesAction = new ToggleShowDirectoriesAction();
@@ -269,14 +276,8 @@ public class ChangesBrowser extends JPanel implements DataProvider {
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
       myViewer);
 
-    toolBarGroup.add(directoriesAction);
-
-    if (myAdditionalToolbarActions != null) {
-      toolBarGroup.addSeparator();
-      toolBarGroup.add(myAdditionalToolbarActions);
-    }
-
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolBarGroup, true).getComponent();
+    myToolBarGroup.add(directoriesAction);
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myToolBarGroup, true).getComponent();
   }
 
   public List<Change> getCurrentDisplayedChanges() {

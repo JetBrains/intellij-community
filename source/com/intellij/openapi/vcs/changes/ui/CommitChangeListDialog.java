@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -27,6 +28,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.OpenSourceUtil;
+import com.intellij.idea.ActionsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,13 +121,18 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     LocalChangeList defaultList = ChangeListManager.getInstance(project).getDefaultChangeList();
     myAllOfDefaultChangeListChangesIncluded = changes.containsAll(defaultList.getChanges());
 
-    myBrowser = new ChangesBrowser(project, changeLists, changes, initialSelection, CommitMessage.getToolbarActions(), true, true);
+    myBrowser = new ChangesBrowser(project, changeLists, changes, initialSelection, true, true);
     myBrowser.addSelectedListChangeListener(new ChangesBrowser.SelectedListChangeListener() {
       public void selectedListChanged() {
         updateComment();
       }
     });
-    new EditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), myBrowser);
+
+    final EditSourceAction editSourceAction = new EditSourceAction();
+    editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myBrowser);
+    myBrowser.addToolbarAction(editSourceAction);
+
+    myBrowser.addToolbarActions(CommitMessage.getToolbarActions());
 
     myCommitMessageArea = new CommitMessage(false);
     setCommitMessage(CheckinDialog.getInitialMessage(getPaths(), project));
@@ -582,6 +589,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private class EditSourceAction extends AnAction {
+    public EditSourceAction() {
+      super(ActionsBundle.actionText("EditSource"),
+            ActionsBundle.actionDescription("EditSource"),
+            IconLoader.getIcon("/actions/editSource.png"));
+    }
+
     public void actionPerformed(AnActionEvent e) {
       final Navigatable[] navigatableArray = (Navigatable[]) e.getDataContext().getData(DataConstants.NAVIGATABLE_ARRAY);
       if (navigatableArray != null && navigatableArray.length > 0) {

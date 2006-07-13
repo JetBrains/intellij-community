@@ -50,7 +50,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     super(project, true);
 
     myProject = project;
-    myBrowser = new ChangesBrowser(project, changeLists, changes, null, null, true, true);
+    myBrowser = new ChangesBrowser(project, changeLists, changes, null, true, true);
 
 
     setOKButtonText("Rollback");

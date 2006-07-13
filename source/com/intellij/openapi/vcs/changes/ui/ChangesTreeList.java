@@ -5,9 +5,12 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -152,9 +155,13 @@ public class ChangesTreeList extends JPanel {
     });
   }
 
-
   public void setDoubleClickHandler(final Runnable doubleClickHandler) {
     myDoubleClickHandler = doubleClickHandler;
+  }
+
+  public void installPopupHandler(ActionGroup group) {
+    PopupHandler.installUnknownPopupHandler(myList, group, ActionManager.getInstance());
+    PopupHandler.installUnknownPopupHandler(myTree, group, ActionManager.getInstance());
   }
 
   public Dimension getPreferredSize() {
