@@ -297,10 +297,11 @@ public class ModuleTypeStep extends ModuleWizardStep {
                                                   int index,
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
-      final JLabel rendererComponent = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       final ModuleType moduleType = (ModuleType)value;
-      rendererComponent.setIcon(moduleType.getBigIcon());
-      rendererComponent.setText(moduleType.getName());
+      setIcon(moduleType.getBigIcon());
+      setDisabledIcon(moduleType.getBigIcon());
+      setText(moduleType.getName());
       return rendererComponent;
     }
   }
