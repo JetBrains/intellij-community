@@ -294,12 +294,15 @@ public class DomTableView extends JPanel implements DataProvider{
     public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
       final Object oldValue = getValueAt(rowIndex, columnIndex);
       if (!Comparing.equal(oldValue, aValue)) {
-        new WriteCommandAction(myProject, ((DomElement)getItems().get(rowIndex)).getRoot().getFile()) {
-          protected void run(final Result result) throws Throwable {
-            MyListTableModel.super.setValueAt("".equals(aValue) ? null : aValue, rowIndex, columnIndex);
-          }
-        }.execute();
-        myDispatcher.getMulticaster().changed();
+        final DomElement domElement = (DomElement)getItems().get(rowIndex);
+        if (domElement.isValid()) {
+          new WriteCommandAction(myProject, domElement.getRoot().getFile()) {
+            protected void run(final Result result) throws Throwable {
+              MyListTableModel.super.setValueAt("".equals(aValue) ? null : aValue, rowIndex, columnIndex);
+            }
+          }.execute();
+          myDispatcher.getMulticaster().changed();
+        }
       }
     }
   }
