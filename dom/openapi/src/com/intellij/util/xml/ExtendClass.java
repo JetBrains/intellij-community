@@ -35,4 +35,9 @@ public @interface ExtendClass {
    * States that the class should be concrete and have public default constructor.
    */
   boolean instantiatable() default true;
+
+/**
+ * States that the class implements "decorator" pattern
+ */
+  boolean canBeDecorator() default false;
 }

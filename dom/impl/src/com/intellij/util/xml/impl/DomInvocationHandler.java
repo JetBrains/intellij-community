@@ -285,7 +285,9 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   protected final void addRequiredChildren() {
     for (final DomChildrenDescription description : myGenericInfo.getChildrenDescriptions()) {
       if (description instanceof DomAttributeChildDescription) {
-        if (((DomAttributeChildDescription)description).getAnnotation(Required.class) != null) {
+        final Required required = description.getAnnotation(Required.class);
+
+        if (required != null && required.value()) {
           description.getValues(getProxy()).get(0).ensureXmlElementExists();
         }
       }
@@ -294,7 +296,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
         List<? extends DomElement> values = null;
         final int count = childDescription.getCount();
         for (int i = 0; i < count; i++) {
-          if (childDescription.getAnnotation(i, Required.class) != null) {
+          final Required required = childDescription.getAnnotation(i, Required.class);
+          if (required != null && required.value()) {
             if (values == null) {
               values = description.getValues(getProxy());
             }
