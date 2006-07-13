@@ -10,6 +10,10 @@
  */
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.idea.Bombed;
+
+import java.util.Calendar;
+
 /**
  * @by Maxim.Mossienko
  */
@@ -21,5 +25,6 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/" + getTestName(false) + ".xml", false, false);
   }
 
+  @Bombed(year = 2006, month = Calendar.JULY, day = 13, user = "lvo", time = 13, description = "Duplicate targets & invalid text")
   public void testSanity() throws Exception { doTest(); }
 }

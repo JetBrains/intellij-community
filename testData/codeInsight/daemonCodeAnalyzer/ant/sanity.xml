@@ -106,4 +106,18 @@
     <flex destdir="source/com/intellij/psi/search/scope/packageSet/lexer"
           flexfile="${basedir}/_ScopesLexer.flex"/>
   </target>
+
+  <target name="all_lexers2" depends="xml,<error>oldxml2</error>">
+  </target>
+
+  <error><wrongTag /></error>
+  <target <error>aaa="bbb"</error> />
+
+  <!-- Duplicate target should be detected -->
+  <error><target name="DuplicateTarget"/></error>
+  <error><target name="DuplicateTarget"/></error>
+
+  <!--Valid XML characters but not valid ANT-->
+  <error>/></error>
+  <error>></error>
 </project>
