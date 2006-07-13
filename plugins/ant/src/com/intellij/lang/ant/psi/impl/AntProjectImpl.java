@@ -96,7 +96,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   @Nullable
   public AntTarget getTarget(final String name) {
     AntTarget[] targets = getTargets();
-    for (AntTarget target : targets) {
+    for (final AntTarget target : targets) {
       if (name.equals(target.getName())) {
         return target;
       }

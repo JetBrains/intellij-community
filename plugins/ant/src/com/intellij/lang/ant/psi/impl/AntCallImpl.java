@@ -10,6 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +37,7 @@ public class AntCallImpl extends AntTaskImpl implements AntCall {
     }
   }
 
+  @Nullable
   public AntTarget getTarget() {
     final String target = getSourceElement().getAttributeValue("target");
     AntTarget result = getAntProject().getTarget(target);
