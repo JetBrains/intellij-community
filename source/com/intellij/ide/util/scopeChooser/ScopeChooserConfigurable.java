@@ -143,12 +143,15 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void reloadTree() {
+    myRoot.removeAllChildren();
+
     myLocalScopesNode = new MyNode(new ScopesGroupConfigurable(myLocalScopesManager, LOCAL_SCOPES), false);
     loadScopes(myLocalScopesManager, myLocalScopesNode, LOCAL_SCOPES);
     myRoot.add(myLocalScopesNode);
 
     mySharedScopesNode = new MyNode(new ScopesGroupConfigurable(mySharedScopesManager, SHARED_SCOPES), false);
     loadScopes(mySharedScopesManager, mySharedScopesNode, SHARED_SCOPES);
+
     myRoot.add(mySharedScopesNode);
   }
 

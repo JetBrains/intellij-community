@@ -16,7 +16,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.profile.ui.ErrorOptionsConfigurable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,10 +35,12 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     myShortName = key.toString();
   }
 
+  @NotNull
   public String getText() {
     return InspectionsBundle.message("edit.options.of.reporter.inspection.text");
   }
 
+  @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("edit.options.of.reporter.inspection.family");
   }
@@ -98,14 +99,12 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     private InspectionProfileImpl myInspectionProfile;
     private String mySelectedTool;
     private SingleInspectionProfilePanel myPanel;
-    private Project myProject;
 
     public InspectionToolsConfigurable(final Project project,
                                        final boolean chooseDifferentProfile,
                                        final ProfileManager profileManager,
                                        final InspectionProfileImpl inspectionProfile,
                                        final String selectedTool) {
-      myProject = project;
       myChooseDifferentProfile = chooseDifferentProfile;
       myInspectionProfile = inspectionProfile;
       mySelectedTool = selectedTool;
@@ -116,7 +115,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
 
     public String getDisplayName() {
       final String title = ApplicationBundle.message("title.errors");
-      return myChooseDifferentProfile ? title : (title + ": \'" + myInspectionProfile.getName() + "\' inspection profile");
+      return myChooseDifferentProfile ? title : InspectionsBundle.message("errors.single.profile.title", myInspectionProfile.getName());
     }
 
     public Icon getIcon() {
@@ -140,7 +139,6 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
 
     public void apply() throws ConfigurationException {
       myPanel.apply();
-      ErrorOptionsConfigurable.getInstance(myProject).fireItemsChangedExternally();
     }
 
     public void reset() {

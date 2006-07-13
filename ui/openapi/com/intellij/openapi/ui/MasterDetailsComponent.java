@@ -436,6 +436,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
       if (newName != null){
         namedConfigurable.setDisplayName(newName);
         ((DefaultTreeModel)myTree.getModel()).reload(node);
+        fireItemsChangedExternally();
       }
     }
 
