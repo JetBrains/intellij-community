@@ -78,6 +78,8 @@ public abstract class DialogWrapper {
 
   private boolean myClosed = false;
 
+  private boolean myPerformAction = false;
+
   private static final Object ourLock = new Object();
   private Action myYesAction = null;
   private Action myNoAction = null;
@@ -844,7 +846,14 @@ public abstract class DialogWrapper {
 
     public void actionPerformed(ActionEvent e) {
       if (myClosed) return;
-      doOKAction();
+      if (myPerformAction) return;
+      try {
+        myPerformAction = true;
+        doOKAction();
+      }
+      finally {
+        myPerformAction = false;
+      }
     }
   }
 
@@ -855,7 +864,14 @@ public abstract class DialogWrapper {
 
     public void actionPerformed(ActionEvent e) {
       if (myClosed) return;
-      doCancelAction();
+      if (myPerformAction) return;
+      try {
+        myPerformAction = true;
+        doCancelAction();
+      }
+      finally {
+        myPerformAction = false;
+      }
     }
   }
 
