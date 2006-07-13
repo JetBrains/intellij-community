@@ -30,7 +30,7 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
     final Tag classpathTag = new Tag("classpath", new Pair[]{new Pair<String, String>("refid", BuildProperties.getClasspathProperty(moduleChunkName))});
     //noinspection HardCodedStringLiteral
     final Tag bootclasspathTag = new Tag("bootclasspath", new Pair[]{new Pair<String, String>("refid", BuildProperties.getBootClasspathProperty(moduleChunkName))});
-    final PatternSetRef compilerExcludes = CompilerExcludes.isAvailable(project)? new PatternSetRef(BuildProperties.getExcludedFromCompilationProperty(moduleChunkName)) : null;
+    final PatternSetRef compilerExcludes = new PatternSetRef(BuildProperties.getExcludedFromCompilationProperty(moduleChunkName));
 
     final String mainTargetName = BuildProperties.getCompileTargetName(moduleChunkName);
     final @NonNls String productionTargetName = mainTargetName + ".production";
@@ -54,9 +54,7 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
       javac.add(classpathTag);
       //noinspection HardCodedStringLiteral
       javac.add(new Tag("src", new Pair[]{new Pair<String, String>("refid", BuildProperties.getSourcepathProperty(moduleChunkName))}));
-      if (compilerExcludes != null) {
-        javac.add(compilerExcludes);
-      }
+      javac.add(compilerExcludes);
 
       myProductionTarget.add(javac);
       myProductionTarget.add(createCopyTask(project, moduleChunk, sourceRoots, outputPathRef, baseDir, genOptions));
@@ -73,9 +71,7 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
       javac.add(new Tag("classpath", new Pair[]{new Pair<String, String>("location", BuildProperties.propertyRef(BuildProperties.getOutputPathProperty(moduleChunkName)))}));
       //noinspection HardCodedStringLiteral
       javac.add(new Tag("src", new Pair[]{new Pair<String, String>("refid", BuildProperties.getTestSourcepathProperty(moduleChunkName))}));
-      if (compilerExcludes != null) {
-        javac.add(compilerExcludes);
-      }
+      javac.add(compilerExcludes);
 
       myTestsTarget.add(javac);
       myTestsTarget.add(createCopyTask(project, moduleChunk, testSourceRoots, testOutputPathRef, baseDir, genOptions));
