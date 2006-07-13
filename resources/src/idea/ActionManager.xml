@@ -877,6 +877,7 @@
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
       <reference ref="EditSource"/>
+      <reference ref="OpenInBrowser"/>
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
@@ -919,6 +920,8 @@
       <action id="OpenCustomEditor" class="com.intellij.ide.actions.EditSourceAction"/>
       <reference ref="NewGroup"/>
       <reference ref="CutCopyPasteGroup"/>
+      <separator/>
+      <reference ref="OpenInBrowser"/>
       <separator/>
 
       <reference ref="AssociateWithFileType"/>
