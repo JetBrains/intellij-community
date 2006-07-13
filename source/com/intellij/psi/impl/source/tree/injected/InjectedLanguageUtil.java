@@ -58,7 +58,8 @@ public class InjectedLanguageUtil {
   public static <T extends PsiLanguageInjectionHost> List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull T host,
                                                                                                            @Nullable LiteralTextEscaper<T> textEscaper) {
     if (!host.isPhysical()) {
-      return new InjectedPsiProvider<T>(host, textEscaper).compute().getValue();
+      CachedValueProvider.Result<List<Pair<PsiElement, TextRange>>> result = new InjectedPsiProvider<T>(host, textEscaper).compute();
+      return result == null ? null : result.getValue();
     }
     
     CachedValue<List<Pair<PsiElement, TextRange>>> cachedPsi = host.getUserData(INJECTED_PSI);
