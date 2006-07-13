@@ -29,8 +29,11 @@ public final class MarginProperty extends AbstractInsetsProperty<RadContainer> {
   }
 
   public Insets getValue(final RadContainer component) {
-    final AbstractLayout layoutManager=(AbstractLayout) component.getLayout();
-    return layoutManager.getMargin();
+    if (component.getLayout() instanceof AbstractLayout) {
+      final AbstractLayout layoutManager=(AbstractLayout) component.getLayout();
+      return layoutManager.getMargin();
+    }
+    return DEFAULT_INSETS;
   }
 
   protected void setValueImpl(final RadContainer component, @NotNull final Insets value) throws Exception{
