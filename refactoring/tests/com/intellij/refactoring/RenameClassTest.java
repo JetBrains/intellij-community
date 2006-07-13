@@ -31,6 +31,10 @@ public class RenameClassTest extends MultiFileTestCase {
     doTest("Test", "Test1");
   }
 
+  public void testCollision1() throws Exception {
+    doTest("Loader", "Reader");
+  }
+
   private void doTest(final String qClassName, final String newName) throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {

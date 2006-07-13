@@ -28,6 +28,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Queue;
+import com.intellij.codeInsight.ChangeContextUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -649,7 +650,9 @@ public class RenameUtil {
     }
 
     // do actual rename
+    ChangeContextUtil.encodeContextInfo(aClass, true);
     aClass.setName(newName);
+    ChangeContextUtil.decodeContextInfo(aClass, null, null); //to make refs to other classes from this one resolve to their old referent
 
     // resolve collisions
     for (UsageInfo postponedCollision : postponedCollisions) {
