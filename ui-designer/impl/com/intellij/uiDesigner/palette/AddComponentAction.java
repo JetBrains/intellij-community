@@ -105,15 +105,15 @@ public class AddComponentAction extends AnAction {
 
   @Override public void update(AnActionEvent e) {
     Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
-    PsiFile psiFile = (PsiFile)e.getDataContext().getData(DataConstants.PSI_FILE);
-    if (psiFile != null && project != null) {
-      e.getPresentation().setVisible(findElementToAdd(psiFile) != null);
+    if (e.getDataContext().getData(GroupItem.class.getName()) != null ||
+        e.getDataContext().getData(ComponentItem.class.getName()) != null) {
+      e.getPresentation().setVisible(true);
+      GroupItem groupItem = (GroupItem)e.getDataContext().getData(GroupItem.class.getName());
+      e.getPresentation().setEnabled(project != null && (groupItem == null || !groupItem.isReadOnly()));
     }
     else {
-      // invoked from palette
-      e.getPresentation().setVisible(true);
-      GroupItem groupItem = (GroupItem) e.getDataContext().getData(GroupItem.class.getName());
-      e.getPresentation().setEnabled(project != null && (groupItem == null || !groupItem.isReadOnly()));
+      PsiFile psiFile = (PsiFile)e.getDataContext().getData(DataConstants.PSI_FILE);
+      e.getPresentation().setVisible(psiFile != null && findElementToAdd(psiFile) != null);
     }
   }
 
