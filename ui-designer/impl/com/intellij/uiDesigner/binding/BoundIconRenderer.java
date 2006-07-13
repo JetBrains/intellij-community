@@ -1,6 +1,5 @@
 package com.intellij.uiDesigner.binding;
 
-import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -8,16 +7,16 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
@@ -30,13 +29,32 @@ import javax.swing.*;
  */
 public class BoundIconRenderer extends GutterIconRenderer {
   private PsiElement myElement;
+  private Icon myIcon;
 
   public BoundIconRenderer(final PsiElement field) {
     myElement = field;
+    if (myElement instanceof PsiField) {
+      final PsiType type = ((PsiField)myElement).getType();
+      if (type instanceof PsiClassType) {
+        PsiClass componentClass = ((PsiClassType)type).resolve();
+        if (componentClass != null) {
+          String qName = componentClass.getQualifiedName();
+          if (qName != null) {
+            final ComponentItem item = Palette.getInstance(myElement.getProject()).getItem(qName);
+            if (item != null) {
+              myIcon = item.getIcon();
+            }
+          }
+        }
+      }
+    }
   }
 
   @NotNull
   public Icon getIcon() {
+    if (myIcon != null) {
+      return myIcon;
+    }
     return Icons.UI_FORM_ICON;
   }
 
@@ -91,9 +109,9 @@ public class BoundIconRenderer extends GutterIconRenderer {
     return formFiles;
   }
 
-  private String composeText(final PsiFile[] formFiles) {
+  private static String composeText(final PsiFile[] formFiles) {
     @NonNls StringBuilder result = new StringBuilder("<html><body>");
-    result.append(DaemonBundle.message("ui.is.bound.header"));
+    result.append(UIDesignerBundle.message("ui.is.bound.header"));
     @NonNls String sep = "";
     for (PsiFile file: formFiles) {
       result.append(sep);
