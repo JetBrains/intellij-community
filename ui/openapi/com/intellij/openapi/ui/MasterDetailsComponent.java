@@ -172,7 +172,6 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     myTree.requestFocus();
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        TreeUtil.selectFirstNode(myTree);
         if (myLastEditedConfigurable == null) return;
         final Enumeration enumeration = myRoot.breadthFirstEnumeration();
         while (enumeration.hasMoreElements()) {
@@ -182,10 +181,11 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
             final Configurable configurable = (Configurable)userObject;
             if (Comparing.strEqual(configurable.getDisplayName(), myLastEditedConfigurable)) {
               TreeUtil.selectInTree(node, true, myTree);
-              break;
+              return;
             }
           }
         }
+        TreeUtil.selectFirstNode(myTree);
       }
     });
     //update tree size

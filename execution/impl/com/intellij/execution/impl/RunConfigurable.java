@@ -158,28 +158,28 @@ class RunConfigurable extends BaseConfigurable {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         myTree.requestFocusInWindow();
-        TreeUtil.selectFirstNode(myTree);
-        drawPressAddButtonMessage(null);
         final RunnerAndConfigurationSettings settings = manager.getSelectedConfiguration();
-        if (settings == null){
-          mySelectedConfigurable = null;
-          return;
-        }
-        final Enumeration enumeration = myRoot.breadthFirstEnumeration();
-        while (enumeration.hasMoreElements()){
-          final DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
-          final Object userObject = node.getUserObject();
-          if (userObject instanceof SingleConfigurationConfigurable) {
-            final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable = ((SingleConfigurationConfigurable<RunConfiguration>)userObject);
-            if (configurationConfigurable.getConfiguration().getType() == settings.getType() &&
-                Comparing.strEqual(configurationConfigurable.getConfiguration().getName(),
-                                   settings.getName())){
-              mySelectedConfigurable = configurationConfigurable;
-              TreeUtil.selectInTree(node, true, myTree);
-              break;
+        if (settings != null) {
+          final Enumeration enumeration = myRoot.breadthFirstEnumeration();
+          while (enumeration.hasMoreElements()){
+            final DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
+            final Object userObject = node.getUserObject();
+            if (userObject instanceof SingleConfigurationConfigurable) {
+              final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable = ((SingleConfigurationConfigurable<RunConfiguration>)userObject);
+              if (configurationConfigurable.getConfiguration().getType() == settings.getType() &&
+                  Comparing.strEqual(configurationConfigurable.getConfiguration().getName(),
+                                     settings.getName())){
+                mySelectedConfigurable = configurationConfigurable;
+                TreeUtil.selectInTree(node, true, myTree);
+                return;
+              }
             }
           }
+        } else {
+          mySelectedConfigurable = null;
         }
+        TreeUtil.selectFirstNode(myTree);
+        drawPressAddButtonMessage(null);
       }
     });
     sortTree(myRoot);
