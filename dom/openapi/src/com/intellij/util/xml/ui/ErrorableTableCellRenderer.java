@@ -32,10 +32,10 @@ import java.util.List;
 
 public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTableCellRenderer {
   private final TableCellRenderer myRenderer;
-  private final T myRowDomElement;
+  private final DomElement myRowDomElement;
   private T myCellValueDomElement;
 
-  public ErrorableTableCellRenderer(final T cellValueDomElement, final TableCellRenderer renderer, final T rowDomElement) {
+  public ErrorableTableCellRenderer(final T cellValueDomElement, final TableCellRenderer renderer, final DomElement rowDomElement) {
     myCellValueDomElement = cellValueDomElement;
     myRenderer = renderer;
     myRowDomElement = rowDomElement;

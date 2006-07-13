@@ -6,10 +6,11 @@ package com.intellij.util.xml.ui;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
-import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,8 +18,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -60,12 +59,19 @@ public class ComboControl extends BaseControl<JComboBox, String> {
   }
 
   public ComboControl(final GenericDomValue<?> reference) {
-    this(reference, new Factory<List<Pair<String, Icon>>>() {
-      public List<Pair<String, Icon>> create() {
+    this(reference, createResolvingFunction(reference));
+  }
+
+  public static Factory<List<Pair<String, Icon>>> createResolvingFunction(final GenericDomValue<?> reference) {
+    return createPresentationFunction(createVariantsGetter(reference));
+  }
+
+  public static Factory<Collection<? extends Object>> createVariantsGetter(final GenericDomValue<?> reference) {
+    return new Factory<Collection<? extends Object>>() {
+      public Collection<? extends Object> create() {
         final Converter converter = reference.getConverter();
         if (converter instanceof ResolvingConverter) {
-          final ResolvingConverter<?> resolvingConverter = (ResolvingConverter)converter;
-          return ContainerUtil.map(resolvingConverter.getVariants(new AbstractConvertContext() {
+          return ((ResolvingConverter)converter).getVariants(new AbstractConvertContext() {
             @NotNull
             public DomElement getInvocationElement() {
               return reference;
@@ -74,15 +80,26 @@ public class ComboControl extends BaseControl<JComboBox, String> {
             public PsiManager getPsiManager() {
               return getFile().getManager();
             }
-          }), new Function<Object, Pair<String, Icon>>() {
-            public Pair<String, Icon> fun(final Object s) {
-              return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
-            }
           });
+
         }
         return Collections.emptyList();
       }
-    });
+    };
+  }
+
+  public static Factory<List<Pair<String, Icon>>> createPresentationFunction(final Factory<Collection<? extends Object>> variantFactory) {
+    return new Factory<List<Pair<String, Icon>>>() {
+      public List<Pair<String, Icon>> create() {
+
+        return ContainerUtil.map(variantFactory.create(), new Function<Object, Pair<String, Icon>>() {
+          public Pair<String, Icon> fun(final Object s) {
+            return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
+          }
+        });
+
+      }
+    };
   }
 
   static Factory<List<Pair<String, Icon>>> createEnumFactory(final Class<? extends Enum> aClass) {

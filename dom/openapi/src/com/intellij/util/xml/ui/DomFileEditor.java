@@ -4,16 +4,27 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.codeHighlighting.HighlightingPass;
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.UserActivityWatcher;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomEventAdapter;
+import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.events.DomEvent;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -79,6 +90,42 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
     }
   }
 
+  public BackgroundEditorHighlighter getBackgroundHighlighter() {
+    return new BackgroundEditorHighlighter() {
+      public HighlightingPass[] createPassesForEditor() {
+        return ContainerUtil.map2Array(getDocuments(), HighlightingPass.class, new Function<Document, HighlightingPass>() {
+          public HighlightingPass fun(final Document document) {
+            return new TextEditorHighlightingPass(document) {
+              public void doCollectInformation(ProgressIndicator progress) {
+                final PsiFile file = getDocumentManager().getPsiFile(document);
+                if (file instanceof XmlFile) {
+                  final XmlFile xmlFile = (XmlFile)file;
+                  final DomFileElement<DomElement> element = DomManager.getDomManager(getProject()).getFileElement(xmlFile);
+                  if (element != null) {
+                    DomElementAnnotationsManager.getInstance(getProject()).getProblemHolder(element);
+                  }
+                }
+              }
+
+              public void doApplyInformationToEditor() {
+                reset();
+              }
+
+              public int getPassId() {
+                return Pass.ALL;
+              }
+            };
+          }
+        });
+      }
+
+      public HighlightingPass[] createPassesForVisibleArea() {
+        return createPassesForEditor();
+      }
+    };
+  }
+
+
   public boolean isValid() {
     return super.isValid() && myComponent.getDomElement().isValid();
   }
@@ -100,6 +147,7 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
       public JComponent getPreferredFocusedComponent() {
         return null;
       }
+
     };
   }
 

@@ -103,6 +103,7 @@ public class CaptionComponent extends JPanel implements Committable {
   }
 
   public void reset() {
+    if (myCommittableErrorPanel != null) myCommittableErrorPanel.reset();
   }
 
   public final void dispose() {

@@ -8,13 +8,11 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceFactory;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NonNls;
@@ -22,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
-import java.util.Collection;
 
 /**
  * @author peter
@@ -54,10 +51,6 @@ public abstract class DomManager implements ProjectComponent {
 
   @Nullable
   public abstract GenericAttributeValue getDomElement(final XmlAttribute element);
-
-  public abstract Collection<PsiElement> getPsiElements(DomElement element);
-
-  public abstract void registerPsiElementProvider(Function<DomElement, Collection<PsiElement>> provider, Disposable parentDisposable);
 
   public abstract <T extends DomElement> T createMockElement(Class<T> aClass, final Module module, final boolean physical);
 

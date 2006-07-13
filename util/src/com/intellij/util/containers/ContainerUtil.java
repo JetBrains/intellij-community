@@ -299,11 +299,11 @@ public class ContainerUtil {
     return (T)find(iterator, new FilteringIterator.InstanceOf<T>((Class<T>)aClass));
   }
 
-  public static <T,V> List<T> concat(V[] array, Function<V,Collection<T>> fun) {
+  public static <T,V> List<T> concat(V[] array, Function<V,Collection<? extends T>> fun) {
     return concat(Arrays.asList(array), fun);
   }
 
-  public static <T,V> List<T> concat(Iterable<V> list, Function<V,Collection<T>> fun) {
+  public static <T,V> List<T> concat(Iterable<V> list, Function<V,Collection<? extends T>> fun) {
     final ArrayList<T> result = new ArrayList<T>();
     for (final V v : list) {
       result.addAll(fun.fun(v));
@@ -384,4 +384,9 @@ public class ContainerUtil {
       }
     });
   }
+
+  public static <T> List<T> createMaybeSingletonList(@Nullable T element) {
+    return element == null ? Collections.<T>emptyList() : Arrays.asList(element);
+  }
+
 }

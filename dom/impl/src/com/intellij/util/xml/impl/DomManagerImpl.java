@@ -365,19 +365,6 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return handler != null ? (GenericAttributeValue)handler.getAttributeChild(attribute.getLocalName()).getProxy() : null;
   }
 
-  public final Collection<PsiElement> getPsiElements(final DomElement element) {
-    return ContainerUtil
-      .concat(myPsiElementProviders, new Function<Function<DomElement, Collection<PsiElement>>, Collection<PsiElement>>() {
-        public Collection<PsiElement> fun(final Function<DomElement, Collection<PsiElement>> s) {
-          return s.fun(element);
-        }
-      });
-  }
-
-  public void registerPsiElementProvider(final Function<DomElement, Collection<PsiElement>> provider, Disposable parentDisposable) {
-    ContainerUtil.add(provider, myPsiElementProviders, parentDisposable);
-  }
-
   @Nullable
   private DomInvocationHandler _getDomElement(final XmlTag tag) {
     if (tag == null) return null;

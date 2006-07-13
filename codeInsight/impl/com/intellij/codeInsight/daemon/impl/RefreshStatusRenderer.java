@@ -62,15 +62,23 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     status.noHighlightingRoots = noHighlightingRoots.isEmpty() ? null : noHighlightingRoots.toArray(new String[noHighlightingRoots.size()]);
     status.rootsNumber = roots.length;
 
-    if (myHighlighter.isErrorAnalyzingFinished(myFile)) {
+    if (isErrorAnalyzingFinished()) {
       status.errorAnalyzingFinished = true;
       for (int i = 0; i < status.errorCount.length; i++) {
         final HighlightSeverity minSeverity = SeverityRegistrar.getSeverityByIndex(i);
         status.errorCount[i] = getErrorsCount(minSeverity);
       }
-      status.inspectionFinished = myHighlighter.isInspectionCompleted(myFile);
+      status.inspectionFinished = isInspectionCompleted();
     }
     return status;
+  }
+
+  protected boolean isInspectionCompleted() {
+    return myHighlighter.isInspectionCompleted(myFile);
+  }
+
+  protected boolean isErrorAnalyzingFinished() {
+    return myHighlighter.isErrorAnalyzingFinished(myFile);
   }
 
   protected int getErrorsCount(final HighlightSeverity minSeverity) {

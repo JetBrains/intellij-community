@@ -41,4 +41,6 @@ public abstract class DomElementAnnotationsManager {
   public abstract List<DomElementProblemDescriptor> getAllProblems(final DomFileElement<?> fileElement, HighlightSeverity minSeverity);
 
   public abstract List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor);
+
+  public abstract boolean isHighlightingFinished(final DomElement[] domElements);
 }

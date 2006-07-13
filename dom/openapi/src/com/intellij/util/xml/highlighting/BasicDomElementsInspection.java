@@ -23,7 +23,7 @@ import java.util.Collection;
 public abstract class BasicDomElementsInspection extends DomElementsInspection {
   protected ProblemDescriptor[] findProblems(final PsiFile file, final InspectionManager manager, final boolean onTheFly) {
     List<ProblemDescriptor> problems =
-      ContainerUtil.concat(getHolder(file), new Function<DomElementProblemDescriptor, Collection<ProblemDescriptor>>() {
+      ContainerUtil.concat(getHolder(file), new Function<DomElementProblemDescriptor, Collection<? extends ProblemDescriptor>>() {
         public Collection<ProblemDescriptor> fun(final DomElementProblemDescriptor s) {
           return DomElementAnnotationsManager.getInstance(file.getProject()).createProblemDescriptors(manager, s);
         }

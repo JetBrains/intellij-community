@@ -33,7 +33,6 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
     this(name, description, new DefaultTableCellRenderer(), editor);
   }
 
-
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -66,7 +65,7 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
   }
 
   public DefaultTableCellRenderer getErroableCellRenderer(final TableCellRenderer renderer, final T domElement) {
-    return new ErrorableTableCellRenderer(getGenericValue(domElement), renderer, domElement);
+    return new ErrorableTableCellRenderer<GenericDomValue>(getGenericValue(domElement), renderer, domElement);
   }
 
   public void setValue(final T o, final String aValue) {

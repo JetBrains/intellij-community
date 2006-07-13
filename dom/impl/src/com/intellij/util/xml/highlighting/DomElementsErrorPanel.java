@@ -65,10 +65,14 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
     repaint();
     setToolTipText(myErrorStripeRenderer.getTooltipMessage());
 
-    if (!myErrorStripeRenderer.getDaemonCodeAnalyzerStatus().inspectionFinished) {
+    if (!isHighlightingFinished()) {
       addUpdateRequest();
     }
-  }          
+  }
+
+  private boolean isHighlightingFinished() {
+    return DomElementAnnotationsManager.getInstance(myDomElements[0].getManager().getProject()).isHighlightingFinished(myDomElements);
+  }
 
   private void addUpdateRequest() {
     myAlarm.addRequest(new Runnable() {
@@ -101,7 +105,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
   }
 
   public void reset() {
-
+    updatePanel();
   }
 
   protected static Dimension getDimension() {
@@ -127,9 +131,14 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
       return sum;
     }
 
-    public DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {
-      return super.getDaemonCodeAnalyzerStatus();
+    protected boolean isInspectionCompleted() {
+      return isHighlightingFinished();
     }
+
+    protected boolean isErrorAnalyzingFinished() {
+      return isHighlightingFinished();
+    }
+
   }
 
   // private static class MyRefreshStatusRenderer extends RefreshStatusRenderer {

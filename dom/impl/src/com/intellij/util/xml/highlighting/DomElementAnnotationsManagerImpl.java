@@ -127,6 +127,14 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     return DomElementsHighlightingUtil.createProblemDescriptors(manager, problemDescriptor);
   }
 
+  public boolean isHighlightingFinished(final DomElement[] domElements) {
+    for (final DomElement domElement : domElements) {
+      final DomElementsProblemsHolder holder = getCachedProblemHolder(domElement);
+      if (holder == EMPTY_PROBLEMS_HOLDER) return false;
+    }
+    return true;
+  }
+
   @NotNull
   @NonNls
   public String getComponentName() {
