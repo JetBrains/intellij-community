@@ -26,12 +26,13 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.awt.dnd.Autoscroll;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class Tree extends JTree {
+public class Tree extends JTree implements Autoscroll {
 
   public Tree() {
     patchTree();
@@ -77,6 +78,23 @@ public class Tree extends JTree {
     return null;
   }
 
+  private static final int AUTOSCROLL_MARGIN = 10;
+
+  public Insets getAutoscrollInsets() {
+    return new Insets(getLocation().y + AUTOSCROLL_MARGIN, 0, getParent().getHeight() - AUTOSCROLL_MARGIN, getWidth()-1);
+  }
+
+  public void autoscroll(Point p) {
+    int realrow = getClosestRowForLocation(p.x, p.y);
+    if (getLocation().y + p.y <= AUTOSCROLL_MARGIN) {
+      if (realrow >= 1) realrow--;
+    }
+    else {
+      if (realrow < getRowCount() - 1) realrow++;
+    }
+    scrollRowToVisible(realrow);
+  }
+
   private class MyMouseListener extends MouseAdapter {
     public void mousePressed(MouseEvent mouseevent) {
       if(!SwingUtilities.isLeftMouseButton(mouseevent)
@@ -86,8 +104,8 @@ public class Tree extends JTree {
           if (getSelectionModel().getSelectionMode() != TreeSelectionModel.SINGLE_TREE_SELECTION) {
             TreePath[] selectionPaths = getSelectionModel().getSelectionPaths();
             if (selectionPaths != null) {
-              for (int i = 0; i < selectionPaths.length; i++) {
-                if (selectionPaths[i] == treepath) return;
+              for (TreePath selectionPath : selectionPaths) {
+                if (selectionPath == treepath) return;
               }
             }
           }
