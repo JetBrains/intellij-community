@@ -1,0 +1,5 @@
+<project default="">
+  <target name="mytarget"/>
+  <target name="mytarget2"/>
+  <target name="mytarget3" depends="mytarget,mytarget<caret>"/>
+</project>

@@ -1,5 +1,5 @@
 <project default="">
   <property name="java.asasdasdg.asjdg" value="v"/>
 
-  <antcall target="${java.asa<caret>"/>
+  <antcall target="${java.asa<caret>}"/>
 </project>
