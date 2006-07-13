@@ -484,16 +484,24 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
         editors = new FileEditor[providers.length];
         for (int i = 0; i < providers.length; i++) {
-          final FileEditorProvider provider = providers[i];
-          LOG.assertTrue(provider != null);
-          LOG.assertTrue(provider.accept(myProject, file));
-          final FileEditor editor = provider.createEditor(myProject, file);
-          editors[i] = editor;
-          LOG.assertTrue(editor != null);
-          LOG.assertTrue(editor.isValid());
+          try {
+            final FileEditorProvider provider = providers[i];
+            LOG.assertTrue(provider != null);
+            LOG.assertTrue(provider.accept(myProject, file));
+            final FileEditor editor = provider.createEditor(myProject, file);
+            editors[i] = editor;
+            LOG.assertTrue(editor != null);
+            LOG.assertTrue(editor.isValid());
 
-          // Register PropertyChangeListener into editor
-          editor.addPropertyChangeListener(myEditorPropertyChangeListener);
+            // Register PropertyChangeListener into editor
+            editor.addPropertyChangeListener(myEditorPropertyChangeListener);
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
+          catch (AssertionError e) {
+            LOG.error(e);
+          }
         }
 
         // Now we have to create EditorComposite and insert it into the TabbedEditorComponent.
