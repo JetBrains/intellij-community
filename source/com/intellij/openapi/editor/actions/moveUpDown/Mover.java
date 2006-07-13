@@ -10,15 +10,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 abstract class Mover {
-  protected final boolean myIsDown;
-  @NotNull protected LineRange whatToMove;
-  protected int insertOffset;    // -1 means we cannot move, e.g method outside class
-  protected int myInsertStartAfterCutOffset;
-  protected int myInsertEndAfterCutOffset;
-  protected int myDeleteStartAfterMoveOffset;
+  protected final boolean isDown;
+  @NotNull protected LineRange toMove;
+  protected LineRange toMove2; // can be null if the move is illegal
+  protected RangeMarker range1;
+  protected RangeMarker range2;
 
   protected Mover(final boolean isDown) {
-    myIsDown = isDown;
+    this.isDown = isDown;
   }
 
   /**
@@ -34,22 +33,33 @@ abstract class Mover {
 
   }
 
-  public void move(Editor editor, final PsiFile file) {
+  public final void move(Editor editor, final PsiFile file) {
     beforeMove(editor);
-    final LineRange lineRange = whatToMove;
-    final int startLine = lineRange.startLine;
-    final int endLine = lineRange.endLine;
-
     final Document document = editor.getDocument();
-    final int start = editor.logicalPositionToOffset(new LogicalPosition(startLine, 0));
-    final int end = editor.logicalPositionToOffset(new LogicalPosition(endLine+1, 0));
-    String toInsert = document.getCharsSequence().subSequence(start, end).toString();
-    if (!StringUtil.endsWithChar(toInsert, '\n')) {
-      toInsert += '\n';
+    final int start = document.getLineStartOffset(toMove.startLine);
+    final int end = getLineStartSafeOffset(document, toMove.endLine);
+    range1 = document.createRangeMarker(start, end);
+
+    String textToInsert = document.getCharsSequence().subSequence(start, end).toString();
+    if (!StringUtil.endsWithChar(textToInsert,'\n')) textToInsert += '\n';
+
+    final int start2 = document.getLineStartOffset(toMove2.startLine);
+    final int end2 = getLineStartSafeOffset(document,toMove2.endLine);
+    String textToInsert2 = document.getCharsSequence().subSequence(start2, end2).toString();
+    if (!StringUtil.endsWithChar(textToInsert2,'\n')) textToInsert2 += '\n';
+    range2 = document.createRangeMarker(start2, end2);
+    if (range1.getStartOffset() < range2.getStartOffset()) {
+      range1.setGreedyToLeft(true);
+      range1.setGreedyToRight(false);
+      range2.setGreedyToLeft(true);
+      range2.setGreedyToRight(true);
     }
-    myInsertStartAfterCutOffset = myIsDown ? insertOffset - toInsert.length() : insertOffset;
-    myInsertEndAfterCutOffset = myInsertStartAfterCutOffset + toInsert.length();
-    myDeleteStartAfterMoveOffset = myIsDown ? start : start + toInsert.length();
+    else {
+      range2.setGreedyToLeft(true);
+      range2.setGreedyToRight(false);
+      range1.setGreedyToLeft(true);
+      range1.setGreedyToRight(true);
+    }
 
     final CaretModel caretModel = editor.getCaretModel();
     final int caretRelativePos = caretModel.getOffset() - start;
@@ -61,44 +71,47 @@ abstract class Mover {
     // to prevent flicker
     caretModel.moveToOffset(0);
 
-    document.deleteString(start, end);
-    document.insertString(myInsertStartAfterCutOffset, toInsert);
-    final Project project = editor.getProject();
+    document.insertString(range1.getStartOffset(), textToInsert2);
+    document.deleteString(range1.getStartOffset()+textToInsert2.length(), range1.getEndOffset());
+
+    document.insertString(range2.getStartOffset(), textToInsert);
+    document.deleteString(range2.getStartOffset()+textToInsert.length(), range2.getEndOffset());
+
+    final Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitDocument(document);
 
     if (hasSelection) {
-      restoreSelection(editor, selectionStart, selectionEnd, start, myInsertStartAfterCutOffset);
+      restoreSelection(editor, selectionStart, selectionEnd, start, range2.getStartOffset());
     }
 
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    final int line1 = editor.offsetToLogicalPosition(myInsertStartAfterCutOffset).line;
-    final int line2 = editor.offsetToLogicalPosition(myInsertEndAfterCutOffset).line;
-    caretModel.moveToOffset(myInsertStartAfterCutOffset + caretRelativePos);
+    final int line1 = editor.offsetToLogicalPosition(range2.getStartOffset()).line;
+    final int line2 = editor.offsetToLogicalPosition(range2.getEndOffset()).line;
+    caretModel.moveToOffset(range2.getStartOffset() + caretRelativePos);
 
     for (int line = line1; line <= line2; line++) {
       if (lineContainsNonSpaces(document, line)) {
         int lineStart = document.getLineStartOffset(line);
-        int oldLineLength = document.getLineEndOffset(line) - lineStart;
         codeStyleManager.adjustLineIndent(document, lineStart);
-        int newLineLength = document.getLineEndOffset(line) - lineStart;
-        myInsertEndAfterCutOffset += newLineLength - oldLineLength;
-        if (!myIsDown) {
-          myDeleteStartAfterMoveOffset += newLineLength - oldLineLength;
-        }
       }
     }
 
     afterMove(editor, file);
-    whatToMove.firstElement = null;
-    whatToMove.lastElement = null;
+    toMove.firstElement = null;
+    toMove.lastElement = null;
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  protected static int getLineStartSafeOffset(final Document document, int line) {
+    if (line == document.getLineCount()) return document.getTextLength();
+    return document.getLineStartOffset(line);
   }
 
   private static boolean lineContainsNonSpaces(final Document document, final int line) {
     int lineStartOffset = document.getLineStartOffset(line);
     int lineEndOffset = document.getLineEndOffset(line);
     @NonNls String text = document.getCharsSequence().subSequence(lineStartOffset, lineEndOffset).toString();
-    return !text.matches("^\\s*$");
+    return text.trim().length() != 0;
   }
 
   private static void restoreSelection(final Editor editor, final int selectionStart, final int selectionEnd, final int moveOffset, int insOffset) {
@@ -107,6 +120,4 @@ abstract class Mover {
     int newSelectionEnd = newSelectionStart + selectionEnd - selectionStart;
     editor.getSelectionModel().setSelection(newSelectionStart, newSelectionEnd);
   }
-
-
 }

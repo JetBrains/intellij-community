@@ -10,7 +10,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 
 public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
@@ -52,9 +51,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
   }
 
   public int getLineNumber(int offset) {
-    if (offset > myDocument.getTextLength()) {
-      LOG.assertTrue(false);
-    }
+    LOG.assertTrue (offset <= myDocument.getTextLength());
     return myDocument.getLineNumber(offset);
   }
 

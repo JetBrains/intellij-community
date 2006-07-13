@@ -23,22 +23,23 @@ class LineMover extends Mover {
     if (selectionModel.hasSelection()) {
       startLine = editor.offsetToLogicalPosition(selectionModel.getSelectionStart()).line;
       final LogicalPosition endPos = editor.offsetToLogicalPosition(selectionModel.getSelectionEnd());
-      endLine = endPos.column == 0 ? endPos.line - 1 : endPos.line;
+      endLine = endPos.column == 0 ? endPos.line : endPos.line+1;
       range = new LineRange(startLine, endLine);
     }
     else {
       startLine = editor.getCaretModel().getLogicalPosition().line;
-      endLine = startLine;
+      endLine = startLine+1;
       range = new LineRange(startLine, endLine);
     }
 
     final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
-    if (range.startLine <= 1 && !myIsDown) return false;
-    if (range.endLine >= maxLine - 1 && myIsDown) return false;
+    if (range.startLine <= 1 && !isDown) return false;
+    if (range.endLine >= maxLine && isDown) return false;
 
-    int nearLine = myIsDown ? range.endLine + 2 : range.startLine - 1;
-    whatToMove = range;
-    insertOffset = editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0));
+    toMove = range;
+    int nearLine = isDown ? range.endLine : range.startLine - 1;
+    toMove2 = new LineRange(nearLine, nearLine+1);
+    //insertOffset = editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0));
     return true;
   }
 
@@ -46,7 +47,7 @@ class LineMover extends Mover {
     final int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
     PsiElement startingElement = firstNonWhiteElement(startOffset, file, true);
     if (startingElement == null) return null;
-    final int endOffset = editor.logicalPositionToOffset(new LogicalPosition(range.endLine+1, 0)) -1;
+    final int endOffset = editor.logicalPositionToOffset(new LogicalPosition(range.endLine, 0)) -1;
 
     PsiElement endingElement = firstNonWhiteElement(endOffset, file, false);
     if (endingElement == null) return null;

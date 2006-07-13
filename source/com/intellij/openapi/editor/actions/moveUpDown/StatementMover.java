@@ -28,8 +28,9 @@ class StatementMover extends LineMover {
     if (statementToSurroundWithCodeBlock != null) {
       try {
         final Document document = PsiDocumentManager.getInstance(statementToSurroundWithCodeBlock.getProject()).getDocument(statementToSurroundWithCodeBlock.getContainingFile());
-        final int startOffset = document.getLineStartOffset(whatToMove.startLine);
-        final int endOffset = document.getLineEndOffset(whatToMove.endLine);
+        int startOffset = document.getLineStartOffset(toMove.startLine);
+        int endOffset = getLineStartSafeOffset(document, toMove.endLine);
+        if (document.getText().charAt(endOffset-1) == '\n') endOffset--;
         final RangeMarker lineRangeMarker = document.createRangeMarker(startOffset, endOffset);
 
         final PsiElementFactory factory = statementToSurroundWithCodeBlock.getManager().getElementFactory();
@@ -39,11 +40,17 @@ class StatementMover extends LineMover {
         blockStatement.getCodeBlock().replace(codeBlock);
         PsiBlockStatement newStatement = (PsiBlockStatement)statementToSurroundWithCodeBlock.replace(blockStatement);
         newStatement = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(newStatement);
-        whatToMove = new LineRange(document.getLineNumber(lineRangeMarker.getStartOffset()),
-                                   document.getLineNumber(lineRangeMarker.getEndOffset()));
+        toMove = new LineRange(document.getLineNumber(lineRangeMarker.getStartOffset()), document.getLineNumber(lineRangeMarker.getEndOffset())+1);
         PsiCodeBlock newCodeBlock = newStatement.getCodeBlock();
-        insertOffset = myIsDown ? newCodeBlock.getFirstBodyElement().getTextRange().getEndOffset() :
-                       newCodeBlock.getRBrace().getTextRange().getStartOffset();
+        if (isDown) {
+          PsiElement blockChild = firstNonWhiteElement(newCodeBlock.getFirstBodyElement(), true);
+          if (blockChild == null) blockChild = newCodeBlock.getRBrace();
+          toMove2 = new LineRange(document.getLineNumber(newCodeBlock.getParent().getTextRange().getStartOffset()),
+                                  document.getLineNumber(blockChild.getTextRange().getStartOffset()));
+        }
+        else {
+          toMove2 = new LineRange(newCodeBlock.getRBrace(), newCodeBlock.getRBrace(), document);
+        }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -55,40 +62,41 @@ class StatementMover extends LineMover {
     //if (!(file instanceof PsiJavaFile)) return false;
     final boolean available = super.checkAvailable(editor, file);
     if (!available) return false;
-    LineRange range = whatToMove;
+    LineRange range = toMove;
 
     range = expandLineRangeToCoverPsiElements(range, editor, file);
     if (range == null) return false;
     final int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
-    final int endOffset = editor.logicalPositionToOffset(new LogicalPosition(range.endLine+1, 0));
+    final int endOffset = editor.logicalPositionToOffset(new LogicalPosition(range.endLine, 0));
     final PsiElement[] statements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
     if (statements.length == 0) return false;
     range.firstElement = statements[0];
     range.lastElement = statements[statements.length-1];
 
     if (!checkMovingInsideOutside(file, editor, range)) {
-      insertOffset = -1;
+      toMove2 = null;
       return true;
     }
-    //calcInsertOffset(file, editor, range);
     return true;
   }
 
   private boolean calcInsertOffset(PsiFile file, final Editor editor, LineRange range) {
-    int line = myIsDown ? range.endLine + 2 : range.startLine - 1;
+    int line = isDown ? range.endLine+1 : range.startLine - 1;
+    int startLine = isDown ? range.endLine : range.startLine - 1;
     while (true) {
       final int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
       PsiElement element = firstNonWhiteElement(offset, file, true);
+
       while (element != null && !(element instanceof PsiFile)) {
         if (!element.getTextRange().grown(-1).shiftRight(1).contains(offset)) {
           PsiElement elementToSurround = null;
           boolean found = false;
           if ((element instanceof PsiStatement || element instanceof PsiComment || element instanceof OuterLanguageElement)
               && statementCanBePlacedAlong(element)) {
+            found = true;
             if (!(element.getParent() instanceof PsiCodeBlock)) {
               elementToSurround = element;
             }
-            found = true;
           }
           else if (element instanceof PsiJavaToken
                    && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE
@@ -104,14 +112,20 @@ class StatementMover extends LineMover {
           }
           if (found) {
             statementToSurroundWithCodeBlock = elementToSurround;
-            whatToMove = range;
-            insertOffset = offset;
+            toMove = range;
+            int endLine = line;
+            if (startLine > endLine) {
+              int tmp = endLine;
+              endLine = startLine;
+              startLine = tmp;
+            }
+            toMove2 = isDown ? new LineRange(startLine, endLine) : new LineRange(startLine, endLine+1);
             return true;
           }
         }
         element = element.getParent();
       }
-      line += myIsDown ? 1 : -1;
+      line += isDown ? 1 : -1;
       if (line == 0 || line >= editor.getDocument().getLineCount()) {
         return false;
       }
@@ -149,6 +163,7 @@ class StatementMover extends LineMover {
 
     // cannot move in/outside method/class/initializer/comment
     if (!calcInsertOffset(file, editor, result)) return false;
+    int insertOffset = isDown ? getLineStartSafeOffset(editor.getDocument(), toMove2.endLine) : editor.getDocument().getLineStartOffset(toMove2.startLine);
     PsiElement newGuard = file.getViewProvider().findElementAt(insertOffset, StdLanguages.JAVA);
     do {
       newGuard = PsiTreeUtil.getParentOfType(newGuard, PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiComment.class);
@@ -186,7 +201,8 @@ class StatementMover extends LineMover {
       endLine = editor.getDocument().getLineCount();
     }
     else {
-      endLine = editor.offsetToLogicalPosition(endOffset).line;
+      endLine = editor.offsetToLogicalPosition(endOffset).line+1;
+      endLine = Math.min(endLine, editor.getDocument().getLineCount());
     }
     int startLine = Math.min(range.startLine, editor.offsetToLogicalPosition(elementRange.getFirst().getTextOffset()).line);
     endLine = Math.max(endLine, range.endLine);

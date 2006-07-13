@@ -45,12 +45,12 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     PsiFile file = getRoot(psiFile, editor);
     if (file == null) return false;
     final Mover mover = getSuitableMover(editor, file);
-    if (mover == null || mover.insertOffset == -1) return false;
+    if (mover == null || mover.toMove2 == null) return false;
     final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
-    final LineRange range = mover.whatToMove;
+    final LineRange range = mover.toMove;
     if (range.startLine <= 1 && !isDown) return false;
     //
-    return range.endLine < maxLine - 1 || !isDown;
+    return range.endLine < maxLine || !isDown;
   }
 
   private static PsiFile getRoot(final PsiFile file, final Editor editor) {

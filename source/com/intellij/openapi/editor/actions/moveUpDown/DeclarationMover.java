@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.codeInsight.CodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +38,10 @@ class DeclarationMover extends LineMover {
       try {
         PsiElement inserted = myEnumToInsertSemicolonAfter.getParent().addAfter(semicolon.getPsi(), myEnumToInsertSemicolonAfter);
         inserted = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(inserted);
-        insertOffset = nextLineOffset(editor, inserted.getTextRange().getEndOffset());
+        final LogicalPosition position = editor.offsetToLogicalPosition(inserted.getTextRange().getEndOffset());
+
+        toMove2 = new LineRange(position.line+1, position.line+1);
+        //insertOffset = nextLineOffset(editor, inserted.getTextRange().getEndOffset());
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -50,14 +54,14 @@ class DeclarationMover extends LineMover {
 
   protected void afterMove(final Editor editor, final PsiFile file) {
     super.afterMove(editor, file);
-    final int line1 = editor.offsetToLogicalPosition(myInsertStartAfterCutOffset).line;
-    final int line2 = editor.offsetToLogicalPosition(myInsertEndAfterCutOffset).line;
+    final int line1 = editor.offsetToLogicalPosition(range2.getStartOffset()).line;
+    final int line2 = editor.offsetToLogicalPosition(range2.getEndOffset()).line;
     Document document = editor.getDocument();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
     documentManager.commitDocument(document);
     PsiWhiteSpace whiteSpace1 = findWhitespaceNear(document.getLineStartOffset(line1), file, false);
     PsiWhiteSpace whiteSpace2 = findWhitespaceNear(document.getLineStartOffset(line2), file, false);
-    PsiWhiteSpace whiteSpace = findWhitespaceNear(myDeleteStartAfterMoveOffset, file, false);
+    PsiWhiteSpace whiteSpace = findWhitespaceNear(isDown ? range1.getStartOffset() : range1.getEndOffset(), file, false);
     fixupWhiteSpace(whiteSpace1);
     fixupWhiteSpace(whiteSpace2);
 
@@ -90,7 +94,7 @@ class DeclarationMover extends LineMover {
     }
     boolean available = super.checkAvailable(editor, file);
     if (!available) return false;
-    LineRange oldRange = whatToMove;
+    LineRange oldRange = toMove;
     final Pair<PsiElement, PsiElement> psiRange = getElementRange(editor, file, oldRange);
     if (psiRange == null) return false;
 
@@ -119,49 +123,33 @@ class DeclarationMover extends LineMover {
       range.firstElement = combinedRange.getFirst();
       range.lastElement = combinedRange.getSecond();
     }
-    PsiElement nextWhitespace = range.lastElement.getNextSibling();
-    if (nextWhitespace instanceof PsiWhiteSpace) {
-      Document document = editor.getDocument();
-      int endLine;
-      for (endLine = editor.offsetToLogicalPosition(nextWhitespace.getTextRange().getEndOffset()).line;
-           endLine >= 0 && endLine != range.endLine;
-           endLine--) {
-        int lineStartOffset = document.getLineStartOffset(endLine);
-        int lineEndOffset = document.getLineEndOffset(endLine);
-        PsiElement elementAtStart = file.findElementAt(lineStartOffset);
-        PsiElement elementAtEnd = file.findElementAt(lineEndOffset - 1);
-        if (elementAtEnd == nextWhitespace && elementAtStart == nextWhitespace) break;
-      }
-      LineRange newRange = new LineRange(range.startLine, endLine);
-      newRange.firstElement = range.firstElement;
-      newRange.lastElement = nextWhitespace;
-      range = newRange;
-    }
+    Document document = editor.getDocument();
 
-
-    PsiElement sibling = myIsDown ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling();
+    PsiElement sibling = isDown ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling();
     if (sibling == null) return false;
+    sibling = firstNonWhiteElement(sibling, isDown);
     final boolean areWeMovingClass = range.firstElement instanceof PsiClass;
-    sibling = firstNonWhiteElement(sibling, myIsDown);
-    int offset = moveInsideOutsideClassOffset(editor, sibling, myIsDown, areWeMovingClass);
-    if (offset == ILLEGAL_MOVE) {
-      insertOffset = -1;
-      return true;
+    toMove = range;
+    try {
+      LineRange intraClassRange = moveInsideOutsideClassPosition(editor, sibling, isDown, areWeMovingClass);
+      if (intraClassRange == null) {
+        toMove2 = new LineRange(sibling, sibling, document);
+        if (isDown) {
+          if (sibling.getNextSibling() == null) return false;
+          //insertOffset = document.getLineStartOffset(document.getLineNumber(sibling.getTextRange().getEndOffset()) + 1);
+        }
+        else {
+          //insertOffset = sibling.getTextRange().getStartOffset();
+        }
+      }
+      else {
+        toMove2 = intraClassRange;
+      }
     }
-    if (offset != NOT_CROSSING_CLASS_BORDER) {
-      whatToMove = range;
-      insertOffset = offset;
-      return true;
+    catch (IllegalMoveException e) {
+      toMove2 = null;
+      //insertOffset = -1;
     }
-    if (myIsDown) {
-      sibling = sibling.getNextSibling();
-      if (sibling == null) return false;
-      sibling = firstNonWhiteElement(sibling, myIsDown);
-      if (sibling == null) return false;
-    }
-
-    whatToMove = range;
-    insertOffset = sibling.getTextRange().getStartOffset();
     return true;
   }
 
@@ -169,7 +157,7 @@ class DeclarationMover extends LineMover {
     final TextRange textRange = member.getTextRange();
     if (editor.getDocument().getTextLength() < textRange.getEndOffset()) return null;
     final int startLine = editor.offsetToLogicalPosition(textRange.getStartOffset()).line;
-    final int endLine = editor.offsetToLogicalPosition(textRange.getEndOffset()).line;
+    final int endLine = editor.offsetToLogicalPosition(textRange.getEndOffset()).line+1;
     if (!isInsideDeclaration(member, startLine, endLine, lineRange, editor)) return null;
 
     return new LineRange(startLine, endLine);
@@ -219,41 +207,52 @@ class DeclarationMover extends LineMover {
   private static final int ILLEGAL_MOVE = -1;
   private static final int NOT_CROSSING_CLASS_BORDER = -2;
 
-  private int moveInsideOutsideClassOffset(Editor editor, PsiElement sibling, final boolean isDown, boolean areWeMovingClass) {
-    if (sibling == null) return ILLEGAL_MOVE;
+  private static class IllegalMoveException extends Exception {
+  }
+
+  // null means we are not crossing class border
+  // throws IllegalMoveException when corresponding movement has no sense
+  @Nullable
+  private LineRange moveInsideOutsideClassPosition(Editor editor, PsiElement sibling, final boolean isDown, boolean areWeMovingClass) throws IllegalMoveException{
+    if (sibling == null) throw new IllegalMoveException();
     if (sibling instanceof PsiJavaToken &&
         ((PsiJavaToken)sibling).getTokenType() == (isDown ? JavaTokenType.RBRACE : JavaTokenType.LBRACE) &&
         sibling.getParent() instanceof PsiClass) {
       // moving outside class
       final PsiClass aClass = (PsiClass)sibling.getParent();
       final PsiElement parent = aClass.getParent();
-      if (!areWeMovingClass && !(parent instanceof PsiClass)) return ILLEGAL_MOVE;
-      if (aClass instanceof PsiAnonymousClass) return ILLEGAL_MOVE;
-      return isDown ? nextLineOffset(editor, aClass.getTextRange().getEndOffset()) : aClass.getTextRange().getStartOffset();
+      if (!areWeMovingClass && !(parent instanceof PsiClass)) throw new IllegalMoveException();
+      if (aClass instanceof PsiAnonymousClass) throw new IllegalMoveException();
+      return new LineRange(sibling, sibling, editor.getDocument());
+      //return isDown ? nextLineOffset(editor, aClass.getTextRange().getEndOffset()) : aClass.getTextRange().getStartOffset();
     }
     // trying to move up inside enum constant list, move outside of enum class instead
-    if (!isDown && sibling.getParent() instanceof PsiClass
+    if (!isDown
+        && sibling.getParent() instanceof PsiClass
         && (sibling instanceof PsiJavaToken && ((PsiJavaToken)sibling).getTokenType() == JavaTokenType.SEMICOLON || sibling instanceof PsiErrorElement)
         && firstNonWhiteElement(sibling.getPrevSibling(), false) instanceof PsiEnumConstant) {
-      final PsiClass aClass = (PsiClass)sibling.getParent();
-      return aClass.getTextRange().getStartOffset();
+      PsiClass aClass = (PsiClass)sibling.getParent();
+      Document document = editor.getDocument();
+      int startLine = document.getLineNumber(aClass.getTextRange().getStartOffset());
+      int endLine = document.getLineNumber(sibling.getTextRange().getEndOffset()) + 1;
+      return new LineRange(startLine, endLine);
     }
     if (sibling instanceof PsiClass) {
       // moving inside class
       PsiClass aClass = (PsiClass)sibling;
-      if (aClass instanceof PsiAnonymousClass) return ILLEGAL_MOVE;
+      if (aClass instanceof PsiAnonymousClass) throw new IllegalMoveException();
       return isDown
-             ? nextLineOffset(editor, aClass.isEnum() ? afterEnumConstantsPosition(aClass) : aClass.getLBrace().getTextOffset())
-             : aClass.getRBrace().getTextOffset();
+             ? new LineRange(aClass.getFirstChild(), aClass.isEnum() ? afterEnumConstantsPosition(aClass) : aClass.getLBrace(), editor.getDocument())
+             : new LineRange(aClass.getRBrace(), aClass.getRBrace(), editor.getDocument());
     }
     if (sibling instanceof JspTemplateDeclaration) {
       // there should be another scriptlet/decl to move
-      if (firstNonWhiteElement(myIsDown ? sibling.getNextSibling() : sibling.getPrevSibling(), myIsDown) == null) return ILLEGAL_MOVE;
+      if (firstNonWhiteElement(this.isDown ? sibling.getNextSibling() : sibling.getPrevSibling(), this.isDown) == null) throw new IllegalMoveException();
     }
-    return NOT_CROSSING_CLASS_BORDER;
+    return null;
   }
 
-  private int afterEnumConstantsPosition(final PsiClass aClass) {
+  private PsiElement afterEnumConstantsPosition(final PsiClass aClass) {
     PsiField[] fields = aClass.getFields();
     for (int i = fields.length-1;i>=0; i--) {
       PsiField field = fields[i];
@@ -263,11 +262,11 @@ class DeclarationMover extends LineMover {
           anchor = field;
           myEnumToInsertSemicolonAfter = (PsiEnumConstant)field;
         }
-        return anchor.getTextRange().getEndOffset();
+        return anchor;
       }
     }
     // no enum constants at all ?
-    return aClass.getLBrace().getTextOffset();
+    return aClass.getLBrace();
   }
 
   private static int nextLineOffset(Editor editor, final int offset) {
