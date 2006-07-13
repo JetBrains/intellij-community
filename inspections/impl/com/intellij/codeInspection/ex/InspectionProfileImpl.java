@@ -263,7 +263,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       HighlightDisplayKey key = HighlightDisplayKey.find(toolClassName);
       if (key == null) {
         if (tool instanceof LocalInspectionToolWrapper) {
-          key = HighlightDisplayKey.register(toolClassName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getShortName());
+          key = HighlightDisplayKey.register(toolClassName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID());
         } else {
           key = HighlightDisplayKey.register(toolClassName);
         }

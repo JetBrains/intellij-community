@@ -36,7 +36,7 @@ public interface HighlightInfoType {
   HighlightInfoType GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER = new HighlightInfoTypeImpl(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING, CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING);  
 
   HighlightInfoType UNUSED_SYMBOL = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME) == null ?
-                                                                       HighlightDisplayKey.register(UnusedSymbolLocalInspection.SHORT_NAME, UnusedSymbolLocalInspection.DISPLAY_NAME) : HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME),
+                                                                       HighlightDisplayKey.register(UnusedSymbolLocalInspection.SHORT_NAME, UnusedSymbolLocalInspection.DISPLAY_NAME, UnusedSymbolLocalInspection.ID) : HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME),
                                                                        CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
   HighlightInfoType UNUSED_IMPORT = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME) == null ?
                                                                        HighlightDisplayKey.register(UnusedImportLocalInspection.SHORT_NAME, UnusedImportLocalInspection.DISPLAY_NAME) : HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME), CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);

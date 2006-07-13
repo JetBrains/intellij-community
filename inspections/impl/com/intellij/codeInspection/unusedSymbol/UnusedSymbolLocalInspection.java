@@ -21,13 +21,13 @@ import java.awt.*;
 public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "UNUSED_SYMBOL";
   @NonNls public static final String DISPLAY_NAME = InspectionsBundle.message("unused.symbol");
+  @NonNls public static final String ID = "UnusedDeclaration";
 
   public boolean LOCAL_VARIABLE = true;
   public boolean FIELD = true;
   public boolean METHOD = true;
   public boolean CLASS = true;
   public boolean PARAMETER = true;
-
 
   public String getGroupDisplayName() {
     return "";
@@ -45,7 +45,7 @@ public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
 
   @NonNls
   public String getID() {
-    return "UnusedDeclaration";
+    return ID;
   }
 
   @Nullable
