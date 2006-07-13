@@ -17,12 +17,15 @@
     </buildFile>
   </component>
   <component name="BattleSpaces" />
+  <component name="BeliefRepository" />
   <component name="BuildJarProjectSettings">
     <option name="BUILD_JARS_ON_MAKE" value="false" />
   </component>
   <component name="CodeStyleProjectProfileManger">
     <option name="PROJECT_PROFILE" />
     <option name="USE_PROJECT_LEVEL_SETTINGS" value="false" />
+    <scopes />
+    <profiles />
   </component>
   <component name="CodeStyleSettingsManager">
     <option name="PER_PROJECT_SETTINGS">
@@ -60,7 +63,6 @@
       <entry name="?*.tld" />
     </wildcardResourcePatterns>
   </component>
-  <component name="CoverageDataManager" />
   <component name="CycleKillerQQC" />
   <component name="DataSourceManagerImpl" />
   <component name="DependenciesAnalyzeManager">
@@ -95,6 +97,266 @@
   <component name="InspectionProjectProfileManager">
     <option name="PROJECT_PROFILE" value="Project Default" />
     <option name="USE_PROJECT_LEVEL_SETTINGS" value="false" />
+    <scopes />
+    <profiles>
+      <profile version="1.0">
+        <option name="myName" value="Project Default" />
+        <option name="myLocal" value="false" />
+        <used_levels>
+          <info color="ffff">
+            <option name="myName" value="STYLE" />
+            <option name="myVal" value="100" />
+            <option name="myExternalName" value="STYLE" />
+            <option name="myDefaultAttributes">
+              <value>
+                <option name="FOREGROUND" />
+                <option name="BACKGROUND" value="ffff00" />
+                <option name="FONT_TYPE" value="0" />
+                <option name="EFFECT_COLOR" />
+                <option name="EFFECT_TYPE" value="0" />
+                <option name="ERROR_STRIPE_COLOR" value="ffff00" />
+              </value>
+            </option>
+          </info>
+          <error>
+            <option name="myName" value="ERROR" />
+            <option name="myVal" value="300" />
+          </error>
+          <warning>
+            <option name="myName" value="WARNING" />
+            <option name="myVal" value="200" />
+          </warning>
+          <information>
+            <option name="myName" value="INFO" />
+            <option name="myVal" value="100" />
+          </information>
+          <server>
+            <option name="myName" value="SERVER PROBLEM" />
+            <option name="myVal" value="100" />
+          </server>
+        </used_levels>
+        <inspection_tool class="IncompatibleMask" level="WARNING" enabled="false" />
+        <inspection_tool class="PointlessBitwiseExpression" level="WARNING" enabled="false">
+          <option name="m_ignoreExpressionsContainingConstants" value="false" />
+        </inspection_tool>
+        <inspection_tool class="ShiftOutOfRange" level="WARNING" enabled="false" />
+        <inspection_tool class="FieldCanBeLocal" level="WARNING" enabled="false" />
+        <inspection_tool class="FinalPrivateMethod" level="WARNING" enabled="false" />
+        <inspection_tool class="FinalStaticMethod" level="WARNING" enabled="false" />
+        <inspection_tool class="CloneCallsSuperClone" level="WARNING" enabled="false" />
+        <inspection_tool class="CloneDeclaresCloneNotSupported" level="WARNING" enabled="false" />
+        <inspection_tool class="ExtendsObject" level="WARNING" enabled="false" />
+        <inspection_tool class="TypeParameterExtendsObject" level="WARNING" enabled="false" />
+        <inspection_tool class="UnnecessarySemicolon" level="WARNING" enabled="false" />
+        <inspection_tool class="SimplifiableConditionalExpression" level="WARNING" enabled="false" />
+        <inspection_tool class="ConstantConditionalExpression" level="WARNING" enabled="false" />
+        <inspection_tool class="ConstantIfStatement" level="WARNING" enabled="false" />
+        <inspection_tool class="InfiniteLoopStatement" level="WARNING" enabled="false" />
+        <inspection_tool class="LoopStatementsThatDontLoop" level="WARNING" enabled="false" />
+        <inspection_tool class="PointlessBooleanExpression" level="WARNING" enabled="false">
+          <option name="m_ignoreExpressionsContainingConstants" value="false" />
+        </inspection_tool>
+        <inspection_tool class="TrivialIf" level="WARNING" enabled="false" />
+        <inspection_tool class="UnnecessaryConditionalExpression" level="WARNING" enabled="false" />
+        <inspection_tool class="UnnecessaryContinue" level="WARNING" enabled="false" />
+        <inspection_tool class="UnnecessaryReturn" level="WARNING" enabled="false" />
+        <inspection_tool class="UnnecessaryLabelOnBreakStatement" level="WARNING" enabled="false" />
+        <inspection_tool class="UnnecessaryLabelOnContinueStatement" level="WARNING" enabled="false" />
+        <inspection_tool class="UnusedLabel" level="WARNING" enabled="false" />
+        <inspection_tool class="CssNoGenericFontName" level="WARNING" enabled="false" />
+        <inspection_tool class="CssOverwrittenProperties" level="WARNING" enabled="false" />
+        <inspection_tool class="CssUnitlessNumber" level="WARNING" enabled="false" />
+        <inspection_tool class="UnnecessaryLocalVariable" level="WARNING" enabled="false">
+          <option name="m_ignoreImmediatelyReturnedVariables" value="false" />
+          <option name="m_ignoreAnnotatedVariables" value="false" />
+        </inspection_tool>
+        <inspection_tool class="SameParameterValue" level="WARNING" enabled="false" />
+        <inspection_tool class="WeakerAccess" level="WARNING" enabled="false">
+          <option name="SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS" value="true" />
+          <option name="SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES" value="true" />
+          <option name="SUGGEST_PRIVATE_FOR_INNERS" value="false" />
+        </inspection_tool>
+        <inspection_tool class="CanBeFinal" level="WARNING" enabled="false">
+          <option name="REPORT_CLASSES" value="true" />
+          <option name="REPORT_METHODS" value="true" />
+          <option name="REPORT_FIELDS" value="true" />
+        </inspection_tool>
+        <inspection_tool class="CanBeStatic" level="WARNING" enabled="false" />
+        <inspection_tool class="DuplicateThrows" level="WARNING" enabled="false" />
+        <inspection_tool class="EmptyMethod" level="WARNING" enabled="false" />
+        <inspection_tool class="SameReturnValue" level="WARNING" enabled="false" />
+        <inspection_tool class="RedundantThrows" level="WARNING" enabled="false" />
+        <inspection_tool class="UnusedParameters" level="WARNING" enabled="false" />
+        <inspection_tool class="UnusedReturnValue" level="WARNING" enabled="false" />
+        <inspection_tool class="Dom Model Inspection" level="ERROR" enabled="false" />
+        <inspection_tool class="ContinueOrBreakFromFinallyBlock" level="WARNING" enabled="false" />
+        <inspection_tool class="EmptyCatchBlock" level="WARNING" enabled="false">
+          <option name="m_includeComments" value="true" />
+          <option name="m_ignoreTestCases" value="true" />
+        </inspection_tool>
+        <inspection_tool class="EmptyFinallyBlock" level="WARNING" enabled="false" />
+        <inspection_tool class="EmptyTryBlock" level="WARNING" enabled="false" />
+        <inspection_tool class="FinallyBlockCannotCompleteNormally" level="WARNING" enabled="false" />
+        <inspection_tool class="ReturnFromFinallyBlock" level="WARNING" enabled="false" />
+        <inspection_tool class="ThrowFromFinallyBlock" level="WARNING" enabled="false" />
+        <inspection_tool class="UnhandledExceptionInJSP" level="WARNING" enabled="false" />
+        <inspection_tool class="Faces Model Inspection" level="ERROR" enabled="false" />
+        <inspection_tool class="NoExplicitFinalizeCalls" level="WARNING" enabled="false" />
+        <inspection_tool class="FinalizeCallsSuperFinalize" level="WARNING" enabled="false">
+          <option name="m_ignoreForObjectSubclasses" value="false" />
+        </inspection_tool>
+        <inspection_tool class="AccessStaticViaInstance" level="WARNING" enabled="false" />
+        <inspection_tool class="JavaDoc" level="WARNING" enabled="false">
+          <option name="TOP_LEVEL_CLASS_OPTIONS">
+            <value>
+              <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+              <option name="REQUIRED_TAGS" value="" />
+            </value>
+          </option>
+          <option name="INNER_CLASS_OPTIONS">
+            <value>
+              <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+              <option name="REQUIRED_TAGS" value="" />
+            </value>
+          </option>
+          <option name="METHOD_OPTIONS">
+            <value>
+              <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+              <option name="REQUIRED_TAGS" value="@return@param@throws or @exception" />
+            </value>
+          </option>
+          <option name="FIELD_OPTIONS">
+            <value>
+              <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+              <option name="REQUIRED_TAGS" value="" />
+            </value>
+          </option>
+          <option name="IGNORE_DEPRECATED" value="false" />
+          <option name="IGNORE_JAVADOC_PERIOD" value="true" />
+          <option name="myAdditionalJavadocTags" value="" />
+        </inspection_tool>
+        <inspection_tool class="JavadocReference" level="ERROR" enabled="false" />
+        <inspection_tool class="DefaultFileTemplate" level="WARNING" enabled="false">
+          <option name="CHECK_FILE_HEADER" value="true" />
+          <option name="CHECK_TRY_CATCH_SECTION" value="true" />
+          <option name="CHECK_METHOD_BODY" value="true" />
+        </inspection_tool>
+        <inspection_tool class="Deprecation" level="WARNING" enabled="false" />
+        <inspection_tool class="EqualsAndHashcode" level="WARNING" enabled="false" />
+        <inspection_tool class="Dependency" level="ERROR" enabled="false" />
+        <inspection_tool class="UNCHECKED_WARNING" level="WARNING" enabled="false" />
+        <inspection_tool class="UnusedDeclaration" level="WARNING" enabled="false">
+          <option name="LOCAL_VARIABLE" value="true" />
+          <option name="FIELD" value="true" />
+          <option name="METHOD" value="true" />
+          <option name="CLASS" value="true" />
+          <option name="PARAMETER" value="true" />
+        </inspection_tool>
+        <inspection_tool class="UNUSED_IMPORT" level="WARNING" enabled="false" />
+        <inspection_tool class="UNUSED_SYMBOL" level="WARNING" enabled="false" />
+        <inspection_tool class="SillyAssignment" level="WARNING" enabled="false" />
+        <inspection_tool class="WrongPackageStatement" level="WARNING" enabled="false" />
+        <inspection_tool class="HTML" level="WARNING" enabled="false">
+          <option name="myAdditionalHtmlTags" value="embed,nobr" />
+          <option name="myAdditionalHtmlAttributes" value="type,wmode,src,width,height" />
+          <option name="myCheckHtmlTags" value="true" />
+          <option name="myCheckHtmlAttributes" value="true" />
+        </inspection_tool>
+        <inspection_tool class="CheckImageSize" level="WARNING" enabled="false" />
+        <inspection_tool class="RequiredAttributes" level="WARNING" enabled="false">
+          <option name="myAdditionalRequiredHtmlAttributes" value="" />
+        </inspection_tool>
+        <inspection_tool class="ExtendsAnnotation" level="WARNING" enabled="false" />
+        <inspection_tool class="UnresolvedPropertyKey" level="ERROR" enabled="false" />
+        <inspection_tool class="SimplifiableIfStatement" level="WARNING" enabled="false" />
+        <inspection_tool class="ForCanBeForeach" level="WARNING" enabled="false" />
+        <inspection_tool class="UnnecessaryBoxing" level="WARNING" enabled="false" />
+        <inspection_tool class="UnnecessaryUnboxing" level="WARNING" enabled="false" />
+        <inspection_tool class="WhileCanBeForeach" level="WARNING" enabled="false" />
+        <inspection_tool class="EjbErrors" level="ERROR" enabled="false" />
+        <inspection_tool class="EjbWarnings" level="WARNING" enabled="false" />
+        <inspection_tool class="EjbDomInspection" level="ERROR" enabled="false" />
+        <inspection_tool class="PersistenceDomInspection" level="ERROR" enabled="false" />
+        <inspection_tool class="PersistenceModelErrorInspection" level="ERROR" enabled="false" />
+        <inspection_tool class="PersistenceModelWarningInspection" level="WARNING" enabled="false" />
+        <inspection_tool class="ReferencesToClassesFromDefaultPackagesInJSPFile" level="ERROR" enabled="false" />
+        <inspection_tool class="SelfIncludingJspFiles" level="ERROR" enabled="false" />
+        <inspection_tool class="JSUndeclaredVariable" level="INFO" enabled="false" />
+        <inspection_tool class="JSUnresolvedFunction" level="INFO" enabled="false" />
+        <inspection_tool class="JSUnresolvedVariable" level="INFO" enabled="false" />
+        <inspection_tool class="OctalLiteral" level="WARNING" enabled="false" />
+        <inspection_tool class="PointlessArithmeticExpression" level="WARNING" enabled="false">
+          <option name="m_ignoreExpressionsContainingConstants" value="false" />
+        </inspection_tool>
+        <inspection_tool class="BooleanConstructor" level="WARNING" enabled="false" />
+        <inspection_tool class="InstantiatingObjectToGetClassObject" level="WARNING" enabled="false" />
+        <inspection_tool class="ManualArrayCopy" level="WARNING" enabled="false" />
+        <inspection_tool class="StringToString" level="WARNING" enabled="false" />
+        <inspection_tool class="StringConstructor" level="WARNING" enabled="false">
+          <option name="ignoreSubstringArguments" value="false" />
+        </inspection_tool>
+        <inspection_tool class="StringConcatenationInsideStringBufferAppend" level="WARNING" enabled="false" />
+        <inspection_tool class="UnnecessaryTemporaryOnConversionFromString" level="WARNING" enabled="false" />
+        <inspection_tool class="UnnecessaryTemporaryOnConversionToString" level="WARNING" enabled="false" />
+        <inspection_tool class="ComponentRegistrationProblems" level="ERROR" enabled="false">
+          <option name="CHECK_PLUGIN_XML" value="true" />
+          <option name="CHECK_JAVA_CODE" value="true" />
+          <option name="CHECK_ACTIONS" value="true" />
+        </inspection_tool>
+        <inspection_tool class="ComponentNotRegistered" level="WARNING" enabled="false">
+          <option name="CHECK_ACTIONS" value="true" />
+          <option name="IGNORE_NON_PUBLIC" value="true" />
+        </inspection_tool>
+        <inspection_tool class="NullArgumentToVariableArgMethod" level="WARNING" enabled="false" />
+        <inspection_tool class="PrimitiveArrayArgumentToVariableArgMethod" level="WARNING" enabled="false" />
+        <inspection_tool class="ConstantConditions" level="WARNING" enabled="false">
+          <option name="SUGGEST_NULLABLE_ANNOTATIONS" value="false" />
+        </inspection_tool>
+        <inspection_tool class="InfiniteRecursion" level="WARNING" enabled="false" />
+        <inspection_tool class="MalformedFormatString" level="WARNING" enabled="false" />
+        <inspection_tool class="MalformedRegex" level="WARNING" enabled="false" />
+        <inspection_tool class="MalformedXPath" level="WARNING" enabled="false" />
+        <inspection_tool class="MismatchedCollectionQueryUpdate" level="WARNING" enabled="false" />
+        <inspection_tool class="MismatchedArrayReadWrite" level="WARNING" enabled="false" />
+        <inspection_tool class="NullableProblems" level="WARNING" enabled="false">
+          <option name="REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL" value="true" />
+          <option name="REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL" value="true" />
+          <option name="REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE" value="true" />
+          <option name="REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL" value="true" />
+        </inspection_tool>
+        <inspection_tool class="ObjectEqualsNull" level="WARNING" enabled="false" />
+        <inspection_tool class="ReflectionForUnavailableAnnotation" level="WARNING" enabled="false" />
+        <inspection_tool class="IgnoreResultOfCall" level="WARNING" enabled="false">
+          <option name="m_reportAllNonLibraryCalls" value="false" />
+          <option name="callCheckString" value="java.io.InputStream,read,java.io.InputStream,skip,java.lang.StringBuffer,toString,java.lang.StringBuilder,toString,java.lang.String,.*,java.math.BigInteger,.*,java.math.BigDecimal,.*,java.net.InetAddress,.*" />
+        </inspection_tool>
+        <inspection_tool class="EmptyStatementBody" level="WARNING" enabled="false">
+          <option name="m_reportEmptyBlocks" value="false" />
+        </inspection_tool>
+        <inspection_tool class="StringEquality" level="WARNING" enabled="false" />
+        <inspection_tool class="SuspiciousMethodCalls" level="WARNING" enabled="false" />
+        <inspection_tool class="SuspiciousNameCombination" level="WARNING" enabled="false" />
+        <inspection_tool class="UnusedAssignment" level="WARNING" enabled="false">
+          <option name="REPORT_PREFIX_EXPRESSIONS" value="false" />
+          <option name="REPORT_POSTFIX_EXPRESSIONS" value="true" />
+          <option name="REPORT_REDUNDANT_INITIALIZER" value="true" />
+        </inspection_tool>
+        <inspection_tool class="UnusedMessageFormatParameter" level="WARNING" enabled="false" />
+        <inspection_tool class="SynchronizeOnNonFinalField" level="WARNING" enabled="false" />
+        <inspection_tool class="BoundFieldAssignment" level="WARNING" enabled="false" />
+        <inspection_tool class="OneButtonGroup" level="WARNING" enabled="false" />
+        <inspection_tool class="DuplicateMnemonic" level="WARNING" enabled="false" />
+        <inspection_tool class="MissingMnemonic" level="WARNING" enabled="false" />
+        <inspection_tool class="NoLabelFor" level="WARNING" enabled="false" />
+        <inspection_tool class="NoButtonGroup" level="WARNING" enabled="false" />
+        <inspection_tool class="NoScrollPane" level="WARNING" enabled="false" />
+        <inspection_tool class="RedundantArrayCreation" level="WARNING" enabled="false" />
+        <inspection_tool class="RedundantTypeArguments" level="WARNING" enabled="false" />
+        <inspection_tool class="RedundantCast" level="WARNING" enabled="false" />
+        <inspection_tool class="IgnoredMethodReturn" level="WARNING" enabled="true" />
+        <inspection_tool class="MismatchedGetterAndField" level="WARNING" enabled="true" />
+      </profile>
+    </profiles>
   </component>
   <component name="JavacSettings">
     <option name="DEBUGGING_INFO" value="true" />
@@ -117,6 +379,7 @@
     <option name="OPTION_DEPRECATED_LIST" value="true" />
     <option name="OTHER_OPTIONS" value="" />
     <option name="HEAP_SIZE" />
+    <option name="LOCALE" />
     <option name="OPEN_IN_BROWSER" value="true" />
   </component>
   <component name="JikesSettings">
@@ -144,7 +407,7 @@
       <item class="javax.swing.JPanel" icon="/com/intellij/uiDesigner/icons/panel.png" removable="false" auto-create-binding="false" can-attach-label="false">
         <default-constraints vsize-policy="3" hsize-policy="3" anchor="0" fill="3" />
       </item>
-      <item class="javax.swing.JScrollPane" icon="/com/intellij/uiDesigner/icons/scrollPane.png" removable="false" auto-create-binding="false" can-attach-label="false">
+      <item class="javax.swing.JScrollPane" icon="/com/intellij/uiDesigner/icons/scrollPane.png" removable="false" auto-create-binding="false" can-attach-label="true">
         <default-constraints vsize-policy="7" hsize-policy="7" anchor="0" fill="3" />
       </item>
       <item class="javax.swing.JButton" icon="/com/intellij/uiDesigner/icons/button.png" removable="false" auto-create-binding="true" can-attach-label="false">
@@ -259,7 +522,7 @@
       <module fileurl="file://$PROJECT_DIR$/InspectionGadgets.iml" filepath="$PROJECT_DIR$/InspectionGadgets.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 3144" />
+  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 5350" project-jdk-type="IDEA JDK" />
   <component name="ProjectRunConfigurationManager" />
   <component name="RmicSettings">
     <option name="IS_EANABLED" value="false" />
@@ -268,6 +531,8 @@
     <option name="GENERATE_IIOP_STUBS" value="false" />
     <option name="ADDITIONAL_OPTIONS_STRING" value="" />
   </component>
+  <component name="StarteamVcsAdapter" />
+  <component name="VssVcs" />
   <component name="com.sixrr.metrics.MetricsReloaded">
     <option name="selectedProfile" value="Default" />
     <option name="autoscroll" value="false" />
@@ -288,7 +553,6 @@
   <component name="uidesigner-configuration">
     <option name="INSTRUMENT_CLASSES" value="true" />
     <option name="COPY_FORMS_RUNTIME_TO_OUTPUT" value="true" />
-    <option name="IRIDA_LAYOUT_MODE" value="false" />
     <option name="DEFAULT_LAYOUT_MANAGER" value="GridLayoutManager" />
   </component>
   <UsedPathMacros />
