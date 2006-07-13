@@ -27,7 +27,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.OpenSourceUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,8 +59,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NonNls private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION";
   private final Action[] myExecutorActions;
 
-  private static void commit(Project project, List<LocalChangeList> list, final List<Change> changes, final List<CommitExecutor> executors) {
-    new CommitChangeListDialog(project, list, changes, executors).show();
+  private static void commit(Project project, List<LocalChangeList> list, final List<Change> changes, final ChangeList initialSelection,
+                             final List<CommitExecutor> executors) {
+    new CommitChangeListDialog(project, list, changes, initialSelection, executors).show();
   }
 
   public static void commitPaths(final Project project, Collection<FilePath> paths) {
@@ -71,7 +71,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       changes.addAll(manager.getChangesIn(path));
     }
 
-    commitChanges(project, changes, manager.getRegisteredExecutors());
+    commitChanges(project, changes, null, manager.getRegisteredExecutors());
   }
 
   /*
@@ -93,7 +93,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
   */
 
-  public static void commitChanges(final Project project, final Collection<Change> changes, final List<CommitExecutor> executors) {
+  public static void commitChanges(final Project project, final Collection<Change> changes, final ChangeList initialSelection,
+                                   final List<CommitExecutor> executors) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
 
     if (changes.isEmpty()) {
@@ -102,18 +103,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       return;
     }
 
-    Set<LocalChangeList> lists = new THashSet<LocalChangeList>();
-    for (Change change : changes) {
-      lists.add(manager.getChangeList(change));
-    }
-
-    commit(project, new ArrayList<LocalChangeList>(lists), new ArrayList<Change>(changes), executors);
-
+    commit(project, new ArrayList<LocalChangeList>(manager.getChangeLists()), new ArrayList<Change>(changes), initialSelection, executors);
   }
 
   private CommitChangeListDialog(final Project project,
                                  List<LocalChangeList> changeLists,
                                  final List<Change> changes,
+                                 final ChangeList initialSelection,
                                  final List<CommitExecutor> executors) {
     super(project, true);
     myProject = project;
@@ -123,7 +119,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     LocalChangeList defaultList = ChangeListManager.getInstance(project).getDefaultChangeList();
     myAllOfDefaultChangeListChangesIncluded = changes.containsAll(defaultList.getChanges());
 
-    myBrowser = new ChangesBrowser(project, changeLists, changes, CommitMessage.getToolbarActions(), true, true);
+    myBrowser = new ChangesBrowser(project, changeLists, changes, initialSelection, CommitMessage.getToolbarActions(), true, true);
     myBrowser.addSelectedListChangeListener(new ChangesBrowser.SelectedListChangeListener() {
       public void selectedListChanged() {
         updateComment();

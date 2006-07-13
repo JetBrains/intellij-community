@@ -74,7 +74,7 @@ public class CommittedChangesBrowser extends JPanel {
     JSplitPane splitter = new JSplitPane();
     splitter.setLeftComponent(changesPanel);
 
-    myChangesView = new ChangesBrowser(project, changeLists, Collections.<Change>emptyList(), null, false, false);
+    myChangesView = new ChangesBrowser(project, changeLists, Collections.<Change>emptyList(), null, null, false, false);
     splitter.setRightComponent(myChangesView);
 
     myChangeListsView.getSelectionModel().addListSelectionListener(new ListSelectionListener() {

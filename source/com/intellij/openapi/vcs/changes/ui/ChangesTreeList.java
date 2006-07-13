@@ -226,7 +226,7 @@ public class ChangesTreeList extends JPanel {
           while (enumeration.hasMoreElements()) {
             ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
             final NodeState state = getNodeStatus(node);
-            if (state == NodeState.CLEAR) {
+            if (node != root && state == NodeState.CLEAR) {
               myTree.collapsePath(new TreePath(node.getPath()));
             }
           }

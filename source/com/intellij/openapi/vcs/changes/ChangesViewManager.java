@@ -444,7 +444,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
       final ChangeList list = getChangeListIfOnlyOne(changes);
       if (list == null) return;
 
-      CommitChangeListDialog.commitChanges(myProject, Arrays.asList(changes),
+      CommitChangeListDialog.commitChanges(myProject, Arrays.asList(changes), list, 
                                            ChangeListManager.getInstance(myProject).getRegisteredExecutors());
     }
   }

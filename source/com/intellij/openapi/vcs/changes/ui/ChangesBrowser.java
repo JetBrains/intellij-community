@@ -57,7 +57,9 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
   public ChangesBrowser(final Project project, List<? extends ChangeList> changeLists, final List<Change> changes,
-                        final @Nullable ActionGroup additionalToolbarActions, final boolean showChangelistChooser,
+                        ChangeList initialListSelection,
+                        final @Nullable ActionGroup additionalToolbarActions,
+                        final boolean showChangelistChooser,
                         final boolean capableOfExcludingChanges) {
     super(new BorderLayout());
 
@@ -66,16 +68,15 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     myAllChanges = new ArrayList<Change>();
     myReadOnly = !showChangelistChooser;
 
-    ChangeList initalListSelection = null;
     for (ChangeList list : changeLists) {
       myAllChanges.addAll(list.getChanges());
-      if (list instanceof LocalChangeList && ((LocalChangeList)list).isDefault()) {
-        initalListSelection = list;
+      if (list instanceof LocalChangeList && ((LocalChangeList)list).isDefault() && initialListSelection == null) {
+        initialListSelection = list;
       }
     }
 
-    if (initalListSelection == null) {
-      initalListSelection = changeLists.get(0);
+    if (initialListSelection == null) {
+      initialListSelection = changeLists.get(0);
     }
 
     myViewer = new ChangesTreeList(myProject, changes, capableOfExcludingChanges);
@@ -85,7 +86,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
       }
     });
 
-    setSelectedList(initalListSelection);
+    setSelectedList(initialListSelection);
 
     JPanel listPanel = new JPanel(new BorderLayout());
     listPanel.add(myViewer);
