@@ -53,7 +53,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlitin
   public TextEditorHighlightingPass[] modifyHighlightingPasses(final List<TextEditorHighlightingPass> passes,
                                                                final PsiFile psiFile,
                                                                final Editor editor) {
-    if (myRegisteredPasses == null){
+    if (myRegisteredPasses == null || psiFile == null){ //do nothing with non-project files
       return passes.toArray(new TextEditorHighlightingPass[passes.size()]);
     }
     List<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(passes);
