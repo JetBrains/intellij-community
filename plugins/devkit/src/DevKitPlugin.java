@@ -15,21 +15,21 @@
  */
 package org.jetbrains.idea.devkit;
 
+import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.module.ModuleTypeManager;
-import com.intellij.codeInspection.InspectionToolProvider;
-import org.jetbrains.idea.devkit.module.PluginModuleType;
-import org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection;
+import org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 public class DevKitPlugin implements ApplicationComponent, InspectionToolProvider {
-  private ModuleTypeManager myModuleTypeManager;
 
   public DevKitPlugin(ModuleTypeManager moduleTypeManager) {
-    myModuleTypeManager = moduleTypeManager;
-    myModuleTypeManager.registerModuleType(PluginModuleType.getInstance());
+    moduleTypeManager.registerModuleType(PluginModuleType.getInstance(), true);
   }
 
+  @NotNull
   public String getComponentName() {
     return "DevKit.Plugin";
   }
