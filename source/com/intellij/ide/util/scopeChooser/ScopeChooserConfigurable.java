@@ -6,10 +6,9 @@ package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -31,12 +30,16 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -81,6 +84,13 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
         return false;
       }
     }));
+    result.add(new MyCopyAction());
+    result.add(new MyMoveAction(ExecutionBundle.message("move.up.action.name"),
+                                IconLoader.getIcon("/actions/moveUp.png"),
+                                -1));
+    result.add(new MyMoveAction(ExecutionBundle.message("move.down.action.name"),
+                                IconLoader.getIcon("/actions/moveDown.png"),
+                                1));
     return result;
   }
 
@@ -118,10 +128,12 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private static boolean isScopesModified(NamedScopesHolder holder, MyNode root) {
+    final NamedScope[] scopes = holder.getEditableScopes();
+    if (scopes.length != root.getChildCount()) return true;
     for (int i = 0; i < root.getChildCount(); i++) {
       final MyNode node = (MyNode)root.getChildAt(i);
       final NamedScope namedScope = (NamedScope)node.getConfigurable().getEditableObject();
-      final NamedScope scope = holder.getScope(namedScope.getName());
+      final NamedScope scope = scopes[i];
       if (scope == null) return true;
       final PackageSet set = scope.getValue();
       final PackageSet packageSet = namedScope.getValue();
@@ -254,6 +266,12 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
   }
 
+  private void addNewScope(final NamedScope scope, final NamedScopesHolder holder, final Icon icon, final MyNode root) {
+    final MyNode nodeToAdd = new MyNode(new ScopeConfigurable(scope, myProject, holder, icon), true);
+    root.add(nodeToAdd);
+    ((DefaultTreeModel)myTree.getModel()).reload(root);
+    selectNodeInTree(nodeToAdd);
+  }
 
 
   private class MyAddAction extends AnAction {
@@ -312,10 +330,65 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       });
       if (newName != null) {
         final NamedScope scope = new NamedScope(newName, null);
-        final MyNode nodeToAdd = new MyNode(new ScopeConfigurable(scope, myProject, holder, icon), true);
-        addNode(nodeToAdd, root);
-        selectNodeInTree(nodeToAdd);
+        addNewScope(scope, holder, icon, root);
+      }
+    }
+
+  }
+
+
+  private class MyMoveAction extends AnAction {
+    private int myDirection;
+
+    protected MyMoveAction(String text, Icon icon, int direction) {
+      super(text, text, icon);
+      myDirection = direction;
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      TreeUtil.moveSelectedRow(myTree, myDirection);
+    }
+
+    public void update(final AnActionEvent e) {
+      final Presentation presentation = e.getPresentation();
+      presentation.setEnabled(false);
+      final TreePath selectionPath = myTree.getSelectionPath();
+      if (selectionPath != null){
+        final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+        if (treeNode.getUserObject() instanceof ScopeConfigurable){
+          if (myDirection < 0){
+            presentation.setEnabled(treeNode.getPreviousSibling() != null);
+          } else {
+            presentation.setEnabled(treeNode.getNextSibling() != null);
+          }
+        }
       }
     }
   }
+
+  private class MyCopyAction extends AnAction {
+
+      public MyCopyAction() {
+        super(ExecutionBundle.message("copy.configuration.action.name"),
+              ExecutionBundle.message("copy.configuration.action.name"),
+              COPY_ICON);
+        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK)), myTree);
+      }
+
+      public void actionPerformed(AnActionEvent e) {
+        NamedScope scope = (NamedScope)getSelectedObject();
+        if (scope != null) {
+          MyNode parent = (MyNode)((DefaultMutableTreeNode)myTree.getSelectionPath().getLastPathComponent()).getParent();
+          final Icon icon = parent.getConfigurable().getIcon();
+          final NamedScopesHolder holder = (NamedScopesHolder)parent.getConfigurable().getEditableObject();
+          final NamedScope newScope = scope.createCopy();
+          addNewScope(newScope, holder, icon, parent);
+        }
+      }
+
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(getSelectedObject() instanceof NamedScope);
+      }
+    }
+
 }

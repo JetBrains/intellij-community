@@ -18,6 +18,7 @@ package com.intellij.util.ui.tree;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -110,7 +111,7 @@ public final class TreeUtil {
   /**
    * Expands specified paths.
    * @param tree JTree to apply expansion status to
-   * @param paths to expand. See {@link #collectExpandedPaths(javax.swing.JTree, java.util.List<javax.swing.tree.TreePath>)}
+   * @param paths to expand. See {@link #collectExpandedPaths(JTree, List<TreePath>)}
    */
   public static void restoreExpandedPaths(final JTree tree, final List<TreePath> paths){
     LOG.assertTrue(tree != null);
@@ -167,6 +168,7 @@ public final class TreeUtil {
     return new TreePath(path.toArray());
   }
 
+  @Nullable
   public static TreeNode findNodeWithObject(final Object object, final TreeModel model, final Object parent) {
     for (int i = 0; i < model.getChildCount(parent); i++) {
       final DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) model.getChild(parent, i);
@@ -194,6 +196,7 @@ public final class TreeUtil {
     removeLastPathComponent((DefaultTreeModel)tree.getModel(), pathToBeRemoved).restoreSelection(tree);
   }
 
+  @Nullable
   public static DefaultMutableTreeNode findNodeWithObject(final DefaultMutableTreeNode aRoot, final Object aObject) {
     if (aRoot.getUserObject().equals(aObject)) {
       return aRoot;
@@ -508,6 +511,17 @@ public final class TreeUtil {
 
   public static void selectNode(final JTree tree, final TreeNode node) {
     selectPath(tree, getPathFromRoot(node));
+  }
+
+  public static void moveSelectedRow(final JTree tree, final int direction){
+    final TreePath selectionPath = tree.getSelectionPath();
+    final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+    final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)treeNode.getParent();
+    final int idx = parent.getIndex(treeNode);
+    parent.remove(treeNode);
+    parent.insert(treeNode, idx + direction);
+    ((DefaultTreeModel)tree.getModel()).reload(parent);
+    TreeUtil.selectNode(tree, treeNode);
   }
 
   public static ArrayList<TreeNode> childrenToArray(final TreeNode node) {

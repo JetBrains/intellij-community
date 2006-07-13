@@ -33,6 +33,6 @@ public class NamedScope {
   }
 
   public NamedScope createCopy() {
-    return new NamedScope(myName, myValue.createCopy());
+    return new NamedScope(myName, myValue != null ? myValue.createCopy() : null);
   }
 }

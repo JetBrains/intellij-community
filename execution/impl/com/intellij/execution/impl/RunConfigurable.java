@@ -807,14 +807,7 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      final TreePath selectionPath = myTree.getSelectionPath();
-      final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-      final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)treeNode.getParent();
-      final int idx = parent.getIndex(treeNode);
-      parent.remove(treeNode);
-      parent.insert(treeNode, idx + myDirection);
-      ((DefaultTreeModel)myTree.getModel()).reload(parent);
-      TreeUtil.selectNode(myTree, treeNode);
+      TreeUtil.moveSelectedRow(myTree, myDirection);
     }
 
     public void update(final AnActionEvent e) {
