@@ -36,14 +36,14 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.module.UnknownModuleType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
 
 public class ModuleTypeManagerImpl extends ModuleTypeManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleTypeManagerImpl");
 
-  private List<ModuleType> myModuleTypes = new ArrayList<ModuleType>();
+  private LinkedHashMap<ModuleType, Boolean> myModuleTypes = new LinkedHashMap<ModuleType, Boolean>();
   @NonNls private static final String JAVA_MODULE_ID_OLD = "JAVA";
 
   public ModuleTypeManagerImpl() {
@@ -51,24 +51,28 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   public void registerModuleType(ModuleType type) {
-    for (ModuleType oldType : myModuleTypes) {
+    registerModuleType(type, false);
+  }
+
+  public void registerModuleType(ModuleType type, boolean classpathProvider) {
+    for (ModuleType oldType : myModuleTypes.keySet()) {
       if (oldType.getId().equals(type.getId())) {
         LOG.error("Trying to register a module type that claunches with existing one. Old=" + oldType + ", new = " + type);
         return;
       }
     }
-    myModuleTypes.add(type);
+    myModuleTypes.put(type, classpathProvider);
   }
 
   public ModuleType[] getRegisteredTypes() {
-    return myModuleTypes.toArray(new ModuleType[myModuleTypes.size()]);
+    return myModuleTypes.keySet().toArray(new ModuleType[myModuleTypes.size()]);
   }
 
   public ModuleType findByID(String moduleTypeID) {
     if (JAVA_MODULE_ID_OLD.equals(moduleTypeID)) {
       return ModuleType.JAVA; // for compatibility with the previous ID that Java modules had
     }
-    for (ModuleType type : myModuleTypes) {
+    for (ModuleType type : myModuleTypes.keySet()) {
       if (type.getId().equals(moduleTypeID)) {
         return type;
       }
@@ -77,6 +81,12 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
     return new UnknownModuleType(moduleTypeID);
   }
 
+  public boolean isClasspathProvider(final ModuleType moduleType) {
+    final Boolean provider = myModuleTypes.get(moduleType);
+    return provider != null && provider.booleanValue();
+  }
+
+  @NotNull
   public String getComponentName() {
     return "ModuleTypeManager";
   }
@@ -85,7 +95,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   private void registerDefaultTypes() {
-    registerModuleType(ModuleType.JAVA);
+    registerModuleType(ModuleType.JAVA, true);
   }
 
   public void disposeComponent() {

@@ -4,12 +4,11 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ui.exclude.SortedComboBoxModel;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.ComboboxSpeedSearch;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -71,7 +70,7 @@ public class ConfigurationModuleSelector {
   }
 
   public static boolean isModuleAccepted(final Module module) {
-    return ArrayUtil.find(new ModuleType[]{ModuleType.JAVA, ModuleType.WEB, ModuleType.EJB}, module.getModuleType()) != -1;
+    return ModuleTypeManager.getInstance().isClasspathProvider(module.getModuleType());    
   }
 
   public Project getProject() {

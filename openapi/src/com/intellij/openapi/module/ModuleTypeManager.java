@@ -24,6 +24,12 @@ public abstract class ModuleTypeManager implements ApplicationComponent {
   }
 
   public abstract void registerModuleType(ModuleType type);
+
   public abstract ModuleType[] getRegisteredTypes();
+
   public abstract ModuleType findByID(String moduleTypeID);
+
+  public abstract void registerModuleType(ModuleType type, boolean classpathProvider);
+
+  public abstract boolean isClasspathProvider(final ModuleType moduleType);
 }
