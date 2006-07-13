@@ -21,6 +21,8 @@ import java.util.Calendar;
 public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/ant";
 
+  public void testDummy() {}
+
   private void doTest() throws Exception {
     doTest(BASE_PATH + "/" + getTestName(false) + ".xml", false, false);
   }
