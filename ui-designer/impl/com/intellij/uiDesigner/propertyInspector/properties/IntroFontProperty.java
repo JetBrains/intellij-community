@@ -57,7 +57,9 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
   @Override protected void setValueImpl(final RadComponent component, final FontDescriptor value) throws Exception {
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), value);
     if (value != null) {
-      invokeSetter(component, null);
+      if (!component.isLoadingProperties()) {
+        invokeSetter(component, null);
+      }
       Font defaultFont = (Font) invokeGetter(component);
       final Font resolvedFont = value.getResolvedFont(defaultFont);
       invokeSetter(component, resolvedFont);
