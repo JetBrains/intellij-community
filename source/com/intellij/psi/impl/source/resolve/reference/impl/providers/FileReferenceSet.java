@@ -200,7 +200,7 @@ public class FileReferenceSet {
     final WebModuleProperties properties = WebUtil.getWebModuleProperties(file);
 
     PsiElement result = null;
-    if (myPathString.startsWith(SEPARATOR_STRING)) {
+    if (isAbsolutePathReference()) {
       result = getAbsoluteTopLevelDirLocation(properties, project, file);
     }
     else {
@@ -230,6 +230,10 @@ public class FileReferenceSet {
     }
 
     return result == null ? Collections.<PsiElement>emptyList() : Collections.singleton(result);
+  }
+
+  public boolean isAbsolutePathReference() {
+    return myPathString.startsWith(SEPARATOR_STRING);
   }
 
   @Nullable

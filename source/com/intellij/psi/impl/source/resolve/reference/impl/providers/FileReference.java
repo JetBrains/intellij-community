@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider;
 import com.intellij.javaee.web.WebUtil;
+import com.intellij.javaee.web.WebModuleProperties;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -15,6 +16,7 @@ import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.file.PsiDirectoryImpl;
 import com.intellij.psi.jsp.JspUtil;
@@ -261,23 +263,31 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     VirtualFile dstVFile = PsiUtil.getVirtualFile(fileSystemItem);
 
     final PsiFile file = getElement().getContainingFile();
-    final String newName;
-    if (WebUtil.getWebModuleProperties(file) != null) {
-      newName = JspUtil.getDeploymentPath((PsiFileSystemItem)element);
-      if (newName == null) {
-        LOG.assertTrue(dstVFile != null); //for web directories path is never null
-        throw new IncorrectOperationException("Cannot find deployment path for " + dstVFile.getPresentableUrl());
+    String newName = null;
+    final WebModuleProperties properties = WebUtil.getWebModuleProperties(file);
+
+    if (dstVFile == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
+    final VirtualFile currentFile = file.getVirtualFile();
+    LOG.assertTrue(currentFile != null);
+
+    if (properties != null) {
+      if (myFileReferenceSet.isAbsolutePathReference()) {
+        return element;
+      } else {
+        final WebDirectoryElement dstWebElement = JspManager.getInstance(element.getProject()).findWebDirectoryByFile(dstVFile, properties);
+        final WebDirectoryElement srcWebElement = JspManager.getInstance(element.getProject()).findWebDirectoryByFile(currentFile, properties);
+        newName = WebUtil.getRelativePath(srcWebElement, dstWebElement);
       }
-    } else {
-      if (dstVFile == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
-      final VirtualFile currentFile = file.getVirtualFile();
-      LOG.assertTrue(currentFile != null);
+    }
+
+    if (newName == null) {
       newName = VfsUtil.getPath(currentFile, dstVFile, '/');
       if (newName == null) {
         throw new IncorrectOperationException("Cannot find path between files; src = " +
                                               currentFile.getPresentableUrl() + "; dst = " + dstVFile.getPresentableUrl());
       }
     }
+
     final TextRange range = new TextRange(myFileReferenceSet.getStartInElement(), getRangeInElement().getEndOffset());
     final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
     if (manipulator == null) {
