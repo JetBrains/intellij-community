@@ -28,10 +28,10 @@ public class XmlTagValueManipulator extends AbstractElementManipulator<XmlTag> {
     TextRange valueRange = element.getValue().getTextRange();
     String url = element.getText();
     int start = valueRange.getStartOffset() - element.getTextOffset();
-    while (url.charAt(start) <= ' ') {
+    int end = valueRange.getEndOffset() - element.getTextOffset();
+    while (start < end && url.charAt(start) <= ' ') {
       start++;
     }
-    int end = valueRange.getEndOffset() - element.getTextOffset();
     while (end > start && url.charAt(end - 1) <= ' ') {
       end--;
     }
