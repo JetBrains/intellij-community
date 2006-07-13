@@ -25,6 +25,6 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/" + getTestName(false) + ".xml", false, false);
   }
 
-  @Bombed(year = 2006, month = Calendar.JULY, day = 13, user = "lvo", time = 13, description = "Duplicate targets & invalid text")
+  @Bombed(year = 2006, month = Calendar.JULY, day = 20, user = "lvo", time = 13, description = "Duplicate targets & invalid text")
   public void testSanity() throws Exception { doTest(); }
 }
