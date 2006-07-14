@@ -44,7 +44,8 @@ public class ClassGroupingRule implements UsageGroupingRule {
     if (usage instanceof PsiElementUsage) {
       final PsiElement psiElement = ((PsiElementUsage)usage).getElement();
       final PsiFile containingFile = psiElement.getContainingFile();
-      if (containingFile instanceof PsiJavaFile) {
+      
+      if (containingFile instanceof PsiJavaFile && !(containingFile instanceof JspFile)) {
         PsiElement containingClass = psiElement;
         do {
           containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, true);
