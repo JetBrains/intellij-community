@@ -188,7 +188,9 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     for (ConfigurableGroup myGroup : myGroups) {
       Configurable[] configurables = myGroup.getConfigurables();
       for (Configurable configurable : configurables) {
-        configurable.disposeUIResources();
+        if (myInitializedConfigurables2Component.containsKey(configurable)){ //do not dispose resources if components weren't initialized
+          configurable.disposeUIResources();
+        }
       }
     }
     myInitializedConfigurables2Component.clear();
