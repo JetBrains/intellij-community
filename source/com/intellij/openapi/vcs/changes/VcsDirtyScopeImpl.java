@@ -175,8 +175,9 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
               for(final FilePath file: myDirtyFiles) {
                 if (file.getVirtualFile() == null) {
                   VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.getIOFile());
-                  if (vFile != null && file.isDirectory()) {
-                    vFile.refresh(false, true);
+                  if (vFile != null) {
+                    file.refresh();
+                    if (file.isDirectory()) vFile.refresh(false, true);
                   }
                 }
               }
