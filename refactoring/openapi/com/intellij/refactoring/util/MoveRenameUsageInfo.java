@@ -24,7 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveRenameUsageInfo extends UsageInfo{
-  private final SmartPsiElementPointer myReferencedElementPointer;
+  private SmartPsiElementPointer myReferencedElementPointer = null;
   private final PsiElement myReferencedElement;
 
   private final PsiReference myReference;
@@ -38,7 +38,9 @@ public class MoveRenameUsageInfo extends UsageInfo{
     super(element);
     final Project project = element.getProject();
     myReferencedElement = referencedElement;
-    myReferencedElementPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(referencedElement);
+    if (referencedElement != null) {
+      myReferencedElementPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(referencedElement);
+    }
     if (reference == null) reference = element.getReference();
     if (reference == null) reference = element.getContainingFile().findReferenceAt(element.getTextRange().getStartOffset());
     myReference = reference;
@@ -55,7 +57,9 @@ public class MoveRenameUsageInfo extends UsageInfo{
     super(element, startOffset, endOffset, nonCodeUsage);
     final Project project = element.getProject();
     myReferencedElement = referencedElement;
-    myReferencedElementPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(referencedElement);
+    if (referencedElement != null) {
+      myReferencedElementPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(referencedElement);
+    }
     if (reference == null) reference = element.getReference();
     if (reference == null) reference = element.getContainingFile().findReferenceAt(element.getTextRange().getStartOffset());
     myReference = reference;
@@ -69,7 +73,7 @@ public class MoveRenameUsageInfo extends UsageInfo{
 
   @Nullable
   public PsiElement getUpToDateReferencedElement() {
-    return myReferencedElementPointer.getElement();
+    return myReferencedElementPointer == null ? null : myReferencedElementPointer.getElement();
   }
 
   @Nullable
