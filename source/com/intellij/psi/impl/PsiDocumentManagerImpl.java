@@ -329,9 +329,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         //String s = new String(chars, startOffset, endOffset - startOffset);
         //myBlockSupport.reparseRangeInternal(file, startOffset, psiEndOffset, s);
         myBlockSupport.reparseRange(file, startOffset, psiEndOffset, endOffset - psiEndOffset, chars);
-        //checkConsistency(file, document);
         //file.setModificationStamp(document.getModificationStamp());
-        InjectedLanguageUtil.commitAllInjectedDocuments(file);
+        InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
       }
 
       textBlock.clear();
@@ -340,6 +339,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       myIsCommitInProgress = false;
       document.putUserData(KEY_COMMITING, Boolean.FALSE);
     }
+    //checkConsistency(file, document);
 
     //mySmartPointerManager.synchronizePointers(file);
   }
@@ -422,16 +422,16 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     return textBlock;
   }
 
-  public static void checkConsistency(PsiFile psiFile, Document document) {
+  public static boolean checkConsistency(PsiFile psiFile, Document document) {
     //todo hack
-    if (psiFile.getVirtualFile() == null) return;
+    if (psiFile.getVirtualFile() == null) return true;
 
     CharSequence editorText = document.getCharsSequence();
     int documentLength = document.getTextLength();
     if (psiFile.textMatches(editorText)) {
       LOG.assertTrue(psiFile.getTextLength() == documentLength);
       LOG.debug("Consistent OK: length=" + documentLength + "; file=" + psiFile.getName() + ":" + psiFile.getClass());
-      return;
+      return true;
     }
 
     char[] fileText = psiFile.textToCharArray();
@@ -464,6 +464,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     LOG.info("Psi Text tail:\n" + new String(fileText, i, Math.min(i + 300, fileText.length) - i));
     LOG.info("*********************************************");
     document.replaceString(0, documentLength, psiFile.getText());
+    return false;
   }
 
   public void contentsLoaded(PsiFileImpl file) {

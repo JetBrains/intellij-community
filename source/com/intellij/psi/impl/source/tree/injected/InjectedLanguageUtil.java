@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.injected.DocumentRange;
 import com.intellij.openapi.editor.impl.injected.EditorDelegate;
 import com.intellij.openapi.editor.impl.injected.VirtualFileDelegate;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -41,11 +40,12 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author cdr
@@ -113,77 +113,69 @@ public class InjectedLanguageUtil {
     parsedNode.putUserData(TreeElement.MANAGER_KEY, psiManager);
     SingleRootFileViewProvider viewProvider = createViewProvider(project, virtualFile);
     PsiFile psiFile = parserDefinition.createFile(viewProvider);
-    psiFile = (PsiFile)registerDocumentRange(hostFile, documentRange, psiFile);
+    SmartPsiElementPointer pointer = createHostSmartPointer(host);
+    psiFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, pointer);
+    psiFile = (PsiFile)registerDocumentRange(documentRange, psiFile);
     SrcRepositoryPsiElement repositoryPsiElement = (SrcRepositoryPsiElement)psiFile;
     ((FileElement)parsedNode).setPsiElement(repositoryPsiElement);
     repositoryPsiElement.setTreeElement(parsedNode);
     ((SingleRootFileViewProvider)psiFile.getViewProvider()).forceCachedPsi(psiFile);
-    if (host.isPhysical()) {
-      SmartPsiElementPointer pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host);
-      psiFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, pointer);
-    }
     return parsedNode.getPsi();
   }
 
   private static <T extends PsiLanguageInjectionHost> SingleRootFileViewProvider createViewProvider(final Project project, final VirtualFileDelegate virtualFile) {
-    return new SingleRootFileViewProvider(PsiManager.getInstance(project), virtualFile) {
-      public void rootChanged(PsiFile psiFile) {
-        super.rootChanged(psiFile);
-        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-        DocumentRange documentRange = (DocumentRange)documentManager.getDocument(psiFile);
-        String text = psiFile.getText();
-        text = StringUtil.trimStart(text, documentRange.getPrefix());
-        text = StringUtil.trimEnd(text, documentRange.getSuffix());
-        PsiLanguageInjectionHost injectionHost = (PsiLanguageInjectionHost)psiFile.getContext();
-        PsiFile hostFile = injectionHost.getContainingFile();
-        TextRange hostTextRange = injectionHost.getTextRange();
-        RangeMarker documentWindow = documentRange.getTextRange();
-        TextRange rangeInsideHost = new TextRange(documentWindow.getStartOffset(), documentWindow.getEndOffset()).shiftRight(-hostTextRange.getStartOffset());
-        String newHostText = StringUtil.replaceSubstring(injectionHost.getText(), rangeInsideHost, text);
-        if (!newHostText.equals(injectionHost.getText())) {
-          injectionHost.fixText(newHostText);
-
-          PsiDocumentManagerImpl.checkConsistency(psiFile, documentRange);
-          PsiDocumentManagerImpl.checkConsistency(hostFile, documentRange.getDelegate());
-        }
-
-        //DocumentEx document = documentRange.getDelegate();
-        //if (!documentManager.isUncommited(document)) {
-        //  document.replaceString(0,0,""); // change document outside commit
-        //}
-      }
-
-      public FileViewProvider clone() {
-        DocumentRange oldDocumentRange = ((VirtualFileDelegate)getVirtualFile()).getDocumentRange();
-        RangeMarker documentWindow = oldDocumentRange.getTextRange();
-        DocumentEx delegate = oldDocumentRange.getDelegate();
-        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-        PsiFile hostFile = documentManager.getPsiFile(delegate);
-        PsiFile hostPsiFileCopy = (PsiFile)hostFile.copy();
-
-        TextRange oldTextRange = new TextRange(documentWindow.getStartOffset(), documentWindow.getEndOffset());
-        T newHost = (T)findInjectionHost(hostPsiFileCopy.findElementAt(oldDocumentRange.getTextRange().getStartOffset()));
-        List<Pair<PsiElement, TextRange>> newInjected = newHost.getInjectedPsi();
-        if (newInjected == null) return null;
-        for (Pair<PsiElement, TextRange> pair : newInjected) {
-          PsiElement psi = pair.getFirst();
-          TextRange rangeInsideHost = pair.getSecond();
-          TextRange injectedRange = newHost.getTextRange().cutOut(rangeInsideHost);
-          if (injectedRange.equals(oldTextRange)) {
-            PsiFile newFile = (PsiFile)psi;
-            return newFile.getViewProvider();
-          }
-        }
-
-        return null;
-      }
-    };
+    return new MyFileViewProvider<T>(project, virtualFile);
   }
+  private static class MyFileViewProvider<T extends PsiLanguageInjectionHost> extends SingleRootFileViewProvider {
+    public MyFileViewProvider(final Project project, final VirtualFileDelegate virtualFile) {
+      super(PsiManager.getInstance(project), virtualFile);
+    }
 
-  @NotNull
-  public static Collection<PsiFile> getInjectedFiles(PsiFile hostFile) {
-    Map<RangeMarker, PsiFile> map = hostFile.getUserData(INJECTED_FILES_KEY);
-    return map == null ? Collections.<PsiFile>emptyList() : map.values();
+    public void rootChanged(PsiFile psiFile) {
+      super.rootChanged(psiFile);
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
+      DocumentRange documentRange = (DocumentRange)documentManager.getDocument(psiFile);
+      String text = psiFile.getText();
+      text = StringUtil.trimStart(text, documentRange.getPrefix());
+      text = StringUtil.trimEnd(text, documentRange.getSuffix());
+      PsiLanguageInjectionHost injectionHost = (PsiLanguageInjectionHost)psiFile.getContext();
+      PsiFile hostFile = injectionHost.getContainingFile();
+      TextRange hostTextRange = injectionHost.getTextRange();
+      RangeMarker documentWindow = documentRange.getTextRange();
+      TextRange rangeInsideHost = new TextRange(documentWindow.getStartOffset(), documentWindow.getEndOffset()).shiftRight(-hostTextRange.getStartOffset());
+      String newHostText = StringUtil.replaceSubstring(injectionHost.getText(), rangeInsideHost, text);
+      if (!newHostText.equals(injectionHost.getText())) {
+        injectionHost.fixText(newHostText);
+
+        PsiDocumentManagerImpl.checkConsistency(psiFile, documentRange);
+        PsiDocumentManagerImpl.checkConsistency(hostFile, documentRange.getDelegate());
+      }
+    }
+
+    public FileViewProvider clone() {
+      DocumentRange oldDocumentRange = ((VirtualFileDelegate)getVirtualFile()).getDocumentRange();
+      RangeMarker documentWindow = oldDocumentRange.getTextRange();
+      DocumentEx delegate = oldDocumentRange.getDelegate();
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
+      PsiFile hostFile = documentManager.getPsiFile(delegate);
+      PsiFile hostPsiFileCopy = (PsiFile)hostFile.copy();
+
+      TextRange oldTextRange = new TextRange(documentWindow.getStartOffset(), documentWindow.getEndOffset());
+      T newHost = (T)findInjectionHost(hostPsiFileCopy.findElementAt(oldDocumentRange.getTextRange().getStartOffset()));
+      List<Pair<PsiElement, TextRange>> newInjected = newHost.getInjectedPsi();
+      if (newInjected == null) return null;
+      for (Pair<PsiElement, TextRange> pair : newInjected) {
+        PsiElement psi = pair.getFirst();
+        TextRange rangeInsideHost = pair.getSecond();
+        TextRange injectedRange = newHost.getTextRange().cutOut(rangeInsideHost);
+        if (injectedRange.equals(oldTextRange)) {
+          PsiFile newFile = (PsiFile)psi;
+          return newFile.getViewProvider();
+        }
+      }
+
+      return null;
+    }
   }
 
   private static <T extends PsiLanguageInjectionHost> void patchLeafs(final ASTNode parsedNode,
@@ -271,18 +263,6 @@ public class InjectedLanguageUtil {
     return null;
   }
 
-  public static String getPrefix(@NotNull PsiElement injectedPsi) {
-    Document document = FileDocumentManager.getInstance().getCachedDocument(((PsiFile)injectedPsi).getVirtualFile());
-    if (document == null) return null;
-    return ((DocumentRange)document).getPrefix();
-  }
-  public static String getSuffix(@NotNull PsiElement injectedPsi) {
-    Document document = FileDocumentManager.getInstance().getCachedDocument(((PsiFile)injectedPsi).getVirtualFile());
-    if (document == null) return null;
-    return ((DocumentRange)document).getSuffix();
-  }
-
-
   private static class InjectedPsiProvider<T extends PsiLanguageInjectionHost> implements CachedValueProvider<List<Pair<PsiElement, TextRange>>> {
     private SmartPsiElementPointer myHostPointer;
     private final LiteralTextEscaper<T> myTextEscaper;
@@ -296,11 +276,7 @@ public class InjectedLanguageUtil {
 
     private void fastenMyBelts(final T host) {
       if (myHostPointer == null) {
-        myHostPointer = host.isPhysical() ? SmartPointerManager.getInstance(host.getProject()).createSmartPsiElementPointer(host) : new SmartPsiElementPointer() {
-          public PsiElement getElement() {
-            return host;
-          }
-        };
+        myHostPointer = createHostSmartPointer(host);
         myHost = null;
       }
     }
@@ -349,6 +325,14 @@ public class InjectedLanguageUtil {
     }
   }
 
+  private static SmartPsiElementPointer createHostSmartPointer(final PsiElement host) {
+    return host.isPhysical() ? SmartPointerManager.getInstance(host.getProject()).createSmartPsiElementPointer(host) : new SmartPsiElementPointer() {
+      public PsiElement getElement() {
+        return host;
+      }
+    };
+  }
+
   public interface LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
     boolean decode(T text, final TextRange rangeInsideHost, StringBuilder outChars);
     int getOffsetInSource(int offsetInDecoded);
@@ -366,10 +350,6 @@ public class InjectedLanguageUtil {
     public int getOffsetInSource(int offsetInDecoded) {
       return outSourceOffsets[offsetInDecoded];
     }
-
-
-
-
   }
 
   public static class XmlTextLiteralEscaper implements LiteralTextEscaper<XmlTextImpl> {
@@ -407,66 +387,68 @@ public class InjectedLanguageUtil {
   }
 
 
-  private static final Key<Map<RangeMarker,PsiFile>> INJECTED_FILES_KEY = Key.create("INJECTED_FILES_KEY");
-  public static void commitAllInjectedDocuments(PsiFile psiFile) {
-    Map<RangeMarker, PsiFile> injected = psiFile.getUserData(INJECTED_FILES_KEY);
+  private static final Key<List<DocumentRange>> INJECTED_FILES_KEY = Key.create("INJECTED_FILES_KEY");
+  public static void commitAllInjectedDocuments(Document hostDocument, Project project) {
+    List<DocumentRange> injected = hostDocument.getUserData(INJECTED_FILES_KEY);
     if (injected == null) return;
-    ArrayList<RangeMarker> oldInjected = new ArrayList<RangeMarker>(injected.keySet());
-    for (RangeMarker documentRange : oldInjected) {
-      final PsiFileImpl oldFile = (PsiFileImpl)injected.get(documentRange);
-      if (!documentRange.isValid() || oldFile == null) {
-        injected.remove(documentRange);
+    List<DocumentRange> oldInjected = new ArrayList<DocumentRange>(injected);
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    PsiFile psiFile = documentManager.getPsiFile(hostDocument);
+    for (DocumentRange injDocument : oldInjected) {
+      final PsiFileImpl oldFile = (PsiFileImpl)documentManager.getPsiFile(injDocument);
+      RangeMarker rangeMarker = injDocument.getTextRange();
+      if (!rangeMarker.isValid() || oldFile == null) {
+        injected.remove(injDocument);
       }
-      PsiElement element = psiFile.findElementAt(documentRange.getStartOffset());
+      PsiElement element = psiFile.findElementAt(rangeMarker.getStartOffset());
       PsiLanguageInjectionHost injectionHost = findInjectionHost(element);
       if (injectionHost == null) continue;
       // it is here reparse happens and old file contents replaced
       injectionHost.getInjectedPsi();
     }
   }
-  private static PsiElement registerDocumentRange(final PsiFile hostFile, final DocumentRange documentRange, final PsiFile injectedPsi) {
-    Map<RangeMarker, PsiFile> injected = hostFile.getUserData(INJECTED_FILES_KEY);
+  private static PsiElement registerDocumentRange(final DocumentRange documentRange, final PsiFile injectedPsi) {
+    DocumentEx hostDocument = documentRange.getDelegate();
+    List<DocumentRange> injected = hostDocument.getUserData(INJECTED_FILES_KEY);
 
     if (injected == null) {
-      injected = new THashMap<RangeMarker, PsiFile>(new TObjectHashingStrategy<RangeMarker>() {
-        public int computeHashCode(final RangeMarker object) {
-          return 0; //ranges can grow/shrink
+      injected = new SmartList<DocumentRange>();
+      hostDocument.putUserData(INJECTED_FILES_KEY, injected);
+    }
+
+    RangeMarker rangeMarker = documentRange.getTextRange();
+    TextRange textRange = new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(injectedPsi.getProject());
+    for (DocumentRange oldDocument : injected) {
+      PsiFileImpl oldFile = (PsiFileImpl)documentManager.getPsiFile(oldDocument);
+      RangeMarker oldRangeMarker = oldDocument.getTextRange();
+      TextRange oldTextRange = new TextRange(oldRangeMarker.getStartOffset(), oldRangeMarker.getEndOffset());
+      if (oldTextRange.intersects(textRange) &&
+          !injectedPsi.getNode().getText().equals(oldFile.getNode().getText())) {
+        // replace psi
+        FileElement newFileElement = (FileElement)injectedPsi.getNode().copyElement();
+        FileElement oldFileElement = oldFile.getTreeElement();
+
+        if (oldFileElement.getFirstChildNode() != null) {
+          TreeUtil.removeRange(oldFileElement.getFirstChildNode(), null);
         }
-
-        public boolean equals(final RangeMarker o1, final RangeMarker o2) {
-          return o1.getStartOffset() == o2.getStartOffset() && o1.getEndOffset() == o2.getEndOffset();
+        final ASTNode firstChildNode = newFileElement.getFirstChildNode();
+        if (firstChildNode != null) {
+          TreeUtil.addChildren(oldFileElement, (TreeElement)firstChildNode);
         }
-      });
-      hostFile.putUserData(INJECTED_FILES_KEY, injected);
-    }
+        oldFileElement.setCharTable(newFileElement.getCharTable());
+        oldFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, injectedPsi.getUserData(ResolveUtil.INJECTED_IN_ELEMENT));
+        FileDocumentManagerImpl.registerDocument(documentRange, oldFile.getVirtualFile());
+        oldFile.subtreeChanged();
 
-    RangeMarker marker = documentRange.getTextRange();
-    final PsiFileImpl oldFile = (PsiFileImpl)injected.get(marker);
-    if (oldFile == null) {
-      injected.put(marker, injectedPsi);
-      return injectedPsi;
-    }
-
-    if (!injectedPsi.getText().equals(oldFile.getText())) {
-      // replace psi
-      FileElement newFileElement = (FileElement)injectedPsi.getNode().copyElement();
-      FileElement oldFileElement = oldFile.getTreeElement();
-
-      if (oldFileElement.getFirstChildNode() != null) {
-        TreeUtil.removeRange(oldFileElement.getFirstChildNode(), null);
+        PsiDocumentManagerImpl.checkConsistency(oldFile, documentRange);
+        SingleRootFileViewProvider viewProvider = (SingleRootFileViewProvider)oldFile.getViewProvider();
+        viewProvider.setVirtualFile(injectedPsi.getVirtualFile());
+        return oldFile;
       }
-      final ASTNode firstChildNode = newFileElement.getFirstChildNode();
-      if (firstChildNode != null) {
-        TreeUtil.addChildren(oldFileElement, (TreeElement)firstChildNode);
-      }
-      oldFileElement.setCharTable(newFileElement.getCharTable());
-      oldFile.subtreeChanged();
-
-      PsiDocumentManagerImpl.checkConsistency(oldFile, documentRange);
-      SingleRootFileViewProvider viewProvider = (SingleRootFileViewProvider)oldFile.getViewProvider();
-      viewProvider.setVirtualFile(injectedPsi.getVirtualFile());
     }
-
-    return oldFile;
+    injected.add(documentRange);
+    return injectedPsi;
   }
+
 }
