@@ -2,8 +2,9 @@
 <module version="4" relativePaths="true" type="JAVA_MODULE">
   <component name="ModuleRootManager" />
   <component name="NewModuleRootManager" inherit-compiler-output="true">
-    <output url="file://$MODULE_DIR$/classes" />
+    <output url="file://$MODULE_DIR$/../../out/classes/production/ant" />
     <exclude-output />
+    <output-test url="file://$MODULE_DIR$/../../out/classes/test/ant" />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests/src" isTestSource="true" />
@@ -15,6 +16,11 @@
     <orderEntry type="module" module-name="action-system-openapi" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
+    <orderEntry type="module" module-name="action-system-impl" />
+    <orderEntry type="module" module-name="ui-impl" />
+    <orderEntry type="module" module-name="compiler-impl" />
+    <orderEntry type="module" module-name="idea_rt" />
+    <orderEntry type="module" module-name="execution-impl" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
