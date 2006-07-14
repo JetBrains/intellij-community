@@ -1,7 +1,7 @@
 package com.intellij.lang.ant.config.impl;
 
-import com.intellij.ant.AntBundle;
 import com.intellij.ide.macro.MacroManager;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;

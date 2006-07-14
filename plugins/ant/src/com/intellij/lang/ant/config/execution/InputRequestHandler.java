@@ -2,7 +2,7 @@ package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.junit2.segments.SegmentReader;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.lang.ant.resources.AntBundle;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;

@@ -1,7 +1,7 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.lang.ant.resources.AntBundle;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;

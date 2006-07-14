@@ -3,7 +3,7 @@ package com.intellij.lang.ant.config.execution;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacOutputParser;
 import com.intellij.compiler.impl.javaCompiler.jikes.JikesOutputParser;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.lang.ant.resources.AntBundle;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;

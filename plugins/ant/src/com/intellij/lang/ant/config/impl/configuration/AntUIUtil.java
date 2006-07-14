@@ -1,13 +1,13 @@
 package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.ide.macro.MacrosDialog;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.impl.AntClasspathEntry;
 import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.AntReference;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
-import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;

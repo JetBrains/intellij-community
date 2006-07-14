@@ -1,6 +1,6 @@
 package com.intellij.lang.ant.config.impl.configuration;
 
-import com.intellij.ant.AntBundle;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.openapi.fileChooser.FileChooser;

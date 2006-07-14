@@ -1,6 +1,6 @@
 package com.intellij.lang.ant.config.execution;
 
-import com.intellij.lang.ant.resources.AntBundle;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;

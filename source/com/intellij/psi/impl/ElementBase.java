@@ -1,9 +1,9 @@
 package com.intellij.psi.impl;
 
-import com.intellij.ant.PsiAntElement;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.ide.IconUtilEx;
+import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;

@@ -1,7 +1,7 @@
 package com.intellij.psi.impl.search;
 
-import com.intellij.ant.PsiAntElement;
 import com.intellij.ide.todo.TodoConfiguration;
+import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;

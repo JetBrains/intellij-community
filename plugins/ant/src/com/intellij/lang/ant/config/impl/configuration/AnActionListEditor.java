@@ -1,7 +1,7 @@
 package com.intellij.lang.ant.config.impl.configuration;
 
-import com.intellij.ant.AntBundle;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;

@@ -1,10 +1,10 @@
 package com.intellij.lang.ant.quickfix;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.misc.AntPsiUtil;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
-import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.editor.Editor;

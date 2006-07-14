@@ -1,8 +1,8 @@
 package com.intellij.lang.ant.config.impl.configuration;
 
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.impl.*;
-import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.ProjectJdk;

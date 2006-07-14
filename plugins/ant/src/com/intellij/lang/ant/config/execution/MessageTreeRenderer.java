@@ -1,6 +1,6 @@
 package com.intellij.lang.ant.config.execution;
 
-import com.intellij.ant.AntElementRole;
+import com.intellij.lang.ant.AntElementRole;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.ui.MultilineTreeCellRenderer;

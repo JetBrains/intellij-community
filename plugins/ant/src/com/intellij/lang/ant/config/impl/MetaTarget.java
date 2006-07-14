@@ -1,10 +1,10 @@
 package com.intellij.lang.ant.config.impl;
 
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.TargetAction;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.lang.ant.psi.AntTarget;
-import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.psi.PsiFile;

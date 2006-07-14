@@ -1,6 +1,6 @@
 package com.intellij.lang.ant.config.impl;
 
-import com.intellij.ant.AntBundle;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;

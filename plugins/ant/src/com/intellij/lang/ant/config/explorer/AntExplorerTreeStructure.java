@@ -1,8 +1,8 @@
 package com.intellij.lang.ant.config.explorer;
 
-import com.intellij.ant.AntBundle;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.impl.MetaTarget;
 import com.intellij.openapi.diagnostic.Logger;

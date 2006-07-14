@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ant;
+package com.intellij.lang.ant;
 
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.SearchScope;
