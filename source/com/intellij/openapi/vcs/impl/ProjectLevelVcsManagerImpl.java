@@ -375,6 +375,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
       if (document == null) return;
 
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("resetting tracker for file " + virtualFile.getPath());
+      }
       final LineStatusTracker tracker = myLineStatusTrackers.get(document);
       if (tracker != null) {
         resetTracker(tracker);
@@ -476,11 +479,21 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
       if (status == FileStatus.NOT_CHANGED ||
           status == FileStatus.ADDED ||
-          status == FileStatus.UNKNOWN) return;
+          status == FileStatus.UNKNOWN) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("installTracker() for file " + virtualFile.getPath() + " failed: status=" + status);
+        }
+        return;
+      }
 
       AbstractVcs activeVcs = getVcsFor(virtualFile);
 
-      if (activeVcs == null) return;
+      if (activeVcs == null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("installTracker() for file " + virtualFile.getPath() + " failed: no active VCS");
+        }
+        return;
+      }
 
       if (!(virtualFile.getFileSystem() instanceof LocalFileSystem)) return;
 
@@ -505,15 +518,28 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         public void run() {
           try {
             alarm.cancelAllRequests();
-            if (!virtualFile.isValid()) return;
+            if (!virtualFile.isValid()) {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("installTracker() for file " + virtualFile.getPath() + " failed: virtual file not valid");
+              }
+              return;
+            }
             final String lastUpToDateContent = getBaseVersionContent(virtualFile);
-            if (lastUpToDateContent == null) return;
+            if (lastUpToDateContent == null) {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("installTracker() for file " + virtualFile.getPath() + " failed: no up to date content");
+              }
+              return;
+            }
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
                 if (!myProject.isDisposed()) {
                   synchronized (TRACKERS_LOCK) {
                     ApplicationManager.getApplication().runWriteAction(new Runnable() {
                       public void run() {
+                        if (LOG.isDebugEnabled()) {
+                          LOG.debug("initializing tracker for file " + virtualFile.getPath());
+                        }
                         tracker.initialize(lastUpToDateContent);
                       }
                     });
