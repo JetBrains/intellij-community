@@ -73,7 +73,8 @@ public class Messages {
   }
 
   public static int showDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
       return ourTestImplementation.show(message);
     }
     else {
