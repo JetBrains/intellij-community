@@ -28,9 +28,9 @@ public class DiffTree<OT, NT> {
     new DiffTree<OT, NT>(oldTree, newTree, comparator, consumer).build(oldTree.getRoot(), newTree.getRoot());
   }
 
-  private void build(OT oldNode, NT newNode) {
-    oldNode = myOldTree.prepareForGetChildren(oldNode);
-    newNode = myNewTree.prepareForGetChildren(newNode);
+  private void build(OT oldN, NT newN) {
+    OT oldNode = myOldTree.prepareForGetChildren(oldN);
+    NT newNode = myNewTree.prepareForGetChildren(newN);
 
     final List<OT> oldChildren = myOldTree.getChildren(oldNode);
     final List<NT> newChildren = myNewTree.getChildren(newNode);
@@ -78,8 +78,11 @@ public class DiffTree<OT, NT> {
       oldEnd--;
       newEnd--;
     }
-
-    if (oldSize == newSize) {
+    
+    if (start == 0 && newEnd == newSize - 1 && oldEnd == oldSize - 1) {
+      myConsumer.nodeReplaced(oldNode, newNode);
+    }
+    else if (oldSize == newSize) {
       for (int i = start; i <= newEnd; i++) {
         final OT oldChild = oldChildren.get(i);
         final NT newChild = newChildren.get(i);

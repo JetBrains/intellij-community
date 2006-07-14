@@ -10,12 +10,20 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
   public ThreeState deepEqual(final ASTNode oldNode, final ASTNode newNode) {
     if (!typesEqual(oldNode, newNode)) return ThreeState.NO;
 
+    return textMatches(oldNode, newNode);
+  }
+
+  private static ThreeState textMatches(final ASTNode oldNode, final ASTNode newNode) {
     if (oldNode instanceof ChameleonElement) {
       return ((TreeElement)newNode).textMatches(oldNode.getText()) ? ThreeState.YES : ThreeState.UNSURE;
     }
 
     if (newNode instanceof ChameleonElement) {
       return ((TreeElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.UNSURE;
+    }
+
+    if (oldNode instanceof LeafElement) {
+      return ((LeafElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
     }
 
     return ThreeState.UNSURE;
@@ -30,8 +38,8 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
   }
 
   public boolean hashcodesEqual(final ASTNode n1, final ASTNode n2) {
-    if (n1 instanceof LeafPsiElement && n2 instanceof LeafPsiElement) {
-      return n1.getText().equals(n2.getText());
+    if (n1 instanceof LeafElement && n2 instanceof LeafElement) {
+      return textMatches(n1, n2) == ThreeState.YES;
     }
 
     return ((TreeElement)n1).hc() == ((TreeElement)n2).hc();
