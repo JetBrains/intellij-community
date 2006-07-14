@@ -39,6 +39,7 @@ import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -806,11 +807,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     }
   }
 
-  @NotNull
+  @Nullable
   protected XmlText splitText(final XmlTextImpl childText, final int displayOffset) throws IncorrectOperationException{
     if(displayOffset == 0) return childText;
-    if(displayOffset >= childText.getValue().length()) {
-      throw new IllegalArgumentException("Wrong offset: " + displayOffset + " text length: " + childText.getValue().length());
+    final int length = childText.getValue().length();
+    if(displayOffset >= length) {
+      return null;
     }
 
     final PomModel model = getProject().getModel();

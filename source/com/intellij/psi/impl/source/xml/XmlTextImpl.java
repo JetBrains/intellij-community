@@ -43,7 +43,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     return "XmlText";
   }
 
-  @NotNull
+  @Nullable
   public XmlText split(int displayIndex) {
     try {
       return ((XmlTagImpl)getParentTag()).splitText(this, displayIndex);
