@@ -38,7 +38,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -409,25 +408,6 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     }
   }
 
-  @Nullable
-  private ChangeList getChangeListIfOnlyOne(Change[] changes) {
-    if (changes == null || changes.length == 0) {
-      return null;
-    }
-
-    ChangeList selectedList = null;
-    for (Change change : changes) {
-      final ChangeList list = ChangeListManager.getInstance(myProject).getChangeList(change);
-      if (selectedList == null) {
-        selectedList = list;
-      }
-      else if (selectedList != list) {
-        return null;
-      }
-    }
-    return selectedList;
-  }
-
   public class CommitAction extends AnAction {
     public CommitAction() {
       super(VcsBundle.message("changes.action.commit.text"), VcsBundle.message("changes.action.commit.description"),
@@ -436,12 +416,12 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
     public void update(AnActionEvent e) {
       Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      e.getPresentation().setEnabled(getChangeListIfOnlyOne(changes) != null);
+      e.getPresentation().setEnabled(ChangesUtil.getChangeListIfOnlyOne(myProject, changes) != null);
     }
 
     public void actionPerformed(AnActionEvent e) {
       Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      final ChangeList list = getChangeListIfOnlyOne(changes);
+      final ChangeList list = ChangesUtil.getChangeListIfOnlyOne(myProject, changes);
       if (list == null) return;
 
       CommitChangeListDialog.commitChanges(myProject, Arrays.asList(changes), list, 
@@ -457,12 +437,12 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
     public void update(AnActionEvent e) {
       Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      e.getPresentation().setEnabled(getChangeListIfOnlyOne(changes) != null);
+      e.getPresentation().setEnabled(ChangesUtil.getChangeListIfOnlyOne(myProject, changes) != null);
     }
 
     public void actionPerformed(AnActionEvent e) {
       Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      final ChangeList list = getChangeListIfOnlyOne(changes);
+      final ChangeList list = ChangesUtil.getChangeListIfOnlyOne(myProject, changes);
       if (list == null) return;
 
       RollbackChangesDialog.rollbackChanges(myProject, Arrays.asList(changes));

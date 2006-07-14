@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -7,9 +8,9 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -64,6 +65,25 @@ public class ChangesUtil {
     navigatables[i] = new OpenFileDescriptor(project, selectedFiles[i], 0);
   }
     return navigatables;
+  }
+
+  @Nullable
+  public static ChangeList getChangeListIfOnlyOne(final Project project, Change[] changes) {
+    if (changes == null || changes.length == 0) {
+      return null;
+    }
+
+    ChangeList selectedList = null;
+    for (Change change : changes) {
+      final ChangeList list = ChangeListManager.getInstance(project).getChangeList(change);
+      if (selectedList == null) {
+        selectedList = list;
+      }
+      else if (selectedList != list) {
+        return null;
+      }
+    }
+    return selectedList;
   }
 
   public interface PerVcsProcessor<T> {
