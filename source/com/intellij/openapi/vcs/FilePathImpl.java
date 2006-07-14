@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -187,5 +188,10 @@ public class FilePathImpl implements FilePath {
         return null;
       }
     }
+  }
+
+  @Override @NonNls
+  public String toString() {
+    return "FilePath[" + myFile + "]";
   }
 }
