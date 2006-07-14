@@ -5,7 +5,6 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.projectWizard.LibraryInfo;
 import com.intellij.javaee.J2EEBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -65,6 +64,7 @@ public class LibraryDownloader {
   private VirtualFile[] doDownload(final VirtualFile dir) {
     HttpConfigurable.getInstance().setAuthenticator();
     final List<Pair<LibraryInfo, File>> downloadedFiles = new ArrayList<Pair<LibraryInfo, File>>();
+    final List<VirtualFile> existingFiles = new ArrayList<VirtualFile>();
     final Exception[] exception = new Exception[]{null};
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
@@ -75,9 +75,12 @@ public class LibraryDownloader {
             LibraryInfo info = myLibraryInfos[i];
             indicator.checkCanceled();
             indicator.setText(J2EEBundle.message("progress.0.of.1.file.downloaded.text", i, myLibraryInfos.length));
-            final File file = download(info);
-            if (file != null) {
-              downloadedFiles.add(Pair.create(info, file));
+
+            final VirtualFile existing = dir.findChild(getExpectedFileName(info));
+            long size = existing != null ? existing.getLength() : -1;
+
+            if (!download(info, size, downloadedFiles)) {
+              existingFiles.add(existing);
             }
           }
         }
@@ -92,7 +95,7 @@ public class LibraryDownloader {
 
     if (exception[0] == null) {
       try {
-        return moveToDir(downloadedFiles, dir);
+        return moveToDir(existingFiles, downloadedFiles, dir);
       }
       catch (IOException e) {
         final String title = J2EEBundle.message("progress.download.libraries.title");
@@ -133,7 +136,7 @@ public class LibraryDownloader {
     return files.length > 0 ? files[0] : null;
   }
 
-  private static VirtualFile[] moveToDir(final List<Pair<LibraryInfo, File>> downloadedFiles, final VirtualFile dir) throws IOException {
+  private static VirtualFile[] moveToDir(final List<VirtualFile> existingFiles, final List<Pair<LibraryInfo, File>> downloadedFiles, final VirtualFile dir) throws IOException {
     List<VirtualFile> files = new ArrayList<VirtualFile>();
 
     final File ioDir = VfsUtil.virtualToIoFile(dir);
@@ -149,7 +152,23 @@ public class LibraryDownloader {
       }.execute().getResultObject());
     }
 
+    for (final VirtualFile file : existingFiles) {
+      files.add(new WriteAction<VirtualFile>() {
+        protected void run(final Result<VirtualFile> result) {
+          final String url = VfsUtil.getUrlForLibraryRoot(VfsUtil.virtualToIoFile(file));
+          result.setResult(VirtualFileManager.getInstance().refreshAndFindFileByUrl(url));
+        }
+
+      }.execute().getResultObject());
+    }
+
     return files.toArray(new VirtualFile[files.size()]);
+  }
+
+  private static String getExpectedFileName(LibraryInfo info) {
+    final String name = info.getExpectedJarName();
+    final int dot = name.lastIndexOf('.');
+    return name.substring(0, dot) + "-" + info.getVersion() + name.substring(dot);
   }
 
   private static File generateName(final String baseName, final String version, final File dir) {
@@ -171,13 +190,13 @@ public class LibraryDownloader {
     pairs.clear();
   }
 
-  private static @Nullable File download(final LibraryInfo libraryInfo) throws IOException {
+  private static boolean download(final LibraryInfo libraryInfo, final long existingFileSize, final List<Pair<LibraryInfo, File>> downloadedFiles) throws IOException {
     final String url = libraryInfo.getDownloadingUrl();
-    if (url == null) return null;
+    if (url == null) return true;
 
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.setText2(J2EEBundle.message("progress.download.jar.text", libraryInfo.getExpectedJarName(), libraryInfo.getPresentableUrl()));
-    final File tempFile = FileUtil.createTempFile("downloaded", "jar");
+    File tempFile = null;
     HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
 
     InputStream input = null;
@@ -191,12 +210,17 @@ public class LibraryDownloader {
         throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
       }
 
+      final int size = connection.getContentLength();
+      if (size != -1 && size == existingFileSize) {
+        return false;
+      }
+
       indicator.setIndeterminate(true);
+      tempFile = FileUtil.createTempFile("downloaded", "jar");
       input = UrlConnectionUtil.getConnectionInputStreamWithException(connection, indicator);
       output = new BufferedOutputStream(new FileOutputStream(tempFile));
-
-      final int size = connection.getContentLength();
       indicator.setIndeterminate(size == -1);
+
       int len;
       final byte[] buf = new byte[1024];
       int count = 0;
@@ -210,7 +234,8 @@ public class LibraryDownloader {
       }
 
       deleteFile = false;
-      return tempFile;
+      downloadedFiles.add(Pair.create(libraryInfo, tempFile));
+      return true;
     }
     finally {
       if (input != null) {
@@ -219,7 +244,7 @@ public class LibraryDownloader {
       if (output != null) {
         output.close();
       }
-      if (deleteFile) {
+      if (deleteFile && tempFile != null) {
         FileUtil.delete(tempFile);
       }
       connection.disconnect();
