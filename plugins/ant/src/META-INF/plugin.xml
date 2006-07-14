@@ -37,10 +37,19 @@
     </component>
   </project-components>
 
-  <actions>>
+  <actions>
     <group id="AntBuildGroup" class="com.intellij.lang.ant.config.actions.AntBuildGroup">
       <add-to-group group-id="BuildMenu" relative-to-action="BuildJar" anchor="before"/>
     </group>
+    <action id="AddAntBuildFile" class="com.intellij.lang.ant.config.actions.AddAntBuildFile" text="text">
+      <add-to-group group-id="ToolsXmlGroup" relative-to-action="GenerateDTD" anchor="before"/>
+      <add-to-group group-id="EditorPopupMenu" relative-to-action="PackageFile" anchor="after"/>
+      <add-to-group group-id="ProjectViewPopupMenu" relative-to-action="ValidateXml" anchor="after"/>
+      <add-to-group group-id="J2EEViewPopupMenu" relative-to-action="ValidateXml" anchor="after"/>
+      <add-to-group group-id="FavoritesViewPopupMenu" relative-to-action="ValidateXml" anchor="after"/>
+      <add-to-group group-id="ScopeViewPopupMenu" relative-to-action="ValidateXml" anchor="after"/>
+      <add-to-group group-id="CommanderPopupMenu" relative-to-action="ValidateXml" anchor="after"/>
+      <add-to-group group-id="Vcs.FileViewPopup" relative-to-action="ValidateXml" anchor="after"/>
+    </action>
   </actions>
-
 </idea-plugin>

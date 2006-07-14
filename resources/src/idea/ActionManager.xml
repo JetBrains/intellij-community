@@ -590,9 +590,8 @@
           <group id="PlaySavedMacroActions" class="com.intellij.ide.actionMacro.actions.MacrosGroup"/>
         </group>
         <separator/>
-        <group>
+        <group id="ToolsXmlGroup">
           <action id="ValidateXml" class="com.intellij.xml.actions.ValidateXmlAction"/>
-          <action id="AddAntBuildFile" class="com.intellij.ant.actions.AddAntBuildFile"/>
           <action id="GenerateDTD" class="com.intellij.codeInsight.actions.GenerateDTDAction"/>
         </group>
 
@@ -816,7 +815,6 @@
       <reference ref="ValidateXml"/>
       <action id="ValidateJsp" class="com.intellij.javaee.module.view.web.ValidateJSPAction"/>
       <action id="PackageFile" class="com.intellij.javaee.module.view.web.PackageFileAction"/>
-      <reference ref="AddAntBuildFile"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
@@ -884,7 +882,6 @@
       <reference ref="AnalyzeMenu"/>
       <reference ref="RefactoringMenu"/>
       <reference ref="ValidateXml"/>
-      <reference ref="AddAntBuildFile"/>
       <separator/>
       <reference ref="AddToFavorites"/>
       <separator/>
@@ -932,7 +929,6 @@
       <reference ref="ShowPackageDeps"/>
       <reference ref="RefactoringMenu"/>
       <reference ref="ValidateXml"/>
-      <reference ref="AddAntBuildFile"/>
       <separator/>
       <reference ref="AddToFavorites"/>
       <separator/>
@@ -981,7 +977,6 @@
       <reference ref="AnalyzeMenu"/>
       <reference ref="RefactoringMenu"/>
       <reference ref="ValidateXml"/>
-      <reference ref="AddAntBuildFile"/>
       <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
@@ -1023,7 +1018,6 @@
       <reference ref="AnalyzeMenu"/>
       <reference ref="RefactoringMenu"/>
       <reference ref="ValidateXml"/>
-      <reference ref="AddAntBuildFile"/>
       <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
@@ -1174,7 +1168,6 @@
       <reference ref="AddToFavorites"/>
       <separator/>
       <reference ref="ValidateXml"/>
-      <reference ref="AddAntBuildFile"/>
       <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
@@ -1216,7 +1209,6 @@
       <separator/>
       <reference ref="RefactoringMenu"/>
       <reference ref="ValidateXml"/>
-      <reference ref="AddAntBuildFile"/>
       <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
