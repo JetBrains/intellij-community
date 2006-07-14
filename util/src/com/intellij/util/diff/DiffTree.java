@@ -97,7 +97,7 @@ public class DiffTree<OT, NT> {
       }
     }
     else {
-      if (!walkedDeep && start == 0 && newEnd == newSize - 1 && oldEnd == oldSize - 1) {
+      if (!walkedDeep && start == 0 && newEnd == newSize - 1 && oldEnd == oldSize - 1 && start < oldEnd && start < newEnd) {
         myConsumer.nodeReplaced(oldNode, newNode);
         return;
       }
