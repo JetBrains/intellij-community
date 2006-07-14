@@ -47,6 +47,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -200,7 +201,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     chooseView();
   }
 
-  private DualViewColumnInfo[] createColumnList(VcsHistoryProvider provider) {
+  private static DualViewColumnInfo[] createColumnList(VcsHistoryProvider provider) {
     ColumnInfo[] additionalColunms = provider.getRevisionColumns();
     ArrayList<DualViewColumnInfo> columns = new ArrayList<DualViewColumnInfo>();
     columns.addAll(Arrays.asList(new DualViewColumnInfo[]{REVISION, DATE, AUTHOR}));
@@ -209,21 +210,20 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return columns.toArray(new DualViewColumnInfo[columns.size()]);
   }
 
-  private Collection<DualViewColumnInfo> wrapAdditionalColumns(ColumnInfo[] additionalColunms) {
+  private static Collection<DualViewColumnInfo> wrapAdditionalColumns(ColumnInfo[] additionalColunms) {
     ArrayList<DualViewColumnInfo> result = new ArrayList<DualViewColumnInfo>();
     if (additionalColunms != null) {
-      for (int i = 0; i < additionalColunms.length; i++) {
-        ColumnInfo additionalColunm = additionalColunms[i];
+      for (ColumnInfo additionalColunm : additionalColunms) {
         result.add(new MyColumnWrapper(additionalColunm));
       }
     }
     return result;
   }
 
-  private List<TreeItem<VcsFileRevision>> wrapWithTreeElements(List<VcsFileRevision> revisions) {
+  private static List<TreeItem<VcsFileRevision>> wrapWithTreeElements(List<VcsFileRevision> revisions) {
     ArrayList<TreeItem<VcsFileRevision>> result = new ArrayList<TreeItem<VcsFileRevision>>();
-    for (Iterator<VcsFileRevision> iterator = revisions.iterator(); iterator.hasNext();) {
-      result.add(new TreeItem<VcsFileRevision>(iterator.next()));
+    for (final VcsFileRevision revision : revisions) {
+      result.add(new TreeItem<VcsFileRevision>(revision));
     }
     return result;
   }
@@ -312,14 +312,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return 0;
   }
 
-  private void makeBold(Component component) {
+  private static void makeBold(Component component) {
     if (component instanceof JComponent) {
       JComponent jComponent = (JComponent)component;
       Font font = jComponent.getFont();
       if (font != null) {
         jComponent.setFont(font.deriveFont(Font.BOLD));
       }
-      return;
     }
     else if (component instanceof Container) {
       Container container = (Container)component;
@@ -463,7 +462,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     }
 
-    result.add(new MyDiffAction());
+    final MyDiffAction diffAction = new MyDiffAction();
+    diffAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_DOWN_MASK)), this);
+    result.add(diffAction);
     MyDiffWithCurrentAction diffWithCurrent = new MyDiffWithCurrentAction();
     if (!popup) {
       myDualView.installDoubleClickHandler(diffWithCurrent);
@@ -472,8 +473,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     result.add(new MyGetVersionAction());
     AnAction[] additionalActions = getHistoryProvider().getAdditionalActions(this);
     if (additionalActions != null) {
-      for (int i = 0; i < additionalActions.length; i++) {
-        result.add(additionalActions[i]);
+      for (AnAction additionalAction : additionalActions) {
+        result.add(additionalAction);
       }
     }
     result.add(new AnAction(VcsBundle.message("action.name.refresh"), VcsBundle.message("action.desctiption.refresh"), IconLoader.getIcon("/actions/sync.png")) {
@@ -618,7 +619,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     private void getVersion(final VcsFileRevision revision) {
       final VirtualFile file = getVirtualFile();
       if ((file != null) && !file.isWritable()) {
-        if (ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(new VirtualFile[]{file}).hasReadonlyFiles()) {
+        if (ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(file).hasReadonlyFiles()) {
           return;
         }
       }
@@ -737,8 +738,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     if (DataConstants.NAVIGATABLE.equals(dataId)) {
       List selectedItems = getSelection();
       if (selectedItems.size() != 1) return null;
-      VcsFileRevision revision = firstSelectedRevision;
-      VirtualFile virtualFileForRevision = createVirtualFileForRevision(revision);
+      VirtualFile virtualFileForRevision = createVirtualFileForRevision(firstSelectedRevision);
       if (virtualFileForRevision != null) {
         return new OpenFileDescriptor(myProject, virtualFileForRevision);
       }
@@ -805,8 +805,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     public TreeNodeOnVcsRevision(VcsFileRevision revision,
                                  List<TreeItem<VcsFileRevision>> roots) {
       myRevision = revision == null ? VcsFileRevision.NULL : revision;
-      for (Iterator iterator = roots.iterator(); iterator.hasNext();) {
-        TreeItem<VcsFileRevision> root = (TreeItem<VcsFileRevision>)iterator.next();
+      for (final TreeItem<VcsFileRevision> root : roots) {
         add(new TreeNodeOnVcsRevision(root.getData(), root.getChildren()));
       }
     }
@@ -1060,7 +1059,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  private class MyCellWrapper implements CellWrapper {
+  private static class MyCellWrapper implements CellWrapper {
     private final VcsHistorySession myHistorySession;
 
     public MyCellWrapper(final VcsHistorySession historySession) {
