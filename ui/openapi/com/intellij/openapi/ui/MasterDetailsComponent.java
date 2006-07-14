@@ -16,6 +16,7 @@ import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
@@ -288,7 +289,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
           group.add(action);
         }
       }
-      PopupHandler.installPopupHandler(myTree, group, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+      PopupHandler.installFollowingSelectionTreePopup(myTree, group, ActionPlaces.UNKNOWN, ActionManager.getInstance()); //popup should follow the selection
     }
   }
 
@@ -310,7 +311,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
   }
 
   private void createUIComponents() {
-    myTree = new JTree() {
+    myTree = new Tree() {
       public Dimension getPreferredScrollableViewportSize() {
         Dimension size = super.getPreferredScrollableViewportSize();
         size = new Dimension(size.width + 20, size.height);

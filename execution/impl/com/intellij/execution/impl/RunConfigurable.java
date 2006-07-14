@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.config.StorageAccessors;
+import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -59,7 +61,7 @@ class RunConfigurable extends BaseConfigurable {
   private final RunDialog myRunDialog;
   private JCheckBox myCbShowSettingsBeforeRunning;
   @NonNls private DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode("Root");
-  private JTree myTree = new JTree(myRoot);
+  private Tree myTree = new Tree(myRoot);
   private JPanel myRightPanel = new JPanel(new BorderLayout());
   private JComponent myToolbarComponent;
   private Splitter myPanel = new Splitter();
@@ -67,6 +69,7 @@ class RunConfigurable extends BaseConfigurable {
   private StorageAccessors myConfig;
   private JCheckBox myCbCompileBeforeRunning;
   private SingleConfigurationConfigurable<RunConfiguration> mySelectedConfigurable = null;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunConfigurable");
 
   public RunConfigurable(final Project project) {
     this(project, null);
@@ -87,15 +90,7 @@ class RunConfigurable extends BaseConfigurable {
     UIUtil.setLineStyleAngled(myTree);
     TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
-    myTree.addMouseListener(new PopupHandler() {
-      public void invokePopup(Component comp, int x, int y) {
-        if (myTree.getPathForLocation(x, y) != null &&
-            Arrays.binarySearch(myTree.getSelectionRows(), myTree.getRowForLocation(x, y)) > -1) {
-          final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, createActionsGroup());
-          popupMenu.getComponent().show(comp, x, y);
-        }
-      }
-    });
+    PopupHandler.installFollowingSelectionTreePopup(myTree, createActionsGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
     myTree.setCellRenderer(new ColoredTreeCellRenderer(){
       public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         if (value instanceof DefaultMutableTreeNode){
@@ -527,6 +522,7 @@ class RunConfigurable extends BaseConfigurable {
     });
   }
 
+  @Nullable
   private SingleConfigurationConfigurable<RunConfiguration> getSelectedConfiguration(){
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null){
@@ -753,6 +749,7 @@ class RunConfigurable extends BaseConfigurable {
 
     public void actionPerformed(AnActionEvent e) {
       final SingleConfigurationConfigurable<RunConfiguration> configuration = getSelectedConfiguration();
+      LOG.assertTrue(configuration != null);
       try {
         final DefaultMutableTreeNode typeNode = getSelectedConfigurationTypeNode();
         final RunnerAndConfigurationSettingsImpl settings = configuration.getSnapshot();
@@ -777,6 +774,7 @@ class RunConfigurable extends BaseConfigurable {
 
     public void actionPerformed(final AnActionEvent e) {
       final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable = getSelectedConfiguration();
+      LOG.assertTrue(configurationConfigurable != null);
       try {
         configurationConfigurable.apply();
       }

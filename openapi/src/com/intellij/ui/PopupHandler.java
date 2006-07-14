@@ -15,7 +15,10 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.application.ApplicationManager;
 
 import javax.swing.*;
@@ -23,6 +26,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.Arrays;
 
 /**
  * @author Eugene Belyaev
@@ -66,6 +70,20 @@ public abstract class PopupHandler extends MouseAdapter {
     };
     component.addMouseListener(popupHandler);
     return popupHandler;
+  }
+
+  public static MouseListener installFollowingSelectionTreePopup(final JTree tree, final ActionGroup group, final String place, final ActionManager actionManager){
+    if (ApplicationManager.getApplication() == null) return new MouseAdapter(){};
+    PopupHandler handler = new PopupHandler() {
+      public void invokePopup(Component comp, int x, int y) {
+        if (tree.getPathForLocation(x, y) != null && Arrays.binarySearch(tree.getSelectionRows(), tree.getRowForLocation(x, y)) > -1) { //do not show popup menu on rows other than selection
+          final ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(place, group);
+          popupMenu.getComponent().show(comp, x, y);
+        }
+      }
+    };
+    tree.addMouseListener(handler);
+    return handler;
   }
 
   public static MouseListener installUnknownPopupHandler(JComponent component, ActionGroup group, ActionManager actionManager) {
