@@ -10,8 +10,8 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.ide.macro.Macro;
 import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
-import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +41,7 @@ public final class ExecutionHandler {
   /**
    * @param antBuildListener should not be null. Use {@link AntBuildListener#NULL}
    */
-  public static void runBuild(final AntBuildFile buildFile,
+  public static void runBuild(final AntBuildFileBase buildFile,
                               String[] targets,
                               final AntBuildMessageView buildMessageViewToReuse,
                               final DataContext dataContext,
@@ -115,9 +115,7 @@ public final class ExecutionHandler {
     final File[] workingDirectory = new File[1];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        final AntFile antFile = buildFile.getAntFile();
-        if (antFile == null || !antFile.isValid()) return;
-        VirtualFile vFile = antFile.getVirtualFile();
+        VirtualFile vFile = buildFile.getVirtualFile();
         if (vFile == null || !vFile.isValid()) return;
         VirtualFile vDir = vFile.getParent();
         workingDirectory[0] = VfsUtil.virtualToIoFile(vDir);
@@ -214,7 +212,7 @@ public final class ExecutionHandler {
   }
 
   private static AntBuildMessageView prepareMessageView(AntBuildMessageView buildMessageViewToReuse,
-                                                        AntBuildFile buildFile,
+                                                        AntBuildFileBase buildFile,
                                                         String[] targets) throws RunCanceledException {
     AntBuildMessageView messageView;
     if (buildMessageViewToReuse != null) {

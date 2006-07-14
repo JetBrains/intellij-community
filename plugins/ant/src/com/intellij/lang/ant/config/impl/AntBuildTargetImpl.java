@@ -1,27 +1,25 @@
 package com.intellij.lang.ant.config.impl;
 
-import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntBuildListener;
-import com.intellij.lang.ant.config.AntBuildModel;
-import com.intellij.lang.ant.config.AntBuildTarget;
+import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.TargetAction;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
-import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.Nullable;
 
-public class AntBuildTargetImpl implements AntBuildTarget {
+public class AntBuildTargetImpl implements AntBuildTargetBase {
 
   private final AntTarget myTarget;
-  private final AntBuildModel myModel;
+  private final AntBuildModelBase myModel;
 
-  public AntBuildTargetImpl(final AntTarget target, final AntBuildModel buildModel) {
+  public AntBuildTargetImpl(final AntTarget target, final AntBuildModelBase buildModel) {
     myTarget = target;
     myModel = buildModel;
   }
@@ -46,11 +44,11 @@ public class AntBuildTargetImpl implements AntBuildTarget {
     return myTarget;
   }
 
-  public AntFile getAntFile() {
+  public PsiFile getAntFile() {
     return myModel.getBuildFile().getAntFile();
   }
 
-  public AntBuildModel getModel() {
+  public AntBuildModelBase getModel() {
     return myModel;
   }
 
@@ -85,7 +83,8 @@ public class AntBuildTargetImpl implements AntBuildTarget {
   }
 
   public OpenFileDescriptor getOpenFileDescriptor() {
-    return new OpenFileDescriptor(myModel.getBuildFile().getProject(), myModel.getBuildFile().getVirtualFile(), myTarget.getTextOffset());
+    final VirtualFile vFile = myModel.getBuildFile().getVirtualFile();
+    return (vFile == null) ? null : new OpenFileDescriptor(myModel.getBuildFile().getProject(), vFile, myTarget.getTextOffset());
   }
 
   public void run(DataContext dataContext, AntBuildListener buildListener) {
@@ -101,6 +100,6 @@ public class AntBuildTargetImpl implements AntBuildTarget {
     }
 
     String[] targets = isDefault() ? ArrayUtil.EMPTY_STRING_ARRAY : new String[]{getName()};
-    ExecutionHandler.runBuild(buildFile, targets, null, dataContext, buildListener);
+    ExecutionHandler.runBuild((AntBuildFileBase)buildFile, targets, null, dataContext, buildListener);
   }
 }

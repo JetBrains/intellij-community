@@ -1,6 +1,6 @@
 package com.intellij.xml.util.documentation;
 
-import com.intellij.ant.AntConfiguration;
+import com.intellij.ant.AntConfigurationOld;
 import com.intellij.ant.BuildFile;
 import com.intellij.ant.impl.AntInstallation;
 import com.intellij.ant.impl.references.PsiNoWhereElement;
@@ -110,7 +110,7 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
       return generateDoc(processor.result, name, typeName);
     } else if (element instanceof PsiNoWhereElement) {
       PsiFile containingFile = originalElement.getContainingFile();
-      AntConfiguration instance = AntConfiguration.getInstance(originalElement.getProject());
+      AntConfigurationOld instance = AntConfigurationOld.getInstance(originalElement.getProject());
 
       for (BuildFile buildFile : instance.getBuildFiles()) {
         if (buildFile.getXmlFile().equals(containingFile)) {

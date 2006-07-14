@@ -3,10 +3,7 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
-import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntBuildModel;
-import com.intellij.lang.ant.config.AntBuildTarget;
-import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -16,6 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.NewInstanceFactory;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-public class AntBuildFileImpl implements AntBuildFile {
+public class AntBuildFileImpl implements AntBuildFileBase {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntBuildFileImpl");
 
@@ -108,10 +106,12 @@ public class AntBuildFileImpl implements AntBuildFile {
       return "$runWithAnt";
     }
 
+    @Nullable
     public AntInstallation getDefault(AbstractProperty.AbstractPropertyContainer container) {
       return get(container);
     }
 
+    @Nullable
     public AntInstallation get(AbstractProperty.AbstractPropertyContainer container) {
       return AntReference.findAnt(ANT_REFERENCE, container);
     }
@@ -143,14 +143,14 @@ public class AntBuildFileImpl implements AntBuildFile {
     };
 
   private final AntFile myFile;
-  private final AntConfiguration myAntConfiguration;
+  private final AntConfigurationBase myAntConfiguration;
   private final ExternalizablePropertyContainer myWorkspaceOptions;
   private final ExternalizablePropertyContainer myProjectOptions;
   private final AbstractProperty.AbstractPropertyContainer myAllOptions;
   private final AntClassLoaderHolder myClassloaderHolder;
   private boolean myExpandFirstTime = true;
 
-  public AntBuildFileImpl(final AntFile antFile, final AntConfiguration configuration) {
+  public AntBuildFileImpl(final AntFile antFile, final AntConfigurationBase configuration) {
     myFile = antFile;
     myAntConfiguration = configuration;
     myWorkspaceOptions = new ExternalizablePropertyContainer();
@@ -192,21 +192,26 @@ public class AntBuildFileImpl implements AntBuildFile {
     return name;
   }
 
+  @Nullable
+  public String getName() {
+    return getAntFile().getName();
+  }
 
-  public AntBuildModel getModel() {
-    return myAntConfiguration.getModel(this);
+
+  public AntBuildModelBase getModel() {
+    return (AntBuildModelBase)myAntConfiguration.getModel(this);
   }
 
   @Nullable
-  public AntBuildModel getModelIfRegistered() {
-    return myAntConfiguration.getModelIfRegistered(this);
+  public AntBuildModelBase getModelIfRegistered() {
+    return (AntBuildModelBase)myAntConfiguration.getModelIfRegistered(this);
   }
 
   public boolean isRunInBackground() {
     return RUN_IN_BACKGROUND.value(myAllOptions);
   }
 
-  public AntFile getAntFile() {
+  public PsiFile getAntFile() {
     return myFile;
   }
 
@@ -214,6 +219,7 @@ public class AntBuildFileImpl implements AntBuildFile {
     return myFile.getProject();
   }
 
+  @Nullable
   public VirtualFile getVirtualFile() {
     return myFile.getVirtualFile();
   }
@@ -222,8 +228,10 @@ public class AntBuildFileImpl implements AntBuildFile {
     return myAllOptions;
   }
 
+  @Nullable
   public String getPresentableUrl() {
-    return getVirtualFile().getPresentableUrl();
+    final VirtualFile file = getVirtualFile();
+    return (file == null) ? null : file.getPresentableUrl();
   }
 
   public boolean shouldExpand() {
@@ -241,7 +249,7 @@ public class AntBuildFileImpl implements AntBuildFile {
   }
 
   public void updateProperties() {
-    Map<String, AntBuildTarget> targetByName =
+    final Map<String, AntBuildTarget> targetByName =
       ContainerUtil.assignKeys(Arrays.asList(getModel().getTargets()).iterator(), new Convertor<AntBuildTarget, String>() {
         public String convert(AntBuildTarget target) {
           return target.getName();

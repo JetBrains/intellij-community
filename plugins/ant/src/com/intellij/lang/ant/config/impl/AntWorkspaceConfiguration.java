@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
@@ -52,7 +53,7 @@ public class AntWorkspaceConfiguration implements JDOMExternalizable, ProjectCom
     for (final AntBuildFile buildFile : AntConfiguration.getInstance(myProject).getBuildFiles()) {
       Element element = new Element(BUILD_FILE);
       element.setAttribute(URL, buildFile.getVirtualFile().getUrl());
-      buildFile.writeWorkspaceProperties(element);
+      ((AntBuildFileBase)buildFile).writeWorkspaceProperties(element);
       parentNode.addContent(element);
     }
   }
@@ -66,7 +67,7 @@ public class AntWorkspaceConfiguration implements JDOMExternalizable, ProjectCom
     for (final AntBuildFile buildFile : AntConfiguration.getInstance(myProject).getBuildFiles()) {
       Element fileElement = findChildByUrl(myProperties, buildFile.getVirtualFile().getUrl());
       if (fileElement == null) continue;
-      buildFile.readWorkspaceProperties(fileElement);
+      ((AntBuildFileBase)buildFile).readWorkspaceProperties(fileElement);
     }
     myProperties = null;
   }

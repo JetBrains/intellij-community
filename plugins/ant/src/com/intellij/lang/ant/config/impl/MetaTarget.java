@@ -1,28 +1,25 @@
 package com.intellij.lang.ant.config.impl;
 
-import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntBuildListener;
-import com.intellij.lang.ant.config.AntBuildModel;
-import com.intellij.lang.ant.config.AntBuildTarget;
+import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.TargetAction;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
-import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public class MetaTarget implements AntBuildTarget {
-  private final AntBuildFile myBuildFile;
+public class MetaTarget implements AntBuildTargetBase {
+  private final AntBuildFileBase myBuildFile;
   private final String[] myTargets;
   private final String myName;
   private final String myDescription;
 
-  public MetaTarget(final AntBuildFile buildFile, final String displayName, final String[] targets) {
+  public MetaTarget(final AntBuildFileBase buildFile, final String displayName, final String[] targets) {
     myBuildFile = buildFile;
     myTargets = targets;
     myName = displayName;
@@ -62,7 +59,7 @@ public class MetaTarget implements AntBuildTarget {
     return builder.toString();
   }
 
-  public AntBuildModel getModel() {
+  public AntBuildModelBase getModel() {
     return myBuildFile.getModel();
   }
 
@@ -85,7 +82,7 @@ public class MetaTarget implements AntBuildTarget {
     return null;
   }
 
-  public AntFile getAntFile() {
+  public PsiFile getAntFile() {
     return myBuildFile.getAntFile();
   }
 

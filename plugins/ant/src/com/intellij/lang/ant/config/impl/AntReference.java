@@ -1,7 +1,6 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -10,6 +9,7 @@ import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.Externalizer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
@@ -109,16 +109,16 @@ public abstract class AntReference {
   public boolean equals(Object obj) {
     if (obj == PROJECT_DEFAULT) return this == PROJECT_DEFAULT;
     if (obj == BUNDLED_ANT) return this == BUNDLED_ANT;
-    if (!(obj instanceof AntReference)) return false;
-    return Comparing.equal(getName(), ((AntReference)obj).getName());
+    return obj instanceof AntReference && Comparing.equal(getName(), ((AntReference)obj).getName());
   }
 
+  @Nullable
   public static AntInstallation findAnt(AbstractProperty<AntReference> property, AbstractProperty.AbstractPropertyContainer container) {
     GlobalAntConfiguration antConfiguration = GlobalAntConfiguration.INSTANCE.get(container);
     LOG.assertTrue(antConfiguration != null);
     AntReference antReference = property.get(container);
     if (antReference == PROJECT_DEFAULT) {
-      antReference = AntConfiguration.DEFAULT_ANT.get(container);
+      antReference = AntConfigurationImpl.DEFAULT_ANT.get(container);
     }
     if (antReference == null) return null;
     return antReference.find(antConfiguration);
@@ -128,16 +128,16 @@ public abstract class AntReference {
                                                AbstractProperty.AbstractPropertyContainer container,
                                                GlobalAntConfiguration antConfiguration) throws CantRunException {
     AntReference antReference = property.get(container);
-    if (antReference == PROJECT_DEFAULT) antReference = AntConfiguration.DEFAULT_ANT.get(container);
+    if (antReference == PROJECT_DEFAULT) antReference = AntConfigurationImpl.DEFAULT_ANT.get(container);
     if (antReference == null) throw new CantRunException(AntBundle.message("cant.run.ant.no.ant.configured.error.message"));
     AntInstallation antInstallation = antReference.find(antConfiguration);
     if (antInstallation == null) {
-      throw new CantRunException(
-        AntBundle.message("cant.run.ant.ant.reference.is.not.configured.error.message", antReference.getName()));
+      throw new CantRunException(AntBundle.message("cant.run.ant.ant.reference.is.not.configured.error.message", antReference.getName()));
     }
     return antInstallation;
   }
 
+  @Nullable
   public static AntInstallation findAntOrBundled(AbstractProperty.AbstractPropertyContainer container) {
     GlobalAntConfiguration antConfiguration = GlobalAntConfiguration.INSTANCE.get(container);
     if (container.hasProperty(AntBuildFileImpl.ANT_REFERENCE)) return findAnt(AntBuildFileImpl.ANT_REFERENCE, container);

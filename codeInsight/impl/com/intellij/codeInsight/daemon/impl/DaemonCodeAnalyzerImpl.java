@@ -1,8 +1,5 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.ant.AntConfiguration;
-import com.intellij.ant.AntConfigurationListener;
-import com.intellij.ant.BuildFile;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -11,11 +8,14 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.problems.WolfTheProblemSolverImpl;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
-import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
+import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.AntConfigurationListener;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -58,15 +58,15 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
@@ -781,15 +781,15 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   private class MyAntConfigurationListener implements AntConfigurationListener {
-    public void buildFileChanged(BuildFile buildFile) {
+    public void buildFileChanged(final AntBuildFile buildFile) {
       restart();
     }
 
-    public void buildFileAdded(BuildFile buildFile) {
+    public void buildFileAdded(final AntBuildFile buildFile) {
       restart();
     }
 
-    public void buildFileRemoved(BuildFile buildFile) {
+    public void buildFileRemoved(final AntBuildFile buildFile) {
       restart();
     }
   }

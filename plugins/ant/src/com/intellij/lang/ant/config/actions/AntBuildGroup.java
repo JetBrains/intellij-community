@@ -1,9 +1,6 @@
 package com.intellij.lang.ant.config.actions;
 
-import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntBuildModel;
-import com.intellij.lang.ant.config.AntBuildTarget;
-import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.impl.MetaTarget;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -29,8 +26,8 @@ public final class AntBuildGroup extends ActionGroup {
     if (project == null) return AnAction.EMPTY_ARRAY;
 
     final List<AnAction> children = new ArrayList<AnAction>();
-    final AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
-    for (AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
+    final AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(project);
+    for (final AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
       final String name = buildFile.getPresentableName();
       DefaultActionGroup subgroup = new DefaultActionGroup();
       subgroup.getTemplatePresentation().setText(name, false);
@@ -45,7 +42,7 @@ public final class AntBuildGroup extends ActionGroup {
   }
 
   private static void fillGroup(final AntBuildFile buildFile, final DefaultActionGroup group, final AntConfiguration antConfiguration) {
-    AntBuildModel model = buildFile.getModel();
+    final AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
     if (model.getDefaultTargetName() != null) {
       DefaultActionGroup subgroup = new DefaultActionGroup();
       subgroup.add(getOrCreateAction(buildFile, TargetAction.DEFAULT_TARGET_NAME, new String[]{TargetAction.DEFAULT_TARGET_NAME}, null,
@@ -75,18 +72,19 @@ public final class AntBuildGroup extends ActionGroup {
       }
       addedTargetNames.add(displayName);
       final String[] targetsToRun = (target instanceof MetaTarget) ? ((MetaTarget)target).getTargetNames() : new String[]{displayName};
-      subgroup.add(getOrCreateAction(buildFile, displayName, targetsToRun, target.getNotEmptyDescription(), target.getActionId()));
+      subgroup.add(getOrCreateAction(buildFile, displayName, targetsToRun, target.getNotEmptyDescription(),
+                                     ((AntBuildTargetBase)target).getActionId()));
     }
     if (subgroup.getChildrenCount() > 0) {
       group.add(subgroup);
     }
   }
 
-  private static AnAction getOrCreateAction(AntBuildFile buildFile,
-                                            String displayName,
-                                            String[] targets,
-                                            String targetDescription,
-                                            String actionId) {
+  private static AnAction getOrCreateAction(final AntBuildFile buildFile,
+                                            final String displayName,
+                                            final String[] targets,
+                                            final String targetDescription,
+                                            final String actionId) {
     AnAction action = null;
     if (actionId != null) {
       action = ActionManager.getInstance().getAction(actionId);

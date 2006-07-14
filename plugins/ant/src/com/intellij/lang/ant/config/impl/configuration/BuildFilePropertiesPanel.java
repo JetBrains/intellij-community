@@ -1,7 +1,6 @@
 package com.intellij.lang.ant.config.impl.configuration;
 
-import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.impl.*;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.application.Application;
@@ -21,6 +20,7 @@ import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -32,12 +32,12 @@ import java.util.*;
 public class BuildFilePropertiesPanel {
   @NonNls private static final String DIMENSION_SERVICE_KEY = "antBuildFilePropertiesDialogDimension";
   private final Form myForm = new Form();
-  private AntBuildFile myBuildFile;
+  private AntBuildFileBase myBuildFile;
 
   private BuildFilePropertiesPanel() {
   }
 
-  private void reset(final AntBuildFile buildFile) {
+  private void reset(final AntBuildFileBase buildFile) {
     myBuildFile = buildFile;
     buildFile.updateProperties();
     myForm.reset(myBuildFile);
@@ -68,7 +68,7 @@ public class BuildFilePropertiesPanel {
     myForm.beforeClose(myBuildFile);
   }
 
-  public static boolean editBuildFile(AntBuildFile buildFile) {
+  public static boolean editBuildFile(AntBuildFileBase buildFile) {
     BuildFilePropertiesPanel panel = new BuildFilePropertiesPanel();
     panel.reset(buildFile);
     return panel.showDialog();
@@ -140,7 +140,7 @@ public class BuildFilePropertiesPanel {
       return myTabs[0].getPreferedFocusComponent();
     }
 
-    public void reset(final AntBuildFile buildFile) {
+    public void reset(final AntBuildFileBase buildFile) {
       myBinding.loadValues(buildFile.getAllOptions());
       myBuildFileName.setText(buildFile.getPresentableUrl());
       for (Tab tab : myTabs) {
@@ -148,14 +148,14 @@ public class BuildFilePropertiesPanel {
       }
     }
 
-    public void apply(AntBuildFile buildFile) {
+    public void apply(AntBuildFileBase buildFile) {
       myBinding.apply(buildFile.getAllOptions());
       for (Tab tab : myTabs) {
         tab.apply(buildFile.getAllOptions());
       }
     }
 
-    public void beforeClose(AntBuildFile buildFile) {
+    public void beforeClose(AntBuildFileBase buildFile) {
       myBinding.beforeClose(buildFile.getAllOptions());
       for (Tab tab : myTabs) {
         tab.beforeClose(buildFile.getAllOptions());
@@ -215,6 +215,7 @@ public class BuildFilePropertiesPanel {
       return myWholePanel;
     }
 
+    @Nullable
     public String getDisplayName() {
       return AntBundle.message("edit.ant.properties.tab.display.name");
     }
@@ -231,7 +232,7 @@ public class BuildFilePropertiesPanel {
     private static final int PREFERRED_CHECKBOX_COLUMN_WIDTH = new JCheckBox().getPreferredSize().width + 4;
     private static final ColumnInfo<TargetFilter, Boolean> CHECK_BOX_COLUMN = new ColumnInfo<TargetFilter, Boolean>("") {
       public Boolean valueOf(TargetFilter targetFilter) {
-        return Boolean.valueOf(targetFilter.isVisible());
+        return targetFilter.isVisible();
       }
 
       public void setValue(TargetFilter targetFilter, Boolean aBoolean) {
@@ -304,6 +305,7 @@ public class BuildFilePropertiesPanel {
       return myWholePanel;
     }
 
+    @Nullable
     public String getDisplayName() {
       return AntBundle.message("edit.ant.properties.filters.tab.display.name");
     }
@@ -385,16 +387,17 @@ public class BuildFilePropertiesPanel {
       return myWholePanel;
     }
 
+    @Nullable
     public String getDisplayName() {
       return AntBundle.message("edit.ant.properties.execution.tab.display.name");
     }
 
     public void reset(AbstractProperty.AbstractPropertyContainer options) {
-      String projectJdkName = AntConfiguration.DEFAULT_JDK_NAME.get(options);
+      String projectJdkName = AntConfigurationImpl.DEFAULT_JDK_NAME.get(options);
       myJDKsController.setRenderer(new AntUIUtil.ProjectJdkRenderer(myAntGlobalConfiguration, true, projectJdkName));
       super.reset(options);
       myJDKsController.resetList(null);
-      myProjectDefaultAnt = AntConfiguration.DEFAULT_ANT.get(options);
+      myProjectDefaultAnt = AntConfigurationImpl.DEFAULT_ANT.get(options);
       updateDefaultAnt();
     }
 
@@ -406,7 +409,7 @@ public class BuildFilePropertiesPanel {
     }
 
     public void apply(AbstractProperty.AbstractPropertyContainer options) {
-      AntConfiguration.DEFAULT_ANT.set(options, myProjectDefaultAnt);
+      AntConfigurationImpl.DEFAULT_ANT.set(options, myProjectDefaultAnt);
       super.apply(options);
     }
 
@@ -427,6 +430,7 @@ public class BuildFilePropertiesPanel {
       return myWholePanel;
     }
 
+    @Nullable
     public String getDisplayName() {
       return AntBundle.message("edit.ant.properties.additional.classpath.tab.display.name");
     }

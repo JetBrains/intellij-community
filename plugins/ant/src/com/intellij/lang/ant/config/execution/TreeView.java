@@ -5,9 +5,9 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntBuildModel;
-import com.intellij.lang.ant.config.AntBuildTarget;
-import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.AntBuildModelBase;
+import com.intellij.lang.ant.config.AntBuildTargetBase;
+import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.BuildTask;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -63,11 +63,11 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     myBuildFile = buildFile;
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       protected boolean isAutoScrollMode() {
-        return AntConfiguration.getInstance(myProject).isAutoScrollToSource();
+        return AntConfigurationBase.getInstance(myProject).isAutoScrollToSource();
       }
 
       protected void setAutoScrollMode(boolean state) {
-        AntConfiguration.getInstance(myProject).setAutoScrollToSource(state);
+        AntConfigurationBase.getInstance(myProject).setAutoScrollToSource(state);
       }
     };
     myPanel = createPanel();
@@ -233,8 +233,8 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
         builder.append(message.getColumn());
         builder.append(") ");
       }
-      addJavacMessageImpl(new AntMessage(message.getType(), message.getPriority(), builder.toString() + message.getText(), message.getFile(),
-                                         message.getLine(), message.getColumn()));
+      addJavacMessageImpl(new AntMessage(message.getType(), message.getPriority(), builder.toString() + message.getText(),
+                                         message.getFile(), message.getLine(), message.getColumn()));
     }
     finally {
       StringBuilderSpinAllocator.dispose(builder);
@@ -387,28 +387,23 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
 
   @Nullable
   private OpenFileDescriptor getDescriptorForTargetNode(MessageNode node) {
-    String targetName = node.getText()[0];
-    AntBuildModel buildModel = myBuildFile.getModel();
-    AntBuildTarget target = buildModel.findTarget(targetName);
-    if (target == null) return null;
-    return target.getOpenFileDescriptor();
+    final String targetName = node.getText()[0];
+    final AntBuildTargetBase target = (AntBuildTargetBase)myBuildFile.getModel().findTarget(targetName);
+    return (target == null) ? null : target.getOpenFileDescriptor();
   }
 
   private
   @Nullable
   OpenFileDescriptor getDescriptorForTaskNode(MessageNode node) {
-    String[] text = node.getText();
+    final String[] text = node.getText();
     if (text == null || text.length == 0) return null;
-    String taskName = text[0];
-    TreeNode parentNode = node.getParent();
+    final String taskName = text[0];
+    final TreeNode parentNode = node.getParent();
     if (!(parentNode instanceof MessageNode)) return null;
-    MessageNode messageNode = (MessageNode)parentNode;
+    final MessageNode messageNode = (MessageNode)parentNode;
     if (messageNode.getType() != AntBuildMessageView.MessageType.TARGET) return null;
-    String targetName = messageNode.getText()[0];
-    AntBuildModel buildModel = myBuildFile.getModel();
-    BuildTask task = buildModel.findTask(targetName, taskName);
-    if (task == null) return null;
-    return task.getOpenFileDescriptor();
+    final BuildTask task = ((AntBuildModelBase)myBuildFile.getModel()).findTask(messageNode.getText()[0], taskName);
+    return (task == null) ? null : task.getOpenFileDescriptor();
   }
 
   private static boolean isValid(final VirtualFile file) {

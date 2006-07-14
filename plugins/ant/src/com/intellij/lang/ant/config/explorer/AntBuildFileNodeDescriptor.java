@@ -2,7 +2,8 @@ package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntBuildModel;
+import com.intellij.lang.ant.config.AntBuildFileBase;
+import com.intellij.lang.ant.config.AntBuildModelBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
@@ -15,10 +16,10 @@ import javax.swing.*;
 final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
   private static final Icon ICON = IconLoader.getIcon("/ant/build.png");
 
-  private final AntBuildFile myBuildFile;
+  private final AntBuildFileBase myBuildFile;
   private CompositeAppearance myAppearance;
 
-  public AntBuildFileNodeDescriptor(Project project, NodeDescriptor parentDescriptor, AntBuildFile buildFile) {
+  public AntBuildFileNodeDescriptor(Project project, NodeDescriptor parentDescriptor, AntBuildFileBase buildFile) {
     super(project, parentDescriptor);
     myBuildFile = buildFile;
   }
@@ -35,7 +36,7 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
     CompositeAppearance oldAppearence = myAppearance;
     myAppearance = new CompositeAppearance();
     myAppearance.getEnding().addText(myBuildFile.getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    final AntBuildModel buildModel = myBuildFile.getModelIfRegistered();
+    final AntBuildModelBase buildModel = myBuildFile.getModelIfRegistered();
     if (buildModel != null) {
       AntTargetNodeDescriptor.addShortcutText(buildModel.getDefaultTargetActionId(), myAppearance);
     }

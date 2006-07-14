@@ -3,10 +3,7 @@ package com.intellij.lang.ant.config.explorer;
 import com.intellij.ant.AntBundle;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntBuildModel;
-import com.intellij.lang.ant.config.AntBuildTarget;
-import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.impl.MetaTarget;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -47,10 +44,10 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       return new TextInfoNodeDescriptor(myProject, parentDescriptor, (String)element);
     }
     else if (element instanceof AntBuildFile) {
-      return new AntBuildFileNodeDescriptor(myProject, parentDescriptor, (AntBuildFile)element);
+      return new AntBuildFileNodeDescriptor(myProject, parentDescriptor, (AntBuildFileBase)element);
     }
     else if (element instanceof AntBuildTarget) {
-      return new AntTargetNodeDescriptor(myProject, parentDescriptor, (AntBuildTarget)element);
+      return new AntTargetNodeDescriptor(myProject, parentDescriptor, (AntBuildTargetBase)element);
     }
     LOG.assertTrue(false, "Unknown element for this tree structure " + element);
     return null;
@@ -58,10 +55,8 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
 
   public Object[] getChildElements(Object element) {
     if (element == myRoot) {
-      List<AntBuildFile> buildFiles = AntConfiguration.getInstance(myProject).getBuildFiles();
-      return !buildFiles.isEmpty()
-             ? buildFiles.toArray(new AntBuildFile[buildFiles.size()])
-             : new Object[]{AntBundle.message("ant.tree.structure.no.build.files.message")};
+      final AntBuildFile[] buildFiles = AntConfiguration.getInstance(myProject).getBuildFiles();
+      return (buildFiles.length != 0) ? buildFiles : new Object[]{AntBundle.message("ant.tree.structure.no.build.files.message")};
     }
 
     if (element instanceof AntBuildFile) {
@@ -76,7 +71,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       Collections.sort(metaTargets, ourTargetComparator);
       targets.addAll(metaTargets);
 
-      return targets.toArray(new AntBuildTarget[targets.size()]);
+      return targets.toArray(new AntBuildTargetBase[targets.size()]);
     }
 
     if (element instanceof AntBuildTarget) {
@@ -92,7 +87,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       if (element instanceof MetaTarget) {
         return ((MetaTarget)element).getBuildFile();
       }
-      AntBuildTarget buildTarget = (AntBuildTarget)element;
+      AntBuildTargetBase buildTarget = (AntBuildTargetBase)element;
       return buildTarget.getModel().getBuildFile();
     }
     else if (element instanceof AntBuildFile) {

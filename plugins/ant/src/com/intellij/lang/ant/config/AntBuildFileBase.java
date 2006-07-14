@@ -1,37 +1,21 @@
 package com.intellij.lang.ant.config;
 
-import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.config.AbstractProperty;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
-public interface AntBuildFile {
+public interface AntBuildFileBase extends AntBuildFile {
+
+  AntBuildModelBase getModel();
 
   @Nullable
-  String getPresentableName();
-
-  AntBuildModel getModel();
-
-  @Nullable
-  AntBuildModel getModelIfRegistered();
+  AntBuildModelBase getModelIfRegistered();
 
   AbstractProperty.AbstractPropertyContainer getAllOptions();
 
-  AntFile getAntFile();
-
-  Project getProject();
-
-  VirtualFile getVirtualFile();
-
-  String getPresentableUrl();
-
   boolean shouldExpand();
-
-  boolean isTargetVisible(final AntBuildTarget target);
 
   void updateProperties();
 

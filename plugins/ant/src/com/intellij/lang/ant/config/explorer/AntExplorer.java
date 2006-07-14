@@ -11,7 +11,6 @@ import com.intellij.lang.ant.config.actions.RemoveBuildFileAction;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.lang.ant.config.impl.*;
 import com.intellij.lang.ant.config.impl.configuration.BuildFilePropertiesPanel;
-import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -30,6 +29,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.Tree;
@@ -67,7 +67,7 @@ public class AntExplorer extends JPanel implements DataProvider {
     }
 
     public boolean canExpand() {
-      return !AntConfiguration.getInstance(myProject).getBuildFiles().isEmpty();
+      return AntConfiguration.getInstance(myProject).getBuildFiles().length != 0;
     }
 
     public void collapseAll() {
@@ -75,7 +75,7 @@ public class AntExplorer extends JPanel implements DataProvider {
     }
 
     public boolean canCollapse() {
-      return !AntConfiguration.getInstance(myProject).getBuildFiles().isEmpty();
+      return canExpand();
     }
   };
 
@@ -88,7 +88,7 @@ public class AntExplorer extends JPanel implements DataProvider {
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new NodeRenderer());
     myBuilder = new AntExplorerTreeBuilder(project, myTree, model);
-    myBuilder.setTargetsFiltered(AntConfiguration.getInstance(project).isFilterTargets());
+    myBuilder.setTargetsFiltered(AntConfigurationBase.getInstance(project).isFilterTargets());
     TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
     new TreeSpeedSearch(myTree);
@@ -179,7 +179,7 @@ public class AntExplorer extends JPanel implements DataProvider {
       try {
         antConfiguration.addBuildFile(file);
       }
-      catch (NoPsiFileException e) {
+      catch (AntNoFileException e) {
         ignoredFiles.add(e.getFile());
       }
     }
@@ -230,7 +230,7 @@ public class AntExplorer extends JPanel implements DataProvider {
     if (!canRunSelection()) {
       return;
     }
-    AntBuildFile buildFile = getCurrentBuildFile();
+    AntBuildFileBase buildFile = getCurrentBuildFile();
     TreePath[] paths = myTree.getSelectionPaths();
     String[] targets = getTargetNamesFromPaths(paths);
     ExecutionHandler.runBuild(buildFile, targets, null, dataContext, AntBuildListener.NULL);
@@ -281,17 +281,17 @@ public class AntExplorer extends JPanel implements DataProvider {
   }
 
   private static AntBuildTarget[] getTargetObjectsFromPaths(TreePath[] paths) {
-    final List<AntBuildTarget> targets = new ArrayList<AntBuildTarget>();
+    final List<AntBuildTargetBase> targets = new ArrayList<AntBuildTargetBase>();
     for (TreePath path : paths) {
       Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
       if (!(userObject instanceof AntTargetNodeDescriptor)) {
         continue;
       }
-      AntBuildTarget target = ((AntTargetNodeDescriptor)userObject).getTarget();
+      AntBuildTargetBase target = ((AntTargetNodeDescriptor)userObject).getTarget();
       targets.add(target);
 
     }
-    return targets.toArray(new AntBuildTarget[targets.size()]);
+    return targets.toArray(new AntBuildTargetBase[targets.size()]);
   }
 
   public boolean isBuildFileSelected() {
@@ -299,9 +299,9 @@ public class AntExplorer extends JPanel implements DataProvider {
   }
 
   @Nullable
-  private AntBuildFile getCurrentBuildFile() {
-    AntBuildFileNodeDescriptor descriptor = getCurrentBuildFileNodeDescriptor();
-    return (descriptor == null) ? null : descriptor.getBuildFile();
+  private AntBuildFileBase getCurrentBuildFile() {
+    final AntBuildFileNodeDescriptor descriptor = getCurrentBuildFileNodeDescriptor();
+    return (AntBuildFileBase)((descriptor == null) ? null : descriptor.getBuildFile());
   }
 
   @Nullable
@@ -339,7 +339,7 @@ public class AntExplorer extends JPanel implements DataProvider {
       group.add(new RemoveBuildFileAction(this));
     }
     if (userObject instanceof AntTargetNodeDescriptor) {
-      AntBuildTarget target = ((AntTargetNodeDescriptor)userObject).getTarget();
+      AntBuildTargetBase target = ((AntTargetNodeDescriptor)userObject).getTarget();
       DefaultActionGroup executeOnGroup = new DefaultActionGroup(AntBundle.message("ant.explorer.execute.on.action.group.name"), true);
       executeOnGroup.add(new ExecuteOnEventAction(target, ExecuteBeforeCompilationEvent.getInstance()));
       executeOnGroup.add(new ExecuteOnEventAction(target, ExecuteAfterCompilationEvent.getInstance()));
@@ -360,7 +360,7 @@ public class AntExplorer extends JPanel implements DataProvider {
       if (buildFile == null) {
         return null;
       }
-      AntFile file = buildFile.getAntFile();
+      final PsiFile file = buildFile.getAntFile();
       if (file == null) {
         return null;
       }
@@ -374,7 +374,7 @@ public class AntExplorer extends JPanel implements DataProvider {
       }
       if (node.getUserObject()instanceof AntTargetNodeDescriptor) {
         AntTargetNodeDescriptor targetNodeDescriptor = (AntTargetNodeDescriptor)node.getUserObject();
-        AntBuildTarget buildTarget = targetNodeDescriptor.getTarget();
+        AntBuildTargetBase buildTarget = targetNodeDescriptor.getTarget();
         final OpenFileDescriptor descriptor = buildTarget.getOpenFileDescriptor();
         if (descriptor != null) {
           final VirtualFile descriptorFile = descriptor.getFile();
@@ -517,7 +517,7 @@ public class AntExplorer extends JPanel implements DataProvider {
     }
 
     public boolean isSelected(AnActionEvent event) {
-      return AntConfiguration.getInstance(myProject).isFilterTargets();
+      return AntConfigurationBase.getInstance(myProject).isFilterTargets();
     }
 
     public void setSelected(AnActionEvent event, boolean flag) {
@@ -527,28 +527,28 @@ public class AntExplorer extends JPanel implements DataProvider {
 
   private void setTargetsFiltered(boolean value) {
     myBuilder.setTargetsFiltered(value);
-    AntConfiguration.getInstance(myProject).setFilterTargets(value);
+    AntConfigurationBase.getInstance(myProject).setFilterTargets(value);
   }
 
   private final class ExecuteOnEventAction extends ToggleAction {
-    private final AntBuildTarget myTarget;
+    private final AntBuildTargetBase myTarget;
     private final ExecutionEvent myExecutionEvent;
 
-    public ExecuteOnEventAction(final AntBuildTarget target, final ExecutionEvent executionEvent) {
+    public ExecuteOnEventAction(final AntBuildTargetBase target, final ExecutionEvent executionEvent) {
       super(executionEvent.getPresentableName());
       myTarget = target;
       myExecutionEvent = executionEvent;
     }
 
     public boolean isSelected(AnActionEvent e) {
-      return myTarget.equals(AntConfiguration.getInstance(myProject).getTargetForEvent(myExecutionEvent));
+      return myTarget.equals(AntConfigurationBase.getInstance(myProject).getTargetForEvent(myExecutionEvent));
     }
 
     public void setSelected(AnActionEvent event, boolean state) {
-      final AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
+      final AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(myProject);
       if (state) {
-        final AntBuildFile buildFile =
-          (myTarget instanceof MetaTarget) ? ((MetaTarget)myTarget).getBuildFile() : myTarget.getModel().getBuildFile();
+        final AntBuildFileBase buildFile =
+          (AntBuildFileBase)((myTarget instanceof MetaTarget) ? ((MetaTarget)myTarget).getBuildFile() : myTarget.getModel().getBuildFile());
         antConfiguration.setTargetForEvent(buildFile, myTarget.getName(), myExecutionEvent);
       }
       else {
@@ -585,9 +585,8 @@ public class AntExplorer extends JPanel implements DataProvider {
     public void actionPerformed(AnActionEvent e) {
       final AntBuildFile buildFile = getCurrentBuildFile();
       final String[] targets = getTargetNamesFromPaths(myTree.getSelectionPaths());
-      final AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
       final ExecuteCompositeTargetEvent event = new ExecuteCompositeTargetEvent(targets);
-      final SaveMetaTargetDialog dialog = new SaveMetaTargetDialog(myTree, event, antConfiguration, buildFile);
+      final SaveMetaTargetDialog dialog = new SaveMetaTargetDialog(myTree, event, AntConfigurationBase.getInstance(myProject), buildFile);
       dialog.setTitle(e.getPresentation().getText());
       dialog.show();
       if (dialog.isOK()) {
@@ -597,7 +596,7 @@ public class AntExplorer extends JPanel implements DataProvider {
     }
 
     public void update(AnActionEvent e) {
-      TreePath[] paths = myTree.getSelectionPaths();
+      final TreePath[] paths = myTree.getSelectionPaths();
       e.getPresentation().setEnabled(paths != null && paths.length > 1 && canRunSelection());
     }
   }
@@ -642,7 +641,7 @@ public class AntExplorer extends JPanel implements DataProvider {
         }
         // try to remove meta targets
         final AntBuildTarget[] targets = getTargetObjectsFromPaths(paths);
-        final AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
+        final AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(myProject);
         for (final AntBuildTarget buildTarget : targets) {
           if (buildTarget instanceof MetaTarget) {
             for (final ExecutionEvent event : antConfiguration.getEventsForTarget(buildTarget)) {

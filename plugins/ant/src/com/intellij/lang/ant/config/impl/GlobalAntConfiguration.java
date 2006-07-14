@@ -2,7 +2,7 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.ant.AntBundle;
 import com.intellij.ide.macro.MacroManager;
-import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -110,7 +110,7 @@ public class GlobalAntConfiguration implements ApplicationComponent, JDOMExterna
 
   public AbstractProperty.AbstractPropertyContainer getProperties(Project project) {
     return new CompositePropertyContainer(new AbstractProperty.AbstractPropertyContainer[]{
-      myProperties, AntConfiguration.getInstance(project).getProperties()});
+      myProperties, AntConfigurationBase.getInstance(project).getProperties()});
   }
 
   public void addConfiguration(final AntInstallation ant) {
@@ -124,11 +124,11 @@ public class GlobalAntConfiguration implements ApplicationComponent, JDOMExterna
     ANTS.getModifiableList(getProperties()).remove(ant);
   }
 
-  public ProjectJdk findJdk(final String jdkName) {
+  public static ProjectJdk findJdk(final String jdkName) {
     return ProjectJdkTable.getInstance().findJdk(jdkName);
   }
 
-  public MacroManager getMacroManager() {
+  public static MacroManager getMacroManager() {
     return MacroManager.getInstance();
   }
 }

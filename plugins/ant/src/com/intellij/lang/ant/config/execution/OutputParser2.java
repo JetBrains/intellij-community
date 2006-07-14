@@ -69,7 +69,7 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
                                           final AntBuildMessageView errorView,
                                           final BuildProgressWindow progress,
                                           final AntBuildFile buildFile) {
-    OutputParser2 parser = new OutputParser2(myProject, handler, errorView, progress, buildFile.getAntFile().getName());
+    OutputParser2 parser = new OutputParser2(myProject, handler, errorView, progress, buildFile.getName());
     DeferedActionsQueue queue = new DeferedActionsQueueImpl();
     attach(parser, handler.getOut(), queue);
     attach(parser, handler.getErr(), queue);

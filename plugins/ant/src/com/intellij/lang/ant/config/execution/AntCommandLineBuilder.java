@@ -4,11 +4,8 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.ide.macro.Macro;
-import com.intellij.lang.ant.config.AntConfiguration;
-import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
-import com.intellij.lang.ant.config.impl.AntInstallation;
-import com.intellij.lang.ant.config.impl.BuildFileProperty;
-import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
+import com.intellij.ide.macro.MacroManager;
+import com.intellij.lang.ant.config.impl.*;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.projectRoots.ProjectJdk;
@@ -27,20 +24,20 @@ import java.util.Arrays;
 import java.util.List;
 
 public class AntCommandLineBuilder {
-  private GlobalAntConfiguration myConfiguration;
-  private final ArrayList<String> myTargets = new ArrayList<String>();
+  private final List<String> myTargets = new ArrayList<String>();
   private JavaParameters myCommandLine = new JavaParameters();
   private String myBuildFilePath;
   private List<BuildFileProperty> myProperties;
   private boolean myDone = false;
-  @NonNls private final ArrayList<String> myExpandedProperties = new ArrayList<String>();
+  @NonNls private final List<String> myExpandedProperties = new ArrayList<String>();
   @NonNls private static final String INPUT_HANDLER_PARAMETER = "-inputhandler";
 
   public void calculateProperties(final DataContext dataContext) throws Macro.ExecutionCancelledException {
     for (BuildFileProperty property : myProperties) {
       String value = property.getPropertyValue();
-      value = myConfiguration.getMacroManager().expandMacrosInString(value, true, dataContext);
-      value = myConfiguration.getMacroManager().expandMacrosInString(value, false, dataContext);
+      final MacroManager macroManager = GlobalAntConfiguration.getMacroManager();
+      value = macroManager.expandMacrosInString(value, true, dataContext);
+      value = macroManager.expandMacrosInString(value, false, dataContext);
       myExpandedProperties.add("-D" + property.getPropertyName() + "=" + value);
     }
   }
@@ -52,16 +49,15 @@ public class AntCommandLineBuilder {
   public void setBuildFile(AbstractProperty.AbstractPropertyContainer container, File buildFile) throws CantRunException {
     String jdkName = AntBuildFileImpl.CUSTOM_JDK_NAME.get(container);
     ProjectJdk jdk;
-    myConfiguration = GlobalAntConfiguration.INSTANCE.get(container);
     if (jdkName != null && jdkName.length() > 0) {
-      jdk = myConfiguration.findJdk(jdkName);
+      jdk = GlobalAntConfiguration.findJdk(jdkName);
     }
     else {
-      jdkName = AntConfiguration.DEFAULT_JDK_NAME.get(container);
+      jdkName = AntConfigurationImpl.DEFAULT_JDK_NAME.get(container);
       if (jdkName == null || jdkName.length() == 0) {
         throw new CantRunException(AntBundle.message("project.jdk.not.specified.error.message"));
       }
-      jdk = myConfiguration.findJdk(jdkName);
+      jdk = GlobalAntConfiguration.findJdk(jdkName);
     }
     if (jdk == null) {
       throw new CantRunException(AntBundle.message("jdk.with.name.not.configured.error.message", jdkName));

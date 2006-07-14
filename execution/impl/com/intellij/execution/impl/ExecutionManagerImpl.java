@@ -1,6 +1,5 @@
 package com.intellij.execution.impl;
 
-import com.intellij.ant.AntConfiguration;
 import com.intellij.ant.impl.MapDataContext;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.impl.ProjectCompileScope;
@@ -16,6 +15,7 @@ import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -96,8 +96,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           final Thread thread = new Thread(new Runnable() {
             public void run() {
               final DataContext dataContext = MapDataContext.singleData(DataConstants.PROJECT, myProject);
-              final boolean result = antConfiguration.executeTaskBeforeRun(dataContext, (RunConfiguration)configuration);
-              if (result) {
+              if (antConfiguration.executeTaskBeforeRun(dataContext, (RunConfiguration)configuration)) {
                 ApplicationManager.getApplication().invokeLater(startRunnable);
               }
             }

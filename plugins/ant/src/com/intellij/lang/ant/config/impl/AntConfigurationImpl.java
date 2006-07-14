@@ -1,6 +1,8 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.ant.AntBundle;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.DataAccessor;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
@@ -18,6 +20,7 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,6 +36,8 @@ import com.intellij.util.ActionRunner;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.StringSetSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.config.AbstractProperty;
+import com.intellij.util.config.ValueProperty;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +49,31 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class AntConfigurationImpl extends AntConfiguration implements JDOMExternalizable {
+public class AntConfigurationImpl extends AntConfigurationBase implements JDOMExternalizable, ModificationTracker {
+
+  public static final ValueProperty<AntReference> DEFAULT_ANT = new ValueProperty<AntReference>("defaultAnt", AntReference.BUNDLED_ANT);
+  public static final ValueProperty<AntConfiguration> INSTANCE = new ValueProperty<AntConfiguration>("$instance", null);
+  public static final AbstractProperty<String> DEFAULT_JDK_NAME = new AbstractProperty<String>() {
+    public String getName() {
+      return "$defaultJDKName";
+    }
+
+    @Nullable
+    public String getDefault(final AbstractPropertyContainer container) {
+      return get(container);
+    }
+
+    @Nullable
+    public String get(final AbstractPropertyContainer container) {
+      if (!container.hasProperty(this)) return null;
+      AntConfiguration antConfiguration = AntConfigurationImpl.INSTANCE.get(container);
+      return ProjectRootManager.getInstance(antConfiguration.getProject()).getProjectJdkName();
+    }
+
+    public String copy(final String jdkName) {
+      return jdkName;
+    }
+  };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntConfigurationImpl");
   @NonNls private static final String BUILD_FILE = "buildFile";
@@ -56,9 +85,10 @@ public class AntConfigurationImpl extends AntConfiguration implements JDOMExtern
 
   private final PsiManager myPsiManager;
   private final ToolWindowManager myToolWindowManager;
-  private final Map<ExecutionEvent, Pair> myEventToTargetMap = new HashMap<ExecutionEvent, Pair>();
+  private final Map<ExecutionEvent, Pair<AntBuildFile, String>> myEventToTargetMap =
+    new HashMap<ExecutionEvent, Pair<AntBuildFile, String>>();
   private final List<AntBuildFile> myBuildFiles = new ArrayList<AntBuildFile>();
-  private final Map<AntBuildFile, AntBuildModel> myModelToBuildFileMap = new HashMap<AntBuildFile, AntBuildModel>();
+  private final Map<AntBuildFile, AntBuildModelBase> myModelToBuildFileMap = new HashMap<AntBuildFile, AntBuildModelBase>();
   private final EventDispatcher<AntConfigurationListener> myEventDispatcher = EventDispatcher.create(AntConfigurationListener.class);
   private final AntWorkspaceConfiguration myAntWorkspaceConfiguration;
   private final StartupManager myStartupManager;
@@ -67,6 +97,10 @@ public class AntConfigurationImpl extends AntConfiguration implements JDOMExtern
 
   public AntConfigurationImpl(final Project project, final AntWorkspaceConfiguration antWorkspaceConfiguration) {
     super(project);
+    getProperties().registerProperty(DEFAULT_ANT, AntReference.EXTERNALIZER);
+    getProperties().rememberKey(INSTANCE);
+    getProperties().rememberKey(DEFAULT_JDK_NAME);
+    INSTANCE.set(getProperties(), this);
     myAntWorkspaceConfiguration = antWorkspaceConfiguration;
     myPsiManager = PsiManager.getInstance(project);
     myToolWindowManager = ToolWindowManager.getInstance(project);
@@ -74,8 +108,8 @@ public class AntConfigurationImpl extends AntConfiguration implements JDOMExtern
   }
 
   public void projectOpened() {
-    final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-    final DataContext dataContext = MapDataContext.singleData(DataConstants.PROJECT, myProject);
+    final CompilerManager compilerManager = CompilerManager.getInstance(getProject());
+    final DataContext dataContext = MapDataContext.singleData(DataConstants.PROJECT, getProject());
     compilerManager.addBeforeTask(new CompileTask() {
       public boolean execute(CompileContext context) {
         return executeTargetBeforeCompile(dataContext);
@@ -87,9 +121,9 @@ public class AntConfigurationImpl extends AntConfiguration implements JDOMExtern
       }
     });
 
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+    StartupManager.getInstance(getProject()).registerPostStartupActivity(new Runnable() {
       public void run() {
-        myAntExplorer = new AntExplorer(myProject);
+        myAntExplorer = new AntExplorer(getProject());
         ToolWindow toolWindow = myToolWindowManager.registerToolWindow(ToolWindowId.ANT_BUILD, myAntExplorer, ToolWindowAnchor.RIGHT);
         toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowAnt.png"));
       }
@@ -117,11 +151,11 @@ public class AntConfigurationImpl extends AntConfiguration implements JDOMExtern
   public void disposeComponent() {
   }
 
-  public List<AntBuildFile> getBuildFiles() {
-    return myBuildFiles;
+  public AntBuildFile[] getBuildFiles() {
+    return myBuildFiles.toArray(new AntBuildFile[myBuildFiles.size()]);
   }
 
-  public AntBuildFile addBuildFile(final VirtualFile file) throws NoPsiFileException {
+  public AntBuildFile addBuildFile(final VirtualFile file) throws AntNoFileException {
     myModificationCount++;
     final AntBuildFile buildFile = addBuildFileImpl(file);
     updateRegisteredActions();
@@ -155,22 +189,22 @@ public class AntConfigurationImpl extends AntConfiguration implements JDOMExtern
   public AntBuildTarget[] getMetaTargets(final AntBuildFile buildFile) {
     final List<ExecutionEvent> events = getEventsByClass(ExecuteCompositeTargetEvent.class);
     if (events.size() == 0) {
-      return AntBuildTarget.EMPTY_ARRAY;
+      return AntBuildTargetBase.EMPTY_ARRAY;
     }
-    final List<AntBuildTarget> targets = new ArrayList<AntBuildTarget>();
+    final List<AntBuildTargetBase> targets = new ArrayList<AntBuildTargetBase>();
     for (ExecutionEvent event : events) {
       final MetaTarget target = (MetaTarget)getTargetForEvent(event);
       if (target != null && buildFile.equals(target.getBuildFile())) {
         targets.add(target);
       }
     }
-    return targets.toArray(new AntBuildTarget[targets.size()]);
+    return targets.toArray(new AntBuildTargetBase[targets.size()]);
   }
 
   public List<ExecutionEvent> getEventsForTarget(final AntBuildTarget target) {
     final List<ExecutionEvent> list = new ArrayList<ExecutionEvent>();
     for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
-      AntBuildTarget targetForEvent = getTargetForEvent(event);
+      final AntBuildTarget targetForEvent = getTargetForEvent(event);
       if (target.equals(targetForEvent)) {
         list.add(event);
       }
@@ -184,7 +218,7 @@ public class AntConfigurationImpl extends AntConfiguration implements JDOMExtern
     if (pair == null) {
       return null;
     }
-    final AntBuildFile buildFile = (AntBuildFile)pair.first;
+    final AntBuildFileBase buildFile = (AntBuildFileBase)pair.first;
     if (!myBuildFiles.contains(buildFile)) {
       return null; // file was removed
     }
@@ -259,7 +293,7 @@ public class AntConfigurationImpl extends AntConfiguration implements JDOMExtern
         for (final AntBuildFile buildFile : myBuildFiles) {
           Element element = new Element(BUILD_FILE);
           element.setAttribute(URL, buildFile.getVirtualFile().getUrl());
-          buildFile.writeProperties(element);
+          ((AntBuildFileBase)buildFile).writeProperties(element);
           for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
             Pair pair = myEventToTargetMap.get(event);
             if (buildFile.equals(pair.first)) {
@@ -286,7 +320,7 @@ public class AntConfigurationImpl extends AntConfiguration implements JDOMExtern
   }
 
   public AntBuildModel getModel(final AntBuildFile buildFile) {
-    AntBuildModel model = myModelToBuildFileMap.get(buildFile);
+    AntBuildModelBase model = myModelToBuildFileMap.get(buildFile);
     if (model == null) {
       model = createModel(buildFile);
       myModelToBuildFileMap.put(buildFile, model);
@@ -294,21 +328,42 @@ public class AntConfigurationImpl extends AntConfiguration implements JDOMExtern
     return model;
   }
 
-  private AntBuildModel createModel(final AntBuildFile buildFile) {
+  @Nullable
+  public AntBuildFile findBuildFileByActionId(final String id) {
+    for (AntBuildFile buildFile : getBuildFiles()) {
+      AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
+      if (id.equals(model.getDefaultTargetActionId())) {
+        return buildFile;
+      }
+      if (model.hasTargetWithActionId(id)) return buildFile;
+    }
+    return null;
+  }
+
+  public boolean hasTasksToExecuteBeforeRun(final RunConfiguration configuration) {
+    return findExecuteBeforeRunEvent(configuration) != null;
+  }
+
+  public boolean executeTaskBeforeRun(final DataContext context, final RunConfiguration configuration) {
+    final ExecuteBeforeRunEvent foundEvent = findExecuteBeforeRunEvent(configuration);
+    return runTargetSynchronously(context, foundEvent);
+  }
+
+  private AntBuildModelBase createModel(final AntBuildFile buildFile) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       }
     });
     return new AntBuildModelImpl(buildFile);
   }
 
-  private AntBuildFile addBuildFileImpl(final VirtualFile file) throws NoPsiFileException {
+  private AntBuildFile addBuildFileImpl(final VirtualFile file) throws AntNoFileException {
     PsiFile psiFile = myPsiManager.findFile(file);
     if (psiFile != null) {
       psiFile = psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
     }
-    if (psiFile == null) throw new NoPsiFileException(AntBundle.message("cant.add.file.error.message"), file);
+    if (psiFile == null) throw new AntNoFileException(AntBundle.message("cant.add.file.error.message"), file);
     AntBuildFileImpl buildFile = new AntBuildFileImpl((AntFile)psiFile, this);
     myBuildFiles.add(buildFile);
 
@@ -330,8 +385,8 @@ public class AntConfigurationImpl extends AntConfiguration implements JDOMExtern
       try {
         for (Project project : openProjects) {
           final AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
-          for (final AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
-            AntBuildModel model = buildFile.getModel();
+          for (final AntBuildFileBase buildFile : (AntBuildFileBase[])antConfiguration.getBuildFiles()) {
+            AntBuildModelBase model = buildFile.getModel();
             String defaultTargetActionId = model.getDefaultTargetActionId();
             if (defaultTargetActionId != null && !registeredIds.contains(defaultTargetActionId)) {
               registeredIds.add(defaultTargetActionId);
@@ -339,8 +394,9 @@ public class AntConfigurationImpl extends AntConfiguration implements JDOMExtern
                                                                                    new String[]{TargetAction.DEFAULT_TARGET_NAME}, null));
             }
 
-            registerTargetActions(model.getFilteredTargets(), registeredIds, actionManager, buildFile);
-            registerTargetActions(antConfiguration.getMetaTargets(buildFile), registeredIds, actionManager, buildFile);
+            registerTargetActions((AntBuildTargetBase[])model.getFilteredTargets(), registeredIds, actionManager, buildFile);
+            registerTargetActions((AntBuildTargetBase[])antConfiguration.getMetaTargets(buildFile), registeredIds, actionManager,
+                                  buildFile);
           }
         }
       }
@@ -351,11 +407,11 @@ public class AntConfigurationImpl extends AntConfiguration implements JDOMExtern
 
   }
 
-  private static void registerTargetActions(AntBuildTarget[] targets,
-                                            Set<String> registeredIds,
-                                            ActionManagerEx actionManager,
-                                            AntBuildFile buildFile) {
-    for (final AntBuildTarget target : targets) {
+  private static void registerTargetActions(final AntBuildTargetBase[] targets,
+                                            final Set<String> registeredIds,
+                                            final ActionManagerEx actionManager,
+                                            final AntBuildFile buildFile) {
+    for (final AntBuildTargetBase target : targets) {
       String actionId = target.getActionId();
       if (actionId == null) {
         continue;
@@ -442,7 +498,7 @@ public class AntConfigurationImpl extends AntConfiguration implements JDOMExtern
         psiFile = psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
       }
       if (!(psiFile instanceof AntFile)) continue;
-      AntBuildFile buildFile = new AntBuildFileImpl((AntFile)psiFile, this);
+      AntBuildFileBase buildFile = new AntBuildFileImpl((AntFile)psiFile, this);
       buildFile.readProperties(element);
       myBuildFiles.add(buildFile);
       for (final Object o1 : element.getChildren(EXECUTE_ON_ELEMENT)) {
@@ -477,6 +533,24 @@ public class AntConfigurationImpl extends AntConfiguration implements JDOMExtern
   }
 
   private void loadBuildFileWorkspaceProperties() throws InvalidDataException {
-    AntWorkspaceConfiguration.getInstance(myProject).loadFileProperties();
+    AntWorkspaceConfiguration.getInstance(getProject()).loadFileProperties();
+  }
+
+  @Nullable
+  private ExecuteBeforeRunEvent findExecuteBeforeRunEvent(RunConfiguration configuration) {
+    final ConfigurationType type = configuration.getType();
+    for (final ExecutionEvent e : getEventsByClass(ExecuteBeforeRunEvent.class)) {
+      final ExecuteBeforeRunEvent event = (ExecuteBeforeRunEvent)e;
+      if (type.equals(event.getConfigurationType())) {
+        if (event.getRunConfigurationName() == null) {
+          // run for any configuration of this type
+          return event;
+        }
+        if (event.getRunConfigurationName().equals(configuration.getName())) {
+          return event;
+        }
+      }
+    }
+    return null;
   }
 }

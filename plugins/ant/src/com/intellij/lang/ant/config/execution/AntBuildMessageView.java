@@ -3,12 +3,11 @@ package com.intellij.lang.ant.config.execution;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.*;
-import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.actions.*;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.HelpID;
-import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -30,6 +29,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.peer.PeerFactory;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.psi.PsiFile;
 import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.ui.content.*;
 import org.jetbrains.annotations.NonNls;
@@ -61,7 +61,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private OutputParser myParsingThread;
   private final Project myProject;
   private final JPanel myMessagePanel;
-  private final AntBuildFile myBuildFile;
+  private final AntBuildFileBase myBuildFile;
   private final String[] myTargets;
   private static final int VERBOSE_MODE = AntMain2.MSG_VERBOSE;
   private static final int BRIEF_MODE = AntMain2.MSG_VERBOSE - 1;
@@ -114,7 +114,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   };
   @NonNls public static final String FILE_PREFIX = "file:";
 
-  private AntBuildMessageView(Project project, AntBuildFile buildFile, String[] targets) {
+  private AntBuildMessageView(Project project, AntBuildFileBase buildFile, String[] targets) {
     super(new BorderLayout(2, 0));
     myProject = project;
     setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -191,7 +191,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     return isText ? myPlainTextView : myTreeView;
   }
 
-  public AntBuildFile getBuildFile() {
+  public AntBuildFileBase getBuildFile() {
     return myBuildFile;
   }
 
@@ -199,8 +199,8 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
    * @return can be null if user cancelled operation
    */
   @Nullable
-  public static AntBuildMessageView openBuildMessageView(Project project, AntBuildFile buildFile, String[] targets) {
-    final AntFile antFile = buildFile.getAntFile();
+  public static AntBuildMessageView openBuildMessageView(Project project, AntBuildFileBase buildFile, String[] targets) {
+    final PsiFile antFile = buildFile.getAntFile();
     if (!LOG.assertTrue(antFile != null)) {
       return null;
     }

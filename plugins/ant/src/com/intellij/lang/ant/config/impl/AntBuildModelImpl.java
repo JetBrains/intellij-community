@@ -1,9 +1,8 @@
 package com.intellij.lang.ant.config.impl;
 
-import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntBuildModel;
-import com.intellij.lang.ant.config.AntBuildTarget;
+import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.TargetAction;
+import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
 import org.jetbrains.annotations.Nullable;
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AntBuildModelImpl implements AntBuildModel {
+public class AntBuildModelImpl implements AntBuildModelBase {
 
   private final AntBuildFile myFile;
 
@@ -31,18 +30,18 @@ public class AntBuildModelImpl implements AntBuildModel {
   }
 
   public AntBuildTarget[] getTargets() {
-    final List<AntBuildTarget> list = getTargetsList();
-    return list.toArray(new AntBuildTarget[list.size()]);
+    final List<AntBuildTargetBase> list = getTargetsList();
+    return list.toArray(new AntBuildTargetBase[list.size()]);
   }
 
   public AntBuildTarget[] getFilteredTargets() {
-    final List<AntBuildTarget> filtered = new ArrayList<AntBuildTarget>();
-    for (final AntBuildTarget buildTarget : getTargetsList()) {
+    final List<AntBuildTargetBase> filtered = new ArrayList<AntBuildTargetBase>();
+    for (final AntBuildTargetBase buildTarget : getTargetsList()) {
       if (myFile.isTargetVisible(buildTarget)) {
         filtered.add(buildTarget);
       }
     }
-    return (filtered.size() == 0) ? AntBuildTarget.EMPTY_ARRAY : filtered.toArray(new AntBuildTarget[filtered.size()]);
+    return (filtered.size() == 0) ? AntBuildTargetBase.EMPTY_ARRAY : filtered.toArray(new AntBuildTargetBase[filtered.size()]);
   }
 
   @Nullable
@@ -54,15 +53,15 @@ public class AntBuildModelImpl implements AntBuildModel {
 
   }
 
-  public AntBuildFile getBuildFile() {
-    return myFile;
+  public AntBuildFileBase getBuildFile() {
+    return (AntBuildFileBase)myFile;
   }
 
   @Nullable
-  public AntBuildTarget findTarget(final String name) {
+  public AntBuildTargetBase findTarget(final String name) {
     final AntTarget antTarget = getAntProject().getTarget(name);
     if (antTarget != null) {
-      for (final AntBuildTarget buildTarget : getTargetsList()) {
+      for (final AntBuildTargetBase buildTarget : getTargetsList()) {
         if (buildTarget.getAntTarget() == antTarget) {
           return buildTarget;
         }
@@ -73,17 +72,25 @@ public class AntBuildModelImpl implements AntBuildModel {
 
   @Nullable
   public BuildTask findTask(final String targetName, final String taskName) {
-    final AntBuildTarget buildTarget = findTarget(targetName);
+    final AntBuildTargetBase buildTarget = findTarget(targetName);
     return (buildTarget == null) ? null : buildTarget.findTask(taskName);
   }
 
   public AntProject getAntProject() {
-    return myFile.getAntFile().getAntProject();
+    return ((AntFile)getBuildFile().getAntFile()).getAntProject();
   }
 
-  private List<AntBuildTarget> getTargetsList() {
+  public boolean hasTargetWithActionId(final String id) {
+    final List<AntBuildTargetBase> targetsList = getTargetsList();
+    for (AntBuildTargetBase buildTarget : targetsList) {
+      if (id.equals(buildTarget.getActionId())) return true;
+    }
+    return false;
+  }
+
+  private List<AntBuildTargetBase> getTargetsList() {
     final AntTarget[] targets = getAntProject().getTargets();
-    final List<AntBuildTarget> list = new ArrayList<AntBuildTarget>(targets.length);
+    final List<AntBuildTargetBase> list = new ArrayList<AntBuildTargetBase>(targets.length);
     for (final AntTarget target : targets) {
       list.add(new AntBuildTargetImpl(target, this));
     }

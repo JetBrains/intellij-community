@@ -5,7 +5,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
-import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.ExecutionEvent;
 import com.intellij.lang.ant.config.impl.ExecuteBeforeRunEvent;
 import com.intellij.lang.ant.resources.AntBundle;
@@ -163,7 +163,7 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
 
 
   private boolean isConfigurationAssigned(ConfigurationType type, String configurationName) {
-    for (final ExecutionEvent event : AntConfiguration.getInstance(myProject).getEventsForTarget(myTarget)) {
+    for (final ExecutionEvent event : AntConfigurationBase.getInstance(myProject).getEventsForTarget(myTarget)) {
       if (event instanceof ExecuteBeforeRunEvent) {
         ExecuteBeforeRunEvent beforeRunEvent = (ExecuteBeforeRunEvent)event;
         if (type.equals(beforeRunEvent.getConfigurationType()) &&
@@ -176,8 +176,7 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
-
+    final AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(myProject);
     // remove old events
     for (final ExecutionEvent event : antConfiguration.getEventsForTarget(myTarget)) {
       if (event instanceof ExecuteBeforeRunEvent) {

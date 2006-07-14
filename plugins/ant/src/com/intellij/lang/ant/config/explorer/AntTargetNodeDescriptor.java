@@ -2,8 +2,8 @@ package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntBuildTarget;
-import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.AntBuildTargetBase;
+import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.ExecutionEvent;
 import com.intellij.lang.ant.config.impl.ExecuteCompositeTargetEvent;
 import com.intellij.lang.ant.config.impl.MetaTarget;
@@ -27,10 +27,10 @@ import java.util.ArrayList;
 final class AntTargetNodeDescriptor extends AntNodeDescriptor {
   private static final TextAttributes ourPostfixAttributes = new TextAttributes(new Color(128, 0, 0), null, null, EffectType.BOXED, Font.PLAIN);
 
-  private final AntBuildTarget myTarget;
+  private final AntBuildTargetBase myTarget;
   private CompositeAppearance myHighlightedText;
 
-  public AntTargetNodeDescriptor(final Project project, final NodeDescriptor parentDescriptor, final AntBuildTarget target) {
+  public AntTargetNodeDescriptor(final Project project, final NodeDescriptor parentDescriptor, final AntBuildTargetBase target) {
     super(project, parentDescriptor);
     myTarget = target;
     myHighlightedText = new CompositeAppearance();
@@ -40,7 +40,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     return myTarget;
   }
 
-  public AntBuildTarget getTarget() {
+  public AntBuildTargetBase getTarget() {
     return myTarget;
   }
 
@@ -58,7 +58,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
 
     myHighlightedText.getEnding().addText(myTarget.getName(), nameAttributes);
 
-    AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
+    AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(myProject);
     final ArrayList<String> addedNames = new ArrayList<String>(4);
     for (final ExecutionEvent event : antConfiguration.getEventsForTarget(myTarget)) {
       final String presentableName;
@@ -78,7 +78,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     }
     myName = myHighlightedText.getText();
 
-    final AntBuildTarget target = getTarget();
+    final AntBuildTargetBase target = getTarget();
     if (!addShortcutText(target.getActionId())) {
       if (target.isDefault()) {
         addShortcutText(target.getModel().getDefaultTargetActionId());

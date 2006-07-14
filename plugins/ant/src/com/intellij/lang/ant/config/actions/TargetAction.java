@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.config.actions;
 
 import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
@@ -30,7 +31,7 @@ public final class TargetAction extends AnAction {
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if (project == null) return;
 
-    for (final AntBuildFile buildFile : AntConfiguration.getInstance(project).getBuildFiles()) {
+    for (final AntBuildFileBase buildFile : (AntBuildFileBase[])AntConfiguration.getInstance(project).getBuildFiles()) {
       final String name = buildFile.getPresentableName();
       if (name != null && myBuildName.equals(name)) {
         String[] targets = myTargets.length == 1 && DEFAULT_TARGET_NAME.equals(myTargets[0]) ? ArrayUtil.EMPTY_STRING_ARRAY : myTargets;

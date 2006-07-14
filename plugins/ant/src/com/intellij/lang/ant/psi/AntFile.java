@@ -2,10 +2,11 @@ package com.intellij.lang.ant.psi;
 
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface AntFile extends AntElement {
+public interface AntFile extends PsiFile, AntElement {
 
   AntFile[] NO_FILES = new AntFile[0];
 

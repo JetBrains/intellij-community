@@ -1,7 +1,7 @@
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.ExecuteCompositeTargetEvent;
 import com.intellij.lang.ant.resources.AntBundle;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -19,12 +19,12 @@ public class SaveMetaTargetDialog extends DialogWrapper {
   private JList myTargetList;
   private JTextField myTfName;
   private ExecuteCompositeTargetEvent myInitialEvent;
-  private final AntConfiguration myAntConfiguration;
+  private final AntConfigurationBase myAntConfiguration;
   private final AntBuildFile myBuildFile;
 
   public SaveMetaTargetDialog(final Component parent,
                               final ExecuteCompositeTargetEvent event,
-                              final AntConfiguration antConfiguration,
+                              final AntConfigurationBase antConfiguration,
                               final AntBuildFile buildFile) {
     super(parent, true);
     myInitialEvent = event;
