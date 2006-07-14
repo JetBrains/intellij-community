@@ -55,22 +55,21 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
   public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<String[]>("EXTEND_CLASS_NAMES");
   public static final CustomizationKey<Boolean> INSTANTIATABLE = new CustomizationKey<Boolean>("INSTANTIATABLE");
-  public static final CustomizationKey<Boolean> RESOLVE_ONLY_CLASSES = new CustomizationKey<Boolean>("RESOLVE_ONLY_CLASSES");
 
 
   public JavaClassReferenceProvider(String extendClassName, boolean instantiatable) {
-    this(new String[]{extendClassName}, instantiatable);
+    this(extendClassName);
+    INSTANTIATABLE.putValue(myOptions, instantiatable);
   }
 
   public JavaClassReferenceProvider(String[] extendClassNames, boolean instantiatable) {
     myOptions = new HashMap<CustomizationKey, Object>();
     EXTEND_CLASS_NAMES.putValue(myOptions, extendClassNames);
     INSTANTIATABLE.putValue(myOptions, instantiatable);
-    RESOLVE_ONLY_CLASSES.putValue(myOptions, Boolean.TRUE);
   }
 
   public JavaClassReferenceProvider(@NotNull String extendClassName) {
-    this(extendClassName, true);
+    this(new String[]{extendClassName}, true);
   }
 
   public JavaClassReferenceProvider() {
@@ -245,7 +244,6 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
         myText = text;
       }
 
-      @Nullable
       public PsiElement getContext() {
         final PsiReference contextRef = getContextReference();
         return contextRef != null ? contextRef.resolve() : null;
@@ -292,7 +290,6 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
         return myIndex > 0 && s.charAt(getRangeInElement().getStartOffset() - 1) == SEPARATOR2;
       }
 
-      @Nullable
       public PsiReference getContextReference() {
         return myIndex > 0 ? getReference(myIndex - 1) : null;
       }
@@ -429,11 +426,6 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
           final PsiClass aClass = manager.findClass(qName, GlobalSearchScope.allScope(myElement.getProject()));
           if (aClass != null) {
             return new ClassCandidateInfo(aClass, PsiSubstitutor.EMPTY, false, false, myElement);
-          } else {
-            final Boolean value = RESOLVE_ONLY_CLASSES.getValue(myOptions);
-            if (value != null && value.booleanValue()) {
-              return JavaResolveResult.EMPTY;
-            }
           }
         }
         PsiElement resolveResult = manager.findPackage(qName);
@@ -494,13 +486,13 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
           if (extendClass != null) {
             PsiClass[] result = context.getManager().getSearchHelper().findInheritors(extendClass, scope, true);
             for (final PsiClass clazz : result) {
-              Object value = createSubclassLookupValue(context, clazz, instantiatable);
+              Object value = createSubclassLookupValue(clazz, instantiatable);
               if (value != null) {
                 lookups.add(value);
               }
             }
             // add itself
-            Object value = createSubclassLookupValue(context, extendClass, instantiatable);
+            Object value = createSubclassLookupValue(extendClass, instantiatable);
             if (value != null) {
               lookups.add(value);
             }
@@ -510,17 +502,18 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       }
 
       @Nullable
-      protected Object createSubclassLookupValue(final PsiPackage context, final PsiClass clazz, boolean instantiatable) {
+      protected Object createSubclassLookupValue(final PsiClass clazz, boolean instantiatable) {
         if (instantiatable && !PsiUtil.isInstantiatable(clazz)) {
           return null;
         }
         String name = clazz.getQualifiedName();
         if (name == null) return null;
-        final String pack = context.getQualifiedName();
-        if (pack.length() > 0) {
-          name = name.substring(pack.length() + 1);
+        String hint = "";
+        int pos = name.lastIndexOf('.');
+        if (pos != -1) {
+          hint = "(" + name.substring(0, pos) + ")";
         }
-        return LookupValueFactory.createLookupValue(name, clazz.getIcon(Iconable.ICON_FLAG_READ_STATUS));
+        return LookupValueFactory.createLookupValueWithHint(name, clazz.getIcon(Iconable.ICON_FLAG_READ_STATUS), hint);
        }
     }
 
