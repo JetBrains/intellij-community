@@ -385,8 +385,8 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
       try {
         for (Project project : openProjects) {
           final AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
-          for (final AntBuildFileBase buildFile : (AntBuildFileBase[])antConfiguration.getBuildFiles()) {
-            AntBuildModelBase model = buildFile.getModel();
+          for (final AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
+            final AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
             String defaultTargetActionId = model.getDefaultTargetActionId();
             if (defaultTargetActionId != null && !registeredIds.contains(defaultTargetActionId)) {
               registeredIds.add(defaultTargetActionId);

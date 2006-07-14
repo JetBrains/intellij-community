@@ -31,11 +31,11 @@ public final class TargetAction extends AnAction {
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if (project == null) return;
 
-    for (final AntBuildFileBase buildFile : (AntBuildFileBase[])AntConfiguration.getInstance(project).getBuildFiles()) {
+    for (final AntBuildFile buildFile : AntConfiguration.getInstance(project).getBuildFiles()) {
       final String name = buildFile.getPresentableName();
       if (name != null && myBuildName.equals(name)) {
         String[] targets = myTargets.length == 1 && DEFAULT_TARGET_NAME.equals(myTargets[0]) ? ArrayUtil.EMPTY_STRING_ARRAY : myTargets;
-        ExecutionHandler.runBuild(buildFile, targets, null, dataContext, AntBuildListener.NULL);
+        ExecutionHandler.runBuild((AntBuildFileBase)buildFile, targets, null, dataContext, AntBuildListener.NULL);
         return;
       }
     }
