@@ -3,13 +3,6 @@
   <include name="componentSets/Core"/>
   <include name="componentSets/CodeInspection"/>
 
-  <project-components>
-    <component>
-      <interface-class>com.intellij.ant.AntConfiguration</interface-class>
-      <implementation-class>com.intellij.ant.DummyAntConfiguration</implementation-class>
-    </component>
-  </project-components>
-
   <application-components>
     <component>
       <implementation-class>com.intellij.ide.GeneralSettings</implementation-class>
