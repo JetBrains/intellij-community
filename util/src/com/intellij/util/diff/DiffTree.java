@@ -50,6 +50,8 @@ public class DiffTree<OT, NT> {
       return;
     }
 
+    boolean walkedDeep = false;
+
     int start = 0;
     while (start < oldSize && start < newSize) {
       OT oldChild = oldChildren.get(start);
@@ -57,6 +59,7 @@ public class DiffTree<OT, NT> {
       if (!myComparator.typesEqual(oldChild, newChild) || !myComparator.hashcodesEqual(oldChild, newChild)) break;
       if (myComparator.deepEqual(oldChild, newChild) != ShallowNodeComparator.ThreeState.YES) {
         build(oldChild, newChild);
+        walkedDeep = true;
       }
 
       start++;
@@ -73,16 +76,14 @@ public class DiffTree<OT, NT> {
       if (!myComparator.typesEqual(oldChild, newChild) || !myComparator.hashcodesEqual(oldChild, newChild)) break;
       if (myComparator.deepEqual(oldChild, newChild) != ShallowNodeComparator.ThreeState.YES) {
         build(oldChild, newChild);
+        walkedDeep = true;
       }
 
       oldEnd--;
       newEnd--;
     }
     
-    if (start == 0 && newEnd == newSize - 1 && oldEnd == oldSize - 1) {
-      myConsumer.nodeReplaced(oldNode, newNode);
-    }
-    else if (oldSize == newSize) {
+    if (oldSize == newSize) {
       for (int i = start; i <= newEnd; i++) {
         final OT oldChild = oldChildren.get(i);
         final NT newChild = newChildren.get(i);
@@ -96,6 +97,11 @@ public class DiffTree<OT, NT> {
       }
     }
     else {
+      if (!walkedDeep && start == 0 && newEnd == newSize - 1 && oldEnd == oldSize - 1) {
+        myConsumer.nodeReplaced(oldNode, newNode);
+        return;
+      }
+
       for (int i = start; i <= oldEnd; i++) {
         final OT oldChild = oldChildren.get(i);
         myConsumer.nodeDeleted(oldNode, oldChild);
