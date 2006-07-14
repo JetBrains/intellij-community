@@ -118,7 +118,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       //if (asteriskIndex==-1 || asteriskIndex == pattern.length()-1) {
       //  return text.startsWith( pattern );
       //}
-
       if (myRecentSearchText != null &&
           myRecentSearchText.equals(pattern)
         ) {
@@ -238,7 +237,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       if (!UIUtil.isReallyTypedEvent(e)) return;
 
       char c = e.getKeyChar();
-      if (Character.isLetterOrDigit(c) || c == '_' || c == '*') {
+      if (Character.isLetterOrDigit(c) || c == '_' || c == '*' || c == '/') {
         manageSearchPopup(new SearchPopup(String.valueOf(c)));
         e.consume();
       }
