@@ -2,19 +2,19 @@ package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.misc.PsiElementHashSetSpinAllocator;
+import com.intellij.lang.ant.psi.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringSetSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class AntRefIdReference extends AntGenericReference {
@@ -56,8 +56,18 @@ public class AntRefIdReference extends AntGenericReference {
         final AntProject importedProject = file.getAntProject();
         importedProject.getChildren();
         refId = importedProject.getElementByRefId(id);
-        if (refId != null) {
-          return refId;
+        if (refId != null) break;
+      }
+    }
+    if (refId == null) {
+      final AntTarget target = PsiTreeUtil.getParentOfType(element, AntTarget.class);
+      if (target != null) {
+        final HashSet<PsiElement> targetStack = PsiElementHashSetSpinAllocator.alloc();
+        try {
+          refId = resolveTargetRefId(target, id, targetStack);
+        }
+        finally {
+          PsiElementHashSetSpinAllocator.dispose(targetStack);
         }
       }
     }
@@ -82,6 +92,20 @@ public class AntRefIdReference extends AntGenericReference {
   @NotNull
   public IntentionAction[] getFixes() {
     return super.getFixes();
+  }
+
+  private static AntElement resolveTargetRefId(final AntTarget target, final String id, final Set<PsiElement> stack) {
+    AntElement result = null;
+    if (!stack.contains(target)) {
+      result = target.getElementByRefId(id);
+      if (result == null) {
+        stack.add(target);
+        for (final AntTarget dependie : target.getDependsTargets()) {
+          if ((result = resolveTargetRefId(dependie, id, stack)) != null) break;
+        }
+      }
+    }
+    return result;
   }
 
   private static void getVariants(final AntStructuredElement element, final Set<String> variants) {

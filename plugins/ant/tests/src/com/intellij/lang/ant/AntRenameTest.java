@@ -38,6 +38,10 @@ public class AntRenameTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testRefidReferenceInDependieTarget() throws Exception {
+    doTest();
+  }
+
   public void testSingleTarget() throws Exception {
     doTest();
   }
