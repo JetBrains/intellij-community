@@ -12,6 +12,8 @@ import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -271,8 +273,7 @@ import java.util.Map;
       }
 
       public boolean isToolEnabled(HighlightDisplayKey key) {
-        if (key == null) return false;
-        return availableToolsMap.containsKey(key.toString());
+        return key != null && availableToolsMap.containsKey(key.toString());
       }
 
       public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key) {
@@ -361,6 +362,10 @@ import java.util.Map;
         catch (IOException e) {
           //noinspection CallToPrintStackTrace
           e.printStackTrace();
+        }
+        FileDocumentManager manager = FileDocumentManager.getInstance();
+        if (manager instanceof FileDocumentManagerImpl) {
+          ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
         }
       }
     });

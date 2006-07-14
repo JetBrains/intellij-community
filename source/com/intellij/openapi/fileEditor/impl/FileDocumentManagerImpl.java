@@ -42,14 +42,15 @@ import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.PendingEventDispatcher;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -82,9 +83,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     myVirtualFileManager = virtualFileManager;
 
     myVirtualFileManager.addVirtualFileListener(this);
-    this.addFileDocumentManagerListener(new TrailingSpacesStripper());
+    addFileDocumentManagerListener(new TrailingSpacesStripper());
   }
 
+  @NotNull
   public String getComponentName() {
     return "FileDocumentManager";
   }
@@ -272,7 +274,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
-  private boolean needsRefresh(final VirtualFile file) {
+  private static boolean needsRefresh(final VirtualFile file) {
     return file instanceof VirtualFileImpl && file.getTimeStamp() != ((VirtualFileImpl)file).getActualTimeStamp() ||
            file instanceof LightVirtualFile && file.getTimeStamp() != ((LightVirtualFile)file).getActualTimeStamp();
   }
@@ -313,8 +315,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   public boolean isFileModified(VirtualFile file) {
     final Document doc = getCachedDocument(file);
-    if (doc == null) return false;
-    return doc.getModificationStamp() != file.getModificationStamp();
+    return doc != null && doc.getModificationStamp() != file.getModificationStamp();
   }
 
   public void addFileDocumentManagerListener(FileDocumentManagerListener listener) {
@@ -423,7 +424,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
     final DialogBuilder builder = new DialogBuilder((Project)null);
-    builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingUtilities.TRAILING));
+    builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingConstants.TRAILING));
     builder.addOkAction().setText(UIBundle.message("file.cache.conflict.load.fs.changes.button"));
     builder.addCancelAction().setText(UIBundle.message("file.cache.conflict.keep.memory.changes.button"));
     builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")){
@@ -450,7 +451,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     });
     //int option = Messages.showYesNoDialog(message, "File Cache Conflict", Messages.getQuestionIcon());
     builder.setTitle(UIBundle.message("file.cache.conflict.dialog.title"));
-    builder.setButtonsAlignment(SwingUtilities.CENTER);
+    builder.setButtonsAlignment(SwingConstants.CENTER);
     return builder.show() == 0;
     //return option == 0;
   }
@@ -508,7 +509,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     public void readOnlyModificationAttempt(Document document) {
       VirtualFile file = getFile(document);
       if (file == null) return;
-      myVirtualFileManager.fireReadOnlyModificationAttempt(new VirtualFile[]{file});
+      myVirtualFileManager.fireReadOnlyModificationAttempt(file);
     }
   }
 
