@@ -81,7 +81,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     processElementaryChange(parent, element, change, depth - 1);
   }
 
-  private int getDepth(ASTNode element) {
+  private static int getDepth(ASTNode element) {
     int depth = 0;
     while((element = element.getTreeParent()) != null) depth++;
     return depth;
@@ -188,7 +188,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     myChangedInOrder.add(node);
   }
 
-  private int[] getRoute(ASTNode node){
+  private static int[] getRoute(ASTNode node){
     final List<ASTNode> parents = new ArrayList<ASTNode>(20);
     while(node != null){
       parents.add(node);
@@ -208,7 +208,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     return root;
   }
 
-  private int compareRouts(int[] root1, int[] root2){
+  private static int compareRouts(int[] root1, int[] root2){
     final int depth = Math.min(root1.length, root2.length);
     for(int i = 0; i < depth; i++){
       if(root1[i] == root2[i]) continue;
@@ -273,10 +273,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     }
 
     {
-      final Iterator<Map.Entry<ASTNode, TreeChange>> iterator = changedElements.entrySet().iterator();
-
-      while (iterator.hasNext()) {
-        final Map.Entry<ASTNode, TreeChange> entry = iterator.next();
+      for (final Map.Entry<ASTNode, TreeChange> entry : changedElements.entrySet()) {
         final ASTNode changed = entry.getKey();
         myChangedElements.put(changed, entry.getValue());
         insertAtList(changed);
@@ -288,9 +285,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
 
   public String toString(){
     final StringBuffer buffer = new StringBuffer();
-    final Iterator<Map.Entry<ASTNode, TreeChange>> iterator = myChangedElements.entrySet().iterator();
-    while (iterator.hasNext()) {
-      final Map.Entry<ASTNode, TreeChange> entry = iterator.next();
+    for (final Map.Entry<ASTNode, TreeChange> entry : myChangedElements.entrySet()) {
       buffer.append(entry.getKey().getElementType().toString());
       buffer.append(": ");
       buffer.append(entry.getValue().toString());

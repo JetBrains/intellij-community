@@ -22,6 +22,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
@@ -92,7 +93,19 @@ public class CodeEditUtil {
     return false;
   }
 
+  public static void checkForOuters(final ASTNode element) {
+    if (element instanceof OuterLanguageElement) throw new TooComplexPSIModificationException();
+    if (element instanceof CompositeElement) {
+      TreeElement child = ((CompositeElement)element).firstChild;
+      while (child != null) {
+        checkForOuters(child);
+        child = child.next;
+      }
+    }
+  }
+
   public static void saveWhitespacesInfo(final ASTNode first) {
+    checkForOuters(first);
     if(first == null || isNodeGenerated(first) || getOldIndentation(first) >= 0) return;
     final PsiFile containingFile = first.getPsi().getContainingFile();
     final Helper helper = new Helper(containingFile.getFileType(), containingFile.getProject());

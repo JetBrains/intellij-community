@@ -11,7 +11,9 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.impl.source.codeStyle.TooComplexPSIModificationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,6 +100,10 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
       myCurrentCommand = new CommandDescriptor(command, project, name, groupId, undoConfirmationPolicy);
       fireCommandStarted();
       command.run();
+    }
+    catch (TooComplexPSIModificationException rollback) {
+      // TODO: [must] rollback the changes if any.
+      Messages.showErrorDialog(project, "Cannot perform operation. Too complex, sorry.", "Failed to perform operation");
     }
     catch (Throwable e) {
       LOG.error(e);
