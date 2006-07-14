@@ -10,24 +10,25 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 
-import java.util.Set;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class VcsDirtyScopeImpl extends VcsDirtyScope {
   private final Set<FilePath> myDirtyFiles = new THashSet<FilePath>();
@@ -184,5 +185,24 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
         }
       }, ModalityState.defaultModalityState());
     }
+  }
+
+  @Override @NonNls
+  public String toString() {
+    @NonNls StringBuilder result = new StringBuilder("VcsDirtyScope[");
+    if (myDirtyFiles.size() > 0) {
+      result.append(" files=");
+      for(FilePath file: myDirtyFiles) {
+        result.append(file).append(" ");
+      }
+    }
+    if (myDirtyDirectoriesRecursively.size() > 0) {
+      result.append(" dirs=");
+      for(FilePath file: myDirtyDirectoriesRecursively) {
+        result.append(file).append(" ");
+      }
+    }
+    result.append("]");
+    return result.toString();
   }
 }
