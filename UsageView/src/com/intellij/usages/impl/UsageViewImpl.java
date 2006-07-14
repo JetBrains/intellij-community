@@ -285,11 +285,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     final JComponent component = getComponent();
 
-    final AnAction collapseAllAction = actionsManager.createCollapseAllAction(treeExpander);
-    collapseAllAction.registerCustomShortcutSet(collapseAllAction.getShortcutSet(), component);
-
     final AnAction expandAllAction = actionsManager.createExpandAllAction(treeExpander);
     expandAllAction.registerCustomShortcutSet(expandAllAction.getShortcutSet(), component);
+
+    final AnAction collapseAllAction = actionsManager.createCollapseAllAction(treeExpander);
+    collapseAllAction.registerCustomShortcutSet(collapseAllAction.getShortcutSet(), component);
 
     scheduleDisposeOnClose(new Disposable() {
       public void dispose() {

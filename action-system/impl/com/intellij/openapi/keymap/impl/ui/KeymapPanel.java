@@ -266,8 +266,8 @@ public class KeymapPanel extends JPanel {
         return true;
       }
     };
-    group.add(commonActionsManager.createCollapseAllAction(treeExpander));
     group.add(commonActionsManager.createExpandAllAction(treeExpander));
+    group.add(commonActionsManager.createCollapseAllAction(treeExpander));
 
     panel.add(toolbar, new GridBagConstraints(0,0,1,1,1,0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(8,0,0,0), 0,0));
     group = new DefaultActionGroup();
