@@ -34,7 +34,6 @@ public abstract class AntConfiguration implements ProjectComponent {
 
   protected AntConfiguration(final Project project) {
     myProject = project;
-    CONFIGURATIONS.put(project, this);
   }
 
   public static AntConfiguration getInstance(final Project project) {
@@ -43,6 +42,14 @@ public abstract class AntConfiguration implements ProjectComponent {
 
   public Project getProject() {
     return myProject;
+  }
+
+  public void initComponent() {
+    CONFIGURATIONS.put(getProject(), this);
+  }
+
+  public void disposeComponent() {
+    CONFIGURATIONS.remove(getProject());
   }
 
   public abstract AntBuildFile[] getBuildFiles();

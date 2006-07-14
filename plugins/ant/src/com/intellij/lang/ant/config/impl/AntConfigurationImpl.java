@@ -145,12 +145,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
     return "AntConfiguration";
   }
 
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
   public AntBuildFile[] getBuildFiles() {
     return myBuildFiles.toArray(new AntBuildFile[myBuildFiles.size()]);
   }
