@@ -394,8 +394,8 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
                                                                                    new String[]{TargetAction.DEFAULT_TARGET_NAME}, null));
             }
 
-            registerTargetActions((AntBuildTargetBase[])model.getFilteredTargets(), registeredIds, actionManager, buildFile);
-            registerTargetActions((AntBuildTargetBase[])antConfiguration.getMetaTargets(buildFile), registeredIds, actionManager,
+            registerTargetActions(model.getFilteredTargets(), registeredIds, actionManager, buildFile);
+            registerTargetActions(antConfiguration.getMetaTargets(buildFile), registeredIds, actionManager,
                                   buildFile);
           }
         }
@@ -407,12 +407,12 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
 
   }
 
-  private static void registerTargetActions(final AntBuildTargetBase[] targets,
+  private static void registerTargetActions(final AntBuildTarget[] targets,
                                             final Set<String> registeredIds,
                                             final ActionManagerEx actionManager,
                                             final AntBuildFile buildFile) {
-    for (final AntBuildTargetBase target : targets) {
-      String actionId = target.getActionId();
+    for (final AntBuildTarget target : targets) {
+      final String actionId = ((AntBuildTargetBase)target).getActionId();
       if (actionId == null) {
         continue;
       }
