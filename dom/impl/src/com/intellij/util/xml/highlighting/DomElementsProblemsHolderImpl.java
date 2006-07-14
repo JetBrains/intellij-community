@@ -157,6 +157,9 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
     final XmlElement xmlElement = domElement.getXmlElement();
     if (xmlElement != null) {
       for (PsiReference reference : getReferences(xmlElement)) {
+        if (reference.isSoft()) {
+          continue;
+        }
         if (XmlHighlightVisitor.hasBadResolve(reference)) {
           final String description = XmlHighlightVisitor.getErrorDescription(reference);
           problems.add(new DomElementProblemDescriptorImpl(domElement, description, HighlightSeverity.ERROR));
