@@ -109,6 +109,10 @@ public abstract class HTMLComposer {
       appendClassOrInterface(buf, (RefClass)owner, false);
       buf.append(NBSP);
       appendElementReference(buf, (RefElement)owner);
+    } else if (refElement instanceof RefFile){ //todo
+      buf.append(InspectionsBundle.message("inspection.export.results.file"));
+      buf.append(NBSP);
+      appendElementReference(buf, refElement);
     }
     buf.append(FONT_CLOSING);
   }
