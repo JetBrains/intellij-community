@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -24,13 +25,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
@@ -468,21 +467,8 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
       final List<VirtualFile> files = (List<VirtualFile>)e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
       if (files == null) return;
 
-      ChangesUtil.processVirtualFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
-        public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
-          final ChangeProvider provider = vcs.getChangeProvider();
-          if (provider != null) {
-            provider.scheduleUnversionedFilesForAddition(files);
-          }
-        }
-      });
-
-      for (VirtualFile file : files) {
-        VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
-        FileStatusManager.getInstance(myProject).fileStatusChanged(file);
-      }
-
-      scheduleRefresh();
+      final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
+      changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), files);
     }
   }
 

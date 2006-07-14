@@ -11,10 +11,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -585,6 +582,43 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       final List<Change> changesInList = map.get(fromList);
       myListeners.getMulticaster().changesMoved(changesInList, fromList, list);
     }
+  }
+
+  public void addUnversionedFiles(final LocalChangeList list, final List<VirtualFile> files) {
+    ChangesUtil.processVirtualFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
+      public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
+        final ChangeProvider provider = vcs.getChangeProvider();
+        if (provider != null) {
+          provider.scheduleUnversionedFilesForAddition(files);
+        }
+      }
+    });
+
+    for (VirtualFile file : files) {
+      VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
+      FileStatusManager.getInstance(myProject).fileStatusChanged(file);
+    }
+
+    if (!list.isDefault()) {
+      // find the changes for the added files and move them to the necessary changelist
+      ensureUpToDate(false);
+      List<Change> changesToMove = new ArrayList<Change>();
+      for(Change change: getDefaultChangeList().getChanges()) {
+        final ContentRevision afterRevision = change.getAfterRevision();
+        if (afterRevision != null) {
+          VirtualFile vFile = afterRevision.getFile().getVirtualFile();
+          if (files.contains(vFile)) {
+            changesToMove.add(change);
+          }
+        }
+      }
+
+      if (changesToMove.size() > 0) {
+        moveChangesTo(list, changesToMove.toArray(new Change[changesToMove.size()]));
+      }
+    }
+
+    ChangesViewManager.getInstance(myProject).scheduleRefresh();
   }
 
   public void addChangeListListener(ChangeListListener listener) {

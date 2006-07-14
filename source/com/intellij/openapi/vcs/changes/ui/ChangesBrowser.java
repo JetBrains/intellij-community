@@ -149,7 +149,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      askAndMove(myProject, new Change[]{myChange});
+      askAndMove(myProject, new Change[]{myChange}, null);
     }
   }
 

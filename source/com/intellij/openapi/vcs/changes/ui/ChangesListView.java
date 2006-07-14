@@ -412,12 +412,13 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
   private static class ChangeListDragBean {
     private ChangesListView myView;
     private Change[] myChanges;
+    private List<VirtualFile> myUnversionedFiles;
     private LocalChangeList myDropList = null;
 
-
-    public ChangeListDragBean(final ChangesListView view, final Change[] changes) {
+    public ChangeListDragBean(final ChangesListView view, final Change[] changes, final List<VirtualFile> unversionedFiles) {
       myView = view;
       myChanges = changes;
+      myUnversionedFiles = unversionedFiles;
     }
 
     public ChangesListView getView() {
@@ -428,10 +429,13 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       return myChanges;
     }
 
+    public List<VirtualFile> getUnversionedFiles() {
+      return myUnversionedFiles;
+    }
+
     public void setTargetList(final LocalChangeList dropList) {
       myDropList = dropList;
     }
-
 
     public LocalChangeList getDropList() {
       return myDropList;
@@ -441,12 +445,14 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
   public class DropTarget implements DnDTarget {
     public boolean update(DnDEvent aEvent) {
       aEvent.hideHighlighter();
+      aEvent.setDropPossible(false, "");
 
       Object attached = aEvent.getAttachedObject();
       if (!(attached instanceof ChangeListDragBean)) return false;
 
       final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
       if (dragBean.getView() != ChangesListView.this) return false;
+      if (dragBean.getChanges().length == 0 && dragBean.getUnversionedFiles().size() == 0) return false;
       dragBean.setTargetList(null);
 
       RelativePoint dropPoint = aEvent.getRelativePoint();
@@ -491,6 +497,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       final LocalChangeList dropList = dragBean.getDropList();
       if (dropList != null) {
         myDragOwner.moveChangesTo(dropList, dragBean.getChanges());
+        myDragOwner.addUnversionedFiles(dropList, dragBean.getUnversionedFiles());
       }
     }
 
@@ -532,11 +539,11 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
   }
 
   public boolean canStartDragging(DnDAction action, Point dragOrigin) {
-    return action == DnDAction.MOVE && getSelectedChanges().length > 0;
+    return action == DnDAction.MOVE && (getSelectedChanges().length > 0 || getSelectedUnversionedFiles().size() > 0);
   }
 
   public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
-    return new DnDDragStartBean(new ChangeListDragBean(this, getSelectedChanges()));
+    return new DnDDragStartBean(new ChangeListDragBean(this, getSelectedChanges(), getSelectedUnversionedFiles()));
   }
 
   @Nullable

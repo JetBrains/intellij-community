@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
+import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
 
 import java.util.ArrayList;
@@ -26,25 +28,31 @@ public class MoveChangesToAnotherListAction extends AnAction {
   public void update(AnActionEvent e) {
     Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
     Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-    e.getPresentation().setEnabled(project != null && changes != null && changes.length > 0);
+    //noinspection unchecked
+    List<VirtualFile> unversionedFiles = (List<VirtualFile>) e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
+    e.getPresentation().setEnabled(project != null &&
+                                   (changes != null && changes.length > 0) || (unversionedFiles != null && unversionedFiles.size() > 0));
   }
 
   public void actionPerformed(AnActionEvent e) {
     Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
     Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
     if (changes == null) return;
+    //noinspection unchecked
+    List<VirtualFile> unversionedFiles = (List<VirtualFile>) e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
 
-    askAndMove(project, changes);
+    askAndMove(project, changes, unversionedFiles);
   }
 
-  public static void askAndMove(final Project project, final Change[] changes) {
-    final ChangeListManager listManager = ChangeListManager.getInstance(project);
+  public static void askAndMove(final Project project, final Change[] changes, final List<VirtualFile> unversionedFiles) {
+    final ChangeListManagerImpl listManager = ChangeListManagerImpl.getInstanceImpl(project);
     final List<LocalChangeList> lists = listManager.getChangeLists();
     ChangeListChooser chooser = new ChangeListChooser(project, getPreferredLists(lists, changes, true), guessPreferredList(lists, changes));
     chooser.show();
     LocalChangeList resultList = chooser.getSelectedList();
     if (resultList != null) {
       listManager.moveChangesTo(resultList, changes);
+      listManager.addUnversionedFiles(resultList, unversionedFiles);
     }
   }
 
@@ -69,7 +77,7 @@ public class MoveChangesToAnotherListAction extends AnAction {
                                                     final boolean includeDefaultIfEmpty) {
     List<LocalChangeList> preferredLists = new ArrayList<LocalChangeList>(lists);
     Set<Change> changesAsSet = new THashSet<Change>(Arrays.asList(changes));
-    for (ChangeList list : lists) {
+    for (LocalChangeList list : lists) {
       for (Change change : list.getChanges()) {
         if (changesAsSet.contains(change)) {
           preferredLists.remove(list);

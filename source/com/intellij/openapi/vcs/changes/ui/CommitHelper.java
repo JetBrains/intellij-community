@@ -130,7 +130,7 @@ public class CommitHelper {
               dialog.show();
               if (dialog.isOK()) {
                 final Collection<Change> changes = changeListManager.getDefaultChangeList().getChanges();
-                MoveChangesToAnotherListAction.askAndMove(myProject, changes.toArray(new Change[changes.size()]));
+                MoveChangesToAnotherListAction.askAndMove(myProject, changes.toArray(new Change[changes.size()]), null);
               }
             }
           }, ModalityState.NON_MMODAL);
