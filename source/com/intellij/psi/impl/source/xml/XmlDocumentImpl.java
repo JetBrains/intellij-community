@@ -80,8 +80,8 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return rootTag != null ? rootTag.getNSDescriptor(rootTag.getNamespace(), false) : null;
   }
 
-  private final Map<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>();
-  private final Map<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheNotStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>();
+  private Map<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>();
+  private Map<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheNotStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>();
 
   public void clearCaches() {
     myDefaultDescriptorsCacheStrict.clear();
@@ -106,6 +106,13 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
         new CachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>() {
           public Result<XmlNSDescriptor> compute() {
             final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
+
+            if (isGeneratedFromDtd(defaultNSDescriptorInner)) {
+              return new Result<XmlNSDescriptor>(defaultNSDescriptorInner,
+                XmlDocumentImpl.this
+              );
+            }
+
             return new Result<XmlNSDescriptor>(defaultNSDescriptorInner,
                                                defaultNSDescriptorInner != null ? defaultNSDescriptorInner.getDependences() : ArrayUtil.EMPTY_OBJECT_ARRAY);
           }
@@ -118,6 +125,14 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       throw ex;
     }
     return defaultNSDescriptor;
+  }
+
+  private boolean isGeneratedFromDtd(XmlNSDescriptor defaultNSDescriptorInner) {
+    return defaultNSDescriptorInner != null &&
+        defaultNSDescriptorInner.getDescriptorFile() != null &&
+        defaultNSDescriptorInner.getDescriptorFile().getName().equals(
+          XmlUtil.getContainingFile(XmlDocumentImpl.this).getName() + ".dtd"
+        );
   }
 
   public XmlNSDescriptor getDefaultNSDescriptorInner(final String namespace, final boolean strict) {
@@ -191,9 +206,48 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return descr;
   }
 
-  public PsiElement copy() {
-    final XmlDocumentImpl copy = (XmlDocumentImpl)super.copy();
+  public Object clone() {
+    HashMap<String, CachedValue<XmlNSDescriptor>> cacheStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>(
+      myDefaultDescriptorsCacheStrict
+    );
+    HashMap<String, CachedValue<XmlNSDescriptor>> cacheNotStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>(
+      myDefaultDescriptorsCacheNotStrict
+    );
+    final XmlDocumentImpl copy = (XmlDocumentImpl) super.clone();
+    updateSelfDependentDtdDescriptors(copy, cacheStrict, cacheNotStrict);
     return copy;
+  }
+
+  public PsiElement copy() {
+    HashMap<String, CachedValue<XmlNSDescriptor>> cacheStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>(
+      myDefaultDescriptorsCacheStrict
+    );
+    HashMap<String, CachedValue<XmlNSDescriptor>> cacheNotStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>(
+      myDefaultDescriptorsCacheNotStrict
+    );
+    final XmlDocumentImpl copy = (XmlDocumentImpl)super.copy();
+    updateSelfDependentDtdDescriptors(copy, cacheStrict, cacheNotStrict);
+    return copy;
+  }
+
+  private void updateSelfDependentDtdDescriptors(XmlDocumentImpl copy, HashMap<String,
+    CachedValue<XmlNSDescriptor>> cacheStrict, HashMap<String, CachedValue<XmlNSDescriptor>> cacheNotStrict) {
+    copy.myDefaultDescriptorsCacheNotStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>();
+    copy.myDefaultDescriptorsCacheStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>();
+
+    for(Map.Entry<String, CachedValue<XmlNSDescriptor>> e:cacheStrict.entrySet()) {
+      if (e.getValue().hasUpToDateValue()) {
+        final XmlNSDescriptor nsDescriptor = e.getValue().getValue();
+        if (!isGeneratedFromDtd(nsDescriptor)) copy.myDefaultDescriptorsCacheStrict.put(e.getKey(), e.getValue());
+      }
+    }
+
+    for(Map.Entry<String, CachedValue<XmlNSDescriptor>> e:cacheNotStrict.entrySet()) {
+      if (e.getValue().hasUpToDateValue()) {
+        final XmlNSDescriptor nsDescriptor = e.getValue().getValue();
+        if (!isGeneratedFromDtd(nsDescriptor)) copy.myDefaultDescriptorsCacheNotStrict.put(e.getKey(), e.getValue());
+      }
+    }
   }
 
   public PsiMetaData getMetaData() {
