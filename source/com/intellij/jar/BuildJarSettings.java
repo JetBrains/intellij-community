@@ -8,6 +8,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.application.ApplicationConfigurationType;
@@ -53,6 +55,12 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
       myModuleContainer.readExternal(settings);
     }
     myJarUrl = JDOMExternalizer.readString(element, "jarUrl");
+    if (myJarUrl == null) {
+      final String jarPath = JDOMExternalizer.readString(element, "jarPath");
+      if (jarPath != null) {
+        myJarUrl = VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(jarPath));
+      }
+    }
     myBuildJar = JDOMExternalizer.readBoolean(element, "buildJar");
     myMainClass = JDOMExternalizer.readString(element, "mainClass");
   }
