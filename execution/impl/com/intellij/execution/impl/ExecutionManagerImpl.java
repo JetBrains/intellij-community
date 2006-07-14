@@ -28,6 +28,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,8 +74,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   public ProcessHandler[] getRunningProcesses() {
     final List<ProcessHandler> handlers = new ArrayList<ProcessHandler>();
     RunContentDescriptor[] descriptors = myContentManager.getAllDescriptors();
-    for (int q = 0; q < descriptors.length; q++) {
-      RunContentDescriptor descriptor = descriptors[q];
+    for (RunContentDescriptor descriptor : descriptors) {
       if (descriptor != null) {
         final ProcessHandler processHandler = descriptor.getProcessHandler();
         if (processHandler != null) {
@@ -91,8 +91,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     final Runnable antAwareRunnable = new Runnable() {
       public void run() {
         final AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
-        if ((configuration instanceof RunConfiguration) &&
-            antConfiguration.hasTasksToExecuteBeforeRun((RunConfiguration)configuration)) {
+        if (configuration instanceof RunConfiguration &&
+            antConfiguration != null && antConfiguration.hasTasksToExecuteBeforeRun((RunConfiguration)configuration)) {
           final Thread thread = new Thread(new Runnable() {
             public void run() {
               final DataContext dataContext = MapDataContext.singleData(DataConstants.PROJECT, myProject);
@@ -168,7 +168,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       };
       final TextConsoleBuilder builder = TextConsoleBuidlerFactory.getInstance().createBuilder(myProject);
       if (myFilters != null) {
-        for (Filter myFilter : myFilters) {
+        for (final Filter myFilter : myFilters) {
           builder.addFilter(myFilter);
         }
       }
@@ -191,6 +191,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     return RunManagerEx.getInstanceEx(myProject).getConfig();
   }
 
+  @NotNull
   public String getComponentName() {
     return "ExecutionManager";
   }

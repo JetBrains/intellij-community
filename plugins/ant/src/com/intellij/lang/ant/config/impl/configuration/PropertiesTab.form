@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.lang.ant.config.impl.configuration.BuildFilePropertiesPanel.PropertiesTab">
+  <grid id="23284" binding="myWholePanel" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="6" left="6" bottom="6" right="6"/>
+    <constraints>
+      <xy x="173" y="110" width="248" height="158"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <scrollpane id="9e63e">
+        <constraints>
+          <xy x="6" y="6" width="151" height="146"/>
+          <grid row="0" column="0" row-span="3" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="2a3e5" class="com.intellij.util.ui.Table" binding="myPropertiesTable">
+            <constraints/>
+            <properties/>
+          </component>
+        </children>
+      </scrollpane>
+      <component id="5fffe" class="javax.swing.JButton" binding="myAddButton">
+        <constraints>
+          <xy x="167" y="6" width="75" height="25"/>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/AntBundle" key="button.add"/>
+        </properties>
+      </component>
+      <component id="fad56" class="javax.swing.JButton" binding="myRemoveButton">
+        <constraints>
+          <xy x="167" y="36" width="75" height="25"/>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/AntBundle" key="button.remove"/>
+        </properties>
+      </component>
+      <vspacer id="bcf7d">
+        <constraints>
+          <xy x="199" y="61" width="11" height="91"/>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+        </constraints>
+      </vspacer>
+    </children>
+  </grid>
+</form>

@@ -31,10 +31,6 @@
       <implementation-class>com.intellij.openapi.diff.impl.external.DiffManagerImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.ant.impl.GlobalAntConfiguration</interface-class>
-      <implementation-class>com.intellij.ant.impl.GlobalAntConfiguration</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.projectRoots.JavaSdk</interface-class>
       <implementation-class>com.intellij.openapi.projectRoots.impl.JavaSdkImpl</implementation-class>
     </component>
@@ -100,19 +96,8 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.ant.AntConfiguration</interface-class>
-      <implementation-class>com.intellij.ant.impl.AntConfigurationImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.ide.util.TreeClassChooserFactory</interface-class>
       <implementation-class>com.intellij.ide.util.TreeClassChooserFactoryImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.ant.impl.AntWorkspaceConfiguration</interface-class>
-      <implementation-class>com.intellij.ant.impl.AntWorkspaceConfiguration</implementation-class>
-      <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
     <component>

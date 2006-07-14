@@ -14,7 +14,6 @@ import com.intellij.psi.*;
 import com.intellij.util.Function;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.containers.ContainerUtil.skipNulls;
-import com.intellij.util.containers.Convertor;
 
 import java.lang.reflect.Array;
 import java.util.List;

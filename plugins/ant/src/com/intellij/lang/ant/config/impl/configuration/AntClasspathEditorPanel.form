@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.lang.ant.config.impl.configuration.AntClasspathEditorPanel$Form">
+  <grid id="e8f1e" binding="myWholePanel" row-count="7" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="76" y="46" width="433" height="265"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="3fa57" class="javax.swing.JButton" binding="myAddButton">
+        <constraints>
+          <xy x="306" y="25" width="127" height="25"/>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/AntBundle" key="button.add"/>
+        </properties>
+      </component>
+      <component id="f3cd" class="javax.swing.JButton" binding="myRemoveButton">
+        <constraints>
+          <xy x="306" y="85" width="127" height="25"/>
+          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/AntBundle" key="button.remove"/>
+        </properties>
+      </component>
+      <component id="4c683" class="javax.swing.JButton" binding="myMoveUpButton">
+        <constraints>
+          <xy x="306" y="115" width="127" height="25"/>
+          <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/AntBundle" key="button.move.up"/>
+        </properties>
+      </component>
+      <component id="57625" class="javax.swing.JButton" binding="myMoveDownButton">
+        <constraints>
+          <xy x="306" y="145" width="127" height="25"/>
+          <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/AntBundle" key="button.move.down"/>
+        </properties>
+      </component>
+      <vspacer id="585ab">
+        <constraints>
+          <xy x="364" y="170" width="11" height="95"/>
+          <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+        </constraints>
+      </vspacer>
+      <scrollpane id="50e51">
+        <constraints>
+          <xy x="0" y="25" width="296" height="240"/>
+          <grid row="1" column="0" row-span="6" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="f85d" class="javax.swing.JList" binding="myClasspathList">
+            <constraints/>
+            <properties/>
+          </component>
+        </children>
+      </scrollpane>
+      <component id="ef36" class="javax.swing.JLabel" binding="myClasspathLabel">
+        <constraints>
+          <xy x="0" y="3" width="124" height="14"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+        </constraints>
+        <properties>
+          <text value="&lt;#############&gt;"/>
+        </properties>
+      </component>
+      <component id="84aa7" class="javax.swing.JButton" binding="myAddAllInDir">
+        <constraints>
+          <xy x="306" y="55" width="127" height="25"/>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/AntBundle" key="additional.classpath.tab.add.all.in.directory.button"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>

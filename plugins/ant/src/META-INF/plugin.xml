@@ -14,8 +14,33 @@
       <implementation-class>com.intellij.lang.ant.AntSupport</implementation-class>
     </component>
     <component>
+      <interface-class>com.intellij.lang.ant.config.impl.GlobalAntConfiguration</interface-class>
+      <implementation-class>com.intellij.lang.ant.config.impl.GlobalAntConfiguration</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.psi.xml.XmlFileNSInfoProvider</interface-class>
       <implementation-class>com.intellij.lang.ant.AntDefaultNSProvider</implementation-class>
     </component>
   </application-components>
+
+  <project-components>
+    <component>
+      <interface-class>com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration</interface-class>
+      <implementation-class>com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
+    <component>
+      <interface-class>com.intellij.lang.ant.config.AntConfiguration</interface-class>
+      <implementation-class>com.intellij.lang.ant.config.impl.AntConfigurationImpl</implementation-class>
+      <skipForDummyProject/>
+    </component>
+  </project-components>
+
+  <actions>>
+    <group id="AntBuildGroup" class="com.intellij.lang.ant.config.actions.AntBuildGroup">
+      <add-to-group group-id="BuildMenu" relative-to-action="BuildJar" anchor="before"/>
+    </group>
+  </actions>
+
 </idea-plugin>

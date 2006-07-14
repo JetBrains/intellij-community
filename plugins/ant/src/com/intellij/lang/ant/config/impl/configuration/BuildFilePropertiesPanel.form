@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.lang.ant.config.impl.configuration.BuildFilePropertiesPanel.Form">
+  <grid id="ed8b8" binding="myWholePanel" row-count="4" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="100" y="42" width="524" height="309"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="3e21c" class="javax.swing.JLabel" binding="myBuildFileName">
+        <constraints>
+          <xy x="0" y="3" width="107" height="14"/>
+          <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+        </constraints>
+        <properties>
+          <text value="&lt;######## ## ####&gt; "/>
+        </properties>
+      </component>
+      <component id="337f5" class="javax.swing.JCheckBox" binding="myRunInBackground">
+        <constraints>
+          <xy x="0" y="50" width="146" height="22"/>
+          <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/AntBundle" key="build.file.properties.make.in.background.cjeclbox"/>
+        </properties>
+      </component>
+      <xy id="1f2c6" binding="myTabsPlace" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="0" y="77" width="524" height="232"/>
+          <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children/>
+      </xy>
+      <component id="60861" class="javax.swing.JLabel" binding="myHeapSizeLabel">
+        <constraints>
+          <xy x="0" y="28" width="125" height="14"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/AntBundle" key="build.file.properties.maximum.heap.size.label"/>
+        </properties>
+      </component>
+      <component id="5f75c" class="javax.swing.JCheckBox" binding="myCloseOnNoError">
+        <constraints>
+          <xy x="165" y="50" width="214" height="22"/>
+          <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="messages/AntBundle" key="build.file.properties.close.message.view.checkbox"/>
+          <toolTipText value=""/>
+        </properties>
+      </component>
+      <grid id="6a80" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="135" y="25" width="389" height="20"/>
+          <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="35aa0" class="javax.swing.JTextField" binding="myXmx">
+            <constraints>
+              <xy x="0" y="0" width="38" height="20"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
+            </constraints>
+            <properties>
+              <columns value="4"/>
+            </properties>
+          </component>
+          <hspacer id="34a16">
+            <constraints>
+              <xy x="38" y="4" width="351" height="11"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+            </constraints>
+          </hspacer>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>

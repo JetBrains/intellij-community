@@ -100,6 +100,9 @@ public class AntAnnotator implements Annotator {
         if (!genRef.shouldBeSkippedByAnnotator() && ref.resolve() == null) {
           final TextRange absoluteRange = ref.getRangeInElement().shiftRight(ref.getElement().getTextRange().getStartOffset());
           final Annotation annotation = holder.createErrorAnnotation(absoluteRange, genRef.getUnresolvedMessagePattern());
+          if( genRef.getUnresolvedMessagePattern().startsWith("Cannot resolve symbol")) {
+            continue;
+          }
           annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
           final IntentionAction[] intentionActions = genRef.getFixes();
           for (final IntentionAction action : intentionActions) {

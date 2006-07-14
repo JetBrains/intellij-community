@@ -528,7 +528,7 @@
         <separator/>
         <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
         <separator/>
-        <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction"/>
+        <action id="I18nize" class="com.intellij.codeInsight.i18n.I18nizeAction"/>
       </group>
 
       <!-- Build -->
@@ -540,7 +540,6 @@
         <separator/>
         <action id="GenerateAntBuild" class="com.intellij.compiler.actions.GenerateAntBuildAction"/>
         <separator/>
-        <group id="AntBuildGroup" class="com.intellij.ant.actions.AntBuildGroup"/>
         <action id="BuildJar" class="com.intellij.jar.BuildJarAction"/>
       </group>
 

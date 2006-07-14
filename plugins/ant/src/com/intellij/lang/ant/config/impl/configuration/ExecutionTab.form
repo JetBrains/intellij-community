@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.lang.ant.config.impl.configuration.BuildFilePropertiesPanel.ExecutionTab">
+  <grid id="81309" binding="myWholePanel" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="6" left="6" bottom="6" right="6"/>
+    <constraints>
+      <xy x="78" y="8" width="412" height="245"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <grid id="a6828" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="6" y="6" width="400" height="78"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="etched" title-resource-bundle="messages/AntBundle" title-key="run.execution.tab.run.with.ant.border"/>
+        <children>
+          <component id="c77b" class="javax.swing.JRadioButton" binding="myUseDefaultAnt">
+            <constraints>
+              <xy x="6" y="21" width="138" height="22"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/AntBundle" key="run.execution.tab.use.project.default.ant.radio"/>
+            </properties>
+          </component>
+          <component id="cb2b8" class="javax.swing.JRadioButton" binding="myUseCastomAnt">
+            <constraints>
+              <xy x="6" y="50" width="101" height="22"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/AntBundle" key="run.execution.tab.use.custom.ant.radio"/>
+            </properties>
+          </component>
+          <component id="a12d2" class="com.intellij.ui.ComboboxWithBrowseButton" binding="myAnts">
+            <constraints>
+              <xy x="154" y="50" width="240" height="22"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1"/>
+            </constraints>
+            <properties/>
+          </component>
+          <grid id="22941" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="4" bottom="0" right="0"/>
+            <constraints>
+              <xy x="154" y="20" width="240" height="25"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="86b9b" class="javax.swing.JButton" binding="mySetDefaultAnt">
+                <constraints>
+                  <xy x="137" y="0" width="103" height="25"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/AntBundle" key="run.execution.tab.set.default.button"/>
+                </properties>
+              </component>
+              <component id="b934a" class="com.intellij.ui.SimpleColoredComponent" binding="myDefaultAnt">
+                <constraints>
+                  <xy x="4" y="3" width="6" height="18"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0"/>
+                </constraints>
+                <properties/>
+              </component>
+            </children>
+          </grid>
+        </children>
+      </grid>
+      <grid id="8185" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="3" bottom="0" right="3"/>
+        <constraints>
+          <xy x="6" y="89" width="400" height="150"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="3d591" class="com.intellij.ui.RawCommandLineEditor" binding="myAntCommandLine">
+            <constraints>
+              <xy x="105" y="0" width="292" height="20"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                <preferred-size width="150" height="-1"/>
+              </grid>
+            </constraints>
+          </component>
+          <component id="98550" class="javax.swing.JLabel" binding="myJDKLabel">
+            <constraints>
+              <xy x="3" y="29" width="79" height="14"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/AntBundle" key="run.execution.tab.run.under.jdk.label"/>
+            </properties>
+          </component>
+          <component id="d2390" class="com.intellij.ui.ComboboxWithBrowseButton" binding="myJDKs">
+            <constraints>
+              <xy x="105" y="25" width="292" height="22"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
+            </constraints>
+            <properties/>
+          </component>
+          <vspacer id="a2aa8">
+            <constraints>
+              <xy x="245" y="47" width="11" height="103"/>
+              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+            </constraints>
+          </vspacer>
+          <component id="411e3" class="javax.swing.JLabel" binding="myAntCmdLineLabel">
+            <constraints>
+              <xy x="3" y="3" width="92" height="14"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/AntBundle" key="run.execution.tab.ant.command.line.label"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>

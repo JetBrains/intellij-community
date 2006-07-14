@@ -22,7 +22,6 @@ import com.intellij.psi.search.SearchScope;
  * @author dyoma
  */
 public interface PsiAntElement extends PsiNamedElement {
-  PsiAntElement copy();
   SearchScope getSearchScope();
   AntElementRole getRole();
 }
