@@ -137,6 +137,11 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
 
         private void checkReferenceElement(
                 @Nullable PsiJavaCodeReferenceElement reference) {
+            checkReferenceElement(reference, false);
+        }
+
+        private void checkReferenceElement(PsiJavaCodeReferenceElement reference,
+                                           boolean isInnerClass) {
             if (reference == null) {
                 return;
             }
@@ -144,7 +149,7 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
             if (qualifier instanceof PsiJavaCodeReferenceElement) {
                 final PsiJavaCodeReferenceElement qualifierReference =
                         (PsiJavaCodeReferenceElement)qualifier;
-                checkReferenceElement(qualifierReference);
+                checkReferenceElement(qualifierReference, true);
             }
             final PsiType[] typeParameters = reference.getTypeParameters();
             if (typeParameters.length > 0) {
@@ -155,6 +160,12 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
                 return;
             }
             final PsiClass aClass = (PsiClass)element;
+            if (isInnerClass) {
+                if (aClass.hasModifierProperty(PsiModifier.STATIC)
+                        || aClass.isInterface()) {
+                    return;
+                }
+            }
             if (!aClass.hasTypeParameters()) {
                 return;
             }
