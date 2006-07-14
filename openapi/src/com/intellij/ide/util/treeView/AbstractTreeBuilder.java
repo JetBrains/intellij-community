@@ -408,17 +408,12 @@ public abstract class AbstractTreeBuilder implements Disposable {
     return nodesToInsert;
   }
 
-  /**
-   * @fabrique We use IBM Rational Software Functional Tester to functionally test Visual Fabrique.
-   * For capturing data from trees it requires 'String getText()' method defined in the
-   * nodes. So, in overriding method we define this method in the DefaultMutableTreeNode.
-   */
   protected DefaultMutableTreeNode createChildNode(final NodeDescriptor childDescr) {
     return new DefaultMutableTreeNode(childDescr);
   }
 
   private void updateInBackground(final DefaultMutableTreeNode node, final NodeDescriptor descriptor) {
-    String text = IdeBundle.message("progress.searching");
+    String text = getLoadingNodeText();
     for (int i = 0; i < node.getChildCount(); i++) {
       TreeNode child = node.getChildAt(i);
       if (child instanceof LoadingNode && text.equals(((LoadingNode)child).getUserObject())) {
@@ -460,6 +455,10 @@ public abstract class AbstractTreeBuilder implements Disposable {
       }
     };
     addTaskToWorker(updateRunnable, true, postRunnable);
+  }
+
+  protected String getLoadingNodeText() {
+    return IdeBundle.message("progress.searching");
   }
 
   private void processChildNode(final DefaultMutableTreeNode childNode,
