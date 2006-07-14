@@ -105,7 +105,7 @@ public class CodeEditUtil {
   }
 
   public static void saveWhitespacesInfo(final ASTNode first) {
-    checkForOuters(first);
+    //checkForOuters(first);
     if(first == null || isNodeGenerated(first) || getOldIndentation(first) >= 0) return;
     final PsiFile containingFile = first.getPsi().getContainingFile();
     final Helper helper = new Helper(containingFile.getFileType(), containingFile.getProject());
