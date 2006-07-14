@@ -29,6 +29,7 @@ public class FileStatusMap {
     private PsiElement dirtyScope; //Q: use WeakReference?
     private PsiElement overridenDirtyScope;
     private PsiElement localInspectionsDirtyScope;
+    public boolean defensivelyMarked; // file marked dirty without knowlesdge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
 
     private FileStatus(PsiElement dirtyScope, PsiElement overridenDirtyScope, PsiElement inspectionDirtyScope) {
       this.dirtyScope = dirtyScope;
@@ -115,10 +116,29 @@ public class FileStatusMap {
     }
   }
 
+  public void markFileScopeDirtyDefensively(PsiFile file) {
+    // mark whole file dirty in case no subsequent PSI events will come, but file requires rehighlighting nevertheless
+    // e.g. in the case of quick typing/backspacing char
+    synchronized(myDocumentToStatusMap){
+      Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
+      if (document == null) return;
+      FileStatus status = myDocumentToStatusMap.get(document);
+      if (status == null) return; // all dirty already
+      status.dirtyScope = file;
+      status.localInspectionsDirtyScope = file;                                                      
+      status.defensivelyMarked = true;
+    }
+  }
+
   public void markFileScopeDirty(Document document, PsiElement scope) {
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) return; // all dirty already
+      if (status.defensivelyMarked) {
+        status.dirtyScope = null;
+        status.localInspectionsDirtyScope = null;
+        status.defensivelyMarked = false;
+      }
       final PsiElement combined1 = combineScopes(status.dirtyScope, scope);
       status.dirtyScope = combined1 == null ? PsiDocumentManager.getInstance(myProject).getPsiFile(document) : combined1;
       final PsiElement combined2 = combineScopes(status.localInspectionsDirtyScope, scope);

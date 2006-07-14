@@ -5,9 +5,10 @@ import com.intellij.codeInsight.daemon.impl.EditorTracker;
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.psi.PsiFile;
 
-public abstract class DaemonCodeAnalyzer {
+public abstract class DaemonCodeAnalyzer implements ProjectComponent {
   public static DaemonCodeAnalyzer getInstance(Project project) {
     return project.getComponent(DaemonCodeAnalyzer.class);
   }

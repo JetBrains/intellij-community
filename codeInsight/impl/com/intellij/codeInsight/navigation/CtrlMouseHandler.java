@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -42,7 +43,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class CtrlMouseHandler implements ProjectComponent {
-  private Project myProject;
+  private final Project myProject;
   private static TextAttributes ourReferenceAttributes;
   private RangeHighlighter myHighlighter;
   private Editor myHighlighterView;
@@ -50,7 +51,7 @@ public class CtrlMouseHandler implements ProjectComponent {
   private Info myStoredInfo;
   private TooltipProvider myTooltipProvider = null;
 
-  private KeyListener myEditorKeyListener = new KeyAdapter() {
+  private final KeyListener myEditorKeyListener = new KeyAdapter() {
     public void keyPressed(final KeyEvent e) {
       handleKey(e);
     }
@@ -83,28 +84,28 @@ public class CtrlMouseHandler implements ProjectComponent {
     }
   };
 
-  private FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerAdapter() {
+  private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerAdapter() {
     public void selectionChanged(FileEditorManagerEvent e) {
       disposeHighlighter();
       myTooltipProvider = null;
     }
   };
 
-  private VisibleAreaListener myVisibleAreaListener = new VisibleAreaListener() {
+  private final VisibleAreaListener myVisibleAreaListener = new VisibleAreaListener() {
     public void visibleAreaChanged(VisibleAreaEvent e) {
       disposeHighlighter();
       myTooltipProvider = null;
     }
   };
 
-  private EditorMouseAdapter myEditorMouseAdapter = new EditorMouseAdapter() {
+  private final EditorMouseAdapter myEditorMouseAdapter = new EditorMouseAdapter() {
     public void mouseReleased(EditorMouseEvent e) {
       disposeHighlighter();
       myTooltipProvider = null;
     }
   };
 
-  private EditorMouseMotionListener myEditorMouseMotionListener = new EditorMouseMotionAdapter() {
+  private final EditorMouseMotionListener myEditorMouseMotionListener = new EditorMouseMotionAdapter() {
     public void mouseMoved(final EditorMouseEvent e) {
       if (e.isConsumed()) {
         return;
@@ -143,8 +144,15 @@ public class CtrlMouseHandler implements ProjectComponent {
     ourReferenceAttributes.setEffectType(EffectType.LINE_UNDERSCORE);
   }
 
-  public CtrlMouseHandler(Project project) {
+  public CtrlMouseHandler(Project project, StartupManager startupManager) {
     myProject = project;
+    startupManager.registerPostStartupActivity(new Runnable(){
+      public void run() {
+        EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
+        eventMulticaster.addEditorMouseListener(myEditorMouseAdapter);
+        eventMulticaster.addEditorMouseMotionListener(myEditorMouseMotionListener);
+      }
+    });
   }
 
   @NotNull
@@ -158,9 +166,6 @@ public class CtrlMouseHandler implements ProjectComponent {
   }
 
   public void projectOpened() {
-    EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-    eventMulticaster.addEditorMouseListener(myEditorMouseAdapter);
-    eventMulticaster.addEditorMouseMotionListener(myEditorMouseMotionListener);
   }
 
   public void projectClosed() {
@@ -180,7 +185,6 @@ public class CtrlMouseHandler implements ProjectComponent {
   }
 
   private static class JavaInfoGenerator {
-    private JavaInfoGenerator() {}
 
     @Nullable
     private static String generateAttributeValueInfo(PsiAntElement antElement) {

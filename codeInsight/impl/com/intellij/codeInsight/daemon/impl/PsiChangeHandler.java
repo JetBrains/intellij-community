@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.xml.XmlFileViewProvider;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
@@ -38,8 +39,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
   }
 
   private static boolean typesEqual(final PsiElement newChild, final PsiElement oldChild) {
-    if (newChild == null || oldChild == null) return false;
-    return newChild.getClass() == oldChild.getClass();
+    return newChild != null && oldChild != null && newChild.getClass() == oldChild.getClass();
   }
 
   public void childrenChanged(PsiTreeChangeEvent event) {
@@ -49,6 +49,19 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
   public void beforeChildMovement(PsiTreeChangeEvent event) {
     updateByChange(event.getOldParent(), true);
     updateByChange(event.getNewParent(), true);
+  }
+
+  public void beforeChildrenChange(PsiTreeChangeEvent event) {
+    // this event sent always before every PSI change, even not significant one (like after quick typing/backspacing char)
+    // mark file dirty just in case
+    PsiFile psiFile = event.getFile();
+    if (psiFile != null) {
+      Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(psiFile);
+      if (document != null) {
+        myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirtyDefensively(psiFile);
+        myDaemonCodeAnalyzer.stopProcess(true);
+      }
+    }
   }
 
   public void propertyChanged(PsiTreeChangeEvent event) {
@@ -79,9 +92,10 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     if (document == null) return;
 
     // optimization
-    if (whitespaceOptimizationAllowed) {
+    if (whitespaceOptimizationAllowed && UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)) {
+      final ASTNode node = child.getNode();
       if (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiDocToken ||
-          child.getNode() != null && PropertiesTokenTypes.PROPERTIES_TYPES_TO_IGNORE.contains(child.getNode().getElementType())) {
+          node != null && PropertiesTokenTypes.PROPERTIES_TYPES_TO_IGNORE.contains(node.getElementType())) {
         return;
       }
     }

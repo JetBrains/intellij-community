@@ -171,8 +171,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     if (timeToOptimizeImports() && myEditor != null) {
       optimizeImportsOnTheFly();
-
-
     }
     //Q: here?
     ErrorStripeRenderer renderer = new RefreshStatusRenderer(myProject, daemonCodeAnalyzer, myDocument, myFile);
@@ -335,7 +333,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private HighlightInfo processField(PsiField field, final List<IntentionAction> options, final String displayName) {
     final PsiIdentifier identifier = field.getNameIdentifier();
-    if (identifier == null) return null;
     final boolean injected = field.getModifierList().findAnnotation("javax.annotation.Resource") != null ||
                              field.getModifierList().findAnnotation("javax.ejb.EJB") != null ||
                              field.getModifierList().findAnnotation("javax.xml.ws.WebServiceRef") != null;
@@ -553,7 +550,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (!method.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     if (method.getParameterList().getParameters().length > 0) return false;
     PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return false;
-    return aClass.getConstructors().length == 1;
+    return aClass != null && aClass.getConstructors().length == 1;
   }
 }
