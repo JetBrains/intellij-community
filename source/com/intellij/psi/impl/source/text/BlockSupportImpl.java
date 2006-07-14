@@ -389,6 +389,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
       }
 
       ChameleonTransforming.transformChildren(newRoot);
+      ChameleonTransforming.transformChildren(oldRoot, true);
 
       final PomModel model = file.getProject().getModel();
       try {

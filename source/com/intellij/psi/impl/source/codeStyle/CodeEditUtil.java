@@ -58,6 +58,7 @@ public class CodeEditUtil {
       ASTNode current = first;
       while(current != lastChild){
         saveWhitespacesInfo(current);
+        checkForOuters(current);
         current = current.getTreeNext();
       }
     }
@@ -105,7 +106,6 @@ public class CodeEditUtil {
   }
 
   public static void saveWhitespacesInfo(final ASTNode first) {
-    //checkForOuters(first);
     if(first == null || isNodeGenerated(first) || getOldIndentation(first) >= 0) return;
     final PsiFile containingFile = first.getPsi().getContainingFile();
     final Helper helper = new Helper(containingFile.getFileType(), containingFile.getProject());
@@ -124,6 +124,14 @@ public class CodeEditUtil {
     final boolean tailingElement = last.getStartOffset() + last.getTextLength() == parent.getStartOffset() + parent.getTextLength();
     final boolean forceReformat = needToForceReformat(parent, first, last);
     saveWhitespacesInfo(first);
+
+    TreeElement child = (TreeElement)first;
+    while (child != null) {
+      checkForOuters(child);
+      if (child == last) break;
+      child = child.next;
+    }
+
     final ASTNode prevLeaf = TreeUtil.prevLeaf(first);
     final ASTNode nextLeaf = TreeUtil.nextLeaf(last);
     parent.removeRange(first, last.getTreeNext());
@@ -147,6 +155,8 @@ public class CodeEditUtil {
   public static void replaceChild(CompositeElement parent, ASTNode oldChild, ASTNode newChild) {
     saveWhitespacesInfo(oldChild);
     saveWhitespacesInfo(newChild);
+    checkForOuters(oldChild);
+    checkForOuters(newChild);
     parent.replaceChild(oldChild, newChild);
     final LeafElement firstLeaf = TreeUtil.findFirstLeaf(newChild);
     final ASTNode prevToken = TreeUtil.prevLeaf(newChild);
