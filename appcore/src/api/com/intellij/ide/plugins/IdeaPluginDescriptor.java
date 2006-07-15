@@ -23,6 +23,8 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
 
   PluginId[] getDependentPluginIds();
 
+  PluginId[] getOptionalDependentPluginIds();
+
   String getVendor();
 
   String getVersion();

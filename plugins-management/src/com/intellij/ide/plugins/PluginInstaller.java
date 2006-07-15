@@ -28,26 +28,27 @@ import java.util.Map;
 public class PluginInstaller {
   private static final Object lock = new Object();
 
+  private PluginInstaller() {}
+
   public static boolean prepareToInstall (List <PluginNode> plugins) {
     ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
 
     long total = 0;
-    for (int i = 0; i < plugins.size(); i++) {
-      PluginNode pluginNode = plugins.get(i);
+    for (PluginNode pluginNode : plugins) {
       total += Long.valueOf(pluginNode.getSize()).longValue();
     }
 
     long count = 0;
     boolean result = false;
 
-    for (int i = 0; i < plugins.size(); i++) {
-      PluginNode pluginNode = plugins.get(i);
+    for (PluginNode pluginNode : plugins) {
       pi.setText(pluginNode.getName());
 
       try {
         result |= prepareToInstall(pluginNode, true, count, total);
-      } catch (IOException e) {
-        throw new RuntimeException (e);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
       count += Integer.valueOf(pluginNode.getSize()).intValue();
     }
@@ -177,25 +178,35 @@ public class PluginInstaller {
     return PathManagerEx.getPluginTempPath() + File.separator + "plugin.classes";
   }
 
+  @SuppressWarnings({"unchecked"})
   public static Map<String, String> loadPluginClasses () throws IOException, ClassNotFoundException {
     synchronized(lock) {
       File file = new File (getPluginClassesPath());
       if (file.exists()) {
         ObjectInputStream ois = new ObjectInputStream (new FileInputStream (file));
-        return (Map<String, String>)ois.readObject();
+        try {
+          return (Map<String, String>)ois.readObject();
+        }
+        finally {
+          ois.close();
+        }
       } else {
         return new HashMap<String, String> ();
       }
     }
   }
 
-  public static void savePluginClasses (Map<String, String> classes) throws IOException {
+  public static void savePluginClasses(Map<String, String> classes) throws IOException {
     synchronized(lock) {
       File file = new File (getPluginClassesPath());
 
       ObjectOutputStream oos = new ObjectOutputStream (new FileOutputStream(file, false));
-      oos.writeObject(classes);
-      oos.close();
+      try {
+        oos.writeObject(classes);
+      }
+      finally {
+        oos.close();
+      }
     }
   }
 }

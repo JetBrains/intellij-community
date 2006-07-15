@@ -50,7 +50,7 @@ public class PluginManager {
   @NonNls public static final String AREA_IDEA_PROJECT = "IDEA_PROJECT";
   @NonNls public static final String AREA_IDEA_MODULE = "IDEA_MODULE";
   @NonNls private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
-  private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
+  @NonNls private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
 
   private static Logger getLogger() {
     if (ourLogger == null) {
@@ -123,15 +123,15 @@ public class PluginManager {
     for (final IdeaPluginDescriptorImpl pluginDescriptor : pluginDescriptors) {
       final List<File> classPath = pluginDescriptor.getClassPath();
       final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
-      final ClassLoader[] parentLoaders = dependentPluginIds.length > 0
-                                          ? getParentLoaders(idToDescriptorMap, dependentPluginIds)
-                                          : new ClassLoader[]{parentLoader};
+      final ClassLoader[] parentLoaders = getParentLoaders(idToDescriptorMap, dependentPluginIds);
+
       final ClassLoader pluginClassLoader = createPluginClassLoader(classPath.toArray(new File[classPath.size()]),
-                                                                        parentLoaders,
-                                                                        pluginDescriptor);
+                                                                    parentLoaders.length > 0 ? parentLoaders : new ClassLoader[] {parentLoader},
+                                                                    pluginDescriptor);
       pluginDescriptor.setLoader(pluginClassLoader);
       pluginDescriptor.registerExtensions();
     }
+
     ourPlugins = pluginDescriptors;
   }
 
@@ -240,9 +240,9 @@ public class PluginManager {
     for (final PluginId id : pluginIds) {
       IdeaPluginDescriptor pluginDescriptor = idToDescriptorMap.get(id);
       if (pluginDescriptor == null) {
-        getLogger().assertTrue(false, "Plugin not found: " + id);
-        return null;
+        continue; // Might be an optional dependency
       }
+
       final ClassLoader loader = pluginDescriptor.getPluginClassLoader();
       if (loader == null) {
         getLogger().assertTrue(false, "Plugin class loader should be initialized for plugin " + id);
@@ -267,6 +267,7 @@ public class PluginManager {
       Runnable runnable = new Runnable() {
         public void run() {
           try {
+            //noinspection AssignmentToStaticFieldFromInstanceMethod
             PluginsFacade.INSTANCE = new Facade();
 
             Class aClass = Class.forName(ourMainClass);
@@ -402,8 +403,9 @@ public class PluginManager {
     for (Iterator<IdeaPluginDescriptorImpl> it = result.iterator(); it.hasNext();) {
       final IdeaPluginDescriptor pluginDescriptor = it.next();
       final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
+      final Set<PluginId> optionalDependencies = new HashSet<PluginId>(Arrays.asList(pluginDescriptor.getDependentPluginIds()));
       for (final PluginId dependentPluginId : dependentPluginIds) {
-        if (!idToDescriptorMap.containsKey(dependentPluginId)) {
+        if (!idToDescriptorMap.containsKey(dependentPluginId) && !optionalDependencies.contains(dependentPluginId)) {
           if (message.length() > 0) {
             message.append("\n");
           }

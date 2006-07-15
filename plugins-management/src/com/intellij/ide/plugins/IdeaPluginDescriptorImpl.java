@@ -37,6 +37,7 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
   private String url;
   private File myPath;
   private PluginId[] myDependencies;
+  private PluginId[] myOptionalDependencies;
   private Element myActionsElement = null;
   private Element myAppComponents = null;
   private Element myProjectComponents = null;
@@ -75,6 +76,7 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
 
   @NonNls private static final String ELEMENT_EXTENSIONS = "extensions";
   @NonNls private static final String ELEMENT_EXTENSION_POINTS = "extensionPoints";
+  @NonNls private static final String ATT_OPTIONAL = "optional";
 
   public IdeaPluginDescriptorImpl(File pluginPath) {
     myPath = pluginPath;
@@ -120,14 +122,20 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
 
     List children = element.getChildren(ELEMENT_DEPENDS);
     Set<PluginId> dependentPlugins = new HashSet<PluginId>(children.size());
+    Set<PluginId> optionalDependentPlugins = new HashSet<PluginId>(children.size());
     for (final Object aChildren : children) {
       final Element dependentPlugin = (Element)aChildren;
       String text = dependentPlugin.getText();
       if (text != null && text.length() > 0) {
-        dependentPlugins.add(PluginId.getId(text));
+        final PluginId id = PluginId.getId(text);
+        dependentPlugins.add(id);
+        if (Boolean.valueOf(dependentPlugin.getAttributeValue(ATT_OPTIONAL)).booleanValue()) {
+          optionalDependentPlugins.add(id);
+        }
       }
     }
     myDependencies = dependentPlugins.toArray(new PluginId[dependentPlugins.size()]);
+    myOptionalDependencies = optionalDependentPlugins.toArray(new PluginId[optionalDependentPlugins.size()]);
 
     children = element.getChildren(ELEMENT_HELPSET);
     List<HelpSetPath> hsPathes = new ArrayList<HelpSetPath>(children.size());
@@ -221,6 +229,10 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
 
   public PluginId[] getDependentPluginIds() {
     return myDependencies;
+  }
+
+  public PluginId[] getOptionalDependentPluginIds() {
+    return myOptionalDependencies;
   }
 
   public String getVendor() {
