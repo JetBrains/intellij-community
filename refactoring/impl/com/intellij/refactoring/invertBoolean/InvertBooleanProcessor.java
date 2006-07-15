@@ -91,15 +91,18 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
       final Query<PsiReference> methodQuery = MethodReferencesSearch.search(method);
       final Collection<PsiReference> methodRefs = methodQuery.findAll();
       for (PsiReference ref : methodRefs) {
-        if (ref.getElement().getParent() instanceof PsiCallExpression) {
-          final PsiCallExpression call = (PsiCallExpression)ref.getElement().getParent();
+        if (ref.getElement().getParent() instanceof PsiCall) {
+          final PsiCall call = (PsiCall)ref.getElement().getParent();
           final PsiReferenceExpression methodExpression = call instanceof PsiMethodCallExpression ?
                                                           ((PsiMethodCallExpression)call).getMethodExpression() :
                                                           null;
-          final PsiExpression[] args = call.getArgumentList().getExpressions();
-          if (index < args.length) {
-            if (methodExpression == null || methodExpression.getQualifier() == null || !"super".equals(methodExpression.getQualifierExpression().getText())) {
-              toInvert.add(mySmartPointerManager.createSmartPsiElementPointer(args[index]));
+          final PsiExpressionList argumentList = call.getArgumentList();
+          if (argumentList != null) {
+            final PsiExpression[] args = argumentList.getExpressions();
+            if (index < args.length) {
+              if (methodExpression == null || methodExpression.getQualifier() == null || !"super".equals(methodExpression.getQualifierExpression().getText())) {
+                toInvert.add(mySmartPointerManager.createSmartPsiElementPointer(args[index]));
+              }
             }
           }
         }
