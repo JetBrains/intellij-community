@@ -5,7 +5,6 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -80,11 +79,6 @@ public class RenameDialog extends RefactoringDialog {
       myCbSearchTextOccurences.setSelected(toSearchForTextOccurences);
     }
 
-    if (!showSearchCheckboxes(myPsiElement)) {
-      myCbSearchInComments.setVisible(false);
-      myCbSearchTextOccurences.setVisible(false);
-    }
-
     validateButtons();
     myHelpID = helpID;
   }
@@ -100,12 +94,6 @@ public class RenameDialog extends RefactoringDialog {
   private String getFullName() {
     final String name = UsageViewUtil.getDescriptiveName(myPsiElement);
     return (UsageViewUtil.getType(myPsiElement) + " " + name).trim();
-  }
-
-  private boolean showSearchCheckboxes(PsiElement e) {
-    if (e instanceof PsiAntElement) return false;
-
-    return true;
   }
 
   private void createNewNameComponent() {
