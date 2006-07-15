@@ -112,6 +112,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         //invoke after all other listeners
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
+            if (mySelectedProfile == null) return; //panel was disposed
             updateProperSettingsForSelection();
             wereToolSettingsModified();
           }
