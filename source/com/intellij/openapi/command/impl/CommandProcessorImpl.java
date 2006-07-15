@@ -10,6 +10,7 @@ import com.intellij.openapi.command.undo.DummyComplexUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
@@ -92,6 +93,8 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
     if (LOG.isDebugEnabled()) {
       LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId);
     }
+
+    boolean failed = false;
     if (myCurrentCommand != null) {
       command.run();
       return;
@@ -102,14 +105,22 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
       command.run();
     }
     catch (TooComplexPSIModificationException rollback) {
-      // TODO: [must] rollback the changes if any.
-      Messages.showErrorDialog(project, "Cannot perform operation. Too complex, sorry.", "Failed to perform operation");
+      failed = true;
     }
     catch (Throwable e) {
       LOG.error(e);
     }
     finally {
       _fireCommandFinished();
+    }
+
+    if (failed) {
+      if (project != null) {
+        FileEditor editor = new FocusBasedCurrentEditorProvider().getCurrentEditor();
+        UndoManager.getInstance(project).undo(editor);
+      }
+
+      Messages.showErrorDialog(project, "Cannot perform operation. Too complex, sorry.", "Failed to perform operation");
     }
   }
 
