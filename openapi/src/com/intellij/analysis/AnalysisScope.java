@@ -166,7 +166,7 @@ public class AnalysisScope {
     }
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
-    return (PsiElementVisitor)new PsiRecursiveElementVisitor() {
+    return new PsiRecursiveElementVisitor() {
       public void visitFile(PsiFile file) {
         if (/*file instanceof PsiJavaFile && */!(file instanceof PsiCompiledElement)) {
           final VirtualFile virtualFile = file.getVirtualFile();
@@ -423,7 +423,7 @@ public class AnalysisScope {
           }
         }, ", ");
 
-        return AnalysisScopeBundle.message("scope.module.list", modules, myModules.size());
+        return AnalysisScopeBundle.message("scope.module.list", modules, Integer.valueOf(myModules.size()));
 
       case PROJECT:
         return AnalysisScopeBundle.message("scope.project", pathToName(myProject.getProjectFilePath()));
@@ -457,7 +457,7 @@ public class AnalysisScope {
             return module.getName();
           }
         }, ", ");
-        return AnalysisScopeBundle.message("scope.module.list", modules, myModules.size());
+        return AnalysisScopeBundle.message("scope.module.list", modules, Integer.valueOf(myModules.size()));
 
       case PROJECT:
         return AnalysisScopeBundle.message("scope.project", myProject.getName());

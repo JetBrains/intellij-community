@@ -6,9 +6,9 @@ package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -20,8 +20,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,10 +58,11 @@ public class ScopeEditorPanel {
   private String myErrorMessage;
   private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
-  private boolean myIsFirstUpdate = true;
   private JLabel myCaretPositionLabel;
   private int myCaretPosition = 0;
   private boolean myCanceled = false;
+  private JPanel myMatchingCountPanel;
+  private PanelProgressIndicator myCurrentProgress;
 
   public ScopeEditorPanel(Project project, final NamedScopesHolder holder) {
     myProject = project;
@@ -332,7 +335,7 @@ public class ScopeEditorPanel {
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(new Runnable() {
       public void run() {
-        SwingUtilities.invokeLater(new Runnable() {
+        new Thread(){
           public void run() {
             if (updateText && myCurrentScope != null) {
               myIsInUpdate = true;
@@ -344,7 +347,7 @@ public class ScopeEditorPanel {
               runnable.run();
             }
           }
-        });
+        }.start();
       }
     }, 300);
   }
@@ -367,38 +370,67 @@ public class ScopeEditorPanel {
   }
 
   private void updateTreeModel() {
-    Runnable updateModel = new Runnable(){
-      public void run() {
-        try {
-          myTreeExpansionMonitor.freeze();
-          TreeModelBuilder.TreeModel model = TreeModelBuilder.createTreeModel(myProject, myIsFirstUpdate, false, myTreeMarker);
-          myIsFirstUpdate = false;
+    PanelProgressIndicator progress = new PanelProgressIndicator(new Consumer<JComponent>() {
+      public void consume(final JComponent component) {
+        setToComponent(component);
+      }
+    }) {
+      public boolean isCanceled() {
+        return super.isCanceled() || myCanceled;
+      }
 
-          if (myErrorMessage == null) {
-            myMatchingCountLabel.setText(IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount()));
-            myMatchingCountLabel.setForeground(new JLabel().getForeground());
-          }
-          else {
-            showErrorMessage();
-          }
+      public void stop() {
+        super.stop();
+        setToComponent(myMatchingCountLabel);
+      }
 
-          myPackageTree.setModel(model);
-          myTreeExpansionMonitor.restore();
-        }
-        finally {
-          myCanceled = false;
-        }
+      public String getText() { //just show non-blocking progress
+        return null;
+      }
+
+      public String getText2() {
+        return null;
       }
     };
-    if (myIsFirstUpdate) {
-      updateModel.run();
-    } else {
-      ProgressManager.getInstance().runProcess(updateModel, new ProgressIndicatorBase() {
-        public boolean isCanceled() {
-          return myCanceled;
-        }
-      });
-    }
+    progress.setBordersVisible(false); 
+    myCurrentProgress = progress;
+    Runnable updateModel = new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            try {
+              myTreeExpansionMonitor.freeze();
+              UIUtil.setEnabled(myPanel, false, true);
+              final TreeModelBuilder.TreeModel model = TreeModelBuilder.createTreeModel(myProject, false, false, myTreeMarker);
+
+              if (myErrorMessage == null) {
+                myMatchingCountLabel
+                  .setText(IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount()));
+                myMatchingCountLabel.setForeground(new JLabel().getForeground());
+              }
+              else {
+                showErrorMessage();
+              }
+
+              SwingUtilities.invokeLater(new Runnable(){
+                public void run() { //not under progress
+                  myPackageTree.setModel(model);
+                  myTreeExpansionMonitor.restore();
+                }
+              });
+            }
+            finally {
+              myCanceled = false;
+              myCurrentProgress = null;
+              //update label
+              setToComponent(myMatchingCountLabel);
+              UIUtil.setEnabled(myPanel, true, true);
+            }
+          }
+        });
+      }
+    };
+    ProgressManager.getInstance().runProcess(updateModel, progress);
   }
 
   public int getMarkedFileCount(){
@@ -406,6 +438,12 @@ public class ScopeEditorPanel {
       return ((TreeModelBuilder.TreeModel)myPackageTree.getModel()).getMarkedFileCount();
     }
     return -1;
+  }
+
+  public void cancelCurrentProgress(){
+    if (myCurrentProgress != null && myCurrentProgress.isRunning()){
+      myCurrentProgress.cancel();
+    }
   }
 
   public boolean checkCurrentScopeValid(boolean showMessage) {
@@ -433,6 +471,13 @@ public class ScopeEditorPanel {
     myCurrentScope = packageSet;
     myPatternField.setText(myCurrentScope == null ? "" : myCurrentScope.getText());
     rebuild(false, runnable);
+  }
+
+  private void setToComponent(final JComponent cmp) {
+    myMatchingCountPanel.removeAll();
+    myMatchingCountPanel.add(cmp, BorderLayout.EAST);
+    myMatchingCountPanel.revalidate();
+    myMatchingCountPanel.repaint();
   }
 
   private static class MyTreeCellRenderer extends DefaultTreeCellRenderer {

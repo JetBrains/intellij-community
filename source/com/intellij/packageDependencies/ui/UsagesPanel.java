@@ -1,13 +1,12 @@
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ColorProgressBar;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.FindDependencyUtil;
@@ -16,7 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.util.Consumer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,7 +51,11 @@ public class UsagesPanel extends JPanel {
       public void run() {
         new Thread(new Runnable() {
           public void run() {
-            final ProgressIndicator progress = new MyProgressIndicator();
+            final ProgressIndicator progress = new PanelProgressIndicator(new Consumer<JComponent>() {
+              public void consume(final JComponent component) {
+                setToComponent(component);
+              }
+            });
             myCurrentProgress = progress;
             ProgressManager.getInstance().runProcess(new Runnable() {
               public void run() {
@@ -143,65 +146,10 @@ public class UsagesPanel extends JPanel {
     }
   }
 
-  private JComponent createLabel(String text) {
+  public static JComponent createLabel(String text) {
     JLabel label = new JLabel(text);
     label.setHorizontalAlignment(SwingConstants.CENTER);
     return label;
   }
 
-  private class MyProgressIndicator extends ProgressIndicatorBase {
-    private MyProgressPanel myProgressPanel;
-    private boolean myPaintInQueue;
-
-    public MyProgressIndicator() {
-      myProgressPanel = new MyProgressPanel();
-    }
-
-    public void start() {
-      super.start();
-      setToComponent(myProgressPanel.myPanel);
-    }
-
-    public void stop() {
-      super.stop();
-      if (isCanceled()) {
-        setToCanceled();
-      }
-    }
-
-    public void setText(String text) {
-      if (!text.equals(getText())) {
-        super.setText(text);
-        update();
-      }
-    }
-
-    public void setFraction(double fraction) {
-      if (fraction != getFraction()) {
-        super.setFraction(fraction);
-        update();
-      }
-    }
-
-    private void update() {
-      if (myPaintInQueue) return;
-      myPaintInQueue = true;
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myPaintInQueue = false;
-          myProgressPanel.myTextLabel.setText(getText());
-          double fraction = getFraction();
-          myProgressPanel.myFractionLabel.setText((int)(fraction * 99 + 0.5) + "%");
-          myProgressPanel.myFractionProgress.setFraction(fraction);
-        }
-      });
-    }
-  }
-
-  private static class MyProgressPanel {
-    public JLabel myFractionLabel;
-    public ColorProgressBar myFractionProgress;
-    public JLabel myTextLabel;
-    public JPanel myPanel;
-  }
 }

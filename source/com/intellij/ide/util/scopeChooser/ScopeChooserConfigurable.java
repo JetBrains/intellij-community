@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -36,6 +37,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -192,6 +195,18 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   protected void initTree() {
+    myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      public void valueChanged(TreeSelectionEvent e) {
+        final TreePath path = e.getOldLeadSelectionPath();
+        if (path != null){
+          final MyNode node = (MyNode)path.getLastPathComponent();
+          final NamedConfigurable namedConfigurable = node.getConfigurable();
+          if (namedConfigurable instanceof ScopeConfigurable){
+            ((ScopeConfigurable)namedConfigurable).cancelCurrentProgress();
+          }
+        }
+      }
+    });
     super.initTree();
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
       public String convert(final TreePath treePath) {

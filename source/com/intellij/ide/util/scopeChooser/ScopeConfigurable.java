@@ -4,6 +4,7 @@
 
 package com.intellij.ide.util.scopeChooser;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -44,7 +45,7 @@ public class ScopeConfigurable implements NamedConfigurable<NamedScope> {
   }
 
   public String getBannerSlogan() {
-    return myScope.getName();
+    return IdeBundle.message("scope.banner.text", myScope.getName());
   }
 
   public String getDisplayName() {
@@ -71,10 +72,15 @@ public class ScopeConfigurable implements NamedConfigurable<NamedScope> {
   }
 
   public void apply() throws ConfigurationException {
-    myPanel.apply();
-    final PackageSet packageSet = myPanel.getCurrentScope();
-    myScope = new NamedScope(myScope.getName(), packageSet);
-    myPackageSet = packageSet != null ? packageSet.getText() : null;
+    try {
+      myPanel.apply();
+      final PackageSet packageSet = myPanel.getCurrentScope();
+      myScope = new NamedScope(myScope.getName(), packageSet);
+      myPackageSet = packageSet != null ? packageSet.getText() : null;
+    }
+    catch (ConfigurationException e) {
+      //was canceled - didn't change anything
+    }
   }
 
   public void reset() {
@@ -82,6 +88,15 @@ public class ScopeConfigurable implements NamedConfigurable<NamedScope> {
   }
 
   public void disposeUIResources() {
-    myPanel = null;
+    if (myPanel != null){
+      myPanel.cancelCurrentProgress();
+      myPanel = null;
+    }
+  }
+
+  public void cancelCurrentProgress(){
+    if (myPanel != null) { //not disposed
+      myPanel.cancelCurrentProgress();
+    }
   }
 }
