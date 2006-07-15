@@ -138,8 +138,8 @@ public class GenericsHighlightUtil {
         if (referenceClass == null) continue;
         final PsiClassType[] bounds = classParameter.getSuperTypes();
         for (PsiClassType type1 : bounds) {
-          PsiType bound = substitutor.substitute(type1);
-          if (!bound.equalsToText("java.lang.Object") && !TypeConversionUtil.isAssignable(bound, type)) {
+          PsiType bound = substitutor.substituteWithoutBoundsPromotion(type1);
+          if (!TypeConversionUtil.isAssignable(bound, type)) {
             PsiClass boundClass = bound instanceof PsiClassType ? ((PsiClassType)bound).resolve() : null;
 
             @NonNls final String messageKey = boundClass == null || referenceClass.isInterface() == boundClass.isInterface()

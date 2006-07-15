@@ -73,6 +73,8 @@ public interface PsiSubstitutor {
    */
   PsiType substituteAndFullCapture(PsiType type);
 
+  PsiType substituteWithoutBoundsPromotion(PsiType type);
+
   /**
    * Creates a substitutor instance which provides the specified parameter to type mapping in addition
    * to mappings contained in this substitutor.

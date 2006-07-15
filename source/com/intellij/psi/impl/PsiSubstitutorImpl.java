@@ -1,7 +1,6 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -37,6 +36,12 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
   public PsiType substitute(PsiType type) {
     if (type == null) return null;
     PsiType substituted = type.accept(myInternalSubstitutionVisitor);
+    return correctExternalSubstitution(substituted, type);
+  }
+
+  public PsiType substituteWithoutBoundsPromotion(PsiType type) {
+    if (type == null) return null;
+    PsiType substituted = type.accept(myInternalSimpleSubstitutionVisitor);
     return correctExternalSubstitution(substituted, type);
   }
 
@@ -127,13 +132,12 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
   }
 
   private final InternalSubstitutionVisitor myInternalSubstitutionVisitor = new InternalSubstitutionVisitor();
+  private final InternalSimpleSubstitutionVisitor myInternalSimpleSubstitutionVisitor = new InternalSimpleSubstitutionVisitor();
   private final InternalCapturingSubstitutionVisitor myInternalCapturingSubstitutionVisitor = new InternalCapturingSubstitutionVisitor();
   private final InternalFullCapturingSubstitutionVisitor myInternalFullCapturingSubstitutionVisitor =
     new InternalFullCapturingSubstitutionVisitor();
 
-  private static final Key<Boolean> PREVENT_RECURSION_KEY = Key.create("PREVENT_RECURSION_KEY");
-
-  private class InternalSubstitutionVisitor extends SubstitutionVisitor {
+  private class InternalSimpleSubstitutionVisitor extends SubstitutionVisitor {
     public PsiType visitClassType(PsiClassType classType) {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
@@ -155,44 +159,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     }
 
     protected PsiType substituteTypeParameter(final PsiTypeParameter typeParameter) {
-      PsiType substituted = mySubstitutionMap.get(typeParameter);
-      if (typeParameter.getUserData(PREVENT_RECURSION_KEY) != null) return PsiWildcardType.createUnbounded(typeParameter.getManager());
-      if (substituted instanceof PsiWildcardType && !((PsiWildcardType)substituted).isSuper()) {
-        PsiType originalBound = ((PsiWildcardType)substituted).getBound();
-        PsiManager manager = typeParameter.getManager();
-        final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
-        for (PsiType boundType : boundTypes) {
-          PsiType substitutedBoundType;
-          synchronized (PsiLock.LOCK) {
-            //prevent infinite recursion
-            try {
-              typeParameter.putUserData(PREVENT_RECURSION_KEY, Boolean.TRUE);
-              substitutedBoundType = boundType.accept(this);
-            }
-            finally {
-              typeParameter.putUserData(PREVENT_RECURSION_KEY, null);
-            }
-          }
-          PsiWildcardType wildcardType = (PsiWildcardType)substituted;
-          if (substitutedBoundType != null && !(substitutedBoundType instanceof PsiWildcardType) && !substitutedBoundType.equalsToText("java.lang.Object")) {
-            if (originalBound == null || !substitutedBoundType.isAssignableFrom(originalBound)) {
-              if (wildcardType.isExtends()) {
-                final PsiType glb = GenericsUtil.getGreatestLowerBound(wildcardType.getBound(), substitutedBoundType);
-                if (glb != null) {
-                 substituted = PsiWildcardType.createExtends(manager, glb);
-                }
-              }
-              else {
-                //unbounded
-                substituted = PsiWildcardType.createExtends(manager, substitutedBoundType);
-              }
-            }
-          }
-        }
-      }
-
-      return substituted;
-    }
+      return mySubstitutionMap.get(typeParameter);
+   }
 
     private PsiType substituteInternal(PsiType type) {
       return type.accept(this);
@@ -215,6 +183,38 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
       final PsiClass containingClass = resolve.getContainingClass();
       return containingClass == null ||
              processClass(containingClass, originalSubstitutor, substMap);
+    }
+  }
+
+  class InternalSubstitutionVisitor extends InternalSimpleSubstitutionVisitor {
+
+    protected PsiType substituteTypeParameter(final PsiTypeParameter typeParameter) {
+      PsiType substituted = super.substituteTypeParameter(typeParameter);
+      if (substituted instanceof PsiWildcardType && !((PsiWildcardType)substituted).isSuper()) {
+        PsiType originalBound = ((PsiWildcardType)substituted).getBound();
+        PsiManager manager = typeParameter.getManager();
+        final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
+        for (PsiType boundType : boundTypes) {
+          PsiType substitutedBoundType = boundType.accept(myInternalSimpleSubstitutionVisitor);
+          PsiWildcardType wildcardType = (PsiWildcardType)substituted;
+          if (substitutedBoundType != null && !(substitutedBoundType instanceof PsiWildcardType) && !substitutedBoundType.equalsToText("java.lang.Object")) {
+            if (originalBound == null || !substitutedBoundType.isAssignableFrom(originalBound)) {
+              if (wildcardType.isExtends()) {
+                final PsiType glb = GenericsUtil.getGreatestLowerBound(wildcardType.getBound(), substitutedBoundType);
+                if (glb != null) {
+                 substituted = PsiWildcardType.createExtends(manager, glb);
+                }
+              }
+              else {
+                //unbounded
+                substituted = PsiWildcardType.createExtends(manager, substitutedBoundType);
+              }
+            }
+          }
+        }
+      }
+
+      return substituted;
     }
   }
 
