@@ -41,6 +41,8 @@
 <!ELEMENT change-notes (#PCDATA)>
 
 <!ELEMENT depends (#PCDATA)>
+<!ATTLIST depends
+   optional (true | false) #IMPLIED>
 
 <!-- extensions. Most relaxed constraints since content of the particular extension cannot be expressed with DTD -->
 <!ELEMENT extensions ANY>
