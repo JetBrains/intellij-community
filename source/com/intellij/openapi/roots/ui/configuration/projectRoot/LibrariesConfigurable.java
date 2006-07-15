@@ -52,6 +52,7 @@ public class LibrariesConfigurable implements NamedConfigurable <String> {
   }
 
   public final JComponent createComponent() {
+    myPanel.removeAll();
     myPanel.setBorder(BorderFactory.createEtchedBorder());
     JLabel label = new JLabel();
     @NonNls String opentTag = "<html>";
