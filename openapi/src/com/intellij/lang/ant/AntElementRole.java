@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.ant;
 
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
@@ -23,18 +22,21 @@ import javax.swing.*;
 /**
  * @author dyoma
  */
-public class AntElementRole {
-  public static final Icon TASK_ICON = IconLoader.getIcon("/ant/task.png");
-  private final String myName;
-  private final Icon myIcon;
-  public static final AntElementRole TARGET_ROLE = new AntElementRole(AntBundle.message("ant.role.ant.target"), Icons.ANT_TARGET_ICON);
-  public static final AntElementRole PROPERTY_ROLE = new AntElementRole(AntBundle.message("ant.role.ant.property"), Icons.PROPERTY_ICON);
-  public static final AntElementRole TASK_ROLE = new AntElementRole(AntBundle.message("ant.role.ant.task"), TASK_ICON);
+public enum AntElementRole {
+  TARGET_ROLE (AntBundle.message("ant.role.ant.target"), Icons.ANT_TARGET_ICON),
+  PROPERTY_ROLE (AntBundle.message("ant.role.ant.property"), Icons.PROPERTY_ICON),
+  TASK_ROLE (AntBundle.message("ant.role.ant.task"), Icons.TASK_ICON),
+  USER_TASK_ROLE (AntBundle.message("ant.element.role.user.task"), Icons.TASK_ICON),
+  PROJECT_ROLE (AntBundle.message("ant.element.role.ant.project.name"), Icons.PROPERTY_ICON),
+  MACRODEF_ROLE (AntBundle.message("ant.element.role.macrodef.element"), Icons.TASK_ICON);
 
-  public AntElementRole(String name, Icon icon) {
+  AntElementRole(String name, Icon icon) {
     myName = name;
     myIcon = icon;
   }
+
+  private final String myName;
+  private final Icon myIcon;
 
   public String getName() {
     return myName;

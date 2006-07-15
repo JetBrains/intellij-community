@@ -1,6 +1,5 @@
 package com.intellij.lang.ant.config.execution;
 
-import com.intellij.lang.ant.AntElementRole;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.ui.MultilineTreeCellRenderer;
@@ -47,7 +46,7 @@ final class MessageTreeRenderer extends MultilineTreeCellRenderer {
         icon = Icons.ANT_TARGET_ICON;
       }
       else if (type == AntBuildMessageView.MessageType.TASK) {
-        icon = AntElementRole.TASK_ICON;
+        icon = Icons.TASK_ICON;
       }
       else if (type == AntBuildMessageView.MessageType.MESSAGE) {
         if (node.getPriority() == AntMain2.MSG_WARN) {

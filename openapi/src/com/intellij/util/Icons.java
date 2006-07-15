@@ -101,4 +101,5 @@ public abstract class Icons {
   public static final Icon FLATTEN_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/flattenPackages.png");
   public static final Icon ADD_TO_SECTION_ICON = IconLoader.getIcon("/general/addItemToSection.png");
   public static final Icon EDIT_IN_SECTION_ICON = IconLoader.getIcon("/general/editItemInSection.png");
+  public static final Icon TASK_ICON = IconLoader.getIcon("/ant/task.png");
 }
