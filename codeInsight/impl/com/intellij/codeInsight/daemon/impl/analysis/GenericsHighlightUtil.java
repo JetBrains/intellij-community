@@ -1036,5 +1036,27 @@ public class GenericsHighlightUtil {
     }
     return null;
   }
+
+  public static HighlightInfo checkSelectStaticClassFromParameterizedType(final PsiElement resolved, final PsiJavaCodeReferenceElement ref) {
+    if (resolved instanceof PsiClass && ((PsiClass)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+      final PsiElement qualifier = ref.getQualifier();
+      if (qualifier instanceof PsiJavaCodeReferenceElement) {
+        final PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)qualifier).getParameterList();
+        if (parameterList != null && parameterList.getTypeArguments().length > 0) {
+          final String message = JavaErrorMessages.message("generics.select.static.class.from.parameterized.type",
+                                                           HighlightUtil.formatClass((PsiClass)resolved));
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                 parameterList, message);
+        }
+      }
+    }
+    return null;
+  }
+
+/*
+  class IDontCompile {
+  Map<?>.Entry<String, String> map;
+}
+*/
 }
 
