@@ -10,6 +10,8 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author ven
  */
@@ -73,8 +75,9 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
         if (argumentList == null) return;
         final JavaResolveResult resolveResult = reference.advancedResolve(false);
 
-        if (resolveResult.getElement() instanceof PsiMethod && resolveResult.isValidResult()) {
-          PsiMethod method = (PsiMethod)resolveResult.getElement();
+        final PsiElement element = resolveResult.getElement();
+        if (element instanceof PsiMethod && resolveResult.isValidResult()) {
+          PsiMethod method = (PsiMethod)element;
           final PsiTypeParameter[] typeParameters = method.getTypeParameters();
           if (typeParameters.length == typeArguments.length) {
             final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -102,7 +105,8 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     return problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
-  private class MyQuickFixAction implements LocalQuickFix {
+  private static class MyQuickFixAction implements LocalQuickFix {
+    @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.redundant.type.remove.quickfix");
     }
@@ -117,6 +121,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       }
     }
 
+    @NotNull
     public String getFamilyName() {
       return getName();
     }
