@@ -70,15 +70,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private static final int GAP_BETWEEN_ANNOTATIONS = 6;
   private Color myBackgroundColor = null;
   private GutterDraggableObject myGutterDraggableObject;
-  private DragSource myDragSource;
 
 
   public EditorGutterComponentImpl(EditorImpl editor) {
     myEditor = editor;
     if (!GraphicsEnvironment.isHeadless()) {
       new DropTarget(this, new MyDropTargetListener());
-      myDragSource = DragSource.getDefaultDragSource();
-      myDragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
+      final DragSource dragSource = DragSource.getDefaultDragSource();
+      dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
     }
     setOpaque(true);
   }
@@ -263,7 +262,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     for (int i = startLineNumber; i < endLineNumber; i++) {
       int logLine = myEditor.visualToLogicalPosition(new VisualPosition(i, 0)).line;
-      String s = "" + (logLine + 1);
+      String s = String.valueOf((logLine + 1));
       g.drawString(s,
                    getLineNumberAreaOffset() + getLineNumberAreaWidth() -
                    myEditor.getFontMetrics(Font.PLAIN).stringWidth(s) -
@@ -345,7 +344,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private boolean less(RangeHighlighter h1, RangeHighlighter h2) {
+  private static boolean less(RangeHighlighter h1, RangeHighlighter h2) {
     if (h1 == null) return false;
     if (h2 == null) return true;
 
@@ -411,9 +410,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     myIconsAreaWidth = START_ICON_AREA_WIDTH;
 
-    myLineToGutterRenderers.forEachValue(new TObjectProcedure() {
-      public boolean execute(Object object) {
-        ArrayList<GutterIconRenderer> renderers = (ArrayList<GutterIconRenderer>)object;
+    myLineToGutterRenderers.forEachValue(new TObjectProcedure<ArrayList<GutterIconRenderer>>() {
+      public boolean execute(ArrayList<GutterIconRenderer> renderers) {
         int width = 1;
         for (int i = 0; i < renderers.size(); i++) {
           GutterIconRenderer renderer = renderers.get(i);
@@ -518,7 +516,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int middleCount = 0;
     int middleSize = 0;
 
-    int y = myEditor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
+    final int y = myEditor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
 
     int x = getLineMarkerAreaOffset() + 1;
     for (GutterIconRenderer r : row) {
@@ -563,7 +561,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private int getTextAlignmentShift(Icon icon) {
-    return myEditor.getLineHeight() - myEditor.getDescent() - icon.getIconHeight();
+    return (myEditor.getLineHeight() - icon.getIconHeight()) /2;
   }
 
   public Color getFoldingColor(boolean isActive) {
