@@ -299,8 +299,8 @@ public class HorizontalList extends JPanel {
         installActions(index);
         index ++;
       }
+      paintComponent();
     }
-    paintComponent();
   }
 
   private boolean isInsideIcon(final Point point, final Object object) {
