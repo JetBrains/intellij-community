@@ -1052,11 +1052,5 @@ public class GenericsHighlightUtil {
     }
     return null;
   }
-
-/*
-  class IDontCompile {
-  Map<?>.Entry<String, String> map;
-}
-*/
 }
 
