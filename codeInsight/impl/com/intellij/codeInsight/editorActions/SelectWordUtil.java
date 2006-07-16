@@ -3,14 +3,13 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.lexer.StringLiteralLexer;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -18,6 +17,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -36,6 +36,7 @@ public class SelectWordUtil {
     new DocCommentSelectioner(),
     new ListSelectioner(),
     new CodeBlockOrInitializerSelectioner(),
+    new FinallyBlockSelectioner(),
     new MethodOrClassSelectioner(),
     new FieldSelectioner(),
     new ReferenceSelectioner(),
@@ -494,6 +495,28 @@ public class SelectWordUtil {
       }
 
       result.add(new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1));
+
+      return result;
+    }
+  }
+
+  private static class FinallyBlockSelectioner extends BasicSelectioner {
+    public boolean canSelect(PsiElement e) {
+      return e instanceof PsiKeyword && PsiKeyword.FINALLY.equals(e.getText());
+    }
+
+
+    public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+      List<TextRange> result = new ArrayList<TextRange>();
+
+      final PsiElement parent = e.getParent();
+      if (parent instanceof PsiTryStatement) {
+        final PsiTryStatement tryStatement = (PsiTryStatement)parent;
+        final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+        if (finallyBlock != null) {
+          result.add(new TextRange(e.getTextRange().getStartOffset(), finallyBlock.getTextRange().getEndOffset()));
+        }
+      }
 
       return result;
     }
