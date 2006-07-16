@@ -54,6 +54,14 @@ public abstract class JBPopupFactory {
                                                    ActionSelectionAid selectionAidMethod,
                                                    boolean showDisabledActions);
 
+  public abstract ListPopup createActionGroupPopup(String title,
+                                                   ActionGroup actionGroup,
+                                                   DataContext dataContext,
+                                                   ActionSelectionAid selectionAidMethod,
+                                                   boolean showDisabledActions,
+                                                   Runnable disposeCallback);
+
+
   public abstract ListPopup createWizardStep(PopupStep step);
 
   public abstract TreePopup createTree(JBPopup parent, TreePopupStep step, Object parentValue);

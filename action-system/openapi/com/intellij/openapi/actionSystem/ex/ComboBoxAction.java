@@ -15,14 +15,18 @@
  */
 package com.intellij.openapi.actionSystem.ex;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -31,14 +35,8 @@ import java.beans.PropertyChangeListener;
 
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
   private static final Icon ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
-  private final String myActionPlace;
-
-  protected ComboBoxAction(String dropDownPlace) {
-    myActionPlace = dropDownPlace;
-  }
 
   protected ComboBoxAction() {
-    this(ActionPlaces.UNKNOWN);
   }
 
   public void actionPerformed(AnActionEvent e) {}
@@ -81,23 +79,19 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     public void showPopup() {
       DefaultActionGroup group = createPopupActionGroup(this);
-      ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(myActionPlace, group);
       myForcePressed = true;
-      JPopupMenu menuComponent = menu.getComponent();
-      menuComponent.addPopupMenuListener(
-        new PopupMenuListener() {
-          public void popupMenuWillBecomeVisible(PopupMenuEvent e) {}
-
-          public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-            myForcePressed = false;
-            repaint();
-          }
-
-          public void popupMenuCanceled(PopupMenuEvent e) {}
-        }
-      );
       repaint();
-      menuComponent.show(this, 0, getHeight());
+
+      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, group, DataManager.getInstance().getDataContext(),
+                                                                                  JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
+                                                                                  new Runnable() {
+                                                                                    public void run() {
+                                                                                      myForcePressed = false;
+                                                                                      repaint();
+                                                                                    }
+                                                                                  });
+
+      popup.showUnderneathOf(this);
     }
 
     public void removeNotify() {

@@ -1,7 +1,6 @@
 
 package com.intellij.execution.actions;
 
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -15,19 +14,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.util.IJSwingUtilities;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-import org.jetbrains.annotations.NotNull;
-
 public class RunConfigurationAction extends ComboBoxAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.RunConfigurationAction");
   private static final Key<ComboBoxAction.ComboBoxButton> BUTTON_KEY = Key.create("COMBOBOX_BUTTON");
-
-  public RunConfigurationAction() {
-    super(ActionPlaces.RUN_CONFIGURATIONS_COMBOBOX);
-  }
 
   public void actionPerformed(final AnActionEvent e) {
     final IdeFrame ideFrame = findFrame(e.getDataContext());

@@ -94,14 +94,23 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
                                           DataContext dataContext,
                                           boolean showNumbers,
                                           boolean showDisabledActions,
-                                          boolean honorActionMnemonics) {
+                                          boolean honorActionMnemonics,
+                                          final Runnable disposeCallback) {
     final Component component = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
     LOG.assertTrue(component != null);
 
     ListPopupStep<ActionItem> step =
       createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics);
 
-    return new ListPopupImpl(step);
+    return new ListPopupImpl(step){
+
+      protected void dispose() {
+        if (disposeCallback != null) {
+          disposeCallback.run();
+        }
+        super.dispose();
+      }
+    };
   }
 
   public ListPopup createActionGroupPopup(String title,
@@ -112,7 +121,21 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
     return createActionGroupPopup(title, actionGroup, dataContext,
                                   selectionAidMethod == ActionSelectionAid.NUMBERING,
                                   showDisabledActions,
-                                  selectionAidMethod == ActionSelectionAid.MNEMONICS);
+                                  selectionAidMethod == ActionSelectionAid.MNEMONICS,
+                                  null);
+  }
+
+  public ListPopup createActionGroupPopup(String title,
+                                          ActionGroup actionGroup,
+                                          DataContext dataContext,
+                                          ActionSelectionAid selectionAidMethod,
+                                          boolean showDisabledActions,
+                                          Runnable disposeCallback) {
+    return createActionGroupPopup(title, actionGroup, dataContext,
+                                  selectionAidMethod == ActionSelectionAid.NUMBERING,
+                                  showDisabledActions,
+                                  selectionAidMethod == ActionSelectionAid.MNEMONICS,
+                                  disposeCallback);
   }
 
   public ListPopupStep createActionsStep(final ActionGroup actionGroup,
