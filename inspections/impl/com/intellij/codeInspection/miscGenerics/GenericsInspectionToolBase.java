@@ -15,7 +15,7 @@ import java.util.List;
 abstract class GenericsInspectionToolBase extends BaseLocalInspectionTool {
   public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
-    if (initializers == null || initializers.length == 0) return null;
+    if (initializers.length == 0) return null;
     List<ProblemDescriptor> descriptors = new ArrayList<ProblemDescriptor>();
     for (PsiClassInitializer initializer : initializers) {
       final ProblemDescriptor[] localDescriptions = getDescriptions(initializer, manager);
