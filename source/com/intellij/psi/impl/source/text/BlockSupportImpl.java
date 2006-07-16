@@ -285,10 +285,12 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
     private final TreeChangeEventImpl myEvent;
     private final PsiFileImpl myFile;
     private final PsiManagerImpl myPsiManager;
+    private final boolean myIsPhysicalScope;
 
 
     public DiffBuilder(final PsiFileImpl fileImpl) {
       myFile = fileImpl;
+      myIsPhysicalScope = fileImpl.isPhysical();
       myPsiManager = (PsiManagerImpl)fileImpl.getManager();
       myRepositoryManager = myPsiManager.getRepositoryManager();
       myEvent = new TreeChangeEventImpl(fileImpl.getProject().getModel().getModelAspect(TreeAspect.class), fileImpl.getTreeElement());
@@ -321,7 +323,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
       myRepositoryManager.beforeChildAddedOrRemoved(myFile, parent);
 
       PsiElement psiParent = parent.getPsi();
-      PsiElement psiChild = !(child instanceof ChameleonElement) ? child.getPsi() : null;
+      PsiElement psiChild = myIsPhysicalScope && !(child instanceof ChameleonElement) ? child.getPsi() : null;
 
       PsiTreeChangeEventImpl event = null;
       if (psiParent != null && psiChild != null) {
