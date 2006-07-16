@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>AndAssign.java</file>
+    <line>19</line>
+    <description>Condition is always true</description>
+  </problem>
+  <problem>
+    <file>AndAssign.java</file>
+    <line>26</line>
+    <description>Condition is always false</description>
+  </problem>
+  <problem>
+    <file>AndAssign.java</file>
+    <line>33</line>
+    <description>Condition is always false</description>
+  </problem>
+  <problem>
+    <file>AndAssign.java</file>
+    <line>40</line>
+    <description>Condition is always false</description>
+  </problem>
+  <problem>
+    <file>AndAssign.java</file>
+    <line>47</line>
+    <description>Condition is always true</description>
+  </problem>
+  <problem>
+    <file>AndAssign.java</file>
+    <line>54</line>
+    <description>Condition is always true</description>
+  </problem>
+  <problem>
+    <file>AndAssign.java</file>
+    <line>61</line>
+    <description>Condition is always true</description>
+  </problem>
+  <problem>
+    <file>AndAssign.java</file>
+    <line>68</line>
+    <description>Condition is always false</description>
+  </problem>
+
+
+
+  <problem>
+    <file>AndAssign.java</file>
+    <line>17</line>
+    <description>left always true</description>
+  </problem>
+  <problem>
+    <file>AndAssign.java</file>
+    <line>24</line>
+    <description>left always true</description>
+  </problem>
+  <problem>
+    <file>AndAssign.java</file>
+    <line>31</line>
+    <description>left always false</description>
+  </problem>
+  <problem>
+    <file>AndAssign.java</file>
+    <line>38</line>
+    <description>left always false</description>
+  </problem>
+  <problem>
+    <file>AndAssign.java</file>
+    <line>45</line>
+    <description>left always true</description>
+  </problem>
+  <problem>
+    <file>AndAssign.java</file>
+    <line>52</line>
+    <description>left always true</description>
+  </problem>
+  <problem>
+    <file>AndAssign.java</file>
+    <line>59</line>
+    <description>left always false</description>
+  </problem>
+  <problem>
+    <file>AndAssign.java</file>
+    <line>66</line>
+    <description>left always false</description>
+  </problem>
+</problems>

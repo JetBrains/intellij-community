@@ -203,4 +203,5 @@ public class DataFlowTest extends InspectionTestCase {
   public void testUnboxingNPE() throws Exception { doTest15(); }
 
   public void testStrangeArrayIndexOutOfBounds() throws Exception { doTest15(); }
+  public void testIDEADEV2605() throws Exception { doTest15(); }
 }

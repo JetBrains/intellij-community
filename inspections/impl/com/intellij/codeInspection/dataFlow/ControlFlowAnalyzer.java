@@ -129,7 +129,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       }
       else if (op == JavaTokenType.ANDEQ) {
         if (isBoolean) {
-          generateAndExpression(lExpr, rExpr, type);
+          generateNonMaccartyExpression(true, lExpr, rExpr, type);
         }
         else {
           generateDefaultBinop(lExpr, rExpr, type);
@@ -137,7 +137,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       }
       else if (op == JavaTokenType.OREQ) {
         if (isBoolean) {
-          generateOrExpression(lExpr, rExpr, type);
+          generateNonMaccartyExpression(false, lExpr, rExpr, type);
         }
         else {
           generateDefaultBinop(lExpr, rExpr, type);
@@ -879,6 +879,29 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     addInstruction(new GotoInstruction(getEndOffset(rExpr)));
     rExpr.accept(this);
     generateBoxingUnboxingInstructionFor(rExpr,exprType);
+  }
+
+  private void generateNonMaccartyExpression(boolean and, PsiExpression lExpression, PsiExpression rExpression, final PsiType exprType) {
+    rExpression.accept(this);
+    generateBoxingUnboxingInstructionFor(rExpression, exprType);
+
+    lExpression.accept(this);
+    generateBoxingUnboxingInstructionFor(lExpression, exprType);
+
+    ConditionalGotoInstruction toPopAndPushSuccess = new ConditionalGotoInstruction(-1, and, lExpression);
+    addInstruction(toPopAndPushSuccess);
+    final GotoInstruction overPushSuccess = new GotoInstruction(-1);
+    addInstruction(overPushSuccess);
+
+    final PopInstruction pop = new PopInstruction();
+    addInstruction(pop);
+    final PushInstruction pushSuccess = new PushInstruction(and
+                                                            ? myFactory.getConstFactory().getFalse()
+                                                            : myFactory.getConstFactory().getTrue());
+    addInstruction(pushSuccess);
+
+    toPopAndPushSuccess.setOffset(pop.getIndex());
+    overPushSuccess.setOffset(pushSuccess.getIndex() + 1);
   }
 
   private void generateAndExpression(PsiExpression lExpr, PsiExpression rExpr, final PsiType exprType) {
