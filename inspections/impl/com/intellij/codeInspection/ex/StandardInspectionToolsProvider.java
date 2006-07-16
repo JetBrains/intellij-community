@@ -1,12 +1,9 @@
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.i18n.I18nInspection;
-import com.intellij.codeInspection.i18n.InvalidPropertyKeyInspection;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
-import com.intellij.codeInspection.canBeStatic.CanBeStaticInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.defUse.DefUseInspection;
@@ -20,6 +17,8 @@ import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
 import com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode;
 import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
+import com.intellij.codeInspection.i18n.I18nInspection;
+import com.intellij.codeInspection.i18n.InvalidPropertyKeyInspection;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
@@ -48,8 +47,8 @@ import com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementIn
 import com.intellij.lang.properties.UnusedMessageFormatParameterInspection;
 import com.intellij.lang.properties.UnusedPropertyInspection;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.xml.util.CheckImageSizeInspection;
 import com.intellij.xml.util.CheckEmptyScriptTagInspection;
+import com.intellij.xml.util.CheckImageSizeInspection;
 import com.intellij.xml.util.CheckValidXmlInScriptBodyInspection;
 
 /**
@@ -70,7 +69,6 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
     return new Class[] {
       DeadCodeInspection.class,
       VisibilityInspection.class,
-      CanBeStaticInspection.class,
       CanBeFinalInspection.class,
       UnusedParametersInspection.class,
       SameParameterValueInspection.class,
@@ -124,6 +122,6 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       UncheckedWarningLocalInspection.class,
       SuspiciousNameCombinationInspection.class,
       DuplicateThrowsInspection.class,
-      };
+    };
   }
 }
