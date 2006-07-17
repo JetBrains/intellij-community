@@ -125,12 +125,28 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
   }
 
   private void _fireCommandFinished() {
+    CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myName,
+                                            myCurrentCommand.myGroupId, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy);
     try {
-      fireBeforeCommandFinished();
-      fireCommandFinished();
+      for (CommandListener listener : myListeners) {
+        try {
+          listener.beforeCommandFinished(event);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
     }
     finally {
       myCurrentCommand = null;
+      for (CommandListener listener : myListeners) {
+        try {
+          listener.commandFinished(event);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
     }
   }
 
@@ -232,32 +248,6 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
     for (CommandListener listener : myListeners) {
       try {
         listener.commandStarted(event);
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
-  }
-
-  private void fireBeforeCommandFinished() {
-    CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myName,
-                                          myCurrentCommand.myGroupId, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy);
-    for (CommandListener listener : myListeners) {
-      try {
-        listener.beforeCommandFinished(event);
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
-  }
-
-  private void fireCommandFinished() {
-    CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myName,
-                                          myCurrentCommand.myGroupId, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy);
-    for (CommandListener listener : myListeners) {
-      try {
-        listener.commandFinished(event);
       }
       catch (Throwable e) {
         LOG.error(e);
