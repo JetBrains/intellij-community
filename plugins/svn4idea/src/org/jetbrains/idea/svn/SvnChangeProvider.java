@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -169,13 +168,13 @@ public class SvnChangeProvider implements ChangeProvider {
                statusType == SVNStatusType.STATUS_MODIFIED ||
                statusType == SVNStatusType.STATUS_REPLACED ||
                propStatus == SVNStatusType.STATUS_MODIFIED) {
-        builder.processChange(new Change(new SvnUpToDateRevision(filePath, myVcs, status.getRevision()), new CurrentContentRevision(filePath), fStatus));
+        builder.processChange(new Change(new SvnUpToDateRevision(filePath, status.getRevision()), new CurrentContentRevision(filePath), fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_ADDED) {
         builder.processChange(new Change(null, new CurrentContentRevision(filePath), fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_DELETED) {
-        builder.processChange(new Change(new SvnUpToDateRevision(filePath, myVcs, status.getRevision()), null, fStatus));
+        builder.processChange(new Change(new SvnUpToDateRevision(filePath, status.getRevision()), null, fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_MISSING) {
         builder.processLocallyDeletedFile(filePath.getIOFile());
@@ -186,11 +185,9 @@ public class SvnChangeProvider implements ChangeProvider {
   private static class SvnUpToDateRevision implements ContentRevision {
     private final FilePath myFile;
     private String myContent = null;
-    private SvnVcs myVcs;
     private VcsRevisionNumber myRevNumber;
 
-    public SvnUpToDateRevision(@NotNull final FilePath file, final SvnVcs vcs, final SVNRevision revision) {
-      myVcs = vcs;
+    public SvnUpToDateRevision(@NotNull final FilePath file, final SVNRevision revision) {
       myFile = file;
       myRevNumber = new SvnRevisionNumber(revision);
     }
@@ -198,7 +195,7 @@ public class SvnChangeProvider implements ChangeProvider {
     @Nullable
     public String getContent() {
       if (myContent == null) {
-        myContent = SvnUpToDateRevisionProvider.getLastUpToDateContentFor(myFile.getIOFile(), CharsetToolkit.getIDEOptionsCharset().name());
+        myContent = SvnUpToDateRevisionProvider.getLastUpToDateContentFor(myFile.getIOFile(), myFile.getCharset().name());
       }
       return myContent;
     }
