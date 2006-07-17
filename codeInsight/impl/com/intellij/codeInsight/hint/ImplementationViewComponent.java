@@ -30,10 +30,11 @@
  *
  */
 package com.intellij.codeInsight.hint;
-
+ 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.javadoc.JavaDocInfoComponent;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -49,19 +50,18 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.EdgeBorder;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -243,6 +243,7 @@ public class ImplementationViewComponent extends JPanel {
     Project project = elt.getProject();
     PsiFile psiFile = getContainingFile(elt);
     final VirtualFile vFile = psiFile.getVirtualFile();
+    if (vFile == null) return;
     final FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, vFile);
     for (FileEditorProvider provider : providers) {
       if (provider instanceof TextEditorProvider) {
@@ -250,7 +251,7 @@ public class ImplementationViewComponent extends JPanel {
         myBinarySwitch.show(myViewingPanel, TEXT_PAGE_KEY);
         break;
       }
-      else if (vFile != null && provider.accept(project, vFile)) {
+      else if (provider.accept(project, vFile)) {
         myCurrentNonTextEditorProvider = provider;
         myNonTextEditor = myCurrentNonTextEditorProvider.createEditor(project, vFile);
         myBinaryPanel.removeAll();
@@ -429,9 +430,11 @@ public class ImplementationViewComponent extends JPanel {
       PsiElement navigationElement = element.getNavigationElement();
       PsiFile file = getContainingFile(navigationElement);
       if (file == null) return;
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile == null) return;
       Project project = element.getProject();
       FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file.getVirtualFile(), navigationElement.getTextOffset());
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile, navigationElement.getTextOffset());
       if (myFocusEditor) {
         fileEditorManager.openTextEditor(descriptor, true);
       }

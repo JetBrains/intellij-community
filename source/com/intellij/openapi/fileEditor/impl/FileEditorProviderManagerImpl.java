@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,11 +33,8 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     }
   }
 
-  public synchronized FileEditorProvider[] getProviders(Project project, VirtualFile file){
-    if(file==null){
-      throw new IllegalArgumentException("file cannot be null");
-    }
-
+  @NotNull
+  public synchronized FileEditorProvider[] getProviders(@NotNull Project project, @NotNull VirtualFile file){
     // Collect all possible editors
     mySharedProviderList.clear();
     boolean doNotShowTextEditor = false;
@@ -60,7 +58,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     // Sort editors according policies
     Collections.sort(mySharedProviderList, MyComparator.ourInstance);
 
-    if(mySharedProviderList.size()>0){
+    if(!mySharedProviderList.isEmpty()){
       return mySharedProviderList.toArray(new FileEditorProvider[mySharedProviderList.size()]);
     }
     else{
@@ -68,10 +66,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     }
   }
 
-  public synchronized FileEditorProvider getProvider(String editorTypeId){
-    if (editorTypeId == null){
-      throw new IllegalArgumentException("editorTypeId cannot be null");
-    }
+  public synchronized FileEditorProvider getProvider(@NotNull String editorTypeId){
     for(int i=myProviders.size()-1;i>=0;i--){
       FileEditorProvider provider=myProviders.get(i);
       if(provider.getEditorTypeId().equals(editorTypeId)){
@@ -81,6 +76,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     return null;
   }
 
+  @NotNull
   public String getComponentName(){
     return "resourceProviderManager";
   }

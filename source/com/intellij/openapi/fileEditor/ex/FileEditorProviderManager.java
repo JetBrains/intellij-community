@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -22,10 +23,10 @@ public abstract class FileEditorProviderManager{
    * an empty array if there are no such providers. Please note that returned array
    * is constructed with respect to editor policies.
    */
-  public abstract FileEditorProvider[] getProviders(Project project, VirtualFile file);
+  public abstract @NotNull FileEditorProvider[] getProviders(@NotNull Project project, @NotNull VirtualFile file);
 
   /**
    * @return may be null
    */
-  public abstract FileEditorProvider getProvider(String editorTypeId);
+  public abstract FileEditorProvider getProvider(@NotNull String editorTypeId);
 }

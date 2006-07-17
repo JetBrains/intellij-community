@@ -10,8 +10,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -23,28 +23,16 @@ final class HistoryEntry{
    * can be null when read from XML
    */ 
   public FileEditorProvider mySelectedProvider;
-  private final HashMap myProvider2State;
+  private final HashMap<FileEditorProvider, FileEditorState> myProvider2State;
   @NonNls public static final String FILE_ATTR = "file";
   @NonNls public static final String PROVIDER_ATTR = "provider";
   @NonNls public static final String EDITOR_TYPE_ID_ATTR = "editor-type-id";
   @NonNls public static final String SELECTED_ATTR_VALUE = "selected";
   @NonNls public static final String STATE_ELEMENT = "state";
 
-  public HistoryEntry(VirtualFile file, FileEditorProvider[] providers, FileEditorState[] states, FileEditorProvider selectedProvider){
-    if (file == null){
-      throw new IllegalArgumentException("file cannot be null");
-    }
-    if (providers == null){
-      throw new IllegalArgumentException("providers cannot be null");
-    }
-    if (states == null){
-      throw new IllegalArgumentException("states cannot be null");
-    }
-    if (selectedProvider == null){
-      throw new IllegalArgumentException("selectedProvider cannot be null");
-    }
+  public HistoryEntry(@NotNull VirtualFile file, @NotNull FileEditorProvider[] providers, @NotNull FileEditorState[] states, @NotNull FileEditorProvider selectedProvider){
     myFile = file;
-    myProvider2State = new HashMap();
+    myProvider2State = new HashMap<FileEditorProvider, FileEditorState>();
     mySelectedProvider = selectedProvider;
     for (int i = 0; i < providers.length; i++) {
       putState(providers[i], states[i]);
@@ -63,15 +51,15 @@ final class HistoryEntry{
     }
 
     myFile = file;
-    myProvider2State = new HashMap();
+    myProvider2State = new HashMap<FileEditorProvider, FileEditorState>();
 
     List providers = e.getChildren(PROVIDER_ATTR);
-    for (Iterator iterator = providers.iterator(); iterator.hasNext();) {
-      Element _e = (Element)iterator.next();
+    for (final Object provider1 : providers) {
+      Element _e = (Element)provider1;
 
       String typeId = _e.getAttributeValue(EDITOR_TYPE_ID_ATTR);
       FileEditorProvider provider = FileEditorProviderManager.getInstance().getProvider(typeId);
-      if (provider == null){
+      if (provider == null) {
         continue;
       }
       if (Boolean.valueOf(_e.getAttributeValue(SELECTED_ATTR_VALUE))) {
@@ -79,7 +67,7 @@ final class HistoryEntry{
       }
 
       Element stateElement = _e.getChild(STATE_ELEMENT);
-      if (stateElement == null){
+      if (stateElement == null) {
         throw new InvalidDataException();
       }
 
@@ -92,7 +80,7 @@ final class HistoryEntry{
     if (provider == null){
       throw new IllegalArgumentException("provider cannot be null");
     }
-    return (FileEditorState)myProvider2State.get(provider);
+    return myProvider2State.get(provider);
   }
 
   public void putState(FileEditorProvider provider, FileEditorState state) {
@@ -114,10 +102,8 @@ final class HistoryEntry{
     element.addContent(e);
     e.setAttribute(FILE_ATTR, myFile.getUrl());
 
-    Iterator i = myProvider2State.entrySet().iterator();
-    while (i.hasNext()) {
-      Map.Entry entry = (Map.Entry)i.next();
-      FileEditorProvider provider = (FileEditorProvider)entry.getKey();
+    for (final Map.Entry<FileEditorProvider, FileEditorState> entry : myProvider2State.entrySet()) {
+      FileEditorProvider provider = entry.getKey();
 
       Element providerElement = new Element(PROVIDER_ATTR);
       if (provider.equals(mySelectedProvider)) {
@@ -126,7 +112,7 @@ final class HistoryEntry{
       providerElement.setAttribute(EDITOR_TYPE_ID_ATTR, provider.getEditorTypeId());
       Element stateElement = new Element(STATE_ELEMENT);
       providerElement.addContent(stateElement);
-      provider.writeState((FileEditorState)entry.getValue(), project, stateElement);
+      provider.writeState(entry.getValue(), project, stateElement);
 
       e.addContent(providerElement);
     }

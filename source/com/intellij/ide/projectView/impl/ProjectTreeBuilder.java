@@ -109,7 +109,8 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
       if (!fileAdded) {
         if (element instanceof PsiFile) {
           myUpdater.addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
-        } else {
+        }
+        else {
           myUpdater.addSubtreeToUpdate(myRootNode);
         }
       }
