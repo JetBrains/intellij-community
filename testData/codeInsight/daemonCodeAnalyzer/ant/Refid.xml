@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="BS Dictionary" default="all" basedir=".">
+  <target name="all" depends="assembly"/>
+  <target name="init" depends="init properties,init directory"/>
+
+  <target name="init properties">
+    <property name="module.name" value="Dictionary"/>
+    <property name="module.root" value="${basedir}"/>
+    <property name="module.source" value="${module.root}/src"/>
+    <property name="module.classes" value="${module.root}/classes"/>
+
+    <property name="module.libs" value="${module.root}/../lib"/>
+    <property name="module.build" value="${module.root}/build"/>
+
+
+    <property name="module.out.dir" value="${module.root}/dist"/>
+
+    <property name="module.Web.name" value="Web"/>
+    <property name="module.Web.file" value="main.war"/>
+    <property name="module.Web.libs" value="spring/spring.jar j2ee/jstl.jar j2ee/standard.jar"/>
+    <property name="module.Web.exploded" value="${module.build}/${module.Web.file}"/>
+    <property name="module.Web.src.webroot" value="${module.root}/web"/>
+
+    <property name="module.Web.exploded.lib" value="${module.Web.exploded}/WEB-INF/lib"/>
+    <property name="module.Web.exploded.classes" value="${module.Web.exploded}/WEB-INF/classes"/>
+
+
+    <property name="build.debug" value="off"/>
+
+
+    <fileset dir="${module.libs}" id="module.classpathid">
+      <include name="**/*.jar"/>
+    </fileset>
+  </target>
+
+
+  <target name="init directory" depends="init properties">
+    <mkdir dir="${module.classes}"/>
+    <mkdir dir="${module.out.dir}"/>
+    <mkdir dir="${module.build}"/>
+  </target>
+
+  <target name="compile" depends="init properties">
+
+    <javac srcdir="${module.source}"
+           destdir="${module.classes}"
+           debug="${build.debug}">
+      <classpath>
+        <fileset dir="${module.libs}" id="module.classpathid3">
+          <include name="**/*.jar"/>
+        </fileset>
+        <fileset refid="module.classpathid"/>
+        <fileset refid="module.classpathid3"/>
+        <fileset refid="<error>module.classpathid2</error>"/>
+      </classpath>
+    </javac>
+
+  </target>
+
+  <target name="assembly" depends="init,compile,assembly Web module"/>
+
+  <target name="assembly Web module" depends="init,compile">
+    <delete dir="${module.Web.exploded}"/>
+    <mkdir dir="${module.Web.exploded}"/>
+
+    <copy todir="${module.Web.exploded}">
+      <fileset dir="${module.Web.src.webroot}"/>
+    </copy>
+    <mkdir dir="${module.Web.exploded.lib}"/>
+    <copy todir="${module.Web.exploded.lib}" flatten="true">
+      <fileset dir="${module.libs}" includes="${module.Web.libs}"/>
+    </copy>
+    <mkdir dir="${module.Web.exploded.classes}"/>
+    <copy todir="${module.Web.exploded.classes}">
+      <fileset dir="${module.classes}"/>
+    </copy>
+
+    <jar destfile="${module.out.dir}/${module.Web.file}">
+      <fileset dir="${module.Web.exploded}"/>
+    </jar>
+  </target>
+
+  <target name="clean" depends="init properties">
+    <delete dir="${module.build}"/>
+    <delete dir="${module.classes}"/>
+    <delete dir="${module.out.dir}"/>
+  </target>
+
+</project>

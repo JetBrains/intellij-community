@@ -42,4 +42,6 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
 
   @Bombed(year = 2006, month = Calendar.JULY, day = 20, user = "lvo", time = 13, description = "Duplicate targets & invalid text")
   public void testSanity() throws Exception { doTest(); }
+
+  public void testRefid() throws Exception { doTest(); }
 }
