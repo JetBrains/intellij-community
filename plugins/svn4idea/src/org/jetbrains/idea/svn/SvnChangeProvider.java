@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -197,14 +198,7 @@ public class SvnChangeProvider implements ChangeProvider {
     @Nullable
     public String getContent() {
       if (myContent == null) {
-        try {
-          final VirtualFile vFile = myFile.getVirtualFile();
-          if (vFile == null) return "";
-          myContent = myVcs.getUpToDateRevisionProvider().getLastUpToDateContentFor(vFile, true);
-        }
-        catch (VcsException e) {
-          // Ignore
-        }
+        myContent = SvnUpToDateRevisionProvider.getLastUpToDateContentFor(myFile.getIOFile(), CharsetToolkit.getIDEOptionsCharset().name());
       }
       return myContent;
     }
