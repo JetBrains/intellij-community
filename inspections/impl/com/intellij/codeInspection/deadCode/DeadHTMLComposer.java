@@ -297,7 +297,7 @@ public class DeadHTMLComposer extends HTMLComposer {
 
       appendHeading(buf, InspectionsBundle.message("inspection.dead.code.export.results.instantiated.from.heading"));
 
-      startList();
+      startList(buf);
       for (Iterator<RefMethod> iterator = refClass.getConstructors().iterator(); iterator.hasNext();) {
         RefMethod refMethod = iterator.next();
         for (Iterator<RefElement> constructorCallersIterator = refMethod.getInReferences().iterator(); constructorCallersIterator.hasNext();) {

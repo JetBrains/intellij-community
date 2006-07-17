@@ -31,7 +31,8 @@ public abstract class HTMLComposer {
   @NonNls protected static final String FONT_CLOSING = "</font>";
   @NonNls protected static final String B_OPENING = "<b>";
   @NonNls protected static final String B_CLOSING = "</b>";
-  @NonNls protected static final String FONT_OPENING = "<font style=\"font-family:verdana;\"";
+  @NonNls protected static final String FONT_OPENING = "<font style=\"font-family:verdana;";
+  @NonNls protected static final String CLOSE_TAG = "\">";
   @NonNls protected static final String A_HREF_OPENING = "<a HREF=\"";
   @NonNls protected static final String A_CLOSING = "</a>";
 
@@ -71,7 +72,7 @@ public abstract class HTMLComposer {
 
   public static void appendHeading(@NonNls final StringBuffer buf, String name) {
     buf.append(
-      "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font style=\"font-family:verdana; font-weight:bold; color:#005555\"; size = \"3\">");
+      "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font style=\"font-family:verdana; font-weight:bold; color:#005555; size = 3\">");
     buf.append(name);
     buf.append(":</font>");
   }
@@ -87,6 +88,7 @@ public abstract class HTMLComposer {
   private void appendLocation(final StringBuffer buf, final RefElement refElement) {
     RefEntity owner = refElement.getOwner();
     buf.append(FONT_OPENING);
+    buf.append(CLOSE_TAG);
     if (owner instanceof RefPackage) {
       buf.append(InspectionsBundle.message("inspection.export.results.package"));
       buf.append(NBSP).append(CODE_OPENING);
@@ -280,6 +282,7 @@ public abstract class HTMLComposer {
   protected void appendQuickFix(@NonNls final StringBuffer buf, String text, int index) {
     if (myExporter == null) {
       buf.append(FONT_OPENING);
+      buf.append(CLOSE_TAG);
       buf.append("<a HREF=\"file://bred.txt#invoke:" + index);
       buf.append("\">");
       buf.append(text);
@@ -392,7 +395,7 @@ public abstract class HTMLComposer {
   protected void appendElementInReferences(StringBuffer buf, RefElement refElement) {
     if (refElement.getInReferences().size() > 0) {
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.used.from"));
-      startList();
+      startList(buf);
       for (Iterator<RefElement> iterator = refElement.getInReferences().iterator(); iterator.hasNext();) {
         RefElement refCaller = iterator.next();
         appendListItem(buf, refCaller);
@@ -405,7 +408,7 @@ public abstract class HTMLComposer {
     if (refElement.getOutReferences().size() > 0) {
       buf.append(BR);
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.uses"));
-      startList();
+      startList(buf);
       for (Iterator<RefElement> iterator = refElement.getOutReferences().iterator(); iterator.hasNext();) {
         RefElement refCallee = iterator.next();
         appendListItem(buf, refCallee);
@@ -417,6 +420,7 @@ public abstract class HTMLComposer {
   protected void appendListItem(StringBuffer buf, RefElement refElement) {
     startListItem(buf);
     buf.append(FONT_OPENING);
+    buf.append(CLOSE_TAG);
     appendElementReference(buf, refElement, true);
     appendAdditionalListItemInfo(buf, refElement);
     buf.append(FONT_CLOSING);
@@ -430,7 +434,7 @@ public abstract class HTMLComposer {
   protected void appendClassExtendsImplements(StringBuffer buf, RefClass refClass) {
     if (refClass.getBaseClasses().size() > 0) {
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.extends.implements"));
-      startList();
+      startList(buf);
       for (Iterator<RefClass> iterator = refClass.getBaseClasses().iterator(); iterator.hasNext();) {
         RefClass refBase = iterator.next();
         appendListItem(buf, refBase);
@@ -448,7 +452,7 @@ public abstract class HTMLComposer {
         appendHeading(buf, InspectionsBundle.message("inspection.export.results.extended"));
       }
 
-      startList();
+      startList(buf);
       for (Iterator<RefClass> iterator = refClass.getSubClasses().iterator(); iterator.hasNext();) {
         RefClass refDerived = iterator.next();
         appendListItem(buf, refDerived);
@@ -461,7 +465,7 @@ public abstract class HTMLComposer {
     if (refClass.getLibraryMethods().size() > 0) {
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.overrides.library.methods"));
 
-      startList();
+      startList(buf);
       for (Iterator<RefMethod> iterator = refClass.getLibraryMethods().iterator(); iterator.hasNext();) {
         RefMethod refMethod = iterator.next();
         appendListItem(buf, refMethod);
@@ -474,7 +478,7 @@ public abstract class HTMLComposer {
     if (refMethod.getSuperMethods().size() > 0) {
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.overrides.implements"));
 
-      startList();
+      startList(buf);
       for (Iterator<RefMethod> iterator = refMethod.getSuperMethods().iterator(); iterator.hasNext();) {
         RefMethod refSuper = iterator.next();
         appendListItem(buf, refSuper);
@@ -487,7 +491,7 @@ public abstract class HTMLComposer {
     if (refMethod.getDerivedMethods().size() > 0) {
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.derived.methods"));
 
-      startList();
+      startList(buf);
       for (Iterator<RefMethod> iterator = refMethod.getDerivedMethods().iterator(); iterator.hasNext();) {
         RefMethod refDerived = iterator.next();
         appendListItem(buf, refDerived);
@@ -500,7 +504,7 @@ public abstract class HTMLComposer {
     if (refClass.getInTypeReferences().size() > 0) {
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.type.references"));
 
-      startList();
+      startList(buf);
       for (Iterator iterator = refClass.getInTypeReferences().iterator(); iterator.hasNext();) {
         RefElement refElement = (RefElement)iterator.next();
         appendListItem(buf, refElement);
@@ -520,7 +524,7 @@ public abstract class HTMLComposer {
         if (text == null) continue;
         if (!listStarted) {
           appendHeading(buf, InspectionsBundle.message("inspection.problem.resolution"));
-          startList();
+          startList(buf);
           listStarted = true;
         }
         startListItem(buf);
@@ -534,12 +538,14 @@ public abstract class HTMLComposer {
     }
   }
 
-  protected void startList() {
+  protected void startList(@NonNls final StringBuffer buf) {
+    buf.append("<ul>");
     myListStackTop++;
     myListStack[myListStackTop] = 0;
   }
 
   protected void doneList(@NonNls StringBuffer buf) {
+    buf.append("</ul>");
     if (myListStack[myListStackTop] != 0) {
       buf.append("<table cellpadding=\"0\" border=\"0\" cellspacing=\"0\"><tr><td>&nbsp;</td></tr></table>");
     }

@@ -33,7 +33,7 @@ public class DescriptorComposer extends HTMLComposer {
 
       CommonProblemDescriptor[] descriptions = myTool.getDescriptions(refEntity);
 
-      startList();
+      startList(buf);
       for (int i = 0; i < descriptions.length; i++) {
         final CommonProblemDescriptor description = descriptions[i];
 
