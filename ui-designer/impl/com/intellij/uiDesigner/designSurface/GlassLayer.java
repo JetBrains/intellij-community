@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.actions.*;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.AWTEvent;
@@ -96,7 +97,11 @@ public final class GlassLayer extends JComponent implements DataProvider{
     }
   }
 
+  @NotNull
   public Point getLastMousePosition() {
+    if (myLastMousePosition == null) {
+      return new Point(10, 10);
+    }
     return myLastMousePosition;
   }
 
