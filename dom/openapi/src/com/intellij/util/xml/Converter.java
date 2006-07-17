@@ -9,12 +9,13 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.IdeBundle;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
  */
 public abstract class Converter<T> {
-  public abstract @Nullable T fromString(@Nullable String s, final ConvertContext context);
+  public abstract @Nullable T fromString(@Nullable @NonNls String s, final ConvertContext context);
   public abstract @Nullable String toString(@Nullable T t, final ConvertContext context);
 
   public String getErrorMessage(@Nullable String s, final ConvertContext context) {
