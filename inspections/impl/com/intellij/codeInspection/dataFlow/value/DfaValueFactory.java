@@ -73,7 +73,7 @@ public class DfaValueFactory {
     else {
       final Object value = ConstantExpressionEvaluator.computeConstantExpression(psiExpression, new THashSet<PsiVariable>(), false);
       if (value != null) {
-        result = getConstFactory().createFromValue(value);
+        result = getConstFactory().createFromValue(value, psiExpression.getType());
       }
     }
 

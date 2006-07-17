@@ -11,14 +11,17 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
+
+import java.util.Map;
 
 public class DfaConstValue extends DfaValue {
   public static class Factory {
     private DfaConstValue dfaNull;
     private DfaConstValue dfaFalse;
     private DfaConstValue dfaTrue;
-    private final HashMap<Object, DfaConstValue> myValues;
+    private final Map<Object, DfaConstValue> myValues;
     private DfaValueFactory myFactory;
 
     Factory(DfaValueFactory factory) {
@@ -30,22 +33,26 @@ public class DfaConstValue extends DfaValue {
     }
 
     public DfaConstValue create(PsiLiteralExpression expr) {
-      if (expr.getType() == PsiType.NULL) return dfaNull;
+      PsiType type = expr.getType();
+      if (type == PsiType.NULL) return dfaNull;
       Object value = expr.getValue();
       if (value == null) return null;
-      return createFromValue(value);
+      return createFromValue(value, type);
     }
 
     public DfaConstValue create(PsiVariable variable) {
       Object value = variable.computeConstantValue();
       if (value == null) return null;
-      return createFromValue(value);
+      return createFromValue(value, variable.getType());
     }
 
-    public DfaConstValue createFromValue(Object value) {
+    public DfaConstValue createFromValue(Object value, final PsiType type) {
       if (value == Boolean.TRUE) return dfaTrue;
       if (value == Boolean.FALSE) return dfaFalse;
 
+      if (TypeConversionUtil.isNumericType(type)) {
+        value = TypeConversionUtil.computeCastTo(value, PsiType.DOUBLE);
+      }
       DfaConstValue instance = myValues.get(value);
       if (instance == null) {
         instance = new DfaConstValue(value, myFactory);

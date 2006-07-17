@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>4</line>
+    <method>
+      <name>void f()</name>
+      <display_name>f()</display_name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>Test</name>
+        <display_name>Test</display_name>
+      </class>
+    </method>
+    <description>Condition &lt;code&gt;L == 5&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>9</line>
+    <method>
+      <name>void f()</name>
+      <display_name>f()</display_name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>Test</name>
+        <display_name>Test</display_name>
+      </class>
+    </method>
+    <description>Condition &lt;code&gt;l == 0f&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>14</line>
+    <method>
+      <name>void f()</name>
+      <display_name>f()</display_name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>Test</name>
+        <display_name>Test</display_name>
+      </class>
+    </method>
+    <description>Condition &lt;code&gt;c == 1L&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+  </problem>
+</problems>

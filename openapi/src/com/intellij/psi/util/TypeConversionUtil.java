@@ -125,8 +125,7 @@ public class TypeConversionUtil {
       final PsiWildcardType toWildcard = (PsiWildcardType)toType;
       if (toWildcard.isSuper()) return false;
       final PsiType bound = toWildcard.getBound();
-      if (bound == null) return true;
-      return isNarrowingReferenceConversionAllowed(fromType, bound);
+      return bound == null || isNarrowingReferenceConversionAllowed(fromType, bound);
     }
 
     if (toType instanceof PsiCapturedWildcardType) return false;
@@ -310,6 +309,9 @@ public class TypeConversionUtil {
 
   public static boolean isNumericType(int typeRank) {
     return typeRank <= MAX_NUMERIC_RANK;
+  }
+  public static boolean isNumericType(PsiType type) {
+    return isNumericType(getTypeRank(type));
   }
 
   /**
@@ -662,28 +664,15 @@ public class TypeConversionUtil {
 
   private static boolean isUnboxable(final PsiPrimitiveType left, final PsiClassType right) {
     final PsiPrimitiveType rightUnboxedType = PsiPrimitiveType.getUnboxedType(right);
-    if (rightUnboxedType != null) {
-      return isAssignable(left, rightUnboxedType);
-    }
-    return false;
+    return rightUnboxedType != null && isAssignable(left, rightUnboxedType);
   }
 
   public static boolean boxingConversionApplicable(final PsiType left, final PsiType right) {
     if (left instanceof PsiPrimitiveType && !PsiType.NULL.equals(left)) {
-      if (right instanceof PsiClassType) {
-        return left.isAssignableFrom(right);
-      }
-      else {
-        return false;
-      }
+      return right instanceof PsiClassType && left.isAssignableFrom(right);
     }
     else if (left instanceof PsiClassType) {
-      if (right instanceof PsiPrimitiveType && !PsiType.NULL.equals(right)) {
-        return left.isAssignableFrom(right);
-      }
-      else {
-        return false;
-      }
+      return right instanceof PsiPrimitiveType && !PsiType.NULL.equals(right) && left.isAssignableFrom(right);
     }
     else {
       return false;
@@ -695,12 +684,7 @@ public class TypeConversionUtil {
     if (psiClass == null) return false;
     if (!left.getLanguageLevel().hasEnumKeywordAndAutoboxing()) return false;
     final PsiClassType rightBoxedType = right.getBoxedType(psiClass.getManager(), left.getResolveScope());
-    if (rightBoxedType != null) {
-      return isAssignable(left, rightBoxedType);
-    }
-    else {
-      return false;
-    }
+    return rightBoxedType != null && isAssignable(left, rightBoxedType);
   }
 
   private static boolean isClassAssignable(PsiClassType.ClassResolveResult leftResult,
@@ -754,11 +738,7 @@ public class TypeConversionUtil {
       final PsiType leftBound = leftWildcard.getBound();
       if (leftBound == null) return true;
       if (leftBound.equalsToText("java.lang.Object")) {
-        if (leftWildcard.isSuper()) {
-          return typeRight.equalsToText("java.lang.Object");
-        } else {
-          return true;
-        }
+        return !leftWildcard.isSuper() || typeRight.equalsToText("java.lang.Object");
       }
 
       if (typeRight instanceof PsiWildcardType) {
