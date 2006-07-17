@@ -18,6 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -53,7 +54,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
 
     public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel(
-          com.siyeh.InspectionGadgetsBundle.message(
+          InspectionGadgetsBundle.message(
                   "unnecessary.fully.qualified.name.ignore.option"),
                 this, "m_ignoreJavadoc");
     }
@@ -105,19 +106,17 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             @NonNls final String packageName =
                     ClassUtil.extractPackageName(qualifiedName);
             if (packageName.equals("java.lang")) {
-                if (ImportUtils.hasOnDemandImportConflict(qualifiedName, file)) {
+                if (ImportUtils.hasOnDemandImportConflict(qualifiedName,
+                        file)) {
                     addImport(importList, aClass);
                 }
-            } else if (
-                    importList.findSingleClassImportStatement(qualifiedName) ==
-                            null) {
+            } else if (importList.findSingleClassImportStatement(
+                    qualifiedName) == null) {
                 addImport(importList, aClass);
             }
-            final PsiElement qualifier = referenceElement.getQualifier();
-            if (qualifier == null) {
-                return;
-            }
-            qualifier.delete();
+            final String fullyQualifiedText = referenceElement.getText();
+            file.accept(new QualificationRemover(fullyQualifiedText));
+
         }
 
         private static void addImport(PsiImportList importList, PsiClass aClass)
@@ -128,6 +127,41 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             final PsiImportStatement importStatement =
                     elementFactory.createImportStatement(aClass);
             importList.add(importStatement);
+        }
+
+        private static class QualificationRemover
+                extends PsiRecursiveElementVisitor {
+
+            private final String fullyQualifiedText;
+
+            QualificationRemover(String fullyQualifiedText) {
+                this.fullyQualifiedText = fullyQualifiedText;
+            }
+
+            public void visitReferenceElement(
+                    PsiJavaCodeReferenceElement reference) {
+                super.visitReferenceElement(reference);
+                final PsiElement parent = reference.getParent();
+                if (parent instanceof PsiImportStatement) {
+                    return;
+                }
+                final String text = reference.getText();
+                if (text.equals(fullyQualifiedText)) {
+                    final PsiElement qualifier = reference.getQualifier();
+                    if (qualifier == null) {
+                        return;
+                    }
+                    try {
+                        qualifier.delete();
+                    } catch(IncorrectOperationException e){
+                        final Class<? extends QualificationRemover> aClass =
+                                getClass();
+                        final String className = aClass.getName();
+                        final Logger logger = Logger.getInstance(className);
+                        logger.error(e);
+                    }
+                }
+            }
         }
     }
 
