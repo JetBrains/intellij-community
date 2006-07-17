@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -37,9 +38,9 @@ import java.beans.EventSetDescriptor;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author yole
@@ -57,11 +58,6 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
   }
 
   private DefaultActionGroup prepareActionGroup(final List<RadComponent> selection) {
-    RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(selection.get(0));
-    final PsiField[] boundFields = new PsiField[selection.size()];
-    for(int i=0; i<selection.size(); i++) {
-      boundFields [i] = BindingProperty.findBoundField(root, selection.get(i).getBinding());
-    }
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     final EventSetDescriptor[] eventSetDescriptors;
     try {
@@ -80,7 +76,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
       }
     });
     for(EventSetDescriptor descriptor: sortedDescriptors) {
-      actionGroup.add(new MyCreateListenerAction(boundFields, descriptor));
+      actionGroup.add(new MyCreateListenerAction(selection, descriptor));
     }
     return actionGroup;
   }
@@ -101,22 +97,20 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
   }
 
   private class MyCreateListenerAction extends AnAction {
-    private final PsiClass myClass;
-    private final PsiField[] myFields;
+    private final List<RadComponent> mySelection;
     private final EventSetDescriptor myDescriptor;
     @NonNls private static final String LISTENER_SUFFIX = "Listener";
     @NonNls private static final String ADAPTER_SUFFIX = "Adapter";
 
-    public MyCreateListenerAction(final PsiField[] boundFields, EventSetDescriptor descriptor) {
+    public MyCreateListenerAction(final List<RadComponent> selection, EventSetDescriptor descriptor) {
       super(descriptor.getListenerType().getSimpleName());
-      myClass = boundFields [0].getContainingClass();
-      myFields = boundFields;
+      mySelection = selection;
       myDescriptor = descriptor;
     }
 
     public void actionPerformed(AnActionEvent e) {
       CommandProcessor.getInstance().executeCommand(
-        myClass.getProject(),
+        mySelection.get(0).getProject(),
         new Runnable() {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -130,6 +124,17 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
     }
 
     private void createListener() {
+      RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(mySelection.get(0));
+      final PsiField[] boundFields = new PsiField[mySelection.size()];
+      for(int i=0; i<mySelection.size(); i++) {
+        boundFields [i] = BindingProperty.findBoundField(root, mySelection.get(i).getBinding());
+      }
+      final PsiClass myClass = boundFields [0].getContainingClass();
+
+      final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(myClass.getProject())
+        .ensureFilesWritable(myClass.getContainingFile().getVirtualFile());
+      if (status.hasReadonlyFiles()) return;
+
       try {
         PsiMethod constructor = findConstructorToInsert(myClass);
         final Module module = ModuleUtil.findModuleForPsiElement(myClass);
@@ -156,8 +161,8 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
 
         @NonNls StringBuilder builder = new StringBuilder();
         @NonNls String variableName = null;
-        if (myFields.length == 1) {
-          builder.append(myFields [0].getName());
+        if (boundFields.length == 1) {
+          builder.append(boundFields [0].getName());
           builder.append(".");
           builder.append(myDescriptor.getAddListenerMethod().getName());
           builder.append("(");
@@ -176,7 +181,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         builder.append("new ");
         builder.append(listenerClass.getQualifiedName());
         builder.append("() { } ");
-        if (myFields.length == 1) {
+        if (boundFields.length == 1) {
           builder.append(");");
         }
         else {
@@ -187,9 +192,9 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         stmt = (PsiStatement) body.addAfter(stmt, body.getLastBodyElement());
         CodeStyleManager.getInstance(body.getProject()).shortenClassReferences(stmt);
 
-        if (myFields.length > 1) {
+        if (boundFields.length > 1) {
           PsiElement anchor = stmt;
-          for(PsiField field: myFields) {
+          for(PsiField field: boundFields) {
             PsiElement addStmt = factory.createStatementFromText(field.getName() + "." + myDescriptor.getAddListenerMethod().getName() +
               "(" + variableName + ");", constructor);
             addStmt = body.addAfter(addStmt, anchor);
