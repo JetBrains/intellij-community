@@ -135,6 +135,8 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
     final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (!getDomWrapper().isValid()) return;
+
         final DomElement domElement = getDomElement();
         if (!project.isOpen() || domElement == null || !domElement.isValid()) return;
 
