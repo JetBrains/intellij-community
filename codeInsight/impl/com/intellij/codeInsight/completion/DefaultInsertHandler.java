@@ -369,15 +369,20 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         }
       }
     }
-    else if (PsiKeyword.SYNCHRONIZED.equals(myLookupItem.getLookupString())) {
-      final PsiElement place = myFile.findElementAt(myStartOffset);
-      hasParms = PsiTreeUtil.getParentOfType(place, PsiMember.class, PsiCodeBlock.class) instanceof PsiCodeBlock;
-    }
-    else if(PsiKeyword.CATCH.equals(myLookupItem.getLookupString())
-             || PsiKeyword.SWITCH.equals(myLookupItem.getLookupString()))
-      hasParms = true;
-    else if (insertingAnnotationWithParameters()) {
-      hasParms = true;
+    else {
+      final String lookupString = myLookupItem.getLookupString();
+      if (PsiKeyword.SYNCHRONIZED.equals(lookupString)) {
+        final PsiElement place = myFile.findElementAt(myStartOffset);
+        hasParms = PsiTreeUtil.getParentOfType(place, PsiMember.class, PsiCodeBlock.class) instanceof PsiCodeBlock;
+      }
+      else if(PsiKeyword.CATCH.equals(lookupString) ||
+              PsiKeyword.SWITCH.equals(lookupString) ||
+              PsiKeyword.WHILE.equals(lookupString) ||
+              PsiKeyword.FOR.equals(lookupString))
+        hasParms = true;
+      else if (insertingAnnotationWithParameters()) {
+        hasParms = true;
+      }
     }
     return hasParms;
   }
