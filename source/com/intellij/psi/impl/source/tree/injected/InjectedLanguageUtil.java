@@ -412,7 +412,7 @@ public class InjectedLanguageUtil {
     List<DocumentRange> injected = hostDocument.getUserData(INJECTED_FILES_KEY);
 
     if (injected == null) {
-      injected = new SmartList<DocumentRange>();
+      injected = new ArrayList<DocumentRange>();
       hostDocument.putUserData(INJECTED_FILES_KEY, injected);
     }
 
