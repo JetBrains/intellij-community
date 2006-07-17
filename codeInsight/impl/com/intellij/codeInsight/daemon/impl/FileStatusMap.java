@@ -22,7 +22,7 @@ public class FileStatusMap {
   private final Map<Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<Document, FileStatus>(); // all dirty if absent
 
   private final Key<RefCountHolder> REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY = Key.create("DaemonCodeAnalyzerImpl.REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY");
-  private Map<Document,Object> myDocumentsWithRefCountHolders = new WeakHashMap<Document, Object>(); // Document --> null
+  private final Map<Document,Object> myDocumentsWithRefCountHolders = new WeakHashMap<Document, Object>(); // Document --> null
   private final Object myRefCountHolderLock = new Object();
 
   private static class FileStatus {
@@ -78,7 +78,7 @@ public class FileStatusMap {
         status = new FileStatus(file, file, file);
         myDocumentToStatusMap.put(document, status);
       }
-
+      status.defensivelyMarked=false;
       if (part == NORMAL_HIGHLIGHTERS){
         status.dirtyScope = null;
       }
