@@ -395,7 +395,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     message = StringUtil.replace(message, "#ref", text);
     message = StringUtil.replace(message, "#loc", "");
 
-    message = XmlUtil.unescape(message);
+    message = XmlUtil.unescape(message).trim();
     return message;
   }
 
