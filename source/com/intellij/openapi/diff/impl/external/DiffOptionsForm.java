@@ -1,12 +1,13 @@
 package com.intellij.openapi.diff.impl.external;
 
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
 import com.intellij.util.config.StringProperty;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -34,23 +35,20 @@ public class DiffOptionsForm {
   }
 
   public boolean isModified() {
-    for (int i = 0; i < myTools.length; i++) {
-      ToolPath tool = myTools[i];
+    for (ToolPath tool : myTools) {
       if (tool.isModifier()) return true;
     }
     return false;
   }
 
   public void apply() {
-    for (int i = 0; i < myTools.length; i++) {
-      ToolPath tool = myTools[i];
+    for (ToolPath tool : myTools) {
       tool.apply();
     }
   }
 
   public void reset() {
-    for (int i = 0; i < myTools.length; i++) {
-      ToolPath tool = myTools[i];
+    for (ToolPath tool : myTools) {
       tool.reset();
     }
   }
@@ -79,7 +77,7 @@ public class DiffOptionsForm {
     }
 
     private void updateEnabledEffect() {
-      myTextField.setEditable(isEnabled());
+      UIUtil.setEnabled(myTextField, isEnabled(), true);
     }
 
     public boolean isModifier() {
@@ -92,7 +90,7 @@ public class DiffOptionsForm {
       return myCheckBox.getModel().isSelected();
     }
 
-    private AbstractProperty.AbstractPropertyContainer getProperties() {
+    private static AbstractProperty.AbstractPropertyContainer getProperties() {
       return DiffManagerImpl.getInstanceEx().getProperties();
     }
 
