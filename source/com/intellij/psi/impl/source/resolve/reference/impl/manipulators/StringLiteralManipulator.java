@@ -19,4 +19,8 @@ public class StringLiteralManipulator extends AbstractElementManipulator<PsiLite
     final PsiExpression newExpr = expr.getManager().getElementFactory().createExpressionFromText(newText, null);
     return (PsiLiteralExpression)expr.replace(newExpr);
   }
+
+  public TextRange getRangeInElement(final PsiLiteralExpression element) {
+    return new TextRange(1, element.getTextLength() - 1);
+  }
 }

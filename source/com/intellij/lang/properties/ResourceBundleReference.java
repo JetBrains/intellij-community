@@ -3,10 +3,8 @@ package com.intellij.lang.properties;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,21 +13,12 @@ import java.util.List;
 /**
  * @author yole
  */
-public class ResourceBundleReference implements PsiPolyVariantReference {
-  private PsiLiteralExpression myElement;
+public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implements PsiPolyVariantReference {
   private String myBundleName;
 
-  public ResourceBundleReference(final PsiLiteralExpression element, String bundleName) {
-    myElement = element;
-    myBundleName = bundleName;
-  }
-
-  public PsiElement getElement() {
-    return myElement;
-  }
-
-  public TextRange getRangeInElement() {
-    return new TextRange(1,myElement.getTextLength()-1);
+  public ResourceBundleReference(final PsiElement element) {
+    super(element);
+    myBundleName = getValue();
   }
 
   @Nullable public PsiElement resolve() {
@@ -53,16 +42,6 @@ public class ResourceBundleReference implements PsiPolyVariantReference {
     return myBundleName;
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    PsiElementFactory factory = myElement.getManager().getElementFactory();
-    PsiExpression newExpression = factory.createExpressionFromText("\"" + newElementName + "\"", myElement);
-    return myElement.replace(newExpression);
-  }
-
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-    throw new IncorrectOperationException("not implemented");
-  }
-
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PropertiesFile) {
       final VirtualFile virtualFile = ((PropertiesFile)element).getVirtualFile();
@@ -77,9 +56,5 @@ public class ResourceBundleReference implements PsiPolyVariantReference {
     PropertiesReferenceManager referenceManager = myElement.getProject().getComponent(PropertiesReferenceManager.class);
     final Module module = ModuleUtil.findModuleForPsiElement(myElement);
     return referenceManager.getPropertyFileBaseNames(module);
-  }
-
-  public boolean isSoft() {
-    return false;
   }
 }

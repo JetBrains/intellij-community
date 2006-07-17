@@ -1,7 +1,6 @@
 package com.intellij.lang.properties;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -14,15 +13,8 @@ import org.jetbrains.annotations.NotNull;
 public class ResourceBundleReferenceProvider implements PsiReferenceProvider {
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
-    if (element instanceof PsiLiteralExpression) {
-      PsiLiteralExpression expr = (PsiLiteralExpression) element;
-      final Object value = expr.getValue();
-      if (value != null) {
-        ResourceBundleReference reference = new ResourceBundleReference(expr, value.toString());
+        ResourceBundleReference reference = new ResourceBundleReference(element);
         return new PsiReference[] { reference };
-      }
-    }
-    return PsiReference.EMPTY_ARRAY;
   }
 
   @NotNull
