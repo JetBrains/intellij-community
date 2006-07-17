@@ -85,25 +85,21 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   }
 
   protected boolean isInSuper(PsiElement member) {
+    if (!(member instanceof PsiMember)) return false;
+    final PsiManager manager = member.getManager();
+    if (InheritanceUtil.isInheritorOrSelf(mySuper, ((PsiMember)member).getContainingClass(), true)) return true;
+
     if (member instanceof PsiField) {
       final PsiClass containingClass = ((PsiField) member).getContainingClass();
-      final PsiManager manager = member.getManager();
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(member);
       if (manager.areElementsEquivalent(containingClass, manager.getElementFactory().getArrayClass(languageLevel))) {
         return true;
       }
-      return manager.areElementsEquivalent(containingClass, mySuper)
-             || mySuper.isInheritor(containingClass, true);
     } else if (member instanceof PsiMethod) {
-      if (member.getParent().equals(mySuper)) return true;
-      PsiMethod methodInSuper2 = mySuper.findMethodBySignature((PsiMethod) member, true);
-      if (methodInSuper2 != null) {
-        return true;
-      }
-      return false;
-    } else {
-      return false; //?
+      return mySuper.findMethodBySignature((PsiMethod) member, true) != null;
     }
+
+    return false;
   }
 
   protected boolean isSuperInheritor(PsiClass aClass) {

@@ -287,6 +287,12 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         markNode(ref);
       }
     }
+    else if (parent instanceof PsiJavaCodeReferenceElement && ref.equals(((PsiJavaCodeReferenceElement)parent).getQualifier())) {
+      final PsiElement resolved = ((PsiJavaCodeReferenceElement)parent).resolve();
+      if (resolved == null || !isInSuper(resolved)) {
+        markNode(ref);
+      }
+    }
     else {
       markNode(ref);
     }
