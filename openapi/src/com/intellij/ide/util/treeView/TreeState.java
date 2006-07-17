@@ -181,11 +181,15 @@ public class TreeState implements JDOMExternalizable {
     for (int i = 0; i < treePath.getPathCount(); i++) {
       final Object pathComponent = treePath.getPathComponent(i);
       if (pathComponent instanceof DefaultMutableTreeNode) {
-        final Object userObject = ((DefaultMutableTreeNode)pathComponent).getUserObject();
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)pathComponent;
+        final TreeNode parent = node.getParent();
+
+        final Object userObject = node.getUserObject();
         if (userObject instanceof NodeDescriptor) {
           final NodeDescriptor nodeDescriptor = (NodeDescriptor)userObject;
           //nodeDescriptor.update();
-          result.add(new PathElement(getDescriptorKey(nodeDescriptor), getDescriptorType(nodeDescriptor), nodeDescriptor.getIndex(), nodeDescriptor));
+          final int childIndex = parent != null ? parent.getIndex(node) : 0;
+          result.add(new PathElement(getDescriptorKey(nodeDescriptor), getDescriptorType(nodeDescriptor), childIndex, nodeDescriptor));
         }
         else {
           result.add(new PathElement("", "", 0, userObject));
@@ -214,17 +218,24 @@ public class TreeState implements JDOMExternalizable {
   }
 
   public void applyTo(JTree tree) {
-    applyExpanded(tree);
+    applyExpanded(tree, tree.getModel().getRoot());
   }
 
-  private void applyExpanded(final JTree tree) {
-    for (final List<PathElement> myPath : myExpandedPaths) {
-      applyTo(myPath, tree);
+  private void applyExpanded(final JTree tree, final Object root) {
+    if (!(root instanceof DefaultMutableTreeNode)) {
+      return;
+    }
+    final DefaultMutableTreeNode nodeRoot = ((DefaultMutableTreeNode)root);
+    final TreeNode[] nodePath = nodeRoot.getPath();
+    if (nodePath.length > 0) {
+      for (final List<PathElement> path : myExpandedPaths) {
+        applyTo(nodePath.length - 1,path, root, tree);
+      }
     }
   }
 
   public void applyTo(final JTree tree, final DefaultMutableTreeNode node) {
-    applyExpanded(tree);
+    applyExpanded(tree, node);
     applySelected(tree, node);
   }
 
@@ -242,10 +253,6 @@ public class TreeState implements JDOMExternalizable {
     }
   }
 
-
-  private static void applyTo(final List<PathElement> path, final JTree tree) {
-    applyTo(0, path, tree.getModel().getRoot(), tree);
-  }
 
   private static DefaultMutableTreeNode findMatchedChild(DefaultMutableTreeNode parent, PathElement pathElement) {
 

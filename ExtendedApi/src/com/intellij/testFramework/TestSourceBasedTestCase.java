@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
+@SuppressWarnings({"HardCodedStringLiteral", "ConstantConditions", "JUnitTestCaseInProductSource"})
 @NonNls public abstract class TestSourceBasedTestCase extends IdeaTestCase {
   private File myTempDirectory;
 
@@ -83,10 +84,9 @@ import java.io.File;
     modifiableModel.commit();
   }
 
-  private VirtualFile getContentRoot() {
+  protected VirtualFile getContentRoot() {
     File file = getTestContentFile();
-    VirtualFile content = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-    return content;
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
   protected String getTestDirectoryName() {
