@@ -23,6 +23,8 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
+import com.intellij.javaee.ejb.role.EjbRolesUtil;
+import com.intellij.javaee.ejb.role.EjbMethodRole;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -113,6 +115,10 @@ public class MethodMayBeStaticInspection extends MethodInspection{
             final PsiClass containingClass =
                     ClassUtils.getContainingClass(method);
             if(containingClass == null){
+                return;
+            }
+            final EjbMethodRole ejbRole = EjbRolesUtil.getEjbRolesUtil().getEjbRole(method);
+            if (ejbRole != null) {
                 return;
             }
             final PsiElement scope = containingClass.getScope();
