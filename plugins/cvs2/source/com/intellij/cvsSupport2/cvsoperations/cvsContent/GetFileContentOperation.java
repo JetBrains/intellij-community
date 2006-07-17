@@ -1,6 +1,8 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsContent;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
@@ -10,17 +12,17 @@ import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.CvsBundle;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
 import org.netbeans.lib.cvsclient.file.FileObject;
-import org.jetbrains.annotations.NonNls;
 
-import java.io.File;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -125,6 +127,13 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
   public static GetFileContentOperation createForFile(VirtualFile file) throws CannotFindCvsRootException {
     LOG.assertTrue(file != null);
     return createForFile(file, RevisionOrDateImpl.createOn(file));
+  }
+
+  public static GetFileContentOperation createForFile(FilePath filePath) throws CannotFindCvsRootException {
+    String pathInRepository = CvsEntriesManager.getInstance().getRepositoryFor(filePath.getVirtualFileParent()) + "/" + filePath.getName();
+    return new GetFileContentOperation(new File(pathInRepository),
+                                       CvsRootProvider.createOn(filePath.getIOFile()),
+                                       RevisionOrDateImpl.createOn(filePath.getVirtualFileParent(), filePath.getName()));
   }
 
   public GetFileContentOperation(File cvsFile, CvsEnvironment environment, RevisionOrDate revisionOrDate) {

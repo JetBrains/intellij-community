@@ -13,6 +13,7 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
+import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -227,6 +228,7 @@ public class CvsChangeProvider implements ChangeProvider {
   private class CvsUpToDateRevision implements ContentRevision {
     private FilePath myPath;
     private VcsRevisionNumber myRevisionNumber;
+    private String myContent;
 
     public CvsUpToDateRevision(final FilePath path, final VcsRevisionNumber revisionNumber) {
       myRevisionNumber = revisionNumber;
@@ -235,14 +237,19 @@ public class CvsChangeProvider implements ChangeProvider {
 
     @Nullable
     public String getContent() {
-      final VirtualFile vFile = myPath.getVirtualFile();
-      if (vFile == null) return null;
-      try {
-        return myVcs.getUpToDateRevisionProvider().getLastUpToDateContentFor(vFile, false);
+      if (myContent == null) {
+        try {
+          final GetFileContentOperation operation = GetFileContentOperation.createForFile(myPath);
+          CvsVcs2.executeQuietOperation(CvsBundle.message("operation.name.get.file.content"), operation, myVcs.getProject());
+          final byte[] fileBytes = operation.getFileBytes();
+
+          myContent = fileBytes == null ? null : new String(fileBytes, myPath.getCharset().name());
+        }
+        catch (Exception e) {
+          myContent = null;
+        }
       }
-      catch (VcsException e) {
-        return null;
-      }
+      return myContent;
     }
 
     @NotNull

@@ -21,6 +21,10 @@ public class RevisionOrDateImpl implements RevisionOrDate {
     return new RevisionOrDateImpl(parent, CvsEntriesManager.getInstance().getEntryFor(parent, file.getName()));
   }
 
+  public static RevisionOrDate createOn(VirtualFile parent, String name) {
+    return new RevisionOrDateImpl(parent, CvsEntriesManager.getInstance().getEntryFor(parent, name));
+  }
+
   public static RevisionOrDate createOn(VirtualFile parent, Entry entry, DateOrRevisionSettings config) {
     RevisionOrDateImpl result = new RevisionOrDateImpl(parent, entry);
     updateOn(result, config);
