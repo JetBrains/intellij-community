@@ -1,19 +1,16 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.HtmlTagImpl;
 import com.intellij.psi.impl.source.javadoc.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateDeclaration;
-import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
 import com.intellij.psi.impl.source.jsp.jspXml.JspCommentImpl;
-import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlDocument;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.impl.source.xml.*;
 import com.intellij.psi.jsp.JspElementType;
@@ -25,8 +22,8 @@ import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -447,9 +444,6 @@ public class Factory implements Constants {
     }
     else if (type == XML_ENUMERATED_TYPE) {
       element = new XmlEnumeratedTypeImpl();
-    }
-    else if (type == XML_PROCESSING_INSTRUCTION) {
-      element = new XmlProcessingInstructionImpl();
     }
     else if (type == ANNOTATION_METHOD) {
       element = new AnnotationMethodElement();
