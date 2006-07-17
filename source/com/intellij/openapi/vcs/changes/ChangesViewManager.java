@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
@@ -530,6 +531,11 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
     protected void processFiles(final ChangeProvider provider, final List<File> files) {
       provider.rollbackMissingFileDeletion(files);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          LocalFileSystem.getInstance().refreshIoFiles(files);
+        }
+      });
     }
   }
 

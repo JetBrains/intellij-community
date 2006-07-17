@@ -11,17 +11,17 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
+import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 
@@ -105,8 +105,14 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     myDirtyFiles.add(newcomer);
   }
 
-  public void iterate(ContentIterator iterator) {
+  public void iterate(final Processor<FilePath> iterator) {
     if (myProject.isDisposed()) return;
+
+    ContentIterator iteratorAdapter = new ContentIterator() {
+      public boolean processFile(VirtualFile fileOrDir) {
+        return iterator.process(new FilePathImpl(fileOrDir));
+      }
+    };
 
     for (VirtualFile root : myAffectedContentRoots) {
       final Module module = VfsUtil.getModuleForFile(myProject, root);
@@ -118,23 +124,21 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
         final VirtualFile vFile = dir.getVirtualFile();
         if (vFile != null && vFile.isValid()) {
           if (VfsUtil.isAncestor(root, vFile, false)) {
-            index.iterateContentUnderDirectory(vFile, iterator);
+            index.iterateContentUnderDirectory(vFile, iteratorAdapter);
           }
           else if (VfsUtil.isAncestor(vFile, root, false)) {
-            index.iterateContentUnderDirectory(root, iterator);
+            index.iterateContentUnderDirectory(root, iteratorAdapter);
           }
         }
       }
     }
 
     for (FilePath file : myDirtyFiles) {
+      iterator.process(file);
       final VirtualFile vFile = file.getVirtualFile();
-      if (vFile != null && vFile.isValid()) {
-        iterator.processFile(vFile);
-        if (vFile.isDirectory()) {
-          for (VirtualFile child : vFile.getChildren()) {
-            iterator.processFile(child);
-          }
+      if (vFile != null && vFile.isValid() && vFile.isDirectory()) {
+        for (VirtualFile child : vFile.getChildren()) {
+          iterator.process(new FilePathImpl(child));
         }
       }
     }
@@ -158,34 +162,6 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
         return Boolean.FALSE;
       }
     }).booleanValue();
-  }
-
-  public void refreshDirtyFiles() {
-    boolean needRefreshVFS = false;
-    for(final FilePath file: myDirtyFiles) {
-      if (file.getVirtualFile() == null) {
-        needRefreshVFS = true;
-      }
-    }
-    if (needRefreshVFS) {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              for(final FilePath file: myDirtyFiles) {
-                if (file.getVirtualFile() == null) {
-                  VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.getIOFile());
-                  if (vFile != null) {
-                    file.refresh();
-                    if (file.isDirectory()) vFile.refresh(false, true);
-                  }
-                }
-              }
-            }
-          });
-        }
-      }, ModalityState.defaultModalityState());
-    }
   }
 
   @Override @NonNls
