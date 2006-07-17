@@ -35,6 +35,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.URLDecoder;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -342,11 +343,11 @@ public class PluginManager {
       for (URL url : urls) {
         final String protocol = url.getProtocol();
         if ("file".equals(protocol)) {
-          final File file = new File(url.getFile());
+          final File file = new File(URLDecoder.decode(url.getFile()));
           final String canonicalPath = file.getCanonicalPath();
           //if (!canonicalPath.startsWith(homePath) || canonicalPath.endsWith(".jar")) continue;
           //if (!canonicalPath.startsWith(homePath)) continue;
-          final IdeaPluginDescriptorImpl pluginDescriptor = loadDescriptor(file.getCanonicalFile());
+          final IdeaPluginDescriptorImpl pluginDescriptor = loadDescriptor(file);
           if (pluginDescriptor != null && !result.contains(pluginDescriptor)) {
             result.add(pluginDescriptor);
           }
