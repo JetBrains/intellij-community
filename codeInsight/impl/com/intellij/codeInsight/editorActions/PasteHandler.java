@@ -180,6 +180,8 @@ public class PasteHandler extends EditorActionHandler {
 
       int length = text.length();
       final String text1 = text;
+      final int offset = editor.getCaretModel().getOffset();
+
       ApplicationManager.getApplication().runWriteAction(
         new Runnable() {
           public void run() {
@@ -188,7 +190,6 @@ public class PasteHandler extends EditorActionHandler {
         }
       );
 
-      final int offset = editor.getCaretModel().getOffset();
       final RangeMarker bounds = document.createRangeMarker(offset, offset + length);
 
       editor.getCaretModel().moveToOffset(bounds.getEndOffset());
@@ -352,13 +353,18 @@ public class PasteHandler extends EditorActionHandler {
   private static void indentBlock(Project project, Editor editor, int startOffset, int endOffset, int originalCaretCol) {
     Document document = editor.getDocument();
     CharSequence chars = document.getCharsSequence();
+    boolean hasNewLine = false;
 
     for (int i = endOffset - 1; i >= startOffset; i--) {
       char c = chars.charAt(i);
-      if (c == '\n' || c == '\r') break;
+      if (c == '\n' || c == '\r') {
+        hasNewLine = true;
+        break;
+      }
       if (c != ' ' && c != '\t') return; // do not indent if does not end with line separator
     }
 
+    if (!hasNewLine) return;
     int lineStart = CharArrayUtil.shiftBackwardUntil(chars, startOffset - 1, "\n\r") + 1;
     int spaceEnd = CharArrayUtil.shiftForward(chars, lineStart, " \t");
     if (startOffset <= spaceEnd) { // we are in starting spaces
