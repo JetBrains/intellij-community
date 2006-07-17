@@ -19,6 +19,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.javaee.make.ModuleBuildProperties;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -32,8 +33,8 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.build.PluginBuildUtil;
@@ -76,7 +77,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     final ModuleWizardStep nameAndLocationStep = stepFactory
       .createNameAndLocationStep(wizardContext, moduleBuilder, modulesProvider, ADD_PLUGIN_MODULE_ICON, "plugin.creation");
     steps.add(nameAndLocationStep);
-    steps.add(stepFactory.createProjectJdkStep(wizardContext, moduleBuilder, new Computable<Boolean>() {
+    steps.add(stepFactory.createProjectJdkStep(wizardContext, ApplicationManager.getApplication().getComponent(IdeaJdk.class), moduleBuilder, new Computable<Boolean>() {
       public Boolean compute() {
         final ProjectJdk projectJdk = wizardContext.getProjectJdk();
         return projectJdk == null || ! (projectJdk.getSdkType() instanceof IdeaJdk) ? Boolean.TRUE : Boolean.FALSE;
