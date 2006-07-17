@@ -2,11 +2,12 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
-import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.properties.PropertiesFilesManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -16,7 +17,6 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -24,11 +24,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Alarm;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.Set;
 
 public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
   private final ProjectViewPsiTreeChangeListener myPsiTreeChangeListener;
@@ -91,7 +95,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
       myUpdater.addSubtreeToUpdate(myRootNode);
     }
 
-    public void fileStatusChanged(VirtualFile vFile) {
+    public void fileStatusChanged(@NotNull VirtualFile vFile) {
       PsiElement element;
       PsiManager psiManager = PsiManager.getInstance(myProject);
       if (vFile.isDirectory()) {
@@ -134,7 +138,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
   private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
     private final Alarm myUpdateProblemAlarm = new Alarm();
-    private final Collection<VirtualFile> myFilesToRefresh = Collections.synchronizedSet(new THashSet<VirtualFile>());
+    private final Collection<VirtualFile> myFilesToRefresh = new THashSet<VirtualFile>();
 
     public void problemsAppeared(VirtualFile file) {
       queueUpdate(file);
@@ -145,15 +149,22 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     }
 
     private void queueUpdate(final VirtualFile fileToRefresh) {
-      if (myFilesToRefresh.add(fileToRefresh)) {
-        myUpdateProblemAlarm.cancelAllRequests();
-        myUpdateProblemAlarm.addRequest(new Runnable() {
-          public void run() {
-            Set<VirtualFile> filesToRefresh = new THashSet<VirtualFile>(myFilesToRefresh);
-            updateNodesContaining(filesToRefresh, myRootNode);
-            myFilesToRefresh.removeAll(filesToRefresh);
-          }
-        }, 200, ModalityState.NON_MMODAL);
+      synchronized (myFilesToRefresh) {
+        if (myFilesToRefresh.add(fileToRefresh)) {
+          myUpdateProblemAlarm.cancelAllRequests();
+          myUpdateProblemAlarm.addRequest(new Runnable() {
+            public void run() {
+              Set<VirtualFile> filesToRefresh;
+              synchronized (myFilesToRefresh) {
+                filesToRefresh = new THashSet<VirtualFile>(myFilesToRefresh);
+              }
+              updateNodesContaining(filesToRefresh, myRootNode);
+              synchronized (myFilesToRefresh) {
+                myFilesToRefresh.removeAll(filesToRefresh);
+              }
+            }
+          }, 200, ModalityState.NON_MMODAL);
+        }
       }
     }
   }
