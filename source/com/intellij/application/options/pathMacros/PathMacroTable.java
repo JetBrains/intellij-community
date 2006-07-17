@@ -1,10 +1,10 @@
 package com.intellij.application.options.pathMacros;
 
 import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.Table;
 
@@ -49,7 +49,9 @@ public class PathMacroTable extends Table {
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         final String macroValue = getMacroValueAt(row);
-        component.setForeground(macroValue.length() == 0? Color.RED : table.getForeground());
+        component.setForeground(macroValue.length() == 0
+                                ? Color.RED
+                                : isSelected ? table.getSelectionForeground() : table.getForeground());
         return component;
       }
     });
@@ -89,17 +91,13 @@ public class PathMacroTable extends Table {
   }
 
   public boolean isRemoveEnabled() {
-    if (myEditOnlyPaths) {
-      return false;
-    }
-    return getValidSelectionRowsCount() > 0;
+    return !myEditOnlyPaths && getValidSelectionRowsCount() > 0;
   }
 
   private int getValidSelectionRowsCount() {
     final int[] selectedRows = getSelectedRows();
     int count = 0;
-    for (int i = 0; i < selectedRows.length; i++) {
-      int selectedRow = selectedRows[i];
+    for (int selectedRow : selectedRows) {
       if (isValidRow(selectedRow)) {
         count++;
       }
@@ -133,8 +131,7 @@ public class PathMacroTable extends Table {
 
   public void commit() {
     myPathMacros.removeAllMacros();
-    for (Iterator<Pair<String, String>> iterator = myMacros.iterator(); iterator.hasNext();) {
-      Pair<String, String> pair = iterator.next();
+    for (Pair<String, String> pair : myMacros) {
       myPathMacros.setMacro(pair.getFirst(), pair.getSecond().replace(File.separatorChar, '/'));
     }
   }
@@ -144,8 +141,7 @@ public class PathMacroTable extends Table {
   }
 
   private boolean hasMacroWithName(String name) {
-    for (Iterator<Pair<String, String>> iterator = myMacros.iterator(); iterator.hasNext();) {
-      Pair<String, String> macro = iterator.next();
+    for (Pair<String, String> macro : myMacros) {
       if (name.equals(macro.getFirst())) {
         return true;
       }
@@ -171,13 +167,11 @@ public class PathMacroTable extends Table {
   private void obtainMacroPairs(final List<Pair<String, String>> macros) {
     macros.clear();
     final Set<String> macroNames = myPathMacros.getUserMacroNames();
-    for (Iterator<String> iterator = macroNames.iterator(); iterator.hasNext();) {
-      String name = iterator.next();
+    for (String name : macroNames) {
       macros.add(Pair.create(name, myPathMacros.getValue(name).replace('/', File.separatorChar)));
     }
-    for (int idx = 0; idx < myUndefinedMacroNames.length; idx++) {
-      String undefinedMacroName = myUndefinedMacroNames[idx];
-      macros.add(new Pair<String,String>(undefinedMacroName, ""));
+    for (String undefinedMacroName : myUndefinedMacroNames) {
+      macros.add(new Pair<String, String>(undefinedMacroName, ""));
     }
     Collections.sort(macros, MACRO_COMPARATOR);
   }
@@ -268,7 +262,7 @@ public class PathMacroTable extends Table {
     }
   }
 
-  private class EditValidator implements PathMacroEditor.Validator {
+  private static class EditValidator implements PathMacroEditor.Validator {
     public boolean checkName(String name) {
       return name.length() > 0 && name.indexOf('$') < 0;
     }
