@@ -35,7 +35,7 @@ import java.util.*;
 /**
  * @author mike
  */
-public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx {
+public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
   //todo: Introduce ComponentDescriptor instead of three maps
@@ -624,5 +624,20 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
       return new CachingComponentAdapter(initializingAdapter);
     }
+  }
+
+
+  public void dispose() {
+    myComponentInterfaces = null;
+    myInitializedComponents = null;
+    myInitializingComponents = null;
+    myInterfaceToClassMap = null;
+    myInterfaceToComponentMap = null;
+    myInterfaceToLockMap = null;
+    myInterfaceToOptionsMap = null;
+    myLazyComponents = null;
+    myNameToComponent = null;
+    myNameToConfiguration = null;
+    myPicoContainer = null;
   }
 }

@@ -143,6 +143,33 @@ public final class SwingCleanuper implements ApplicationComponent{
                       catch (Exception e) {
                         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                       }
+                      try {
+                        final Field f = KeyboardFocusManager.class.getDeclaredField("newFocusOwner");
+                        f.setAccessible(true);
+                        f.set(null, null);
+                      }
+                      catch (Exception e) {
+                        e.printStackTrace();
+                      }
+
+                      try {
+                        final Field f = KeyboardFocusManager.class.getDeclaredField("permanentFocusOwner");
+                        f.setAccessible(true);
+                        f.set(null, null);
+                      }
+                      catch (Exception e) {
+                        e.printStackTrace();
+                      }
+
+                      try {
+                        final Field f = KeyboardFocusManager.class.getDeclaredField("currentFocusCycleRoot");
+                        f.setAccessible(true);
+                        f.set(null, null);
+                      }
+                      catch (Exception e) {
+                        e.printStackTrace();
+                      }
+
                     }
                   }
                 );

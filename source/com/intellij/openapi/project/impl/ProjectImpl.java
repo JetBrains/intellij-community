@@ -560,6 +560,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
 
     disposeComponents();
     Extensions.disposeArea(this);
+    super.dispose();
     myDisposed = true;
   }
 
