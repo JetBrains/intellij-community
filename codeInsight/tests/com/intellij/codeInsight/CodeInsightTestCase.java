@@ -19,6 +19,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestData;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,8 +27,6 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Mike
@@ -429,5 +428,9 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
   protected String getTestRoot(){
     return FileUtil.toSystemIndependentName(getTestDataPath());
+  }
+
+  public Editor getEditor() {
+    return myEditor;
   }
 }

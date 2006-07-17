@@ -13,10 +13,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Document;
@@ -187,4 +187,11 @@ public abstract class PsiTestCase extends ModuleTestCase {
   }
 
 
+  public PsiFile getFile() {
+    return myFile;
+  }
+
+  public com.intellij.openapi.editor.Document getDocument(PsiFile file) {
+    return PsiDocumentManager.getInstance(getProject()).getDocument(file);
+  }
 }

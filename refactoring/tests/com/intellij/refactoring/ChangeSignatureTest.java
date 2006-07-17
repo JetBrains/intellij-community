@@ -2,7 +2,6 @@ package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
@@ -219,10 +218,6 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
                                  newName != null ? newName : method.getName(),
                                  newType, genParams.genParams(method), genExceptions.genExceptions(method)).run();
     checkResultByFile(filePath + ".after");
-  }
-
-  private Editor getEditor() {
-    return myEditor;
   }
 
   private interface GenParams {
