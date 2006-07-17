@@ -65,7 +65,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   private final Map<Configurable, Dimension> myConfigurable2PrefSize;
   private JButton myHelpButton;
   private JPanel myComponentPanel;
-  private SearchUtil.MyTextField mySearchField;
+  private SearchUtil.SearchTextField mySearchField;
   private Set<Configurable> myOptionContainers = null;
   private Alarm myShowHintAlarm = new Alarm();
   private JTree myTree;
@@ -359,7 +359,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
 
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    mySearchField = new SearchUtil.MyTextField();
+    mySearchField = new SearchUtil.SearchTextField();
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();

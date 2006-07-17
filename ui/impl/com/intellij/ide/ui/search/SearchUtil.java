@@ -21,10 +21,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -303,7 +300,7 @@ public class SearchUtil {
    }
 
 
-  public static void showHintPopup(final MyTextField searchField,
+  public static void showHintPopup(final SearchTextField searchField,
                                    final SearchableOptionsRegistrar optionsRegistrar,
                                    final JBPopup [] activePopup,
                                    final Alarm showHintAlarm,
@@ -381,7 +378,7 @@ public class SearchUtil {
   private static void showPopupWithFocus(final JBPopup popup,
                                          final JList list,
                                          final Runnable onChosen,
-                                         final MyTextField searchField,
+                                         final SearchTextField searchField,
                                          final JBPopup[] activePopup,
                                          final boolean down) {
     if (popup != null) {
@@ -426,7 +423,19 @@ public class SearchUtil {
 
 
   //make process event public
-  public static class MyTextField extends JTextField {
+  public static class SearchTextField extends JTextField {
+
+    public SearchTextField() {
+      super();
+      addKeyListener(new KeyAdapter() {
+        public void keyPressed(KeyEvent e) {
+          if (e.getKeyCode() == KeyEvent.VK_ESCAPE && getText().length() > 0) {
+            setText("");
+            e.consume();
+          }
+        }
+      });
+    }
 
     public void processKeyEvent(KeyEvent e) {
       super.processKeyEvent(e);

@@ -52,7 +52,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
   private int mySelectedGroup = 0;
 
   private Set<Configurable> myOptionContainers = null;
-  private SearchUtil.MyTextField mySearchField;
+  private SearchUtil.SearchTextField mySearchField;
   private GlassPanel myGlassPanel;
   private Alarm myShowHintAlarm = new Alarm();
   private JBPopup[] myPopup = new JBPopup[1];
@@ -325,7 +325,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
 
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    mySearchField = new SearchUtil.MyTextField();
+    mySearchField = new SearchUtil.SearchTextField();
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         myGlassPanel.clear();
