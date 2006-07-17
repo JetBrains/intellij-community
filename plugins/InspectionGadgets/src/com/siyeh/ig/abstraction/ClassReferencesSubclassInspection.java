@@ -94,20 +94,25 @@ public class ClassReferencesSubclassInspection extends BaseInspection {
             if(!(componentType instanceof PsiClassType)){
                 return;
             }
-            final PsiClassType classType = (PsiClassType)componentType;
             final PsiClass parentClass =
                     PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-            if(!isSubclass(classType, parentClass)){
-                return;
-            }
-            final PsiJavaCodeReferenceElement classReference =
-                    expression.getClassReference();
-            if (classReference != null) {
-                registerError(classReference, parentClass, Boolean.FALSE);
+            final PsiAnonymousClass anonymousClass =
+                    expression.getAnonymousClass();
+            if (anonymousClass != null) {
+                final PsiClassType classType =
+                        anonymousClass.getBaseClassType();
+                if (!isSubclass(classType, parentClass)) {
+                    return;
+                }
+                registerClassError(anonymousClass, parentClass, Boolean.FALSE);
             } else {
-                final PsiAnonymousClass anonymousClass =
-                        expression.getAnonymousClass();
-                registerClassError(anonymousClass, parentClass, Boolean.TRUE);
+                final PsiClassType classType = (PsiClassType)componentType;
+                if(!isSubclass(classType, parentClass)){
+                    return;
+                }
+                final PsiJavaCodeReferenceElement classReference =
+                        expression.getClassReference();
+                registerError(classReference, parentClass, Boolean.FALSE);
             }
         }
 
