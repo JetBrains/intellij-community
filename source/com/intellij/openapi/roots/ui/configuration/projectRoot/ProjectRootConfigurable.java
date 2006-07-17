@@ -808,10 +808,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   public DefaultActionGroup createAddJdksGroup(){
     DefaultActionGroup group = new DefaultActionGroup();
-    myJdksTreeModel.createAddActions(group, myTree, new Condition<ProjectJdk>() {
-      public boolean value(final ProjectJdk jdk) {
-        addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel), true), myJdksNode);
-        return false;
+    myJdksTreeModel.createAddActions(group, myTree, new Consumer<ProjectJdk>() {
+      public void consume(final ProjectJdk projectJdk) {
+        addJdkNode(projectJdk);
       }
     });
     return group;
@@ -819,12 +818,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   private PopupStep createJdksStep(DataContext dataContext) {
     DefaultActionGroup group = new DefaultActionGroup();
-    myJdksTreeModel.createAddActions(group, myTree, new Condition<ProjectJdk>() {
-      public boolean value(final ProjectJdk jdk) {
-        createNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel), myJdksNode);
-        return false;
+    myJdksTreeModel.createAddActions(group, myTree, new Consumer<ProjectJdk>() {
+      public void consume(final ProjectJdk projectJdk) {
+        addJdkNode(projectJdk);
       }
-
     });
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
     return popupFactory.createActionsStep(group, dataContext, false, false, ProjectBundle.message("add.new.jdk.title"), myTree, true);
@@ -929,17 +926,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
               final Module module = myModulesConfigurator.addModule(myTree);
               if (module != null) {
                 final MyNode node = new MyNode(new ModuleConfigurable(myModulesConfigurator, module), true);
-                myProjectNode.add(node);
-                TreeUtil.sort(myProjectNode, new Comparator() {
-                  public int compare(final Object o1, final Object o2) {
-                    final MyNode node1 = (MyNode)o1;
-                    final MyNode node2 = (MyNode)o2;
-                    if (node1.getConfigurable()instanceof ModuleConfigurable) return -1;
-                    if (node2.getConfigurable()instanceof ModuleConfigurable) return 1;
-                    return node1.getDisplayName().compareToIgnoreCase(node2.getDisplayName());
-                  }
-                });
-                ((DefaultTreeModel)myTree.getModel()).reload(myProjectNode);
+                addNode(node, myProjectNode);
                 selectNodeInTree(node);
               }
             }

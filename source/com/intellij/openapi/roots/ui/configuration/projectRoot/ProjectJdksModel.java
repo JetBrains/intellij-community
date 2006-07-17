@@ -18,8 +18,8 @@ import com.intellij.openapi.projectRoots.ui.NotifiableSdkModel;
 import com.intellij.openapi.projectRoots.ui.SdkEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,7 +202,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     }
   }
 
-  public void createAddActions(DefaultActionGroup group, final JComponent parent, final Condition<ProjectJdk> updateTree) {
+  public void createAddActions(DefaultActionGroup group, final JComponent parent, final Consumer<ProjectJdk> updateTree) {
     final SdkType[] types = ApplicationManager.getApplication().getComponents(SdkType.class);
     for (final SdkType type : types) {
       final AnAction addAction = new AnAction(ProjectBundle.message("sdk.list.add.action", type.getPresentableName()),
@@ -216,7 +216,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     }
   }
 
-  private void doAdd(final SdkType type, JComponent parent, final Condition<ProjectJdk> updateTree) {
+  public void doAdd(final SdkType type, JComponent parent, final Consumer<ProjectJdk> updateTree) {
     final String home = SdkEditor.selectSdkHome(parent, type);
     if (home == null) {
       return;
@@ -235,7 +235,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     newJdk.setHomePath(home);
     type.setupSdkPaths(newJdk);
     myProjectJdks.put(newJdk, newJdk);
-    updateTree.value(newJdk);
+    updateTree.consume(newJdk);
     mySdkEventsDispatcher.getMulticaster().sdkAdded(newJdk);
     myModified = true;
   }

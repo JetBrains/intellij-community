@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Consumer;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -72,8 +73,8 @@ class JdkComboBox extends JComboBox{
       public void actionPerformed(ActionEvent e) {
         final ProjectRootConfigurable configurable = ProjectRootConfigurable.getInstance(project);
         DefaultActionGroup group = new DefaultActionGroup();
-        jdksModel.createAddActions(group, JdkComboBox.this, new Condition<ProjectJdk>() {
-          public boolean value(final ProjectJdk jdk) {
+        jdksModel.createAddActions(group, JdkComboBox.this, new Consumer<ProjectJdk>() {
+          public void consume(final ProjectJdk jdk) {
             configurable.addJdkNode(jdk);
             reloadModel(firstItem, project);
             setSelectedJdk(jdk); //restore selection
@@ -82,7 +83,6 @@ class JdkComboBox extends JComboBox{
                 setSelectedJdk(firstItem.getJdk());
               }
             }
-            return false;
           }
         });
         JBPopupFactory.getInstance()

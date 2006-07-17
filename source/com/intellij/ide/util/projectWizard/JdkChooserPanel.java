@@ -4,10 +4,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import gnu.trove.TIntArrayList;
@@ -20,21 +22,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 
 public class JdkChooserPanel extends JPanel {
   private JList myList = null;
   private DefaultListModel myListModel = null;
   private ProjectJdk myCurrentJdk;
-  private boolean myUseDefaultProject;
+  private Project myProject; //null during project creation
 
-  public JdkChooserPanel() {
-    this(false);
-  }
-
-  public JdkChooserPanel(boolean useDefaultProject) {
+  public JdkChooserPanel(Project project) {
     super(new BorderLayout());
-    myUseDefaultProject = useDefaultProject;
+    myProject = project;
     myListModel = new DefaultListModel();
     myList = new JList(myListModel);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -50,7 +49,7 @@ public class JdkChooserPanel extends JPanel {
     });
     myList.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) {
+        if (e.getClickCount() == 2 && myProject == null) {
           editJdkTable();
         }
       }
@@ -69,30 +68,36 @@ public class JdkChooserPanel extends JPanel {
   }
 
   public void editJdkTable() {
-    ProjectJdksEditor editor = new ProjectJdksEditor((ProjectJdk)myList.getSelectedValue(), myUseDefaultProject, myList);
+    ProjectJdksEditor editor = new ProjectJdksEditor((ProjectJdk)myList.getSelectedValue(),
+                                                     myProject != null ? myProject : ProjectManager.getInstance().getDefaultProject(),
+                                                     myList);
     editor.show();
     if (editor.isOK()) {
       ProjectJdk selectedJdk = editor.getSelectedJdk();
-      Object[] selectedValues = selectedJdk != null ? new Object[]{selectedJdk} : myList.getSelectedValues();
-      fillList();
-      // restore selection
-      TIntArrayList list = new TIntArrayList();
-      for (Object selectedValue : selectedValues) {
-        int idx = myListModel.indexOf(selectedValue);
-        if (idx >= 0) {
-          list.add(idx);
-        }
-      }
-      final int[] indicesToSelect = list.toNativeArray();
-      if (indicesToSelect.length > 0) {
-        myList.setSelectedIndices(indicesToSelect);
-      }
-      else if (myList.getModel().getSize() > 0) {
-        myList.setSelectedIndex(0);
-      }
-
-      myCurrentJdk = (ProjectJdk)myList.getSelectedValue();
+      updateList(selectedJdk);
     }
+  }
+
+  public void updateList(final ProjectJdk selectedJdk) {
+    Object[] selectedValues = selectedJdk != null ? new Object[]{selectedJdk} : myList.getSelectedValues();
+    fillList();
+    // restore selection
+    TIntArrayList list = new TIntArrayList();
+    for (Object selectedValue : selectedValues) {
+      int idx = myListModel.indexOf(selectedValue);
+      if (idx >= 0) {
+        list.add(idx);
+      }
+    }
+    final int[] indicesToSelect = list.toNativeArray();
+    if (indicesToSelect.length > 0) {
+      myList.setSelectedIndices(indicesToSelect);
+    }
+    else if (myList.getModel().getSize() > 0) {
+      myList.setSelectedIndex(0);
+    }
+
+    myCurrentJdk = (ProjectJdk)myList.getSelectedValue();
   }
 
   public JList getPreferredFocusedComponent() {
@@ -101,7 +106,15 @@ public class JdkChooserPanel extends JPanel {
 
   private void fillList() {
     myListModel.clear();
-    final ProjectJdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
+    final ProjectJdk[] jdks;
+    if (myProject == null) {
+      jdks = ProjectJdkTable.getInstance().getAllJdks();
+    }
+    else {
+      final Collection<ProjectJdk> collection =
+        ProjectRootConfigurable.getInstance(myProject).getProjectJdksModel().getProjectJdks().values();
+      jdks = collection.toArray(new ProjectJdk[collection.size()]);
+    }
     Arrays.sort(jdks, new Comparator<ProjectJdk>() {
       public int compare(final ProjectJdk o1, final ProjectJdk o2) {
         return o1.getName().compareToIgnoreCase(o2.getName());
@@ -123,8 +136,8 @@ public class JdkChooserPanel extends JPanel {
     }
   }
 
-  private static ProjectJdk showDialog(String title, final Component parent, ProjectJdk jdkToSelect) {
-    final JdkChooserPanel jdkChooserPanel = new JdkChooserPanel();
+  private static ProjectJdk showDialog(final Project project, String title, final Component parent, ProjectJdk jdkToSelect) {
+    final JdkChooserPanel jdkChooserPanel = new JdkChooserPanel(project);
     final MyDialog dialog = jdkChooserPanel.new MyDialog(parent);
     if (title != null) {
       dialog.setTitle(title);
@@ -138,7 +151,7 @@ public class JdkChooserPanel extends JPanel {
 
   public static ProjectJdk chooseAndSetJDK(final Project project) {
     final ProjectJdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
-    final ProjectJdk jdk = showDialog(ProjectBundle.message("module.libraries.target.jdk.select.title"), WindowManagerEx.getInstanceEx().getFrame(project), projectJdk);
+    final ProjectJdk jdk = showDialog(project, ProjectBundle.message("module.libraries.target.jdk.select.title"), WindowManagerEx.getInstanceEx().getFrame(project), projectJdk);
     if (jdk == null) {
       return null;
     }

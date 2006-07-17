@@ -4,10 +4,13 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -27,13 +30,17 @@ public class ProjectJdkStep extends ModuleWizardStep {
   private boolean myInitialized = false;
 
   public ProjectJdkStep(WizardContext context) {
+    this(context, null);
+  }
+
+  public ProjectJdkStep(final WizardContext context, final SdkType type) {
     myContext = context;
-    myJdkChooser = new JdkChooserPanel(true);
+    myJdkChooser = new JdkChooserPanel(context.getProject());
 
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
 
-    final JLabel label = new JLabel(IdeBundle.message("prompt.please.select.project.jdk"));
+    final JLabel label = new JLabel(type == null ? IdeBundle.message("prompt.please.select.project.jdk") : IdeBundle.message("prompt.please.select.module.jdk", type.getPresentableName()));
     label.setUI(new MultiLineLabelUI());
     myPanel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 8, 10), 0, 0));
 
@@ -47,7 +54,18 @@ public class ProjectJdkStep extends ModuleWizardStep {
 
     configureButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myJdkChooser.editJdkTable();
+        if (type == null) { //new project
+          myJdkChooser.editJdkTable();
+        } else {
+          final Project project = context.getProject();
+          final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(project);
+          rootConfigurable.getProjectJdksModel().doAdd(type, myPanel, new Consumer<ProjectJdk>() {
+            public void consume(final ProjectJdk jdk) {
+              rootConfigurable.addJdkNode(jdk);
+              myJdkChooser.updateList(jdk);
+            }
+          });
+        }
       }
     });
   }
