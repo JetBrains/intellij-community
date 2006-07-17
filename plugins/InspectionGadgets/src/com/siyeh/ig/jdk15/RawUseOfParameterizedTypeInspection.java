@@ -20,6 +20,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.lang.StdLanguages;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
@@ -76,6 +77,9 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
             extends BaseInspectionVisitor {
 
         public void visitElement(PsiElement element) {
+            if (element.getLanguage() != StdLanguages.JAVA) {
+                return;
+            }
             final LanguageLevel languageLevel =
                     PsiUtil.getLanguageLevel(element);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {

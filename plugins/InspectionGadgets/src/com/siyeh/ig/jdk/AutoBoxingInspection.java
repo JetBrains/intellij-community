@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.StdLanguages;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -113,6 +114,9 @@ public class AutoBoxingInspection extends ExpressionInspection {
     private static class AutoBoxingVisitor extends BaseInspectionVisitor {
 
         public void visitElement(PsiElement element) {
+            if (element.getLanguage() != StdLanguages.JAVA) {
+                return;
+            }
             final LanguageLevel languageLevel =
                     PsiUtil.getLanguageLevel(element);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {

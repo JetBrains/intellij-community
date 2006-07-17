@@ -36,6 +36,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -76,6 +77,7 @@ public class AutoUnboxingInspection extends ExpressionInspection{
         return new AutoUnboxingVisitor();
     }
 
+    @Nullable
     public InspectionGadgetsFix buildFix(PsiElement location){
         if (!isFixApplicable(location)) {
             return null;
@@ -241,8 +243,12 @@ public class AutoUnboxingInspection extends ExpressionInspection{
     private static class AutoUnboxingVisitor extends BaseInspectionVisitor{
 
         public void visitElement(PsiElement element) {
-            if (element.getLanguage() != StdLanguages.JAVA ||
-                PsiUtil.getLanguageLevel(element).compareTo(LanguageLevel.JDK_1_5) < 0) {
+            if (element.getLanguage() != StdLanguages.JAVA) {
+                return;
+            }
+            final LanguageLevel languageLevel = 
+                    PsiUtil.getLanguageLevel(element);
+            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
             super.visitElement(element);
