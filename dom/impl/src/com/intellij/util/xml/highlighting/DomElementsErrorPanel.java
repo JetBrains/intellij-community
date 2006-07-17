@@ -62,6 +62,10 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
   private void updatePanel() {
     myAlarm.cancelAllRequests();
 
+    for (final DomElement domElement : myDomElements) {
+      if (!domElement.isValid()) return;
+    }
+
     repaint();
     setToolTipText(myErrorStripeRenderer.getTooltipMessage());
 

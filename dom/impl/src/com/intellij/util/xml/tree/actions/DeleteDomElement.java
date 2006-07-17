@@ -34,7 +34,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
     if (selectedNode instanceof BaseDomElementNode) {
 
       final DomElement domElement = ((BaseDomElementNode)selectedNode).getDomElement();
-      new WriteCommandAction(domElement.getManager().getProject(), domElement.getXmlTag().getContainingFile()) {
+      new WriteCommandAction(domElement.getManager().getProject(), domElement.getRoot().getFile()) {
         protected void run(final Result result) throws Throwable {
           domElement.undefine();
         }
@@ -53,7 +53,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
     boolean enabled = false;
     if (selectedNode instanceof BaseDomElementNode) {
       final DomElement domElement = ((BaseDomElementNode)selectedNode).getDomElement();
-      if (domElement.getXmlElement() != null && !domElement.equals(domElement.getRoot().getRootElement())) {
+      if (domElement.isValid() && domElement.getXmlElement() != null && !domElement.equals(domElement.getRoot().getRootElement())) {
         enabled = true;
       }
     }

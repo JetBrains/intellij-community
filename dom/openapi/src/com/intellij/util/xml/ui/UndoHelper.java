@@ -3,18 +3,17 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.command.CommandAdapter;
+import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.CommandAdapter;
-import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 
-import javax.swing.*;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author peter
@@ -26,16 +25,11 @@ public class UndoHelper {
   private boolean myDirty;
   private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
     public void documentChanged(DocumentEvent e) {
-      if (myShowing && !isCommitting()) {
+      if (myShowing) {
         myDirty = true;
       }
     }
   };
-
-  protected boolean isCommitting() {
-    return CommittableUtil.isCommitting();
-  }
-
 
   public UndoHelper(final Project project, final Committable committable) {
     myProject = project;
@@ -51,12 +45,8 @@ public class UndoHelper {
 
       public void undoTransparentActionFinished() {
         if (myDirty) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              PsiDocumentManager.getInstance(project).commitAllDocuments();
-              committable.reset();
-            }
-          });
+          PsiDocumentManager.getInstance(project).commitAllDocuments();
+          CommittableUtil.queueReset(committable);
         }
       }
 

@@ -15,11 +15,10 @@ import java.util.LinkedHashSet;
  * @author peter
  */
 public class CommittableUtil {
-  private static int myCount;
   private static final Application ourApplication = ApplicationManager.getApplication();
-  private static final LinkedHashSet<Runnable> ourRunnables = new LinkedHashSet<Runnable>();
+  private static final LinkedHashSet<Committable> ourResetQueue = new LinkedHashSet<Committable>();
 
-  static {
+  {
     CommandProcessor.getInstance().addCommandListener(new CommandAdapter() {
 
       public void commandFinished(CommandEvent event) {
@@ -27,38 +26,21 @@ public class CommittableUtil {
       }
 
       public void undoTransparentActionFinished() {
-        if (!ourRunnables.isEmpty()) {
-          final Runnable[] runnables = ourRunnables.toArray(new Runnable[ourRunnables.size()]);
-          ourRunnables.clear();
-          for (final Runnable runnable : runnables) {
-            runnable.run();
-          }
+        for (final Committable committable : ourResetQueue) {
+          committable.reset();
         }
+        ourResetQueue.clear();
       }
-
     });
   }
 
-  public static void runAfterCommandFinish(Runnable runnable) {
-    if (CommandProcessor.getInstance().getCurrentCommand() == null) {
-      runnable.run();
-    }
-    ourRunnables.add(runnable);
-  }
-
-  public static void commit(Runnable runnable) {
+  public static void queueReset(Committable committable) {
     ourApplication.assertIsDispatchThread();
-    myCount++;
-    try {
-      runnable.run();
-    } finally {
-      myCount--;
+    if (CommandProcessor.getInstance().getCurrentCommand() != null || CommandProcessor.getInstance().isUndoTransparentActionInProgress()) {
+      ourResetQueue.add(committable);
+    } else {
+      committable.reset();
     }
-  }
-
-  public static boolean isCommitting() {
-    ourApplication.assertIsDispatchThread();
-    return myCount > 0;
   }
 
 }

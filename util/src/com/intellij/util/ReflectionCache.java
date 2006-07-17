@@ -84,7 +84,9 @@ public class ReflectionCache {
   }
 
   public static Method[] getMethods(Class aClass) {
-    return ourMethods.get(aClass);
+    synchronized (ourMethods) {
+      return ourMethods.get(aClass);
+    }
   }
 
   public static boolean isAssignable(Class ancestor, Class descendant) {

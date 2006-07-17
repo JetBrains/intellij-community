@@ -434,12 +434,18 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
   public final <T extends DomElement> T createStableValue(final Factory<T> provider) {
     final T initial = provider.create();
-    final InvocationHandler handler = new StableInvocationHandler<T>(initial, provider);
+    final StableInvocationHandler handler = new StableInvocationHandler<T>(initial, provider);
     final Set<Class> intf = new HashSet<Class>();
     intf.addAll(Arrays.asList(initial.getClass().getInterfaces()));
     intf.add(StableElement.class);
-    return AdvancedProxy.createProxy((Class<? extends T>)initial.getClass().getSuperclass(), intf.toArray(new Class[intf.size()]), handler,
-                                     Collections.<JavaMethodSignature>emptySet());
+    final Class<? extends T> superClass = (Class<? extends T>)initial.getClass().getSuperclass();
+    final T proxy = AdvancedProxy.createProxy(superClass, intf.toArray(new Class[intf.size()]),
+                                              handler, Collections.<JavaMethodSignature>emptySet());
+    final Set classes = new HashSet();
+    classes.addAll(Arrays.asList(initial.getClass().getInterfaces()));
+    ContainerUtil.addIfNotNull(superClass, classes);
+    handler.setClasses(classes);
+    return proxy;
   }
 
   public final void registerFileDescription(final DomFileDescription description, Disposable parentDisposable) {

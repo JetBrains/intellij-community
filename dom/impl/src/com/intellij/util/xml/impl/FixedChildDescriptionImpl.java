@@ -60,6 +60,9 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
           //assert method.getDeclaringClass().isInstance(element) : method.getDeclaringClass() + " " + element.getClass();
           result.add((DomElement) method.invoke(element));
         }
+        catch (IllegalArgumentException e) {
+          LOG.error(e);
+        }
         catch (IllegalAccessException e) {
           LOG.error(e);
         }

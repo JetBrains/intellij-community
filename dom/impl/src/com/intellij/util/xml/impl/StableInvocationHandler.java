@@ -10,6 +10,7 @@ import net.sf.cglib.proxy.InvocationHandler;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Set;
 
 /**
  * @author peter
@@ -17,12 +18,17 @@ import java.lang.reflect.InvocationTargetException;
 class StableInvocationHandler<T extends DomElement> implements InvocationHandler, StableElement {
   private T myOldValue;
   private T myCachedValue;
+  private Set<Class> myClasses;
   private final Factory<T> myProvider;
 
   public StableInvocationHandler(final T initial, final Factory<T> provider) {
     myProvider = provider;
     myCachedValue = initial;
     myOldValue = initial;
+  }
+
+  public void setClasses(final Set<Class> classes) {
+    myClasses = classes;
   }
 
   public final Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
@@ -94,6 +100,10 @@ class StableInvocationHandler<T extends DomElement> implements InvocationHandler
   }
 
   private boolean isNotValid(final T t) {
-    return t == null || !t.isValid();
+    if (t == null || !t.isValid()) return true;
+    for (final Class aClass : myClasses) {
+      if (!aClass.isInstance(t)) return true;
+    }
+    return false;
   }
 }

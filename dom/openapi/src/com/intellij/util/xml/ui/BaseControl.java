@@ -128,7 +128,7 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
   }
 
   public final void commit() {
-    if (/*myDomWrapper.isValid() && */!isCommitted()) {
+    if (!isCommitted()) {
       setValueToXml(getValue());
       updateComponent();
     }
@@ -168,18 +168,14 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
     if (myCommitting) return;
     myCommitting = true;
     try {
-      CommittableUtil.commit(new Runnable() {
-        public void run() {
-          new WriteCommandAction(getProject(), getDomWrapper().getFile()) {
-            protected void run(Result result) throws Throwable {
-              final CommitListener multicaster = myDispatcher.getMulticaster();
-              multicaster.beforeCommit(BaseControl.this);
-              myDomWrapper.setValue("".equals(value) ? null : value);
-              multicaster.afterCommit(BaseControl.this);
-            }
-          }.execute();
+      final CommitListener multicaster = myDispatcher.getMulticaster();
+      multicaster.beforeCommit(this);
+      new WriteCommandAction(getProject(), getDomWrapper().getFile()) {
+        protected void run(Result result) throws Throwable {
+          myDomWrapper.setValue("".equals(value) ? null : value);
         }
-      });
+      }.execute();
+      multicaster.afterCommit(this);
     }
     finally {
       myCommitting = false;

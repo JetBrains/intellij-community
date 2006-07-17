@@ -1,27 +1,25 @@
 package com.intellij.util.xml.tree;
 
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.ui.TooltipUtils;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.ui.TooltipUtils;
 import com.intellij.xml.XmlElementDescriptor;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.List;
-import java.lang.reflect.Type;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-
-import org.jetbrains.annotations.NotNull;
+import java.lang.reflect.Type;
+import java.util.*;
 
 
 public class BaseDomElementNode extends AbstractDomElementNode {
@@ -117,6 +115,8 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
   @NotNull
   public List<DomCollectionChildDescription> getConsolidatedChildrenDescriptions() {
+    if (!myDomElement.isValid()) return Collections.emptyList();
+
     final List<DomCollectionChildDescription> consolidated = new ArrayList<DomCollectionChildDescription>();
     for (DomCollectionChildDescription description : myDomElement.getGenericInfo().getCollectionChildrenDescriptions()) {
         if (isMarkedType(description.getType(), CONSOLIDATED_NODES_KEY)) {
