@@ -377,7 +377,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     }
 
     public void mouseDragged(MouseEvent e) {
-      if (myResizeLine != -1) {
+      if (myResizeLine > 0) {
         Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
                                                 mySelectedContainer.getDelegee());
         int[] coords = mySelectedContainer.getGridLayoutManager().getGridCellCoords(mySelectedContainer, myIsRow);
