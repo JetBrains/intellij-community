@@ -83,6 +83,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
 
+  @NotNull
   public String getComponentName() {
     return COMPONENT_NAME;
   }
@@ -156,7 +157,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
               if (groupPathString != null) {
                 final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
                 myModuleModel.setModuleGroupPath(module, groupPath); //model should be updated too
-                setModuleGroupPath(module, groupPath);
               }
               myFailedModulePaths.remove(modulePath);
             }
@@ -201,7 +201,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
               }
               message = ProjectBundle.message("module.unknown.type.multiple.error", modulesBuilder.toString());
             }
-            Messages.showWarningDialog(myProject, message.toString(), ProjectBundle.message("module.unknown.type.title"));
+            Messages.showWarningDialog(myProject, message, ProjectBundle.message("module.unknown.type.title"));
           }
         }
       });
@@ -362,7 +362,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
 
-  public void addModuleListener(ModuleListener listener) {
+  public void addModuleListener(@NotNull ModuleListener listener) {
     myModuleEventDispatcher.addListener(listener);
   }
 
@@ -370,16 +370,16 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     myModuleEventDispatcher.addListener(listener, parentDisposable);
   }
 
-  public void removeModuleListener(ModuleListener listener) {
+  public void removeModuleListener(@NotNull ModuleListener listener) {
     myModuleEventDispatcher.removeListener(listener);
   }
 
-  public void dispatchPendingEvent(ModuleListener listener) {
+  public void dispatchPendingEvent(@NotNull ModuleListener listener) {
     myModuleEventDispatcher.dispatchPendingEvent(listener);
   }
 
   @NotNull
-  public Module newModule(String filePath) {
+  public Module newModule(@NotNull String filePath) {
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.newModule(filePath);
     modifiableModel.commitAssertingNoCircularDependency();
@@ -387,7 +387,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   @NotNull
-  public Module newModule(String filePath, ModuleType moduleType) {
+  public Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType) {
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.newModule(filePath, moduleType);
     modifiableModel.commitAssertingNoCircularDependency();
@@ -396,7 +396,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   @NotNull
-  public Module loadModule(String filePath) throws InvalidDataException,
+  public Module loadModule(@NotNull String filePath) throws InvalidDataException,
                                                    IOException,
                                                    JDOMException,
                                                    ModuleWithNameAlreadyExists,
@@ -407,7 +407,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     return module;
   }
 
-  public void disposeModule(final Module module) {
+  public void disposeModule(@NotNull final Module module) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final ModifiableModuleModel modifiableModel = getModifiableModel();
@@ -435,7 +435,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     return myCachedSortedModules;
   }
 
-  public Module findModuleByName(String name) {
+  public Module findModuleByName(@NotNull String name) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return myModuleModel.findModuleByName(name);
   }
@@ -458,12 +458,12 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     return myModuleModel.moduleGraph();
   }
 
-  @NotNull public List<Module> getModuleDependentModules(Module module) {
+  @NotNull public List<Module> getModuleDependentModules(@NotNull Module module) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return myModuleModel.getModuleDependentModules(module);
   }
 
-  public boolean isModuleDependent(Module module, Module onModule) {
+  public boolean isModuleDependent(@NotNull Module module, @NotNull Module onModule) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return myModuleModel.isModuleDependent(module, onModule);
   }
@@ -531,12 +531,12 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     @NotNull
-    public Module newModule(String filePath) {
+    public Module newModule(@NotNull String filePath) {
       assertWritable();
       return newModule(filePath, ModuleType.JAVA);
     }
 
-    public void renameModule(Module module, String newName) throws ModuleWithNameAlreadyExists {
+    public void renameModule(@NotNull Module module, @NotNull String newName) throws ModuleWithNameAlreadyExists {
       final Module oldModule = getModuleByNewName(newName);
       if (oldModule != null) {
         throw new ModuleWithNameAlreadyExists(ProjectBundle.message("module.already.exists.error", newName), newName);
@@ -547,7 +547,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       myNewNamesToModulesMap.put(newName, module);
     }
 
-    public Module getModuleToBeRenamed(String newName) {
+    public Module getModuleToBeRenamed(@NotNull String newName) {
       return myNewNamesToModulesMap.get(newName);
     }
 
@@ -565,12 +565,12 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
     }
 
-    public String getNewName(Module module) {
+    public String getNewName(@NotNull Module module) {
       return myModulesToNewNamesMap.get(module);
     }
 
     @NotNull
-    public Module newModule(String filePath, ModuleType moduleType) {
+    public Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType) {
       assertWritable();
       try {
         String canonicalPath = new File(filePath.replace('/', File.separatorChar)).getCanonicalPath();
@@ -602,7 +602,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     @NotNull
-    public Module loadModule(String filePath) throws InvalidDataException,
+    public Module loadModule(@NotNull String filePath) throws InvalidDataException,
                                                      IOException,
                                                      JDOMException,
                                                      ModuleWithNameAlreadyExists {
@@ -664,7 +664,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
     }
 
-    public void disposeModule(Module module) {
+    public void disposeModule(@NotNull Module module) {
       assertWritable();
       if (myPath2ModelMap.values().contains(module)) {
         myPath2ModelMap.values().remove(module);
@@ -675,7 +675,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
     }
 
-    public Module findModuleByName(String name) {
+    public Module findModuleByName(@NotNull String name) {
       final Module[] allModules = getModules();
       for (Module module : allModules) {
         if (module.getName().equals(name)) {
@@ -901,20 +901,12 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
   }
 
-  public String[] getModuleGroupPath(Module module) {
-    return myModuleGroupPath == null ? null : myModuleGroupPath.get(module);
+  public String[] getModuleGroupPath(@NotNull Module module) {
+    return myModuleModel.getModuleGroupPath(module);
   }
 
   public void setModuleGroupPath(Module module, String[] groupPath) {
-    if (myModuleGroupPath == null) {
-      myModuleGroupPath = new THashMap<Module, String[]>();
-    }
-    if (groupPath == null) {
-      myModuleGroupPath.remove(module);
-    }
-    else {
-      myModuleGroupPath.put(module, groupPath);
-    }
+    myModuleModel.setModuleGroupPath(module, groupPath);
   }
 }
 
