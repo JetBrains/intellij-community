@@ -69,7 +69,7 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
 
   protected PsiElement getElement() {
     final PsiJavaCodeReferenceElement element = getRefElement();
-    if (!element.isValid() || !element.getManager().isInProject(element)) return null;
+    if (element == null || !element.isValid() || !element.getManager().isInProject(element)) return null;
     if (!CreateFromUsageUtils.isValidReference(element, true) &&
         element.getReferenceNameElement() != null && checkClassName(element.getReferenceName())) {
       PsiElement parent = element.getParent();
