@@ -3,6 +3,8 @@
  */
 package com.intellij.openapi.editor.actions.moveUpDown;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -12,7 +14,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.lang.ASTNode;
 
 class MoveStatementHandler extends EditorWriteActionHandler {
   private final boolean isDown;
@@ -35,9 +36,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
   }
 
   public boolean isEnabled(Editor editor, DataContext dataContext) {
-    if (editor.isOneLineMode()) {
-      return false;
-    }
+    if (editor.isViewer() || editor.isOneLineMode()) return false;
     final Project project = editor.getProject();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = editor.getDocument();
@@ -54,12 +53,16 @@ class MoveStatementHandler extends EditorWriteActionHandler {
   }
 
   private static PsiFile getRoot(final PsiFile file, final Editor editor) {
-    if (file == null || editor == null) return null;
+    if (file == null) return null;
     int offset = editor.getCaretModel().getOffset();
     if (offset == editor.getDocument().getTextLength()) offset--;
     if (offset<0) return null;
     PsiElement leafElement = file.findElementAt(offset);
     if (leafElement == null) return null;
+    if (leafElement.getLanguage() == StdLanguages.ANT) {
+      leafElement = file.getViewProvider().findElementAt(offset, StdLanguages.XML);
+      if (leafElement == null) return null;
+    }
     ASTNode node = leafElement.getNode();
     if (node == null) return null;
     return (PsiFile)PsiUtil.getRoot(node).getPsi();
