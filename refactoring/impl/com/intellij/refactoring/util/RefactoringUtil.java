@@ -217,15 +217,12 @@ public class RefactoringUtil {
     PsiSearchHelper helper = manager.getSearchHelper();
     SearchScope scope = element.getUseScope();
     scope = scope.intersectWith(GlobalSearchScope.projectScope(manager.getProject()));
-    int index = stringToSearch.lastIndexOf('.');
-    String identifierToSearch = index >= 0 ? stringToSearch.substring(index + 1) : stringToSearch;
-
-    PsiLiteralExpression[] literals = helper.findStringLiteralsContainingIdentifier(identifierToSearch, scope);
+    PsiLiteralExpression[] literals = helper.findStringLiteralsContainingIdentifier(stringToSearch, scope);
     for (PsiLiteralExpression literal : literals) {
       processStringOrComment(literal, stringToSearch, results, factory);
     }
 
-    PsiElement[] comments = helper.findCommentsContainingIdentifier(identifierToSearch, scope);
+    PsiElement[] comments = helper.findCommentsContainingIdentifier(stringToSearch, scope);
     for (PsiElement comment : comments) {
       processStringOrComment(comment, stringToSearch, results, factory);
     }
