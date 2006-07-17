@@ -3,8 +3,8 @@ package com.intellij.packageDependencies.ui;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Icons;
 
 import javax.swing.*;
 import java.util.Set;
@@ -14,8 +14,6 @@ import java.util.Set;
  * Date: 24-Jan-2006
  */
 public class ModuleGroupNode extends PackageDependenciesNode {
-  public static final Icon CLOSED_ICON = IconLoader.getIcon("/nodes/moduleGroupClosed.png");
-  public static final Icon OPENED_ICON = IconLoader.getIcon("/nodes/moduleGroupOpen.png");
   private ModuleGroup myModuleGroup;
 
   public ModuleGroupNode(ModuleGroup moduleGroup) {
@@ -33,11 +31,11 @@ public class ModuleGroupNode extends PackageDependenciesNode {
   }
 
   public Icon getOpenIcon() {
-    return OPENED_ICON;
+    return Icons.OPENED_MODULE_GROUP_ICON;
   }
 
   public Icon getClosedIcon() {
-    return CLOSED_ICON;
+    return Icons.CLOSED_MODULE_GROUP_ICON;
   }
 
   public String toString() {

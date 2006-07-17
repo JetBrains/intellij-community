@@ -3,6 +3,7 @@
  */
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -10,7 +11,6 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ArrayUtil;
-import com.intellij.ide.IdeBundle;
 
 public class MoveModulesToSubGroupAction extends MoveModulesToGroupAction {
   public MoveModulesToSubGroupAction(ModuleGroup moduleGroup) {
@@ -40,6 +40,6 @@ public class MoveModulesToSubGroupAction extends MoveModulesToGroupAction {
       newGroup = new String[]{group};
     }
 
-    doMove(modules, new ModuleGroup(newGroup));
+    doMove(modules, new ModuleGroup(newGroup), dataContext);
   }
 }

@@ -214,4 +214,5 @@ public interface IdeActions {
   String ACTION_RENAME = "RenameElement";
 
   String ACTION_ANALYZE_DEPENDENCIES = "ShowPackageDeps";
+  String GROUP_MOVE_MODULE_TO_GROUP = "MoveModuleToGroup";
 }

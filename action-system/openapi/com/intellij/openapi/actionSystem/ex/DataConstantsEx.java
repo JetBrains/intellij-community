@@ -83,4 +83,10 @@ public interface DataConstantsEx extends DataConstants {
    * returns array of {@link com.intellij.lang.properties.ResourceBundle}
    */
   @NonNls String RESOURCE_BUNDLE_ARRAY = "resource.bundle.array";
+
+
+  /**
+   * returns {@link com.intellij.openapi.module.ModifiableModuleModel}
+   */
+  @NonNls String MODIFIABLE_MODULE_MODEL = "modifiable.module.model";
 }

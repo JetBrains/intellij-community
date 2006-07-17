@@ -18,10 +18,8 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class LibrariesConfigurable implements NamedConfigurable <String> {
   private static final Icon ICON = IconLoader.getIcon("/modules/libraries.png");
@@ -29,8 +27,7 @@ public class LibrariesConfigurable implements NamedConfigurable <String> {
   private String myLibraryTable;
   private LibrariesModifiableModel myModel;
 
-  private JPanel myPanel = new JPanel(new GridBagLayout());
-
+  private PanelWithText myPanel = new PanelWithText();
 
   protected LibrariesConfigurable(final String libraryTable, final LibrariesModifiableModel model) {
     myLibraryTable = libraryTable;
@@ -52,19 +49,12 @@ public class LibrariesConfigurable implements NamedConfigurable <String> {
   }
 
   public final JComponent createComponent() {
-    myPanel.removeAll();
-    myPanel.setBorder(BorderFactory.createEtchedBorder());
-    JLabel label = new JLabel();
-    @NonNls String opentTag = "<html>";
-    @NonNls String closeTag = "</html>";
     final int choice = getChoice();
-    String message = choice == 1
-                     ? ProjectBundle.message("libraries.node.text.ide")
-                     : choice == 2
-                       ? ProjectBundle.message("libraries.node.text.application.server")
-                       : ProjectBundle.message("libraries.node.text.project");
-    label.setText(opentTag + message + closeTag);
-    myPanel.add(label, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(8,8,8,8), 0, 0));
+    myPanel.setText(choice == 1
+                    ? ProjectBundle.message("libraries.node.text.ide")
+                    : choice == 2
+                      ? ProjectBundle.message("libraries.node.text.application.server")
+                      : ProjectBundle.message("libraries.node.text.project"));
     return myPanel;
   }
 

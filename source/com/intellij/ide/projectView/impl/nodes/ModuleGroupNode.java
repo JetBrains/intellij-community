@@ -8,17 +8,15 @@ import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
-  private static final Icon OPEN_ICON = IconLoader.getIcon("/nodes/moduleGroupOpen.png");
-  private static final Icon CLOSED_ICON = IconLoader.getIcon("/nodes/moduleGroupClosed.png");
-
   public ModuleGroupNode(final Project project, final ModuleGroup value, final ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
@@ -42,15 +40,15 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
     return result;
   }
 
-  public boolean contains(VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     return someChildContainsFile(file);
   }
 
   public void update(PresentationData presentation) {
     final String[] groupPath = getValue().getGroupPath();
     presentation.setPresentableText(groupPath[groupPath.length-1]);
-    presentation.setOpenIcon(OPEN_ICON);
-    presentation.setClosedIcon(CLOSED_ICON);
+    presentation.setOpenIcon(Icons.OPENED_MODULE_GROUP_ICON);
+    presentation.setClosedIcon(Icons.CLOSED_MODULE_GROUP_ICON);
   }
 
   public String getTestPresentation() {

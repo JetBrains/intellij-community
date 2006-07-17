@@ -26,9 +26,15 @@ public class JdkChooserPanel extends JPanel {
   private JList myList = null;
   private DefaultListModel myListModel = null;
   private ProjectJdk myCurrentJdk;
+  private boolean myUseDefaultProject;
 
   public JdkChooserPanel() {
+    this(false);
+  }
+
+  public JdkChooserPanel(boolean useDefaultProject) {
     super(new BorderLayout());
+    myUseDefaultProject = useDefaultProject;
     myListModel = new DefaultListModel();
     myList = new JList(myListModel);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -63,7 +69,7 @@ public class JdkChooserPanel extends JPanel {
   }
 
   public void editJdkTable() {
-    ProjectJdksEditor editor = new ProjectJdksEditor((ProjectJdk)myList.getSelectedValue(), myList);
+    ProjectJdksEditor editor = new ProjectJdksEditor((ProjectJdk)myList.getSelectedValue(), myUseDefaultProject, myList);
     editor.show();
     if (editor.isOK()) {
       ProjectJdk selectedJdk = editor.getSelectedJdk();
@@ -71,8 +77,8 @@ public class JdkChooserPanel extends JPanel {
       fillList();
       // restore selection
       TIntArrayList list = new TIntArrayList();
-      for (int i = 0; i < selectedValues.length; i++) {
-        int idx = myListModel.indexOf(selectedValues[i]);
+      for (Object selectedValue : selectedValues) {
+        int idx = myListModel.indexOf(selectedValue);
         if (idx >= 0) {
           list.add(idx);
         }
@@ -101,8 +107,8 @@ public class JdkChooserPanel extends JPanel {
         return o1.getName().compareToIgnoreCase(o2.getName());
       }
     });
-    for (int i = 0; i < jdks.length; i++) {
-      myListModel.addElement(jdks[i]);
+    for (ProjectJdk jdk : jdks) {
+      myListModel.addElement(jdk);
     }
   }
 

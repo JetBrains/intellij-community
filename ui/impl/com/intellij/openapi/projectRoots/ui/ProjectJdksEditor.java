@@ -22,16 +22,26 @@ public class ProjectJdksEditor extends DialogWrapper{
   private ProjectRootConfigurable myConfigurable;
   private ProjectJdk myProjectJdk;
 
-  public ProjectJdksEditor(ProjectJdk jdk, Component parent){
+
+  public ProjectJdksEditor(ProjectJdk jdk, boolean useDefaultProject, Component parent) {
     super(parent, true);
-    Project project = (Project)DataManager.getInstance().getDataContext(parent).getData(DataConstants.PROJECT);
-    if (project == null){
+    Project project;
+    if (useDefaultProject){
       project = ProjectManager.getInstance().getDefaultProject();
+    } else {
+      project = (Project)DataManager.getInstance().getDataContext(parent).getData(DataConstants.PROJECT);
+      if (project == null){
+        project = ProjectManager.getInstance().getDefaultProject();
+      }
     }
     myConfigurable = ProjectRootConfigurable.getInstance(project);
     myConfigurable.selectNodeInTree(jdk != null ? jdk.getName() : JdksConfigurable.JDKS);
     setTitle(ProjectBundle.message("sdk.configure.title"));
     init();
+  }
+
+  public ProjectJdksEditor(ProjectJdk jdk, Component parent){
+    this(jdk, false, parent);
   }
 
   protected JComponent createCenterPanel(){

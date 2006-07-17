@@ -19,8 +19,8 @@ import com.intellij.openapi.components.LoadCancelledException;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -139,4 +139,8 @@ public interface ModifiableModuleModel {
    * @return the new name, or null if the module has not been renamed.
    */
   @Nullable String getNewName(@NotNull Module module);
+
+  String[] getModuleGroupPath(Module module);
+
+  void setModuleGroupPath(Module module, String[] groupPath);
 }

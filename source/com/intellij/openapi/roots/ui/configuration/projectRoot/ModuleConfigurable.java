@@ -46,8 +46,9 @@ public class ModuleConfigurable implements NamedConfigurable<Module> {
                                IdeBundle.message("title.rename.module"));
       return;
     }
+    myConfigurator.moduleRenamed(myModuleName, name);
     myModuleName = name;
-    myConfigurator.setModified(!Comparing.strEqual(myModule.getName(), myModuleName));
+    myConfigurator.setModified(true);
   }
 
   public Module getEditableObject() {

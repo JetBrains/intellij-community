@@ -3,6 +3,7 @@ package com.intellij.openapi.module.impl;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.LoadCancelledException;
 import com.intellij.openapi.components.ProjectComponent;
@@ -14,14 +15,10 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.pom.PomModel;
 import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
@@ -158,6 +155,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
               final String groupPathString = modulePath.getModuleGroup();
               if (groupPathString != null) {
                 final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
+                myModuleModel.setModuleGroupPath(module, groupPath); //model should be updated too
                 setModuleGroupPath(module, groupPath);
               }
               myFailedModulePaths.remove(modulePath);
@@ -499,6 +497,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     private Map<Module, String> myModulesToNewNamesMap = new HashMap<Module, String>();
     private Map<String, Module> myNewNamesToModulesMap = new HashMap<String, Module>();
     private boolean myIsWritable;
+    private Map<Module, String []> myModuleGroupPath;
 
     ModuleModelImpl() {
       myIsWritable = false;
@@ -506,6 +505,11 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
     ModuleModelImpl(ModuleModelImpl that) {
       myPath2ModelMap.putAll(that.myPath2ModelMap);
+      final Map<Module, String[]> groupPath = that.myModuleGroupPath;
+      if (groupPath != null){
+        myModuleGroupPath = new THashMap<Module, String[]>();
+        myModuleGroupPath.putAll(that.myModuleGroupPath);
+      }
       myIsWritable = true;
       myPomModel = myProject.getModel();
     }
@@ -666,6 +670,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         myPath2ModelMap.values().remove(module);
         myModulesToDispose.add(module);
       }
+      if (myModuleGroupPath != null){
+        myModuleGroupPath.remove(module);
+      }
     }
 
     public Module findModuleByName(String name) {
@@ -761,7 +768,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
       Set<Module> thisModules = new HashSet<Module>(myPath2ModelMap.values());
       Set<Module> thatModules = new HashSet<Module>(ModuleManagerImpl.this.myModuleModel.myPath2ModelMap.values());
-      return !thisModules.equals(thatModules);
+      return !thisModules.equals(thatModules) || !Comparing.equal(ModuleManagerImpl.this.myModuleGroupPath, myModuleGroupPath);
     }
 
     private void disposeModel() {
@@ -771,6 +778,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         Disposer.dispose(module);
       }
       myPath2ModelMap.clear();
+      if (myModuleGroupPath != null) {
+        myModuleGroupPath = null;
+      }
     }
 
     public void projectOpened() {
@@ -789,6 +799,21 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
     }
 
+    public String[] getModuleGroupPath(Module module) {
+      return myModuleGroupPath == null ? null : myModuleGroupPath.get(module);
+    }
+
+    public void setModuleGroupPath(Module module, String[] groupPath) {
+      if (myModuleGroupPath == null) {
+        myModuleGroupPath = new THashMap<Module, String[]>();
+      }
+      if (groupPath == null) {
+        myModuleGroupPath.remove(module);
+      }
+      else {
+        myModuleGroupPath.put(module, groupPath);
+      }
+    }
   }
 
   private void commitModel(ModuleModelImpl moduleModel, Runnable runnable) {
@@ -845,6 +870,15 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
       fireModulesRenamed(modules);
       cleanCachedStuff();
+      if (moduleModel.myModuleGroupPath != null){
+        if (myModuleGroupPath == null){
+          myModuleGroupPath = new THashMap<Module, String[]>();
+        }
+        myModuleGroupPath.clear();
+        myModuleGroupPath.putAll(moduleModel.myModuleGroupPath);
+      } else if (myModuleGroupPath != null) {
+        myModuleGroupPath = null;
+      }
     }
     finally {
       ProjectRootManagerEx.getInstanceEx(myProject).rootsChanged(false);

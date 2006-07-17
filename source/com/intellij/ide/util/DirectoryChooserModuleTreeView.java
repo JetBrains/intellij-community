@@ -1,8 +1,11 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IconUtilEx;
+import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.ide.projectView.impl.ModuleGroupUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -11,6 +14,9 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.Icons;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.Tree;
 
@@ -30,14 +36,17 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   private final List<DirectoryChooser.ItemWrapper>  myItems = new ArrayList<DirectoryChooser.ItemWrapper>();
   private final Map<DirectoryChooser.ItemWrapper, DefaultMutableTreeNode> myItemNodes = new HashMap<DirectoryChooser.ItemWrapper, DefaultMutableTreeNode>();
   private final Map<Module, DefaultMutableTreeNode> myModuleNodes = new HashMap<Module, DefaultMutableTreeNode>();
+  private final Map<ModuleGroup, DefaultMutableTreeNode> myModuleGroupNodes = new HashMap<ModuleGroup, DefaultMutableTreeNode>();
   private final DefaultMutableTreeNode myRootNode;
   private ProjectFileIndex myFileIndex;
+  private Project myProject;
 
   public DirectoryChooserModuleTreeView(Project project) {
     myRootNode = new DefaultMutableTreeNode();
     myTree = new Tree(myRootNode);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    myProject = project;
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new MyTreeCellRenderer());
@@ -59,6 +68,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     myItems.clear();
     myItemNodes.clear();
     myModuleNodes.clear();
+    myModuleGroupNodes.clear();
   }
 
   public JComponent getComponent() {
@@ -111,23 +121,55 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     DefaultMutableTreeNode node = myModuleNodes.get(module);
     if (node == null) {
       node = new DefaultMutableTreeNode(module, true);
-      final Enumeration enumeration = myRootNode.children();
-
-      final int index = Collections.binarySearch(Collections.list(enumeration), node, new Comparator<DefaultMutableTreeNode>() {
-              public int compare(DefaultMutableTreeNode node1, DefaultMutableTreeNode node2) {
-                return ((Module)node1.getUserObject()).getName().compareToIgnoreCase(((Module)node2.getUserObject()).getName());
-              }
-            });
-      final int insertionPoint = -(index+1);
-      LOG.assertTrue(0 <= insertionPoint && insertionPoint <= myRootNode.getChildCount());
-      myRootNode.insert(node, insertionPoint);
-      ((DefaultTreeModel)myTree.getModel()).nodeStructureChanged(myRootNode);
+      LOG.assertTrue(module != null);
+      final String[] groupPath = ModuleManager.getInstance(myProject).getModuleGroupPath(module);
+      if (groupPath == null || groupPath.length == 0){
+        insertNode(node, myRootNode);
+      } else {
+        final DefaultMutableTreeNode parentNode = ModuleGroupUtil.buildModuleGroupPath(new ModuleGroup(groupPath),
+                                                                                       myRootNode,
+                                                                                       myModuleGroupNodes,
+                                                                                       new Consumer<ModuleGroupUtil.ParentChildRelation<DefaultMutableTreeNode>>() {
+                                                                                         public void consume(final ModuleGroupUtil.ParentChildRelation<DefaultMutableTreeNode> parentChildRelation) {
+                                                                                           insertNode(parentChildRelation.getChild(), parentChildRelation.getParent());
+                                                                                         }
+                                                                                       },
+                                                                                       new Function<ModuleGroup, DefaultMutableTreeNode>() {
+                                                                                         public DefaultMutableTreeNode fun(final ModuleGroup moduleGroup) {
+                                                                                           return new DefaultMutableTreeNode(moduleGroup, true);
+                                                                                         }
+                                                                                       });
+        insertNode(node, parentNode);
+      }
       myModuleNodes.put(module, node);
     }
     final DefaultMutableTreeNode itemNode = new DefaultMutableTreeNode(itemWrapper, false);
     myItemNodes.put(itemWrapper, itemNode);
     node.add(itemNode);
     ((DefaultTreeModel)myTree.getModel()).nodeStructureChanged(node);
+  }
+
+  private void insertNode(final DefaultMutableTreeNode nodeToInsert, DefaultMutableTreeNode rootNode) {
+    final Enumeration enumeration = rootNode.children();
+    final int index = Collections.binarySearch(Collections.list(enumeration), nodeToInsert, new Comparator<DefaultMutableTreeNode>() {
+      public int compare(DefaultMutableTreeNode node1, DefaultMutableTreeNode node2) {
+        final Object o1 = node1.getUserObject();
+        final Object o2 = node2.getUserObject();
+        if (o1 instanceof Module && o2 instanceof Module) {
+          return ((Module)o1).getName().compareToIgnoreCase(((Module)o2).getName());
+        }
+        if (o1 instanceof ModuleGroup && o2 instanceof ModuleGroup){
+          return ((ModuleGroup)o1).toString()
+            .compareToIgnoreCase(((ModuleGroup)o2).toString());
+        }
+        if (o1 instanceof ModuleGroup) return -1;
+        return 1;
+      }
+    });
+    final int insertionPoint = -(index+1);
+    LOG.assertTrue(0 <= insertionPoint && insertionPoint <= rootNode.getChildCount());
+    rootNode.insert(nodeToInsert, insertionPoint);
+    ((DefaultTreeModel)myTree.getModel()).nodeStructureChanged(rootNode);
   }
 
   public void listFilled() {
@@ -158,9 +200,9 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
       if (value instanceof DirectoryChooser.ItemWrapper) {
         DirectoryChooser.ItemWrapper wrapper = (DirectoryChooser.ItemWrapper)value;
         DirectoryChooser.PathFragment[] fragments = wrapper.getFragments();
-        for (int i = 0; i < fragments.length; i++) {
-          DirectoryChooser.PathFragment fragment = fragments[i];
-          append(fragment.getText(), fragment.isCommon() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        for (DirectoryChooser.PathFragment fragment : fragments) {
+          append(fragment.getText(),
+                 fragment.isCommon() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
         setIcon(wrapper.getIcon(myFileIndex));
       }
@@ -168,6 +210,9 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
         final Module module = (Module)value;
         append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(IconUtilEx.getIcon(module, expanded ? Iconable.ICON_FLAG_OPEN : Iconable.ICON_FLAG_CLOSED));
+      } else if (value instanceof ModuleGroup) {
+        append(((ModuleGroup)value).toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        setIcon(expanded ? Icons.OPENED_MODULE_GROUP_ICON : Icons.CLOSED_MODULE_GROUP_ICON);
       }
     }
   }

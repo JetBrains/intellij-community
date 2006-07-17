@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.GraphGenerator;
@@ -221,6 +222,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
 
   public Module addModule(Component parent) {
+    if (myProject.isDefault()) return null;
     final ModuleBuilder builder = runModuleWizard(parent);
     if (builder != null) {
       final Module module = createModule(builder);
@@ -343,5 +345,14 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         });
       }
     });
+  }
+
+  public void moduleRenamed(final String oldName, final String name) {
+    for (ModuleEditor moduleEditor : myModuleEditors) {
+      if (Comparing.strEqual(moduleEditor.getName(), oldName)){
+        moduleEditor.setModuleName(name);
+        return;
+      }
+    }
   }
 }

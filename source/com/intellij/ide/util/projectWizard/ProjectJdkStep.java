@@ -28,7 +28,7 @@ public class ProjectJdkStep extends ModuleWizardStep {
 
   public ProjectJdkStep(WizardContext context) {
     myContext = context;
-    myJdkChooser = new JdkChooserPanel();
+    myJdkChooser = new JdkChooserPanel(true);
 
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());

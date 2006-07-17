@@ -6,8 +6,11 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
 import com.intellij.find.FindBundle;
+import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.ide.projectView.impl.ModuleGroupUtil;
 import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
@@ -43,6 +46,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -155,6 +160,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     };
     findUsages.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES).getShortcutSet(), myTree);
     result.add(findUsages);
+    result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_MOVE_MODULE_TO_GROUP));
     return result;
   }
 
@@ -208,12 +214,31 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   private void createProjectNodes() {
     myProjectNode = new MyNode(myModulesConfigurable, false);
+    final Map<ModuleGroup, MyNode> moduleGroup2NodeMap = new HashMap<ModuleGroup, MyNode>();
     final Module[] modules = myModuleManager.getModules();
     for (final Module module : modules) {
       ModuleConfigurable configurable = new ModuleConfigurable(myModulesConfigurator, module);
       final MyNode moduleNode = new MyNode(configurable, true);
       createModuleLibraries(module, moduleNode);
-      addNode(moduleNode, myProjectNode);
+      final String[] groupPath = myModulesConfigurator.getModuleModel().getModuleGroupPath(module);
+      if (groupPath == null || groupPath.length == 0){
+        addNode(moduleNode, myProjectNode);
+      } else {
+        final MyNode moduleGroupNode = ModuleGroupUtil
+          .buildModuleGroupPath(new ModuleGroup(groupPath), myProjectNode, moduleGroup2NodeMap,
+                                new Consumer<ModuleGroupUtil.ParentChildRelation<MyNode>>() {
+                                  public void consume(final ModuleGroupUtil.ParentChildRelation<MyNode> parentChildRelation) {
+                                    addNode(parentChildRelation.getChild(), parentChildRelation.getParent());
+                                  }
+                                },
+                                new Function<ModuleGroup, MyNode>() {
+                                  public MyNode fun(final ModuleGroup moduleGroup) {
+                                    final NamedConfigurable moduleGroupConfigurable = new ModuleGroupConfigurable(moduleGroup);
+                                    return new MyNode(moduleGroupConfigurable, false, true);
+                                  }
+                                });
+        addNode(moduleNode, moduleGroupNode);
+      }
     }
 
     final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
@@ -228,6 +253,69 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myProjectNode.add(myProjectLibrariesNode);
 
     myRoot.add(myProjectNode);
+  }
+
+  public boolean updateProjectTree(final Module[] modules, final ModuleGroup group) {
+    if (myRoot.getChildCount() == 0) return false; //isn't visible
+    final MyNode [] nodes = new MyNode[modules.length];
+    int i = 0;
+    for (Module module : modules) {
+      MyNode node = findNodeByObject(myProjectNode, module);
+      node.removeFromParent();
+      nodes[i ++] = node;
+    }
+    for (final MyNode moduleNode : nodes) {
+      final String[] groupPath = group != null ? group.getGroupPath() : null;
+      if (groupPath == null || groupPath.length == 0){
+        addNode(moduleNode, myProjectNode);
+      } else {
+        final MyNode moduleGroupNode = ModuleGroupUtil
+          .updateModuleGroupPath(new ModuleGroup(groupPath), myProjectNode, new Function<ModuleGroup, MyNode>() {
+            public MyNode fun(final ModuleGroup group) {
+              return findNodeByObject(myProjectNode, group);
+            }
+          }, new Consumer<ModuleGroupUtil.ParentChildRelation<MyNode>>() {
+            public void consume(final ModuleGroupUtil.ParentChildRelation<MyNode> parentChildRelation) {
+              addNode(parentChildRelation.getChild(), parentChildRelation.getParent());
+            }
+          }, new Function<ModuleGroup, MyNode>() {
+            public MyNode fun(final ModuleGroup moduleGroup) {
+              final NamedConfigurable moduleGroupConfigurable = new ModuleGroupConfigurable(moduleGroup);
+              return new MyNode(moduleGroupConfigurable, false, true);
+            }
+          });
+        addNode(moduleNode, moduleGroupNode);
+      }
+    }
+    ((DefaultTreeModel)myTree.getModel()).reload(myProjectNode);
+    return true;
+  }
+
+  protected void addNode(MyNode nodeToAdd, MyNode parent) {
+    parent.add(nodeToAdd);
+    TreeUtil.sort(parent, new Comparator() {
+      public int compare(final Object o1, final Object o2) {
+        final MyNode node1 = (MyNode)o1;
+        final MyNode node2 = (MyNode)o2;
+        final Object editableObject1 = node1.getConfigurable().getEditableObject();
+        final Object editableObject2 = node2.getConfigurable().getEditableObject();
+        if (editableObject1.getClass() == editableObject2.getClass()) {
+          return node1.getDisplayName().compareToIgnoreCase(node2.getDisplayName());
+        }
+
+        if (editableObject2 instanceof Module && editableObject1 instanceof ModuleGroup) return -1;
+        if (editableObject1 instanceof Module && editableObject2 instanceof ModuleGroup) return 1;
+
+        if (editableObject2 instanceof Module && editableObject1 instanceof String) return 1;
+        if (editableObject1 instanceof Module && editableObject2 instanceof String) return -1;
+
+        if (editableObject2 instanceof ModuleGroup && editableObject1 instanceof String) return 1;
+        if (editableObject1 instanceof ModuleGroup && editableObject2 instanceof String) return -1;
+
+        return 0;
+      }
+    });
+    ((DefaultTreeModel)myTree.getModel()).reload(parent);
   }
 
   private void createModuleLibraries(final Module module, final MyNode moduleNode) {
@@ -376,6 +464,11 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myGlobalLibrariesProvider = null;
     myApplicationServerLibrariesProvider = null;
     super.disposeUIResources();
+  }
+
+
+  public JComponent createComponent() {
+    return new MyDataProviderWrapper();
   }
 
   protected void processRemovedItems() {
@@ -648,6 +741,27 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel), true), myJdksNode);
   }
 
+  private class MyDataProviderWrapper extends JPanel implements DataProvider {
+    public MyDataProviderWrapper() {
+      super(new BorderLayout());
+      add(myWholePanel, BorderLayout.CENTER);
+    }
+
+    @Nullable
+    public Object getData(@NonNls String dataId) {
+      if (DataConstants.MODULE_CONTEXT_ARRAY.equals(dataId)){
+        final Object o = getSelectedObject();
+        if (o instanceof Module){
+          return new Module[]{(Module)o};
+        }
+      }
+      if (DataConstantsEx.MODIFIABLE_MODULE_MODEL.equals(dataId)){
+        return myModulesConfigurator.getModuleModel();
+      }
+      return null;
+    }
+  }
+
   private class MyRemoveAction extends MyDeleteAction {
     public MyRemoveAction(final Condition<Object> availableCondition) {
       super(availableCondition);
@@ -729,6 +843,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       public void actionPerformed(AnActionEvent e) {
         LibraryTableEditor.editLibraryTable(getProjectLibrariesProvider(), myProject).createAddLibraryAction(true, myWholePanel).actionPerformed(null);
       }
+
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(!myProject.isDefault());
+      }
     });
     group.add(new AnAction(ProjectBundle.message("add.new.application.server.library.text")) {
       public void actionPerformed(AnActionEvent e) {
@@ -790,7 +908,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       final String jdkChoice = ProjectBundle.message("add.new.jdk.text");
       actions.add(jdkChoice);
       final String moduleChoice = ProjectBundle.message("add.new.module.text");
-      actions.add(moduleChoice);
+      if (!myProject.isDefault()) {
+        actions.add(moduleChoice);
+      }
       List<Icon> icons = new ArrayList<Icon>();
       final ListPopup listPopup = jbPopupFactory.createWizardStep(new BaseListPopupStep<String>(ProjectBundle.message("add.action.name"), actions, icons) {
         public boolean hasSubstep(final String selectedValue) {
@@ -833,8 +953,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
             return 0;
           } else if (selectedObject instanceof ProjectJdk || selectedObject instanceof ProjectJdksModel){
             return 1;
+          } else if (selectedObject instanceof Module){
+            return 2;
           }
-          return 2;
+          return 0;
         }
       });
       listPopup.showUnderneathOf(myNorthPanel);

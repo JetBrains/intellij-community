@@ -41,7 +41,7 @@ public class ModuleEditor {
   private static String ourSelectedTabName;
   private TabbedPaneWrapper myTabbedPane;
   private final ModulesProvider myModulesProvider;
-  private final String myName;
+  private String myName;
   @Nullable
   private final ModuleBuilder myModuleBuilder;
   private List<ModuleConfigurationEditor> myEditors = new ArrayList<ModuleConfigurationEditor>();
@@ -216,8 +216,9 @@ public class ModuleEditor {
       editor.apply();
     }
 
-    if (getModule().getModuleType().isJ2EE() && myModifiableRootModel != null) {
-      final JavaeeModulePropertiesEx j2EEModulePropertiesEx = (JavaeeModulePropertiesEx)JavaeeModuleProperties.getInstance(getModule());
+    final Module module = myModifiableRootModel.getModule();
+    if (module.getModuleType().isJ2EE() && myModifiableRootModel != null) {
+      final JavaeeModulePropertiesEx j2EEModulePropertiesEx = (JavaeeModulePropertiesEx)JavaeeModuleProperties.getInstance(module);
       if (j2EEModulePropertiesEx != null && j2EEModulePropertiesEx.getModifiableModel() != null) { //start edit was call
         j2EEModulePropertiesEx.commit(myModifiableRootModel);
       }
@@ -419,6 +420,10 @@ public class ModuleEditor {
     }
     final ModuleConfigurationEditor moduleElementsEditor = myEditors.get(myTabbedPane.getSelectedIndex());
     return moduleElementsEditor.getHelpTopic();
+  }
+
+  public void setModuleName(final String name) {
+    myName = name;
   }
 
   private class ModuleEditorPanel extends JPanel implements DataProvider{
