@@ -20,7 +20,7 @@ import java.util.Set;
 public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T> implements PsiPolyVariantReference {
 
   private List<PsiReference> myReferences = new ArrayList<PsiReference>();
-  private int myChoosenOne;
+  private int myChoosenOne = -1;
   private boolean mySoft;
 
   public PsiDynaReference(final T psiElement, boolean soft) {
