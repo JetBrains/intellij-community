@@ -30,23 +30,23 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
 
   private static final CvsMessagePattern ABORTED_PATTERD = new CvsMessagePattern("cvs [* aborted]*");
   @NonNls private static CvsMessagePattern[] ERRORS_PATTERNS = new CvsMessagePattern[]{ABORTED_PATTERD,
-    new CvsMessagePattern("cvs server: invalid option*"), new CvsMessagePattern(new String[]{"cvs checkout: could not check out ", "*"}, 2),
-    new CvsMessagePattern("cvs update: could not merge revision * of *: No such file or directory"),
-    new CvsMessagePattern(new String[]{"cvs update: could not patch ", "*", "; will refetch"}, 2),
+    new CvsMessagePattern("cvs* server: invalid option*"), new CvsMessagePattern(new String[]{"cvs checkout: could not check out ", "*"}, 2),
+    new CvsMessagePattern("cvs* update: could not merge revision * of *: No such file or directory"),
+    new CvsMessagePattern(new String[]{"cvs* update: could not patch ", "*", "; will refetch"}, 2),
     new CvsMessagePattern("dying gasps from * unexpected"),
     new CvsMessagePattern("end of file from server (consult above messages if any)"),
     new CvsMessagePattern("\\*PANIC\\* administration files missing"),
-    new CvsMessagePattern(new String[]{"cvs *: Up-to-date check failed for `", "*", "'"}, 2),
-    new CvsMessagePattern("cvs server: cannot add file on non-branch tag *"), new CvsMessagePattern("Cannot access *"),
+    new CvsMessagePattern(new String[]{"cvs*: Up-to-date check failed for `", "*", "'"}, 2),
+    new CvsMessagePattern("cvs* server: cannot add file on non-branch tag *"), new CvsMessagePattern("Cannot access *"),
     new CvsMessagePattern("error  Permission denied"),
-    new CvsMessagePattern(new String[]{"cvs server: ", "*", " already exists, with version number *"}, 2),
-    new CvsMessagePattern(new String[]{"cvs server: cannot commitAssertingNoCircularDependency with sticky date for file `", "*", "'"}, 2),
-    new CvsMessagePattern(new String[]{"cvs server: nothing known about `", "*", "'"}, 2),
-    new CvsMessagePattern("cvs server: sticky tag `" + "*" + "' for file `" + "*" + "' is not a branch"),
-    new CvsMessagePattern("cvs server: ERROR: cannot mkdir * -- not added: No such file or directory"),
+    new CvsMessagePattern(new String[]{"cvs* server: ", "*", " already exists, with version number *"}, 2),
+    new CvsMessagePattern(new String[]{"cvs* server: cannot commitAssertingNoCircularDependency with sticky date for file `", "*", "'"}, 2),
+    new CvsMessagePattern(new String[]{"cvs* server: nothing known about `", "*", "'"}, 2),
+    new CvsMessagePattern("cvs* server: sticky tag `" + "*" + "' for file `" + "*" + "' is not a branch"),
+    new CvsMessagePattern("cvs* server: ERROR: cannot mkdir * -- not added: No such file or directory"),
     new CvsMessagePattern(new String[]{"cvs server: nothing known about ", "*"}, 2),
     new CvsMessagePattern("Root * must be an absolute pathname"), new CvsMessagePattern("protocol error: *"),
-    new CvsMessagePattern("cvs tag: nothing known about *")};
+    new CvsMessagePattern("cvs* tag: nothing known about *")};
 
   private static CvsMessagePattern[] WARNINGS_PATTERNS = new CvsMessagePattern[]{
     new CvsMessagePattern("cvs server: cannot open *: mismission denied"),
@@ -141,14 +141,14 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
 
   }
 
-  private boolean isFileMessage(String message) {
+  private static boolean isFileMessage(String message) {
     for (Pattern pattern : FILE_MESSAGE_PATTERNS) {
       if (pattern.matcher(message).matches()) return true;
     }
     return false;
   }
 
-  private boolean isMessage(String message) {
+  private static boolean isMessage(String message) {
     for (Pattern pattern : MESSAGE_PATTERNS) {
       if (pattern.matcher(message).matches()) return true;
     }
@@ -157,7 +157,7 @@ public class CvsMessagesTranslator implements IFileInfoListener, IMessageListene
 
 
   @Nullable
-  private CvsMessagePattern getErrorMessagePattern(String message, CvsMessagePattern[] patterns) {
+  private static CvsMessagePattern getErrorMessagePattern(String message, CvsMessagePattern[] patterns) {
     for (CvsMessagePattern pattern : patterns) {
       if (pattern.matches(message)) return pattern;
     }
