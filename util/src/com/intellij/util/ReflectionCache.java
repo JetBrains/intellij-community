@@ -80,7 +80,9 @@ public class ReflectionCache {
   }
 
   public static Class[] getInterfaces(Class aClass) {
-    return ourInterfaces.get(aClass);
+    synchronized (ourInterfaces) {
+      return ourInterfaces.get(aClass);
+    }
   }
 
   public static Method[] getMethods(Class aClass) {
@@ -102,7 +104,9 @@ public class ReflectionCache {
   }
 
   public static Type[] getGenericInterfaces(Class aClass) {
-    return ourGenericInterfaces.get(aClass);
+    synchronized (ourGenericInterfaces) {
+      return ourGenericInterfaces.get(aClass);
+    }
   }
 
 }
