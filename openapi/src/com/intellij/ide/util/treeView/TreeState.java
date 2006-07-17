@@ -274,14 +274,15 @@ public class TreeState implements JDOMExternalizable {
       if (pathElement.matchedWith(nodeDescriptor)) return childNode;
     }
 
-    for (int j = 0; j < parent.getChildCount(); j++) {
-      final TreeNode child = parent.getChildAt(j);
-      if (!(child instanceof DefaultMutableTreeNode)) continue;
-      final DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)child;
-      final Object userObject = childNode.getUserObject();
-      if (!(userObject instanceof NodeDescriptor)) continue;
-      final NodeDescriptor nodeDescriptor = (NodeDescriptor)userObject;
-      if (pathElement.matchedWithByIndex(nodeDescriptor)) return childNode;
+    if (parent.getChildCount() > 0) {
+      int index = pathElement.myItemIndex;
+      if (index >= parent.getChildCount()) {
+        index = parent.getChildCount()-1;
+      }
+      final TreeNode child = parent.getChildAt(index);
+      if (child instanceof DefaultMutableTreeNode) {
+        return (DefaultMutableTreeNode) child;
+      }
     }
 
     return null;
