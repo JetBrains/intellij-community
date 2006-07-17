@@ -1,46 +1,47 @@
 package com.intellij.jar;
 
+import com.intellij.execution.util.RefactoringElementListenerComposite;
 import com.intellij.ide.IdeBundle;
 import com.intellij.javaee.make.*;
 import com.intellij.javaee.module.LibraryLink;
 import com.intellij.javaee.module.ModuleContainer;
 import com.intellij.javaee.module.ModuleLink;
-import com.intellij.openapi.compiler.DummyCompileContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.DummyCompileContext;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.refactoring.listeners.RefactoringListenerManager;
-import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
-import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiClass;
-import com.intellij.execution.util.RefactoringElementListenerComposite;
+import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
+import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Set;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.jar.Attributes;
 
 /**
  * @author cdr
@@ -145,7 +146,9 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
         BuildJarSettings buildJarSettings = BuildJarSettings.getInstance(module);
         if (buildJarSettings == null || !buildJarSettings.isBuildJar()) continue;
         String presentableJarPath = "'" + FileUtil.toSystemDependentName(VfsUtil.urlToPath(buildJarSettings.getJarUrl() + "'"));
-        progressIndicator.setText(IdeBundle.message("jar.build.progress", presentableJarPath));
+        if (progressIndicator != null) {
+          progressIndicator.setText(IdeBundle.message("jar.build.progress", presentableJarPath));
+        }
         buildJar(module, buildJarSettings,progressIndicator);
         WindowManager.getInstance().getStatusBar(myProject).setInfo(IdeBundle.message("jar.build.success.message", presentableJarPath));
       }
@@ -196,7 +199,9 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
             File file = fileCopyInstruction.getFile();
             if (file == null || !file.exists()) return true;
             String presentablePath = FileUtil.toSystemDependentName(file.getPath());
-            progressIndicator.setText2(IdeBundle.message("jar.build.processing.file.progress", presentablePath));
+            if (progressIndicator != null) {
+              progressIndicator.setText2(IdeBundle.message("jar.build.processing.file.progress", presentablePath));
+            }
           }
           instruction.addFilesToJar(DummyCompileContext.getInstance(), tempFile, jarOutputStream, dependencies, tempWrittenRelativePaths, null);
           return true;
