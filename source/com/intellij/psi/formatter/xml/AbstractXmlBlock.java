@@ -56,7 +56,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
 
-  protected WrapType getWrapType(final int type) {
+  protected static WrapType getWrapType(final int type) {
     if (type == CodeStyleSettings.DO_NOT_WRAP) return WrapType.NONE;
     if (type == CodeStyleSettings.WRAP_ALWAYS) return WrapType.ALWAYS;
     if (type == CodeStyleSettings.WRAP_AS_NEEDED) return WrapType.NORMAL;
@@ -94,7 +94,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return null;
   }
 
-  private boolean canWrapTagEnd(final XmlTag tag) {
+  private static boolean canWrapTagEnd(final XmlTag tag) {
     final String name = tag.getName();
     return tag.getSubTags().length > 0 || (name.toLowerCase().startsWith(JSP_TAG_PREFIX));
   }
@@ -103,7 +103,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return getTag(myNode);
   }
 
-  protected XmlTag getTag(final ASTNode node) {
+  protected static XmlTag getTag(final ASTNode node) {
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
     if (element instanceof XmlTag) {
       return (XmlTag)element;
@@ -192,7 +192,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   }
 
-  private XmlTag[] collectSubTags(final XmlElement node) {
+  private static XmlTag[] collectSubTags(final XmlElement node) {
     final List<XmlTag> result = new ArrayList<XmlTag>();
     node.processElements(new PsiElementProcessor() {
       public boolean execute(final PsiElement element) {
@@ -347,18 +347,19 @@ private boolean canBeAnotherTreeTagStart(final ASTNode child) {
             child.getPsi() instanceof OuterLanguageElement);
 
   }
-  protected boolean isXmlTag(final ASTNode child) {
+  protected static boolean isXmlTag(final ASTNode child) {
     return isXmlTag(child.getPsi());
   }
 
-  protected boolean isXmlTag(final PsiElement psi) {
+  protected static boolean isXmlTag(final PsiElement psi) {
     return psi instanceof XmlTag && !(psi instanceof JspScriptlet) && !(psi instanceof JspDeclaration);
   }
 
-  private boolean useMyFormatter(final Language myLanguage, final Language childLanguage) {
+  private static boolean useMyFormatter(final Language myLanguage, final Language childLanguage) {
     return myLanguage == childLanguage
            || childLanguage == StdLanguages.JAVA
            || childLanguage == StdLanguages.HTML
+           || childLanguage == StdLanguages.XHTML
            || childLanguage == StdLanguages.XML
            || childLanguage == StdLanguages.JSP
            || childLanguage == StdLanguages.JSPX
@@ -439,7 +440,6 @@ private boolean canBeAnotherTreeTagStart(final ASTNode child) {
     return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, documentModel), null, null);
   }
 
-  @Nullable
   protected void createJspTextNode(final List<Block> localResult, final ASTNode child, final Indent indent) {
 
     localResult.add(new JspTextBlock(child,
