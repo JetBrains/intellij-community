@@ -35,6 +35,16 @@ import java.awt.event.MouseEvent;
  * @author yole
  */
 public final class RadTabbedPane extends RadContainer implements ITabbedPane {
+  public static class Factory extends RadComponentFactory {
+    public RadComponent newInstance(Module module, Class aClass, String id) {
+      return new RadTabbedPane(module, aClass, id);
+    }
+
+    public RadComponent newInstance(final Class componentClass, final String id, final Palette palette) {
+      return new RadTabbedPane(componentClass, id, palette);
+    }
+  }
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadTabbedPane");
   /**
    * value: HashMap<String, LwTabbedPane.Constraints>

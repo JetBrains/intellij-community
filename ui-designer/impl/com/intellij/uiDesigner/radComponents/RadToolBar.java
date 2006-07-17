@@ -19,6 +19,16 @@ import java.awt.*;
  * @author yole
  */
 public class RadToolBar extends RadContainer {
+  public static class Factory extends RadComponentFactory {
+    public RadComponent newInstance(Module module, Class aClass, String id) {
+      return new RadToolBar(module, aClass, id);
+    }
+
+    public RadComponent newInstance(final Class componentClass, final String id, final Palette palette) {
+      return new RadToolBar(componentClass, id, palette);
+    }
+  }
+
   public RadToolBar(final Module module, final Class componentClass, final String id) {
     super(module, componentClass, id);
   }

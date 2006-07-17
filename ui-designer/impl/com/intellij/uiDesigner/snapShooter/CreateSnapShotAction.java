@@ -43,6 +43,7 @@ import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadComponentFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -445,8 +446,8 @@ public class CreateSnapShotAction extends AnAction {
 
     private void collectUnknownLayoutManagerClasses(final Project project, final SnapShotRemoteComponent rc,
                                                     final Set<String> layoutManagerClasses) throws IOException {
-      Class radClass = InsertComponentProcessor.getRadComponentClass(project, rc.getClassName());
-      if (RadContainer.class.equals(radClass) && rc.getLayoutManager().length() > 0 &&
+      RadComponentFactory factory = InsertComponentProcessor.getRadComponentFactory(project, rc.getClassName());
+      if (factory instanceof RadContainer.Factory && rc.getLayoutManager().length() > 0 &&
           !LayoutManagerRegistry.isKnownLayoutClass(rc.getLayoutManager())) {
         layoutManagerClasses.add(rc.getLayoutManager());
       }

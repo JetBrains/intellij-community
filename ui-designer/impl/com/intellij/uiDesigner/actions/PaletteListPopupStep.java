@@ -134,7 +134,7 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
   public void hideNonAtomic() {
     for(int i=myItems.size()-1; i >= 0; i--) {
       ComponentItem item = myItems.get(i);
-      if (InsertComponentProcessor.getRadComponentClass(myProject, item.getClassName()) != null || item.getBoundForm() != null) {
+      if (InsertComponentProcessor.getRadComponentFactory(myProject, item.getClassName()) != null || item.getBoundForm() != null) {
         myItems.remove(i);
       }
     }

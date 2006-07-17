@@ -694,18 +694,12 @@ public abstract class RadComponent implements IComponent {
       }
     }
     else {
-      final Class<? extends RadComponent> radClass = InsertComponentProcessor.getRadComponentClass(componentClass);
-      if (radClass == null) {
+      final RadComponentFactory factory = InsertComponentProcessor.getRadComponentFactory(componentClass);
+      if (factory == null) {
         result = new RadAtomicComponent(componentClass, id, context.getPalette());
       }
       else {
-        try {
-          final Constructor<? extends RadComponent> constructor = radClass.getConstructor(Class.class, String.class, Palette.class);
-          result = constructor.newInstance(componentClass, id, context.getPalette());
-        }
-        catch(Exception ex) {
-          throw new RuntimeException(ex);
-        }
+        result = factory.newInstance(componentClass, id, context.getPalette());
       }
     }
 

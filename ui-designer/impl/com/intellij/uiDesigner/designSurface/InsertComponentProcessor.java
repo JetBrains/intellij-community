@@ -6,12 +6,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -38,7 +38,6 @@ import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.lang.reflect.Constructor;
 
 /**
  * @author Anton Katilin
@@ -55,16 +54,16 @@ public final class InsertComponentProcessor extends EventProcessor {
   private ComponentItem myComponentToInsert;
   private DropLocation myLastLocation;
 
-  private static Map<String, Class<? extends RadComponent>> myComponentClassMap = new HashMap<String, Class<? extends RadComponent>>();
+  private static Map<String, RadComponentFactory> myComponentClassMap = new HashMap<String, RadComponentFactory>();
   static {
-    myComponentClassMap.put(JScrollPane.class.getName(), RadScrollPane.class);
-    myComponentClassMap.put(JPanel.class.getName(), RadContainer.class);
-    myComponentClassMap.put(VSpacer.class.getName(), RadVSpacer.class);
-    myComponentClassMap.put(HSpacer.class.getName(), RadHSpacer.class);
-    myComponentClassMap.put(JTabbedPane.class.getName(), RadTabbedPane.class);
-    myComponentClassMap.put(JSplitPane.class.getName(), RadSplitPane.class);
-    myComponentClassMap.put(JToolBar.class.getName(), RadToolBar.class);
-    myComponentClassMap.put(JTable.class.getName(), RadTable.class);
+    myComponentClassMap.put(JScrollPane.class.getName(), new RadScrollPane.Factory());
+    myComponentClassMap.put(JPanel.class.getName(), new RadContainer.Factory());
+    myComponentClassMap.put(VSpacer.class.getName(), new RadVSpacer.Factory());
+    myComponentClassMap.put(HSpacer.class.getName(), new RadHSpacer.Factory());
+    myComponentClassMap.put(JTabbedPane.class.getName(), new RadTabbedPane.Factory());
+    myComponentClassMap.put(JSplitPane.class.getName(), new RadSplitPane.Factory());
+    myComponentClassMap.put(JToolBar.class.getName(), new RadToolBar.Factory());
+    myComponentClassMap.put(JTable.class.getName(), new RadTable.Factory());
   }
 
   public InsertComponentProcessor(@NotNull final GuiEditor editor) {
@@ -429,12 +428,11 @@ public final class InsertComponentProcessor extends EventProcessor {
     RadComponent result;
     final String id = FormEditingUtil.generateId(editor.getRootContainer());
 
-    Class radComponentClass = getRadComponentClass(editor.getProject(), item.getClassName());
+    RadComponentFactory factory = getRadComponentFactory(editor.getProject(), item.getClassName());
     final ClassLoader loader = LoaderFactory.getInstance(editor.getProject()).getLoader(editor.getFile());
-    if (radComponentClass != null) {
+    if (factory != null) {
       try {
-        final Constructor constructor = radComponentClass.getConstructor(Module.class, Class.class, String.class);
-        result = (RadComponent) constructor.newInstance(editor.getModule(), Class.forName(item.getClassName(), true, loader), id);
+        result = factory.newInstance(editor.getModule(), item.getClassName(), id);
       }
       catch (Exception e) {
         LOG.error(e);
@@ -495,7 +493,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     return result;
   }
 
-  public static Class<? extends RadComponent> getRadComponentClass(Project project, final String className) {
+  public static RadComponentFactory getRadComponentFactory(Project project, final String className) {
     ClassLoader loader = LoaderFactory.getInstance(project).getProjectClassLoader();
     Class componentClass;
     try {
@@ -504,14 +502,17 @@ public final class InsertComponentProcessor extends EventProcessor {
     catch (ClassNotFoundException e) {
       return myComponentClassMap.get(className);
     }
-    return getRadComponentClass(componentClass);
+    return getRadComponentFactory(componentClass);
   }
 
-  public static Class<? extends RadComponent> getRadComponentClass(Class componentClass) {
+  public static RadComponentFactory getRadComponentFactory(Class componentClass) {
     while(componentClass != null) {
-      Class<? extends RadComponent> c = myComponentClassMap.get(componentClass.getName());
+      RadComponentFactory c = myComponentClassMap.get(componentClass.getName());
       if (c != null) return c;
       componentClass = componentClass.getSuperclass();
+      // if a component item is a JPanel subclass, a RadContainer should be created for it only
+      // if it's marked as "Is Container"
+      if (JPanel.class.equals(componentClass)) return null;
     }
     return null;
   }

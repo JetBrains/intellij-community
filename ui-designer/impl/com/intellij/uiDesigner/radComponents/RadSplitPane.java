@@ -1,22 +1,22 @@
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
-import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.lw.LwSplitPane;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Anton Katilin
@@ -24,6 +24,16 @@ import java.awt.event.KeyEvent;
  */
 public final class RadSplitPane extends RadContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadSplitPane");
+
+  public static class Factory extends RadComponentFactory {
+    public RadComponent newInstance(Module module, Class aClass, String id) {
+      return new RadSplitPane(module, aClass, id);
+    }
+
+    public RadComponent newInstance(final Class componentClass, final String id, final Palette palette) {
+      return new RadSplitPane(componentClass, id, palette);
+    }
+  }
 
   public RadSplitPane(final Module module, final Class componentClass, final String id) {
     super(module, componentClass, id);

@@ -31,6 +31,16 @@ import java.util.ArrayList;
 public class RadContainer extends RadComponent implements IContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadContainer");
 
+  public static class Factory extends RadComponentFactory {
+    public RadComponent newInstance(Module module, Class aClass, String id) {
+      return new RadContainer(module, aClass, id);
+    }
+
+    public RadComponent newInstance(final Class componentClass, final String id, final Palette palette) {
+      return new RadContainer(componentClass, id, palette);
+    }
+  }
+
   /**
    * value: RadComponent[]
    */

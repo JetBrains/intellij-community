@@ -1,17 +1,17 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
-import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.designSurface.DropLocation;
 import com.intellij.uiDesigner.designSurface.FeedbackLayer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,6 +22,16 @@ import java.awt.*;
  */
 public final class RadScrollPane extends RadContainer {
   public static final Class COMPONENT_CLASS = JScrollPane.class;
+
+  public static class Factory extends RadComponentFactory {
+    public RadComponent newInstance(Module module, Class aClass, String id) {
+      return new RadScrollPane(module, aClass, id);
+    }
+
+    public RadComponent newInstance(final Class componentClass, final String id, final Palette palette) {
+      return new RadScrollPane(componentClass, id, palette);
+    }
+  }
 
   public RadScrollPane(final Module module, final Class componentClass, final String id){
     super(module, componentClass, id);

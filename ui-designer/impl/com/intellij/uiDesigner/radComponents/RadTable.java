@@ -15,6 +15,16 @@ import javax.swing.table.DefaultTableModel;
  * @author yole
  */
 public class RadTable extends RadAtomicComponent {
+  public static class Factory extends RadComponentFactory {
+    public RadComponent newInstance(Module module, Class aClass, String id) {
+      return new RadTable(module, aClass, id);
+    }
+
+    public RadComponent newInstance(final Class componentClass, final String id, final Palette palette) {
+      return new RadTable(componentClass, id, palette);
+    }
+  }
+
   public RadTable(final Module module, final Class componentClass, final String id) {
     super(module, componentClass, id);
     initDefaultModel();
