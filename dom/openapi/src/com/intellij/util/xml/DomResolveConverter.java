@@ -107,7 +107,7 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
   }
 
   @NotNull
-  public Collection<T> getVariants(final ConvertContext context) {
+  public Collection<? extends T> getVariants(final ConvertContext context) {
     final DomElement reference = context.getInvocationElement();
     final DomElement scope = reference.getManager().getResolvingScope((GenericDomValue)reference);
     return (Collection<T>)myResolveCache.get(scope).getValue().values();

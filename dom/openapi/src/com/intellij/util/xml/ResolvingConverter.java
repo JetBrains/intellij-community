@@ -59,7 +59,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
     }
 
     @NotNull
-    public Collection<Boolean> getVariants(final ConvertContext context) {
+    public Collection<? extends Boolean> getVariants(final ConvertContext context) {
       return Arrays.asList(Boolean.FALSE, Boolean.TRUE);
     }
   };
@@ -69,7 +69,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
   }
 
   @NotNull
-  public abstract Collection<T> getVariants(final ConvertContext context);
+  public abstract Collection<? extends T> getVariants(final ConvertContext context);
 
   public PsiElement getPsiElement(T resolvedValue) {
     if (resolvedValue instanceof PsiElement) {

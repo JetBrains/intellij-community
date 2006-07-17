@@ -4,18 +4,18 @@
 
 package com.intellij.util.xml.highlighting;
 
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.util.containers.WeakValueHashMap;
+import com.intellij.util.containers.WeakFactoryMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomReflectionUtil;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.InspectionManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,8 +24,12 @@ import java.util.*;
 public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManager implements ProjectComponent {
   private Map<Class, List<DomElementsAnnotator>> myClass2Annotator = new HashMap<Class, List<DomElementsAnnotator>>();
 
-  private Map<DomFileElement, CachedValue<DomElementsProblemsHolder>> myCache =
-    new WeakValueHashMap<DomFileElement, CachedValue<DomElementsProblemsHolder>>();
+  private WeakFactoryMap<DomFileElement, CachedValue<DomElementsProblemsHolder>> myCache =
+    new WeakFactoryMap<DomFileElement, CachedValue<DomElementsProblemsHolder>>() {
+      protected CachedValue<DomElementsProblemsHolder> create(final DomFileElement fileElement) {
+        return getCachedValue(fileElement);
+      }
+    };
   private static final DomElementsProblemsHolderImpl EMPTY_PROBLEMS_HOLDER = new DomElementsProblemsHolderImpl() {
     public void addProblem(final DomElementProblemDescriptor problemDescriptor) {
       throw new UnsupportedOperationException("This holder is immutable");
@@ -79,10 +83,6 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   }
 
   public DomElementsProblemsHolder getDomElementsProblemsHolder(final DomFileElement<?> fileElement) {
-    if (myCache.get(fileElement) == null) {
-      myCache.put(fileElement, getCachedValue(fileElement));
-    }
-
     return myCache.get(fileElement).getValue();
   }
 

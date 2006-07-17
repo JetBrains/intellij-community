@@ -15,19 +15,19 @@
  */
 package com.intellij.util.containers;
 
-import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 import java.util.Map;
 
 /**
  * @author peter
  */
 public abstract class WeakFactoryMap<T,V> {
-  private final Map<T, WeakReference<V>> myMap = new WeakHashMap<T, WeakReference<V>>();
+  private final Map<T, SoftReference<V>> myMap = new WeakHashMap<T, SoftReference<V>>();
 
   protected abstract V create(T key);
 
   public final V get(T key) {
-    final WeakReference<V> reference = myMap.get(key);
+    final SoftReference<V> reference = myMap.get(key);
     if (reference != null) {
       final V v = reference.get();
       if (v != null) {
@@ -36,7 +36,7 @@ public abstract class WeakFactoryMap<T,V> {
     }
 
     final V v1 = create(key);
-    myMap.put(key, new WeakReference<V>(v1 == null ? (V)FactoryMap.NULL : v1));
+    myMap.put(key, new SoftReference<V>(v1 == null ? (V)FactoryMap.NULL : v1));
     return v1;
   }
 

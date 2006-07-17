@@ -42,7 +42,7 @@ public class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
   }
 
   @NotNull
-  public Collection<T> getVariants(final ConvertContext context) {
+  public Collection<? extends T> getVariants(final ConvertContext context) {
     return Arrays.asList(myType.getEnumConstants());
   }
 }

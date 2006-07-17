@@ -61,7 +61,7 @@ public class MockDomElementsEditor {
   protected final DomFileEditor initFileEditor(final BasicDomElementComponent component, final VirtualFile virtualFile, final String name) {
     myContents = component;
     final Project project = component.getProject();
-    myFileEditor = new DomFileEditor(project, virtualFile, name, component) {
+    myFileEditor = new DomFileEditor<BasicDomElementComponent>(project, virtualFile, name, component) {
       public JComponent getPreferredFocusedComponent() {
         return null;
       }

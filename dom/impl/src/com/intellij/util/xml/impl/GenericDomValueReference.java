@@ -109,7 +109,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     if (converter instanceof ResolvingConverter) {
       final ResolvingConverter<T> resolvingConverter = (ResolvingConverter<T>)converter;
       final ConvertContext convertContext = createConvertContext();
-      final Collection<T> variants = resolvingConverter.getVariants(convertContext);
+      final Collection<? extends T> variants = resolvingConverter.getVariants(convertContext);
       ArrayList<Object> result = new ArrayList<Object>(variants.size());
       for (T variant: variants) {
         String name = converter.toString(variant, convertContext);

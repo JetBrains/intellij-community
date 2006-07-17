@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.RefreshStatusRenderer;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -17,7 +16,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.xml.DomChangeAdapter;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.ui.CommittablePanel;
 
 import javax.swing.*;
@@ -37,22 +35,18 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
 
   private final Alarm myAlarm = new Alarm();
 
-  public DomElementsErrorPanel(final DomElement domElement) {
-    this(new DomElement[]{domElement}, domElement.getManager(), domElement.getRoot().getFile());
-  }
+  public DomElementsErrorPanel(final DomElement... domElements) {
+    assert domElements.length > 0;
 
-  public DomElementsErrorPanel(final DomElement[] domElements, DomManager domManager, PsiFile file) {
     myDomElements = domElements;
-
-    final Document document = PsiDocumentManager.getInstance(domManager.getProject()).getDocument(file);
 
     setPreferredSize(getDimension());
 
-    myErrorStripeRenderer = new DomElementsRefreshStatusRenderer(domManager.getProject(), document, file);
+    myErrorStripeRenderer = new DomElementsRefreshStatusRenderer(domElements[0].getRoot().getFile());
 
     addUpdateRequest();
 
-    domManager.addDomEventListener(new DomChangeAdapter() {
+    domElements[0].getManager().addDomEventListener(new DomChangeAdapter() {
       protected void elementChanged(DomElement element) {
         updatePanel();
       }
@@ -117,8 +111,8 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
   }
 
   private class DomElementsRefreshStatusRenderer extends RefreshStatusRenderer {
-    public DomElementsRefreshStatusRenderer(final Project project, final Document document, final PsiFile xmlFile) {
-      super(project, (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project), document, xmlFile);
+    public DomElementsRefreshStatusRenderer(final PsiFile xmlFile) {
+      super(xmlFile.getProject(), (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(xmlFile.getProject()), PsiDocumentManager.getInstance(xmlFile.getProject()).getDocument(xmlFile), xmlFile);
     }
 
     protected int getErrorsCount(final HighlightSeverity minSeverity) {

@@ -13,6 +13,7 @@ import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomReflectionUtil;
+import com.intellij.util.xml.highlighting.DomElementsErrorPanel;
 import com.intellij.javaee.web.WebPath;
 import org.jetbrains.annotations.NonNls;
 
@@ -82,6 +83,11 @@ public class DomUIFactoryImpl extends DomUIFactory {
       return new WebPathControl(wrapper, commitOnEveryChange);
     }
     return null;
+  }
+
+  public CaptionComponent addErrorPanel(CaptionComponent captionComponent, DomElement... elements) {
+    captionComponent.initErrorPanel(new DomElementsErrorPanel(elements));
+    return captionComponent;
   }
 
   public BaseControl createPsiClassControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange) {

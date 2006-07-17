@@ -156,4 +156,6 @@ public abstract class DomUIFactory implements ApplicationComponent {
 
     return new StringColumnInfo(presentableName);
   }
+
+  public abstract CaptionComponent addErrorPanel(CaptionComponent captionComponent, DomElement... elements);
 }
