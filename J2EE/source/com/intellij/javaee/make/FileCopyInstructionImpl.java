@@ -55,18 +55,6 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
     }
   }
 
-  public void addFilesToRefresh(File outputDir, Set<File> filesToRefresh) {
-    if (myChangedSet == null) {
-      final File to = MakeUtil.canonicalRelativePath(outputDir, getOutputRelativePath());
-      filesToRefresh.add(to);
-    }
-    else {
-      for (FileCopyInstructionImpl singleFileCopyInstruction : myChangedSet) {
-        singleFileCopyInstruction.addFilesToRefresh(outputDir, filesToRefresh);
-      }
-    }
-  }
-
   public boolean accept(BuildInstructionVisitor visitor) throws Exception {
     return visitor.visitFileCopyInstruction(this);
   }
