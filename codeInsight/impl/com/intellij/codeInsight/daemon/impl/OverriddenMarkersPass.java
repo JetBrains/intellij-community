@@ -142,8 +142,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
     }
 
     for (PsiMethod method : overridden) {
-      boolean overrides;
-      overrides = !method.hasModifierProperty(PsiModifier.ABSTRACT);
+      boolean overrides = !method.hasModifierProperty(PsiModifier.ABSTRACT);
 
       int offset = method.getNameIdentifier().getTextRange().getStartOffset();
       LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.OVERRIDEN_METHOD, method, offset,

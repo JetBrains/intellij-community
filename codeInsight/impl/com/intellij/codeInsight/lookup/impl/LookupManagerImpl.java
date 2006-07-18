@@ -17,6 +17,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -31,22 +32,19 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   protected Editor myActiveLookupEditor = null;
   private PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
-  protected static final Comparator COMPARATOR = new Comparator(){
-    public int compare(Object o1, Object o2){
-      LookupItem item1 = (LookupItem)o1;
-      LookupItem item2 = (LookupItem)o2;
-      
-      int priority = item1.getObject() instanceof LookupValueWithPriority ? 
-                     ((LookupValueWithPriority)item1.getObject()).getPriority():
+  protected static final Comparator<LookupItem> COMPARATOR = new Comparator<LookupItem>(){
+    public int compare(LookupItem o1, LookupItem o2){
+      int priority = o1.getObject() instanceof LookupValueWithPriority ?
+                     ((LookupValueWithPriority)o1.getObject()).getPriority():
                      LookupValueWithPriority.NORMAL;
       
-      int priority2 = item2.getObject() instanceof LookupValueWithPriority ? 
-                     ((LookupValueWithPriority)item2.getObject()).getPriority():
+      int priority2 = o2.getObject() instanceof LookupValueWithPriority ?
+                     ((LookupValueWithPriority)o2.getObject()).getPriority():
                      LookupValueWithPriority.NORMAL;
       if (priority != priority2) {
         return priority2 - priority;
       }
-      return item1.getLookupString().compareToIgnoreCase(item2.getLookupString());
+      return o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
     }
   };
   private boolean myIsDisposed;
@@ -65,6 +63,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     editorFactory.addEditorFactoryListener(myEditorFactoryListener);
   }
 
+  @NotNull
   public String getComponentName(){
     return "LookupManager";
   }
@@ -139,6 +138,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
         }
 
         private void dispose(){
+          if (myActiveLookup == null) return;
           alarm.cancelAllRequests();
           if (daemonCodeAnalyzer != null) {
             daemonCodeAnalyzer.setUpdateByTimerEnabled(true);
@@ -211,9 +211,9 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     return myIsDisposed;
   }
 
-  protected LookupItem[] filterEqualSignatures(LookupItem[] items) {
-    ArrayList array = new ArrayList();
-    HashMap methodNameToItem = new HashMap();
+  protected static LookupItem[] filterEqualSignatures(LookupItem[] items) {
+    ArrayList<LookupItem> array = new ArrayList<LookupItem>();
+    HashMap<String, LookupItem> methodNameToItem = new HashMap<String, LookupItem>();
     for (LookupItem item : items) {
       if (item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null) {
         array.add(item);
@@ -221,25 +221,26 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
       }
       Object o = item.getObject();
       if (o instanceof PsiMethod) {
-        String name = ((PsiMethod)o).getName();
-        LookupItem item1 = (LookupItem)methodNameToItem.get(name);
+        PsiMethod method = (PsiMethod)o;
+        String name = method.getName();
+        LookupItem item1 = methodNameToItem.get(name);
         if (item1 != null) {
-          ArrayList allMethods = (ArrayList)item1.getAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE);
-          allMethods.add(o);
+          ArrayList<PsiMethod> allMethods = (ArrayList<PsiMethod>)item1.getAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE);
+          allMethods.add(method);
           continue;
         }
         else {
           methodNameToItem.put(name, item);
-          ArrayList allMethods = new ArrayList();
-          allMethods.add(o);
+          ArrayList<PsiMethod> allMethods = new ArrayList<PsiMethod>();
+          allMethods.add(method);
           item.setAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE, allMethods);
         }
       }
       array.add(item);
     }
-    items = (LookupItem[])array.toArray(new LookupItem[array.size()]);
+    items = array.toArray(new LookupItem[array.size()]);
     for (LookupItem item : items) {
-      ArrayList allMethods = (ArrayList)item.getAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE);
+      ArrayList<PsiMethod> allMethods = (ArrayList<PsiMethod>)item.getAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE);
       if (allMethods != null) {
         item.setAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE, allMethods.toArray(new PsiMethod[allMethods.size()]));
       }
