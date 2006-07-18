@@ -4,7 +4,6 @@ import com.intellij.Patches;
 import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Key;
@@ -84,7 +83,7 @@ public final class LoadTextUtil {
   }
 
   private static int detectCharsetAndSkipBOM(final VirtualFile virtualFile, final byte[] content) {
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
+    FileType fileType = virtualFile.getFileType();
     String charsetName = fileType.getCharset(virtualFile);
     if (charsetName != null) {
       Charset charset = null;
@@ -149,7 +148,7 @@ public final class LoadTextUtil {
   }
 
   private static Charset getCharsetForWriting(final VirtualFile virtualFile, final String text) {
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
+    FileType fileType = virtualFile.getFileType();
     Charset charset = null;
     if (fileType instanceof XmlLikeFileType) {
       String name = XmlUtil.extractXmlEncodingFromProlog(text);
@@ -171,7 +170,7 @@ public final class LoadTextUtil {
 
   public static CharSequence loadText(VirtualFile file) {
     if (file.isDirectory()) return null;
-    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+    final FileType fileType = file.getFileType();
 
     if (fileType.equals(StdFileTypes.CLASS)){
       return new CharArrayCharSequence(decompile(file));
@@ -213,25 +212,17 @@ public final class LoadTextUtil {
 
   public static CharSequence getTextByBinaryPresentation(final byte[] bytes, final VirtualFile virtualFile) {
     CharBuffer charBuffer;
-    if (virtualFile instanceof LightVirtualFile) {
-      CharSequence content = ((LightVirtualFile)virtualFile).getContent();
-      charBuffer = CharBuffer.allocate(content.length());
-      charBuffer.append(content);
-      charBuffer.flip();
-    }
-    else {
-      int offset = detectCharsetAndSkipBOM(virtualFile, bytes);
-      ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, offset, bytes.length - offset);
+    int offset = detectCharsetAndSkipBOM(virtualFile, bytes);
+    ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, offset, bytes.length - offset);
 
-      Charset charset = virtualFile.getCharset();
-      if (charset == null) {
-        charset = CharsetToolkit.getDefaultSystemCharset();
-      }
-      if (charset == null) {
-        charset = Charset.forName("ISO-8859-1");
-      }
-      charBuffer = charset.decode(byteBuffer);
+    Charset charset = virtualFile.getCharset();
+    if (charset == null) {
+      charset = CharsetToolkit.getDefaultSystemCharset();
     }
+    if (charset == null) {
+      charset = Charset.forName("ISO-8859-1");
+    }
+    charBuffer = charset.decode(byteBuffer);
     Pair<CharSequence, String> result = convertLineSeparators(charBuffer);
     virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, result.getSecond());
     return result.getFirst();
