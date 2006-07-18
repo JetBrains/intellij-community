@@ -193,8 +193,9 @@ public class SnapShooterDaemon implements Runnable {
     List<Component> result = new ArrayList<Component>();
     for(Frame frame: Frame.getFrames()) {
       //noinspection HardCodedStringLiteral
-      if (frame.getClass().getName().endsWith("SwingUtilities$SharedOwnerFrame")) continue;
-      result.add(frame);
+      if (!frame.getClass().getName().endsWith("SwingUtilities$SharedOwnerFrame")) {
+        result.add(frame);
+      }
       for(Window window: frame.getOwnedWindows()) {
         if (window.isVisible()) {
           result.add(window);
