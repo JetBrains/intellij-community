@@ -9,18 +9,21 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -100,6 +103,13 @@ public class CreateClassDialog extends DialogWrapper {
       gbConstraints.fill = GridBagConstraints.HORIZONTAL;
       gbConstraints.anchor = GridBagConstraints.WEST;
       panel.add(myTfClassName, gbConstraints);
+
+      myTfClassName.getDocument().addDocumentListener(new DocumentAdapter() {
+        protected void textChanged(DocumentEvent e) {
+          getOKAction().setEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myTfClassName.getText()));
+        }
+      });
+      getOKAction().setEnabled(myClassName != null);
     }
 
     gbConstraints.gridx = 0;
