@@ -393,6 +393,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   private static boolean canBeHint(HighlightInfoType type) {
-    return type == HighlightInfoType.WRONG_REF;
+    return type == HighlightInfoType.WRONG_REF || type.getAttributesKey() == HighlightInfoType.JAVADOC_WRONG_REF.getAttributesKey();
   }
 }
