@@ -15,6 +15,8 @@ import java.util.*;
  * @author ven
  */
 public class CommonRefactoringUtil {
+  private CommonRefactoringUtil() {}
+
   public static void showErrorMessage(String title, String message, String helpId, Project project) {
     RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpId, "OptionPane.errorIcon", false, project);
     dialog.show();
@@ -37,8 +39,8 @@ public class CommonRefactoringUtil {
   }
 
   public static boolean checkReadOnlyStatus(PsiElement element, Project project, String messagePrefix) {
-    if (element.isWritable()) return true;
-    return checkReadOnlyStatus(Collections.singleton(element), project, messagePrefix, false);
+    return element.isWritable() ||
+           checkReadOnlyStatus(Collections.singleton(element), project, messagePrefix, false);
   }
 
   public static boolean checkReadOnlyStatusRecursively(Project project, Collection<? extends PsiElement> element) {
@@ -133,7 +135,7 @@ public class CommonRefactoringUtil {
           message.append(RefactoringBundle.message("0.is.located.in.a.jar.file", subj));
         }
         else {
-          message.append(RefactoringBundle.message("0.is.read.only", subj + presentableUrl));
+          message.append(RefactoringBundle.message("0.is.read.only", subj));
         }
       }
       showErrorMessage(RefactoringBundle.message("error.title"), message.toString(), null, project);
