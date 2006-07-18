@@ -1,11 +1,11 @@
 package com.intellij.openapi.vcs.update;
 
-import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.options.Configurable;
 
 import java.util.LinkedHashMap;
 
@@ -24,10 +24,11 @@ public interface ActionInfo {
     }
 
     public UpdateOrStatusOptionsDialog createOptionsDialog(final Project project,
-                                                           LinkedHashMap<Configurable,AbstractVcs> envToConfMap) {
+                                                           LinkedHashMap<Configurable, AbstractVcs> envToConfMap,
+                                                           final String scopeName) {
       return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
         protected String getRealTitle() {
-          return getActionName();
+          return getActionName() + " " + scopeName;
         }
 
         protected boolean isToBeShown() {
@@ -61,10 +62,10 @@ public interface ActionInfo {
     }
 
     public UpdateOrStatusOptionsDialog createOptionsDialog(final Project project,
-                                                           LinkedHashMap<Configurable,AbstractVcs> envToConfMap) {
+                                                           LinkedHashMap<Configurable, AbstractVcs> envToConfMap, final String scopeName) {
       return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
         protected String getRealTitle() {
-          return getActionName();
+          return getActionName() + " " + scopeName;
         }
 
         protected boolean isToBeShown() {
@@ -101,10 +102,11 @@ public interface ActionInfo {
       return vcs.getIntegrateEnvironment();
     }
 
-    public UpdateOrStatusOptionsDialog createOptionsDialog(final Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap) {
+    public UpdateOrStatusOptionsDialog createOptionsDialog(final Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap,
+                                                           final String scopeName) {
       return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
         protected String getRealTitle() {
-          return "Integrate";
+          return "Integrate " + scopeName;
         }
 
         protected boolean canBeHidden() {
@@ -138,7 +140,8 @@ public interface ActionInfo {
 
   UpdateEnvironment getEnvironment(AbstractVcs vcs);
 
-  UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable,AbstractVcs> envToConfMap);
+  UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap,
+                                                  final String scopeName);
 
   String getActionName(String scopeName);
 

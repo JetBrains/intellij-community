@@ -93,7 +93,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
 
         if (showUpdateOptions || OptionsDialog.shiftIsPressed(context.getModifiers())) {
-          showOptionsDialog(vcsToVirtualFiles, project);
+          showOptionsDialog(vcsToVirtualFiles, project, context);
         }
         final ArrayList<VcsException> vcsExceptions = new ArrayList<VcsException>();
         final List<UpdateSession> updateSessions = new ArrayList<UpdateSession>();
@@ -176,7 +176,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
   }
 
-  private boolean someSessionWasCanceled(List<UpdateSession> updateSessions) {
+  private static boolean someSessionWasCanceled(List<UpdateSession> updateSessions) {
     for (UpdateSession updateSession : updateSessions) {
       if (updateSession.isCanceled()) {
         return true;
@@ -185,7 +185,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     return false;
   }
 
-  private String getAllFilesAreUpToDateMessage(FilePath[] roots) {
+  private static String getAllFilesAreUpToDateMessage(FilePath[] roots) {
     if (roots.length == 1 && !roots[0].isDirectory()) {
       return VcsBundle.message("message.text.file.is.up.to.date");
     }
@@ -208,10 +208,13 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     updateInfoTree.expandRootChildren();
   }
 
-  private void showOptionsDialog(final Map<AbstractVcs, Collection<FilePath>> updateEnvToVirtualFiles, final Project project) {
+  private void showOptionsDialog(final Map<AbstractVcs, Collection<FilePath>> updateEnvToVirtualFiles, final Project project,
+                                 final VcsContext dataContext) {
     LinkedHashMap<Configurable, AbstractVcs> envToConfMap = createConfigurableToEnvMap(updateEnvToVirtualFiles);
     if (!envToConfMap.isEmpty()) {
-      UpdateOrStatusOptionsDialog dialogOrStatus = myActionInfo.createOptionsDialog(project, envToConfMap);
+      UpdateOrStatusOptionsDialog dialogOrStatus = myActionInfo.createOptionsDialog(project, envToConfMap,
+                                                                                    myScopeInfo.getScopeName(dataContext,
+                                                                                                             myActionInfo));
       dialogOrStatus.show();
       if (!dialogOrStatus.isOK()) {
         throw new ProcessCanceledException();
@@ -260,7 +263,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
   }
 
-  private boolean containsParent(FilePath[] array, FilePath file) {
+  private static boolean containsParent(FilePath[] array, FilePath file) {
     for (FilePath virtualFile : array) {
       if (virtualFile == file) continue;
       if (VfsUtil.isAncestor(virtualFile.getIOFile(), file.getIOFile(), false)) return true;
@@ -293,7 +296,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     return result.toArray(new FilePath[result.size()]);
   }
 
-  private FilePath[] createFilePathsOn(final VirtualFile[] children) {
+  private static FilePath[] createFilePathsOn(final VirtualFile[] children) {
     final VcsContextFactory vcsContextFactory = PeerFactory.getInstance().getVcsContextFactory();
     final FilePath[] result = new FilePath[children.length];
     for (int i = 0; i < result.length; i++) {
@@ -344,7 +347,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     return true;
   }
 
-  private boolean updateSupportingVcsesAreEmpty(final Project project) {
+  private static boolean updateSupportingVcsesAreEmpty(final Project project) {
     if (project == null) return true;
     final AbstractVcs[] allActiveVcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
     for (AbstractVcs activeVcs : allActiveVcss) {
