@@ -100,6 +100,10 @@ public class FileStatusMap {
       if (status == null){
         return PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       }
+      if (status.defensivelyMarked) {
+        status.dirtyScope = status.localInspectionsDirtyScope = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        status.defensivelyMarked = false;
+      }
       if (part == NORMAL_HIGHLIGHTERS){
         return status.dirtyScope;
       }
@@ -124,19 +128,15 @@ public class FileStatusMap {
       if (document == null) return;
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) return; // all dirty already
-      status.dirtyScope = file;
-      status.localInspectionsDirtyScope = file;                                                      
       status.defensivelyMarked = true;
     }
   }
 
   public void markFileScopeDirty(Document document, PsiElement scope) {
-    synchronized(myDocumentToStatusMap){
+    synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) return; // all dirty already
       if (status.defensivelyMarked) {
-        status.dirtyScope = null;
-        status.localInspectionsDirtyScope = null;
         status.defensivelyMarked = false;
       }
       final PsiElement combined1 = combineScopes(status.dirtyScope, scope);
