@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.Disposable;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -85,6 +86,12 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
                                                      (DefaultTreeModel)tree.getModel(),treeStructure,myTreeModelWrapper);
     myAbstractTreeBuilder.updateFromRoot();
     Disposer.register(this, myAbstractTreeBuilder);
+    Disposer.register(myAbstractTreeBuilder, new Disposable() {
+      public void dispose() {
+        storeState();
+      }
+    });
+
     add(new JScrollPane(myAbstractTreeBuilder.getTree()), BorderLayout.CENTER);
 
     myAbstractTreeBuilder.getTree().setCellRenderer(new NodeRenderer());
@@ -481,7 +488,6 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   public void dispose() {
     LOG.assertTrue(EventQueue.isDispatchThread(), Thread.currentThread().getName());
-    storeState();
     myAbstractTreeBuilder = null;
     // this will also dispose wrapped TreeModel
     myTreeModelWrapper.dispose();
