@@ -1,12 +1,12 @@
 package com.intellij.psi.filters.getters;
 
+import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.PsiElement;
-import com.intellij.codeInsight.completion.CompletionContext;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,7 +26,7 @@ public class FilterGetter implements ContextGetter{
 
   public Object[] get(PsiElement context, CompletionContext completionContext){
     final List results = new ArrayList();
-    final Object[] elements = myBaseGetter.get(context, null);
+    final Object[] elements = myBaseGetter.get(context, completionContext);
     for (final Object element : elements) {
       if (myFilter.isClassAcceptable(element.getClass()) && myFilter.isAcceptable(element, context)) {
         results.add(element);
