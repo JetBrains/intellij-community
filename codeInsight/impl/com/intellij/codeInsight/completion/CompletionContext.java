@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.html.HtmlTag;
@@ -10,9 +10,13 @@ import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import org.apache.oro.text.regex.Pattern;
+import org.apache.oro.text.regex.Perl5Matcher;
 
 public class CompletionContext implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionContext");
+  private Pattern myPattern;
+  private Perl5Matcher myMatcher;
 
   protected Object clone() {
     try {
@@ -37,14 +41,15 @@ public class CompletionContext implements Cloneable {
   public int argListEndOffset = -1;
   public boolean hasArgs = false;
 
-  public String prefix = "";
+  private String myPrefix = "";
 
   public CompletionContext(Project project, Editor editor, PsiFile file, int offset1, int offset2){
     this.project = project;
     this.editor = editor;
     this.file = file;
-    this.startOffset = offset1;
-    this.selectionEndOffset = offset2;
+
+    startOffset = offset1;
+    selectionEndOffset = offset2;
 
     init();
   }
@@ -154,6 +159,26 @@ public class CompletionContext implements Cloneable {
     argListEndOffset = -1;
     identifierEndOffset = -1;
     lparenthOffset = -1;
+  }
+
+  public boolean prefixMatches(final String name) {
+    if (myPattern == null) {
+      myPattern = CompletionUtil.createCampelHumpsMatcher(myPrefix);
+      myMatcher = new Perl5Matcher();
+    }
+
+    return myMatcher.matches(name, myPattern);
+  }
+
+  public String getPrefix() {
+    return myPrefix;
+  }
+
+  public void setPrefix(final String prefix) {
+    myPattern = null;
+    myMatcher = null;
+
+    myPrefix = prefix;
   }
 }
 

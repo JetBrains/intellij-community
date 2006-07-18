@@ -1,17 +1,17 @@
 package com.intellij.psi.filters.getters;
 
-import com.intellij.psi.filters.ContextGetter;
+import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.util.ArrayUtil;
-import com.intellij.codeInsight.completion.CompletionContext;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class AllWordsGetter implements ContextGetter {
   public Object[] get(final PsiElement context, final CompletionContext completionContext) {
-    if (completionContext.prefix.length() == 0) {
+    if (completionContext.getPrefix().length() == 0) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
     final char [] chars = context.getContainingFile().getText().toCharArray();

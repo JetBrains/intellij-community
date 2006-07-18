@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
@@ -9,9 +9,6 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.util.PsiUtil;
-import org.apache.oro.text.regex.Pattern;
-import org.apache.oro.text.regex.PatternMatcher;
-import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -25,7 +22,7 @@ import java.util.*;
  */
 public class CompletionProcessor extends BaseScopeProcessor
  implements ElementClassHint{
-  private final String myPrefix;
+  private final CompletionContext myContext;
   private boolean myStatic = false;
   private final Set<Object> myResultNames = new HashSet<Object>();
   private final List<CompletionElement> myResults;
@@ -36,12 +33,10 @@ public class CompletionProcessor extends BaseScopeProcessor
   private boolean myMembersFlag = false;
   private PsiType myQualifierType = null;
   private PsiClass myQualifierClass = null;
-  private final PatternMatcher myMatcher;
-  private final Pattern myPattern;
 
-  private CompletionProcessor(String prefix, PsiElement element, List<CompletionElement> container, ElementFilter filter){
+  private CompletionProcessor(CompletionContext prefix, PsiElement element, List<CompletionElement> container, ElementFilter filter){
     mySettings = CodeInsightSettings.getInstance();
-    myPrefix = prefix;
+    myContext = prefix;
     myResults = container;
     myElement = element;
     myFilter = filter;
@@ -62,17 +57,14 @@ public class CompletionProcessor extends BaseScopeProcessor
         }
       }
       else if (qualifier != null) {
-          myQualifierType = qualifier.getType();
-          myQualifierClass = PsiUtil.resolveClassInType(myQualifierType);
-        }
+        myQualifierType = qualifier.getType();
+        myQualifierClass = PsiUtil.resolveClassInType(myQualifierType);
       }
-
-    myMatcher = new Perl5Matcher();
-    myPattern = CompletionUtil.createCampelHumpsMatcher(myPrefix);
+    }
   }
 
-  public CompletionProcessor(String prefix, PsiElement element, ElementFilter filter){
-    this(prefix, element, new ArrayList<CompletionElement>(), filter);
+  public CompletionProcessor(CompletionContext context, PsiElement element, ElementFilter filter){
+    this(context, element, new ArrayList<CompletionElement>(), filter);
   }
 
 
@@ -116,7 +108,7 @@ public class CompletionProcessor extends BaseScopeProcessor
     PsiResolveHelper resolveHelper = myElement.getManager().getResolveHelper();
     if(!(element instanceof PsiMember) || resolveHelper.isAccessible((PsiMember)element, myElement, myQualifierClass)){
       final String name = PsiUtil.getName(element);
-      if(name != null && (CompletionUtil.checkName(name, myPrefix) || myMatcher.matches(name, myPattern))
+      if(name != null && myContext.prefixMatches(name)
          && myFilter.isClassAcceptable(element.getClass())
          && myFilter.isAcceptable(new CandidateInfo(element, substitutor), myElement))
         add(new CompletionElement(myQualifierType, element, substitutor));

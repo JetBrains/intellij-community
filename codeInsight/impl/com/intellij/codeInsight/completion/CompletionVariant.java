@@ -6,16 +6,13 @@ import com.intellij.codeInsight.completion.scope.CompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import org.apache.oro.text.regex.Pattern;
-import org.apache.oro.text.regex.PatternMatcher;
-import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -176,14 +173,14 @@ public class CompletionVariant {
     return isScopeAcceptable(scope) && myPosition.isAcceptable(position, scope);
   }
 
-  public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, String prefix){
+  public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionContext prefix){
     for (final CompletionVariantItem ce : myCompletionsList) {
       addReferenceCompletions(reference, position, set, prefix, ce);
     }
   }
 
   @Nullable
-  private LookupItem addLookupItem(Set<LookupItem> set, CompletionVariantItem element, @NotNull Object completion, String prefix){
+  private LookupItem addLookupItem(Set<LookupItem> set, CompletionVariantItem element, @NotNull Object completion, CompletionContext context){
     LookupItem ret = LookupItemUtil.objectToLookupItem(completion);
     if(ret == null) return null;
 
@@ -226,18 +223,11 @@ public class CompletionVariant {
     }
 
     final String lookupString = ret.getLookupString();
-    if(CompletionUtil.checkName(lookupString, prefix, caseInsensitive)){
+    if(CompletionUtil.checkName(lookupString, context, caseInsensitive)){
       set.add(ret);
       return ret;
-    } else {
-      final Pattern pattern = CompletionUtil.createCampelHumpsMatcher(prefix);
-      PatternMatcher matcher = new Perl5Matcher();
-
-      if (matcher.matches(lookupString, pattern)) {
-        set.add(ret);
-        return ret;
-      }
     }
+
     return null;
   }
 
@@ -254,7 +244,7 @@ public class CompletionVariant {
       else if (comp instanceof ContextGetter) {
         final Object[] elements = ((ContextGetter)comp).get(position, context);
         for (Object element : elements) {
-          addLookupItem(set, ce, element, context.prefix);
+          addLookupItem(set, ce, element, context);
         }
       }
       // TODO: KeywordChooser -> ContextGetter
@@ -275,15 +265,15 @@ public class CompletionVariant {
       }
     }
     if(factory == null){
-      addLookupItem(set, ce, comp, context.prefix);
+      addLookupItem(set, ce, comp, context);
     }
     else{
       try{
         final PsiKeyword keyword = factory.createKeyword((String)comp);
-        addLookupItem(set, ce, keyword, context.prefix);
+        addLookupItem(set, ce, keyword, context);
       }
       catch(IncorrectOperationException e){
-        addLookupItem(set, ce, comp, context.prefix);
+        addLookupItem(set, ce, comp, context);
       }
     }
   }
@@ -308,12 +298,12 @@ public class CompletionVariant {
   }
 
   protected void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set,
-                                         String prefix, CompletionVariantItem item){
+                                         CompletionContext context, CompletionVariantItem item){
     if(item.myCompletion instanceof ElementFilter){
-      final CompletionProcessor processor = new CompletionProcessor(prefix, position, (ElementFilter)item.myCompletion);
+      final CompletionProcessor processor = new CompletionProcessor(context, position, (ElementFilter)item.myCompletion);
       if (reference instanceof PsiMultiReference) {
         for (PsiReference ref : ((PsiMultiReference)reference).getReferences()) {
-          addReferenceCompletions(ref, position, set, prefix, item);
+          addReferenceCompletions(ref, position, set, context, item);
         }
       }
       else if(reference instanceof PsiJavaReference){
@@ -334,7 +324,7 @@ public class CompletionVariant {
             }
           }
           else {
-            addLookupItem(set, item, completion, prefix);
+            addLookupItem(set, item, completion, context);
           }
         }
       }
@@ -342,7 +332,7 @@ public class CompletionVariant {
       Collection<CompletionElement> results = processor.getResults();
       if (results != null) {
         for (CompletionElement element : results) {
-          final LookupItem lookupItem = addLookupItem(set, item, element.getElement(), prefix);
+          final LookupItem lookupItem = addLookupItem(set, item, element.getElement(), context);
           if (lookupItem != null) {
             lookupItem.setAttribute(LookupItem.SUBSTITUTOR, element.getSubstitutor());
             if (element.getQualifier() != null){

@@ -7,13 +7,12 @@ import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
-import com.intellij.openapi.util.Comparing;
-import org.apache.oro.text.regex.Pattern;
-import org.apache.oro.text.regex.PatternMatcher;
-import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,9 +22,6 @@ import java.util.*;
  * To change this template use Options | File Templates.
  */
 public class AllClassesGetter implements ContextGetter{
-  private String myPrefixStr = null;
-  private PatternMatcher myMatcher = null;
-  private Pattern myPattern = null;
   @NonNls private static final String JAVA_PACKAGE_PREFIX = "java.";
   @NonNls private static final String JAVAX_PACKAGE_PREFIX = "javax.";
 
@@ -35,14 +31,6 @@ public class AllClassesGetter implements ContextGetter{
     final List<PsiClass> classesList = new ArrayList<PsiClass>();
     final PsiManager manager = context.getManager();
     final PsiShortNamesCache cache = manager.getShortNamesCache();
-    // Optimization:
-    final String prefix = context.getUserData(CompletionUtil.COMPLETION_PREFIX);
-
-    if(!Comparing.strEqual(prefix,myPrefixStr)){
-      myMatcher = new Perl5Matcher();
-      myPattern = CompletionUtil.createCampelHumpsMatcher(prefix);
-      myPrefixStr = prefix;
-    }
 
     final GlobalSearchScope scope = context.getContainingFile().getResolveScope();
     final String[] names = cache.getAllClassNames(true);
@@ -55,7 +43,7 @@ public class AllClassesGetter implements ContextGetter{
     }
 
     for (final String name : names) {
-      if (prefix != null && !(CompletionUtil.checkName(name, prefix) || myMatcher.matches(name, myPattern))) continue;
+      if (!completionContext.prefixMatches(name)) continue;
       final PsiClass[] classesByName = cache.getClassesByName(name, scope);
       
       for (PsiClass psiClass : classesByName) {

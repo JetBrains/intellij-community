@@ -2,8 +2,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -28,14 +28,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -235,7 +235,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
   private void adjustContextAfterLookupStringInsertion(){
     // Handling lookup auto insert
-    myContext.shiftOffsets(myLookupItem.getLookupString().length() - myContext.prefix.length() - (myContext.selectionEndOffset - myContext.startOffset));
+    myContext.shiftOffsets(myLookupItem.getLookupString().length() - myContext.getPrefix().length() - (myContext.selectionEndOffset - myContext.startOffset));
   }
 
   private void handleBrackets(){

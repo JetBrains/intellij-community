@@ -88,13 +88,13 @@ public class CompletionData {
 
     for (CompletionVariant variant : variants) {
       if (variant.hasReferenceFilter()) {
-        variant.addReferenceCompletions(reference, position, set, context.prefix);
+        variant.addReferenceCompletions(reference, position, set, context);
         hasApplicableVariants = true;
       }
     }
 
     if(!hasApplicableVariants){
-      myGenericVariant.addReferenceCompletions(reference, position, set, context.prefix);
+      myGenericVariant.addReferenceCompletions(reference, position, set, context);
     }
   }
 
@@ -119,20 +119,21 @@ public class CompletionData {
     final VariableKind variableKind = codeStyleManager.getVariableKind(var);
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, null, null, var.getType());
     final String[] suggestedNames = suggestedNameInfo.names;
-    LookupItemUtil.addLookupItems(set, suggestedNames, context.prefix);
+    LookupItemUtil.addLookupItems(set, suggestedNames, context.getPrefix());
 
     if (set.isEmpty()) {
-      suggestedNameInfo = new SuggestedNameInfo(CompletionUtil.getOverlappedNameVersions(context.prefix, suggestedNames, "")) {
+      suggestedNameInfo = new SuggestedNameInfo(CompletionUtil.getOverlappedNameVersions(context.getPrefix(), suggestedNames, "")) {
         public void nameChoosen(String name) {
         }
       };
 
-      LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, context.prefix);
+      LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, context.getPrefix());
     }
     PsiElement parent = PsiTreeUtil.getParentOfType(var, PsiCodeBlock.class);
     if(parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
-    LookupItemUtil.addLookupItems(set, CompletionUtil.getUnresolvedReferences(parent, false), context.prefix);
-    LookupItemUtil.addLookupItems(set, StatisticsManager.getInstance().getNameSuggestions(var.getType(), StatisticsManager.getContext(var), context.prefix), context.prefix);
+    LookupItemUtil.addLookupItems(set, CompletionUtil.getUnresolvedReferences(parent, false), context.getPrefix());
+    LookupItemUtil.addLookupItems(set, StatisticsManager.getInstance().getNameSuggestions(var.getType(), StatisticsManager.getContext(var),
+                                                                                          context.getPrefix()), context.getPrefix());
 
     return new NamePreferencePolicy(suggestedNameInfo);
   }
@@ -142,7 +143,7 @@ public class CompletionData {
 
     CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx) CodeStyleManager.getInstance(context.project);
     final VariableKind variableKind = CodeStyleManager.getInstance(var.getProject()).getVariableKind(var);
-    final String prefix = context.prefix;
+    final String prefix = context.getPrefix();
 
     if (var.getType() == PsiType.VOID ||
         prefix.startsWith(CompletionUtil.IS_PREFIX) ||
@@ -173,7 +174,7 @@ public class CompletionData {
     }
 
     LookupItemUtil.addLookupItems(set, StatisticsManager.getInstance().getNameSuggestions(var.getType(), StatisticsManager.getContext(var), prefix), prefix);
-    LookupItemUtil.addLookupItems(set, CompletionUtil.getUnresolvedReferences(var.getParent(), false), context.prefix);
+    LookupItemUtil.addLookupItems(set, CompletionUtil.getUnresolvedReferences(var.getParent(), false), context.getPrefix());
 
     return new NamePreferencePolicy(suggestedNameInfo);
   }
@@ -183,20 +184,22 @@ public class CompletionData {
       final PsiMethod method = (PsiMethod)element;
       if (method.isConstructor()) {
         final PsiClass containingClass = method.getContainingClass();
-        LookupItemUtil.addLookupItem(set, containingClass.getName(), context.prefix);
+        LookupItemUtil.addLookupItem(set, containingClass.getName(), context.getPrefix());
         return null;
       }
     }
 
-    LookupItemUtil.addLookupItems(set, CompletionUtil.getUnresolvedReferences(element.getParent(), true), context.prefix);
+    LookupItemUtil.addLookupItems(set, CompletionUtil.getUnresolvedReferences(element.getParent(), true), context.getPrefix());
     if(!((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PRIVATE)){
-      LookupItemUtil.addLookupItems(set, CompletionUtil.getOverides((PsiClass)element.getParent(), PsiUtil.getTypeByPsiElement(element)), context.prefix);
-      LookupItemUtil.addLookupItems(set, CompletionUtil.getImplements((PsiClass)element.getParent(), PsiUtil.getTypeByPsiElement(element)), context.prefix);
+      LookupItemUtil.addLookupItems(set, CompletionUtil.getOverides((PsiClass)element.getParent(), PsiUtil.getTypeByPsiElement(element)),
+                                    context.getPrefix());
+      LookupItemUtil.addLookupItems(set, CompletionUtil.getImplements((PsiClass)element.getParent(), PsiUtil.getTypeByPsiElement(element)),
+                                    context.getPrefix());
     }
     LookupItemUtil.addLookupItems(set, CompletionUtil.getPropertiesHandlersNames(
       (PsiClass)element.getParent(),
       ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC),
-      PsiUtil.getTypeByPsiElement(element), element), context.prefix);
+      PsiUtil.getTypeByPsiElement(element), element), context.getPrefix());
     return null;
   }
 
@@ -236,7 +239,7 @@ public class CompletionData {
   }
 
   protected static final CompletionVariant myGenericVariant = new CompletionVariant(){
-    public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, String prefix){
+    public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionContext prefix){
       addReferenceCompletions(reference, position, set, prefix, new CompletionVariantItem(TrueFilter.INSTANCE, TailType.NONE));
     }
   };

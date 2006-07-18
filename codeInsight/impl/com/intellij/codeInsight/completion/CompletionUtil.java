@@ -204,15 +204,21 @@ public class CompletionUtil {
     return completionDatas.get(fileType);
   }
 
-  public static boolean checkName(String name, String prefix) {
-    return checkName(name, prefix, false);
-  }
-
-  public static boolean checkName(String name, String prefix, boolean forceCaseInsensitive) {
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+  public static boolean checkName(String name, CompletionContext context, boolean forceCaseInsensitive) {
     if (name == null) {
       return false;
     }
+
+    String prefix = context.getPrefix();
+    if (forceCaseInsensitive) {
+      return name.toLowerCase().startsWith(prefix.toLowerCase());
+    }
+
+    return context.prefixMatches(name);
+
+    /*
+
+    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     boolean ret = true;
     if (prefix != null) {
       int variant = settings.COMPLETION_CASE_SENSITIVE;
@@ -241,6 +247,7 @@ public class CompletionUtil {
       }
     }
     return ret;
+    */
   }
 
 
@@ -253,16 +260,16 @@ public class CompletionUtil {
     try {
       switch (variant) {
         case CodeInsightSettings.NONE:
-          pat = compiler.compile(NameUtil.buildRegexp(pattern, 0, false));
+          pat = compiler.compile(NameUtil.buildRegexp(pattern, 0, true, true));
           break;
         case CodeInsightSettings.FIRST_LETTER:
-          pat = compiler.compile(NameUtil.buildRegexp(pattern, 1, false));
+          pat = compiler.compile(NameUtil.buildRegexp(pattern, 1, true, false));
           break;
         case CodeInsightSettings.ALL:
-          pat = compiler.compile(NameUtil.buildRegexp(pattern, 0, true));
+          pat = compiler.compile(NameUtil.buildRegexp(pattern, 0, false, false));
           break;
         default:
-          pat = compiler.compile(NameUtil.buildRegexp(pattern, 0, false));
+          pat = compiler.compile(NameUtil.buildRegexp(pattern, 1, true, false));
       }
     }
     catch (MalformedPatternException me) {

@@ -55,7 +55,6 @@ public abstract class ChooseByNameBase{
   protected JPanel myCardContainer;
   protected CardLayout myCard;
   protected JCheckBox myCheckBox;
-  protected int myExactPrefixLen;
 
   protected JScrollPane myListScrollPane; // Located in the layered pane
   protected JList myList;
@@ -105,7 +104,6 @@ public abstract class ChooseByNameBase{
     myProject = project;
     myModel = model;
     myInitialText = initialText;
-    myExactPrefixLen = 0;
   }
 
   public void invoke(final ChooseByNamePopupComponent.Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
@@ -756,11 +754,6 @@ public abstract class ChooseByNameBase{
     }
 
     protected void processKeyEvent(KeyEvent e) {
-      final int caretPosition = getCaretPosition();
-      if (getCaretPosition() < myExactPrefixLen) {
-        myExactPrefixLen = caretPosition;
-      }
-
       final KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
       if (myCompletionKeyStroke != null && keyStroke.equals(myCompletionKeyStroke)) {
         e.consume();
@@ -979,7 +972,7 @@ public abstract class ChooseByNameBase{
     }
 
     final String[] names = checkboxState ? myNames[1] : myNames[0];
-    final String regex = NameUtil.buildRegexp(pattern, myExactPrefixLen, false);
+    final String regex = NameUtil.buildRegexp(pattern, 0, true, true);
 
     try {
       Perl5Compiler compiler = new Perl5Compiler();

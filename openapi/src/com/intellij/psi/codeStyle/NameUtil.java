@@ -20,11 +20,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import java.util.ArrayList;
 
 public class NameUtil {
+  private NameUtil() {}
+
   public static String[] nameToWords(String name){
     ArrayList<String> array = new ArrayList<String>();
     int index = 0;
     int wordStart;
-  WordsLoop:
+
     while(index < name.length()){
       wordStart = index;
       int upperCaseCount = 0;
@@ -70,16 +72,7 @@ public class NameUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static String buildRegexp(String pattern, int exactPrefixLen, final boolean caseSencetive) {
-    {
-      final int len = pattern.length ();
-      int i = 0;
-      while (i != len && (Character.isLetterOrDigit(pattern.charAt(i)) && (i == 0 || !Character.isUpperCase(pattern.charAt(i))))) {
-        ++i;
-      }
-    }
-
-
+  public static String buildRegexp(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
     final int eol = pattern.indexOf('\n');
     if (eol != -1) {
       pattern = pattern.substring(0, eol);
@@ -91,9 +84,13 @@ public class NameUtil {
     final StringBuffer buffer = new StringBuffer();
     boolean lastIsUppercase = false;
     final boolean endsWithSpace = StringUtil.endsWithChar(pattern, ' ');
-    final boolean uppercaseOnly = containsOnlyUppercaseLetters(pattern);
     pattern = pattern.trim();
     exactPrefixLen = Math.min(exactPrefixLen, pattern.length());
+    final boolean uppercaseOnly = containsOnlyUppercaseLetters(pattern.substring(exactPrefixLen));
+    if (uppercaseOnly) {
+      allowToLower = false;
+    }
+
     for (int i = 0; i != exactPrefixLen; ++i) {
       final char c = pattern.charAt(i);
       if (Character.isLetterOrDigit(c)) {
@@ -109,26 +106,33 @@ public class NameUtil {
         buffer.append(Integer.toHexString(c + 0x20000).substring(3));
       }
     }
+
+    boolean firstIdentifierLetter = (exactPrefixLen == 0);
     for (int i = exactPrefixLen; i < pattern.length(); i++) {
       final char c = pattern.charAt(i);
       lastIsUppercase = false;
       if (Character.isLetterOrDigit(c)) {
         // This logic allows to use uppercase letters only to catch the name like PDM for PsiDocumentManager
         if (Character.isUpperCase(c) || Character.isDigit(c)) {
-          if (!uppercaseOnly && !caseSencetive) {
-            buffer.append('(');
-          }
-          if (i > 0)
+          buffer.append('(');
+
+          if (!firstIdentifierLetter) {
             buffer.append("[a-z0-9_\\$]*");
+          }
+
           buffer.append(c);
-          if (!uppercaseOnly && !caseSencetive) {
+          if (allowToLower) {
             buffer.append('|');
             buffer.append(Character.toLowerCase(c));
-            buffer.append(')');
           }
+          if (!firstIdentifierLetter) {
+            buffer.append("|[A-Z0-9\\$]*_");
+            buffer.append(c);
+          }
+          buffer.append(')');
           lastIsUppercase = true;
         }
-        else if (Character.isLowerCase(c) && !caseSencetive) {
+        else if (Character.isLowerCase(c) && allowToUpper) {
           buffer.append('[');
           buffer.append(c);
           buffer.append('|');
@@ -138,11 +142,15 @@ public class NameUtil {
         else {
           buffer.append(c);
         }
+
+        firstIdentifierLetter = false;
       }
       else if (c == '*') {
         buffer.append(".*");
+        firstIdentifierLetter = true;
       }
       else {
+        firstIdentifierLetter = true;
         // for standard RegExp engine
         // buffer.append("\\u");
         // buffer.append(Integer.toHexString(c + 0x20000).substring(1));

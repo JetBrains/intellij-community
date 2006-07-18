@@ -71,7 +71,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final LookupData data = getLookupData(context);
     final LookupItem[] items = data.items;
     String prefix = data.prefix;
-    context.prefix = data.prefix;
+    context.setPrefix(data.prefix);
     if (items.length == 0) {
       handleEmptyLookup(context, data);
       return;
@@ -140,7 +140,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
         uniqueText = item.getLookupString(); // text may be not ready yet
         context.startOffset -= prefix.length();
-        data.prefix = context.prefix = ""; // prefix may be of no interest
+        data.prefix = "";
+        context.setPrefix(""); // prefix may be of no interest
       }
 
       EditorModificationUtil.deleteSelectedText(editor);
@@ -163,7 +164,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
         if (!newPrefix.equals(prefix)) {
           final int shift = newPrefix.length() - prefix.length();
-          context.prefix = newPrefix;
+          context.setPrefix(newPrefix);
           prefix = newPrefix;
           context.shiftOffsets(shift);
           //context.offset1 += shift;
@@ -310,17 +311,16 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     CompletionData completionData = getCompletionData(context, lastElement);
 
-    context.prefix = findPrefix(insertedElement, context.startOffset, CompletionUtil.DUMMY_IDENTIFIER, completionData);
+    context.setPrefix(findPrefix(insertedElement, context.startOffset, CompletionUtil.DUMMY_IDENTIFIER, completionData));
     if (completionData == null) {
       // some completion data may depend on prefix
       completionData = getCompletionData(context, lastElement);
     }
 
-    if (completionData == null) return new LookupData(new LookupItem[0], context.prefix);
+    if (completionData == null) return new LookupData(new LookupItem[0], context.getPrefix());
 
     final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
     complete(context, insertedElement, completionData, lookupSet);
-    insertedElement.putUserData(CompletionUtil.COMPLETION_PREFIX, context.prefix);
     if (!CodeInsightUtil.isAntFile(file)) {
       final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
       completionData.addKeywordVariants(keywordVariants, context, insertedElement);
@@ -329,9 +329,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     CompletionUtil.highlightMembersOfContainer(lookupSet);
 
     final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
-    final LookupData data = new LookupData(items, context.prefix);
+    final LookupData data = new LookupData(items, context.getPrefix());
     if (myPreferencePolicy == null) {
-      myPreferencePolicy = new CompletionPreferencePolicy(manager, items, null, context.prefix);
+      myPreferencePolicy = new CompletionPreferencePolicy(manager, items, null, context.getPrefix());
     }
     data.itemPreferencePolicy = myPreferencePolicy;
     myPreferencePolicy = null;
@@ -420,9 +420,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         PsiDocumentManager.getInstance(context.project).commitAllDocuments();
-        context.prefix = data.prefix;
+        context.setPrefix(data.prefix);
         final PsiElement position =
-          context.file.findElementAt(context.startOffset - context.prefix.length() + item.getLookupString().length() - 1);
+          context.file.findElementAt(context.startOffset - context.getPrefix().length() + item.getLookupString().length() - 1);
         analyseItem(item, position, context);
         handler.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
       }
