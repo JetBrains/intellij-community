@@ -61,6 +61,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     myStructureModel.addModelListener(myModelListener);
     myDocumentsListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
+        if (isDisposed()) return;
         if (PsiDocumentManager.getInstance(myProject).isUncommited(e.getDocument())) {
           final boolean hasActiveRequests = myUpdateAlarm.getActiveRequestCount() > 0;
           myUpdateAlarm.cancelAllRequests();
@@ -83,7 +84,6 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
     CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
     myStructureModel.removeModelListener(myModelListener);
-    EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myDocumentsListener);
     super.dispose();
   }
 
