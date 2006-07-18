@@ -331,8 +331,14 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       int offset = element.getTextRange().getStartOffset();
       EjbMethodRole role = EjbRolesUtil.getEjbRolesUtil().getEjbRole(method);
 
-      if (role instanceof EjbImplMethodRole && ((EjbImplMethodRole) role).findAllDeclarations().length != 0) {
-        return new LineMarkerInfo(LineMarkerInfo.OVERRIDING_METHOD, method, offset, IMPLEMENTING_METHOD_ICON);
+      if (role instanceof EjbImplMethodRole) {
+        final PsiClass containingClass = method.getContainingClass();
+        final PsiMethod[] declarations = ((EjbImplMethodRole)role).findAllDeclarations();
+        for (PsiMethod declaration : declarations) {
+          if (containingClass.isInheritor(declaration.getContainingClass(), true)) {
+            return new LineMarkerInfo(LineMarkerInfo.OVERRIDING_METHOD, method, offset, IMPLEMENTING_METHOD_ICON);            
+          }
+        }
       }
 
       PsiMethod[] methods = method.findSuperMethods(false);
