@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author peter
@@ -66,7 +67,16 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
 
     GenericDomValue domValue = (GenericDomValue)domElement;
 
-    PsiReference[] references = createReferences(domValue, (XmlElement)psiElement);
+    boolean soft = false;
+    final Converter converter = domValue.getConverter();
+    if (converter instanceof ResolvingConverter) {
+      final Set additionalVariants = ((ResolvingConverter)converter).getAdditionalVariants();
+      if (additionalVariants.contains(domValue.getStringValue())) {
+        soft = true;
+      }
+    }
+
+    PsiReference[] references = createReferences(domValue, (XmlElement)psiElement, soft);
 
     // creating "declaration" reference
     DomElement parent = domElement.getParent();
@@ -77,7 +87,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  protected final PsiReference[] createReferences(GenericDomValue domValue, XmlElement psiElement) {
+  protected final PsiReference[] createReferences(GenericDomValue domValue, XmlElement psiElement, boolean soft) {
 
     Converter converter = domValue.getConverter();
     if (converter instanceof PsiReferenceConverter) {
@@ -102,7 +112,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
       return provider.getReferencesByElement(psiElement);
     }
     if (Integer.class.isAssignableFrom(clazz)) {
-      return new PsiReference[]{new GenericDomValueReference<Integer>((GenericDomValue<Integer>)domValue) {
+      return new PsiReference[]{new GenericDomValueReference<Integer>((GenericDomValue<Integer>)domValue, true) {
         public Object[] getVariants() {
           return new Object[]{"239", "42"};
         }
@@ -116,7 +126,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
       return provider.getReferencesByElement(psiElement);
     }
 
-    return new PsiReference[]{new GenericDomValueReference(domValue)};
+    return new PsiReference[]{new GenericDomValueReference(domValue, soft)};
   }
 
 

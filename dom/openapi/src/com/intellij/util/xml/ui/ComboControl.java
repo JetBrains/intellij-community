@@ -63,7 +63,37 @@ public class ComboControl extends BaseControl<JComboBox, String> {
   }
 
   public static Factory<List<Pair<String, Icon>>> createResolvingFunction(final GenericDomValue<?> reference) {
-    return createPresentationFunction(createVariantsGetter(reference));
+    return new Factory<List<Pair<String, Icon>>>() {
+      public List<Pair<String, Icon>> create() {
+        final Converter converter = reference.getConverter();
+        if (converter instanceof ResolvingConverter) {
+          final AbstractConvertContext context = new AbstractConvertContext() {
+            @NotNull
+            public DomElement getInvocationElement() {
+              return reference;
+            }
+
+            public PsiManager getPsiManager() {
+              return getFile().getManager();
+            }
+          };
+          final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
+          final Collection<Object> variants = resolvingConverter.getVariants(context);
+          final List<Pair<String, Icon>> all = ContainerUtil.map(variants, new Function<Object, Pair<String, Icon>>() {
+            public Pair<String, Icon> fun(final Object s) {
+              return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
+            }
+          });
+          all.addAll(ContainerUtil.map(resolvingConverter.getAdditionalVariants(), new Function() {
+            public Object fun(final Object s) {
+              return new Pair(s, null);
+            }
+          }));
+          return all;
+        }
+        return Collections.emptyList();
+      }
+    };
   }
 
   public static Factory<Collection<? extends Object>> createVariantsGetter(final GenericDomValue<?> reference) {

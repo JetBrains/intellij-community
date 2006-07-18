@@ -17,9 +17,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -27,10 +25,12 @@ import java.util.List;
  */
 public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> implements EmptyResolveMessageProvider {
   private final GenericDomValue<T> myGenericValue;
+  private final boolean mySoft;
 
-  public GenericDomValueReference(GenericDomValue<T> domValue) {
+  public GenericDomValueReference(GenericDomValue<T> domValue, boolean soft) {
     super(DomUtil.getValueElement(domValue));
     myGenericValue = domValue;
+    mySoft = soft;
     assert domValue.getXmlTag() != null;
     setRangeInElement(createTextRange());
   }
@@ -45,6 +45,10 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
 
   protected final GenericDomValue<T> getGenericValue() {
     return myGenericValue;
+  }
+
+  public boolean isSoft() {
+    return mySoft;
   }
 
   protected PsiElement resolveInner(T o) {
@@ -109,15 +113,15 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     if (converter instanceof ResolvingConverter) {
       final ResolvingConverter<T> resolvingConverter = (ResolvingConverter<T>)converter;
       final ConvertContext convertContext = createConvertContext();
-      final Collection<? extends T> variants = resolvingConverter.getVariants(convertContext);
-      ArrayList<Object> result = new ArrayList<Object>(variants.size());
-      for (T variant: variants) {
+      ArrayList<Object> result = new ArrayList<Object>();
+      for (T variant: resolvingConverter.getVariants(convertContext)) {
         String name = converter.toString(variant, convertContext);
         if (name != null) {
-          Icon icon = ElementPresentationManager.getIcon(variant);
-          Object value = LookupValueFactory.createLookupValue(name, icon);
-          result.add(value);
+          result.add(LookupValueFactory.createLookupValue(name, ElementPresentationManager.getIcon(variant)));
         }
+      }
+      for (final String string : resolvingConverter.getAdditionalVariants()) {
+        result.add(LookupValueFactory.createLookupValue(string, null));
       }
       return result.toArray();
     }

@@ -77,8 +77,4 @@ public abstract class DomManager implements ProjectComponent {
 
   public abstract DomElement getIdentityScope(DomElement element);
 
-  public abstract boolean processUsages(Object target, DomElement scope, Processor<PsiReference> processor);
-
-  public abstract boolean processUsages(Object target, XmlFile scope, Processor<PsiReference> processor);
-
 }

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author peter
@@ -70,6 +71,10 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
 
   @NotNull
   public abstract Collection<? extends T> getVariants(final ConvertContext context);
+
+  public Set<String> getAdditionalVariants() {
+    return Collections.emptySet();
+  }
 
   public PsiElement getPsiElement(T resolvedValue) {
     if (resolvedValue instanceof PsiElement) {

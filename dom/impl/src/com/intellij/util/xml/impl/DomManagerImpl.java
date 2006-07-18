@@ -28,7 +28,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
-import com.intellij.util.Processor;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -523,40 +522,6 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   public final DomElement getIdentityScope(DomElement element) {
     final DomFileDescription description = findFileDescription(element);
     return description == null ? element.getParent() : description.getIdentityScope(element);
-  }
-
-  public boolean processUsages(final Object target, DomElement scope, final Processor<PsiReference> processor) {
-    final Class elementClass = target.getClass();
-    final boolean[] stopped = new boolean[]{false};
-    scope.accept(new DomElementVisitor() {
-      public void visitGenericDomValue(GenericDomValue reference) {
-        final XmlElement xmlElement = reference.getXmlElement();
-        if (xmlElement == null) return;
-        final Class parameter = DomUtil.getGenericValueParameter(reference.getDomElementType());
-        if (parameter != null && ReflectionCache.isAssignable(parameter, elementClass) && target.equals(reference.getValue())) {
-          for (final PsiReference psiReference : myGenericValueReferenceProvider.createReferences(reference, xmlElement)) {
-            if (!processor.process(psiReference)) {
-              stopped[0] = true;
-              break;
-            }
-          }
-          return;
-        }
-        visitDomElement(reference);
-      }
-
-      public void visitDomElement(DomElement element) {
-        if (!stopped[0] && element.getXmlElement() != null) {
-          element.acceptChildren(this);
-        }
-      }
-    });
-    return !stopped[0];
-  }
-
-  public boolean processUsages(Object target, XmlFile scope, Processor<PsiReference> processor) {
-    final DomFileElementImpl<DomElement> element = getFileElement(scope);
-    return element == null || processUsages(target, element, processor);
   }
 
   public final VisitorDescription getVisitorDescription(Class<? extends DomElementVisitor> aClass) {
