@@ -908,6 +908,13 @@ public abstract class DebugProcessImpl implements DebugProcess {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
       finally {
+        // important need this to ensure that no requesst have been left.
+        // situation; eveluate some method in breakpoint inside it
+        // after the breakpoint has been hit, do stepOut: the step-out request will be added as a result
+        // the problem is that VM will pause at the end of method evaluation _before_ stepOut event occurs and
+        // the next evaluation (map.size() or toString()) will cause the request to generate the event.
+        // As a result the user will find himself paused in completely different method 
+        deleteStepRequests(invokeThread);
         suspendContext.setIsEvaluating(null);
         SuspendManagerUtil.restoreAfterResume(suspendContext, resumeData);
         for (Iterator<SuspendContextImpl> iterator = getSuspendManager().getEventContexts().iterator(); iterator.hasNext();) {
