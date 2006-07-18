@@ -5,11 +5,11 @@
 package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 public final class ObjectNode {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectNode");
@@ -20,11 +20,16 @@ public final class ObjectNode {
   private Object myObject;
 
   private List<ObjectNode> myChildren;
+  private Throwable myTrace;
 
   public ObjectNode(ObjectTree tree, ObjectNode parentNode, Object object) {
     myTree = tree;
     myParent = parentNode;
     myObject = object;
+
+    if (Disposer.isDebugMode()) {
+      myTrace = new Throwable();
+    }
   }
 
   public void addChild(Object childObject) {
@@ -123,4 +128,8 @@ public final class ObjectNode {
     return "Node: " + myObject.toString();
   }
 
+
+  public Throwable getTrace() {
+    return myTrace;
+  }
 }

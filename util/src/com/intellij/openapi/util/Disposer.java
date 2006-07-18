@@ -5,6 +5,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.objectTree.ObjectNode;
 import com.intellij.openapi.util.objectTree.ObjectTree;
 import com.intellij.openapi.util.objectTree.ObjectTreeAction;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,7 @@ public class Disposer {
       ((Disposable)each).dispose();
     }
   };
+  private static boolean ourDebugMode;
 
   private Disposer() {
   }
@@ -62,10 +64,25 @@ public class Disposer {
 
       for (Object object : objects) {
         System.err.println("***   " + object + " of class " + object.getClass());
+        final ObjectNode objectNode = ourTree.getObject2NodeMap().get(object);
+        final Throwable trace = objectNode.getTrace();
+        if (trace != null) {
+          System.err.println("***         First seen at: ");
+          trace.printStackTrace();
+        }
       }
 
       System.err.println("***                                                                                         ***");
       System.err.println("***********************************************************************************************");
     }
+  }
+
+  public static void setDebugMode(final boolean b) {
+    ourDebugMode = true;
+  }
+
+
+  public static boolean isDebugMode() {
+    return ourDebugMode;
   }
 }

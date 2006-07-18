@@ -68,6 +68,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   public StructureViewComponent(FileEditor editor, StructureViewModel structureViewModel, Project project) {
     super(new BorderLayout());
+
     myProject = project;
     myFileEditor = editor;
     myTreeModel = structureViewModel;
@@ -83,7 +84,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     myAbstractTreeBuilder = new StructureTreeBuilder(project, tree,
                                                      (DefaultTreeModel)tree.getModel(),treeStructure,myTreeModelWrapper);
     myAbstractTreeBuilder.updateFromRoot();
-    Disposer.register(myProject, myAbstractTreeBuilder);
+    Disposer.register(this, myAbstractTreeBuilder);
     add(new JScrollPane(myAbstractTreeBuilder.getTree()), BorderLayout.CENTER);
 
     myAbstractTreeBuilder.getTree().setCellRenderer(new NodeRenderer());

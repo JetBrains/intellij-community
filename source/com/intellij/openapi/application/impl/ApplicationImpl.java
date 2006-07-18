@@ -87,6 +87,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @NonNls private static final String XML_EXTENSION = ".xml";
 
   public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, boolean isHeadless, String appName) {
+    if (isInternal || isUnitTestMode) {
+      Disposer.setDebugMode(true);
+    }
     myStartTime = System.currentTimeMillis();
     myName = appName;
     ApplicationManagerEx.setApplication(this);
