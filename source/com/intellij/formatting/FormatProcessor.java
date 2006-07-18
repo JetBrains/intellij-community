@@ -318,6 +318,8 @@ class FormatProcessor {
   private static boolean shouldSaveDependancy(final SpacingImpl spaceProperty, WhiteSpace whiteSpace) {
     if (!(spaceProperty instanceof DependantSpacingImpl)) return false;
 
+    if (whiteSpace.isReadOnly() || whiteSpace.isLineFeedsAreReadOnly()) return false;
+
     final TextRange dependancy = ((DependantSpacingImpl)spaceProperty).getDependancy();
     return whiteSpace.getTextRange().getStartOffset() < dependancy.getEndOffset();
   }
