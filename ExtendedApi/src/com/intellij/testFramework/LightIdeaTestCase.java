@@ -518,7 +518,9 @@ import java.util.Map;
         try {
           SwingUtilities.invokeAndWait(new Runnable() {
             public void run() {
-              ProjectUtil.closeProject(ourProject);
+              if (ourProject != null) {
+                ProjectUtil.closeProject(ourProject);
+              }
             }
           });
         }
