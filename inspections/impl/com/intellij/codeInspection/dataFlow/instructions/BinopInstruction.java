@@ -50,7 +50,7 @@ public class BinopInstruction extends BranchingInstruction {
       final DfaValueFactory factory = runner.getFactory();
       if (("==".equals(myOperationSign) || "!=".equals(myOperationSign)) &&
           dfaLeft instanceof DfaConstValue && dfaRight instanceof DfaConstValue) {
-        boolean negated = "!=".equals(myOperationSign);
+        boolean negated = "!=".equals(myOperationSign) ^ (memState.canBeNaN(dfaLeft) || memState.canBeNaN(dfaRight));
         if (dfaLeft == dfaRight ^ negated) {
           memState.push(factory.getConstFactory().getTrue());
           setTrueReachable();
@@ -62,7 +62,8 @@ public class BinopInstruction extends BranchingInstruction {
         return new DfaInstructionState[]{new DfaInstructionState(next, memState)};
       }
 
-      DfaRelationValue dfaRelation = factory.getRelationFactory().create(dfaLeft, dfaRight, myOperationSign, false);
+      boolean negated = memState.canBeNaN(dfaLeft) || memState.canBeNaN(dfaRight);
+      DfaRelationValue dfaRelation = factory.getRelationFactory().create(dfaLeft, dfaRight, myOperationSign, negated);
       if (dfaRelation != null) {
         myCanBeNullInInstanceof = true;
         ArrayList<DfaInstructionState> states = new ArrayList<DfaInstructionState>();

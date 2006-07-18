@@ -12,7 +12,7 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.testFramework.InspectionTestCase;
 
-public class DataFlowTest extends InspectionTestCase {
+public class DataFlowInspectionTest extends InspectionTestCase {
   private void doTest() throws Exception {
     doTest("dataFlow/" + getTestName(false), new DataFlowInspection());
   }
@@ -115,4 +115,5 @@ public class DataFlowTest extends InspectionTestCase {
   public void testStrangeArrayIndexOutOfBounds() throws Exception { doTest15(); }
   public void testIDEADEV2605() throws Exception { doTest15(); }
   public void testConstantsDifferentTypes() throws Exception { doTest15(); }
+  public void testBoxingNaN() throws Exception { doTest15(); }
 }

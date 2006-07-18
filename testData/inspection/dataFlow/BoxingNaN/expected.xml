@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>6</line>
+    <method>
+      <name>void main(String[] args)</name>
+      <display_name>main(String[])</display_name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>DoubleTrouble</name>
+        <display_name>DoubleTrouble</display_name>
+      </class>
+    </method>
+    <description>Condition &lt;code&gt;b == Double.NaN&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;.</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>11</line>
+    <method>
+      <name>void main(String[] args)</name>
+      <display_name>main(String[])</display_name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>DoubleTrouble</name>
+        <display_name>DoubleTrouble</display_name>
+      </class>
+    </method>
+    <description>Condition &lt;code&gt;Float.NaN != Float.NaN&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>18</line>
+    <method>
+      <name>void main(String[] args)</name>
+      <display_name>main(String[])</display_name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>DoubleTrouble</name>
+        <display_name>DoubleTrouble</display_name>
+      </class>
+    </method>
+    <description>Condition &lt;code&gt;Double.NaN == a&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;.</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>19</line>
+    <method>
+      <name>void main(String[] args)</name>
+      <display_name>main(String[])</display_name>
+      <package>&lt;default&gt;</package>
+      <class>
+        <name>DoubleTrouble</name>
+        <display_name>DoubleTrouble</display_name>
+      </class>
+    </method>
+    <description>Condition &lt;code&gt;b == a&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;.</description>
+  </problem>
+</problems>
+
