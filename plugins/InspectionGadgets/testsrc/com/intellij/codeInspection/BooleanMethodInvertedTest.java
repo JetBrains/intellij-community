@@ -49,6 +49,6 @@ public class BooleanMethodInvertedTest extends IGInspectionTestCase {
   }
 
   private void doTest() throws Exception {
-    doTest("invertedBoolean/" + getTestName(false), new BooleanMethodIsAlwaysInvertedInspection());
+    doTest("invertedBoolean/" + getTestName(true), new BooleanMethodIsAlwaysInvertedInspection());
   }
 }
