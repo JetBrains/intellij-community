@@ -32,6 +32,22 @@ public class BooleanMethodInvertedTest extends IGInspectionTestCase {
     doTest();
   }
 
+  public void testHierarchyNotAlwaysInverted() throws Exception {
+    doTest();
+  }
+
+  public void testDeepHierarchyNotAlwaysInverted() throws Exception {
+    doTest();
+  }
+
+  public void testDeepHierarchyNotAlwaysInvertedInScope() throws Exception {
+    doTest();
+  }
+
+  public void testDeepHierarchyAlwaysInverted() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest("invertedBoolean/" + getTestName(false), new BooleanMethodIsAlwaysInvertedInspection());
   }

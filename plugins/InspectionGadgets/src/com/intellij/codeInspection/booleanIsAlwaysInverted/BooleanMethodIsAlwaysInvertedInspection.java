@@ -13,6 +13,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * User: anna
  * Date: 06-Jan-2006
@@ -46,13 +48,24 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalInspectionToo
     if (refEntity instanceof RefMethod) {
       RefMethod refMethod = (RefMethod)refEntity;
       if (!refMethod.isReferenced()) return null;
-      final Boolean alwaysInverted = refMethod.getUserData(ALWAYS_INVERTED);
-      if (alwaysInverted == null || !alwaysInverted.booleanValue()) return null;
+      if (hasNonInvertedCalls(refMethod)) return null;
+      if (refMethod.getSuperMethods().size() > 0) return null;
       return new ProblemDescriptor[]{manager.createProblemDescriptor(refMethod.getElement(), InspectionsBundle.message(
         "boolean.method.is.always.inverted.problem.descriptor"), (LocalQuickFix [])null,
-                                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+                                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
     }
     return null;
+  }
+
+  private static boolean hasNonInvertedCalls(final RefMethod refMethod) {
+    final Boolean alwaysInverted = refMethod.getUserData(ALWAYS_INVERTED);
+    if (alwaysInverted == null) return true;
+    if (refMethod.isReferenced() && !alwaysInverted.booleanValue()) return true;
+    final Collection<RefMethod> superMethods = refMethod.getSuperMethods();
+    for (RefMethod superMethod : superMethods) {
+      if (hasNonInvertedCalls(superMethod)) return true;
+    }
+    return false;
   }
 
   public boolean queryExternalUsagesRequests(final InspectionManager manager,
@@ -61,7 +74,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalInspectionToo
     globalContext.getRefManager().iterate(new RefVisitor() {
       public void visitMethod(final RefMethod refMethod) {
         if (processor.getDescriptions(refMethod) != null) { //suspicious method -> need to check external usages
-          globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalInspectionContext.UsagesProcessor() {
+          final GlobalInspectionContext.UsagesProcessor usagesProcessor = new GlobalInspectionContext.UsagesProcessor() {
             public boolean process(PsiReference psiReference) {
               final PsiElement psiReferenceExpression = psiReference.getElement();
               if (psiReferenceExpression instanceof PsiReferenceExpression &&
@@ -70,11 +83,20 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalInspectionToo
               }
               return false;
             }
-          });
+          };
+          traverseSuperMethods(refMethod, globalContext, usagesProcessor);
         }
       }
     });
     return false;
+  }
+
+  private static void traverseSuperMethods(RefMethod refMethod, GlobalInspectionContext globalContext, GlobalInspectionContext.UsagesProcessor processor){
+    final Collection<RefMethod> superMethods = refMethod.getSuperMethods();
+    for (RefMethod superMethod : superMethods) {
+      traverseSuperMethods(superMethod, globalContext, processor);
+    }
+    globalContext.enqueueMethodUsagesProcessor(refMethod, processor);
   }
 
   private static void checkMethodCall(RefElement refWhat, final PsiElement element) {
@@ -98,6 +120,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalInspectionToo
 
   private static boolean isInvertedMethodCall(final PsiReferenceExpression methodExpression) {
     final PsiPrefixExpression prefixExpression = PsiTreeUtil.getParentOfType(methodExpression, PsiPrefixExpression.class);
+    if (methodExpression.getQualifierExpression() instanceof PsiSuperExpression) return true; //don't flag super calls
     if (prefixExpression != null) {
       final PsiJavaToken sign = prefixExpression.getOperationSign();
       final IElementType tokenType = sign.getTokenType();
