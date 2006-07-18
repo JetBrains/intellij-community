@@ -154,9 +154,18 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
           if (path.isUnder(filePath, false)) return Boolean.TRUE;
         }
 
-        FilePath parent = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(path.getIOFile().getParentFile());
-        for (FilePath filePath : myDirtyFiles) {
-          if (filePath.equals(parent) || filePath.equals(path)) return Boolean.TRUE;
+        if (myDirtyFiles.size() > 0) {
+          FilePath parent;
+          VirtualFile vParent = path.getVirtualFileParent();
+          if (vParent != null && vParent.isValid()) {
+            parent = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(vParent);
+          }
+          else {
+            parent = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(path.getIOFile().getParentFile());
+          }
+          for (FilePath filePath : myDirtyFiles) {
+            if (filePath.equals(parent) || filePath.equals(path)) return Boolean.TRUE;
+          }
         }
 
         return Boolean.FALSE;
