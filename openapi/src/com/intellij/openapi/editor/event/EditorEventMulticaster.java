@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.event;
 
+import com.intellij.openapi.Disposable;
+
 /**
  * Allows to attach listeners which receive notifications about changes in any currently open
  * editor.
@@ -23,6 +25,7 @@ package com.intellij.openapi.editor.event;
  */
 public interface EditorEventMulticaster {
   void addDocumentListener(DocumentListener listener);
+  void addDocumentListener(DocumentListener listener, Disposable parentDisposable);
   void removeDocumentListener(DocumentListener listener);
 
   void addEditorMouseListener(EditorMouseListener listener);
