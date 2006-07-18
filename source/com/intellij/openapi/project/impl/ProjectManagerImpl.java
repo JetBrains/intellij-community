@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ProfilingUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.TObjectLongHashMap;
@@ -33,6 +32,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,7 +67,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private TObjectLongHashMap<VirtualFile> mySavedTimestamps = new TObjectLongHashMap<VirtualFile>();
   private HashMap<Project, List<VirtualFile>> myChangedProjectFiles = new HashMap<Project, List<VirtualFile>>();
   private PathMacrosImpl myPathMacros;
-  private VirtualFilePointerManager myFilePointerManager;
 
   private static ProjectManagerListener[] getListeners(Project project) {
     ArrayList<ProjectManagerListener> array = project.getUserData(LISTENERS_IN_PROJECT_KEY);
@@ -75,10 +74,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return array.toArray(new ProjectManagerListener[array.size()]);
   }
 
-  /* @fabrique used by fabrique! */
-  public ProjectManagerImpl(VirtualFileManagerEx virtualFileManagerEx,
-                            PathMacrosImpl pathMacros,
-                            VirtualFilePointerManager filePointerManager) {
+  public ProjectManagerImpl(VirtualFileManagerEx virtualFileManagerEx, PathMacrosImpl pathMacros) {
     addProjectManagerListener(
       new ProjectManagerListener() {
 
@@ -117,7 +113,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     registerExternalProjectFileListener(virtualFileManagerEx);
     myPathMacros = pathMacros;
-    myFilePointerManager = filePointerManager;
   }
 
   public void disposeComponent() {
@@ -156,7 +151,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       project.setDummy(isDummy);
     }
     else {
-      project = new ProjectImpl(this, filePath, isDefault, isOptimiseTestLoadSpeed, myPathMacros, myFilePointerManager);
+      project = new ProjectImpl(this, filePath, isDefault, isOptimiseTestLoadSpeed, myPathMacros);
     }
     project.loadProjectComponents();
     return project;
@@ -702,21 +697,24 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return "project.default";
   }
 
+  @NotNull
   public String getComponentName() {
     return "ProjectManager";
   }
 
+  @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile(this)};
   }
 
+  @NotNull
   public String getPresentableName() {
     return ProjectBundle.message("project.default.settings");
   }
 
   private class DummyProject extends ProjectImpl {
     public DummyProject(final String filePath, final boolean aDefault, final boolean optimiseTestLoadSpeed) {
-      super(ProjectManagerImpl.this, filePath, aDefault, optimiseTestLoadSpeed, ProjectManagerImpl.this.myPathMacros, ProjectManagerImpl.this.myFilePointerManager);
+      super(ProjectManagerImpl.this, filePath, aDefault, optimiseTestLoadSpeed, ProjectManagerImpl.this.myPathMacros);
     }
   }
 

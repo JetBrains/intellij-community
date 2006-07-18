@@ -36,7 +36,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.pom.PomModel;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -92,7 +91,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
                         String filePath,
                         boolean isDefault,
                         boolean isOptimiseTestLoadSpeed,
-                        PathMacrosImpl pathMacros, VirtualFilePointerManager filePointerManager) {
+                        PathMacrosImpl pathMacros) {
     super(isDefault, pathMacros);
 
     myOptimiseTestLoadSpeed = isOptimiseTestLoadSpeed;
@@ -351,8 +350,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
 
   private boolean isWorkspace(Class componentInterface) {
     final Map options = getComponentOptions(componentInterface);
-    if (options == null) return false;
-    return Boolean.parseBoolean((String) options.get(OPTION_WORKSPACE));
+    return options != null && Boolean.parseBoolean((String)options.get(OPTION_WORKSPACE));
   }
 
   private void getExpandProjectHomeReplacements(ExpandMacroToPathMap result) {
@@ -443,6 +441,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
     myManager.addProjectManagerListener(this, myProjectManagerListener);
   }
 
+  /** @noinspection AssignmentToStaticFieldFromInstanceMethod*/
   public void save() {
     if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) return; //no need to save
     ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
