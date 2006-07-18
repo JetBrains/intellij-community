@@ -302,7 +302,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   }
 
   private void doHolderToXmlChanges(final PsiFile psiFile) {
-    boolean removeRoot = myRootsInUpdate.add(psiFile);
+    boolean removeRoot = false;
 
     final Language language = getBaseLanguage();
     final List<Pair<OuterLanguageElement, Pair<StringBuffer, StringBuffer>>> javaFragments =
