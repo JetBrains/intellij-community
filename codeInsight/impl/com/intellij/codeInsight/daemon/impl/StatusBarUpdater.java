@@ -37,10 +37,12 @@ public class StatusBarUpdater {
       new FileEditorManagerAdapter() {
         public void selectionChanged(FileEditorManagerEvent e) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
-                    public void run() {
-                      updateStatus();
-                    }
-                  });
+            public void run() {
+              if (myProject.isOpen()) {
+                updateStatus();
+              }
+            }
+          });
         }
       }
     );
