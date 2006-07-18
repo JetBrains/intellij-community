@@ -8,6 +8,7 @@
  */
 package com.intellij.codeInspection.util;
 
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -56,10 +57,10 @@ public class XMLExportUtl {
       problem.addContent(lineElement);
 
       final Element rangeElement = new Element("text_range");
-      final PsiElement navigationElement = psiElement.getNavigationElement();
-      final TextRange textRange = range != null
-                                  ? range
-                                  : (navigationElement != null ? navigationElement.getTextRange() : psiElement.getTextRange());
+      final PsiElement navigationElement = HighlightUsagesHandler.getNameIdentifier(psiElement);
+      final TextRange textRange = navigationElement != null 
+                                  ? navigationElement.getTextRange()
+                                  : range != null ? range : psiElement.getTextRange();
       rangeElement.setAttribute("start", String.valueOf(textRange.getStartOffset()));
       rangeElement.setAttribute("end", String.valueOf(textRange.getEndOffset()));
       problem.addContent(rangeElement);

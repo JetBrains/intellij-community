@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Foo.java</file>
+    <line>4</line>
+    <description>IOException</description>
+    <text_range start="48" end="51" />
+  </problem>
+</problems>
+

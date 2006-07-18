@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.StreamTokenizer;
 import java.util.ArrayList;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class InspectionTestCase extends PsiTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.InspectionTestCase");
 
@@ -54,7 +55,15 @@ public abstract class InspectionTestCase extends PsiTestCase {
     doTest(folderName, tool, "java 1.4");
   }
 
+  public void doTest(@NonNls String folderName, InspectionTool tool, final boolean checkRange) throws Exception {
+    doTest(folderName, tool, "java 1.4", checkRange);
+  }
+
   public void doTest(@NonNls String folderName, InspectionTool tool, @NonNls final String jdkName) throws Exception {
+    doTest(folderName, tool, jdkName, false);
+  }
+
+  public void doTest(@NonNls String folderName, InspectionTool tool, @NonNls final String jdkName, boolean checkRange) throws Exception {
     final String testDir = getTestDataPath() + "/"+folderName;
     final VirtualFile[] sourceDir = new VirtualFile[1];
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -124,7 +133,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     File file = new File(testDir + "/expected.xml");
     Document expectedDocument = JDOMUtil.loadDocument(file);
 
-    compareWithExpected(expectedDocument, doc);
+    compareWithExpected(expectedDocument, doc, checkRange);
   }
 
   @NonNls
@@ -132,7 +141,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     return PathManagerEx.getTestDataPath()+"/inspection/";
   }
 
-  private static void compareWithExpected(Document expectedDoc, Document doc) throws Exception {
+  private static void compareWithExpected(Document expectedDoc, Document doc, boolean checkRange) throws Exception {
     ArrayList<Object> expectedProblems = new ArrayList<Object>(expectedDoc.getRootElement().getChildren("problem"));
     ArrayList reportedProblems = new ArrayList(doc.getRootElement().getChildren("problem"));
 
@@ -143,7 +152,7 @@ expected:
     for (Element expectedProblem : expectedArrayed) {
       Element[] reportedArrayed = (Element[])reportedProblems.toArray(new Element[reportedProblems.size()]);
       for (Element reportedProblem : reportedArrayed) {
-        if (compareProblemWithExpected(reportedProblem, expectedProblem)) {
+        if (compareProblemWithExpected(reportedProblem, expectedProblem, checkRange)) {
           expectedProblems.remove(expectedProblem);
           reportedProblems.remove(reportedProblem);
           continue expected;
@@ -165,12 +174,20 @@ expected:
     assertFalse(failed);
   }
 
-  private static boolean compareProblemWithExpected(Element reportedProblem, Element expectedProblem) throws Exception {
+  private static boolean compareProblemWithExpected(Element reportedProblem, Element expectedProblem, boolean checkRange) throws Exception {
     if (!compareFiles(reportedProblem, expectedProblem)) return false;
     if (!compareLines(reportedProblem, expectedProblem)) return false;
     if (!compareDescriptions(reportedProblem, expectedProblem)) return false;
-
+    if (checkRange && !compareTextRange(reportedProblem, expectedProblem)) return false;
     return true;
+  }
+
+  private static boolean compareTextRange(final Element reportedProblem, final Element expectedProblem) {
+    Element reportedTextRange = reportedProblem.getChild("text_range");
+    if (reportedTextRange == null) return false;
+    Element expectedTextRange = expectedProblem.getChild("text_range");
+    return Comparing.equal(reportedTextRange.getAttributeValue("end"), expectedTextRange.getAttributeValue("end")) &&
+           Comparing.equal(reportedTextRange.getAttributeValue("start"), expectedTextRange.getAttributeValue("start"));
   }
 
   private static boolean compareDescriptions(Element reportedProblem, Element expectedProblem) throws Exception {

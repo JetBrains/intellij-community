@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Base.java</file>
+    <line>2</line>
+    <description>empty</description>
+    <text_range start="34" end="37" />
+  </problem>
+</problems>
+
