@@ -59,7 +59,7 @@ public class IntroComponentProperty extends IntrospectedProperty<String> {
 
   @Override protected void setValueImpl(final RadComponent component, final String value) throws Exception {
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), value);
-    if (getName().equals(SwingProperties.LABEL_FOR) && !component.isLoadingProperties()) {
+    if (getName().equals(SwingProperties.LABEL_FOR) && !component.isLoadingProperties() && component.getModule() != null) {
       updateLabelForBinding(component);
     }
   }

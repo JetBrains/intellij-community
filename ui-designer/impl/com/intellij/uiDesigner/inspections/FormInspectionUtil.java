@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -34,7 +35,7 @@ public class FormInspectionUtil {
     return false;
   }
 
-  @Nullable public static String getText(final Module module, final IComponent component) {
+  @Nullable public static String getText(@NotNull final Module module, final IComponent component) {
     IProperty textProperty = findProperty(component, SwingProperties.TEXT);
     if (textProperty != null) {
       Object propValue = textProperty.getPropertyValue(component);
