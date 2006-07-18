@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.lang.reflect.Type;
@@ -46,7 +47,10 @@ public abstract class AddDomElementAction extends AnAction {
     if (actions.length == 1) {
       e.getPresentation().setText(actions[0].getTemplatePresentation().getText());
     } else {
-      e.getPresentation().setText(getActionText(e) + (actions.length > 1 ? "..." : ""));
+      final String actionText = getActionText(e);
+      if (!actionText.endsWith("...")) {
+        e.getPresentation().setText(actionText + (actions.length > 1 ? "..." : ""));
+      }
     }
     e.getPresentation().setIcon(DomCollectionControl.ADD_ICON);
 
@@ -82,7 +86,12 @@ public abstract class AddDomElementAction extends AnAction {
   }
 
   protected void showPopup(final ListPopup groupPopup, final AnActionEvent e) {
-    groupPopup.showUnderneathOf(e.getInputEvent().getComponent());
+    final Component component = e.getInputEvent().getComponent();
+    if (component instanceof JMenuItem) {
+      groupPopup.showInBestPositionFor(e.getDataContext());
+    } else {
+      groupPopup.showUnderneathOf(component);
+    }
   }
 
   @NotNull
