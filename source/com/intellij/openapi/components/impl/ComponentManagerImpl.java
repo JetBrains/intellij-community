@@ -65,6 +65,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @NonNls private static final String HEADLESS_IMPLEMENTATION_CLASS_ELEMENT = "headless-implementation-class";
   @NonNls private static final String OPTION_ELEMENT = "option";
   @NonNls private static final String VALUE_ATTR = "value";
+  private boolean myDisposed = false;
 
   protected void initComponents() {
     createComponents();
@@ -202,6 +203,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   public <T> T getComponent(Class<T> interfaceClass) {
+    assert !myDisposed;
     return getComponent(interfaceClass, null);
   }
 
@@ -628,6 +630,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
 
   public void dispose() {
+    myDisposed = true;
     myComponentInterfaces = null;
     myInitializedComponents = null;
     myInitializingComponents = null;
