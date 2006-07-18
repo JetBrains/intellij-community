@@ -945,6 +945,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myGutterSizeUpdater != null) return;
     myGutterSizeUpdater = new Runnable() {
       public void run() {
+        if (isDisposed()) return;
         myGutterComponent.updateSize();
         myGutterSizeUpdater = null;
       }
