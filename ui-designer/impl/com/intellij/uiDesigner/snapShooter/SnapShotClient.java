@@ -73,7 +73,7 @@ public class SnapShotClient {
       if (line.trim().equals(".")) {
         break;
       }
-      result.add(new SnapShotRemoteComponent(line));
+      result.add(new SnapShotRemoteComponent(line, id == 0));
     }
     return result.toArray(new SnapShotRemoteComponent[result.size()]);
   }

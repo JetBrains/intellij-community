@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -53,6 +54,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -282,10 +284,14 @@ public class CreateSnapShotAction extends AnAction {
     private JPanel myRootPanel;
     private JTree myComponentTree;
     private JTextField myFormNameTextField;
+    private JLabel myErrorLabel;
     private final Project myProject;
     private final SnapShotClient myClient;
     private final PsiDirectory myDirectory;
     @NonNls private static final String SWING_PACKAGE = "javax.swing.";
+
+    private Icon myUnknownComponentIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/unknown.png");
+    private Icon myFormIcon = IconLoader.getIcon("/fileTypes/uiForm.png");
 
     public MyDialog(Project project, final SnapShotClient client, final PsiDirectory dir) {
       super(project, true);
@@ -296,6 +302,7 @@ public class CreateSnapShotAction extends AnAction {
       setTitle(UIDesignerBundle.message("snapshot.title"));
       final SnapShotTreeModel model = new SnapShotTreeModel(client);
       myComponentTree.setModel(model);
+      myComponentTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
       myComponentTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
         public void valueChanged(TreeSelectionEvent e) {
           updateOKAction();
@@ -306,6 +313,8 @@ public class CreateSnapShotAction extends AnAction {
           myComponentTree.expandRow(row);
         }
       }
+      myComponentTree.getSelectionModel().setSelectionPath(myComponentTree.getPathForRow(0));
+      myFormNameTextField.setText(suggestFormName());
 
       final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
       final TextAttributes attributes = globalScheme.getAttributes(HighlighterColors.JAVA_STRING);
@@ -331,13 +340,18 @@ public class CreateSnapShotAction extends AnAction {
             append(" (" + rc.getLayoutManager() + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
           }
 
-          final Palette palette = Palette.getInstance(myProject);
-          final ComponentItem item = palette.getItem(rc.getClassName());
-          if (item != null) {
-            setIcon(item.getSmallIcon());
+          if (rc.isTopLevel()) {
+            setIcon(myFormIcon);
           }
           else {
-            setIcon(palette.getPanelItem().getSmallIcon());
+            final Palette palette = Palette.getInstance(myProject);
+            final ComponentItem item = palette.getItem(rc.getClassName());
+            if (item != null) {
+              setIcon(item.getSmallIcon());
+            }
+            else {
+              setIcon(myUnknownComponentIcon);
+            }
           }
         }
       });
@@ -349,14 +363,40 @@ public class CreateSnapShotAction extends AnAction {
       updateOKAction();
     }
 
+    @NonNls
+    private String suggestFormName() {
+      int count = 0;
+      do {
+        count++;
+      } while(myDirectory.findFile("Form" + count + ".form") != null);
+      return "Form" + count;
+    }
+
     private void updateOKAction() {
-      setOKActionEnabled(isFormNameValid() && isSelectedComponentValid());
+      final boolean selectedComponentValid = isSelectedComponentValid();
+      setOKActionEnabled(isFormNameValid() && selectedComponentValid);
+      if (myComponentTree.getSelectionPath() != null && !selectedComponentValid) {
+        myErrorLabel.setText(UIDesignerBundle.message("snapshooter.invalid.container"));
+      }
+      else {
+        myErrorLabel.setText(" ");
+      }
     }
 
     private boolean isSelectedComponentValid() {
       final TreePath selectionPath = myComponentTree.getSelectionPath();
       if (selectionPath == null) return false;
       SnapShotRemoteComponent rc = (SnapShotRemoteComponent) selectionPath.getLastPathComponent();
+      if (isValidComponent(rc)) return true;
+      if (selectionPath.getPathCount() == 2) {
+        // capture frame/dialog root pane when a frame or dialog itself is selected
+        final SnapShotRemoteComponent[] children = rc.getChildren();
+        return children != null && children.length > 0 && isValidComponent(children[0]);
+      }
+      return false;
+    }
+
+    private boolean isValidComponent(final SnapShotRemoteComponent rc) {
       PsiClass componentClass = PsiManager.getInstance(myProject).findClass(rc.getClassName(),
                                                                             GlobalSearchScope.allScope(myProject));
       while(componentClass != null) {
@@ -452,10 +492,12 @@ public class CreateSnapShotAction extends AnAction {
         layoutManagerClasses.add(rc.getLayoutManager());
       }
 
-      if (rc.getChildren() == null) {
-        rc.setChildren(myClient.listChildren(rc.getId()));
+      SnapShotRemoteComponent[] children = rc.getChildren();
+      if (children == null) {
+        children = myClient.listChildren(rc.getId());
+        rc.setChildren(children);
       }
-      for(SnapShotRemoteComponent child: rc.getChildren()) {
+      for(SnapShotRemoteComponent child: children) {
         collectUnknownLayoutManagerClasses(project, child, layoutManagerClasses);
       }
     }
@@ -466,7 +508,15 @@ public class CreateSnapShotAction extends AnAction {
     }
 
     public int getSelectedComponentId() {
-      SnapShotRemoteComponent rc = (SnapShotRemoteComponent) myComponentTree.getSelectionPath().getLastPathComponent();
+      final TreePath selectionPath = myComponentTree.getSelectionPath();
+      SnapShotRemoteComponent rc = (SnapShotRemoteComponent) selectionPath.getLastPathComponent();
+      if (!isValidComponent(rc) && selectionPath.getPathCount() == 2) {
+        // capture frame/dialog root pane when a frame or dialog itself is selected
+        final SnapShotRemoteComponent[] children = rc.getChildren();
+        if (children != null && children.length > 0 && isValidComponent(children [0])) {
+          return children [0].getId();
+        }
+      }
       return rc.getId();
     }
 

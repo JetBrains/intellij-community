@@ -4,11 +4,14 @@
 
 package com.intellij.uiDesigner.snapShooter;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author yole
  */
 public class SnapShotRemoteComponent {
   private int myId;
+  private boolean myTopLevel;
   private String myClassName;
   private final String myLayoutManager;
   private String myText;
@@ -21,16 +24,21 @@ public class SnapShotRemoteComponent {
     myText = text;
   }
 
-  public SnapShotRemoteComponent(String line) {
+  public SnapShotRemoteComponent(String line, boolean topLevel) {
     final String[] strings = line.trim().split(";", 4);
     myId = Integer.parseInt(strings [0]);
     myClassName = strings [1];
     myLayoutManager = strings [2];
     myText = strings [3];
+    myTopLevel = topLevel;
   }
 
   public int getId() {
     return myId;
+  }
+
+  public boolean isTopLevel() {
+    return myTopLevel;
   }
 
   public String getClassName() {
@@ -45,6 +53,7 @@ public class SnapShotRemoteComponent {
     return myLayoutManager;
   }
 
+  @Nullable
   public SnapShotRemoteComponent[] getChildren() {
     return myChildren;
   }
