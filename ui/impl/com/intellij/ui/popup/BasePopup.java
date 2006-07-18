@@ -37,7 +37,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
 
   private static final int AUTO_POPUP_DELAY = 1000;
   protected static final Color TITLE_BACKGROUND = new Color(180, 193, 215);
-  protected static final Dimension MAX_SIZE = new Dimension(Integer.MAX_VALUE, 400);
+  protected static final Dimension MAX_SIZE = new Dimension(Integer.MAX_VALUE, 600);
 
   protected static final int STEP_X_PADDING = 2;
 

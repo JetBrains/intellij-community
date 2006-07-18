@@ -109,6 +109,10 @@ public class RunConfigurationAction extends ComboBoxAction {
     if (project != null) {
       final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
 
+      allActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
+      allActionsGroup.add(new SaveTemporaryAction());
+      allActionsGroup.addSeparator();
+
       final ConfigurationType[] types = runManager.getConfigurationFactories();
       for (ConfigurationType type : types) {
         final DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -122,9 +126,6 @@ public class RunConfigurationAction extends ComboBoxAction {
         allActionsGroup.add(actionGroup);
         allActionsGroup.addSeparator();
       }
-
-      allActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
-      allActionsGroup.add(new SaveTemporaryAction());
     }
     return allActionsGroup;
   }

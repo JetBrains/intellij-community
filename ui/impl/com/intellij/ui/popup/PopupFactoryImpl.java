@@ -4,6 +4,7 @@
  */
 package com.intellij.ui.popup;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -39,8 +40,6 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
     }
   };
 
-  public PopupFactoryImpl() {}
-
   @NotNull
   public String getComponentName() {
     return "PopupFactory";
@@ -51,7 +50,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
   public void disposeComponent() {}
 
   public ListPopup createConfirmation(String title, final Runnable onYes, int defaultOptionIndex) {
-    return createConfirmation(title, "&Yes", "&No", onYes, defaultOptionIndex);
+    return createConfirmation(title, CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText(), onYes, defaultOptionIndex);
   }
 
   public ListPopup createConfirmation(String title, final String yesText, String noText, final Runnable onYes, int defaultOptionIndex) {
@@ -95,14 +94,15 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
                                           boolean showNumbers,
                                           boolean showDisabledActions,
                                           boolean honorActionMnemonics,
-                                          final Runnable disposeCallback) {
+                                          final Runnable disposeCallback,
+                                          final int maxRowCount) {
     final Component component = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
     LOG.assertTrue(component != null);
 
     ListPopupStep<ActionItem> step =
       createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics);
 
-    return new ListPopupImpl(step){
+    return new ListPopupImpl(step, maxRowCount){
 
       protected void dispose() {
         if (disposeCallback != null) {
@@ -122,7 +122,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
                                   selectionAidMethod == ActionSelectionAid.NUMBERING,
                                   showDisabledActions,
                                   selectionAidMethod == ActionSelectionAid.MNEMONICS,
-                                  null);
+                                  null, -1);
   }
 
   public ListPopup createActionGroupPopup(String title,
@@ -130,12 +130,14 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
                                           DataContext dataContext,
                                           ActionSelectionAid selectionAidMethod,
                                           boolean showDisabledActions,
-                                          Runnable disposeCallback) {
+                                          Runnable disposeCallback,
+                                          int maxRowCount) {
     return createActionGroupPopup(title, actionGroup, dataContext,
                                   selectionAidMethod == ActionSelectionAid.NUMBERING,
                                   showDisabledActions,
                                   selectionAidMethod == ActionSelectionAid.MNEMONICS,
-                                  disposeCallback);
+                                  disposeCallback,
+                                  maxRowCount);
   }
 
   public ListPopupStep createActionsStep(final ActionGroup actionGroup,

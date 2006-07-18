@@ -59,7 +59,8 @@ public abstract class JBPopupFactory {
                                                    DataContext dataContext,
                                                    ActionSelectionAid selectionAidMethod,
                                                    boolean showDisabledActions,
-                                                   Runnable disposeCallback);
+                                                   Runnable disposeCallback,
+                                                   int maxRowCount);
 
 
   public abstract ListPopup createWizardStep(PopupStep step);

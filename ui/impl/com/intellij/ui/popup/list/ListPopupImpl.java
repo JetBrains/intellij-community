@@ -24,6 +24,14 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
   private ListPopupModel myListModel;
 
   private int myIndexForShowingChild = -1;
+  private int myMaxRowCount = 20;
+
+  public ListPopupImpl(PopupStep aStep, int maxRowCount) {
+    super(aStep);
+    if (maxRowCount != -1){
+      myMaxRowCount = maxRowCount;
+    }
+  }
 
   public ListPopupImpl(PopupStep aStep) {
     super(aStep);
@@ -34,6 +42,14 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     setParentValue(parentValue);
   }
 
+  public ListPopupImpl(BasePopup aParent, PopupStep aStep, Object parentValue, int maxRowCount) {
+    super(aParent, aStep);
+    setParentValue(parentValue);
+    if (maxRowCount != -1){
+      myMaxRowCount = maxRowCount;
+    }
+  }
+
   public ListPopupModel getListModel() {
     return myListModel;
   }
@@ -42,7 +58,7 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     myList.addMouseMotionListener(myMouseMotionListener);
     myList.addMouseListener(myMouseListener);
 
-    myList.setVisibleRowCount(Math.min(20, myListModel.getSize()));
+    myList.setVisibleRowCount(Math.min(myMaxRowCount, myListModel.getSize()));
   }
 
   protected void afterShow() {

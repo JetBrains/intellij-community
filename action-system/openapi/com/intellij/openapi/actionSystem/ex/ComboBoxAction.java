@@ -89,7 +89,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
                                                                                       myForcePressed = false;
                                                                                       repaint();
                                                                                     }
-                                                                                  });
+                                                                                  },
+                                                                                  30);
 
       popup.showUnderneathOf(this);
     }
