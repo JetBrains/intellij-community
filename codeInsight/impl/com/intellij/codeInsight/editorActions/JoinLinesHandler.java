@@ -9,6 +9,8 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.ide.DataManager;
+import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -133,6 +135,9 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
             rc = tryJoinDeclaration(psiAtStartLineEnd, psiAtNextLineStart);
             if (rc == -1) {
               rc = tryUnwrapBlockStatement(psiAtStartLineEnd, psiAtNextLineStart);
+              if (rc == -1) {
+                rc = tryJoinProperties(doc, psiFile, start);
+              }
             }
           }
 
@@ -202,6 +207,16 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
         }
       }
     });
+  }
+
+  private static int tryJoinProperties(final DocumentEx doc, final PsiFile psiFile, int start) {
+    if (!(psiFile instanceof PropertiesFile)) return -1;
+    // strip continuation char
+    if (PropertiesUtil.isUnescapedBackSlashAtTheEnd(doc.getText().substring(0,start+1))) {
+      doc.deleteString(start, start + 1);
+      start--;
+    }
+    return start+1;
   }
 
   private static int tryUnwrapBlockStatement(PsiElement elementAtStartLineEnd, PsiElement elementAtNextLineStart) {
@@ -359,15 +374,15 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
 
   private static int tryJoinStringLiteral(Document doc, PsiFile psiFile, int offsetNear) {
     CharSequence text = doc.getCharsSequence();
-    int state = 0;
-    int startQuoteOffset = -1;
 
     int start = offsetNear;
     while (text.charAt(start) == ' ' || text.charAt(start) == '\t' || text.charAt(start) == '+') start--;
     if (text.charAt(start) == '\"') start--;
     if (start < offsetNear) start++;
 
-state_loop:
+    int state = 0;
+    int startQuoteOffset = -1;
+    state_loop:
     for (int j = start; j < doc.getTextLength(); j++) {
       switch (text.charAt(j)) {
         case ' ':
