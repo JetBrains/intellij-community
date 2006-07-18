@@ -62,6 +62,6 @@ public class ReferencesSearch extends QueryFactory<PsiReference, ReferencesSearc
   }
 
   public static Query<PsiReference> search(PsiElement element, SearchScope searchScope, boolean ignoreAccessScope) {
-    return INSTANCE.createQuery(new SearchParameters(element, searchScope, ignoreAccessScope));
+    return INSTANCE.createUniqueResultsQuery(new SearchParameters(element, searchScope, ignoreAccessScope));
   }
 }

@@ -23,7 +23,11 @@ public class QueryFactory<Result, Parameters> {
    * @return query to perform the search
    * @param parameters of the search
    */
-  public final Query<Result> createQuery(Parameters parameters) {
+  public final Query<Result> createUniqueResultsQuery(Parameters parameters) {
     return new UniqueResultsQuery<Result>(new ExecutorsQuery<Result, Parameters>(parameters, myExecutors));
+  }
+
+  public final Query<Result> createQuery(Parameters parameters) {
+    return new ExecutorsQuery<Result, Parameters>(parameters, myExecutors);
   }
 }
