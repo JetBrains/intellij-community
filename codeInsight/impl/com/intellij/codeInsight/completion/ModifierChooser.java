@@ -7,6 +7,7 @@ import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.filters.NotFilter;
 import com.intellij.psi.filters.classes.InterfaceFilter;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,7 +25,7 @@ import java.util.Map;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class ModifierChooser
  implements KeywordChooser{
-  private static Map myMap = new com.intellij.util.containers.HashMap();
+  private static Map<ElementFilter, String[][]> myMap = new HashMap<ElementFilter, String[][]>();
 
   static {
     myMap.put(new NotFilter(new InterfaceFilter()), new String[][]{
@@ -33,6 +34,7 @@ public class ModifierChooser
       new String[]{"final", "abstract"},
       new String[]{"native"},
       new String[]{"synchronized"},
+      new String[]{"strictfp"},
       new String[]{"volatile"},
       new String[]{"transient"}
     });
@@ -59,7 +61,7 @@ public class ModifierChooser
   }
 
   public String[] getKeywords(CompletionContext context, PsiElement position){
-    final List ret = new ArrayList();
+    final List<String> ret = new ArrayList<String>();
     try{
       PsiElement scope;
 
@@ -75,8 +77,7 @@ scopes:
         for (final Object o : myMap.keySet()) {
           final ElementFilter filter = (ElementFilter)o;
           if (filter.isClassAcceptable(scope.getClass()) && filter.isAcceptable(scope, scope.getParent())) {
-            final String[][] keywordSets = (String[][])myMap.get(filter);
-            keywordSets:
+            final String[][] keywordSets = myMap.get(filter);
             for (int i = 0; i < keywordSets.length; i++) {
               final String[] keywords = keywordSets[keywordSets.length - i - 1];
               boolean containModifierFlag = false;
@@ -91,7 +92,6 @@ scopes:
               if (!containModifierFlag) {
                 ret.addAll(Arrays.asList(keywords));
               }
-//              else break keywordSets;
             }
             break scopes;
           }
@@ -101,10 +101,10 @@ scopes:
       }
     }
     catch(Exception e){}
-    return (String[])ret.toArray(new String[ret.size()]);
+    return ret.toArray(new String[ret.size()]);
   }
 
-  private PsiModifierList getModifierList(PsiElement element)
+  private static PsiModifierList getModifierList(PsiElement element)
   throws Exception{
     if(element == null){
       return null;

@@ -68,6 +68,7 @@ public interface PsiKeyword extends PsiJavaToken {
   String TRY = "try";
   String VOID = "void";
   String STATIC = "static";
+  String STRICTFP = "strictfp";
   String WHILE = "while";
   String VOLATILE = "volatile";
 
