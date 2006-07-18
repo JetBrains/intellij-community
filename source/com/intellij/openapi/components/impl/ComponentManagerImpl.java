@@ -203,7 +203,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   public <T> T getComponent(Class<T> interfaceClass) {
-    assert !myDisposed;
+    assert !myDisposed : "Already disposed";
     return getComponent(interfaceClass, null);
   }
 
