@@ -83,6 +83,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     myAbstractTreeBuilder = new StructureTreeBuilder(project, tree,
                                                      (DefaultTreeModel)tree.getModel(),treeStructure,myTreeModelWrapper);
     myAbstractTreeBuilder.updateFromRoot();
+    Disposer.register(myProject, myAbstractTreeBuilder);
     add(new JScrollPane(myAbstractTreeBuilder.getTree()), BorderLayout.CENTER);
 
     myAbstractTreeBuilder.getTree().setCellRenderer(new NodeRenderer());
@@ -480,10 +481,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   public void dispose() {
     LOG.assertTrue(EventQueue.isDispatchThread(), Thread.currentThread().getName());
     storeState();
-    if (myAbstractTreeBuilder != null) {
-      Disposer.dispose(myAbstractTreeBuilder);
-      myAbstractTreeBuilder = null;
-    }
+    myAbstractTreeBuilder = null;
     // this will also dispose wrapped TreeModel
     myTreeModelWrapper.dispose();
     myFileEditor = null;

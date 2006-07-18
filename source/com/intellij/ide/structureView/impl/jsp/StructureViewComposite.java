@@ -2,6 +2,7 @@ package com.intellij.ide.structureView.impl.jsp;
 
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.TabbedPaneWrapper;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +32,9 @@ public class StructureViewComposite implements StructureView {
 
   public StructureViewComposite(@NotNull StructureViewDescriptor... views) {
     myStructureViews = views;
+    for (StructureViewDescriptor descriptor : views) {
+      Disposer.register(this, descriptor.structureView);
+    }
     mySelectedViewDescriptor = views[0];
     myTabbedPaneWrapper = new TabbedPaneWrapper();
     for (StructureViewDescriptor descriptor : views) {
@@ -62,9 +66,6 @@ public class StructureViewComposite implements StructureView {
   }
 
   public void dispose() {
-    for (StructureViewDescriptor descriptor : myStructureViews) {
-      descriptor.structureView.dispose();
-    }
   }
 
   public void centerSelectedRow() {

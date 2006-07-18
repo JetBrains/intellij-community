@@ -1,22 +1,22 @@
 package com.intellij.ide.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewWrapper;
-import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Alarm;
@@ -163,7 +163,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
     boolean hadFocus = myStructureView != null && IJSwingUtilities.hasFocus2(myStructureView.getComponent());
     if (myStructureView != null) {
       myStructureView.storeState();
-      myStructureView.dispose();
+      Disposer.dispose(myStructureView);
       myStructureView = null;
     }
     myPanel.removeAll();

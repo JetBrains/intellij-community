@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.structureView;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileEditor.FileEditor;
 
 import javax.swing.*;
@@ -28,7 +29,7 @@ import javax.swing.*;
  * @see TreeBasedStructureViewBuilder
  */
 
-public interface StructureView {
+public interface StructureView extends Disposable {
   /**
    * Returns the editor whose structure is displayed in the structure view.
    *
@@ -51,11 +52,6 @@ public interface StructureView {
    * @return the structure view component.
    */
   JComponent getComponent();
-
-  /**
-   * Disposes of the structure view component.
-   */
-  void dispose();
 
   // TODO: remove from OpenAPI?
   void centerSelectedRow();
