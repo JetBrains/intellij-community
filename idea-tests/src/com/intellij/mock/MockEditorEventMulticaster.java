@@ -1,5 +1,6 @@
 package com.intellij.mock;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.*;
 
 public class MockEditorEventMulticaster implements EditorEventMulticaster {
@@ -8,6 +9,9 @@ public class MockEditorEventMulticaster implements EditorEventMulticaster {
 
   public void addDocumentListener(DocumentListener listener) {
   }
+
+  public void addDocumentListener(DocumentListener listener, Disposable parentDisposable) {
+      }
 
   public void removeDocumentListener(DocumentListener listener) {
   }
