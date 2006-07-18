@@ -45,7 +45,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   private final PendingEventDispatcher<ModuleListener> myModuleEventDispatcher = PendingEventDispatcher.create(ModuleListener.class);
   private final Project myProject;
   private ModuleModelImpl myModuleModel = new ModuleModelImpl();
-  private Map<Module, String[]> myModuleGroupPath;
   private PomModel myPomModel;
 
   private final ModuleRootListener myModuleRootListener = new ModuleRootListener() {
@@ -768,7 +767,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
       Set<Module> thisModules = new HashSet<Module>(myPath2ModelMap.values());
       Set<Module> thatModules = new HashSet<Module>(ModuleManagerImpl.this.myModuleModel.myPath2ModelMap.values());
-      return !thisModules.equals(thatModules) || !Comparing.equal(ModuleManagerImpl.this.myModuleGroupPath, myModuleGroupPath);
+      return !thisModules.equals(thatModules) || !Comparing.equal(ModuleManagerImpl.this.myModuleModel.myModuleGroupPath, myModuleGroupPath);
     }
 
     private void disposeModel() {
@@ -870,15 +869,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
       fireModulesRenamed(modules);
       cleanCachedStuff();
-      if (moduleModel.myModuleGroupPath != null){
-        if (myModuleGroupPath == null){
-          myModuleGroupPath = new THashMap<Module, String[]>();
-        }
-        myModuleGroupPath.clear();
-        myModuleGroupPath.putAll(moduleModel.myModuleGroupPath);
-      } else if (myModuleGroupPath != null) {
-        myModuleGroupPath = null;
-      }
     }
     finally {
       ProjectRootManagerEx.getInstanceEx(myProject).rootsChanged(false);
