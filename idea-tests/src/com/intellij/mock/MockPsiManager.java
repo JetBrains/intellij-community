@@ -19,6 +19,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -204,6 +205,10 @@ public class MockPsiManager extends PsiManager {
   }
 
   public void performActionWithFormatterDisabled(Runnable r) {
+    r.run();
+  }
+
+  public <T extends Throwable> void performActionWithFormatterDisabled(ThrowableRunnable<T> r) throws T {
     r.run();
   }
 

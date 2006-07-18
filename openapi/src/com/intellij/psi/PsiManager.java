@@ -15,11 +15,11 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.Disposable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.JavadocManager;
@@ -29,6 +29,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -369,6 +370,8 @@ public abstract class PsiManager implements UserDataHolder {
    * @param r the operation to run.
    */
   public abstract void performActionWithFormatterDisabled(Runnable r);
+  public abstract <T extends Throwable> void performActionWithFormatterDisabled(ThrowableRunnable<T> r) throws
+                                                                                                        T;
   public abstract <T> T performActionWithFormatterDisabled(Computable<T> r);
 
   public abstract void postponeAutoFormattingInside(Runnable runnable);

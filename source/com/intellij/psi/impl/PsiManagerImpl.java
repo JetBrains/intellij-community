@@ -58,6 +58,7 @@ import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -302,6 +303,24 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     finally {
       ((FormatterImpl)FormatterEx.getInstance()).enableFormatting();
     }
+  }
+
+  public <T extends Throwable> void performActionWithFormatterDisabled(final ThrowableRunnable<T> r) throws T {
+    final Throwable[] throwable = new Throwable[1];
+
+    final PostprocessReformattingAspect component = getProject().getComponent(PostprocessReformattingAspect.class);
+    try {
+      ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
+      component.disablePostprocessFormattingInside(new Computable<Object>() {
+        public Object compute() { try { r.run(); } catch (Throwable t) { throwable[0] = t; } return null; }
+      });
+    }
+    finally {
+      ((FormatterImpl)FormatterEx.getInstance()).enableFormatting();
+    }
+
+    if (throwable[0] != null) //noinspection unchecked
+      throw (T)throwable[0];
   }
 
   public <T> T performActionWithFormatterDisabled(Computable<T> r) {

@@ -24,6 +24,9 @@ import org.jetbrains.annotations.NonNls;
 import java.util.List;
 
 public class JDOMExternalizer {
+  private JDOMExternalizer() {
+  }
+
   public static void write(Element root, @NonNls String name, String value) {
     @NonNls Element element = new Element("setting");
     element.setAttribute("name", name);

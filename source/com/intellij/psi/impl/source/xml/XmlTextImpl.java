@@ -23,7 +23,6 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -109,14 +108,18 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
 
     final int bsResult = Arrays.binarySearch(myGapPhysicalStarts, physicalIndex);
 
-    final int gapIndex;
-    if(bsResult >= 0) gapIndex = bsResult;
-    else if(bsResult < -1) gapIndex = -bsResult - 2;
-    else gapIndex = -1;
+    if (bsResult >= 0) return myGapDisplayStarts[bsResult];
 
-    if(gapIndex < 0) return physicalIndex;
-    final int shift = myGapPhysicalStarts[gapIndex] - myGapDisplayStarts[gapIndex];
-    return Math.max(myGapDisplayStarts[gapIndex], physicalIndex - shift);
+    int insertionIndex = -bsResult - 1;
+
+    if (insertionIndex == myGapDisplayStarts.length) return getValue().length();
+    
+    int prevPhysGapStart = insertionIndex > 0 ? myGapPhysicalStarts[insertionIndex - 1] : 0;
+    int prevDisplayGapStart = insertionIndex > 0 ? myGapDisplayStarts[insertionIndex - 1] : 0;
+    int prevDisplayGapLength = insertionIndex > 0 ? myGapDisplayStarts[insertionIndex] - myGapDisplayStarts[insertionIndex - 1] : myGapDisplayStarts[0];
+
+    if (physicalIndex - prevPhysGapStart > prevDisplayGapLength) return myGapDisplayStarts[insertionIndex];
+    return physicalIndex - prevPhysGapStart + prevDisplayGapStart;
   }
 
   public int displayToPhysical(int displayIndex) {
