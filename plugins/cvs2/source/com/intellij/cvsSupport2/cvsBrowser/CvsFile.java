@@ -53,4 +53,13 @@ public class CvsFile extends CvsElement {
   public File getCvsLightFile() {
     return new File(((CvsElement)getParent()).createPathForChild(myName));
   }
+
+  public boolean isLeaf() {
+    return true;
+  }
+
+
+  public int getChildCount() {
+    return 0;
+  }
 }
