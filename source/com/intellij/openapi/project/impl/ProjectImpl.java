@@ -559,6 +559,11 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
 
     disposeComponents();
     Extensions.disposeArea(this);
+    myManager = null;
+    myModel = null;
+    myProjectFile = null;
+    myWorkspaceFile = null;
+    myProjectManagerListener = null;
     super.dispose();
     myDisposed = true;
   }

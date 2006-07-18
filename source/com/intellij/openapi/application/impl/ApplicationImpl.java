@@ -410,6 +410,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       disposeComponents();
     }
 
+    super.dispose();
     Disposer.assertIsEmpty();
   }
 

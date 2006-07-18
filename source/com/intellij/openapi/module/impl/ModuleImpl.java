@@ -215,6 +215,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     myIsDisposed = true;
     VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
     Extensions.disposeArea(this);
+    super.dispose();
   }
 
   public ConfigurationFile[] getConfigurationFiles() {
