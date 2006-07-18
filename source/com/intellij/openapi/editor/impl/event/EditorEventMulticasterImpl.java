@@ -1,7 +1,9 @@
 package com.intellij.openapi.editor.impl.event;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
 
 import java.beans.PropertyChangeListener;
@@ -37,6 +39,15 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
 
   public void addDocumentListener(DocumentListener listener) {
     myDocumentMulticaster.addListener(listener);
+  }
+
+  public void addDocumentListener(final DocumentListener listener, Disposable parentDisposable) {
+    addDocumentListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        removeDocumentListener(listener);
+      }
+    });
   }
 
   public void removeDocumentListener(DocumentListener listener) {
