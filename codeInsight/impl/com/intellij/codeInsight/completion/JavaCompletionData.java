@@ -607,7 +607,8 @@ public class JavaCompletionData extends CompletionData{
     variant.addCompletion(new String[]{
       PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
       PsiKeyword.DOUBLE, PsiKeyword.LONG,
-      PsiKeyword.INT, PsiKeyword.FLOAT, PsiKeyword.CHAR
+      PsiKeyword.INT, PsiKeyword.FLOAT,
+      PsiKeyword.CHAR, PsiKeyword.BYTE
     }, tailType);
   }
 
