@@ -1286,7 +1286,12 @@ class JavaDocInfoGenerator {
 
     if (type instanceof PsiArrayType) {
       int rest = generateType(buffer, ((PsiArrayType)type).getComponentType(), context);
-      buffer.append("[]");
+      if (!((type instanceof PsiEllipsisType))) {
+        buffer.append("[]");
+      }
+      else {
+        buffer.append("...");
+      }
       return rest + 2;
     }
 

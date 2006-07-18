@@ -57,7 +57,12 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         if (parameters.length != signature.length) continue;
         for (int j = 0; j < parameters.length; j++) {
           PsiParameter parameter = parameters[j];
-          if (!TypeConversionUtil.erasure(parameter.getType()).equals(signature[j])) continue nextMethod;
+          PsiType type1 = TypeConversionUtil.erasure(parameter.getType());
+          PsiType type2 = signature[j];
+          if (type2 instanceof PsiEllipsisType) {
+            type2 = ((PsiEllipsisType)type2).toArrayType();
+          }
+          if (!type1.equals(type2)) continue nextMethod;
         }
 
         return new MyReference(method) {
