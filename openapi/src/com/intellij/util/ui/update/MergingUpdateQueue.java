@@ -29,6 +29,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private int myMergingTimeSpan;
   private final JComponent myComponent;
   private boolean myPassThrough;
+  private boolean myDisposed;
 
   public MergingUpdateQueue(@NonNls String name, int mergingTimeSpan, boolean isActive, JComponent component) {
     myMergingTimeSpan = mergingTimeSpan;
@@ -174,7 +175,12 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   public void queue(final Update update) {
     final Application app = ApplicationManager.getApplication();
     if (myPassThrough) {
-      app.invokeLater(update);
+      app.invokeLater(new Runnable() {
+        public void run() {
+          if (myDisposed) return;
+          update.run();
+        }
+      });
       return;
     }
 
@@ -231,6 +237,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   public void dispose() {
+    myDisposed = true;
     clearWaiter();
   }
 

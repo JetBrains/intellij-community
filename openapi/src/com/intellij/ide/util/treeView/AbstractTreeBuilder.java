@@ -738,6 +738,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
         // when running outside invokeLater, in EJB view just collapsed node get expanded again (bug 4585)
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            if (myDisposed) return;
             myTree.addSelectionPath(new TreePath(myTreeModel.getPathToRoot(node)));
           }
         });
