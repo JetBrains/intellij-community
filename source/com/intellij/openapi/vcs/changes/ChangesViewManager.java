@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -27,8 +28,8 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
@@ -445,6 +446,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
       final ChangeList list = ChangesUtil.getChangeListIfOnlyOne(myProject, changes);
       if (list == null) return;
 
+      FileDocumentManager.getInstance().saveAllDocuments();
       RollbackChangesDialog.rollbackChanges(myProject, Arrays.asList(changes));
     }
   }
