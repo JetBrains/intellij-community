@@ -2,12 +2,15 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.impl.DebugUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 class InitialInfoBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.InitialInfoBuilder");
@@ -233,7 +236,13 @@ class InitialInfoBuilder {
       final FormattingDocumentModelImpl modelImpl = ((FormattingDocumentModelImpl)model);
       buffer.append("Psi Tree:");
       buffer.append('\n');
-      DebugUtil.treeToBuffer(buffer, modelImpl.getFile().getNode(), 0, false, true, true);
+      final PsiFile file = modelImpl.getFile();
+      final PsiFile[] roots = file.getPsiRoots();
+      for (PsiFile root : roots) {
+        buffer.append("Root ").append(root.toString());
+        DebugUtil.treeToBuffer(buffer, root.getNode(), 0, false, true, true);
+      }
+
       buffer.append('\n');
     }
 
