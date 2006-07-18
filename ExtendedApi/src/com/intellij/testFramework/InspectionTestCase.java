@@ -51,6 +51,9 @@ public abstract class InspectionTestCase extends PsiTestCase {
   public void doTest(@NonNls String folderName, GlobalInspectionTool tool) throws Exception {
     doTest(folderName, new GlobalInspectionToolWrapper(tool));
   }
+  public void doTest(@NonNls String folderName, GlobalInspectionTool tool, boolean checkRange) throws Exception {
+    doTest(folderName, new GlobalInspectionToolWrapper(tool), checkRange);
+  }
   public void doTest(@NonNls String folderName, InspectionTool tool) throws Exception {
     doTest(folderName, tool, "java 1.4");
   }
