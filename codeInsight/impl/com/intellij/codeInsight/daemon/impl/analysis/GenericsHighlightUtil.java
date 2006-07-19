@@ -437,9 +437,13 @@ public class GenericsHighlightUtil {
     if (lType instanceof PsiArrayType || rType instanceof PsiArrayType) return false;
 
     if (rType instanceof PsiIntersectionType) {
-      final PsiType[] conjuncts = ((PsiIntersectionType)rType).getConjuncts();
-      for (PsiType type : conjuncts) {
+      for (PsiType type : ((PsiIntersectionType)rType).getConjuncts()) {
         if (isRawToGeneric(lType, type)) return true;
+      }
+      return false;
+    } else if (lType instanceof PsiIntersectionType) {
+      for (PsiType type : ((PsiIntersectionType)lType).getConjuncts()) {
+        if (isRawToGeneric(type, rType)) return true;
       }
       return false;
     }
