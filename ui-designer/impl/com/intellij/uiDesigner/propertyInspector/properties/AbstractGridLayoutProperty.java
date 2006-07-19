@@ -15,6 +15,8 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+
 /**
  * @author yole
  */
@@ -27,11 +29,9 @@ public abstract class AbstractGridLayoutProperty extends Property<RadContainer, 
   }
 
   public Boolean getValue(final RadContainer component) {
-    final AbstractLayout layoutManager=(AbstractLayout) component.getLayout();
-    if (!(layoutManager instanceof GridLayoutManager)) {
-      throw new IllegalArgumentException("grid layout expected: "+layoutManager);
-    }
-    final GridLayoutManager gridLayoutManager = (GridLayoutManager)layoutManager;
+    final LayoutManager layoutManager = component.getLayout();
+    if (!(layoutManager instanceof GridLayoutManager)) return null;
+    final GridLayoutManager gridLayoutManager = (GridLayoutManager) layoutManager;
     return getGridLayoutPropertyValue(gridLayoutManager);
   }
 
@@ -58,7 +58,8 @@ public abstract class AbstractGridLayoutProperty extends Property<RadContainer, 
   }
 
   @Override public boolean isModified(final RadContainer component) {
-    return getValue(component).booleanValue();
+    final Boolean value = getValue(component);
+    return value != null && value.booleanValue();
   }
 
   @Override public void resetValue(RadContainer component) throws Exception {
