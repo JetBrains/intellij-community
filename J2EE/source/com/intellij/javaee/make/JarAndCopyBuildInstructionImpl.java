@@ -13,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.jar.JarFile;
@@ -26,6 +28,7 @@ import java.util.jar.JarFile;
  */
 public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl implements JarAndCopyBuildInstruction {
   private File myJarFile;
+  private List<File> myTempJars = new ArrayList<File>(1);
   @NonNls protected static final String TMP_FILE_SUFFIX = ".tmp";
 
   public JarAndCopyBuildInstructionImpl(Module module,
@@ -55,6 +58,7 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
     // todo optimization: cache created jars
     @NonNls final String moduleName = getModule() == null ? "jar" : ModuleUtil.getModuleNameInReadAction(getModule());
     final File tempFile = File.createTempFile(moduleName+"___",TMP_FILE_SUFFIX);
+    myTempJars.add(tempFile);
     makeJar(context, tempFile, fileFilter);
 
     final String outputRelativePath = getOutputRelativePath();
@@ -115,5 +119,10 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
 
   public File getJarFile() {
     return myJarFile;
+  }
+
+  public void deleteTemporaryJars() {
+    FileUtil.asyncDelete(myTempJars);
+    myTempJars.clear();
   }
 }
