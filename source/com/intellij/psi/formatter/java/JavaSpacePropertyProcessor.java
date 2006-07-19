@@ -300,6 +300,10 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
   }
 
 
+  public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+    createSpaceInCode(true);
+  }
+
   public void visitEnumConstantInitializer(PsiEnumConstantInitializer enumConstantInitializer) {
     if (myRole2 == ChildRole.EXTENDS_LIST || myRole2 == ChildRole.IMPLEMENTS_LIST) {
       createSpaceInCode(true);
