@@ -94,7 +94,7 @@ public class CompletionData {
     }
 
     if(!hasApplicableVariants){
-      myGenericVariant.addReferenceCompletions(reference, position, set, context);
+      ourGenericVariant.addReferenceCompletions(reference, position, set, context);
     }
   }
 
@@ -238,7 +238,7 @@ public class CompletionData {
     return variants.toArray(new CompletionVariant[variants.size()]);
   }
 
-  protected static final CompletionVariant myGenericVariant = new CompletionVariant(){
+  protected static final CompletionVariant ourGenericVariant = new CompletionVariant(){
     public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionContext prefix){
       addReferenceCompletions(reference, position, set, prefix, new CompletionVariantItem(TrueFilter.INSTANCE, TailType.NONE));
     }
