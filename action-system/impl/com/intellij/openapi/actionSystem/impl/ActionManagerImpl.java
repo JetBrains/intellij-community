@@ -105,7 +105,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
   public void initComponent() {}
 
-  public void disposeComponent() {}
+  public void disposeComponent() {
+    if (myTimer != null) {
+      myTimer.stop();
+      myTimer = null;
+    }
+  }
 
   public void addTimerListener(int delay, final TimerListener listener) {
     if (myTimer == null) {
