@@ -724,7 +724,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     return tableModel.hasLibraryEditor(library) ? (Library)tableModel.getLibraryEditor(library).getModel() : library;
   }
 
-  public void selectModuleTab(final String moduleName, final String tabName) {
+  public void selectModuleTab(@NotNull final String moduleName, final String tabName) {
     final MyNode node = findNodeByObject(myProjectNode, ModuleManager.getInstance(myProject).findModuleByName(moduleName));
     if (node != null) {
       selectNodeInTree(node);

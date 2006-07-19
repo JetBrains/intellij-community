@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.GraphGenerator;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -334,11 +335,13 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  public static boolean showDialog(Project project, final String moduleToSelect, final String tabNameToSelect, final boolean show) {
+  public static boolean showDialog(Project project, @Nullable final String moduleToSelect, final String tabNameToSelect, final boolean show) {
     final ProjectRootConfigurable projectRootConfigurable = ProjectRootConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, projectRootConfigurable, new Runnable() {
       public void run() {
-        projectRootConfigurable.selectModuleTab(moduleToSelect, tabNameToSelect);
+        if (moduleToSelect != null) {
+          projectRootConfigurable.selectModuleTab(moduleToSelect, tabNameToSelect);
+        }
         projectRootConfigurable.setStartModuleWizard(show);
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
