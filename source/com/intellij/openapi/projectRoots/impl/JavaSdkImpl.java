@@ -276,7 +276,7 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static ProjectJdk getMockJdk(String versionName) {
+  public static ProjectJdk getMockJdk(@NonNls String versionName) {
     final String forcedPath = System.getProperty("idea.testingFramework.mockJDK");
     String jdkHome = forcedPath != null ? forcedPath : PathManager.getHomePath() + File.separator + "mockJDK";
     return createMockJdk(jdkHome, versionName, getInstance());
