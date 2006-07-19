@@ -19,12 +19,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.options.*;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.vfs.IfsUtil;
+import org.intellij.images.fileTypes.ImageFileTypeManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -144,6 +147,25 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
         options.removePropertyChangeListener(optionsChangeListener);
         editorUI.dispose();
         disposed = true;
+    }
+
+    public void propertyChanged(VirtualFilePropertyEvent event) {
+        super.propertyChanged(event);
+        if (file.equals(event.getFile())) {
+            // Change document
+            file.refresh(true, false, new Runnable() {
+                public void run() {
+                    if (ImageFileTypeManager.getInstance().isImage(file)) {
+                        setValue(file);
+                    } else {
+                        setValue(null);
+                        // Close editor
+                        FileEditorManager editorManager = FileEditorManager.getInstance(project);
+                        editorManager.closeFile(file);
+                    }
+                }
+            });
+        }
     }
 
     public void contentsChanged(VirtualFileEvent event) {

@@ -58,7 +58,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     private final VirtualFileListener vfsListener = new VFSListener();
     private final OptionsChangeListener optionsListener = new OptionsChangeListener();
 
-    private static final Navigatable[] EMPTY_NAVIGATABLE_ARRAY = new Navigatable[] {};
+    private static final Navigatable[] EMPTY_NAVIGATABLE_ARRAY = new Navigatable[]{};
 
     private final ThumbnailViewImpl thumbnailView;
     private final UIHelper.CopyPasteSupport copyPasteSupport;
@@ -66,17 +66,17 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     private ThumbnailListCellRenderer cellRenderer;
     private JList list;
     private static final Comparator<VirtualFile> VIRTUAL_FILE_COMPARATOR = new Comparator<VirtualFile>() {
-    public int compare(VirtualFile o1, VirtualFile o2) {
-        if (o1.isDirectory() && !o2.isDirectory()) {
-            return -1;
-        }
-        if (o2.isDirectory() && !o1.isDirectory()) {
-            return 1;
-        }
+        public int compare(VirtualFile o1, VirtualFile o2) {
+            if (o1.isDirectory() && !o2.isDirectory()) {
+                return -1;
+            }
+            if (o2.isDirectory() && !o1.isDirectory()) {
+                return 1;
+            }
 
-        return o1.getPath().toLowerCase().compareTo(o2.getPath().toLowerCase());
-    }
-};
+            return o1.getPath().toLowerCase().compareTo(o2.getPath().toLowerCase());
+        }
+    };
 
     public ThumbnailViewUI(ThumbnailViewImpl thumbnailView) {
         super(new BorderLayout());
@@ -123,7 +123,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             list.addMouseListener(mouseListener);
             list.addMouseMotionListener(mouseListener);
 
-            ThumbnailComponentUI componentUI = (ThumbnailComponentUI)UIManager.getUI(cellRenderer);
+            ThumbnailComponentUI componentUI = (ThumbnailComponentUI) UIManager.getUI(cellRenderer);
             Dimension preferredSize = componentUI.getPreferredSize(cellRenderer);
 
             list.setFixedCellWidth(preferredSize.width);
@@ -131,13 +131,13 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
 
             JScrollPane scrollPane = new JScrollPane(
-                list, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+                    list, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
             );
 
             ActionManager actionManager = ActionManager.getInstance();
-            ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ThumbnailViewActions.GROUP_TOOLBAR);
+            ActionGroup actionGroup = (ActionGroup) actionManager.getAction(ThumbnailViewActions.GROUP_TOOLBAR);
             ActionToolbar actionToolbar = actionManager.createActionToolbar(
-                ThumbnailViewActions.GROUP_TOOLBAR, actionGroup, true
+                    ThumbnailViewActions.ACTION_PLACE, actionGroup, true
             );
 
             JComponent toolbar = actionToolbar.getComponent();
@@ -154,7 +154,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     public void refresh() {
         createUI();
         if (list != null) {
-            DefaultListModel model = (DefaultListModel)list.getModel();
+            DefaultListModel model = (DefaultListModel) list.getModel();
             model.clear();
             VirtualFile root = thumbnailView.getRoot();
             if (root != null && root.isValid() && root.isDirectory()) {
@@ -200,7 +200,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     }
 
     public boolean isSelected(VirtualFile file) {
-        int index = ((DefaultListModel)list.getModel()).indexOf(file);
+        int index = ((DefaultListModel) list.getModel()).indexOf(file);
         return index != -1 && list.isSelectedIndex(index);
     }
 
@@ -210,7 +210,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         if (selectedValues != null) {
             VirtualFile[] files = new VirtualFile[selectedValues.length];
             for (int i = 0; i < selectedValues.length; i++) {
-                files[i] = (VirtualFile)selectedValues[i];
+                files[i] = (VirtualFile) selectedValues[i];
             }
             return files;
         }
@@ -218,14 +218,14 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     }
 
     private final class ThumbnailListCellRenderer extends ThumbnailComponent
-        implements ListCellRenderer {
+            implements ListCellRenderer {
         private final ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
 
         public Component getListCellRendererComponent(
-            JList list, Object value, int index, boolean isSelected, boolean cellHasFocus
+                JList list, Object value, int index, boolean isSelected, boolean cellHasFocus
         ) {
             if (value instanceof VirtualFile) {
-                VirtualFile file = (VirtualFile)value;
+                VirtualFile file = (VirtualFile) value;
                 setFileName(file.getName());
                 setToolTipText(IfsUtil.getReferencePath(thumbnailView.getProject(), file));
                 setDirectory(file.isDirectory());
@@ -343,7 +343,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             int index = list.locationToIndex(point);
             if (index != -1) {
                 Rectangle cellBounds = list.getCellBounds(index, index);
-                if (!cellBounds.contains(point) && (KeyEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != KeyEvent.CTRL_DOWN_MASK) {
+                if (!cellBounds.contains(point) && (KeyEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != KeyEvent.CTRL_DOWN_MASK)
+                {
                     list.clearSelection();
                     e.consume();
                 }
@@ -355,7 +356,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             int index = list.locationToIndex(point);
             if (index != -1) {
                 Rectangle cellBounds = list.getCellBounds(index, index);
-                if (!cellBounds.contains(point) && (KeyEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != KeyEvent.CTRL_DOWN_MASK) {
+                if (!cellBounds.contains(point) && (KeyEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != KeyEvent.CTRL_DOWN_MASK)
+                {
                     index = -1;
                     list.clearSelection();
                 }
@@ -364,7 +366,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 if (MouseEvent.BUTTON1 == e.getButton() && e.getClickCount() == 2) {
                     // Double click
                     list.setSelectedIndex(index);
-                    VirtualFile selected = (VirtualFile)list.getSelectedValue();
+                    VirtualFile selected = (VirtualFile) list.getSelectedValue();
                     if (selected != null) {
                         if (selected.isDirectory()) {
                             thumbnailView.setRoot(selected);
@@ -386,7 +388,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                     }
                     // Single right click
                     ActionManager actionManager = ActionManager.getInstance();
-                    ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ThumbnailViewActions.GROUP_POPUP);
+                    ActionGroup actionGroup = (ActionGroup) actionManager.getAction(ThumbnailViewActions.GROUP_POPUP);
                     ActionPopupMenu menu = actionManager.createActionPopupMenu(ThumbnailViewActions.ACTION_PLACE, actionGroup);
                     JPopupMenu popupMenu = menu.getComponent();
                     popupMenu.pack();
@@ -398,7 +400,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         }
     }
 
-    @Nullable public Object getData(String dataId) {
+    @Nullable
+    public Object getData(String dataId) {
         if (DataConstantsEx.PROJECT.equals(dataId)) {
             return thumbnailView.getProject();
         } else if (DataConstantsEx.VIRTUAL_FILE.equals(dataId)) {
@@ -461,7 +464,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             if (selectedValues != null) {
                 VirtualFile[] files = new VirtualFile[selectedValues.length];
                 for (int i = 0; i < selectedValues.length; i++) {
-                    files[i] = (VirtualFile)selectedValues[i];
+                    files[i] = (VirtualFile) selectedValues[i];
                 }
                 return files;
             }
@@ -508,7 +511,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         public void contentsChanged(VirtualFileEvent event) {
             VirtualFile file = event.getFile();
             if (list != null) {
-                int index = ((DefaultListModel)list.getModel()).indexOf(file);
+                int index = ((DefaultListModel) list.getModel()).indexOf(file);
                 if (index != -1) {
                     Rectangle cellBounds = list.getCellBounds(index, index);
                     list.repaint(cellBounds);
@@ -523,8 +526,12 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 refresh();
             }
             if (list != null) {
-                ((DefaultListModel)list.getModel()).removeElement(file);
+                ((DefaultListModel) list.getModel()).removeElement(file);
             }
+        }
+
+        public void propertyChanged(VirtualFilePropertyEvent event) {
+            refresh();
         }
 
         public void fileCreated(VirtualFileEvent event) {
@@ -538,7 +545,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
     private final class OptionsChangeListener implements PropertyChangeListener {
         public void propertyChange(PropertyChangeEvent evt) {
-            Options options = (Options)evt.getSource();
+            Options options = (Options) evt.getSource();
             EditorOptions editorOptions = options.getEditorOptions();
             TransparencyChessboardOptions chessboardOptions = editorOptions.getTransparencyChessboardOptions();
             GridOptions gridOptions = editorOptions.getGridOptions();
