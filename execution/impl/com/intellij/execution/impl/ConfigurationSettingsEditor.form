@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.execution.impl.ConfigurationSettingsEditor.RunnersEditorComponent" stored-main-component-binding="myWholePanel">
-  <grid id="4be0c" binding="myRunnersPanel" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="4be0c" binding="myRunnersPanel" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="6" left="6" bottom="6" right="6"/>
     <constraints>
       <xy x="151" y="101" width="295" height="128"/>
-      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <scrollpane id="baa95">
         <constraints>
-          <xy x="6" y="6" width="140" height="116"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3">
-            <preferred-size width="200" height="-1"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="2" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
           </grid>
         </constraints>
         <properties/>
@@ -27,11 +25,10 @@
           </component>
         </children>
       </scrollpane>
-      <xy id="56f2e" binding="myRunnerPanel" hgap="-1" vgap="-1">
+      <xy id="56f2e" binding="myRunnerPanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="156" y="6" width="139" height="116"/>
-          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3"/>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
