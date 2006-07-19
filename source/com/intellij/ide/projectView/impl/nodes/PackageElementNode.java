@@ -49,10 +49,7 @@ import com.intellij.util.Icons;
 import com.intellij.coverage.CoverageDataManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class PackageElementNode extends ProjectViewNode<PackageElement> {
   public PackageElementNode(final Project project,
@@ -66,8 +63,9 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
                             final ViewSettings viewSettings) {
     this(project, (PackageElement)value, viewSettings);
   }
-  public boolean contains(final VirtualFile file) {
-    if (!isUnderContent(file)) {
+
+  public boolean contains(@NotNull final VirtualFile file) {
+    if (!isUnderContent(file) || getValue() == null) {
       return false;
     }
 
@@ -95,9 +93,9 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
 
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
-
     final PackageElement value = getValue();
+    if (value == null) return Collections.emptyList();
+    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     final Module module = value.getModule();
     final PsiPackage aPackage = value.getPackage();
 
@@ -156,7 +154,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
       else {
         final PsiPackage parentPackageInTree = ((PackageElement)getParentValue()).getPackage();
         PsiPackage parentPackage = aPackage.getParentPackage();
-        final StringBuffer buf = new StringBuffer();
+        final StringBuilder buf = new StringBuilder();
         buf.append(aPackage.getName());
         while (parentPackage != null && !parentPackage.equals(parentPackageInTree)) {
           buf.insert(0, ".");
@@ -217,4 +215,4 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     }
     return false;
   }
-  }
+}

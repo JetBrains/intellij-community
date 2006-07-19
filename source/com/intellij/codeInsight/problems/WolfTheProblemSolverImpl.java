@@ -98,8 +98,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
 
     public int hashCode() {
-      int result;
-      result = problems.hashCode();
+      int result = problems.hashCode();
       result = 31 * result + (hasSyntaxErrors ? 1 : 0);
       return result;
     }
@@ -265,13 +264,13 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return false;
   }
 
-  public boolean hasProblemFilesBeneath(final ProjectViewNode scope) {
+  public boolean hasProblemFilesBeneath(final ProjectViewNode node) {
     return hasProblemFilesBeneath(new Condition<VirtualFile>() {
       public boolean value(final VirtualFile virtualFile) {
-        return scope.contains(virtualFile)
+        return node.contains(virtualFile)
                // in case of flattened packages, when package node a.b.c contains error file, node a.b might not.
-               && (scope.getValue()instanceof PsiElement && PsiUtil.getVirtualFile((PsiElement)scope.getValue()) == virtualFile ||
-                   scope.someChildContainsFile(virtualFile));
+               && (node.getValue() instanceof PsiElement && PsiUtil.getVirtualFile((PsiElement)node.getValue()) == virtualFile ||
+                   node.someChildContainsFile(virtualFile));
       }
     });
   }
