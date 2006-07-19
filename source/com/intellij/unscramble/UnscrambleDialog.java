@@ -82,7 +82,7 @@ public class UnscrambleDialog extends DialogWrapper{
 
   private void useUnscramblerChanged() {
     boolean selected = myUseUnscrambler.isSelected();
-    GuiUtils.enableChildren(myUnscramblePanel, selected, new JComponent[]{myUseUnscrambler});
+    GuiUtils.enableChildren(myUnscramblePanel, selected, myUseUnscrambler);
   }
 
   private void reset() {
@@ -91,7 +91,7 @@ public class UnscrambleDialog extends DialogWrapper{
     myLogFile.setHistory(savedUrls);
 
     String lastUrl = getLastUsedLogUrl();
-    if (lastUrl == null && savedUrls.size() != 0) {
+    if (lastUrl == null && !savedUrls.isEmpty()) {
       lastUrl = savedUrls.get(savedUrls.size() - 1);
     }
     if (lastUrl != null) {
@@ -290,34 +290,30 @@ public class UnscrambleDialog extends DialogWrapper{
       text = normalizeText(text);
 
       final String newText = text;
-      CommandProcessor.getInstance().executeCommand(
-          myProject, new Runnable() {
-          public void run(){
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run(){
-                myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), newText);
-              }
-            });
-          }
-        },
-          "",
-          null
-      );
+      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              myEditor.getDocument().replaceString(0, myEditor.getDocument().getTextLength(), newText);
+            }
+          });
+        }
+      }, "", null);
     }
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private String normalizeText(String text) {
-      // move 'at' to the line start
-      text = text.replaceAll("\\nat\\n", "\nat ");
-      text = text.replaceAll("(\\S)[\\s&&[^\\n]]*at ", "$1\n at ");
-      text = text.replaceAll("(\\S)\\nat ", "$1\n at ");
-      // merge (inadvertently) splitted lines (unless next line begins with 'at')
-      text = text.replaceAll("\\s*\\n\\s*+([^a]|(a[^t]))", "$1");
+  }
 
-      // remove empty lines
-      text = text.replaceAll("(\\n\\s*)+\\n", "\n");
-      return text;
-    }
+  static String normalizeText(@NonNls String text) {
+    // move 'at' to the line start
+    text = text.replaceAll("\\nat\\n", "\nat ");
+    text = text.replaceAll("(\\S)[\\s&&[^\\n]]*at ", "$1\n at ");
+    text = text.replaceAll("(\\S)\\nat ", "$1\n at ");
+    // merge (inadvertently) splitted lines (unless next line begins with 'at' or 'Caused by')
+    text = text.replaceAll("\\s*\\n\\s*+([^aC]|(a[^t])|[^Ca]|(C[^a])|(Ca[^u])|(Cau[^s])|(Caus[^e])|(Cause[^d]))", "$1");
+
+    // remove empty lines
+    text = text.replaceAll("(\\n\\s*)+\\n", "\n");
+    return text;
   }
 
   private static final class EditorPanel extends JPanel implements DataProvider{
