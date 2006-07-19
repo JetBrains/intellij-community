@@ -206,6 +206,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
     @NotNull
     public VirtualFile[] getSelection() {
+      if (list != null) {
         Object[] selectedValues = list.getSelectedValues();
         if (selectedValues != null) {
             VirtualFile[] files = new VirtualFile[selectedValues.length];
@@ -214,7 +215,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             }
             return files;
         }
-        return VirtualFile.EMPTY_ARRAY;
+      }
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     private final class ThumbnailListCellRenderer extends ThumbnailComponent
