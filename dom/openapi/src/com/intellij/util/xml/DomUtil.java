@@ -3,17 +3,20 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
+import com.intellij.util.ReflectionCache;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
-import com.intellij.util.ReflectionCache;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.*;
 
 /**
@@ -131,6 +134,37 @@ public class DomUtil {
       final int tagOffset = tag.getTextOffset();
       return new TextRange(valueRange.getStartOffset() - tagOffset, valueRange.getEndOffset() - tagOffset);
     }
+  }
+
+  public static List<? extends DomElement> getIdentitySiblings(DomElement element) {
+    final Method nameValueMethod = ElementPresentationManager.findNameValueMethod(element.getClass());
+    if (nameValueMethod != null) {
+      final NameValue nameValue = DomReflectionUtil.findAnnotationDFS(nameValueMethod, NameValue.class);
+      if (nameValue == null || nameValue.unique()) {
+        final Object o = DomReflectionUtil.invokeMethod(nameValueMethod, element);
+        if (o instanceof GenericDomValue) {
+          final GenericDomValue genericDomValue = (GenericDomValue)o;
+          final String stringValue = genericDomValue.getStringValue();
+          if (stringValue != null) {
+            final DomElement parent = element.getManager().getIdentityScope(element);
+            final DomGenericInfo domGenericInfo = parent.getGenericInfo();
+            final String tagName = element.getXmlElementName();
+            final DomCollectionChildDescription childDescription = domGenericInfo.getCollectionChildDescription(tagName);
+            if (childDescription != null) {
+              final ArrayList<DomElement> list = new ArrayList<DomElement>(childDescription.getValues(parent));
+              list.remove(element);
+              return list;
+            }
+          }
+        }
+      }
+    }
+    return Collections.emptyList();
+  }
+
+  @Nullable
+  public static DomElement findDuplicateNamedValue(DomElement element, String newName) {
+    return ElementPresentationManager.findByName(getIdentitySiblings(element), newName);
   }
 
 }

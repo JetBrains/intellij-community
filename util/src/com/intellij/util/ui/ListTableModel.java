@@ -166,4 +166,8 @@ public class ListTableModel <Item> extends TableViewModel<Item> implements ItemR
     myItems.remove(idx);
     fireTableRowsDeleted(idx, idx);
   }
+
+  public Object getItem(final int rowIndex) {
+    return getItems().get(rowIndex);
+  }
 }

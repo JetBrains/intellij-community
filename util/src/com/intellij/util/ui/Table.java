@@ -87,6 +87,8 @@ public class Table extends JTable {
   public void removeNotify() {
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     //noinspection HardCodedStringLiteral
+    keyboardFocusManager.removePropertyChangeListener("permanentFocusOwner", myEditorRemover);
+    //noinspection HardCodedStringLiteral
     keyboardFocusManager.removePropertyChangeListener("focusOwner", myEditorRemover);
     super.removeNotify();
   }
@@ -109,6 +111,8 @@ public class Table extends JTable {
       myEditorRemover = new MyCellEditorRemover(keyboardFocusManager);
       //noinspection HardCodedStringLiteral
       keyboardFocusManager.addPropertyChangeListener("focusOwner", myEditorRemover);
+      //noinspection HardCodedStringLiteral
+      keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", myEditorRemover);
     }
 
     final TableCellEditor editor = getCellEditor(row, column);
@@ -132,13 +136,6 @@ public class Table extends JTable {
       return true;
     }
     return false;
-  }
-
-  public void removeEditor() {
-    final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    //noinspection HardCodedStringLiteral
-    keyboardFocusManager.removePropertyChangeListener("focusOwner", myEditorRemover);
-    super.removeEditor();
   }
 
   private final class MyCellEditorRemover implements PropertyChangeListener {
