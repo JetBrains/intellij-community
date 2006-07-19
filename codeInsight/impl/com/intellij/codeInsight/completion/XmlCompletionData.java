@@ -8,6 +8,9 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.MacroFactory;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -15,6 +18,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.*;
@@ -36,10 +40,6 @@ import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 
 import java.util.*;
 
@@ -120,23 +120,6 @@ public class XmlCompletionData extends CompletionData {
 
   protected ElementFilter createTagCompletionFilter() {
     return TrueFilter.INSTANCE;
-  }
-
-  public String findPrefix(PsiElement insertedElement, int offset) {
-    String result = super.findPrefix(insertedElement, offset);
-    if (insertedElement instanceof XmlToken) {
-      int index = result.lastIndexOf("${");
-      if (index >= 0) {
-        result = result.substring(index + 2);
-      }
-      else {
-        index = result.lastIndexOf("@{");
-        if (index >= 0) {
-          result = result.substring(index + 2);
-        }
-      }
-    }
-    return result;
   }
 
   private static class XmlAttributeValueInsertHandler extends DefaultInsertHandler {
