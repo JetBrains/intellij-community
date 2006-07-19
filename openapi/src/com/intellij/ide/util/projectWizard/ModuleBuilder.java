@@ -117,7 +117,7 @@ public abstract class ModuleBuilder {
     return module;
   }
 
-  public void addSupport(Module module) {
+  public void addSupport(@NotNull Module module) {
 
     ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
     if (myAddSupportContexts != null) {

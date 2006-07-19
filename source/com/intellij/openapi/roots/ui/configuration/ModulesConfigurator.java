@@ -188,9 +188,11 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
             public void run() {
               for (final ModuleEditor moduleEditor : editors) {
                 final Module module = moduleEditor.getModule();
-                final ModuleBuilder builder = moduleEditor.getModuleBuilder();
-                if (builder != null) {
-                  builder.addSupport(module);
+                if (module != null) {
+                  final ModuleBuilder builder = moduleEditor.getModuleBuilder();
+                  if (builder != null) {
+                    builder.addSupport(module);
+                  }
                 }
               }
             }
@@ -349,7 +351,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public void moduleRenamed(final String oldName, final String name) {
     for (ModuleEditor moduleEditor : myModuleEditors) {
-      if (Comparing.strEqual(moduleEditor.getName(), oldName)){
+      if (Comparing.strEqual(moduleEditor.getName(), oldName)) {
         moduleEditor.setModuleName(name);
         return;
       }
