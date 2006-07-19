@@ -58,6 +58,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -134,6 +135,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   private final Stack<Pair<PomModelAspect, PomTransaction>> myBlockedAspects = new Stack<Pair<PomModelAspect, PomTransaction>>();
 
   public synchronized void runTransaction(PomTransaction transaction) throws IncorrectOperationException{
+    List<Throwable> throwables = new ArrayList<Throwable>();
     synchronized(PsiLock.LOCK){
       final PomModelAspect aspect = transaction.getTransactionAspect();
       startTransaction(transaction);
@@ -185,10 +187,20 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
           }
         }
       }
-      finally{
-        commitTransaction(transaction);
+      catch (Throwable t) {
+        throwables.add(t);
+      }
+      finally {
+        try {
+          commitTransaction(transaction);
+        }
+        catch (Throwable t) {
+          throwables.add(t);
+        }
       }
     }
+
+    if (!throwables.isEmpty()) throw new CompoundRuntimeException(throwables); 
   }
 
   @Nullable
@@ -252,9 +264,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final ASTNode node = changeScope.getNode();
     if (node == null) return changeScope.getContainingFile();
     final FileElement fileElement = TreeUtil.getFileElement((TreeElement)node);
-    if (fileElement == null) {
-      LOG.assertTrue(false);
-    }
+    assert fileElement != null : "Can't find file element for node: " + node;
     final PsiFile psiFile = (PsiFile)fileElement.getPsi();
     return psiFile.getLanguage() == psiFile.getViewProvider().getBaseLanguage() ? psiFile : null;
   }
