@@ -364,4 +364,6 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   public ASTNode getNode() {
     return null;
   }
+
+  public abstract LightPsiFileImpl copyLight(final FileViewProvider viewProvider);
 }

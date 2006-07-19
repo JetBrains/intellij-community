@@ -245,13 +245,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                         final CompletionData completionData,
                         final Set<LookupItem> lookupSet) {
     if (lastElement == null) return;
-    if (CodeInsightUtil.isAntFile(context.file)) {
-      final PsiReference ref = context.file.findReferenceAt(context.offset);
-      if (ref != null) {
-        completionData.completeReference(ref, lookupSet, context, lastElement);
-        return;
-      }
-    }
     final PsiReference ref = lastElement.getContainingFile().findReferenceAt(context.offset);
     if (ref != null) {
       completionData.completeReference(ref, lookupSet, context, lastElement);

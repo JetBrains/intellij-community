@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
+import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.AntTask;
@@ -33,6 +34,10 @@ public class AntTaskImpl extends AntStructuredElementImpl implements AntTask {
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
+  }
+
+  public AntElementRole getRole() {
+    return (!isMacroDefined() && !isPresetDefined() && !isTypeDefined()) ? AntElementRole.TASK_ROLE : AntElementRole.USER_TASK_ROLE;
   }
 
   @Nullable

@@ -9,6 +9,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -27,22 +28,38 @@ public class AntTargetListReferenceProvider extends AntTargetReferenceProviderBa
       return PsiReference.EMPTY_ARRAY;
     }
     int offsetInPosition = xmlAttributeValue.getTextRange().getStartOffset() - target.getTextRange().getStartOffset() + 1;
-    final String str = attr.getValue();
-    final String[] targets = str.split(",");
+    final String value = attr.getValue();
     final List<PsiReference> result = PsiReferenceListSpinAllocator.alloc();
     try {
-      for (final String t : targets) {
+      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+      try {
         int i = 0;
-        final int len = t.length();
-        for (; i < len; ++i) {
-          if (!Character.isWhitespace(t.charAt(i))) break;
+        int rightBound;
+        final int valueLen = value.length();
+        do {
+          rightBound = (i < valueLen) ? value.indexOf(',', i) : valueLen;
+          if (rightBound < 0) rightBound = valueLen;
+          builder.setLength(0);
+          int j = i;
+          for (; j < rightBound; ++j) {
+            builder.append(value.charAt(j));
+          }
+          j = 0;
+          final int len = builder.length();
+          for (; j < len; ++j) {
+            if (!Character.isWhitespace(builder.charAt(j))) break;
+          }
+          final String targetName = (len == 0 || j == len) ? "" : builder.substring(j);
+          result.add(new AntTargetReference(this, target, targetName,
+                                            new TextRange(offsetInPosition + i + j, offsetInPosition + i + j + targetName.length()), attr));
+          i = rightBound + 1;
         }
-        final String targetName = (i < len) ? t.substring(i).trim() : "";
-        result.add(new AntTargetReference(this, target, targetName,
-                                          new TextRange(offsetInPosition + i, offsetInPosition + i + targetName.length()), attr));
-        offsetInPosition += len + 1;
+        while (rightBound < valueLen);
+        return (result.size() > 0) ? result.toArray(new PsiReference[result.size()]) : PsiReference.EMPTY_ARRAY;
       }
-      return (result.size() > 0) ? result.toArray(new PsiReference[result.size()]) : PsiReference.EMPTY_ARRAY;
+      finally {
+        StringBuilderSpinAllocator.dispose(builder);
+      }
     }
     finally {
       PsiReferenceListSpinAllocator.dispose(result);

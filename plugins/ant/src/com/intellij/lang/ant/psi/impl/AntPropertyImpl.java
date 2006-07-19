@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
+import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.psi.AntCall;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProperty;
@@ -67,6 +68,10 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
+  }
+
+  public AntElementRole getRole() {
+    return AntElementRole.PROPERTY_ROLE;
   }
 
   public String getFileReferenceAttribute() {

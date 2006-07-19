@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
+import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntMacroDef;
@@ -40,6 +41,11 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
       StringBuilderSpinAllocator.dispose(builder);
     }
   }
+
+  public AntElementRole getRole() {
+    return AntElementRole.MACRODEF_ROLE;
+  }
+
 
   public AntTypeDefinition getMacroDefinition() {
     return myMacroDefinition;

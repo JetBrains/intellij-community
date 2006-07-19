@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
+import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.psi.AntCall;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
@@ -48,6 +49,10 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
+  }
+
+  public AntElementRole getRole() {
+    return AntElementRole.TARGET_ROLE;
   }
 
   @Nullable

@@ -247,7 +247,8 @@ public class CompletionData {
   public static String findPrefixStatic(PsiElement insertedElement, int offset) {
     if(insertedElement == null) return "";
     int offsetInElement = offset - insertedElement.getTextRange().getStartOffset();
-    final PsiReference ref = insertedElement.findReferenceAt(offsetInElement);
+    //final PsiReference ref = insertedElement.findReferenceAt(offsetInElement);
+    final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(insertedElement.getTextRange().getStartOffset() + offsetInElement);
 
     // TODO: need to add more separators here. Such as #, $ etc... Think on centralizing their location.
     final String text = insertedElement.getText();

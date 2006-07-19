@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
+import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.util.SystemInfo;
@@ -51,6 +52,10 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     finally {
       StringBuilderSpinAllocator.dispose(builder);
     }
+  }
+
+  public AntElementRole getRole() {
+    return AntElementRole.PROJECT_ROLE;
   }
 
   public void clearCaches() {

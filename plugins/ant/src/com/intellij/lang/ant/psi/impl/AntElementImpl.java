@@ -2,6 +2,7 @@ package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.AntLanguage;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.misc.PsiElementHashSetSpinAllocator;
@@ -324,5 +325,9 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
       }
     }
     return result;
+  }
+
+  public AntElementRole getRole() {
+    return AntElementRole.NULL_ROLE;
   }
 }

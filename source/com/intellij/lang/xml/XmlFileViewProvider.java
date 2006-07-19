@@ -5,6 +5,7 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CompositeLanguageFileViewProvider;
 import com.intellij.psi.PsiManager;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -36,5 +37,11 @@ public class XmlFileViewProvider extends CompositeLanguageFileViewProvider {
   @NotNull
   public LanguageExtension[] getLanguageExtensions() {
     return myLanguage.getLanguageExtensions();
+  }
+
+  protected XmlFileViewProvider cloneInner() {
+    return new XmlFileViewProvider(getManager(), new LightVirtualFile(getVirtualFile().getName(),
+                                                                                    getVirtualFile().getFileType(), getContents(),
+                                                                                    getModificationStamp()), false, myLanguage);
   }
 }

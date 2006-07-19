@@ -2,6 +2,7 @@ package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.extapi.psi.LightPsiFileBase;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
@@ -65,6 +66,10 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return getSourceElement().getVirtualFile();
   }
 
+  public AntElementRole getRole() {
+    return AntElementRole.NULL_ROLE;
+  }
+
   public void setProperty(@NotNull final String name, @NotNull final String value) {
     synchronized (PsiLock.LOCK) {
       if (myExternalProperties == null) {
@@ -100,6 +105,10 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   public PsiElement getLastChild() {
     final PsiElement[] psiElements = getChildren();
     return psiElements[psiElements.length - 1];
+  }
+
+  public AntFileImpl copyLight(final FileViewProvider viewProvider) {
+    return new AntFileImpl(viewProvider);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

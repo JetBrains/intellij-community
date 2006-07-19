@@ -1,11 +1,11 @@
 package com.intellij.lang.ant.psi;
 
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface AntElement extends PsiNamedElement {
+public interface AntElement extends PsiAntElement {
   AntElement[] EMPTY_ARRAY = new AntElement[0];
 
   @NotNull

@@ -16,6 +16,7 @@
 package com.intellij.lang.ant;
 
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
@@ -23,12 +24,13 @@ import javax.swing.*;
  * @author dyoma
  */
 public enum AntElementRole {
-  TARGET_ROLE (AntBundle.message("ant.role.ant.target"), Icons.ANT_TARGET_ICON),
-  PROPERTY_ROLE (AntBundle.message("ant.role.ant.property"), Icons.PROPERTY_ICON),
-  TASK_ROLE (AntBundle.message("ant.role.ant.task"), Icons.TASK_ICON),
-  USER_TASK_ROLE (AntBundle.message("ant.element.role.user.task"), Icons.TASK_ICON),
-  PROJECT_ROLE (AntBundle.message("ant.element.role.ant.project.name"), Icons.PROPERTY_ICON),
-  MACRODEF_ROLE (AntBundle.message("ant.element.role.macrodef.element"), Icons.TASK_ICON);
+  TARGET_ROLE(AntBundle.message("ant.role.ant.target"), Icons.ANT_TARGET_ICON),
+  PROPERTY_ROLE(AntBundle.message("ant.role.ant.property"), Icons.PROPERTY_ICON),
+  TASK_ROLE(AntBundle.message("ant.role.ant.task"), Icons.TASK_ICON),
+  USER_TASK_ROLE(AntBundle.message("ant.element.role.user.task"), Icons.TASK_ICON),
+  PROJECT_ROLE(AntBundle.message("ant.element.role.ant.project.name"), Icons.PROPERTY_ICON),
+  MACRODEF_ROLE(AntBundle.message("ant.element.role.macrodef.element"), Icons.TASK_ICON),
+  @NonNls NULL_ROLE("Ant element", null);
 
   AntElementRole(String name, Icon icon) {
     myName = name;

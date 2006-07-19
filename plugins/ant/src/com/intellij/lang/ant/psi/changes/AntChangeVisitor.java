@@ -9,7 +9,6 @@ import com.intellij.pom.xml.events.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
-import org.jetbrains.annotations.Nullable;
 
 public class AntChangeVisitor implements XmlChangeVisitor {
 
@@ -50,7 +49,6 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     clearParentCaches(xmlTextChanged.getText());
   }
 
-  @Nullable
   private static void clearParentCaches(final XmlElement el) {
     final TextRange textRange = el.getTextRange();
     final AntFile file = (AntFile)el.getContainingFile().getViewProvider().getPsi(AntSupport.getLanguage());
