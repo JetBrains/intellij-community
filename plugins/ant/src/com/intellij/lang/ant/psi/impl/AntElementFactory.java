@@ -7,6 +7,7 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlEntityRef;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
 import org.apache.tools.ant.Target;
@@ -28,7 +29,13 @@ public class AntElementFactory {
   @Nullable
   public static AntElement createAntElement(final AntElement parent, final XmlElement element) {
     instantiate();
-    if (element instanceof XmlComment) return new AntCommentImpl(parent, element);
+
+    if (element instanceof XmlComment) {
+      return new AntCommentImpl(parent, element);
+    }
+    if(element instanceof XmlEntityRef) {
+      return new AntEntityRefImpl(parent, element);
+    }
     if (!(element instanceof XmlTag)) return null;
 
     final XmlTag tag = (XmlTag)element;

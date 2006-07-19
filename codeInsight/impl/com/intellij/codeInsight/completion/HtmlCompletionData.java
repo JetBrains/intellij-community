@@ -2,16 +2,15 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.AndFilter;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TextStartFilter;
-import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.filters.getters.HtmlAttributeValueGetter;
+import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.codeInsight.TailType;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Set;
@@ -89,7 +88,7 @@ public class HtmlCompletionData extends XmlCompletionData {
     };
   }
 
-  protected ElementFilter createAttributeCompletion() {
+  protected ElementFilter createAttributeCompletionFilter() {
     return new ElementFilter() {
       public boolean isAcceptable(Object element, PsiElement context) {
         if (isStyleAttributeContext(context)) return false;

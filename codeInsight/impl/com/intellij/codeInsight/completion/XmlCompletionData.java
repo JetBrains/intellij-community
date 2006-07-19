@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -65,7 +66,7 @@ public class XmlCompletionData extends CompletionData {
     }
 
     {
-      final CompletionVariant variant = new CompletionVariant(createAttributeCompletion());
+      final CompletionVariant variant = new CompletionVariant(createAttributeCompletionFilter());
       variant.includeScopeClass(XmlAttribute.class);
       variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
       variant.setInsertHandler(new XmlAttributeInsertHandler());
@@ -110,16 +111,16 @@ public class XmlCompletionData extends CompletionData {
     return new XmlAttributeValueGetter();
   }
 
-  protected ElementFilter createAttributeCompletion() {
-    return TrueFilter.INSTANCE;
+  protected ElementFilter createAttributeCompletionFilter() {
+    return ourNotAntElementFilter;
   }
 
   protected ElementFilter createAttributeValueCompletionFilter() {
-    return TrueFilter.INSTANCE;
+    return ourNotAntElementFilter;
   }
 
   protected ElementFilter createTagCompletionFilter() {
-    return TrueFilter.INSTANCE;
+    return ourNotAntElementFilter;
   }
 
   private static class XmlAttributeValueInsertHandler extends DefaultInsertHandler {
@@ -448,4 +449,16 @@ public class XmlCompletionData extends CompletionData {
       caretModel.moveToOffset(caretModel.getOffset() + 1);
     }
   }
+
+  private static class NotAntElementFilter implements ElementFilter {
+    public boolean isAcceptable(Object element, PsiElement context) {
+      return !CodeInsightUtil.isAntFile(context.getContainingFile());
+    }
+
+    public boolean isClassAcceptable(Class hintClass) {
+      return true;
+    }
+  }
+
+  private static NotAntElementFilter ourNotAntElementFilter = new NotAntElementFilter();
 }

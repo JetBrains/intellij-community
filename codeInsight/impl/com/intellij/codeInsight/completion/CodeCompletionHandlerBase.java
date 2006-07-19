@@ -7,6 +7,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -21,8 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.lang.StdLanguages;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -316,11 +316,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
     complete(context, insertedElement, completionData, lookupSet);
-    if (!CodeInsightUtil.isAntFile(file)) {
-      final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-      completionData.addKeywordVariants(keywordVariants, context, insertedElement);
-      CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
-    }
+    final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
+    completionData.addKeywordVariants(keywordVariants, context, insertedElement);
+    CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
     CompletionUtil.highlightMembersOfContainer(lookupSet);
 
     final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
