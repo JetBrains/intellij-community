@@ -1,13 +1,13 @@
 package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.actions.BaseCodeInsightAction;
+import com.intellij.codeInsight.actions.CodeInsightAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 
-public class BaseGenerateAction extends BaseCodeInsightAction {
+public class BaseGenerateAction extends CodeInsightAction {
   private CodeInsightActionHandler myHandler;
 
   public BaseGenerateAction(CodeInsightActionHandler handler) {
