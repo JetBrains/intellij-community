@@ -6,9 +6,9 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -187,8 +187,10 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       streamsToClose.get(i).close();
     }
 
-    final ContentEntry contentEntry = rootModel.addContentEntry(vDir);
-    if (isAddDirToSource()) contentEntry.addSourceFolder(vDir, false);
+    if (isAddDirToContentRoot()) {
+      final ContentEntry contentEntry = rootModel.addContentEntry(vDir);
+      if (isAddDirToSource()) contentEntry.addSourceFolder(vDir, false);
+    }
     rootModel.commit();
 
     for (int i = 0; i < newVFiles.length; i++) {
@@ -206,6 +208,8 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       }
     }
 
+
+
     return vDir;
   }
 
@@ -222,6 +226,10 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   protected File createTempDirectory() throws IOException {
     File dir = FileUtil.createTempDirectory("unitTest", null);
     return dir;
+  }
+
+  protected boolean isAddDirToContentRoot() {
+    return true;
   }
 
   protected boolean isAddDirToSource() {
