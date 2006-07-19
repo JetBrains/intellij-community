@@ -26,7 +26,6 @@ public class ChangeListChooser extends DialogWrapper {
   private JRadioButton myRbNew;
   private JComboBox myExisitingsCombo;
   private EditChangelistPanel myNewListPanel;
-  private final Collection<? extends ChangeList> myExistingLists;
   private Project myProject;
   private LocalChangeList mySelectedList;
 
@@ -35,7 +34,6 @@ public class ChangeListChooser extends DialogWrapper {
                            @NotNull Collection<? extends ChangeList> changelists,
                            @Nullable ChangeList defaultSelection) {
     super(project, false);
-    myExistingLists = changelists;
     myProject = project;
 
     final DefaultComboBoxModel model = new DefaultComboBoxModel();
@@ -101,13 +99,11 @@ public class ChangeListChooser extends DialogWrapper {
   protected void doOKAction() {
     if (myRbNew.isSelected()) {
       String newText = myNewListPanel.getName();
-      for (ChangeList list : myExistingLists) {
-        if (newText.equals(list.getName())) {
-          Messages.showErrorDialog(myProject,
-                                   VcsBundle.message("changes.newchangelist.warning.already.exists.text", newText),
-                                   VcsBundle.message("changes.newchangelist.warning.already.exists.title"));
-          return;
-        }
+      if (ChangeListManager.getInstance(myProject).findChangeList(newText) != null) {
+        Messages.showErrorDialog(myProject,
+                                 VcsBundle.message("changes.newchangelist.warning.already.exists.text", newText),
+                                 VcsBundle.message("changes.newchangelist.warning.already.exists.title"));
+        return;
       }
     }
 
