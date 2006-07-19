@@ -52,10 +52,9 @@ import java.util.Iterator;
 import java.util.List;
 
 
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class VcsUtil
 {
-  private VcsUtil() {}
-
   public static void markFileAsUpToDate(VirtualFile file, Project project) {
     markAsUpToDate(project, file.isDirectory(), file.getPath());
     FileStatusManager.getInstance(project).fileStatusChanged(file);
