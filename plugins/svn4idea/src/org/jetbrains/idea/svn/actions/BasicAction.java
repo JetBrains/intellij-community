@@ -197,7 +197,6 @@ public abstract class BasicAction extends AnAction {
         }
       });
 
-      FileStatusManager.getInstance(project).fileStatusChanged(file);
       VcsDirtyScopeManager.getInstance(project).fileDirty(file);
 
 
@@ -214,7 +213,6 @@ public abstract class BasicAction extends AnAction {
           file.refresh(false, true);
         }
       });
-      FileStatusManager.getInstance(project).fileStatusChanged(file);
       VcsDirtyScopeManager.getInstance(project).fileDirty(file);
     }
   }
@@ -234,7 +232,6 @@ public abstract class BasicAction extends AnAction {
     });
 
     for (int i = 0; file != null && i < file.length; i++) {
-      FileStatusManager.getInstance(project).fileStatusChanged(file[i]);
       VcsDirtyScopeManager.getInstance(project).fileDirty(file[i]);
     }
   }

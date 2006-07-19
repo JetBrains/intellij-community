@@ -37,6 +37,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -135,7 +136,10 @@ public class MarkResolvedAction extends BasicAction {
       throw new VcsException(e);
     }
     finally {
-      FileStatusManager.getInstance(project).fileStatusesChanged();
+      for(int i = 0; i < files.length; i++) {
+        VcsDirtyScopeManager.getInstance(project).fileDirty(files[i]);
+      }
+
     }
   }
 

@@ -139,7 +139,6 @@ public class AddAction extends BasicAction {
           .findFileByUrl("file://" + event.getFile().getAbsolutePath().replace(File.separatorChar, '/'));
         if (vfile != null) {
           VcsDirtyScopeManager.getInstance(myProject).fileDirty(vfile);
-          FileStatusManager.getInstance(myProject).fileStatusChanged(vfile);
         }
       }
     }

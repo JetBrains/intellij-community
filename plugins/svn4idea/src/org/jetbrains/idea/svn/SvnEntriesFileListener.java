@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -102,6 +101,7 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
 
   private void fireFileStatusesChanged(VirtualFile parent) {
     VcsDirtyScopeManager.getInstance(myProject).fileDirty(parent);
+    /*
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     final VirtualFile[] children = parent.getChildren();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -112,6 +112,7 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
         }
       }
     }, ModalityState.NON_MMODAL);
+    */
   }
 
   private static boolean isEntriesFile(final VirtualFile file) {

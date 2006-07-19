@@ -185,7 +185,6 @@ public class PropertiesComponent extends JPanel {
       String url = "file://" + myFile.getPath().replace(File.separatorChar, '/');
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       VcsDirtyScopeManager.getInstance(myVcs.getProject()).fileDirty(file);
-      FileStatusManager.getInstance(myVcs.getProject()).fileStatusChanged(file);
     }
   }
 
