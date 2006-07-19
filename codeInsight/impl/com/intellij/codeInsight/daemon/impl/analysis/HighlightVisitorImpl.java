@@ -79,16 +79,16 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void projectClosed() {}
 
   public HighlightVisitorImpl(PsiManager manager) {
-    this(new XmlHighlightVisitor(),manager.getResolveHelper());
+    this(manager.getResolveHelper());
   }
 
-  private HighlightVisitorImpl(XmlHighlightVisitor xmlHighlightVisitor, PsiResolveHelper resolveHelper) {
+  private HighlightVisitorImpl(PsiResolveHelper resolveHelper) {
     myResolveHelper = resolveHelper;
-    myXmlVisitor = xmlHighlightVisitor;
+    myXmlVisitor = new XmlHighlightVisitor();
   }
 
   public HighlightVisitorImpl clone() {
-    return new HighlightVisitorImpl(myXmlVisitor, myResolveHelper);
+    return new HighlightVisitorImpl(myResolveHelper);
   }
 
   public boolean suitableForFile(PsiFile file) {
@@ -125,7 +125,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     boolean hasAnnotators = highlightInjectedPsi(element);
     List<Annotator> annotators = lang.getAnnotators();
 
-    if (annotators.size() > 0) {
+    if (!annotators.isEmpty()) {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < annotators.size(); i++) {
         annotators.get(i).annotate(element, myAnnotationHolder);
