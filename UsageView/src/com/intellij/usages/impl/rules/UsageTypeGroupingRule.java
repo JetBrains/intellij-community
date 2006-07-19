@@ -112,6 +112,12 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
       if (retType != null && PsiTreeUtil.isAncestor(retType, element, true)) return UsageType.CLASS_METHOD_RETURN_TYPE;
     }
 
+    final PsiNewExpression psiNewExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
+    if (psiNewExpression != null) {
+      final PsiJavaCodeReferenceElement classReference = psiNewExpression.getClassReference();
+      if (classReference != null && PsiTreeUtil.isAncestor(classReference, element, false)) return UsageType.CLASS_NEW_OPERATOR;
+    }
+
     return null;
   }
 

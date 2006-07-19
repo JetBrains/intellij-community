@@ -37,6 +37,7 @@ public class UsageType {
   public static final UsageType CLASS_METHOD_PARAMETER_DECLARATION = new UsageType(UsageViewBundle.message("usage.type.parameter.declaration"));
   public static final UsageType CLASS_CATCH_CLAUSE_PARAMETER_DECLARATION = new UsageType(UsageViewBundle.message("usage.type.catch.declaration"));
   public static final UsageType CLASS_METHOD_RETURN_TYPE = new UsageType(UsageViewBundle.message("usage.type.return"));
+  public static final UsageType CLASS_NEW_OPERATOR = new UsageType(UsageViewBundle.message("usage.type.new"));
 
   public static final UsageType LITERAL_USAGE = new UsageType(UsageViewBundle.message("usage.type.string.constant"));
   public static final UsageType COMMENT_USAGE = new UsageType(UsageViewBundle.message("usage.type.comment"));
