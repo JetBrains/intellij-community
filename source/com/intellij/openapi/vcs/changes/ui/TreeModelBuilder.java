@@ -40,9 +40,7 @@ public class TreeModelBuilder {
     final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
     final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
     for (Change change : changes) {
-      final ChangesBrowserNode node = new ChangesBrowserNode(change);
-      ChangesUtil.getFilePath(change).refresh();
-      model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, root), 0);
+      insertChangeNode(change, foldersCache, moduleCache, root);
     }
 
     collapseDirectories(model, root);
@@ -61,9 +59,7 @@ public class TreeModelBuilder {
       final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
       final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
       for (Change change : list.getChanges()) {
-        final ChangesBrowserNode node = new ChangesBrowserNode(change);
-        ChangesUtil.getFilePath(change).refresh();
-        model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, listNode), 0);
+        insertChangeNode(change, foldersCache, moduleCache, listNode);
       }
     }
 
@@ -94,6 +90,21 @@ public class TreeModelBuilder {
     sortNodes();
 
     return model;
+  }
+
+  private void insertChangeNode(final Change change, final HashMap<FilePath, ChangesBrowserNode> foldersCache, final HashMap<Module, ChangesBrowserNode> moduleCache,
+                                final ChangesBrowserNode listNode) {
+    final FilePath nodePath = ChangesUtil.getFilePath(change);
+    nodePath.refresh();
+    ChangesBrowserNode oldNode = foldersCache.get(nodePath);
+    if (oldNode != null) {
+      oldNode.setUserObject(change);
+    }
+    else {
+      final ChangesBrowserNode node = new ChangesBrowserNode(change);
+      model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, listNode), 0);
+      foldersCache.put(nodePath, node);
+    }
   }
 
   private void sortNodes() {

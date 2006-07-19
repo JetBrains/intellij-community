@@ -64,6 +64,9 @@ class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
         append(" (" + filePath.getIOFile().getParentFile().getPath() + ", " + getChangeStatus(change).getText() + ")",
                SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
+      else if (node.getCount() != 0) {
+        appendCount(node);
+      }
 
       if (filePath.isDirectory()) {
         setIcon(Icons.DIRECTORY_CLOSED_ICON);
@@ -117,7 +120,17 @@ class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
   }
 
   private void appendCount(final ChangesBrowserNode node) {
-    append(" " + VcsBundle.message("changes.nodetitle.changecount", node.getCount()), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+    int count = node.getCount();
+    int dirCount = node.getDirectoryCount();
+    if (count > 0 && dirCount == 0) {
+      append(" " + VcsBundle.message("changes.nodetitle.changecount", count), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+    }
+    else if (count == 0 && dirCount > 1) {
+      append(" " + VcsBundle.message("changes.nodetitle.directory.changecount", dirCount), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+    }
+    else {
+      append(" " + VcsBundle.message("changes.nodetitle.directory.file.changecount", dirCount, count), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+    }
   }
 
   private FileStatus getChangeStatus(Change change) {

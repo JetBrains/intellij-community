@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -16,6 +17,7 @@ import java.util.List;
  */
 public class ChangesBrowserNode extends DefaultMutableTreeNode {
   private int count = -1;
+  private int myDirectoryCount = -1;
 
   public ChangesBrowserNode(Object userObject) {
     super(userObject);
@@ -28,6 +30,7 @@ public class ChangesBrowserNode extends DefaultMutableTreeNode {
   public void insert(MutableTreeNode newChild, int childIndex) {
     super.insert(newChild, childIndex);
     count = -1;
+    myDirectoryCount = -1;
   }
 
   public int getCount() {
@@ -40,6 +43,24 @@ public class ChangesBrowserNode extends DefaultMutableTreeNode {
       }
     }
     return count;
+  }
+
+  public int getDirectoryCount() {
+    if (myDirectoryCount == -1) {
+      if (userObject instanceof Change && ChangesUtil.getFilePath((Change) userObject).isDirectory()) {
+        myDirectoryCount = 1;
+      }
+      else {
+        myDirectoryCount = 0;
+      }
+
+      final Enumeration nodes = children();
+      while (nodes.hasMoreElements()) {
+        ChangesBrowserNode child = (ChangesBrowserNode)nodes.nextElement();
+        myDirectoryCount += child.getDirectoryCount();
+      }
+    }
+    return myDirectoryCount;
   }
 
   public List<Change> getAllChangesUnder() {
