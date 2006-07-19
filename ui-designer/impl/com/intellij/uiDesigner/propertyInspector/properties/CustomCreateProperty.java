@@ -11,6 +11,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -85,7 +87,6 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
   protected void setValueImpl(final RadComponent component, final Boolean value) throws Exception {
     if (value.booleanValue() && component.getBinding() == null) {
       String initialBinding = BindingProperty.getDefaultBinding(component);
-      final PsiNameHelper nameHelper = PsiManager.getInstance(component.getProject()).getNameHelper();
       String binding = Messages.showInputDialog(
         component.getProject(),
         UIDesignerBundle.message("custom.create.field.name.prompt"),
@@ -114,6 +115,14 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
   }
 
   public static void generateCreateComponentsMethod(final PsiClass aClass) {
+    final ReadonlyStatusHandler roHandler = ReadonlyStatusHandler.getInstance(aClass.getProject());
+    final PsiFile psiFile = aClass.getContainingFile();
+    if (psiFile == null) return;
+    final VirtualFile vFile = psiFile.getVirtualFile();
+    if (vFile == null) return;
+    final ReadonlyStatusHandler.OperationStatus status = roHandler.ensureFilesWritable(vFile);
+    if (status.hasReadonlyFiles()) return;
+
     final Ref<SmartPsiElementPointer> refMethod = new Ref<SmartPsiElementPointer>();
     CommandProcessor.getInstance().executeCommand(
       aClass.getProject(),
@@ -150,7 +159,7 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
             assert body != null;
             final PsiComment comment = PsiTreeUtil.getChildOfType(body, PsiComment.class);
             if (comment != null) {
-              new OpenFileDescriptor(comment.getProject(), comment.getContainingFile().getVirtualFile(),
+              new OpenFileDescriptor(comment.getProject(), vFile,
                                      comment.getTextOffset()).navigate(true);
             }
           }
