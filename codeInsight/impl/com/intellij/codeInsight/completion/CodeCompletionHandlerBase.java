@@ -21,6 +21,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.lang.StdLanguages;
+import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -353,7 +355,17 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       PsiElement element = injectedFile.findElementAt(newContext.startOffset);
       return Pair.create(newContext, element);
     }
-    PsiElement element = fileCopy.findElementAt(context.startOffset);
+    PsiElement element;
+    if (CodeInsightUtil.isAntFile(fileCopy)) {
+      //need xml element but ant reference
+      //TODO: need a better way of handling this
+      final ASTNode fileNode = fileCopy.getViewProvider().getPsi(StdLanguages.XML).getNode();
+      assert fileNode != null;
+      element = fileNode.findLeafElementAt(context.startOffset).getPsi();
+    }
+    else {
+      element = fileCopy.findElementAt(context.startOffset);
+    }
     return Pair.create(context, element);
   }
 
