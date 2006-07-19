@@ -1,8 +1,8 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.codeFormatting.general.FormatterUtil;
-import com.intellij.lang.ASTNode;
 import com.intellij.formatting.*;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -219,7 +219,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return Wrap.createWrap(getWrapType(mySettings.THROWS_LIST_WRAP), true);
     }
     else if (myNode.getElementType() == ElementType.CODE_BLOCK) {
-      return Wrap.createWrap(Wrap.NORMAL, true);
+      return Wrap.createWrap(Wrap.NONE, false);
     }
     else if (isAssignment()) {
       return Wrap.createWrap(getWrapType(mySettings.ASSIGNMENT_WRAP), true);
@@ -418,7 +418,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
-  @NotNull private ASTNode findLastFieldInGroup(final ASTNode child) {
+  @NotNull private static ASTNode findLastFieldInGroup(final ASTNode child) {
     final PsiTypeElement typeElement = ((PsiVariable)child.getPsi()).getTypeElement();
     if (typeElement == null) return child;
 
@@ -531,7 +531,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return result;
   }
 
-  private ArrayList<ASTNode> readToNextDot(final ArrayList<ASTNode> nodes) {
+  private static ArrayList<ASTNode> readToNextDot(final ArrayList<ASTNode> nodes) {
     final ArrayList<ASTNode> result = new ArrayList<ASTNode>();
     result.add(nodes.remove(0));
     for (Iterator<ASTNode> iterator = nodes.iterator(); iterator.hasNext();) {
@@ -560,7 +560,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   }
 
-  private boolean lastChildIsAnnotation(final ASTNode child) {
+  private static boolean lastChildIsAnnotation(final ASTNode child) {
     ASTNode current = child.getLastChildNode();
     while (current != null && current.getElementType() == ElementType.WHITE_SPACE) {
       current = current.getTreePrev();
@@ -569,7 +569,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return current.getElementType() == ElementType.ANNOTATION;
   }
 
-  private boolean containsAnnotations(final ASTNode child) {
+  private static boolean containsAnnotations(final ASTNode child) {
     return ((PsiModifierList)child.getPsi()).getAnnotations().length > 0;
   }
 
@@ -662,7 +662,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   */
-  private Alignment createAlignment(final boolean alignOption, final Alignment defaultAlignment) {
+  private static Alignment createAlignment(final boolean alignOption, final Alignment defaultAlignment) {
     return alignOption ?
            (createAlignmentOrDefault(defaultAlignment)) : defaultAlignment;
   }
@@ -788,19 +788,24 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     else if (myNode.getElementType() == ElementType.IF_STATEMENT) {
-      if (role == ChildRole.THEN_BRANCH) {
-        return Wrap.createWrap(WrapType.NORMAL, true);
-      }
-      else if (role == ChildRole.ELSE_BRANCH) {
-        return Wrap.createWrap(WrapType.NORMAL, true);
-      } else {
-        return null;
+      if (role == ChildRole.THEN_BRANCH || role == ChildRole.ELSE_BRANCH) {
+        if (child.getElementType() == ElementType.BLOCK_STATEMENT) {
+          return null;
+        }
+        else {
+          return Wrap.createWrap(WrapType.NORMAL, true);
+        }
       }
     }
 
     else if (myNode.getElementType() == ElementType.FOREACH_STATEMENT || myNode.getElementType() == ElementType.WHILE_STATEMENT) {
       if (role == ChildRole.LOOP_BODY) {
-        return Wrap.createWrap(WrapType.NORMAL, true);
+        if (child.getElementType() == ElementType.BLOCK_STATEMENT) {
+          return null;
+        }
+        else {
+          return Wrap.createWrap(WrapType.NORMAL, true);
+        }
       }
     }
 
@@ -837,7 +842,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
-  protected WrapType getWrapType(final int wrap) {
+  protected static WrapType getWrapType(final int wrap) {
     switch (wrap) {
       case CodeStyleSettings.WRAP_ALWAYS:
         return WrapType.ALWAYS;
@@ -935,7 +940,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     myChildIndent = internalIndent;
   }
 
-  private Alignment createAlignmentOrDefault(final Alignment defaultAlignment) {
+  private static Alignment createAlignmentOrDefault(final Alignment defaultAlignment) {
     return defaultAlignment == null ? Alignment.createAlignment() : defaultAlignment;
   }
 
@@ -969,7 +974,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
            : createNormalIndent(baseChildrenIndent);
   }
 
-  protected Indent createNormalIndent(final int baseChildrenIndent) {
+  protected static Indent createNormalIndent(final int baseChildrenIndent) {
     if (baseChildrenIndent == 1) {
       return Indent.getNormalIndent();
     }
