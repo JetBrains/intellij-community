@@ -132,13 +132,30 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
 
   public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
     if (myRole1 == ChildRole.LBRACE) {
-      createSpaceInCode(mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES);
+      if (mySettings.ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE) {
+        int spaces = mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES ? 1 : 0;
+        myResult = Spacing
+          .createDependentLFSpacing(spaces, spaces, myParent.getTextRange(), mySettings.KEEP_LINE_BREAKS,
+                                    mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
+      else {
+        createSpaceProperty(mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
+
     }
     else if (myRole2 == ChildRole.LBRACE) {
       createSpaceInCode(mySettings.SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE);
     }
     else if (myRole2 == ChildRole.RBRACE) {
-      createSpaceProperty(mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+      if (mySettings.ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE) {
+        int spaces = mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES ? 1 : 0;
+        myResult = Spacing
+          .createDependentLFSpacing(spaces, spaces, myParent.getTextRange(), mySettings.KEEP_LINE_BREAKS,
+                                    mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+      }
+      else {
+        createSpaceProperty(mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+      }
     }
     else if (myRole1 == ChildRole.COMMA) {
       createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
