@@ -42,13 +42,21 @@ public abstract class CompositeLexer extends LexerBase {
   }
 
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    myLexer1.start(buffer, startOffset, endOffset, initialState);
-    myLexer2.start(buffer, startOffset, endOffset, initialState);
+    myLexer1.start(buffer, startOffset, endOffset, (initialState >> 16) & 0xFFFF);
+    myLexer2.start(buffer, startOffset, endOffset, initialState & 0xFFFF);
     myCurOffset = startOffset;
   }
 
   public int getState() {
-    return 0; // does not work
+    final int state = myLexer1.getState();
+    final int state2 = myLexer2.getState();
+
+    if (state >= 0 && state < Short.MAX_VALUE &&
+       state2 >= 0 && state2 < Short.MAX_VALUE) {
+      return (state << 16) + state2;
+    }
+
+    return 0;
   }
 
   public IElementType getTokenType() {
