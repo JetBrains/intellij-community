@@ -4,13 +4,19 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.Content;
 
 public class ContentsUtil {
+  private ContentsUtil() {
+  }
+
   public static void addOrReplaceContent(ContentManager manager, Content content, boolean select) {
     final String contentName = content.getDisplayName();
-    Content contentWithTheSameName = manager.findContent(contentName);
-    while (contentWithTheSameName != null) {
-      manager.removeContent(contentWithTheSameName);
-      contentWithTheSameName = manager.findContent(contentName);
+
+    Content[] contents = manager.getContents();
+    for(Content oldContent: contents) {
+      if (!oldContent.isPinned() && oldContent.getDisplayName().equals(contentName)) {
+        manager.removeContent(oldContent);
+      }
     }
+    
     manager.addContent(content);
     if (select) {
       manager.setSelectedContent(content);
