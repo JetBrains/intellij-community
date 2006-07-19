@@ -630,6 +630,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     else if (myNode.getElementType() == ElementType.METHOD) {
       if (role == ChildRole.MODIFIER_LIST) return defaultAlignment;
       if (role == ChildRole.TYPE) return defaultAlignment;
+      if (role == ChildRole.NAME) return defaultAlignment;
       return null;
     }
 
