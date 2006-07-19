@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.jsp.JspManager;
@@ -193,8 +194,9 @@ public class XmlUtil {
 
   public static XmlFile findXmlFile(PsiFile base, String uri) {
     PsiFile result = null;
+    final JspFile jspFile = PsiUtil.getJspFile(base);
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      final JspFile jspFile = PsiUtil.getJspFile(base);
       String data = jspFile != null ? jspFile.getUserData(TEST_PATH) : base.getUserData(TEST_PATH);
 
       if (data == null) {
@@ -215,14 +217,26 @@ public class XmlUtil {
       result = PsiUtil.findRelativeFile(uri, base);
     }
 
-    if (result == null && PsiUtil.isInJspFile(base)) {
-      result = JspManager.getInstance(base.getProject()).getTldFileByUri(uri, PsiUtil.getJspFile(base));
+    if (( result == null || !(result instanceof XmlFile) )) {
+      if (jspFile != null) {
+        result = JspManager.getInstance(base.getProject()).getTldFileByUri(uri, jspFile);
+      } else {
+        // check facelets file
+        if (base instanceof XmlFile) {
+          final XmlDocument document = ((XmlFile)base).getDocument();
+          final XmlTag rootTag = document != null ? document.getRootTag():null;
+
+          if (rootTag != null && rootTag.getPrefixByNamespace(XmlUtil.FACELETS_URI) != null) {
+            result = JspManager.getInstance(base.getProject()).getTldFileByUri(uri, ModuleUtil.findModuleForPsiElement(base), null);
+          }
+        }
+      }
     }
 
     if (result instanceof XmlFile) {
       return (XmlFile)result;
     }
-    if (PsiUtil.isInJspFile(base)) return JspManager.getInstance(base.getProject()).getTldFileByUri(uri, PsiUtil.getJspFile(base));
+
     return null;
   }
 

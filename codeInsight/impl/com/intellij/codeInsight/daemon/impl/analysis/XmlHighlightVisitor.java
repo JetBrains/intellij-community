@@ -960,11 +960,11 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     if(element == null) return;
     final PsiReference[] references = element.getReferences();
 
-    if (references.length == 1 && references[0] instanceof URIReferenceProvider.URLReference) {
-      checkUriReferenceProblem(references[0]);
-    } else {
-      checkReferences(element, QuickFixProvider.NULL);
+    if (references.length > 0 && references[references.length - 1] instanceof URIReferenceProvider.URLReference) {
+      checkUriReferenceProblem(references[references.length - 1]);
     }
+
+    checkReferences(element, QuickFixProvider.NULL);
   }
 
   private void checkUriReferenceProblem(final PsiReference reference) {
