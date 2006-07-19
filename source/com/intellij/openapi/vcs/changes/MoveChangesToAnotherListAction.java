@@ -52,7 +52,9 @@ public class MoveChangesToAnotherListAction extends AnAction {
     LocalChangeList resultList = chooser.getSelectedList();
     if (resultList != null) {
       listManager.moveChangesTo(resultList, changes);
-      listManager.addUnversionedFiles(resultList, unversionedFiles);
+      if (unversionedFiles != null) {
+        listManager.addUnversionedFiles(resultList, unversionedFiles);
+      }
     }
   }
 

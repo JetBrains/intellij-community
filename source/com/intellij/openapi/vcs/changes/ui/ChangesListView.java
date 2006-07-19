@@ -497,7 +497,10 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
       final LocalChangeList dropList = dragBean.getDropList();
       if (dropList != null) {
         myDragOwner.moveChangesTo(dropList, dragBean.getChanges());
-        myDragOwner.addUnversionedFiles(dropList, dragBean.getUnversionedFiles());
+        final List<VirtualFile> unversionedFiles = dragBean.getUnversionedFiles();
+        if (unversionedFiles != null) {
+          myDragOwner.addUnversionedFiles(dropList, unversionedFiles);
+        }
       }
     }
 
