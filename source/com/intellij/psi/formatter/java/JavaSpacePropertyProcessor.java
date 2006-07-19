@@ -269,6 +269,10 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     else if (myRole2 == ChildRole.COMMA || myChild2.getElementType() == ElementType.SEMICOLON) {
       createSpaceProperty(false, false, 0);
     }
+    else if (myRole1 == ChildRole.COMMA) {
+      createSpaceProperty(mySettings.SPACE_AFTER_COMMA, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+    }
+
     else if (myRole1 == ChildRole.MODIFIER_LIST) {
       processModifierList();
     }
