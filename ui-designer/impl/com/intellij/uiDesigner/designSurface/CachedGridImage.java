@@ -30,12 +30,19 @@ public class CachedGridImage {
   private CachedGridImage(final RadContainer container) {
     final GraphicsConfiguration graphicsConfiguration =
       WindowManagerEx.getInstanceEx().getFrame(container.getModule().getProject()).getGraphicsConfiguration();
-    myImage = graphicsConfiguration.createCompatibleImage(container.getWidth(), container.getHeight(),
+    if (container.getWidth() * container.getHeight() < 4096*4096) {
+      myImage = graphicsConfiguration.createCompatibleImage(container.getWidth(), container.getHeight(),
                                                           Transparency.BITMASK);
-    update(container);
+      update(container);
+    }
+    else {
+      // create fake image for insanely large containers
+      myImage = graphicsConfiguration.createCompatibleImage(16, 16,  Transparency.BITMASK);
+    }
   }
 
   private void update(final RadContainer container) {
+    if (container.getWidth() * container.getHeight() >= 4096*4096) return;
     int count = container.getComponentCount();
     int[] rows = new int[count];
     int[] rowSpans = new int[count];
@@ -70,6 +77,7 @@ public class CachedGridImage {
     final int width = container.getWidth();
     final int height = container.getHeight();
 
+    if (width * height >= 4096*4096) return;
     Graphics2D g2d = (Graphics2D) myImage.getGraphics();
     try {
       g2d.setComposite(AlphaComposite.Clear);
