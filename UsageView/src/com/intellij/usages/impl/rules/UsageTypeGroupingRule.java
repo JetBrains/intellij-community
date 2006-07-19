@@ -18,6 +18,7 @@ package com.intellij.usages.impl.rules;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usages.ReadWriteAccessUsage;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
@@ -39,10 +40,18 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
       PsiElementUsage elementUsage = (PsiElementUsage)usage;
 
       UsageType usageType = getUsageType(elementUsage.getElement());
-      if (usageType == null) return null;
+      if (usageType != null) return new UsageTypeGroup(usageType);
 
-      return new UsageTypeGroup(usageType);
+      if (usage instanceof ReadWriteAccessUsage) {
+        ReadWriteAccessUsage u = (ReadWriteAccessUsage)usage;
+        if (u.isAccessedForReading()) return new UsageTypeGroup(UsageType.READ);
+        if (u.isAccessedForWriting()) return new UsageTypeGroup(UsageType.WRITE);
+      }
+
+      return new UsageTypeGroup(UsageType.UNCLASSIFIED);
     }
+
+
     return null;
   }
 
@@ -56,7 +65,7 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
 
     if (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null) { return UsageType.COMMENT_USAGE; }
 
-    return UsageType.UNCLASSIFIED;
+    return null;
   }
 
   private UsageType getClassUsageType(PsiElement element) {
@@ -93,7 +102,7 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
       if (scope instanceof PsiMethod) return UsageType.CLASS_METHOD_PARAMETER_DECLARATION;
       if (scope instanceof PsiCatchSection) return UsageType.CLASS_CATCH_CLAUSE_PARAMETER_DECLARATION;
       if (scope instanceof PsiForeachStatement) return UsageType.CLASS_LOCAL_VAR_DECLARATION;
-      return UsageType.UNCLASSIFIED;
+      return null;
     }
 
     PsiField psiField = PsiTreeUtil.getParentOfType(element, PsiField.class);

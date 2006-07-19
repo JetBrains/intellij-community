@@ -39,6 +39,9 @@ public class UsageType {
   public static final UsageType CLASS_METHOD_RETURN_TYPE = new UsageType(UsageViewBundle.message("usage.type.return"));
   public static final UsageType CLASS_NEW_OPERATOR = new UsageType(UsageViewBundle.message("usage.type.new"));
 
+  public static final UsageType READ = new UsageType(UsageViewBundle.message("usage.type.read"));
+  public static final UsageType WRITE = new UsageType(UsageViewBundle.message("usage.type.write"));
+
   public static final UsageType LITERAL_USAGE = new UsageType(UsageViewBundle.message("usage.type.string.constant"));
   public static final UsageType COMMENT_USAGE = new UsageType(UsageViewBundle.message("usage.type.comment"));
 

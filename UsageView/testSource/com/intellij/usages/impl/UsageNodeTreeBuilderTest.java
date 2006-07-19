@@ -6,8 +6,8 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsagePresentation;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageFilteringRule;
+import com.intellij.usages.rules.UsageGroupingRule;
 import junit.framework.TestCase;
 
 import javax.swing.*;
@@ -76,8 +76,7 @@ public class UsageNodeTreeBuilderTest extends TestCase {
   private GroupNode buildUsageTree(int[] indices, UsageGroupingRule[] rules) {
     Usage[] usages = new Usage[indices.length];
     for (int i = 0; i < usages.length; i++) {
-      Usage usage = createUsage(indices[i]);
-      usages[i] = usage;
+      usages[i] = createUsage(indices[i]);
     }
 
     DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode("temp"));

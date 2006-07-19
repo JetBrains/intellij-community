@@ -15,15 +15,12 @@
  */
 package com.intellij.usages.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -36,7 +33,6 @@ public class UsageNodeTreeBuilder {
   private GroupNode myRoot;
   private UsageGroupingRule[] myGroupingRules;
   private UsageFilteringRule[] myFilteringRules;
-  private List<Disposable> myDisposables = new ArrayList<Disposable>();
 
   public UsageNodeTreeBuilder(UsageGroupingRule[] groupingRules, UsageFilteringRule[] filteringRules, GroupNode root) {
     myGroupingRules = groupingRules;
@@ -45,8 +41,7 @@ public class UsageNodeTreeBuilder {
   }
 
   public void appendUsages(Usage[] usages) {
-    for (int i = 0; i < usages.length; i++) {
-      Usage usage = usages[i];
+    for (Usage usage : usages) {
       appendUsage(usage);
     }
   }
@@ -60,8 +55,7 @@ public class UsageNodeTreeBuilder {
   }
 
   public UsageNode appendUsage(Usage usage) {
-    for (int idx = 0; idx < myFilteringRules.length; idx++) {
-      final UsageFilteringRule rule = myFilteringRules[idx];
+    for (final UsageFilteringRule rule : myFilteringRules) {
       if (!rule.isVisible(usage)) {
         return null;
       }
@@ -78,10 +72,6 @@ public class UsageNodeTreeBuilder {
   }
 
   public void removeAllChildren() {
-    for (Disposable disposable : myDisposables) {
-      disposable.dispose();
-    }
-    myDisposables.clear();
     Enumeration children = myRoot.children();
     while (children.hasMoreElements()) {
       Object child = children.nextElement();
