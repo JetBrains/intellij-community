@@ -6,6 +6,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -56,7 +57,7 @@ public class SuperMethodWarningUtil {
     );
     dialog.show();
 
-    if (dialog.getExitCode() == SuperMethodWarningDialog.OK_EXIT_CODE) {
+    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       return superMethods.toArray(new PsiMethod[superMethods.size()]);
     }
     if (dialog.getExitCode() == SuperMethodWarningDialog.NO_EXIT_CODE) {
@@ -84,7 +85,7 @@ public class SuperMethodWarningUtil {
         );
     dialog.show();
 
-    if (dialog.getExitCode() == SuperMethodWarningDialog.OK_EXIT_CODE) return superMethod;
+    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) return superMethod;
     if (dialog.getExitCode() == SuperMethodWarningDialog.NO_EXIT_CODE) return method;
 
     return null;

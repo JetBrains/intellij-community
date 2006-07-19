@@ -35,7 +35,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
     return MessageFormat.format(InspectionsBundle.message("inspection.annotate.quickfix.name"), ClassUtil.extractClassName(myAnnotation));
   }
 
-  public void applyFix(Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
     final PsiElement psiElement = descriptor.getPsiElement();
     PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
     if (method == null) return;
@@ -44,15 +44,15 @@ public class AnnotateMethodFix implements LocalQuickFix {
       PsiMethod superMethod = superMethodSignature.getMethod();
       if (superMethod != null && !AnnotationUtil.isAnnotated(superMethod, myAnnotation, false) &&
           superMethod.getManager().isInProject(superMethod)) {
-        final PsiMethod[] superMethods =
-          SuperMethodWarningUtil.checkSuperMethods(method, InspectionsBundle.message("inspection.annotate.quickfix.verb"));
+        PsiMethod[] superMethods = SuperMethodWarningUtil.checkSuperMethods(method, InspectionsBundle.message("inspection.annotate.quickfix.verb"));
+        if (superMethods.length == 0) {
+          return; // pressed Cancel
+        }
         for (final PsiMethod psiMethod : superMethods) {
           if (psiMethod != null && psiMethod != method) {
             annotateMethod(psiMethod);
           }
         }
-
-
         break;
       }
     }
