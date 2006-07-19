@@ -78,6 +78,9 @@ public class RepositoryTreeNode implements TreeNode {
     // couldn't do that when 'loading' is in progress.
     myChildren = null;
     myModel.reload(this);
+    if (isLeaf()) {
+      ((RepositoryTreeNode) getParent()).reload();
+    }
   }
 
   public String toString() {
