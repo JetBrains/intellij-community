@@ -28,7 +28,7 @@ public class DialogAppender extends AppenderSkeleton {
 
     Application application = ApplicationManager.getApplication();
     if (application != null) {
-      if (application.isHeadlessEnvironment()) return;
+      if (application.isHeadlessEnvironment() || application.isDisposed()) return;
       loggers.addAll(Arrays.asList(application.getComponents(ErrorLogger.class)));
     }
 

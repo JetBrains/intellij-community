@@ -643,4 +643,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myNameToConfiguration = null;
     myPicoContainer = null;
   }
+
+  public boolean isDisposed() {
+    return myDisposed;
+  }
 }

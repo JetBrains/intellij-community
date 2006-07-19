@@ -25,8 +25,6 @@ public interface ApplicationEx extends Application {
 
   String getName();
 
-  void dispose();
-
   void assertReadAccessToDocumentsAllowed();
 
   void doNotSave();

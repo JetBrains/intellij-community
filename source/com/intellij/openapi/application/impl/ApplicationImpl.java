@@ -132,7 +132,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           SwingUtilities.invokeAndWait(new Runnable() {
             public void run() {
               saveAll();
-              dispose();
+              disposeSelf();
             }
           });
         }
@@ -144,6 +144,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         }
       }
     }));
+  }
+
+  private void disposeSelf() {
+    Disposer.dispose(this);
+    Disposer.assertIsEmpty();
   }
 
   public String getComponentsDescriptor() {
@@ -414,7 +419,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     super.dispose();
-    Disposer.assertIsEmpty();
   }
 
   public boolean runProcessWithProgressSynchronously(final Runnable process, String progressTitle, boolean canBeCanceled, Project project) {
@@ -591,7 +595,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           saveAll();
           if (!canExit()) return;
 
-          dispose();
+          disposeSelf();
 
           System.exit(0);
         }

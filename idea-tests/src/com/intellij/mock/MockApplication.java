@@ -78,6 +78,10 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
     return new IdeaPluginDescriptor[0];
   }
 
+  public boolean isDisposed() {
+    return false;
+  }
+
   public BaseComponent getComponent(String name) {
     return null;
   }

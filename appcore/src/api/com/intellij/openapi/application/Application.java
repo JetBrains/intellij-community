@@ -245,4 +245,6 @@ public interface Application extends ComponentManager {
   IdeaPluginDescriptor getPlugin(PluginId id);
 
   IdeaPluginDescriptor[] getPlugins();
+
+  boolean isDisposed();
 }

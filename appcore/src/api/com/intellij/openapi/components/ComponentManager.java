@@ -15,9 +15,10 @@
  */
 package com.intellij.openapi.components;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.UserDataHolder;
-import org.picocontainer.PicoContainer;
 import org.jetbrains.annotations.NotNull;
+import org.picocontainer.PicoContainer;
 
 /**
  * Provides access to components. Servers as a base interface for {@link com.intellij.openapi.application.Application}
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @see com.intellij.openapi.application.Application
  * @see com.intellij.openapi.project.Project
  */
-public interface ComponentManager extends UserDataHolder {
+public interface ComponentManager extends UserDataHolder, Disposable {
   /**
    * Gets the component by its name
    *

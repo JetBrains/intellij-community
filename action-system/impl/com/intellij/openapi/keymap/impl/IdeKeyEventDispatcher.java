@@ -3,16 +3,19 @@ package com.intellij.openapi.keymap.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ui.KeyboardShortcutDialog;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
@@ -35,7 +38,7 @@ import java.util.ArrayList;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class IdeKeyEventDispatcher {
+public final class IdeKeyEventDispatcher implements Disposable {
   @NonNls
   private static final String GET_CACHED_STROKE_METHOD_NAME = "getCachedStroke";
 
@@ -56,11 +59,13 @@ public final class IdeKeyEventDispatcher {
   private final ArrayList<AnAction> myActions;
   private final PresentationFactory myPresentationFactory;
   private JComponent myFoundComponent;
+  private boolean myDisposed = false;
 
   public IdeKeyEventDispatcher(){
     myState=STATE_INIT;
     myActions=new ArrayList<AnAction>();
     myPresentationFactory=new PresentationFactory();
+    Disposer.register(ApplicationManager.getApplication(), this);
   }
 
   public boolean isWaitingForSecondKeyStroke(){
@@ -72,6 +77,8 @@ public final class IdeKeyEventDispatcher {
    * <code>IdeKeyEventDispatcher</code> and there is no need for any other processing of the event.
    */
   public boolean dispatchKeyEvent(final KeyEvent e){
+    if (myDisposed) return false;
+
     if(e.isConsumed()){
       return false;
     }
@@ -450,5 +457,9 @@ public final class IdeKeyEventDispatcher {
     }
 
     return hasSecondStroke;
+  }
+
+  public void dispose() {
+    myDisposed = true;
   }
 }
