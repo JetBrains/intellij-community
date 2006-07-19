@@ -16,8 +16,9 @@
 package org.intellij.images.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import org.intellij.images.editor.ImageEditor;
-import org.intellij.images.editor.actionSystem.AbstractEditorToggleAction;
+import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
 
 /**
  * Toggle grid lines over image.
@@ -25,12 +26,21 @@ import org.intellij.images.editor.actionSystem.AbstractEditorToggleAction;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  * @see ImageEditor#setGridVisible
  */
-public final class ToggleGridAction extends AbstractEditorToggleAction {
-    public void setSelected(ImageEditor imageEditor, AnActionEvent e, boolean state) {
-        imageEditor.setGridVisible(state);
+public final class ToggleGridAction extends ToggleAction {
+    public boolean isSelected(AnActionEvent e) {
+        ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
+        return editor != null && editor.isGridVisible();
     }
 
-    public boolean isSelected(ImageEditor imageEditor, AnActionEvent e) {
-        return imageEditor.isGridVisible();
+    public void setSelected(AnActionEvent e, boolean state) {
+        ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
+        if (editor != null) {
+            editor.setGridVisible(state);
+        }
+    }
+
+    public void update(final AnActionEvent e) {
+        super.update(e);
+        ImageEditorActionUtil.setEnabled(e);
     }
 }

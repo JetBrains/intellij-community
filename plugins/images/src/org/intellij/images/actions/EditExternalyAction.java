@@ -26,7 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.intellij.images.IconsBundle;
+import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
@@ -49,8 +49,8 @@ public final class EditExternalyAction extends AnAction {
         String executablePath = options.getExternalEditorOptions().getExecutablePath();
         if (StringUtil.isEmpty(executablePath)) {
             Messages.showErrorDialog(project,
-                                     IconsBundle.message("error.empty.external.editor.path"),
-                                     IconsBundle.message("error.title.empty.external.editor.path"));
+                                     ImagesBundle.message("error.empty.external.editor.path"),
+                                     ImagesBundle.message("error.title.empty.external.editor.path"));
             OptionsConfigurabe.show(project);
         } else {
             if (files != null) {
@@ -70,7 +70,7 @@ public final class EditExternalyAction extends AnAction {
                 } catch (IOException ex) {
                     Messages.showErrorDialog(project,
                                              ex.getLocalizedMessage(),
-                                             IconsBundle.message("error.title.launching.external.editor"));
+                                             ImagesBundle.message("error.title.launching.external.editor"));
                 }
             }
         }

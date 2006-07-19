@@ -26,12 +26,12 @@ import java.util.ResourceBundle;
 /**
  * @author max
  */
-public class IconsBundle {
+public class ImagesBundle {
   private static Reference<ResourceBundle> ourBundle;
 
-  @NonNls private static final String BUNDLE = "org.intellij.images.IconsBundle";
+  @NonNls private static final String BUNDLE = "org.intellij.images.ImagesBundle";
 
-  private IconsBundle() {
+  private ImagesBundle() {
   }
 
   public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {

@@ -16,17 +16,26 @@
  */
 package org.intellij.images.thumbnail.actions;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.intellij.images.thumbnail.ThumbnailView;
-import org.intellij.images.thumbnail.actionSystem.AbstractThumbnailViewAction;
+import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
 
 /**
  * Hide tool window.
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-public final class HideThumbnailsAction extends AbstractThumbnailViewAction {
-    public void actionPerformed(ThumbnailView thumbnailView, AnActionEvent e) {
-        thumbnailView.setVisible(false);
+public final class HideThumbnailsAction extends AnAction {
+    public void actionPerformed(AnActionEvent e) {
+        ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
+        if (view != null) {
+            view.setVisible(false);
+        }
+    }
+
+    public void update(AnActionEvent e) {
+        super.update(e);
+        ThumbnailViewActionUtil.setEnabled(e);
     }
 }

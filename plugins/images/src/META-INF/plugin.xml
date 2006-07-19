@@ -2,12 +2,12 @@
 <idea-plugin>
 
     <vendor>Alexey Efimov</vendor>
-  
+
     <name>Images</name>
     <version>1.1</version>
-    <idea-version since-build="3378"/>
-  
-    <resource-bundle>org.intellij.images.IconsBundle</resource-bundle>
+    <idea-version since-build="5383"/>
+
+    <resource-bundle>org.intellij.images.ImagesBundle</resource-bundle>
 
     <extensions xmlns="com.intellij">
       <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -43,35 +43,51 @@
         <action class="org.intellij.images.actions.EditExternalyAction"
                 id="Images.EditExternaly"
                 icon="/org/intellij/images/icons/EditExternaly.png">
+            <keyboard-shortcut first-keystroke="control alt F4" keymap="$default" />
             <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
             <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="EditSource"/>
         </action>
         <action class="org.intellij.images.actions.ShowThumbnailsAction"
                 id="Images.ShowThumbnails">
+            <keyboard-shortcut first-keystroke="shift control T" keymap="$default"/>
             <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="AddToFavorites"/>
             <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="AddToFavorites"/>
+        </action>
+        <action class="org.intellij.images.actions.ToggleTransparencyChessboardAction"
+                id="Images.ToggleTransparencyChessboard"
+                icon="/org/intellij/images/icons/ToggleTransparencyChessboard.png">
+            <keyboard-shortcut first-keystroke="control BACK_SLASH" keymap="$default"/>
         </action>
         <group id="Images.FileViewPopupMenu">
             <reference id="Images.EditExternaly"/>
             <reference id="Images.ShowThumbnails"/>
         </group>
         <group id="Images.EditorToolbar">
-            <action class="org.intellij.images.editor.actions.ToggleTransparencyChessboardAction"
-                    id="Images.Editor.ToggleTransparencyChessboard"
-                    icon="/org/intellij/images/icons/ToggleTransparencyChessboard.png"/>
+            <reference id="Images.ToggleTransparencyChessboard" />
             <action class="org.intellij.images.editor.actions.ToggleGridAction"
                     id="Images.Editor.ToggleGrid"
-                    icon="/org/intellij/images/icons/ToggleGrid.png"/>
+                    icon="/org/intellij/images/icons/ToggleGrid.png">
+                <keyboard-shortcut first-keystroke="control QUOTE" keymap="$default" />
+            </action>
             <separator/>
             <action class="org.intellij.images.editor.actions.ZoomInAction"
                     id="Images.Editor.ZoomIn"
-                    icon="/org/intellij/images/icons/ZoomIn.png"/>
+                    icon="/org/intellij/images/icons/ZoomIn.png">
+                <keyboard-shortcut first-keystroke="control ADD" keymap="$default"/>
+                <keyboard-shortcut first-keystroke="control EQUALS" keymap="$default"/>
+            </action>
             <action class="org.intellij.images.editor.actions.ZoomOutAction"
                     id="Images.Editor.ZoomOut"
-                    icon="/org/intellij/images/icons/ZoomOut.png"/>
+                    icon="/org/intellij/images/icons/ZoomOut.png">
+                <keyboard-shortcut first-keystroke="control SUBTRACT" keymap="$default"/>
+                <keyboard-shortcut first-keystroke="control MINUS" keymap="$default"/>
+            </action>
             <action class="org.intellij.images.editor.actions.ActualSizeAction"
                     id="Images.Editor.ActualSize"
-                    icon="/org/intellij/images/icons/ActualSize.png"/>
+                    icon="/org/intellij/images/icons/ActualSize.png">
+                <keyboard-shortcut first-keystroke="control DIVIDE" keymap="$default"/>
+                <keyboard-shortcut first-keystroke="control SLASH" keymap="$default"/>
+            </action>
             <separator/>
             <reference id="Images.EditExternaly"/>
         </group>
@@ -94,24 +110,32 @@
         <group id="Images.ThumbnailsToolbar">
             <action class="org.intellij.images.thumbnail.actions.UpFolderAction"
                     id="Images.Thumbnails.UpFolder"
-                    icon="/nodes/upFolder.png"/>
+                    icon="/nodes/upFolder.png">
+                <keyboard-shortcut first-keystroke="BACK_SPACE" keymap="$default" />
+            </action>
             <action class="org.intellij.images.thumbnail.actions.ToggleRecursiveAction"
                     id="Images.Thumbnails.ToggleRecursive"
-                    icon="/objectBrowser/flattenPackages.png"/>
+                    icon="/objectBrowser/flattenPackages.png">
+                <keyboard-shortcut first-keystroke="control MULTIPLY" keymap="$default" />
+            </action>
             <separator/>
-            <action class="org.intellij.images.thumbnail.actions.ToggleTransparencyChessboardAction"
-                    id="Images.Thumbnails.ToggleTransparencyChessboard"
-                    icon="/org/intellij/images/icons/ToggleTransparencyChessboard.png"/>
+            <reference id="Images.ToggleTransparencyChessboard" />
             <separator/>
             <reference id="Images.EditExternaly"/>
             <separator/>
             <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction"
                     id="Images.Thumbnails.Hide"
-                    icon="/actions/cancel.png"/>
+                    icon="/actions/cancel.png">
+                <keyboard-shortcut first-keystroke="control F4" keymap="$default" />
+            </action>
         </group>
         <group id="Images.ThumbnailsPopupMenu">
             <reference id="CutCopyPasteGroup" />
             <reference id="EditSource" />
+            <action class="org.intellij.images.thumbnail.actions.EnterAction"
+                    id="Images.Thumbnails.EnterAction">
+                <keyboard-shortcut first-keystroke="ENTER" keymap="$default" />
+            </action>
             <separator />
             <reference id="Images.ThumbnailsToolbar"/>
             <separator/>

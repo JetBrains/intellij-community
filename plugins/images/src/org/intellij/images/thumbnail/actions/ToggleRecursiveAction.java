@@ -17,20 +17,30 @@
 package org.intellij.images.thumbnail.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import org.intellij.images.thumbnail.ThumbnailView;
-import org.intellij.images.thumbnail.actionSystem.AbstractThumbnailViewToggleAction;
+import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
 
 /**
  * Toggle recursive flag.
  *
- * @author <a href="aefimov@tengry.com">Alexey Efimov</a>
+ * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-public final class ToggleRecursiveAction extends AbstractThumbnailViewToggleAction {
-    public void setSelected(ThumbnailView thumbnailView, AnActionEvent e, boolean state) {
-        thumbnailView.setRecursive(state);
+public final class ToggleRecursiveAction extends ToggleAction {
+    public boolean isSelected(AnActionEvent e) {
+        ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
+        return view != null && view.isRecursive();
     }
 
-    public boolean isSelected(ThumbnailView thumbnailView, AnActionEvent e) {
-        return thumbnailView.isRecursive();
+    public void setSelected(AnActionEvent e, boolean state) {
+        ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
+        if (view != null) {
+            view.setRecursive(state);
+        }
+    }
+
+    public void update(final AnActionEvent e) {
+        super.update(e);
+        ThumbnailViewActionUtil.setEnabled(e);
     }
 }

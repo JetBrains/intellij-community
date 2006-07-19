@@ -19,7 +19,7 @@ package org.intellij.images.ui;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.images.IconsBundle;
+import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.jetbrains.annotations.NonNls;
 
@@ -34,10 +34,14 @@ import java.awt.image.BufferedImage;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public class ThumbnailComponentUI extends ComponentUI {
+    @NonNls
+    private static final String DOTS = "...";
+    @NonNls
+    private static final String THUMBNAIL_COMPONENT_ERROR_STRING = "ThumbnailComponent.errorString";
+
     private static final Icon BLANK_ICON = IconLoader.getIcon("/org/intellij/images/icons/ThumbnailBlank.png");
     private static final Icon DIRECTORY_ICON = IconLoader.getIcon("/org/intellij/images/icons/ThumbnailDirectory.png");
     private static final Icon ERROR_ICON = Messages.getErrorIcon();
-    @NonNls private static final String DOTS = "...";
 
     private static final Color LINE_COLOR = new Color(0x8E, 0xA8, 0xCE);
     private static final Color PNG_COLOR = new Color(0x80, 0x00, 0x80);
@@ -47,16 +51,14 @@ public class ThumbnailComponentUI extends ComponentUI {
 
     private static final ThumbnailComponentUI ui = new ThumbnailComponentUI();
 
-  @NonNls private static final String THUMBNAIL_COMPONENT_ERROR_STRING = "ThumbnailComponent.errorString";
-
     static {
-      UIManager.getDefaults().put(THUMBNAIL_COMPONENT_ERROR_STRING,
-                                  IconsBundle.message("thumbnails.component.error.text"));
+        UIManager.getDefaults().put(THUMBNAIL_COMPONENT_ERROR_STRING,
+                ImagesBundle.message("thumbnails.component.error.text"));
     }
 
 
     public void paint(Graphics g, JComponent c) {
-        ThumbnailComponent tc = (ThumbnailComponent)c;
+        ThumbnailComponent tc = (ThumbnailComponent) c;
         if (tc != null) {
             paintBackground(g, tc);
 
@@ -77,7 +79,7 @@ public class ThumbnailComponentUI extends ComponentUI {
 
         int imagesCount = tc.getImagesCount();
         if (imagesCount > 0) {
-            final String title = IconsBundle.message("icons.count", imagesCount);
+            final String title = ImagesBundle.message("icons.count", imagesCount);
 
             Font font = getSmallFont();
             FontMetrics fontMetrics = g.getFontMetrics(font);
@@ -125,7 +127,7 @@ public class ThumbnailComponentUI extends ComponentUI {
     }
 
     private int paintImageCaps(Graphics g, BufferedImage image) {
-        String description = IconsBundle.message("icon.dimensions", image.getWidth(), image.getHeight(), image.getColorModel().getPixelSize());
+        String description = ImagesBundle.message("icon.dimensions", image.getWidth(), image.getHeight(), image.getColorModel().getPixelSize());
 
         Font font = getSmallFont();
         FontMetrics fontMetrics = g.getFontMetrics(font);
@@ -150,9 +152,9 @@ public class ThumbnailComponentUI extends ComponentUI {
         g.setColor(getFormatColor(format));
         g.setFont(font);
         g.drawString(
-            format,
-            x,
-            y + fontMetrics.getAscent()
+                format,
+                x,
+                y + fontMetrics.getAscent()
         );
 
         return fontMetrics.getHeight();
@@ -183,14 +185,14 @@ public class ThumbnailComponentUI extends ComponentUI {
 
         if (imageWidth > maxWidth || imageHeight > maxHeight) {
             if (imageWidth > maxWidth) {
-                double proportion = (double)maxWidth / (double)imageWidth;
+                double proportion = (double) maxWidth / (double) imageWidth;
                 imageWidth = maxWidth;
-                imageHeight = (int) ((double)imageHeight * proportion);
+                imageHeight = (int) ((double) imageHeight * proportion);
             }
             if (imageHeight > maxHeight) {
-                double proportion = (double)maxHeight / (double)imageHeight;
+                double proportion = (double) maxHeight / (double) imageHeight;
                 imageHeight = maxHeight;
-                imageWidth = (int) ((double)imageWidth * proportion);
+                imageWidth = (int) ((double) imageWidth * proportion);
             }
         }
 
@@ -235,9 +237,9 @@ public class ThumbnailComponentUI extends ComponentUI {
         g.setColor(Color.BLACK);
         g.setFont(font);
         g.drawString(
-            tc.getFileSizeText(),
-            8,
-            BLANK_ICON.getIconHeight() + 4 - fontMetrics.getHeight() + fontMetrics.getAscent()
+                tc.getFileSizeText(),
+                8,
+                BLANK_ICON.getIconHeight() + 4 - fontMetrics.getHeight() + fontMetrics.getAscent()
         );
     }
 
@@ -246,10 +248,10 @@ public class ThumbnailComponentUI extends ComponentUI {
         FontMetrics fontMetrics = g.getFontMetrics(font);
 
         ERROR_ICON.paintIcon(
-            tc,
-            g,
-            5 + (BLANK_ICON.getIconWidth() - ERROR_ICON.getIconWidth()) / 2,
-            5 + (BLANK_ICON.getIconHeight() - ERROR_ICON.getIconHeight()) / 2
+                tc,
+                g,
+                5 + (BLANK_ICON.getIconWidth() - ERROR_ICON.getIconWidth()) / 2,
+                5 + (BLANK_ICON.getIconHeight() - ERROR_ICON.getIconHeight()) / 2
         );
 
         // Error
@@ -259,9 +261,9 @@ public class ThumbnailComponentUI extends ComponentUI {
         g.drawString(error, 8, 8 + fontMetrics.getAscent());
     }
 
-  private String getSubmnailComponentErrorString() {
-    return UIManager.getString(THUMBNAIL_COMPONENT_ERROR_STRING);
-  }
+    private String getSubmnailComponentErrorString() {
+        return UIManager.getString(THUMBNAIL_COMPONENT_ERROR_STRING);
+    }
 
     private static Font getSmallFont() {
         Font labelFont = UIUtil.getLabelFont();
@@ -272,11 +274,12 @@ public class ThumbnailComponentUI extends ComponentUI {
         Font labelFont = UIUtil.getLabelFont();
         FontMetrics fontMetrics = c.getFontMetrics(labelFont);
         return new Dimension(
-            BLANK_ICON.getIconWidth() + 10,
-            BLANK_ICON.getIconHeight() + fontMetrics.getHeight() + 15
+                BLANK_ICON.getIconWidth() + 10,
+                BLANK_ICON.getIconHeight() + fontMetrics.getHeight() + 15
         );
     }
 
+    @SuppressWarnings({"UnusedDeclaration"})
     public static ComponentUI createUI(JComponent c) {
         return ui;
     }

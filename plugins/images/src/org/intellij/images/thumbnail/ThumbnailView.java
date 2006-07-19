@@ -18,7 +18,7 @@ package org.intellij.images.thumbnail;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.intellij.images.IconsBundle;
+import org.intellij.images.ImagesBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,29 +27,35 @@ import org.jetbrains.annotations.NotNull;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface ThumbnailView extends Disposable {
-    String TOOLWINDOW_ID = IconsBundle.message("thumbnails.toolwindow.name");
+    String TOOLWINDOW_ID = ImagesBundle.message("thumbnails.toolwindow.name");
 
-    @NotNull Project getProject();
+    @NotNull
+    Project getProject();
 
     /**
      * Add virtual files to view
+     *
      * @param root Root
      */
     void setRoot(@NotNull VirtualFile root);
 
     /**
      * Return current root
+     *
+     * @return Current root
      */
-    @NotNull VirtualFile getRoot();
+    VirtualFile getRoot();
 
     boolean isRecursive();
 
     void setRecursive(boolean recursive);
 
     void setSelected(@NotNull VirtualFile file, boolean selected);
+
     boolean isSelected(@NotNull VirtualFile file);
 
-    @NotNull VirtualFile[] getSelection();
+    @NotNull
+    VirtualFile[] getSelection();
 
     /**
      * Scroll to selection. If ToolWindow is not active, then
@@ -64,5 +70,6 @@ public interface ThumbnailView extends Disposable {
     void activate();
 
     void setTransparencyChessboardVisible(boolean visible);
+
     boolean isTransparencyChessboardVisible();
 }

@@ -25,7 +25,7 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.UIHelper;
-import org.intellij.images.IconsBundle;
+import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
@@ -115,7 +115,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
         toolbarPanel.addMouseListener(new FocusRequester());
 
         JLabel errorLabel = new JLabel(
-            IconsBundle.message("error.broken.image.file.format"),
+            ImagesBundle.message("error.broken.image.file.format"),
             Messages.getErrorIcon(), JLabel.CENTER
         );
 
@@ -144,13 +144,13 @@ final class ImageEditorUI extends JPanel implements DataProvider {
             ColorModel colorModel = image.getColorModel();
             String format = document.getFormat();
             if (format == null) {
-                format = IconsBundle.message("unknown.format");
+                format = ImagesBundle.message("unknown.format");
             } else {
                 format = format.toUpperCase();
             }
             VirtualFile file = editor.getFile();
             infoLabel.setText(
-                    IconsBundle.message("image.info",
+                    ImagesBundle.message("image.info",
                             image.getWidth(), image.getHeight(), format,
                             colorModel.getPixelSize(), file != null ? StringUtil.formatFileSize(file.getLength()) : ""));
         } else {

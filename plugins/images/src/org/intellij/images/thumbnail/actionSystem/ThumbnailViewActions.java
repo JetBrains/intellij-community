@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NonNls;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-public interface ThumbnailsActions {
+public interface ThumbnailViewActions {
     @NonNls String GROUP_POPUP = "Images.ThumbnailsPopupMenu";
     @NonNls String GROUP_TOOLBAR = "Images.ThumbnailsToolbar";
     @NonNls String ACTION_PLACE = "Images.Thumbnails";

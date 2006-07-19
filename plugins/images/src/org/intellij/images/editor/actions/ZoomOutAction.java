@@ -15,11 +15,11 @@
  */
 package org.intellij.images.editor.actions;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
-import org.intellij.images.editor.actionSystem.AbstractEditorAction;
+import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
 
 /**
  * Zoom out.
@@ -27,16 +27,21 @@ import org.intellij.images.editor.actionSystem.AbstractEditorAction;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  * @see ImageEditor#getZoomModel
  */
-public final class ZoomOutAction extends AbstractEditorAction {
-    public void actionPerformed(ImageEditor imageEditor, AnActionEvent e) {
-        ImageZoomModel zoomModel = imageEditor.getZoomModel();
-        zoomModel.zoomOut();
+public final class ZoomOutAction extends AnAction {
+    public void actionPerformed(AnActionEvent e) {
+        ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
+        if (editor != null) {
+            ImageZoomModel zoomModel = editor.getZoomModel();
+            zoomModel.zoomOut();
+        }
     }
 
-    public void update(ImageEditor imageEditor, AnActionEvent e) {
-        super.update(imageEditor, e);
-        ImageZoomModel zoomModel = imageEditor.getZoomModel();
-        Presentation presentation = e.getPresentation();
-        presentation.setEnabled(zoomModel.canZoomOut());
+    public void update(AnActionEvent e) {
+        super.update(e);
+        if (ImageEditorActionUtil.setEnabled(e)) {
+            ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
+            ImageZoomModel zoomModel = editor.getZoomModel();
+            e.getPresentation().setEnabled(zoomModel.canZoomOut());
+        }
     }
 }

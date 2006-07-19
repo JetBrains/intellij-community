@@ -15,10 +15,11 @@
  */
 package org.intellij.images.editor.actions;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
-import org.intellij.images.editor.actionSystem.AbstractEditorAction;
+import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
 
 /**
  * Resize image to actual size.
@@ -27,16 +28,21 @@ import org.intellij.images.editor.actionSystem.AbstractEditorAction;
  * @see ImageEditor#getZoomModel()
  * @see ImageZoomModel#setZoomFactor
  */
-public final class ActualSizeAction extends AbstractEditorAction {
-    public void actionPerformed(ImageEditor imageEditor, AnActionEvent e) {
-        ImageZoomModel zoomModel = imageEditor.getZoomModel();
-        zoomModel.setZoomFactor(1.0d);
+public final class ActualSizeAction extends AnAction {
+    public void actionPerformed(AnActionEvent e) {
+        ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
+        if (editor != null) {
+            ImageZoomModel zoomModel = editor.getZoomModel();
+            zoomModel.setZoomFactor(1.0d);
+        }
     }
 
-    public void update(ImageEditor imageEditor, AnActionEvent e) {
-        super.update(imageEditor, e);
-
-        ImageZoomModel zoomModel = imageEditor.getZoomModel();
-        e.getPresentation().setEnabled(zoomModel.getZoomFactor() != 1.0d);
+    public void update(AnActionEvent e) {
+        super.update(e);
+        if (ImageEditorActionUtil.setEnabled(e)) {
+            ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
+            ImageZoomModel zoomModel = editor.getZoomModel();
+            e.getPresentation().setEnabled(zoomModel.getZoomFactor() != 1.0d);
+        }
     }
 }

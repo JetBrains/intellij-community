@@ -18,12 +18,10 @@ package org.intellij.images.thumbnail.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiManager;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +51,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
     }
 
     private ThumbnailViewUI getUI() {
-        return ((ThumbnailViewUI)toolWindow.getComponent());
+        return ((ThumbnailViewUI) toolWindow.getComponent());
     }
 
     public void setRoot(@NotNull VirtualFile root) {
@@ -61,7 +59,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
         updateUI();
     }
 
-    @NotNull public VirtualFile getRoot() {
+    public VirtualFile getRoot() {
         return root;
     }
 
@@ -81,10 +79,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
     }
 
     public boolean isSelected(@NotNull VirtualFile file) {
-        if (isVisible()) {
-            return getUI().isSelected(file);
-        }
-        return false;
+        return isVisible() && getUI().isSelected(file);
     }
 
     @NotNull
@@ -136,7 +131,8 @@ final class ThumbnailViewImpl implements ThumbnailView {
         toolWindow.setTitle(root != null ? IfsUtil.getReferencePath(project, root) : null);
     }
 
-    @NotNull public Project getProject() {
+    @NotNull
+    public Project getProject() {
         return project;
     }
 

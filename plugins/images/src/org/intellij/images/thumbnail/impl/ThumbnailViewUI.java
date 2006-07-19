@@ -32,7 +32,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.UIHelper;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
-import org.intellij.images.thumbnail.actionSystem.ThumbnailsActions;
+import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.ui.ThumbnailComponent;
 import org.intellij.images.ui.ThumbnailComponentUI;
@@ -65,6 +65,18 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     private final DeleteProvider deleteProvider;
     private ThumbnailListCellRenderer cellRenderer;
     private JList list;
+    private static final Comparator<VirtualFile> VIRTUAL_FILE_COMPARATOR = new Comparator<VirtualFile>() {
+    public int compare(VirtualFile o1, VirtualFile o2) {
+        if (o1.isDirectory() && !o2.isDirectory()) {
+            return -1;
+        }
+        if (o2.isDirectory() && !o1.isDirectory()) {
+            return 1;
+        }
+
+        return o1.getPath().toLowerCase().compareTo(o2.getPath().toLowerCase());
+    }
+};
 
     public ThumbnailViewUI(ThumbnailViewImpl thumbnailView) {
         super(new BorderLayout());
@@ -123,9 +135,9 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             );
 
             ActionManager actionManager = ActionManager.getInstance();
-            ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ThumbnailsActions.GROUP_TOOLBAR);
+            ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ThumbnailViewActions.GROUP_TOOLBAR);
             ActionToolbar actionToolbar = actionManager.createActionToolbar(
-                ThumbnailsActions.GROUP_TOOLBAR, actionGroup, true
+                ThumbnailViewActions.GROUP_TOOLBAR, actionGroup, true
             );
 
             JComponent toolbar = actionToolbar.getComponent();
@@ -145,27 +157,17 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             DefaultListModel model = (DefaultListModel)list.getModel();
             model.clear();
             VirtualFile root = thumbnailView.getRoot();
-            if (root.isValid() && root.isDirectory()) {
+            if (root != null && root.isValid() && root.isDirectory()) {
                 Set<VirtualFile> files = findFiles(root.getChildren());
                 VirtualFile[] virtualFiles = files.toArray(VirtualFile.EMPTY_ARRAY);
-                Arrays.sort(
-                    virtualFiles, new Comparator<VirtualFile>() {
-                    public int compare(VirtualFile o1, VirtualFile o2) {
-                        if (o1.isDirectory() && !o2.isDirectory()) {
-                            return -1;
-                        }
-                        if (o2.isDirectory() && !o1.isDirectory()) {
-                            return 1;
-                        }
-
-                        return o1.getPath().toLowerCase().compareTo(o2.getPath().toLowerCase());
-                    }
-                }
-                );
+                Arrays.sort(virtualFiles, VIRTUAL_FILE_COMPARATOR);
 
                 model.ensureCapacity(model.size() + virtualFiles.length + 1);
                 for (VirtualFile virtualFile : virtualFiles) {
                     model.addElement(virtualFile);
+                }
+                if (model.size() > 0) {
+                    list.setSelectedIndex(0);
                 }
             } else {
                 thumbnailView.setVisible(false);
@@ -199,10 +201,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
     public boolean isSelected(VirtualFile file) {
         int index = ((DefaultListModel)list.getModel()).indexOf(file);
-        if (index != -1) {
-            return list.isSelectedIndex(index);
-        }
-        return false;
+        return index != -1 && list.isSelectedIndex(index);
     }
 
     @NotNull
@@ -387,8 +386,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                     }
                     // Single right click
                     ActionManager actionManager = ActionManager.getInstance();
-                    ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ThumbnailsActions.GROUP_POPUP);
-                    ActionPopupMenu menu = actionManager.createActionPopupMenu(ThumbnailsActions.ACTION_PLACE, actionGroup);
+                    ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ThumbnailViewActions.GROUP_POPUP);
+                    ActionPopupMenu menu = actionManager.createActionPopupMenu(ThumbnailViewActions.ACTION_PLACE, actionGroup);
                     JPopupMenu popupMenu = menu.getComponent();
                     popupMenu.pack();
                     popupMenu.show(e.getComponent(), e.getX(), e.getY());
@@ -519,7 +518,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
         public void fileDeleted(VirtualFileEvent event) {
             VirtualFile file = event.getFile();
-            if (VfsUtil.isAncestor(file, thumbnailView.getRoot(), false)) {
+            VirtualFile root = thumbnailView.getRoot();
+            if (root != null && VfsUtil.isAncestor(file, root, false)) {
                 refresh();
             }
             if (list != null) {

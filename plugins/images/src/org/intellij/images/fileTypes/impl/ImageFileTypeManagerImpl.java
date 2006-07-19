@@ -22,9 +22,10 @@ import com.intellij.openapi.fileTypes.UserBinaryFileType;
 import com.intellij.openapi.fileTypes.UserFileType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.intellij.images.IconsBundle;
+import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
 import java.util.HashSet;
@@ -40,7 +41,7 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements App
     
     private static final String[] EMPTY_STRING_ARRAY = new String[] {};
     @NonNls private static final String IMAGE_FILE_TYPE_NAME = "Images";
-    private static final String IMAGE_FILE_TYPE_DESCRIPTION = IconsBundle.message("images.filetype.description");
+    private static final String IMAGE_FILE_TYPE_DESCRIPTION = ImagesBundle.message("images.filetype.description");
     private UserFileType imageFileType;
 
     public boolean isImage(VirtualFile file) {
@@ -53,6 +54,7 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements App
         return imageFileType;
     }
 
+    @NotNull
     public String getComponentName() {
         return NAME;
     }

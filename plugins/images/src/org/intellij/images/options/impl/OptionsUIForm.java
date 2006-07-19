@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.DocumentAdapter;
-import org.intellij.images.IconsBundle;
+import org.intellij.images.ImagesBundle;
 import org.intellij.images.options.*;
 
 import javax.swing.*;
@@ -177,6 +177,7 @@ final class OptionsUIForm {
             this.name = name;
         }
 
+        @SuppressWarnings({"UnnecessaryBoxing"})
         public void itemStateChanged(ItemEvent e) {
             options.setOption(name, Boolean.valueOf(ItemEvent.SELECTED == e.getStateChange()));
         }
@@ -237,8 +238,8 @@ final class OptionsUIForm {
 
                     FileChooserDescriptor fileDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
                     fileDescriptor.setShowFileSystemRoots(true);
-                    fileDescriptor.setTitle(IconsBundle.message("select.external.executable.title"));
-                    fileDescriptor.setDescription(IconsBundle.message("select.external.executable.message"));
+                    fileDescriptor.setTitle(ImagesBundle.message("select.external.executable.title"));
+                    fileDescriptor.setDescription(ImagesBundle.message("select.external.executable.message"));
                     VirtualFile[] virtualFiles = FileChooser.chooseFiles(externalEditorPath, fileDescriptor, previous);
 
                     if (virtualFiles != null && virtualFiles.length > 0) {

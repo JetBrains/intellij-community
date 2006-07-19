@@ -23,11 +23,12 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import org.intellij.images.IconsBundle;
+import org.intellij.images.ImagesBundle;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
@@ -40,7 +41,7 @@ import java.beans.PropertyChangeListener;
  */
 public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport implements SearchableConfigurable, ApplicationComponent, PropertyChangeListener {
     @NonNls private static final String NAME = "Images.OptionsConfigurable";
-    private static final String DISPLAY_NAME = IconsBundle.message("settings.page.name");
+    private static final String DISPLAY_NAME = ImagesBundle.message("settings.page.name");
     private OptionsUIForm uiForm;
 
     public String getDisplayName() {
@@ -99,6 +100,7 @@ public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport 
         setModified(!options.equals(uiOptions));
     }
 
+    @NotNull
     public String getComponentName() {
         return NAME;
     }
