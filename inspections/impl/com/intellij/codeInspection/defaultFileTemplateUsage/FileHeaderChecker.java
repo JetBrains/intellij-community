@@ -15,6 +15,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ public class FileHeaderChecker {
                                               final TIntObjectHashMap<String> offsetToProperty) {
     final FileTemplate template = FileTemplateManager.getInstance().getPattern(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
     final ReplaceWithFileTemplateFix replaceTemplateFix = new ReplaceWithFileTemplateFix() {
-      public void applyFix(Project project, ProblemDescriptor descriptor) {
+      public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
         String newText;
         try {
           newText = template.getText(computeProperties(matcher, offsetToProperty));
