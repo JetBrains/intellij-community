@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -91,8 +92,10 @@ class JavaModuleFixtureBuilderImpl extends ModuleFixtureBuilderImpl implements J
 
     if (myJdk != null) {
       model.setJdk(JavaSdkImpl.getInstance().createJdk(module.getName() + "_jdk", myJdk, false));
+    } else {
+      final ProjectJdk projectJdk = JavaSdkImpl.getMockJdk("java 1.4");
+      model.setJdk(projectJdk);
     }
-
     model.commit();
   }
 }

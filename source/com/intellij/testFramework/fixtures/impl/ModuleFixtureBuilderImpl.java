@@ -30,7 +30,7 @@ abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements Modu
 
   private final List<String> myContentRoots = new ArrayList<String>();
   private final ModuleType myModuleType;
-  private final TestFixtureBuilder<? extends IdeaProjectTestFixture> myFixtureBuilder;
+  protected final TestFixtureBuilder<? extends IdeaProjectTestFixture> myFixtureBuilder;
 
   public ModuleFixtureBuilderImpl(@NotNull final ModuleType moduleType, TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
     myModuleType = moduleType;
