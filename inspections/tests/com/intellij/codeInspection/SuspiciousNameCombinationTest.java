@@ -12,7 +12,7 @@ import com.intellij.testFramework.InspectionTestCase;
  */
 public class SuspiciousNameCombinationTest extends InspectionTestCase {
   private void doTest() throws Exception {
-    doTest("suspiciousNameCombination/" + getTestName(false), new SuspiciousNameCombinationInspection());
+    doTest("suspiciousNameCombination/" + getTestName(true), new SuspiciousNameCombinationInspection());
   }
 
   public void testAssignment() throws Exception {

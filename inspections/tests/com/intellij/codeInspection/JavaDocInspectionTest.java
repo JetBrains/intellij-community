@@ -5,7 +5,7 @@ import com.intellij.testFramework.InspectionTestCase;
 
 public class JavaDocInspectionTest extends InspectionTestCase {
   private void doTest() throws Exception {
-    doTest("javaDocInspection/" + getTestName(false),  new JavaDocLocalInspection());
+    doTest("javaDocInspection/" + getTestName(true),  new JavaDocLocalInspection());
   }
 
   public void testDuplicateParam() throws Exception {
@@ -32,6 +32,10 @@ public class JavaDocInspectionTest extends InspectionTestCase {
 
   //inherited javadoc
   public void testMissedTags() throws Exception {
+    doTest();
+  }
+
+  public void testDoubleMissedTags() throws Exception{
     doTest();
   }
 }

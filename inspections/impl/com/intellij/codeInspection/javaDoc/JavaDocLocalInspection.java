@@ -371,7 +371,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     for (int i = 0; i < tagsToCheck.length; i++) {
       final String tagToCheck = tagsToCheck[i];
       if (isTagRequired[i] && !isTagPresent[i]) {
-        problems = new ArrayList<ProblemDescriptor>(2);
+        if (problems == null) problems = new ArrayList<ProblemDescriptor>(2);
         ProblemDescriptor descriptor = createMissingTagDescriptor(elementToHighlight, tagToCheck, manager);
         problems.add(descriptor);
       }
@@ -502,13 +502,27 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     for (PsiDocTag tag : tags) {
-      if ("param".equals(tag.getName()) && tag.getDataElements().length < 2) {
-        if (problems == null) problems = new ArrayList<ProblemDescriptor>(2);
+      if ("param".equals(tag.getName())) {
+        final PsiElement[] dataElements = tag.getDataElements();
         final PsiDocTagValue valueElement = tag.getValueElement();
-        if (valueElement != null) {
-          problems.add(createDescriptor(valueElement,
-                                        InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>@param " + valueElement.getText() + "</code>"),
-                                        manager));
+        boolean hasProblemsWithTag = dataElements.length < 2;
+        if (!hasProblemsWithTag) {
+          final StringBuffer buf = new StringBuffer();
+          for (PsiElement element : dataElements) {
+            if (element != valueElement){
+              buf.append(element.getText());
+            }
+          }
+          hasProblemsWithTag = buf.toString().trim().length() == 0;
+        }
+        if (hasProblemsWithTag) {
+          if (problems == null) problems = new ArrayList<ProblemDescriptor>(2);
+          if (valueElement != null) {
+            problems.add(createDescriptor(valueElement,
+                                          InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>@param " + valueElement.getText() + "</code>"),
+                                          manager));
+          }
+
         }
       }
     }

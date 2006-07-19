@@ -12,7 +12,7 @@ import com.intellij.testFramework.InspectionTestCase;
  */
 public class DeprecationInspectionTest extends InspectionTestCase {
   private void doTest() throws Exception {
-    doTest("deprecation/" + getTestName(false), new DeprecationInspection());
+    doTest("deprecation/" + getTestName(true), new DeprecationInspection());
   }
 
   public void testDeprecatedMethod() throws Exception{

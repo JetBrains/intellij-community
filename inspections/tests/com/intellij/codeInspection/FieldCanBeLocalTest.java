@@ -12,7 +12,7 @@ public class FieldCanBeLocalTest extends InspectionTestCase {
   }
 
   private void doTest() throws Exception {
-    doTest("fieldCanBeLocal/" + getTestName(false), new FieldCanBeLocalInspection());
+    doTest("fieldCanBeLocal/" + getTestName(true), new FieldCanBeLocalInspection());
   }
 
   public void testSimple () throws Exception {

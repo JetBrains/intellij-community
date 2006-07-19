@@ -5,7 +5,7 @@ import com.intellij.testFramework.InspectionTestCase;
 
 public class DuplicateThrowsInspectionTest extends InspectionTestCase {
   private void doTest() throws Exception {
-    doTest("duplicateThrows/" + getTestName(false), new DuplicateThrowsInspection());
+    doTest("duplicateThrows/" + getTestName(true), new DuplicateThrowsInspection());
   }
 
   public void testSimple() throws Exception{

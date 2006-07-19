@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Foo.java</file>
+    <line>6</line>
+    <description>missing</description>
+  </problem>
+  <problem>
+    <file>Foo.java</file>
+    <line>7</line>
+    <description>missing</description>
+  </problem>
+</problems>
+
