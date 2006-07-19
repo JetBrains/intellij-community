@@ -3,10 +3,10 @@ package com.intellij.psi.impl.file.impl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface FileManager {
   void dispose();
@@ -37,4 +37,6 @@ public interface FileManager {
   FileViewProvider findViewProvider(VirtualFile file);
   FileViewProvider findCachedViewProvider(VirtualFile file);
   void setViewProvider(VirtualFile virtualFile, FileViewProvider fileViewProvider);
+
+  List<PsiFile> getAllCachedFiles();
 }

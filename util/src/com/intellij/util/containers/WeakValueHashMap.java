@@ -17,9 +17,7 @@ package com.intellij.util.containers;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class WeakValueHashMap<K,V> implements Map<K,V>{
   private HashMap<K,MyReference<K,V>> myMap;
@@ -97,7 +95,15 @@ public final class WeakValueHashMap<K,V> implements Map<K,V>{
   }
 
   public Collection<V> values() {
-    throw new RuntimeException("method not implemented");
+    List<V> result = new ArrayList<V>();
+    final Collection<MyReference<K, V>> refs = myMap.values();
+    for (MyReference<K, V> ref : refs) {
+      final V value = ref.get();
+      if (value != null) {
+        result.add(value);
+      }
+    }
+    return result;
   }
 
   public Set<Entry<K, V>> entrySet() {

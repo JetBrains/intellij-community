@@ -625,6 +625,16 @@ public class FileManagerImpl implements FileManager {
     return fileViewProvider != null ? ((SingleRootFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage()) : null;
   }
 
+  public List<PsiFile> getAllCachedFiles() {
+    List<PsiFile> files = new ArrayList<PsiFile>();
+    for (FileViewProvider provider : myVFileToPsiFileMap.values()) {
+      if (provider != null) {
+        files.add(((SingleRootFileViewProvider)provider).getCachedPsi(provider.getBaseLanguage()));
+      }
+    }
+    return files;
+  }
+
   private void removeInvalidFilesAndDirs(boolean useFind) {
     HashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = myVFileToPsiDirMap;
     if (useFind) {
