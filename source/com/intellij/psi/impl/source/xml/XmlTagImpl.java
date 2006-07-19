@@ -38,6 +38,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,6 +125,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
   public boolean isEmpty() {
     return XmlChildRole.CLOSING_TAG_START_FINDER.findChild(this) == null;
+  }
+
+  @Nullable
+  @NonNls
+  public String getSubTagText(@NonNls String qname) {
+    final XmlTag tag = findFirstSubTag(qname);
+    if (tag == null) return null;
+    return tag.getValue().getText();
   }
 
   private Map<String, CachedValue<XmlNSDescriptor>> initNSDescriptorsMap() {
