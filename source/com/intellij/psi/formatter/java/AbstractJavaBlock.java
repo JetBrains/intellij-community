@@ -219,7 +219,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return Wrap.createWrap(getWrapType(mySettings.THROWS_LIST_WRAP), true);
     }
     else if (myNode.getElementType() == ElementType.CODE_BLOCK) {
-      return Wrap.createWrap(Wrap.NONE, false);
+      return Wrap.createWrap(Wrap.NORMAL, false);
     }
     else if (isAssignment()) {
       return Wrap.createWrap(getWrapType(mySettings.ASSIGNMENT_WRAP), true);
