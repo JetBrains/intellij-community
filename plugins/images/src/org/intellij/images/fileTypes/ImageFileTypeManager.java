@@ -35,6 +35,7 @@ public abstract class ImageFileTypeManager {
      * Check that file is image.
      *
      * @param file File to check
+     * @return Return <code>true</code> if image file is file with Images file type
      */
     public abstract boolean isImage(VirtualFile file);
 

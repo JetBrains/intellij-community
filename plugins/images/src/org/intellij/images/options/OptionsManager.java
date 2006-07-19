@@ -26,6 +26,8 @@ import com.intellij.openapi.application.ApplicationManager;
 public abstract class OptionsManager {
     /**
      * Return current options.
+     *
+     * @return Options
      */
     public abstract Options getOptions();
 

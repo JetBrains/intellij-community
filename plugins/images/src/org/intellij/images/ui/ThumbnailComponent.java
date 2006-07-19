@@ -17,20 +17,33 @@
 package org.intellij.images.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
-import org.jetbrains.annotations.NonNls;
-
 /**
+ * Thumbnail component.
+ *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public class ThumbnailComponent extends JComponent {
+    @NonNls
+    private static final String FORMAT_PROP = "format";
+    @NonNls
+    private static final String FILE_SIZE_PROP = "fileSize";
+    @NonNls
+    private static final String FILE_NAME_PROP = "fileName";
+    @NonNls
+    private static final String DIRECTORY_PROP = "directory";
+    @NonNls
+    private static final String IMAGES_COUNT_PROP = "imagesCount";
+
     /**
      * @see #getUIClassID
      * @see #readObject
      */
-    @NonNls private static final String uiClassID = "ThumbnailComponentUI";
+    @NonNls
+    private static final String uiClassID = "ThumbnailComponentUI";
 
     static {
         UIManager.getDefaults().put(uiClassID, ThumbnailComponentUI.class.getName());
@@ -46,15 +59,10 @@ public class ThumbnailComponent extends JComponent {
     private String fileName;
     private boolean directory;
     private int imagesCount;
-  @NonNls private static final String FORMAT_PROP = "format";
-  @NonNls private static final String FILE_SIZE_PROP = "fileSize";
-  @NonNls private static final String FILE_NAME_PROP = "fileName";
-  @NonNls private static final String DIRECTORY_PROP = "directory";
-  @NonNls private static final String IMAGES_COUNT_PROP = "imagesCount";
 
-  public ThumbnailComponent() {
-      updateUI();
-  }
+    public ThumbnailComponent() {
+        updateUI();
+    }
 
     public ImageComponent getImageComponent() {
         return imageComponent;

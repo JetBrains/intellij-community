@@ -28,64 +28,43 @@ import javax.swing.*;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface ImageEditor extends Disposable, VirtualFileListener {
-    /**
-     * Get file
-     */
     VirtualFile getFile();
 
-    /**
-     * Get editor project.
-     */
     Project getProject();
 
-    /**
-     * Return buffered image source that editing.
-     */
     ImageDocument getDocument();
 
-    /**
-     * Return entire editor component.
-     */
     JComponent getComponent();
 
     /**
      * Return the target of image editing area within entire component,
      * returned by {@link #getComponent()}.
+     *
+     * @return Content component
      */
     JComponent getContentComponent();
 
     /**
      * Return <code>true</code> if editor show valid image.
+     *
+     * @return <code>true</code> if editor show valid image.
      */
     boolean isValid();
 
     /**
      * Return <code>true</code> if editor is already disposed.
+     *
+     * @return <code>true</code> if editor is already disposed.
      */
     boolean isDisposed();
 
-    /**
-     * Return zoom model.
-     */
     ImageZoomModel getZoomModel();
 
-    /**
-     * Toggle transparency chessboard.
-     */
     void setTransparencyChessboardVisible(boolean visible);
 
-    /**
-     * Return <code>true</code> if transparency chessboard is visible.
-     */
     boolean isTransparencyChessboardVisible();
 
-    /**
-     * Toggle grid.
-     */
     void setGridVisible(boolean visible);
 
-    /**
-     * Return <code>true</code> if grid is visible.
-     */
     boolean isGridVisible();
 }

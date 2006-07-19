@@ -82,7 +82,7 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     }
 
     @NotNull
-    public FileEditorState getState(FileEditorStateLevel level) {
+    public FileEditorState getState(@NotNull FileEditorStateLevel level) {
         ImageZoomModel zoomModel = imageEditor.getZoomModel();
         return new ImageFileEditorState(
             imageEditor.isTransparencyChessboardVisible(),
@@ -90,7 +90,7 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
             zoomModel.getZoomFactor());
     }
 
-    public void setState(FileEditorState state) {
+    public void setState(@NotNull FileEditorState state) {
         if (state instanceof ImageFileEditorState) {
             ImageFileEditorState editorState = (ImageFileEditorState)state;
             ImageZoomModel zoomModel = imageEditor.getZoomModel();
@@ -114,10 +114,10 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     public void deselectNotify() {
     }
 
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
+    public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     }
 
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
+    public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     }
 
     public BackgroundEditorHighlighter getBackgroundHighlighter() {

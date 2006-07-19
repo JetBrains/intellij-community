@@ -27,28 +27,35 @@ import java.awt.image.BufferedImage;
 public interface ImageDocument {
     /**
      * Return image for rendering
+     *
+     * @return Image renderer
      */
     Image getRenderer();
 
     /**
      * Return current image.
+     *
+     * @return Return current buffered image
      */
     BufferedImage getValue();
 
     /**
      * Set image value
+     *
      * @param image Value
      */
     void setValue(BufferedImage image);
 
     /**
      * Return image format.
+     *
      * @return Format name
      */
     String getFormat();
 
     /**
      * Set image format.
+     *
      * @param format Format from ImageIO (GIF, PNG, JPEG etc)
      */
     void setFormat(String format);

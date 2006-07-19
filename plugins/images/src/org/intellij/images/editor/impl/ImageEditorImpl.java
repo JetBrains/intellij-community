@@ -77,7 +77,7 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
                         // Resize to preffered size
                         // Calculate zoom factor
 
-                        double factor = (prefferedSize.getWidth() / (double)image.getWidth() + prefferedSize.getHeight() / (double)image.getHeight()) / 2.0d;
+                        double factor = (prefferedSize.getWidth() / (double) image.getWidth() + prefferedSize.getHeight() / (double) image.getHeight()) / 2.0d;
                         zoomModel.setZoomFactor(Math.ceil(factor));
                     }
                 }
@@ -155,13 +155,12 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
                     setValue(file);
                 }
             });
-
         }
     }
 
     private class OptionsChangeListener implements PropertyChangeListener {
         public void propertyChange(PropertyChangeEvent evt) {
-            Options options = (Options)evt.getSource();
+            Options options = (Options) evt.getSource();
             EditorOptions editorOptions = options.getEditorOptions();
             TransparencyChessboardOptions chessboardOptions = editorOptions.getTransparencyChessboardOptions();
             GridOptions gridOptions = editorOptions.getGridOptions();

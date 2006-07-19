@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 final class ImageEditorManagerImpl implements ImageEditorManager, ApplicationComponent {
     @NonNls private static final String NAME = "ImageEditorManager";
 
+    @NotNull
     public String getComponentName() {
         return NAME;
     }

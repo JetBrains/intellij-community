@@ -24,6 +24,7 @@ import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Options configurable manager.
@@ -35,6 +36,7 @@ final class OptionsManagerImpl extends OptionsManager implements NamedJDOMExtern
     @NonNls private static final String NAME = "Images.OptionsManager";
     private Options options = new OptionsImpl();
 
+    @NotNull
     public String getComponentName() {
         return NAME;
     }

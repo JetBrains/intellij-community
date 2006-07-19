@@ -109,6 +109,7 @@ public class ImageComponentUI extends ComponentUI {
         }
     }
 
+    @SuppressWarnings({"UnusedDeclaration"})
     public static ComponentUI createUI(JComponent c) {
         return ui;
     }

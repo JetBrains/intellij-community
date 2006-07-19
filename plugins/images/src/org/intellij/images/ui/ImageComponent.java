@@ -35,11 +35,29 @@ import java.util.Set;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public class ImageComponent extends JComponent {
+    @NonNls
+    private static final String TRANSPARENCY_CHESSBOARD_CELL_SIZE_PROP = "TransparencyChessboard.cellSize";
+    @NonNls
+    private static final String TRANSPARENCY_CHESSBOARD_WHITE_COLOR_PROP = "TransparencyChessboard.whiteColor";
+    @NonNls
+    private static final String TRANSPARENCY_CHESSBOARD_BLACK_COLOR_PROP = "TransparencyChessboard.blackColor";
+    @NonNls
+    private static final String TRANSPARENCY_CHESSBOARD_VISIBLE_PROP = "TransparencyChessboard.visible";
+    @NonNls
+    private static final String GRID_LINE_ZOOM_FACTOR_PROP = "Grid.lineZoomFactor";
+    @NonNls
+    private static final String GRID_LINE_SPAN_PROP = "Grid.lineSpan";
+    @NonNls
+    private static final String GRID_LINE_COLOR_PROP = "Grid.lineColor";
+    @NonNls
+    private static final String GRID_VISIBLE_PROP = "Grid.visible";
+
     /**
      * @see #getUIClassID
      * @see #readObject
      */
-    @NonNls private static final String uiClassID = "ImageComponentUI";
+    @NonNls
+    private static final String uiClassID = "ImageComponentUI";
 
     static {
         UIManager.getDefaults().put(uiClassID, ImageComponentUI.class.getName());
@@ -48,18 +66,10 @@ public class ImageComponent extends JComponent {
     private final ImageDocument document = new ImageDocumentImpl();
     private final Grid grid = new Grid();
     private final Chessboard chessboard = new Chessboard();
-  @NonNls private static final String TRANSPARENCY_CHESSBOARD_CELL_SIZE_PROP = "TransparencyChessboard.cellSize";
-  @NonNls private static final String TRANSPARENCY_CHESSBOARD_WHITE_COLOR_PROP = "TransparencyChessboard.whiteColor";
-  @NonNls private static final String TRANSPARENCY_CHESSBOARD_BLACK_COLOR_PROP = "TransparencyChessboard.blackColor";
-  @NonNls private static final String TRANSPARENCY_CHESSBOARD_VISIBLE_PROP = "TransparencyChessboard.visible";
-  @NonNls private static final String GRID_LINE_ZOOM_FACTOR_PROP = "Grid.lineZoomFactor";
-  @NonNls private static final String GRID_LINE_SPAN_PROP = "Grid.lineSpan";
-  @NonNls private static final String GRID_LINE_COLOR_PROP = "Grid.lineColor";
-  @NonNls private static final String GRID_VISIBLE_PROP = "Grid.visible";
 
-  public ImageComponent() {
-      updateUI();
-  }
+    public ImageComponent() {
+        updateUI();
+    }
 
     public ImageDocument getDocument() {
         return document;

@@ -39,6 +39,7 @@ final class ImageFileEditorProvider implements ApplicationComponent, FileEditorP
         this.typeManager = typeManager;
     }
 
+    @NotNull
     public String getComponentName() {
         return NAME;
     }
@@ -49,22 +50,22 @@ final class ImageFileEditorProvider implements ApplicationComponent, FileEditorP
     public void disposeComponent() {
     }
 
-    public boolean accept(Project project, VirtualFile file) {
+    public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
         return typeManager.isImage(file);
     }
 
     @NotNull
-    public FileEditor createEditor(Project project, VirtualFile file) {
+    public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
         return new ImageFileEditorImpl(project, file);
     }
 
-    public void disposeEditor(FileEditor editor) {
+    public void disposeEditor(@NotNull FileEditor editor) {
         ImageFileEditorImpl fileEditor = (ImageFileEditorImpl)editor;
         fileEditor.dispose();
     }
 
     @NotNull
-    public FileEditorState readState(Element sourceElement, Project project, VirtualFile file) {
+    public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
         return new FileEditorState() {
             public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
                 return false;
@@ -72,7 +73,7 @@ final class ImageFileEditorProvider implements ApplicationComponent, FileEditorP
         };
     }
 
-    public void writeState(FileEditorState state, Project project, Element targetElement) {
+    public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
     }
 
     @NotNull

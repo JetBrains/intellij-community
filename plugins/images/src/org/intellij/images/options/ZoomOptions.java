@@ -25,12 +25,18 @@ import java.awt.*;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface ZoomOptions extends Cloneable {
+    @NonNls
+    String ATTR_PREFIX = "Editor.Zoom.";
+    @NonNls
+    String ATTR_WHEEL_ZOOMING = ATTR_PREFIX + "wheelZooming";
+    @NonNls
+    String ATTR_SMART_ZOOMING = ATTR_PREFIX + "smartZooming";
+    @NonNls
+    String ATTR_PREFFERED_WIDTH = ATTR_PREFIX + "prefferedWidth";
+    @NonNls
+    String ATTR_PREFFERED_HEIGHT = ATTR_PREFIX + "prefferedHeight";
+
     Dimension DEFAULT_PREFFERED_SIZE = new Dimension(128, 128);
-    @NonNls String ATTR_PREFIX = "Editor.Zoom.";
-    @NonNls String ATTR_WHEEL_ZOOMING = ATTR_PREFIX + "wheelZooming";
-    @NonNls String ATTR_SMART_ZOOMING = ATTR_PREFIX + "smartZooming";
-    @NonNls String ATTR_PREFFERED_WIDTH = ATTR_PREFIX + "prefferedWidth";
-    @NonNls String ATTR_PREFFERED_HEIGHT = ATTR_PREFIX + "prefferedHeight";
 
     boolean isWheelZooming();
 

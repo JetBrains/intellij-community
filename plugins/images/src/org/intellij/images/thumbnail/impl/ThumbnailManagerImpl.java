@@ -56,6 +56,7 @@ final class ThumbnailManagerImpl extends ThumbnailManager implements Application
         return thumbnailView;
     }
 
+    @NotNull
     public String getComponentName() {
         return NAME;
     }

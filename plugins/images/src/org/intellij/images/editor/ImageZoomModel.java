@@ -25,14 +25,8 @@ public interface ImageZoomModel {
     int MACRO_ZOOM_LIMIT = 32;
     int MICRO_ZOOM_LIMIT = 8;
 
-    /**
-     * Return zoom value of current image.
-     */
     double getZoomFactor();
 
-    /**
-     * Zoom image.
-     */
     void setZoomFactor(double zoomFactor);
 
     void zoomOut();

@@ -33,6 +33,10 @@ public abstract class ThumbnailManager {
 
     /**
      * Create thumbnail view
+     *
+     * @param project Project
+     * @return Return thumbnail view
      */
-    public abstract @NotNull ThumbnailView getThumbnailView(@NotNull Project project);
+    @NotNull
+    public abstract ThumbnailView getThumbnailView(@NotNull Project project);
 }
