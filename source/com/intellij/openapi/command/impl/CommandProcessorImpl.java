@@ -94,11 +94,11 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
       LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId);
     }
 
-    boolean failed = false;
     if (myCurrentCommand != null) {
       command.run();
       return;
     }
+    boolean failed = false;
     try {
       myCurrentCommand = new CommandDescriptor(command, project, name, groupId, undoConfirmationPolicy);
       fireCommandStarted();
@@ -244,7 +244,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
   }
 
   private void fireCommandStarted() {
-    CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy);
+    CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand, myCurrentCommand.myName, null, myCurrentCommand.myProject, myCurrentCommand.myUndoConfirmationPolicy);
     for (CommandListener listener : myListeners) {
       try {
         listener.commandStarted(event);

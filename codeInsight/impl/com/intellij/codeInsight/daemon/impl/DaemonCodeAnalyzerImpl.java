@@ -19,6 +19,7 @@ import com.intellij.lang.ant.config.AntConfigurationListener;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationAdapter;
@@ -94,10 +95,8 @@ import java.util.*;
 public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMExternalizable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl");
 
-  private static final Key<HighlightInfo[]> HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY = Key
-    .create("DaemonCodeAnalyzerImpl.HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY");
-  private static final Key<LineMarkerInfo[]> MARKERS_IN_EDITOR_DOCUMENT_KEY = Key
-    .create("DaemonCodeAnalyzerImpl.MARKERS_IN_EDITOR_DOCUMENT_KEY");
+  private static final Key<HighlightInfo[]> HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY = Key.create("DaemonCodeAnalyzerImpl.HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY");
+  private static final Key<LineMarkerInfo[]> MARKERS_IN_EDITOR_DOCUMENT_KEY = Key.create("DaemonCodeAnalyzerImpl.MARKERS_IN_EDITOR_DOCUMENT_KEY");
 
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
@@ -148,12 +147,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private boolean myInitialized;
 
   private boolean myIsFrameFocused = true;
-  @NonNls
-  private static final String DISABLE_HINTS_TAG = "disable_hints";
-  @NonNls
-  private static final String FILE_TAG = "file";
-  @NonNls
-  private static final String URL_ATT = "url";
+  @NonNls private static final String DISABLE_HINTS_TAG = "disable_hints";
+  @NonNls private static final String FILE_TAG = "file";
+  @NonNls private static final String URL_ATT = "url";
+
+  private boolean cutOperationJustHappened;
 
   protected DaemonCodeAnalyzerImpl(Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings) {
     myProject = project;
@@ -511,7 +509,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         if (startOffset > offset || offset > endOffset) continue;
       }
 
-      if (foundInfoList.size() != 0) {
+      if (!foundInfoList.isEmpty()) {
         HighlightInfo foundInfo = foundInfoList.get(0);
         if (foundInfo.getSeverity().compareTo(info.getSeverity()) < 0) {
           foundInfoList.clear();
@@ -523,7 +521,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       foundInfoList.add(info);
     }
 
-    if (foundInfoList.size() == 0) return null;
+    if (foundInfoList.isEmpty()) return null;
     if (foundInfoList.size() == 1) return foundInfoList.get(0);
     return new HighlightInfoComposite(foundInfoList);
   }
@@ -685,7 +683,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     }
   }
 
-  static boolean canChangeFileSilently(PsiFile file) {
+  boolean canChangeFileSilently(PsiFile file) {
+    if (cutOperationJustHappened) return false;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;
     Project project = file.getProject();
@@ -713,7 +712,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   private class MyCommandListener extends CommandAdapter {
+    private final String myCutActionName = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
+
     public void commandStarted(CommandEvent event) {
+      cutOperationJustHappened = myCutActionName.equals(event.getCommandName());
       if (!myUpdateProgress.isRunning()) return;
       if (myUpdateProgress.isCanceled()) return;
       if (LOG.isDebugEnabled()) {

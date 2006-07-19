@@ -266,13 +266,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     PsiShortNamesCache cache = manager.getShortNamesCache();
     PsiElement refname = ref.getReferenceNameElement();
-    if (!(refname instanceof PsiIdentifier)) {
-      return false;
-    }
+    if (!(refname instanceof PsiIdentifier)) return false;
     PsiElement refElement = ref.resolve();
-    if (refElement != null) {
-      return false;
-    }
+    if (refElement != null) return false;
     String name = ref.getQualifiedName();
     if (manager.getResolveHelper().resolveReferencedClass(name, ref) != null) return false;
 
@@ -333,11 +329,13 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     int offset2 = ref.getTextRange().getEndOffset();
     QuestionAction action = new AddImportAction(manager.getProject(), ref, classes, editor);
 
+    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(manager.getProject());
+
     if (classes.length == 1
         && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
         && !isCaretNearRef(editor,ref)
         && !PsiUtil.isInJspFile(psiFile)
-        && DaemonCodeAnalyzerImpl.canChangeFileSilently(psiFile)
+        && codeAnalyzer.canChangeFileSilently(psiFile)
         && !hasUnresolvedImportWhichCanImport(psiFile, classes[0].getName())
       ) {
       action.execute();

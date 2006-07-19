@@ -527,7 +527,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
     if (errors.length != 0) return false;
 
-    return DaemonCodeAnalyzerImpl.canChangeFileSilently(myFile);
+    return codeAnalyzer.canChangeFileSilently(myFile);
   }
 
   private static boolean isMainMethod(PsiMethod method) {
