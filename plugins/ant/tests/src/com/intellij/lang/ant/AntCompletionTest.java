@@ -118,7 +118,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     checkResultByFile("/targetCompletion-out.xml");
   }
 
-  /*public void testEntityCompletion() throws Exception {
+  public void testEntityCompletion() throws Exception {
     configureByFile("EntityCompletion.xml");
     performNormalCompletion();
     if (getItems() != null) {
@@ -126,7 +126,20 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     }
 
     checkResultByFile("EntityCompletion-out.xml");
-  }*/
+  }
+
+  public void testTargetAttributesCompletion() throws Exception {
+    if (true) return;
+    final String testName = getTestName(false);
+    configureByFile(testName + ".xml");
+    performNormalCompletion();
+
+    final LookupItem[] lookupItems = getItems();
+    assertNotNull("Target attributes should be present",lookupItems);
+    assertTrue(lookupItems.length > 0);
+
+    checkResultByFile(testName + "-out.xml");
+  }
 
   private void select() {
     select(Lookup.NORMAL_SELECT_CHAR, getSelected());
