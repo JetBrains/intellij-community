@@ -128,7 +128,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (!annotators.isEmpty()) {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < annotators.size(); i++) {
-        annotators.get(i).annotate(element, myAnnotationHolder);
+        Annotator annotator = annotators.get(i);
+        annotator.annotate(element, myAnnotationHolder);
       }
       hasAnnotators = true;
     }
@@ -956,6 +957,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     List<HighlightInfo> result = myXmlVisitor.getResult();
     myHolder.addAll(result);
     myXmlVisitor.clearResult();
+    super.visitXmlElement(element);
   }
 
   public void visitXmlText(XmlText text) {

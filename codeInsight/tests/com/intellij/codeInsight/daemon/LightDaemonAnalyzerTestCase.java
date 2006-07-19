@@ -15,12 +15,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 import java.util.HashSet;
 
 public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCase {
-  protected void doTest(String filePath, boolean checkWarnings, boolean checkInfos) throws Exception {
+  protected void doTest(@NonNls String filePath, boolean checkWarnings, boolean checkInfos) throws Exception {
     configureByFile(filePath);
     doTestConfiguredFile(checkWarnings, checkInfos);
   }
