@@ -7,14 +7,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
  */
 public class UnversionedFilesHolder {
-  private List<VirtualFile> myFiles = new ArrayList<VirtualFile>();
+  private Set<VirtualFile> myFiles = new HashSet<VirtualFile>();
   private Project myProject;
 
   public UnversionedFilesHolder(Project project) {
@@ -44,7 +45,7 @@ public class UnversionedFilesHolder {
   }
 
   public synchronized List<VirtualFile> getFiles() {
-    return Collections.unmodifiableList(myFiles);
+    return new ArrayList<VirtualFile>(myFiles);
   }
 
   public synchronized UnversionedFilesHolder copy() {
