@@ -1,146 +1,129 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.intellij.images.options.impl.OptionsUIForm">
-  <grid id="23031" binding="contentPane" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="23031" binding="contentPane" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="29" y="2" width="766" height="464"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+      <xy x="29" y="2" width="766" height="476"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="81843" row-count="12" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="81843" layout-manager="GridLayoutManager" row-count="12" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="561" height="393"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <enabled value="true"/>
           <visible value="true"/>
         </properties>
-        <border type="none" title-resource-bundle="org/intellij/images/IconsBundle" title-key="main.page.border.title"/>
+        <border type="none" title-resource-bundle="org/intellij/images/ImagesBundle" title-key="main.page.border.title"/>
         <children>
           <component id="74001" class="javax.swing.JLabel" binding="smartZoomingWidthLabel">
             <constraints>
-              <xy x="28" y="342" width="253" height="14"/>
-              <grid row="10" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="10" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/intellij/images/IconsBundle" key="settings.preffered.smart.zoom.width"/>
+              <text resource-bundle="org/intellij/images/ImagesBundle" key="settings.preffered.smart.zoom.width"/>
             </properties>
           </component>
           <component id="e096e" class="javax.swing.JLabel" binding="smartZoomingHeightLabel">
             <constraints>
-              <xy x="28" y="369" width="257" height="14"/>
-              <grid row="11" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="11" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/intellij/images/IconsBundle" key="settings.preffered.smart.zoom.height"/>
+              <text resource-bundle="org/intellij/images/ImagesBundle" key="settings.preffered.smart.zoom.height"/>
             </properties>
           </component>
           <component id="5d722" class="javax.swing.JCheckBox" binding="showGrid">
             <constraints>
-              <xy x="6" y="20" width="150" height="22"/>
-              <grid row="0" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+              <grid row="0" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/intellij/images/IconsBundle" key="show.grid.lines"/>
+              <text resource-bundle="org/intellij/images/ImagesBundle" key="show.grid.lines"/>
             </properties>
           </component>
           <component id="8092" class="javax.swing.JCheckBox" binding="showChessboard">
             <constraints>
-              <xy x="6" y="144" width="229" height="22"/>
-              <grid row="4" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+              <grid row="4" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/intellij/images/IconsBundle" key="show.transparency.chessboard"/>
+              <text resource-bundle="org/intellij/images/ImagesBundle" key="show.transparency.chessboard"/>
             </properties>
           </component>
           <component id="1d481" class="javax.swing.JCheckBox" binding="wheelZooming">
             <constraints>
-              <xy x="6" y="284" width="265" height="22"/>
-              <grid row="8" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+              <grid row="8" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/intellij/images/IconsBundle" key="enable.mousewheel.zooming"/>
+              <text resource-bundle="org/intellij/images/ImagesBundle" key="enable.mousewheel.zooming"/>
             </properties>
           </component>
           <component id="135b7" class="javax.swing.JCheckBox" binding="smartZooming">
             <constraints>
-              <xy x="6" y="311" width="209" height="22"/>
-              <grid row="9" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+              <grid row="9" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/intellij/images/IconsBundle" key="smart.zoom"/>
+              <text resource-bundle="org/intellij/images/ImagesBundle" key="smart.zoom"/>
             </properties>
           </component>
           <component id="f13" class="javax.swing.JLabel" binding="chessboardSizeLabel">
             <constraints>
-              <xy x="28" y="175" width="142" height="14"/>
-              <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/intellij/images/IconsBundle" key="chessboard.cell.size"/>
+              <text resource-bundle="org/intellij/images/ImagesBundle" key="chessboard.cell.size"/>
             </properties>
           </component>
           <component id="3c25" class="javax.swing.JSpinner" binding="chessboardSize">
             <constraints>
-              <xy x="320" y="171" width="31" height="22"/>
-              <grid row="5" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1"/>
+              <grid row="5" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
           </component>
           <component id="a8778" class="javax.swing.JSpinner" binding="smartZoomingWidth">
             <constraints>
-              <xy x="320" y="338" width="31" height="22"/>
-              <grid row="10" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1"/>
+              <grid row="10" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
           </component>
           <component id="57450" class="javax.swing.JSpinner" binding="smartZoomingHeight">
             <constraints>
-              <xy x="320" y="365" width="31" height="22"/>
-              <grid row="11" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1"/>
+              <grid row="11" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
           </component>
           <component id="ca32d" class="javax.swing.JLabel" binding="gridLineSpanLabel">
             <constraints>
-              <xy x="28" y="78" width="171" height="14"/>
-              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/intellij/images/IconsBundle" key="show.grid.every"/>
+              <text resource-bundle="org/intellij/images/ImagesBundle" key="show.grid.every"/>
             </properties>
           </component>
           <component id="e4680" class="javax.swing.JSpinner" binding="gridLineSpan">
             <constraints>
-              <xy x="320" y="74" width="31" height="22"/>
-              <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1"/>
+              <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
           </component>
           <component id="452ab" class="javax.swing.JLabel" binding="gridLineZoomFactorlLabel">
             <constraints>
-              <xy x="28" y="51" width="282" height="14"/>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/intellij/images/IconsBundle" key="show.grid.zoom.limit"/>
+              <text resource-bundle="org/intellij/images/ImagesBundle" key="show.grid.zoom.limit"/>
             </properties>
           </component>
           <component id="ec3c4" class="javax.swing.JSpinner" binding="gridLineZoomFactor">
             <constraints>
-              <xy x="320" y="47" width="31" height="22"/>
-              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1"/>
+              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
           </component>
           <component id="acb45" class="javax.swing.JLabel">
             <constraints>
-              <xy x="361" y="58" width="194" height="0"/>
-              <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1"/>
+              <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text value=""/>
@@ -148,8 +131,7 @@
           </component>
           <hspacer id="ac4d1">
             <constraints>
-              <xy x="6" y="52" width="22" height="11"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1">
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
                 <minimum-size width="22" height="-1"/>
                 <maximum-size width="22" height="-1"/>
               </grid>
@@ -157,49 +139,43 @@
           </hspacer>
           <component id="e7c83" class="javax.swing.JLabel" binding="chessboardWhiteColorLabel">
             <constraints>
-              <xy x="28" y="210" width="97" height="14"/>
-              <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/intellij/images/IconsBundle" key="white.cell.color"/>
+              <text resource-bundle="org/intellij/images/ImagesBundle" key="white.cell.color"/>
             </properties>
           </component>
           <component id="5a0c4" class="javax.swing.JLabel" binding="chessboardBlackColorLabel">
             <constraints>
-              <xy x="28" y="253" width="95" height="14"/>
-              <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/intellij/images/IconsBundle" key="black.cell.color"/>
+              <text resource-bundle="org/intellij/images/ImagesBundle" key="black.cell.color"/>
             </properties>
           </component>
           <component id="b2df3" class="com.intellij.ui.ColorPanel" binding="chessboardWhiteColor">
             <constraints>
-              <xy x="320" y="198" width="235" height="38"/>
-              <grid row="6" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="6" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
           </component>
           <component id="e12c2" class="com.intellij.ui.ColorPanel" binding="chessboardBlackColor">
             <constraints>
-              <xy x="320" y="241" width="235" height="38"/>
-              <grid row="7" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="7" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
           </component>
           <component id="729f9" class="javax.swing.JLabel" binding="gridLineColorLabel">
             <constraints>
-              <xy x="28" y="113" width="72" height="14"/>
-              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/intellij/images/IconsBundle" key="grid.line.color"/>
+              <text resource-bundle="org/intellij/images/ImagesBundle" key="grid.line.color"/>
             </properties>
           </component>
           <component id="61a7d" class="com.intellij.ui.ColorPanel" binding="gridLineColor">
             <constraints>
-              <xy x="320" y="101" width="235" height="38"/>
-              <grid row="3" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="3" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
           </component>
@@ -207,44 +183,39 @@
       </grid>
       <hspacer id="e0712">
         <constraints>
-          <xy x="561" y="191" width="205" height="11"/>
-          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
       </hspacer>
       <vspacer id="8c4aa">
         <constraints>
-          <xy x="275" y="444" width="11" height="20"/>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
-      <grid id="f5eaa" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="f5eaa" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="398" width="561" height="46"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
-        <border type="none" title-resource-bundle="org/intellij/images/IconsBundle" title-key="external.editor.border.title"/>
+        <border type="none" title-resource-bundle="org/intellij/images/ImagesBundle" title-key="external.editor.border.title"/>
         <children>
           <component id="55972" class="javax.swing.JLabel" binding="externalEditorLabel">
             <constraints>
-              <xy x="28" y="23" width="86" height="14"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/intellij/images/IconsBundle" key="external.editor.executable.path"/>
+              <text resource-bundle="org/intellij/images/ImagesBundle" key="external.editor.executable.path"/>
             </properties>
           </component>
           <component id="8e176" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="externalEditorPath">
             <constraints>
-              <xy x="124" y="20" width="431" height="20"/>
-              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="1"/>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
+            <properties/>
           </component>
           <hspacer id="4f642">
             <constraints>
-              <xy x="6" y="24" width="22" height="11"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1">
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
                 <minimum-size width="22" height="-1"/>
                 <maximum-size width="22" height="-1"/>
               </grid>

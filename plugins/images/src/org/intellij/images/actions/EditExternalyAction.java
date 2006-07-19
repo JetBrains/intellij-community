@@ -22,10 +22,13 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.EnvironmentUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.Options;
@@ -34,6 +37,8 @@ import org.intellij.images.options.impl.OptionsConfigurabe;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Open image file externaly.
@@ -43,34 +48,52 @@ import java.io.IOException;
 public final class EditExternalyAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
         DataContext dataContext = e.getDataContext();
-        Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-        VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
+        Project project = (Project) dataContext.getData(DataConstants.PROJECT);
+        VirtualFile[] files = (VirtualFile[]) dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
         Options options = OptionsManager.getInstance().getOptions();
         String executablePath = options.getExternalEditorOptions().getExecutablePath();
         if (StringUtil.isEmpty(executablePath)) {
             Messages.showErrorDialog(project,
-                                     ImagesBundle.message("error.empty.external.editor.path"),
-                                     ImagesBundle.message("error.title.empty.external.editor.path"));
+                    ImagesBundle.message("error.empty.external.editor.path"),
+                    ImagesBundle.message("error.title.empty.external.editor.path"));
             OptionsConfigurabe.show(project);
         } else {
             if (files != null) {
                 ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
-                StringBuffer commandLine = new StringBuffer(executablePath.replace('/', File.separatorChar));
-                for (VirtualFile file : files) {
-                    if ((file.getFileSystem() instanceof LocalFileSystem) && typeManager.isImage(file)) {
-                        commandLine.append(" \"");
-                        commandLine.append(VfsUtil.virtualToIoFile(file).getAbsolutePath());
-                        commandLine.append('\"');
+                Map<String, String> env = EnvironmentUtil.getEnviromentProperties();
+                Set<String> varNames = env.keySet();
+                for (String varName : varNames) {
+                    if (SystemInfo.isWindows) {
+                        executablePath = StringUtil.replace(executablePath, "%" + varName + "%", env.get(varName), true);
+                    } else {
+                        executablePath = StringUtil.replace(executablePath, "${" + varName + "}", env.get(varName), false);
                     }
                 }
+                executablePath = FileUtil.toSystemDependentName(executablePath);
+                File executable = new File(executablePath);
+                if (executable.exists()) {
+                    StringBuffer commandLine = new StringBuffer(executable.getAbsolutePath());
+                    for (VirtualFile file : files) {
+                        if ((file.getFileSystem() instanceof LocalFileSystem) && typeManager.isImage(file)) {
+                            commandLine.append(" \"");
+                            commandLine.append(VfsUtil.virtualToIoFile(file).getAbsolutePath());
+                            commandLine.append('\"');
+                        }
+                    }
 
-                try {
-                    File executableFile = new File(executablePath);
-                    Runtime.getRuntime().exec(commandLine.toString(), null, executableFile.getParentFile());
-                } catch (IOException ex) {
+                    try {
+                        File executableFile = new File(executablePath);
+                        Runtime.getRuntime().exec(commandLine.toString(), null, executableFile.getParentFile());
+                    } catch (IOException ex) {
+                        Messages.showErrorDialog(project,
+                                ex.getLocalizedMessage(),
+                                ImagesBundle.message("error.title.launching.external.editor"));
+                    }
+                } else {
                     Messages.showErrorDialog(project,
-                                             ex.getLocalizedMessage(),
-                                             ImagesBundle.message("error.title.launching.external.editor"));
+                            ImagesBundle.message("error.executable.not.found", executablePath),
+                            ImagesBundle.message("error.title.launching.external.editor"));
+                    OptionsConfigurabe.show(project);
                 }
             }
         }
@@ -80,7 +103,7 @@ public final class EditExternalyAction extends AnAction {
         super.update(e);
 
         DataContext dataContext = e.getDataContext();
-        VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
+        VirtualFile[] files = (VirtualFile[]) dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
         e.getPresentation().setEnabled(isImages(files));
     }
 
@@ -91,7 +114,7 @@ public final class EditExternalyAction extends AnAction {
             for (VirtualFile file : files) {
                 boolean isImage = typeManager.isImage(file);
                 isImagesFound |= isImage;
-                if (!(file.getFileSystem() instanceof LocalFileSystem) || !isImage) {
+                if (!(file.getFileSystem()instanceof LocalFileSystem) || !isImage) {
                     return false;
                 }
             }
