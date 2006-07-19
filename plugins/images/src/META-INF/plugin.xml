@@ -134,7 +134,7 @@
             <reference id="EditSource" />
             <action class="org.intellij.images.thumbnail.actions.EnterAction"
                     id="Images.Thumbnails.EnterAction">
-                <keyboard-shortcut first-keystroke="ENTER" keymap="$default" />
+                <!--<keyboard-shortcut first-keystroke="ENTER" keymap="$default" />-->
             </action>
             <separator />
             <reference id="Images.ThumbnailsToolbar"/>
