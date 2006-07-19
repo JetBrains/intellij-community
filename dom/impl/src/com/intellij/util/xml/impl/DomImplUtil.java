@@ -27,6 +27,10 @@ public class DomImplUtil {
       final Class<?> declaringClass = method.getDeclaringClass();
       if (signature.findAnnotation(SubTag.class, declaringClass) != null) return false;
       if (signature.findAnnotation(SubTagList.class, declaringClass) != null) return false;
+      if (signature.findAnnotation(Convert.class, declaringClass) != null ||
+          signature.findAnnotation(Resolve.class, declaringClass) != null) {
+        return !ReflectionCache.isAssignable(GenericDomValue.class, method.getReturnType());
+      }
       if (ReflectionCache.isAssignable(DomElement.class, method.getReturnType())) return false;
       return true;
     }
