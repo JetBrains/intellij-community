@@ -146,7 +146,7 @@ public class ReplaceDialog extends SearchDialog {
         lvcsAction.finish();
 
         if (replaceContext.getUsageView().getUsagesCount() > 0) {
-          for (Usage usage : replaceContext.getUsageView().getUsages()) {
+          for (Usage usage : replaceContext.getUsageView().getSortedUsages()) {
             if (!replaceContext.isExcluded(usage)) {
               replaceContext.getUsageView().selectUsages(new Usage[]{usage});
               return;
@@ -221,7 +221,7 @@ public class ReplaceDialog extends SearchDialog {
   }
 
   private static void doReplace(ReplaceUsageViewContext context) {
-    Set<Usage> infos = context.getUsageView().getUsages();
+    java.util.List<Usage> infos = context.getUsageView().getSortedUsages();
     java.util.List<ReplacementInfo> results = new ArrayList<ReplacementInfo>(context.getResults().size());
 
     for (final Usage info : infos) {
