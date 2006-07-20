@@ -623,10 +623,12 @@ public class JavaCompletionData extends CompletionData{
     variant.addCompletion(PsiKeyword.ASSERT, TailType.SPACE);
   }
 
-  static final AndFilter START_OF_CODE_FRAGMENT = new AndFilter(
+  private static final AndFilter START_OF_CODE_FRAGMENT = new AndFilter(
     new ScopeFilter(new AndFilter(
       new ClassFilter(PsiCodeFragment.class),
-      new ClassFilter(PsiExpressionCodeFragment.class, false)
+      new ClassFilter(PsiExpressionCodeFragment.class, false),
+      new ClassFilter(PsiJavaCodeReferenceCodeFragment.class, false),
+      new ClassFilter(PsiTypeCodeFragment.class, false)
     )),
     new StartElementFilter()
   );
