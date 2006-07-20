@@ -264,7 +264,10 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final ASTNode node = changeScope.getNode();
     if (node == null) return changeScope.getContainingFile();
     final FileElement fileElement = TreeUtil.getFileElement((TreeElement)node);
-    assert fileElement != null : "Can't find file element for node: " + node;
+    // assert fileElement != null : "Can't find file element for node: " + node;
+    // Hack. the containing tree can be invalidated if updating supplementary trees like HTML in JSP.
+    if (fileElement == null) return null;
+
     final PsiFile psiFile = (PsiFile)fileElement.getPsi();
     return psiFile.getLanguage() == psiFile.getViewProvider().getBaseLanguage() ? psiFile : null;
   }
