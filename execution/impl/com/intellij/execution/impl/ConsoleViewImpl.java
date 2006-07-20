@@ -558,10 +558,11 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   private class CopyAction extends AnAction{
     public CopyAction(){
-      super(myEditor.getSelectionModel().hasSelection() ? ExecutionBundle.message("copy.selected.content.action.name") : ExecutionBundle.message("copy.content.action.name"));
+      super(myEditor != null && myEditor.getSelectionModel().hasSelection() ? ExecutionBundle.message("copy.selected.content.action.name") : ExecutionBundle.message("copy.content.action.name"));
     }
 
     public void actionPerformed(final AnActionEvent e){
+      if (myEditor == null) return;
       if (myEditor.getSelectionModel().hasSelection()){
         myEditor.getSelectionModel().copySelectionToClipboard();
       }
@@ -737,7 +738,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
       }
 
       synchronized(consoleView.LOCK){
-        if (consoleView.myTokens.size() == 0) return;
+        if (consoleView.myTokens.isEmpty()) return;
         final TokenInfo info = consoleView.myTokens.get(consoleView.myTokens.size() - 1);
         if (info.contentType != ConsoleViewContentType.USER_INPUT) return;
         if (consoleView.myDeferredUserInput.length() == 0) return;
