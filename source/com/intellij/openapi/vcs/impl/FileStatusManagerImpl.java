@@ -16,10 +16,10 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -27,9 +27,9 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Collection;
 
 /**
  * @author mike
@@ -43,6 +43,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   private final ProjectLevelVcsManager myVcsManager;
   private List<FileStatusListener> myListeners = new ArrayList<FileStatusListener>();
   private MyDocumentAdapter myDocumentListener;
+  private boolean myInitialUpdateDone = false;
 
   private final Map<VirtualFileSystem, FileStatusProvider> myVFSToProviderMap = new HashMap<VirtualFileSystem, FileStatusProvider>();
 
@@ -82,12 +83,17 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       public void defaultListChanged(ChangeList newDefaultList) {
         fileStatusesChanged();
       }
+
+      public void changeListUpdateDone() {
+        if (!myInitialUpdateDone) {
+          myInitialUpdateDone = true;
+          fileStatusesC`hanged();
+        }
+      }
     });
   }
 
-  public FileStatus calcStatus(VirtualFile virtualFile) {
-    LOG.assertTrue(virtualFile != null);
-
+  public FileStatus calcStatus(@NotNull VirtualFile virtualFile) {
     final VirtualFileSystem fileSystem = virtualFile.getFileSystem();
     if (fileSystem == LocalFileSystem.getInstance()) {
       return calcLocalFileStatus(virtualFile);

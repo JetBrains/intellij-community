@@ -279,6 +279,10 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     public void defaultListChanged(ChangeList newDefaultList) {
       scheduleRefresh();
     }
+
+    public void changeListUpdateDone() {
+      scheduleRefresh();
+    }
   }
 
   private class Expander implements TreeExpander {

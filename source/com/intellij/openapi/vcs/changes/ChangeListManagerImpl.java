@@ -325,7 +325,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           myUnversionedFilesHolder = unversionedHolder;
           myDeletedFilesHolder = deletedHolder;
         }
-        ChangesViewManager.getInstance(myProject).scheduleRefresh();
+        myListeners.getMulticaster().changeListUpdateDone();
       }
     }
     catch (DisposedException e) {
@@ -583,7 +583,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
-  public void addUnversionedFiles(final LocalChangeList list, final List<VirtualFile> files) {
+  public void addUnversionedFiles(final LocalChangeList list, @NotNull final List<VirtualFile> files) {
     ChangesUtil.processVirtualFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
       public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
         final ChangeProvider provider = vcs.getChangeProvider();
