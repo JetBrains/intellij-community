@@ -28,7 +28,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/" + getTestName(false) + ".xml", false, false);
   }
 
-  @Bombed(year = 2006, month = Calendar.JULY, day = 20, user = "lvo", time = 13, description = "Using entity")
+  @Bombed(year = 2006, month = Calendar.JULY, day = 25, user = "lvo", time = 12, description = "Using entity")
   public void testEntity() throws Exception {
     configureByFiles(
       new VirtualFile[] {
@@ -40,7 +40,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
-  @Bombed(year = 2006, month = Calendar.JULY, day = 20, user = "lvo", time = 13, description = "Duplicate targets & invalid text")
+  @Bombed(year = 2006, month = Calendar.JULY, day = 25, user = "lvo", time = 12, description = "Duplicate targets & invalid text")
   public void testSanity() throws Exception { doTest(); }
 
   public void testRefid() throws Exception { doTest(); }
