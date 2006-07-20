@@ -17,6 +17,7 @@ import java.util.List;
  * </ul>
  * Currently, language can be injected into string literals, XML tag contents and XML attributes.
  * You don't have to implement PsiLanguageInjectionHost by yourself, unless you want to inject something into your own custom PSI.
+ * For all returned injected PSI elements, {@link PsiElement#getContext()} method returns PsiLanguageInjectionHost they were injected into.
  */
 public interface PsiLanguageInjectionHost extends PsiElement {
   /**
