@@ -130,10 +130,22 @@ public class VariableAccessUtils{
                     arrayAccessExpression.getArrayExpression();
             return mayEvaluateToVariable(arrayExpression, variable);
         }
-        if(!(expression instanceof PsiReferenceExpression)){
+        return evaluatesToVariable(expression, variable);
+    }
+
+    public static boolean evaluatesToVariable(
+            PsiExpression expression, PsiVariable variable) {
+        final PsiExpression strippedExpression =
+                ParenthesesUtils.stripParentheses(expression);
+        if(strippedExpression == null){
             return false;
         }
-        final PsiElement referent = ((PsiReference) expression).resolve();
+        if (!(expression instanceof PsiReferenceExpression)) {
+            return false;
+        }
+        final PsiReferenceExpression referenceExpression =
+                (PsiReferenceExpression) expression;
+        final PsiElement referent = referenceExpression.resolve();
         if(referent == null){
             return false;
         }

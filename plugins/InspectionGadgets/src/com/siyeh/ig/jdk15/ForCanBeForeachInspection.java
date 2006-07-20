@@ -35,6 +35,7 @@ import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.StringUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,6 +75,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
 
     private static class ForCanBeForeachFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message("foreach.replace.quickfix");
         }
@@ -1096,7 +1098,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
                 return false;
             }
             final PsiExpression operand = prefixExp.getOperand();
-            return expressionIsVariableLookup(operand, var);
+            return VariableAccessUtils.evaluatesToVariable(operand, var);
         } else if(exp instanceof PsiPostfixExpression){
             final PsiPostfixExpression postfixExp = (PsiPostfixExpression) exp;
             final PsiJavaToken sign = postfixExp.getOperationSign();
@@ -1105,7 +1107,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
                 return false;
             }
             final PsiExpression operand = postfixExp.getOperand();
-            return expressionIsVariableLookup(operand, var);
+            return VariableAccessUtils.evaluatesToVariable(operand, var);
         }
         return false;
     }
@@ -1125,7 +1127,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             return false;
         }
         final PsiExpression lhs = binaryExp.getLOperand();
-        if(!expressionIsVariableLookup(lhs, var)){
+        if(!VariableAccessUtils.evaluatesToVariable(lhs, var)){
             return false;
         }
         final PsiExpression rhs = binaryExp.getROperand();
@@ -1150,7 +1152,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             return false;
         }
         final PsiExpression lhs = binaryExp.getLOperand();
-        if(!expressionIsVariableLookup(lhs, var)){
+        if(!VariableAccessUtils.evaluatesToVariable(lhs, var)){
             return false;
         }
         final PsiExpression rhs = binaryExp.getROperand();
@@ -1215,18 +1217,6 @@ public class ForCanBeForeachInspection extends StatementInspection{
             return false;
         }
         return type.getArrayDimensions() > 0;
-    }
-
-    private static boolean expressionIsVariableLookup(PsiExpression expression,
-                                                      PsiLocalVariable var){
-        final PsiExpression strippedExpression =
-                ParenthesesUtils.stripParentheses(expression);
-        if (strippedExpression == null) {
-            return false;
-        }
-        final String expressionText = strippedExpression.getText();
-        final String varText = var.getName();
-        return expressionText.equals(varText);
     }
 
     private static class VariableAssignmentVisitor

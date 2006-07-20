@@ -27,6 +27,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -359,7 +360,8 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                     return false;
                 }
                 final PsiExpression operand = prefixExp.getOperand();
-                return expressionIsVariableLookup(operand, variable);
+                return VariableAccessUtils.evaluatesToVariable(operand,
+                        variable);
             } else if (expression instanceof PsiPostfixExpression) {
                 final PsiPostfixExpression postfixExp =
                         (PsiPostfixExpression)expression;
@@ -369,7 +371,8 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                     return false;
                 }
                 final PsiExpression operand = postfixExp.getOperand();
-                return expressionIsVariableLookup(operand, variable);
+                return VariableAccessUtils.evaluatesToVariable(operand,
+                        variable);
             }
             return true;
         }
@@ -389,26 +392,15 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                 return false;
             }
             final PsiExpression lhs = binaryExp.getLOperand();
-            return expressionIsVariableLookup(lhs, variable);
-        }
-
-        private static boolean expressionIsVariableLookup(
-                PsiExpression expression, PsiLocalVariable variable) {
-            final PsiExpression strippedExpression =
-                    ParenthesesUtils.stripParentheses(expression);
-            if (strippedExpression == null) {
-                return false;
-            }
-            final String expressionText = strippedExpression.getText();
-            final String varText = variable.getName();
-            return expressionText.equals(varText);
+            return VariableAccessUtils.evaluatesToVariable(lhs, variable);
         }
 
         private static boolean expressionIsOffsetVariableLookup(
                 PsiExpression expression, PsiLocalVariable variable) {
             final PsiExpression strippedExpression =
                     ParenthesesUtils.stripParentheses(expression);
-            if (expressionIsVariableLookup(strippedExpression, variable)) {
+            if (VariableAccessUtils.evaluatesToVariable(strippedExpression,
+                    variable)) {
                 return true;
             }
             if (!(strippedExpression instanceof PsiBinaryExpression)) {
