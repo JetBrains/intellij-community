@@ -1,15 +1,14 @@
 package org.netbeans.lib.cvsclient.response;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IConnectionStreams;
 import org.netbeans.lib.cvsclient.io.StreamUtilities;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.ParseException;
 import java.util.Date;
 
 /**
@@ -171,7 +170,7 @@ public final class ResponseParser {
         final Date modifiedDate = ResponseUtils.parseDateString(dateString);
         responseProcessor.processModTimeResponse(modifiedDate, responseServices);
       }
-      catch (ParseException ex) {
+      catch (Exception ex) {
         BugLog.getInstance().showException(ex);
       }
       return null;
