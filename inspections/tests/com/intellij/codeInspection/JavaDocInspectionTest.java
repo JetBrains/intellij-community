@@ -38,4 +38,8 @@ public class JavaDocInspectionTest extends InspectionTestCase {
   public void testDoubleMissedTags() throws Exception{
     doTest();
   }
+
+  public void testMissedThrowsTag() throws Exception {
+    doTest();
+  }
 }

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+  <file>Test.java</file>
+  <line>5</line>
+  <text_range start="79" end="82" />
+  <method>
+    <name>void foo()</name>
+    <display_name>foo()</display_name>
+    <package>&lt;default&gt;</package>
+    <class>
+      <name>Test</name>
+      <display_name>Test</display_name>
+    </class>
+  </method>
+  <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Declaration has javadoc problems</problem_class>
+  <description>Required tag &lt;code&gt;@throws&lt;/code&gt; java.io.IOException is missing</description>
+</problem>
+</problems>
+
