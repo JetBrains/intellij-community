@@ -85,13 +85,9 @@ public class AntInstallation {
     registerProperties(myProperties);
   }
 
-  private AntInstallation(ExternalizablePropertyContainer properties) {
+  private AntInstallation(final ExternalizablePropertyContainer properties) {
     myProperties = properties;
-    myClassLoader = new AntClassLoaderHolder(myProperties, CLASS_PATH) {
-      protected AntClassLoader createEmptyLoader() {
-        return new AntClassLoader(null);
-      }
-    };
+    myClassLoader = new AntClassLoaderHolder(myProperties, CLASS_PATH);
   }
 
   public String getName() {

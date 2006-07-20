@@ -4,6 +4,10 @@ import com.intellij.extapi.psi.LightPsiFileBase;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.AntSupport;
+import com.intellij.lang.ant.config.AntConfigurationBase;
+import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
+import com.intellij.lang.ant.config.impl.AntClassLoader;
+import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
@@ -28,6 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Method;
 import java.util.*;
 
 @SuppressWarnings({"UseOfObsoleteCollectionType"})
@@ -36,7 +41,8 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   private AntElement myPrologElement;
   private AntElement myEpilogueElement;
   private PsiElement[] myChildren;
-  private Project myAntProject;
+  private AntClassLoader myClassLoader;
+  private Hashtable myProjectProperties;
   /**
    * Map of propeties set outside.
    */
@@ -52,6 +58,11 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
    * It's updated together with the set of custom definitons.
    */
   private HashMap<AntTypeId, String> myProjectElements;
+
+  @NonNls private static final String INIT_METHOD_NAME = "init";
+  @NonNls private static final String GET_TASK_DEFINITIONS_METHOD_NAME = "getTaskDefinitions";
+  @NonNls private static final String GET_DATA_TYPE_DEFINITIONS_METHOD_NAME = "getDataTypeDefinitions";
+  @NonNls private static final String GET_PROPERTIES_METHOD_NAME = "getProperties";
 
   public AntFileImpl(final FileViewProvider viewProvider) {
     super(viewProvider, AntSupport.getLanguage());
@@ -135,6 +146,27 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return (XmlFile)getViewProvider().getPsi(StdLanguages.XML);
   }
 
+  @NotNull
+  public AntClassLoader getClassLoader() {
+    if (myClassLoader == null) {
+      final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(XmlFile.ANT_BUILD_FILE);
+      if (buildFile != null) {
+        myClassLoader = buildFile.getClassLoader();
+      }
+      else {
+        final AntConfigurationBase configuration = AntConfigurationBase.getInstance(getProject());
+        final AntInstallation antInstallation = configuration != null ? configuration.getProjectDefaultAnt() : null;
+        if (antInstallation != null) {
+          myClassLoader = antInstallation.getClassLoader();
+        }
+        else {
+          myClassLoader = new AntClassLoader();
+        }
+      }
+    }
+    return myClassLoader;
+  }
+
   @Nullable
   public AntElement getAntParent() {
     return null;
@@ -147,23 +179,25 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   public AntProject getAntProject() {
     // the following line is necessary only to satisfy the "sync/unsync context" inspection
     synchronized (PsiLock.LOCK) {
-      if (myProject != null) return myProject;
-      final XmlFile baseFile = getSourceElement();
-      final XmlDocument document = baseFile.getDocument();
-      assert document != null;
-      final XmlTag tag = document.getRootTag();
-      assert tag != null;
-      final String fileText = baseFile.getText();
-      final int projectStart = tag.getTextRange().getStartOffset();
-      if (projectStart > 0) {
-        myPrologElement = new AntOuterProjectElement(this, 0, fileText.substring(0, projectStart));
+      if (myProject == null) {
+        final XmlFile baseFile = getSourceElement();
+        final XmlDocument document = baseFile.getDocument();
+        assert document != null;
+        final XmlTag tag = document.getRootTag();
+        assert tag != null;
+        final String fileText = baseFile.getText();
+        final int projectStart = tag.getTextRange().getStartOffset();
+        if (projectStart > 0) {
+          myPrologElement = new AntOuterProjectElement(this, 0, fileText.substring(0, projectStart));
+        }
+        final int projectEnd = tag.getTextRange().getEndOffset();
+        if (projectEnd < fileText.length()) {
+          myEpilogueElement = new AntOuterProjectElement(this, projectEnd, fileText.substring(projectEnd));
+        }
+        final AntProjectImpl project = new AntProjectImpl(this, tag, createProjectDefinition());
+        project.loadPredefinedProperties(myProjectProperties, myExternalProperties);
+        myProject = project;
       }
-      final int projectEnd = tag.getTextRange().getEndOffset();
-      if (projectEnd < fileText.length()) {
-        myEpilogueElement = new AntOuterProjectElement(this, projectEnd, fileText.substring(projectEnd));
-      }
-      myProject = new AntProjectImpl(this, tag, createProjectDefinition());
-      ((AntProjectImpl)myProject).loadPredefinedProperties(myAntProject, myExternalProperties);
       return myProject;
     }
   }
@@ -209,12 +243,14 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       if (myTypeDefinitions == null) {
         myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
         myProjectElements = new HashMap<AntTypeId, String>();
-        myAntProject = new Project();
-        myAntProject.init();
-        // first, create task definitons
-        updateTypeDefinitions(myAntProject.getTaskDefinitions(), true);
-        // second, create definitions of data types
-        updateTypeDefinitions(myAntProject.getDataTypeDefinitions(), false);
+        final ReflectedProject reflectedProject = new ReflectedProject(getClassLoader());
+        if (reflectedProject.myProject != null) {
+          // first, create task definitons
+          updateTypeDefinitions(reflectedProject.myTaskDefinitions, true);
+          // second, create definitions of data types
+          updateTypeDefinitions(reflectedProject.myDataTypeDefinitions, false);
+          myProjectProperties = reflectedProject.myProperties;
+        }
       }
       return myTypeDefinitions.get(className);
     }
@@ -354,9 +390,43 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       return IntrospectionHelper.getHelper(c);
     }
     catch (Throwable e) {
-      // TODO[lvo]: please review.
-      // Problem creating introspector like classes this task depends on cannot be loaded or missing.
+      // can't be
     }
     return null;
   }
+
+  private static final class ReflectedProject {
+    private Object myProject;
+    private Hashtable myTaskDefinitions;
+    private Hashtable myDataTypeDefinitions;
+    private Hashtable myProperties;
+
+    public ReflectedProject(final AntClassLoader classLoader) {
+      try {
+        final Class projectClass = classLoader.loadClass("org.apache.tools.ant.Project");
+        myProject = projectClass.newInstance();
+        Method method = projectClass.getMethod(INIT_METHOD_NAME);
+        method.invoke(myProject);
+        method = getMethod(projectClass, GET_TASK_DEFINITIONS_METHOD_NAME);
+        myTaskDefinitions = (Hashtable)method.invoke(myProject);
+        method = getMethod(projectClass, GET_DATA_TYPE_DEFINITIONS_METHOD_NAME);
+        myDataTypeDefinitions = (Hashtable)method.invoke(myProject);
+        method = getMethod(projectClass, GET_PROPERTIES_METHOD_NAME);
+        myProperties = (Hashtable)method.invoke(myProject);
+      }
+      catch (Exception e) {
+        myProject = null;
+      }
+    }
+
+    private static Method getMethod(final Class introspectionHelperClass, final String name) throws NoSuchMethodException {
+      final Method method;
+      method = introspectionHelperClass.getMethod(name);
+      if (!method.isAccessible()) {
+        method.setAccessible(true);
+      }
+      return method;
+    }
+  }
 }
+

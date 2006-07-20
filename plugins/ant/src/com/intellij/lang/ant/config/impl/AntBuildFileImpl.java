@@ -14,11 +14,13 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NewInstanceFactory;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -152,6 +154,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
 
   public AntBuildFileImpl(final AntFile antFile, final AntConfigurationBase configuration) {
     myFile = antFile;
+    antFile.getSourceElement().putCopyableUserData(XmlFile.ANT_BUILD_FILE, this);
     myAntConfiguration = configuration;
     myWorkspaceOptions = new ExternalizablePropertyContainer();
     myWorkspaceOptions.registerProperty(RUN_IN_BACKGROUND);
@@ -174,11 +177,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     myAllOptions = new CompositePropertyContainer(new AbstractProperty.AbstractPropertyContainer[]{myWorkspaceOptions, myProjectOptions,
       GlobalAntConfiguration.getInstance().getProperties(getProject())});
 
-    myClassloaderHolder = new AntClassLoaderHolder(myAllOptions, ALL_CLASS_PATH_ENTRIES) {
-      protected AntClassLoader createEmptyLoader() {
-        return new AntClassLoader(null);
-      }
-    };
+    myClassloaderHolder = new AntClassLoaderHolder(myAllOptions, ALL_CLASS_PATH_ENTRIES);
     updateProperties();
   }
 
@@ -346,5 +345,10 @@ public class AntBuildFileImpl implements AntBuildFileBase {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public AntClassLoader getClassLoader() {
+    return myClassloaderHolder.getClassloader();
   }
 }

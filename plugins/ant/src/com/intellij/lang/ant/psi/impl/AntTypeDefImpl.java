@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.AntTypeDef;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
@@ -74,7 +75,10 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   public void clearCaches() {
     super.clearCaches();
     if (myNewDefinition != null) {
-      getAntParent().unregisterCustomType(myNewDefinition);
+      final AntStructuredElement parent = getAntParent();
+      if (parent != null) {
+        parent.unregisterCustomType(myNewDefinition);
+      }
       myNewDefinition = null;
       getAntFile().clearCaches();
     }
@@ -92,8 +96,8 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private void loadClass(final String classname) {
+    ClassLoader loader = getAntFile().getClassLoader().getClassloader();
     final String classpath = getClassPath();
-    ClassLoader loader = null;
     if (classpath != null) {
       try {
         URL[] urls;
@@ -107,7 +111,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
           }
           urls = urlList.toArray(new URL[urlList.size()]);
         }
-        loader = new URLClassLoader(urls, getClass().getClassLoader());
+        loader = new URLClassLoader(urls, loader);
       }
       catch (MalformedURLException e) {
         LOG.error(e);
@@ -133,8 +137,13 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
     else {
       myNewDefinition = (AntTypeDefinitionImpl)AntFileImpl.createTypeDefinition(id, clazz, Task.class.isAssignableFrom(clazz));
+    }
+    if (myNewDefinition != null) {
       myNewDefinition.setDefiningElement(this);
-      getAntParent().registerCustomType(myNewDefinition);
+      final AntStructuredElement parent = getAntParent();
+      if (parent != null) {
+        parent.registerCustomType(myNewDefinition);
+      }
     }
   }
 }

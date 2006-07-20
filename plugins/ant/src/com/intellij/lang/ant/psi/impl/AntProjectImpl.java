@@ -14,7 +14,6 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
-import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.Property;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -173,15 +172,14 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   }
 
   @SuppressWarnings({"UseOfObsoleteCollectionType"})
-  void loadPredefinedProperties(final Project project, final Map<String, String> externalProps) {
-    Hashtable ht = project.getProperties();
-    final Enumeration props = ht.keys();
+  void loadPredefinedProperties(final Hashtable properties, final Map<String, String> externalProps) {
+    final Enumeration props = properties.keys();
     @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     builder.append("<project name=\"fake\">");
     try {
       while (props.hasMoreElements()) {
         final String name = (String)props.nextElement();
-        final String value = (String)ht.get(name);
+        final String value = (String)properties.get(name);
         builder.append("<property name=\"");
         builder.append(name);
         builder.append("\" value=\"");

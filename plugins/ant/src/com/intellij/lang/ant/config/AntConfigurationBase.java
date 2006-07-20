@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.config;
 
+import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.config.ExternalizablePropertyContainer;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,8 @@ public abstract class AntConfigurationBase extends AntConfiguration {
   public abstract boolean isAutoScrollToSource();
 
   public abstract void setAutoScrollToSource(final boolean value);
+
+  public abstract AntInstallation getProjectDefaultAnt();
 
   public ExternalizablePropertyContainer getProperties() {
     return myProperties;

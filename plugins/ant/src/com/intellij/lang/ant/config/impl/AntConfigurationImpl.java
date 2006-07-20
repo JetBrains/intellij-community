@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ActionRunner;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.StringSetSpinAllocator;
@@ -247,6 +248,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
     myAntWorkspaceConfiguration.IS_AUTOSCROLL_TO_SOURCE = value;
   }
 
+  public AntInstallation getProjectDefaultAnt() {
+    return DEFAULT_ANT.get(getProperties()).find(GlobalAntConfiguration.getInstance());
+  }
+
   @Nullable
   public AntBuildModel getModelIfRegistered(final AntBuildFile buildFile) {
     if (!myBuildFiles.contains(buildFile)) return null;
@@ -389,8 +394,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
             }
 
             registerTargetActions(model.getFilteredTargets(), registeredIds, actionManager, buildFile);
-            registerTargetActions(antConfiguration.getMetaTargets(buildFile), registeredIds, actionManager,
-                                  buildFile);
+            registerTargetActions(antConfiguration.getMetaTargets(buildFile), registeredIds, actionManager, buildFile);
           }
         }
       }
@@ -420,6 +424,8 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
   }
 
   private void removeBuildFileImpl(AntBuildFile buildFile) {
+    final XmlFile xmlFile = ((AntFile)buildFile.getAntFile()).getSourceElement();
+    xmlFile.putCopyableUserData(XmlFile.ANT_BUILD_FILE, null);
     myBuildFiles.remove(buildFile);
     myModelToBuildFileMap.remove(buildFile);
     myEventDispatcher.getMulticaster().buildFileRemoved(buildFile);
