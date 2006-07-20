@@ -588,7 +588,7 @@ public class RenameUtil {
     while(!queue.isEmpty()) {
       final PsiReference reference = queue.pullFirst();
       final PsiElement oldElement = reference.getElement();
-      if (!oldElement.isValid()) continue;
+      if (!oldElement.isValid() || oldElement == originalElement) continue;
       final PsiElement newElement = reference.handleElementRename(newName);
       if (!oldElement.isValid()) {
         final PsiReference[] references = searchHelper.findReferences(originalElement, new LocalSearchScope(newElement), false);
