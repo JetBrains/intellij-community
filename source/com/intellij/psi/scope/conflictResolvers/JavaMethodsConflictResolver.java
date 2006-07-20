@@ -177,14 +177,17 @@ outer:
     final PsiParameter[] params1 = method1.getParameterList().getParameters();
     final PsiParameter[] params2 = method2.getParameterList().getParameters();
     if(params1.length != params2.length) return false;
+    final PsiSubstitutor substitutor1 = one.getSubstitutor();
+    final PsiSubstitutor substitutor2 = two.getSubstitutor();
     for(int i = 0; i < params1.length; i++){
-      final PsiType type1 = one.getSubstitutor().substitute(params1[i].getType());
-      final PsiType type2 = two.getSubstitutor().substitute(params2[i].getType());
+      final PsiType type1 = substitutor1.substitute(params1[i].getType());
+      final PsiType type2 = substitutor2.substitute(params2[i].getType());
       if (type1 == null || !type1.equals(type2)) {
         return false;
       }
     }
-    return Comparing.equal(method1.getReturnType(), method2.getReturnType());
+    return Comparing.equal(substitutor1.substitute(method1.getReturnType()),
+                           substitutor2.substitute(method2.getReturnType()));
   }
 
   private Specifics checkSubtyping(PsiType type1, PsiType type2, final PsiType argType) {
@@ -242,9 +245,7 @@ outer:
 
       for (int i = 0; i < params1.length; i++) {
         PsiType type1 = params1[i].getType();
-        type1 = TypeConversionUtil.erasure(type1);
         PsiType type2 = params2[i].getType();
-        type2 = TypeConversionUtil.erasure(type2);
         PsiType argType = i < args.length ? args[i].getType() : null;
 
         final Specifics specifics = checkSubtyping(type1, type2, argType);
@@ -268,9 +269,7 @@ outer:
 
       for (int i = 0; i < Math.max(params1.length, params2.length); i++) {
         PsiType type1 = i < params1.length - 1 ? params1[i].getType() : ((PsiArrayType)params1[params1.length - 1].getType()).getComponentType();
-        type1 = TypeConversionUtil.erasure(type1);
         PsiType type2 = i < params2.length - 1 ? params2[i].getType() : ((PsiArrayType)params2[params2.length - 1].getType()).getComponentType();
-        type2 = TypeConversionUtil.erasure(type2);
         PsiType argType = i < args.length ? args[i].getType() : null;
         final Specifics specifics = checkSubtyping(type1, type2, argType);
         if (specifics == null) continue;
