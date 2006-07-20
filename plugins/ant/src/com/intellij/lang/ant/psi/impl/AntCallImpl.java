@@ -40,7 +40,7 @@ public class AntCallImpl extends AntTaskImpl implements AntCall {
   @Nullable
   public AntTarget getTarget() {
     final String target = getSourceElement().getAttributeValue("target");
-    AntTarget result = getAntProject().getTarget(target);
+    final AntTarget result = (target == null) ? null : getAntProject().getTarget(target);
     if (result != null) {
       result.setDependsTargets(getDependsTargets());
     }
