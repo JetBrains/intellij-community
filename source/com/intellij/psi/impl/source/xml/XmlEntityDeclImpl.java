@@ -44,7 +44,26 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
 
     return null;
   }
-  
+
+  public XmlAttributeValue getValueElement() {
+    if (isInternalReference()) {
+      for (ASTNode e = getFirstChildNode(); e != null; e = e.getTreeNext()) {
+        if (e.getElementType() == ElementType.XML_ATTRIBUTE_VALUE) {
+          return (XmlAttributeValue)SourceTreeToPsiMap.treeElementToPsi(e);
+        }
+      }
+    }
+    else {
+      for (ASTNode e = getLastChildNode(); e != null; e = e.getTreePrev()) {
+        if (e.getElementType() == ElementType.XML_ATTRIBUTE_VALUE) {
+          return (XmlAttributeValue)SourceTreeToPsiMap.treeElementToPsi(e);
+        }
+      }
+    }
+
+    return null;
+  }
+
   public String getName() {
     PsiElement nameElement = getNameElement();
     return nameElement != null ? nameElement.getText() : "";
@@ -197,25 +216,14 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
   }
 
   private PsiElement getValueElement(PsiFile baseFile) {
+    final XmlAttributeValue value = getValueElement();
     if (isInternalReference()) {
-      for (ASTNode e = getFirstChildNode(); e != null; e = e.getTreeNext()) {
-        if (e.getElementType() == ElementType.XML_ATTRIBUTE_VALUE) {
-          XmlAttributeValue value = (XmlAttributeValue)SourceTreeToPsiMap.treeElementToPsi(e);
-          return value;
-        }
-      }
+      return value;
     }
-    else {
-      for (ASTNode e = getLastChildNode(); e != null; e = e.getTreePrev()) {
-        if (e.getElementType() == ElementType.XML_ATTRIBUTE_VALUE) {
-          XmlAttributeValue value = (XmlAttributeValue)SourceTreeToPsiMap.treeElementToPsi(e);
-          final XmlFile xmlFile = XmlUtil.findXmlFile(baseFile, value.getValue());
-          if (xmlFile != null) {
-            return xmlFile;
-          }
-
-          return null;
-        }
+    else if (value != null) {
+      final XmlFile xmlFile = XmlUtil.findXmlFile(baseFile, value.getValue());
+      if (xmlFile != null) {
+        return xmlFile;
       }
     }
 
