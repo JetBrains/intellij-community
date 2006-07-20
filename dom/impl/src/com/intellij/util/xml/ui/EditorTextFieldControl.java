@@ -135,10 +135,11 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
     final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (!project.isOpen()) return;
         if (!getDomWrapper().isValid()) return;
 
         final DomElement domElement = getDomElement();
-        if (!project.isOpen() || domElement == null || !domElement.isValid()) return;
+        if (domElement == null || !domElement.isValid()) return;
 
         final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
         final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(domElement);
