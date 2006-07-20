@@ -164,7 +164,6 @@ public class SvnChangeProvider implements ChangeProvider {
         builder.processUnversionedFile(filePath.getVirtualFile());
       }
       else if (statusType == SVNStatusType.STATUS_CONFLICTED ||
-               statusType == SVNStatusType.STATUS_MERGED ||
                statusType == SVNStatusType.STATUS_MODIFIED ||
                statusType == SVNStatusType.STATUS_REPLACED ||
                propStatus == SVNStatusType.STATUS_MODIFIED) {
