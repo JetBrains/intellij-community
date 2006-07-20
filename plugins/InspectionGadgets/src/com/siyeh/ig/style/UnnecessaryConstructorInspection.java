@@ -92,8 +92,8 @@ public class UnnecessaryConstructorInspection extends ClassInspection {
                     aClass.hasModifierProperty(PsiModifier.PUBLIC)){
                 return;
             }
-            final PsiParameterList parameterList = constructor
-                    .getParameterList();
+            final PsiParameterList parameterList =
+                    constructor.getParameterList();
             if (parameterList.getParameters().length != 0) {
                 return;
             }

@@ -31,6 +31,9 @@ public class ImportUtils{
         if(hasExactImportConflict(fqName, file)){
             return false;
         }
+        if(hasOnDemandImportConflict(fqName, file, true)){
+            return false;
+        }
         if(containsConflictingClass(fqName, file)){
             return false;
         }
@@ -79,6 +82,18 @@ public class ImportUtils{
 
     public static boolean hasOnDemandImportConflict(@NotNull String fqName,
                                                     @NotNull PsiJavaFile file){
+        return hasOnDemandImportConflict(fqName, file, false);
+    }
+
+    /**
+     * @param strict  if strict is true this method checks if the conflicting
+     * class which is imported is actually used in the file. If it isn't the
+     * on demand import can be overridden with an exact import for the fqName
+     * without breaking stuff.
+     */
+    private static boolean hasOnDemandImportConflict(@NotNull String fqName,
+                                                     @NotNull PsiJavaFile file,
+                                                     boolean strict) {
         final PsiImportList imports = file.getImportList();
         if(imports == null){
             return false;
@@ -89,27 +104,37 @@ public class ImportUtils{
         final String shortName = fqName.substring(lastDotIndex + 1);
         final String packageName = ClassUtil.extractPackageName(fqName);
         for(final PsiImportStatement importStatement : importStatements){
-            if(importStatement.isOnDemand()){
-                final PsiJavaCodeReferenceElement importReference =
-                        importStatement.getImportReference();
-                if(importReference == null){
+            if (!importStatement.isOnDemand()) {
+                continue;
+            }
+            final PsiJavaCodeReferenceElement importReference =
+                    importStatement.getImportReference();
+            if(importReference == null){
+                continue;
+            }
+            final String packageText = importReference.getText();
+            if(packageText.equals(packageName)){
+                continue;
+            }
+            final PsiElement element = importReference.resolve();
+            if (element == null || !(element instanceof PsiPackage)) {
+                continue;
+            }
+            final PsiPackage aPackage = (PsiPackage) element;
+            final PsiClass[] classes = aPackage.getClasses();
+            for(final PsiClass aClass : classes){
+                final String className = aClass.getName();
+                if (!shortName.equals(className)) {
                     continue;
                 }
-                final String packageText = importReference.getText();
-                if(packageText.equals(packageName)){
-                    continue;
+                if (!strict) {
+                    return true;
                 }
-                final PsiElement element = importReference.resolve();
-                if(element != null && element instanceof PsiPackage){
-                    final PsiPackage aPackage = (PsiPackage) element;
-                    final PsiClass[] classes = aPackage.getClasses();
-                    for(final PsiClass aClass : classes){
-                        final String className = aClass.getName();
-                        if(shortName.equals(className)){
-                            return true;
-                        }
-                    }
-                }
+                final String qualifiedClassname = aClass.getQualifiedName();
+                final ClassReferenceVisitor visitor =
+                        new ClassReferenceVisitor(qualifiedClassname);
+                file.accept(visitor);
+                return visitor.isReferenceFound();
             }
         }
         if (hasDefaultImportConflict(fqName, file)) {
@@ -226,17 +251,18 @@ public class ImportUtils{
             this.fullyQualifiedName = fullyQualifiedName;
         }
 
-        public void visitReferenceExpression(
-                PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
+
+        public void visitReferenceElement(
+                PsiJavaCodeReferenceElement reference) {
+            super.visitReferenceElement(reference);
             if (m_referenceFound) {
                 return;
             }
-            final String text = expression.getText();
+            final String text = reference.getText();
             if (text.indexOf((int)'.') >= 0 || !m_name.equals(text)) {
                 return;
             }
-            final PsiElement element = expression.resolve();
+            final PsiElement element = reference.resolve();
             if(element instanceof PsiClass
                     && !(element instanceof PsiTypeParameter)){
                 final PsiClass aClass = (PsiClass) element;

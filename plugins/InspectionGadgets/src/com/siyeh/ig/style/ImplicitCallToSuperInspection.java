@@ -89,8 +89,8 @@ public class ImplicitCallToSuperInspection extends MethodInspection {
         return new ImplicitCallToSuperVisitor();
     }
 
-    private class ImplicitCallToSuperVisitor
-            extends BaseInspectionVisitor {
+    private class ImplicitCallToSuperVisitor extends BaseInspectionVisitor {
+
         public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (!method.isConstructor()) {

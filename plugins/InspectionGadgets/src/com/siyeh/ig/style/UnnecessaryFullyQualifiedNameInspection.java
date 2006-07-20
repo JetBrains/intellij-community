@@ -111,7 +111,9 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
                     addImport(importList, aClass);
                 }
             } else if (importList.findSingleClassImportStatement(
-                    qualifiedName) == null) {
+                    qualifiedName) == null &&
+                    importList.findOnDemandImportStatement(
+                    packageName) == null) {
                 addImport(importList, aClass);
             }
             final String fullyQualifiedText = referenceElement.getText();

@@ -16,7 +16,6 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -48,40 +47,6 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
 
     public String getGroupDisplayName() {
         return GroupNames.STYLE_GROUP_NAME;
-    }
-
-    public ProblemDescriptor[] doCheckClass(PsiClass aClass,
-                                            InspectionManager manager,
-                                            boolean isOnTheFly) {
-        if (!aClass.isPhysical()) {
-            return super.doCheckClass(aClass, manager, isOnTheFly);
-        }
-        final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
-        aClass.accept(visitor);
-
-        return visitor.getErrors();
-    }
-
-    public ProblemDescriptor[] doCheckMethod(PsiMethod method,
-                                             InspectionManager manager,
-                                             boolean isOnTheFly) {
-        if (!method.isPhysical()) {
-            return super.doCheckMethod(method, manager, isOnTheFly);
-        }
-        final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
-        method.accept(visitor);
-        return visitor.getErrors();
-    }
-
-    public ProblemDescriptor[] doCheckField(PsiField field,
-                                            InspectionManager manager,
-                                            boolean isOnTheFly) {
-        if (!field.isPhysical()) {
-            return super.doCheckField(field, manager, isOnTheFly);
-        }
-        final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
-        field.accept(visitor);
-        return visitor.getErrors();
     }
 
     @NotNull
@@ -131,6 +96,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
                     fieldModifiers.getText());
         }
 
+        @NotNull
         public String getName() {
             return m_name;
         }
