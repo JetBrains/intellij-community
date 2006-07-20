@@ -127,7 +127,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             if (expectedType instanceof PsiArrayType) {
                 final PsiArrayType arrayType = (PsiArrayType) expectedType;
                 final PsiType componentType = arrayType.getDeepComponentType();
-                if(isTypeParameter(componentType)) {
+                if (isTypeParameter(componentType)) {
                     return;
                 }
             }
@@ -144,6 +144,9 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
                         (PsiClassType)expectedType;
                 final PsiClassType rawType = expectedClassType.rawType();
                 if (type.equals(rawType)) {
+                    return;
+                }
+                if (type instanceof PsiArrayType) {
                     return;
                 }
             }

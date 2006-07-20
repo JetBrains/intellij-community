@@ -16,16 +16,13 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.progress.ProgressManager;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.Query;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import com.siyeh.HardcodedMethodConstants;
+import org.jetbrains.annotations.Nullable;
 
 public class MethodUtils{
 
@@ -71,22 +68,11 @@ public class MethodUtils{
         return returnTypeP.equals(returnType);
     }
 
-    public static boolean isOverridden(final PsiMethod method){
-        final PsiManager manager = method.getManager();
-        final Project project = manager.getProject();
-        final GlobalSearchScope globalScope =
-                GlobalSearchScope.allScope(project);
-        final PsiSearchHelper searchHelper = manager.getSearchHelper();
-        final PsiElementProcessor.FindElement<PsiMethod> processor =
-                new PsiElementProcessor.FindElement<PsiMethod>();
-        final ProgressManager progressManager = ProgressManager.getInstance();
-        progressManager.runProcess(new Runnable() {
-            public void run() {
-                searchHelper.processOverridingMethods(processor, method,
-                                                      globalScope, true);
-            }
-        }, null);
-        return processor.isFound();
+    public static boolean isOverridden(PsiMethod method){
+        final Query<PsiMethod> overridingMethodQuery =
+                OverridingMethodsSearch.search(method);
+        final PsiMethod result = overridingMethodQuery.findFirst();
+        return result != null;
     }
 
     public static boolean isEmpty(PsiMethod method){

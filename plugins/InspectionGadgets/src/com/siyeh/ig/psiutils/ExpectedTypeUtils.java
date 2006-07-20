@@ -523,9 +523,7 @@ public class ExpectedTypeUtils{
             if(parameter.isVarArgs()){
                 final PsiArrayType arrayType =
                         (PsiArrayType)parameterType;
-                final PsiType type =
-                        substitutor.substitute(arrayType.getComponentType());
-                return type.createArrayType();
+                return substitutor.substitute(arrayType.getComponentType());
             }
             return substitutor.substitute(parameterType);
         }
