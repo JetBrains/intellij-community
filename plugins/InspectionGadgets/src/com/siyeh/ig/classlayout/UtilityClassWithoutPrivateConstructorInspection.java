@@ -19,8 +19,12 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,7 +35,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class UtilityClassWithoutPrivateConstructorInspection
         extends ClassInspection {
@@ -73,6 +77,7 @@ public class UtilityClassWithoutPrivateConstructorInspection
     private static class CreateEmptyPrivateConstructor
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "utility.class.without.private.constructor.create.quickfix");
@@ -100,6 +105,7 @@ public class UtilityClassWithoutPrivateConstructorInspection
     private static class MakeConstructorPrivateFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "utility.class.without.private.constructor.make.quickfix");
@@ -127,10 +133,10 @@ public class UtilityClassWithoutPrivateConstructorInspection
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new StaticClassWithoutPrivateConstructorVisitor();
+        return new UtilityClassWithoutPrivateConstructorVisitor();
     }
 
-    private class StaticClassWithoutPrivateConstructorVisitor
+    private class UtilityClassWithoutPrivateConstructorVisitor
             extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
@@ -145,6 +151,14 @@ public class UtilityClassWithoutPrivateConstructorInspection
                 return;
             }
             if (hasPrivateConstructor(aClass)) {
+                return;
+            }
+            final SearchScope scope =
+                    GlobalSearchScope.projectScope(aClass.getProject());
+            final Query<PsiClass> query =
+                    ClassInheritorsSearch.search(aClass, scope, true, true);
+            final PsiClass subclass = query.findFirst();
+            if (subclass != null) {
                 return;
             }
             registerClassError(aClass);
@@ -185,16 +199,16 @@ public class UtilityClassWithoutPrivateConstructorInspection
             }
             return true;
         }
-    }
 
-    static boolean hasPrivateConstructor(PsiClass aClass) {
-        final PsiMethod[] constructors = aClass.getConstructors();
-        for (final PsiMethod constructor : constructors) {
-            if (constructor.hasModifierProperty(PsiModifier.PRIVATE)) {
-                return true;
+        boolean hasPrivateConstructor(PsiClass aClass) {
+            final PsiMethod[] constructors = aClass.getConstructors();
+            for (final PsiMethod constructor : constructors) {
+                if (constructor.hasModifierProperty(PsiModifier.PRIVATE)) {
+                    return true;
+                }
             }
+            return false;
         }
-        return false;
     }
 
     static boolean hasNullArgConstructor(PsiClass aClass) {
