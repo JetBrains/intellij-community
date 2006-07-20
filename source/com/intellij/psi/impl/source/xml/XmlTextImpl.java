@@ -79,7 +79,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
       int end = buffer.length();
       int originalLength = child.getTextLength();
       if (end - start != originalLength) {
-        gapsStarts.add(start);
+        gapsStarts.add(end);
         gapsShifts.add(originalLength - (end - start));
       }
       final ASTNode next = child.getTreeNext();
@@ -112,13 +112,16 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
 
     int insertionIndex = -bsResult - 1;
 
-    if (insertionIndex == myGapDisplayStarts.length) return getValue().length();
+    //if (insertionIndex == myGapDisplayStarts.length) return getValue().length();
     
     int prevPhysGapStart = insertionIndex > 0 ? myGapPhysicalStarts[insertionIndex - 1] : 0;
     int prevDisplayGapStart = insertionIndex > 0 ? myGapDisplayStarts[insertionIndex - 1] : 0;
-    int prevDisplayGapLength = insertionIndex > 0 ? myGapDisplayStarts[insertionIndex] - myGapDisplayStarts[insertionIndex - 1] : myGapDisplayStarts[0];
 
-    if (physicalIndex - prevPhysGapStart > prevDisplayGapLength) return myGapDisplayStarts[insertionIndex];
+    if (insertionIndex < myGapDisplayStarts.length) {
+      int prevDisplayGapLength = insertionIndex > 0 ? myGapDisplayStarts[insertionIndex] - myGapDisplayStarts[insertionIndex - 1] : myGapDisplayStarts[0];
+      if (physicalIndex - prevPhysGapStart > prevDisplayGapLength) return myGapDisplayStarts[insertionIndex];
+    }
+
     return physicalIndex - prevPhysGapStart + prevDisplayGapStart;
   }
 
@@ -127,15 +130,12 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     if (myGapDisplayStarts.length == 0) return displayIndex;
 
     final int bsResult = Arrays.binarySearch(myGapDisplayStarts, displayIndex);
-    final int gapIndex;
+    if (bsResult >= 0) return myGapPhysicalStarts[bsResult];
 
-    if(bsResult > 0) gapIndex = bsResult - 1;
-    else if(bsResult < -1) gapIndex = -bsResult - 2;
-    else gapIndex = -1;
-
-    if(gapIndex < 0) return displayIndex;
-    final int shift = myGapPhysicalStarts[gapIndex] - myGapDisplayStarts[gapIndex];
-    return displayIndex + shift;
+    int insertionIndex = -bsResult - 1;
+    int prevPhysGapStart = insertionIndex > 0 ? myGapPhysicalStarts[insertionIndex - 1] : 0;
+    int prevDisplayGapStart = insertionIndex > 0 ? myGapDisplayStarts[insertionIndex - 1] : 0;
+    return (displayIndex - prevDisplayGapStart)+ prevPhysGapStart;
   }
 
   public void setValue(String s) throws IncorrectOperationException {
