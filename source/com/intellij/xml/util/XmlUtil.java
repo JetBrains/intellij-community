@@ -192,6 +192,8 @@ public class XmlUtil {
     return findNamespacePrefixByURI(file, XML_SCHEMA_INSTANCE_URI);
   }
 
+  private static final Key<String> findXmlFileInProgressKey = Key.create("find.xml.file.in.progress");
+
   public static XmlFile findXmlFile(PsiFile base, String uri) {
     PsiFile result = null;
     final JspFile jspFile = PsiUtil.getJspFile(base);
@@ -222,12 +224,18 @@ public class XmlUtil {
         result = JspManager.getInstance(base.getProject()).getTldFileByUri(uri, jspFile);
       } else {
         // check facelets file
-        if (base instanceof XmlFile) {
-          final XmlDocument document = ((XmlFile)base).getDocument();
-          final XmlTag rootTag = document != null ? document.getRootTag():null;
+        if (base instanceof XmlFile && base.getUserData(findXmlFileInProgressKey) == null) {
+          base.putUserData(findXmlFileInProgressKey, "");
+          try {
+            final XmlDocument document = ((XmlFile)base).getDocument();
+            final XmlTag rootTag = document != null ? document.getRootTag():null;
 
-          if (rootTag != null && rootTag.getPrefixByNamespace(XmlUtil.FACELETS_URI) != null) {
-            result = JspManager.getInstance(base.getProject()).getTldFileByUri(uri, ModuleUtil.findModuleForPsiElement(base), null);
+            if (rootTag != null && rootTag.getPrefixByNamespace(XmlUtil.FACELETS_URI) != null) {
+              result = JspManager.getInstance(base.getProject()).getTldFileByUri(uri, ModuleUtil.findModuleForPsiElement(base), null);
+            }
+          }
+          finally {
+            base.putUserData(findXmlFileInProgressKey, null);
           }
         }
       }
