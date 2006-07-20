@@ -173,7 +173,7 @@ public class CompletionUtil {
     final CompletionData completionDataByFileType = getCompletionDataByFileType(file.getFileType());
     if (completionDataByFileType != null) return completionDataByFileType;
 
-    if ((file instanceof PsiJavaFile || file instanceof PsiCodeFragment) &&
+    if ((file.getViewProvider().getPsi(StdLanguages.JAVA) != null) &&
         !(PsiUtil.isInJspFile(file)) // TODO: we need to check the java context of JspX
       ) {
       if (element != null && new SuperParentFilter(new ClassFilter(PsiDocComment.class)).isAcceptable(element, element.getParent())) {
