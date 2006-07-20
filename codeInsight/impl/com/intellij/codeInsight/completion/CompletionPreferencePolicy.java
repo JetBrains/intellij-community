@@ -26,13 +26,15 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
 
   private CodeStyleManager myCodeStyleManager;
   private String myPrefix;
+  private String myPrefixLowered;
 
   public void setPrefix(String prefix) {
     myPrefix = prefix;
+    myPrefixLowered = prefix.toLowerCase();
   }
 
   public CompletionPreferencePolicy(PsiManager manager, LookupItem[] allItems, ExpectedTypeInfo[] expectedInfos, String prefix) {
-    myPrefix = prefix;
+    setPrefix( prefix );
     myManager = manager;
     myCodeStyleManager = CodeStyleManager.getInstance(myManager.getProject());
     if(expectedInfos != null){
@@ -66,10 +68,26 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
 
   public int compare(final LookupItem item1, final LookupItem item2) {
     if (item1 == item2) return 0;
-    if(item1.getLookupString().toLowerCase().startsWith(myPrefix.toLowerCase()) && !item2.getLookupString().toLowerCase().startsWith(myPrefix.toLowerCase()))
+    String item1String = item1.getLookupString();
+    String item2String = item2.getLookupString();
+
+    item1String = item1String.toLowerCase();
+    item2String = item2String.toLowerCase();
+
+    if(item1String.startsWith(myPrefixLowered) && !item2String.startsWith(myPrefixLowered))
       return -1;
-    if(!item1.getLookupString().toLowerCase().startsWith(myPrefix.toLowerCase()) && item2.getLookupString().toLowerCase().startsWith(myPrefix.toLowerCase()))
+    if(!item1String.startsWith(myPrefixLowered) && item2String.startsWith(myPrefixLowered))
       return 1;
+
+    // Check equality in case
+    item1String = item1.getLookupString();
+    item2String = item2.getLookupString();
+
+    if(item1String.startsWith(myPrefix) && !item2String.startsWith(myPrefix))
+      return -1;
+    if(!item1String.startsWith(myPrefix) && item2String.startsWith(myPrefix))
+      return 1;
+
     Object o1 = item1.getObject();
     Object o2 = item2.getObject();
 

@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.containers.HashMap;
@@ -351,33 +350,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
   private void selectMostPreferableItem(){
     //if (!isVisible()) return;
 
-    if (myItemPreferencePolicy == null){
-      myIndex = -1;
-    }
-    else{
-      myItemPreferencePolicy.setPrefix(myPrefix);
-      DefaultListModel model = (DefaultListModel)myList.getModel();
-      Object[] items = model.toArray();
-      LookupItem prefItem = null;
-      int prefItemIndex = -1;
-      for(int i = 0; i < items.length; i++){
-        LookupItem item = (LookupItem)items[i];
-        final Object obj = item.getObject();
-        if (obj instanceof PsiElement && !((PsiElement)obj).isValid()) continue;
-        if (prefItem == null){
-          prefItem = item;
-          prefItemIndex = i;
-        }
-        else{
-          int d = myItemPreferencePolicy.compare(item, prefItem);
-          if (d < 0){
-            prefItem = item;
-            prefItemIndex = i;
-          }
-        }
-      }
-      myIndex = prefItem != null ? prefItemIndex : -1;
-    }
+    myIndex = LookupItemUtil.doSelectMostPreferableItem(myItemPreferencePolicy, myPrefix, ((DefaultListModel)myList.getModel()).toArray());
     myList.setSelectedIndex(myIndex);
   }
 
