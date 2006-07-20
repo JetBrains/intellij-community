@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 public class AbstractMethodOverridesConcreteMethodInspection
         extends MethodInspection {
 
-
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "abstract.method.overrides.concrete.method.display.name");
@@ -59,8 +58,8 @@ public class AbstractMethodOverridesConcreteMethodInspection
             if (containingClass == null) {
                 return;
             }
-            if (containingClass.isInterface() || containingClass
-                    .isAnnotationType()) {
+            if (containingClass.isInterface() ||
+                    containingClass.isAnnotationType()) {
                 return;
             }
             if (!method.hasModifierProperty(PsiModifier.ABSTRACT)) {

@@ -24,7 +24,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassExtendsUtilityClassInspection extends BaseInspection {
+public class ExtendsUtilityClassInspection extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(

@@ -48,8 +48,7 @@ public class NoopMethodInAbstractClassInspection extends MethodInspection {
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
-            if(containingClass == null)
-            {
+            if(containingClass == null) {
                 return;
             }
             if (containingClass.isInterface() ||
