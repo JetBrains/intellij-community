@@ -15,6 +15,7 @@ import com.intellij.util.SmartList;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private final String myName;
@@ -53,7 +54,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     final RunResult<T> result = new RunResult<T>(this);
 
     if (myPsiFiles.length > 0) {
-      java.util.List<VirtualFile> list = new SmartList<VirtualFile>();
+      List<VirtualFile> list = new SmartList<VirtualFile>();
       for (final PsiFile psiFile : myPsiFiles) {
         final VirtualFile virtualFile = psiFile.getVirtualFile();
         if (virtualFile != null) {
@@ -65,10 +66,6 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
           return result;
         }
       }
-    }
-
-    if (canWriteNow()) {
-      return executeCommand(result);
     }
 
     try {
