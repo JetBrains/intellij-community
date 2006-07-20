@@ -36,9 +36,8 @@ public class AntAttributeReferenceProvider extends GenericReferenceProvider {
           }
         }
         else if (child instanceof PsiWhiteSpace) {
-          final int off = child.getTextRange().getStartOffset() - elementStartOffset;
-          final String text = child.getText();
-          list.add(new AntAttributeReference(this, se, text, new TextRange(off, off + text.length()), null));
+          final int off = child.getTextRange().getStartOffset() - elementStartOffset + 1;
+          list.add(new AntAttributeReference(this, se, " ", new TextRange(off, off), null));
         }
         else if (child instanceof XmlAttribute) {
           final PsiElement nameElement = child.getFirstChild();

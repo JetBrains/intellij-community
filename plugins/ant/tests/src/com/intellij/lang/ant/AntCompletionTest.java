@@ -129,7 +129,6 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
   }
 
   public void testTargetAttributesCompletion() throws Exception {
-    if (true) return;
     final String testName = getTestName(false);
     configureByFile(testName + ".xml");
     performNormalCompletion();
