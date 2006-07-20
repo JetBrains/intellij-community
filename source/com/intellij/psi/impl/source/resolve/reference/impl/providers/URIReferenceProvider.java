@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -22,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -50,6 +52,8 @@ public class URIReferenceProvider implements PsiReferenceProvider {
 
   public static class URLReference implements PsiReference {
     private PsiElement myElement;
+    @NonNls private static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
+
     public URLReference(PsiElement element) {
       myElement = element;
     }
@@ -69,13 +73,15 @@ public class URIReferenceProvider implements PsiReferenceProvider {
       VirtualFile relativeFile = VfsUtil.findRelativeFile(canonicalText, myElement.getContainingFile().getVirtualFile());
       if (relativeFile != null) return myElement.getManager().findFile(relativeFile);
 
+      final XmlTag tag = PsiTreeUtil.getParentOfType(myElement, XmlTag.class);
+      if (tag != null && canonicalText.equals(tag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME))) return tag;
+
       final PsiFile containingFile = myElement.getContainingFile();
       if (containingFile instanceof XmlFile) {
         final XmlTag rootTag = ((XmlFile)containingFile).getDocument().getRootTag();
         if (rootTag == null) return null;
         final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(canonicalText, true);
         if (nsDescriptor != null) return nsDescriptor.getDescriptorFile();
-        if (canonicalText.equals(rootTag.getAttributeValue("targetNamespace"))) return containingFile;
       }
       return null;
     }
