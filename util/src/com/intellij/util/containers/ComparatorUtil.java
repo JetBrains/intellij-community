@@ -18,6 +18,9 @@ package com.intellij.util.containers;
 import java.util.Comparator;
 
 public class ComparatorUtil {
+  private ComparatorUtil() {
+  }
+
   public static <Type, Aspect> Comparator<Type> compareBy(final Convertor<Type, Aspect> aspect, final Comparator<Aspect> comparator) {
     return new Comparator<Type>() {
       public int compare(Type element1, Type element2) {
