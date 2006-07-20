@@ -546,7 +546,7 @@ public class FindInProjectUtil {
     return presentation;
   }
 
-  public static boolean hasReadOnlyUsages(final Set<Usage> usages) {
+  public static boolean hasReadOnlyUsages(final Collection<Usage> usages) {
     for (Usage usage : usages) {
       if (usage.isReadOnly()) return true;
     }

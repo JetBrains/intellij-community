@@ -103,6 +103,29 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final List<Usage> myUsagesToFlush = new ArrayList<Usage>();
   private Factory<ProgressIndicator> myIndicatorFactory;
   private List<Disposable> myDisposables = new ArrayList<Disposable>();
+  private static final Comparator<Usage> USAGE_COMPARATOR = new Comparator<Usage>() {
+    public int compare(final Usage o1, final Usage o2) {
+      if (o1 instanceof Comparable && o2 instanceof Comparable) {
+        final int selfcompared = ((Comparable<Usage>)o1).compareTo(o2);
+        if (selfcompared != 0) return selfcompared;
+
+        if (o1 instanceof UsageInFile && o2 instanceof UsageInFile) {
+          UsageInFile u1 = (UsageInFile)o1;
+          UsageInFile u2 = (UsageInFile)o2;
+
+          VirtualFile f1 = u1.getFile();
+          VirtualFile f2 = u2.getFile();
+
+          if (f1 != null && f1.isValid() && f2 != null && f2.isValid()) {
+            return f1.getPresentableUrl().compareTo(f2.getPresentableUrl());
+          }
+        }
+
+        return 0;
+      }
+      return 0;
+    }
+  };
 
   public UsageViewImpl(UsageViewPresentation presentation,
                        UsageTarget[] targets,
@@ -333,14 +356,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     final ArrayList<UsageState> states = new ArrayList<UsageState>();
     captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
     final List<Usage> allUsages = new ArrayList<Usage>(myUsageNodes.keySet());
-    Collections.sort(allUsages, new Comparator<Usage>() {
-      public int compare(final Usage o1, final Usage o2) {
-        if (o1 instanceof Comparable && o2 instanceof Comparable) {
-          return ((Comparable<Usage>) o1).compareTo(o2);
-        }
-        return 0;
-      }
-    });
+    Collections.sort(allUsages, USAGE_COMPARATOR);
     reset();
     myBuilder.setGroupingRules(getActiveGroupingRules(myProject));
     myBuilder.setFilteringRules(getActiveFilteringRules(myProject));
@@ -820,6 +836,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   public Set<Usage> getUsages() {
     return myUsages;
+  }
+
+  public List<Usage> getSortedUsages() {
+    List<Usage> usages = new ArrayList<Usage>(myUsages);
+    Collections.sort(usages, USAGE_COMPARATOR);
+    return usages;
   }
 
   private static void collectUsages(DefaultMutableTreeNode node, Set<Usage> usages) {

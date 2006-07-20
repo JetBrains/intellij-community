@@ -1,7 +1,10 @@
 
 package com.intellij.find.replaceInProject;
 
-import com.intellij.find.*;
+import com.intellij.find.FindBundle;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindResult;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -16,21 +19,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.usageView.*;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
-import com.intellij.usages.UsageViewManager;
-import com.intellij.usages.UsageView;
 import com.intellij.util.Processor;
 
 import javax.swing.*;
-import java.util.Set;
-import java.util.Iterator;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 public class ReplaceInProjectManager implements ProjectComponent {
   private Project myProject;
@@ -154,7 +156,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
   }
 
   private void replaceWithPrompt(final ReplaceContext replaceContext) {
-    final Set<Usage> _usages = replaceContext.getUsageView().getUsages();
+    final List<Usage> _usages = replaceContext.getUsageView().getSortedUsages();
 
     if (FindInProjectUtil.hasReadOnlyUsages(_usages)){
       WindowManager.getInstance().getStatusBar(myProject).setInfo(

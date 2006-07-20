@@ -16,11 +16,11 @@
 package com.intellij.usages;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.Set;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -67,6 +67,7 @@ public interface UsageView extends Disposable {
   Set<Usage> getExcludedUsages();
   Set<Usage> getSelectedUsages();
   Set<Usage> getUsages();
+  List<Usage> getSortedUsages();
 
   JComponent getComponent();
 
