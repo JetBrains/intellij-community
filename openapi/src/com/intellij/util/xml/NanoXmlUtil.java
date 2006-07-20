@@ -64,7 +64,7 @@ public class NanoXmlUtil {
       }
       catch (XMLException e) {
         if (e.getException() instanceof ParserStoppedException) return;
-        LOG.error(e);
+        //LOG.error(e);
       }
       finally {
         reader.close();
