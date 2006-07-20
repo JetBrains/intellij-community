@@ -5,7 +5,6 @@ import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.impl.StructureViewWrapperImpl;
-import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -15,6 +14,7 @@ import com.intellij.ide.ui.SplitterProportionsData;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.properties.ResourceBundle;
@@ -1305,10 +1305,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       if (viewPane == null) {
         return;
       }
-      final BaseProjectTreeBuilder treeBuilder = (BaseProjectTreeBuilder)viewPane.myTreeBuilder;
-      final JTree tree = viewPane.myTree;
-      final DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
-      final List<TreePath> paths = new ArrayList<TreePath>(myElements.length);
+      AbstractTreeBuilder treeBuilder = viewPane.myTreeBuilder;
+      JTree tree = viewPane.myTree;
+      DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
+      List<TreePath> paths = new ArrayList<TreePath>(myElements.length);
       for (final Object element : myElements) {
         DefaultMutableTreeNode node = treeBuilder.getNodeForElement(element);
         if (node == null) {
