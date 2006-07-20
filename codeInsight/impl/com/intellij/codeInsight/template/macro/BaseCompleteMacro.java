@@ -66,6 +66,7 @@ public abstract class BaseCompleteMacro implements Macro {
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (!project.isOpen()) return;
         CommandProcessor.getInstance().executeCommand(
             project, new Runnable() {
             public void run() {
