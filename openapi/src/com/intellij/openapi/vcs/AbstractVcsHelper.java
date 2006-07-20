@@ -96,6 +96,7 @@ public abstract class AbstractVcsHelper {
 
   public abstract void showChangesBrowser(List<CommittedChangeList> changelists);
   public abstract void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title);
+  public abstract void showChangesBrowser(CommittedChangeList changelist, @Nls String title);
 
   /**
    * @deprecated Use {@link #showChangesBrowser(java.util.List<com.intellij.openapi.vcs.versionBrowser.CommittedChangeList>)} instead.

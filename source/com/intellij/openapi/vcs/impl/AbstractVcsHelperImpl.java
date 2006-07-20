@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserDialog;
+import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.DifferenceType;
 import com.intellij.openapi.vcs.checkin.VcsOperation;
@@ -619,6 +620,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
     final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists);
+    if (title != null) {
+      dlg.setTitle(title);
+    }
+    dlg.show();
+  }
+
+  public void showChangesBrowser(CommittedChangeList changelist, @Nls String title) {
+    final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, changelist);
     if (title != null) {
       dlg.setTitle(title);
     }

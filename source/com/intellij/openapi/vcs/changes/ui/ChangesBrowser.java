@@ -301,7 +301,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   private List<Change> filterBySelectedChangeList(final Collection<Change> changes) {
     List<Change> filtered = new ArrayList<Change>();
     for (Change change : changes) {
-      if (getList(change) == mySelectedChangeList) {
+      if (myReadOnly || getList(change) == mySelectedChangeList) {
         filtered.add(change);
       }
     }
