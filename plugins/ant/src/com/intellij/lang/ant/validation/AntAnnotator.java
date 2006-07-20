@@ -29,10 +29,11 @@ public class AntAnnotator implements Annotator {
       AntElement parent = se.getAntParent();
       AntTypeDefinition def = se.getTypeDefinition();
       final String name = se.getSourceElement().getName();
+      final TextRange absoluteRange = new TextRange(0, name.length()).shiftRight(se.getSourceElement().getTextOffset());
       if (def == null) {
-        final Annotation annotation = holder.createErrorAnnotation(se, AntBundle.message("undefined.element", name));
+        final Annotation annotation = holder.createErrorAnnotation(absoluteRange, AntBundle.message("undefined.element", name));
         boolean defined = false;
-        while (!(parent instanceof AntFile)) {
+        while (parent != null) {
           if (parent instanceof AntTask && ((AntTask)parent).isMacroDefined()) {
             defined = true;
             break;
@@ -51,8 +52,7 @@ public class AntAnnotator implements Annotator {
           final AntStructuredElement pe = (AntStructuredElement)parent;
           final AntTypeDefinition parentDef = pe.getTypeDefinition();
           if (parentDef != null && parentDef.getNestedClassName(def.getTypeId()) == null) {
-            final TextRange textRange = new TextRange(0, name.length()).shiftRight(se.getSourceElement().getTextOffset());
-            holder.createErrorAnnotation(textRange, AntBundle.message("nested.element.is.not.allowed.here", name));
+            holder.createErrorAnnotation(absoluteRange, AntBundle.message("nested.element.is.not.allowed.here", name));
           }
         }
       }
@@ -76,7 +76,7 @@ public class AntAnnotator implements Annotator {
       final String name = attr.getName();
       final AntAttributeType type = def.getAttributeType(name);
       if (type == null) {
-        holder.createErrorAnnotation(attr, AntBundle.message("attribute.is.not.allowed.here", name));
+        holder.createErrorAnnotation(attr.getFirstChild(), AntBundle.message("attribute.is.not.allowed.here", name));
       }
       else {
         final String value = attr.getValue();
@@ -85,7 +85,7 @@ public class AntAnnotator implements Annotator {
             Integer.parseInt(value);
           }
           catch (NumberFormatException e) {
-            holder.createErrorAnnotation(attr, AntBundle.message("integer.attribute.has.invalid.value", name));
+            holder.createErrorAnnotation(attr.getFirstChild(), AntBundle.message("integer.attribute.has.invalid.value", name));
           }
         }
       }
@@ -100,9 +100,6 @@ public class AntAnnotator implements Annotator {
         if (!genRef.shouldBeSkippedByAnnotator() && ref.resolve() == null) {
           final TextRange absoluteRange = ref.getRangeInElement().shiftRight(ref.getElement().getTextRange().getStartOffset());
           final Annotation annotation = holder.createErrorAnnotation(absoluteRange, genRef.getUnresolvedMessagePattern());
-          if( genRef.getUnresolvedMessagePattern().startsWith("Cannot resolve symbol")) {
-            continue;
-          }
           annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
           final IntentionAction[] intentionActions = genRef.getFixes();
           for (final IntentionAction action : intentionActions) {
