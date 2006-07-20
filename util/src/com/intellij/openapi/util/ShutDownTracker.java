@@ -93,4 +93,8 @@ public class ShutDownTracker implements Runnable {
   public void registerShutdownThread(final Thread thread) {
     myShutdownTreads.add(thread);
   }
+
+  public void registerShutdownThread(int index, final Thread thread) {
+    myShutdownTreads.add(index, thread);
+  }
 }

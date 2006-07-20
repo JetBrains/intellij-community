@@ -12,8 +12,6 @@ import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +20,8 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -513,7 +513,7 @@ import java.util.Map;
   static {
     System.setProperty("jbdt.test.fixture", "com.intellij.designer.dt.IJTestFixture");
 
-    ShutDownTracker.getInstance().registerShutdownThread(new Thread(new Runnable() {
+    ShutDownTracker.getInstance().registerShutdownThread(0, new Thread(new Runnable() {
       public void run() {
         try {
           SwingUtilities.invokeAndWait(new Runnable() {
