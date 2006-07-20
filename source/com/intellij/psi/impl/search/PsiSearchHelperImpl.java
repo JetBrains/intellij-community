@@ -676,27 +676,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   public void processAllFilesWithWord(String word, GlobalSearchScope scope, Processor<PsiFile> processor, final boolean caseSensitively) {
-    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_CODE, scope, caseSensitively);
-
-    for (PsiFile file : files) {
-      if (!processor.process(file)) return;
-    }
+    myManager.getCacheManager().processFilesWithWord(processor,word, UsageSearchContext.IN_CODE, scope, caseSensitively);
   }
 
   public void processAllFilesWithWordInComments(String word, GlobalSearchScope scope, Processor<PsiFile> processor) {
-    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_COMMENTS, scope, true);
-
-    for (PsiFile file : files) {
-      if (!processor.process(file)) return;
-    }
+    myManager.getCacheManager().processFilesWithWord(processor, word, UsageSearchContext.IN_COMMENTS, scope, true);
   }
 
   public void processAllFilesWithWordInLiterals(String word, GlobalSearchScope scope, Processor<PsiFile> processor) {
-    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_STRINGS, scope, true);
-
-    for (PsiFile file : files) {
-      if (!processor.process(file)) return;
-    }
+    myManager.getCacheManager().processFilesWithWord(processor, word, UsageSearchContext.IN_STRINGS, scope, true);
   }
 
 }

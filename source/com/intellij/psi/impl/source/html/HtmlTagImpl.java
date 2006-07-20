@@ -94,7 +94,7 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
   }
 
   public String getPrefixByNamespace(String namespace) {
-    if (namespace.equals(XmlUtil.HTML_URI)) namespace = XmlUtil.XHTML_URI;
+    if (XmlUtil.HTML_URI.equals(namespace)) namespace = XmlUtil.XHTML_URI;
     return super.getPrefixByNamespace(namespace);
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
+import com.intellij.util.Processor;
 
 public interface CacheManager {
   void initialize();
@@ -13,6 +14,8 @@ public interface CacheManager {
   CacheUpdater[] getCacheUpdaters();
 
   PsiFile[] getFilesWithWord(String word, short occurenceMask, GlobalSearchScope scope, final boolean caseSensitively);
+
+  boolean processFilesWithWord(Processor<PsiFile> processor,String word, short occurenceMask, GlobalSearchScope scope, final boolean caseSensitively);
 
   /**
    * @return all VirtualFile's that contain todo-items under project roots

@@ -7,6 +7,8 @@ import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
+import com.intellij.util.Processor;
+import com.intellij.util.CommonProcessors;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,11 +45,16 @@ public class CompositeCacheManager implements CacheManager{
   }
 
   public PsiFile[] getFilesWithWord(String word, short occurenceMask, GlobalSearchScope scope, final boolean caseSensitively) {
-    List<PsiFile> files = new ArrayList<PsiFile>();
+    CommonProcessors.CollectProcessor<PsiFile> processor = new CommonProcessors.CollectProcessor<PsiFile>();
+    processFilesWithWord(processor, word, occurenceMask, scope, caseSensitively);
+    return processor.toArray(PsiFile.EMPTY_ARRAY);
+  }
+
+  public boolean processFilesWithWord(Processor<PsiFile> processor, String word, short occurenceMask, GlobalSearchScope scope, final boolean caseSensitively) {
     for (CacheManager cacheManager : myManagers) {
-      files.addAll(Arrays.asList(cacheManager.getFilesWithWord(word, occurenceMask, scope, caseSensitively)));
+      if (!cacheManager.processFilesWithWord(processor, word, occurenceMask, scope, true)) return false;
     }
-    return files.toArray(new PsiFile[files.size()]);
+    return true;
   }
 
   public PsiFile[] getFilesWithTodoItems() {
