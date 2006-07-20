@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.*;
@@ -30,8 +31,7 @@ import java.util.regex.Pattern;
 public class JavaSdkImpl extends JavaSdk {
   // do not use javaw.exe for Windows because of issues with encoding
   @NonNls private static final String VM_EXE_NAME = "java";
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private final Pattern myVersionStringPattern = Pattern.compile("^(.*)java version \"([1234567890_.]*)\"(.*)$");
+  @NonNls private final Pattern myVersionStringPattern = Pattern.compile("^(.*)java version \"([1234567890_.]*)\"(.*)$");
   public static final Icon ICON = IconLoader.getIcon("/nodes/ppJdkClosed.png");
   private static final Icon JDK_ICON_EXPANDED = IconLoader.getIcon("/nodes/ppJdkOpen.png");
   private static final Icon ADD_ICON = IconLoader.getIcon("/general/addJdk.png");
@@ -75,10 +75,10 @@ public class JavaSdkImpl extends JavaSdk {
     return getConvertedHomePath(sdk) + "bin";
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls
   public String getToolsPath(Sdk sdk) {
     final String versionString = sdk.getVersionString();
-    final boolean isJdk1_x = versionString.indexOf("1.0") > -1 || versionString.indexOf("1.1") > -1;
+    final boolean isJdk1_x = versionString.contains("1.0") || versionString.contains("1.1");
     return getConvertedHomePath(sdk) + "lib" + File.separator + (isJdk1_x? "classes.zip" : "tools.jar");
   }
 
@@ -96,10 +96,10 @@ public class JavaSdkImpl extends JavaSdk {
     return getConvertedHomePath(sdk) + "jre" + File.separator + "lib" + File.separator + "rt.jar";
   }
 
-  private String getConvertedHomePath(Sdk sdk) {
+  private static String getConvertedHomePath(Sdk sdk) {
     String path = sdk.getHomePath().replace('/', File.separatorChar);
     if (!path.endsWith(File.separator)) {
-      path = path + File.separator;
+      path += File.separator;
     }
     return path;
   }
@@ -124,7 +124,7 @@ public class JavaSdkImpl extends JavaSdk {
       if (replaceNameWithVersion){
         // user did not change name -> set it automatically
         final String versionString = getVersionString(sdkHome);
-        suggestedName = (versionString == null)? currentSdkName : matcher.replaceFirst("$1" + versionString + "$3");
+        suggestedName = versionString == null ? currentSdkName : matcher.replaceFirst("$1" + versionString + "$3");
       }
       else {
         suggestedName = currentSdkName;
@@ -180,8 +180,7 @@ public class JavaSdkImpl extends JavaSdk {
       sdkModificator.addRoot(docs, ProjectRootType.JAVADOC);
     }
     else if (SystemInfo.isMac) {
-      VirtualFile commonDocs;
-      commonDocs = findDocs(jdkHome, "docs");
+      VirtualFile commonDocs = findDocs(jdkHome, "docs");
       if (commonDocs == null) {
         commonDocs = findInJar(new File(jdkHome, "docs.jar"), "doc/api");
       }
@@ -189,8 +188,7 @@ public class JavaSdkImpl extends JavaSdk {
         sdkModificator.addRoot(commonDocs, ProjectRootType.JAVADOC);
       }
 
-      VirtualFile appleDocs;
-      appleDocs = findDocs(jdkHome, "appledocs");
+      VirtualFile appleDocs = findDocs(jdkHome, "appledocs");
       if (appleDocs == null) {
         appleDocs = findInJar(new File(jdkHome, "appledocs.jar"), "appledoc/api");
       }
@@ -214,6 +212,7 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
 
+  @NotNull
   public String getComponentName() {
     return getName();
   }
@@ -283,7 +282,7 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static ProjectJdk getMockJdk15(String versionName) {
+  public static ProjectJdk getMockJdk15(@NonNls String versionName) {
     String jdkHome = PathManager.getHomePath() + File.separator + "mockJDK-1.5";
     return createMockJdk(jdkHome, versionName, getInstance());
   }
@@ -314,7 +313,6 @@ public class JavaSdkImpl extends JavaSdk {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static VirtualFile[] findClasses(File file, boolean isJre, JarFileSystem jarFileSystem) {
     FileFilter jarFileFilter = new FileFilter(){
       @SuppressWarnings({"HardCodedStringLiteral"})
@@ -328,19 +326,19 @@ public class JavaSdkImpl extends JavaSdk {
     File[] jarDirs;
     if(SystemInfo.isMac && !ApplicationManager.getApplication().isUnitTestMode()){
       File libFile = new File(file, "lib");
-      File classesFile = new File(file, "../Classes");
-      File libExtFile = new File(libFile, "ext");
+      @NonNls File classesFile = new File(file, "../Classes");
+      @NonNls File libExtFile = new File(libFile, "ext");
       jarDirs = new File[]{libFile, classesFile, libExtFile};
     }
     else{
       File jreLibFile = isJre ? new File(file, "lib") : new File(new File(file, "jre"), "lib");
-      File jreLibExtFile = new File(jreLibFile, "ext");
+      @NonNls File jreLibExtFile = new File(jreLibFile, "ext");
       jarDirs = new File[]{jreLibFile, jreLibExtFile};
     }
 
     ArrayList<File> childrenList = new ArrayList<File>();
     for (File jarDir : jarDirs) {
-      if ((jarDir != null) && jarDir.isDirectory()) {
+      if (jarDir != null && jarDir.isDirectory()) {
         File[] files = jarDir.listFiles(jarFileFilter);
         for (File file1 : files) {
           childrenList.add(file1);
@@ -358,8 +356,8 @@ public class JavaSdkImpl extends JavaSdk {
       }
     }
 
-    File classesZipFile = new File(new File(file, "lib"), "classes.zip");
-    if((!classesZipFile.isDirectory()) && classesZipFile.exists()){
+    @NonNls File classesZipFile = new File(new File(file, "lib"), "classes.zip");
+    if(!classesZipFile.isDirectory() && classesZipFile.exists()){
       String path = classesZipFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
       jarFileSystem.setNoCopyJarForPath(path);
       VirtualFile vFile = jarFileSystem.findFileByPath(path);
@@ -396,8 +394,7 @@ public class JavaSdkImpl extends JavaSdk {
     else {
       if (!srcfile.exists() || !srcfile.isDirectory()) return null;
       String path = srcfile.getAbsolutePath().replace(File.separatorChar, '/');
-      VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(path);
-      return vFile;
+      return LocalFileSystem.getInstance().findFileByPath(path);
     }
   }
 
@@ -421,8 +418,7 @@ public class JavaSdkImpl extends JavaSdk {
     file = new File(file.getAbsolutePath() + File.separator + relativePath.replace('/', File.separatorChar));
     if (!file.exists() || !file.isDirectory()) return null;
     String path = file.getAbsolutePath().replace(File.separatorChar, '/');
-    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(path);
-    return vFile;
+    return LocalFileSystem.getInstance().findFileByPath(path);
   }
 
   private static class ReadStreamThread extends Thread {
@@ -460,7 +456,7 @@ public class JavaSdkImpl extends JavaSdk {
         while (true) {
           String line = readLine();
           if (line == null) return;
-          if (line.indexOf(VERSION) >= 0) {
+          if (line.contains(VERSION)) {
             myVersionString[0] = line;
           }
         }
@@ -472,7 +468,7 @@ public class JavaSdkImpl extends JavaSdk {
 
     private String readLine() throws IOException {
       boolean first = true;
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       while (true) {
         int c = myReader.read();
         if (c == -1) break;

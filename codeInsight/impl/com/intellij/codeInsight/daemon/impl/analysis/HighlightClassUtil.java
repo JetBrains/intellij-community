@@ -580,12 +580,14 @@ public class HighlightClassUtil {
     PsiJavaFile javaFile = (PsiJavaFile)file;
     // check only top-level classes conflicts
     if (aClass.getParent() != javaFile) return null;
-    PsiImportStatementBase[] importStatements = javaFile.getImportList().getAllImportStatements();
+    PsiImportList importList = javaFile.getImportList();
+    if (importList == null) return null;
+    PsiImportStatementBase[] importStatements = importList.getAllImportStatements();
     for (PsiImportStatementBase importStatement : importStatements) {
       if (importStatement.isOnDemand()) continue;
       PsiElement resolved = importStatement.resolve();
-      if (resolved instanceof PsiClass && Comparing.equal(aClass.getName(), ((PsiClass)resolved).getName(), true)) {
-        String description = JavaErrorMessages.message("class.already.imported", HighlightUtil.formatClass(aClass));
+      if (resolved instanceof PsiClass && !resolved.equals(aClass) && Comparing.equal(aClass.getName(), ((PsiClass)resolved).getName(), true)) {
+        String description = JavaErrorMessages.message("class.already.imported", HighlightUtil.formatClass(aClass, false));
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                  elementToHighlight,
                                                  description);

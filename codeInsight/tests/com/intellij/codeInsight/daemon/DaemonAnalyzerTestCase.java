@@ -29,6 +29,7 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -98,7 +99,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     doTest(filePath, checkWarnings, checkInfos, false);
   }
 
-  protected void doTest(String filePath, String projectRoot, boolean checkWarnings, boolean checkInfos) throws Exception {
+  protected void doTest(@NonNls String filePath, @NonNls String projectRoot, boolean checkWarnings, boolean checkInfos) throws Exception {
     configureByFile(filePath, projectRoot);
     doDoTest(checkWarnings, checkInfos);
   }
