@@ -279,7 +279,9 @@ public class ChangesBrowser extends JPanel implements DataProvider {
 
     myToolBarGroup.add(directoriesAction);
 
-    myToolBarGroup.add(new RollbackAction());
+    if (!myReadOnly) {
+      myToolBarGroup.add(new RollbackAction());
+    }
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myToolBarGroup, true).getComponent();
   }
