@@ -1,7 +1,8 @@
 package com.intellij.lang.ant.psi.impl;
 
-import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +13,7 @@ public class AntOuterProjectElement extends AntElementImpl {
   private final int myStartOffset;
   private final String myText;
 
-  public AntOuterProjectElement(final AntElement parent, final int startOffset, final String text) {
+  public AntOuterProjectElement(final AntFile parent, final int startOffset, final String text) {
     super(parent, null);
     myStartOffset = startOffset;
     myText = text;
@@ -25,6 +26,14 @@ public class AntOuterProjectElement extends AntElementImpl {
 
   public boolean isPhysical() {
     return getParent().isPhysical();
+  }
+
+  public boolean isValid() {
+    return getParent().isValid();
+  }
+
+  public PsiManager getManager() {
+    return getParent().getManager();
   }
 
   public TextRange getTextRange() {
