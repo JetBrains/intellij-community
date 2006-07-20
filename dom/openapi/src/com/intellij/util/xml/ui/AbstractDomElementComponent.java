@@ -2,6 +2,7 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 
@@ -31,11 +32,6 @@ public abstract class AbstractDomElementComponent<T extends DomElement> extends 
   }
 
   protected static void setEnabled(Component component, boolean enabled) {
-    component.setEnabled(enabled);
-    if (component instanceof Container) {
-      for (Component child : ((Container)component).getComponents()) {
-        setEnabled(child, enabled);
-      }
-    }
+    UIUtil.setEnabled(component, enabled, true);
   }
 }
