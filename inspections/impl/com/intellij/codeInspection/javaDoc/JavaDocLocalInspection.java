@@ -22,6 +22,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
@@ -607,7 +608,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
           for (Iterator<PsiClassType> it = declaredExceptions.keySet().iterator(); it.hasNext();) {
             PsiClassType classType = it.next();
             final PsiClass psiClass = declaredExceptions.get(classType);
-            if (psiClass.equals(exceptionClass)) {
+            if (InheritanceUtil.isInheritorOrSelf(exceptionClass, psiClass, true)) {
               it.remove();
               break;
             }
