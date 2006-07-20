@@ -112,6 +112,10 @@ public class ModuleLinkImpl extends ModuleLink {
     return getId(getModule());
   }
 
+  public boolean hasId(String id) {
+    return hasId(getModule(), id);
+  }
+
   public String getPresentableName() {
     return getName();
   }

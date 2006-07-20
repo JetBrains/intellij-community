@@ -1,8 +1,8 @@
 package com.intellij.compiler;
 
 import com.intellij.javaee.JavaeeModuleProperties;
-import com.intellij.javaee.module.ModuleLink;
 import com.intellij.javaee.model.JavaeeApplicationModel;
+import com.intellij.javaee.module.ModuleLink;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,9 +11,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
@@ -35,12 +33,12 @@ public final class ModuleCompilerUtil {
       return ModuleRootManager.getInstance(module).getDependencies();
     }
     List<Module> result = new ArrayList<Module>();
-    final com.intellij.javaee.model.xml.application.Application root = ((JavaeeApplicationModel)JavaeeModuleProperties.getInstance(module)).getRoot();
+    final com.intellij.javaee.model.xml.application.JavaeeApplication root = ((JavaeeApplicationModel)JavaeeModuleProperties.getInstance(module)).getRoot();
     if (root == null) {
       return Module.EMPTY_ARRAY;
     }
-    final List<com.intellij.javaee.model.xml.application.Module> modules = root.getModules();
-    for (final com.intellij.javaee.model.xml.application.Module moduleInApplication : modules) {
+    final List<com.intellij.javaee.model.xml.application.JavaeeModule> modules = root.getModules();
+    for (final com.intellij.javaee.model.xml.application.JavaeeModule moduleInApplication : modules) {
       final Module depModule = getReferenceModule(moduleInApplication);
       if (depModule != null && !dependsOn(depModule, module)) {
         result.add(depModule);
@@ -49,7 +47,7 @@ public final class ModuleCompilerUtil {
     return result.toArray(new Module[result.size()]);
   }
 
-  public static Module getReferenceModule(final com.intellij.javaee.model.xml.application.Module moduleLink) {
+  public static Module getReferenceModule(final com.intellij.javaee.model.xml.application.JavaeeModule moduleLink) {
     String id = moduleLink.getId().getValue();
     Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>(){
       public Module[] compute() {
@@ -58,7 +56,7 @@ public final class ModuleCompilerUtil {
     });
 
     for (Module module : modules) {
-      if (Comparing.equal(ModuleLink.getId(module), id)) return module;
+      if (ModuleLink.hasId(module, id)) return module;
     }
     return null;
   }

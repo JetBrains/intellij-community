@@ -17,10 +17,9 @@ package com.intellij.javaee.module;
 
 import com.intellij.openapi.module.Module;
 import com.sun.org.apache.xml.internal.utils.XMLChar;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-
-import org.jetbrains.annotations.Nullable;
 
 
 /**
@@ -36,10 +35,13 @@ public abstract class ModuleLink extends ContainerElement {
 
   public abstract String getId();
 
+  public abstract boolean hasId(String id);
+
   public abstract String getName();
 
   public static String getId(Module module) {
-    final String baseName = module == null ? "" : new File(module.getModuleFilePath()).getName();
+    String baseName = module == null ? "" : new File(module.getModuleFilePath()).getName();
+    if (baseName.endsWith(".iml")) baseName = baseName.substring(0, baseName.length() - ".iml".length());
     return convertNameToXmlName(baseName);
   }
 
@@ -53,5 +55,10 @@ public abstract class ModuleLink extends ContainerElement {
       builder.append(c);
     }
     return builder.toString();
+  }
+
+  public static boolean hasId(final Module module, final String id) {
+    final String id1 = getId(module);
+    return id1.equals(id) || (id1 + ".iml").equals(id);
   }
 }
