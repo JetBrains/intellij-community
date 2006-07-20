@@ -36,10 +36,11 @@ public class CommittableUtil {
 
   public static void queueReset(Committable committable) {
     ourApplication.assertIsDispatchThread();
-    if (CommandProcessor.getInstance().getCurrentCommand() != null || CommandProcessor.getInstance().isUndoTransparentActionInProgress()) {
-      ourResetQueue.add(committable);
-    } else {
+    ourResetQueue.add(committable);
+    if (!ourResetQueue.contains(committable) && CommandProcessor.getInstance().getCurrentCommand() == null &&
+        !CommandProcessor.getInstance().isUndoTransparentActionInProgress()) {
       committable.reset();
+      ourResetQueue.remove(committable);
     }
   }
 
