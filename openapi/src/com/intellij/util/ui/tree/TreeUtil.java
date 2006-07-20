@@ -534,15 +534,22 @@ public final class TreeUtil {
 
   public static void expandRootChildIfOnlyOne(final JTree tree) {
     if (tree == null) return;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    final Runnable runnable = new Runnable() {
       public void run() {
-        final DefaultMutableTreeNode root = (DefaultMutableTreeNode) tree.getModel().getRoot();
+        final DefaultMutableTreeNode root = (DefaultMutableTreeNode)tree.getModel().getRoot();
+        tree.expandPath(new TreePath(new Object[]{root}));
         if (root.getChildCount() == 1) {
           TreeNode firstChild = root.getFirstChild();
           tree.expandPath(new TreePath(new Object[]{root, firstChild}));
         }
       }
-    });
+    };
+    if (EventQueue.isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable);
+    }
   }
 
   public static void expandAll(final JTree tree) {
