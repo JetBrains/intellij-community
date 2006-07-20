@@ -122,7 +122,7 @@ class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
   private void appendCount(final ChangesBrowserNode node) {
     int count = node.getCount();
     int dirCount = node.getDirectoryCount();
-    if (count > 0 && dirCount == 0) {
+    if (dirCount == 0) {
       append(" " + VcsBundle.message("changes.nodetitle.changecount", count), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
     }
     else if (count == 0 && dirCount > 1) {

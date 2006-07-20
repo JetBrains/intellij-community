@@ -87,7 +87,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       public void changeListUpdateDone() {
         if (!myInitialUpdateDone) {
           myInitialUpdateDone = true;
-          fileStatusesC`hanged();
+          fileStatusesChanged();
         }
       }
     });
