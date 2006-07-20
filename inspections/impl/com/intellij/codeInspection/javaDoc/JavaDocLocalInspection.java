@@ -284,11 +284,12 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       this(tag, "");
     }
 
+    @NotNull
     public String getName() {
-      return InspectionsBundle.message("inspection.javadoc.problem.add.tag", myTag);
+      return InspectionsBundle.message("inspection.javadoc.problem.add.tag", myTag, myValue);
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
       PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
       try {
         PsiDocCommentOwner owner = PsiTreeUtil.getParentOfType(descriptor.getEndElement(), PsiDocCommentOwner.class);
@@ -319,6 +320,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       }
     }
 
+    @NotNull
     public String getFamilyName() {
       return InspectionsBundle.message("inspection.javadoc.problem.add.tag.family");
     }
@@ -528,18 +530,21 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     if (superMethods.length == 0 && isTagRequired(psiMethod, "@throws") && psiMethod.getThrowsList().getReferencedTypes().length > 0) {
-      boolean found = false;
-      for (PsiDocTag tag : tags) {
-        if ("throws".equals(tag.getName()) || "exception".equals(tag.getName())) {
-          found = true;
-          break;
+      final Map<PsiClassType, PsiClass> declaredExceptions = new HashMap<PsiClassType, PsiClass>();
+      final PsiClassType[] classTypes = psiMethod.getThrowsList().getReferencedTypes();
+      for (PsiClassType classType : classTypes) {
+        final PsiClass psiClass = classType.resolve();
+        if (psiClass != null){
+          declaredExceptions.put(classType, psiClass);
         }
       }
-
-      if (!found) {
+      processThrowsTags(tags, declaredExceptions);
+      if (!declaredExceptions.isEmpty()) {
         if (problems == null) problems = new ArrayList<ProblemDescriptor>(2);
-        ProblemDescriptor descriptor = createMissingThrowsTagDescriptor(psiMethod, manager);
-        problems.add(descriptor);
+        for (PsiClassType declaredException : declaredExceptions.keySet()) {
+          ProblemDescriptor descriptor = createMissingThrowsTagDescriptor(psiMethod, manager, declaredException);
+          problems.add(descriptor);
+        }
       }
     }
 
@@ -587,12 +592,38 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
            : problems.toArray(new ProblemDescriptorImpl[problems.size()]);
   }
 
-  private static ProblemDescriptor createMissingThrowsTagDescriptor(final PsiMethod method, final InspectionManager manager) {
+  private static void processThrowsTags(final PsiDocTag[] tags, final Map<PsiClassType, PsiClass> declaredExceptions) {
+    for (PsiDocTag tag : tags) {
+      if ("throws".equals(tag.getName()) || "exception".equals(tag.getName())) {
+        final PsiDocTagValue value = tag.getValueElement();
+        final PsiElement firstChild = value.getFirstChild();
+        if (firstChild == null) continue;
+        final PsiElement psiElement = firstChild.getFirstChild();
+        if (!(psiElement instanceof PsiJavaCodeReferenceElement)) continue;
+        final PsiJavaCodeReferenceElement ref = ((PsiJavaCodeReferenceElement)psiElement);
+        final PsiElement element = ref.resolve();
+        if (element instanceof PsiClass){
+          final PsiClass exceptionClass = (PsiClass)element;
+          for (Iterator<PsiClassType> it = declaredExceptions.keySet().iterator(); it.hasNext();) {
+            PsiClassType classType = it.next();
+            final PsiClass psiClass = declaredExceptions.get(classType);
+            if (psiClass.equals(exceptionClass)) {
+              it.remove();
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private static ProblemDescriptor createMissingThrowsTagDescriptor(final PsiMethod method, final InspectionManager manager, final PsiClassType exceptionClassType) {
     @NonNls String tag = "throws";
-    String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", "<code>@" + tag + "</code>");
-    PsiClassType type = method.getThrowsList().getReferencedTypes()[0];
-    final String firstDeclaredException = type.getCanonicalText();
-    return createDescriptor(method.getNameIdentifier(), message,new AddMissingTagFix(tag, firstDeclaredException), manager);
+    String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", "<code>@" + tag + "</code> " + exceptionClassType.getCanonicalText());
+    final String firstDeclaredException = exceptionClassType.getCanonicalText();
+    final PsiIdentifier nameIdentifier = method.getNameIdentifier();
+    LOG.assertTrue(nameIdentifier != null);
+    return createDescriptor(nameIdentifier, message,new AddMissingTagFix(tag, firstDeclaredException), manager);
   }
 
   private static ProblemDescriptor createMissingTagDescriptor(PsiElement elementToHighlight,
@@ -616,6 +647,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       myParamName = paramName;
     }
 
+    @NotNull
     public String getName() {
       String message = InspectionsBundle.message("inspection.javadoc.problem.add.param.tag", myParamName);
       return message;
@@ -712,6 +744,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     return problems.isEmpty() ? null : problems;
   }
 
+  @SuppressWarnings({"SimplifiableIfStatement"})
   private boolean isTagRequired(PsiElement context, @NonNls String tag) {
     if (context instanceof PsiClass) {
       if (PsiTreeUtil.getParentOfType(context, PsiClass.class) != null) {
@@ -870,15 +903,17 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       myTag = tag;
     }
 
+    @NotNull
     public String getName() {
       return QuickFixBundle.message("add.doctag.to.custom.tags", myTag.getName());
     }
 
+    @NotNull
     public String getFamilyName() {
      return QuickFixBundle.message("fix.javadoc.family");
    }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
       if (myTag == null || !myTag.isValid()) return;
       if (myAdditionalJavadocTags.length() > 0) {
         myAdditionalJavadocTags += "," + myTag.getName();
