@@ -9,8 +9,8 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.injected.EditorDelegate;
 import com.intellij.openapi.editor.impl.injected.DocumentRange;
+import com.intellij.openapi.editor.impl.injected.EditorDelegate;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -285,8 +285,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
 
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    String text = myFile.getText();
-    assertEquals(getMessage("Text mismatch", message), newFileText1, text);
+    assertEquals(getMessage("Text mismatch", message), newFileText1, myFile.getText());
 
     checkCaretPosition(caretMarker, newFileText, message);
     checkSelection(selStartMarker, selEndMarker, newFileText, message);
