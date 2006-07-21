@@ -52,10 +52,12 @@ public class BaseDomElementNode extends AbstractDomElementNode {
       ((MouseEvent)inputEvent).consume();
     }
     final DomElement domElement = getDomElement();
-    final DomElementNavigationProvider provider =
-      DomElementsNavigationManager.getManager(domElement.getManager().getProject()).getDomElementsNavigateProvider(DomElementsNavigationManager.DEFAULT_PROVIDER_NAME);
+    if (domElement.isValid()) {
+      final DomElementNavigationProvider provider = DomElementsNavigationManager.getManager(domElement.getManager().getProject())
+        .getDomElementsNavigateProvider(DomElementsNavigationManager.DEFAULT_PROVIDER_NAME);
 
-    provider.navigate(domElement, true);
+      provider.navigate(domElement, true);
+    }
   }
 
   protected final SimpleNode[] doGetChildren(final DomElement element) {
@@ -70,7 +72,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
       String childName = description.getXmlElementName();
       if (xmlDescriptors != null) {
         boolean found = false;
-        for (XmlElementDescriptor xmlDescriptor: xmlDescriptors) {
+        for (XmlElementDescriptor xmlDescriptor : xmlDescriptors) {
           if (xmlDescriptor.getDefaultName().equals(childName)) {
             found = true;
             break;
@@ -84,7 +86,8 @@ public class BaseDomElementNode extends AbstractDomElementNode {
           for (DomElement value : values) {
             children.add(new GenericValueNode((GenericDomValue)value, this));
           }
-        } else {
+        }
+        else {
           for (DomElement domElement : values) {
             children.add(new BaseDomElementNode(domElement, this));
           }
@@ -97,7 +100,8 @@ public class BaseDomElementNode extends AbstractDomElementNode {
         DomElementsGroupNode groupNode = new DomElementsGroupNode(element, description);
         if (isMarkedType(description.getType(), CONSOLIDATED_NODES_KEY)) {
           Collections.addAll(children, groupNode.getChildren());
-        } else {
+        }
+        else {
           children.add(groupNode);
         }
       }
@@ -119,8 +123,8 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
     final List<DomCollectionChildDescription> consolidated = new ArrayList<DomCollectionChildDescription>();
     for (DomCollectionChildDescription description : myDomElement.getGenericInfo().getCollectionChildrenDescriptions()) {
-        if (isMarkedType(description.getType(), CONSOLIDATED_NODES_KEY)) {
-          consolidated.add(description);
+      if (isMarkedType(description.getType(), CONSOLIDATED_NODES_KEY)) {
+        consolidated.add(description);
       }
     }
     return consolidated;
@@ -138,17 +142,21 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
     final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(myDomElement.getManager().getProject());
     final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(myDomElement);
-    final List<DomElementProblemDescriptor> problems = holder.getProblems(myDomElement, true, highlightIfChildrenHasProblems(), HighlightSeverity.ERROR);
+    final List<DomElementProblemDescriptor> problems =
+      holder.getProblems(myDomElement, true, highlightIfChildrenHasProblems(), HighlightSeverity.ERROR);
 
     if (problems.size() > 0) {
       addColoredFragment(getNodeName(), TooltipUtils.getTooltipText(problems), SimpleTextAttributes.ERROR_ATTRIBUTES);
-    } else if (myDomElement.getXmlTag() == null && !(myDomElement instanceof DomFileElement)) {
+    }
+    else if (myDomElement.getXmlTag() == null && !(myDomElement instanceof DomFileElement)) {
       addColoredFragment(getNodeName(), folder ? SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
-    } else if (folder) {
+    }
+    else if (folder) {
       addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       final int childrenCount = getChildren().length;
       addColoredFragment(" (" + childrenCount + ')', SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
-    } else {
+    }
+    else {
       addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
