@@ -479,7 +479,12 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       }
 
       public void registerQuickfix(HighlightInfo info, PsiReference reference) {
-        JavaClassReferenceQuickFixProvider.registerQuickFix(info, reference);
+        final String[] extendClasses = EXTEND_CLASS_NAMES.getValue(myOptions);
+        if (extendClasses != null && extendClasses.length > 0) {
+          JavaClassReferenceQuickFixProvider.registerQuickFix(info, reference, extendClasses[0]);
+        } else {
+          JavaClassReferenceQuickFixProvider.registerQuickFix(info, reference);
+        }
       }
 
       @NotNull
