@@ -77,7 +77,7 @@ public class CheckValidXmlInScriptBodyInspection extends LocalInspectionTool {
                   IElementType tokenType = myXmlLexer.getTokenType();
 
                   if (tokenType == XmlTokenType.XML_CDATA_START) {
-                    while(tokenType != XmlTokenType.XML_CDATA_END) {
+                    while(tokenType != null && tokenType != XmlTokenType.XML_CDATA_END) {
                       myXmlLexer.advance();
                       tokenType = myXmlLexer.getTokenType();
                     }
