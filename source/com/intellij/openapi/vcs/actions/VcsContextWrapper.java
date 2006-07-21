@@ -38,13 +38,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.VcsDataConstants;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDataConstants;
 import com.intellij.openapi.vcs.fileView.impl.FileViewPanel;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 
@@ -105,14 +105,13 @@ public class VcsContextWrapper implements VcsContext {
     return VirtualFile.EMPTY_ARRAY;
   }
 
-  private boolean isLocal(VirtualFile virtualFile) {
+  private static boolean isLocal(VirtualFile virtualFile) {
     return virtualFile.getFileSystem() == LocalFileSystem.getInstance();
   }
 
-  private VirtualFile[] filterLocalFiles(VirtualFile[] fileArray) {
+  private static VirtualFile[] filterLocalFiles(VirtualFile[] fileArray) {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (int i = 0; i < fileArray.length; i++) {
-      VirtualFile virtualFile = fileArray[i];
+    for (VirtualFile virtualFile : fileArray) {
       if (isLocal(virtualFile)) {
         result.add(virtualFile);
       }
@@ -159,7 +158,8 @@ public class VcsContextWrapper implements VcsContext {
 
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     if (toolWindowManager == null) return null;
-    ToolWindowEx fileViewToolWindow =(ToolWindowEx) toolWindowManager.getToolWindow(ProjectLevelVcsManager.FILE_VIEW_TOOL_WINDOW_ID);
+
+    ToolWindow fileViewToolWindow = toolWindowManager.getToolWindow(ProjectLevelVcsManager.FILE_VIEW_TOOL_WINDOW_ID);
     if (fileViewToolWindow.isAvailable()) {
       final JComponent component = fileViewToolWindow.getComponent();
       return ((FileViewPanel) component);
@@ -175,10 +175,9 @@ public class VcsContextWrapper implements VcsContext {
       result.add(path);
     }
 
-    FilePath paths[] = (FilePath[])myContext.getData(VcsDataConstants.FILE_PATH_ARRAY);
+    FilePath[] paths = (FilePath[])myContext.getData(VcsDataConstants.FILE_PATH_ARRAY);
     if (paths != null) {
-      for (int i = 0; i < paths.length; i++) {
-        FilePath filePath = paths[i];
+      for (FilePath filePath : paths) {
         if (!result.contains(filePath)) {
           result.add(filePath);
         }
@@ -187,8 +186,7 @@ public class VcsContextWrapper implements VcsContext {
 
     VirtualFile[] selectedFiles = getSelectedFiles();
     if (selectedFiles != null) {
-      for (int i = 0; i < selectedFiles.length; i++) {
-        VirtualFile selectedFile = selectedFiles[i];
+      for (VirtualFile selectedFile : selectedFiles) {
         FilePathImpl filePath = new FilePathImpl(selectedFile);
         if (!result.contains(filePath)) {
           result.add(filePath);
@@ -198,10 +196,9 @@ public class VcsContextWrapper implements VcsContext {
 
     File[] selectedIOFiles = getSelectedIOFiles();
     if (selectedIOFiles != null){
-      for (int i = 0; i < selectedIOFiles.length; i++) {
-        File selectedFile = selectedIOFiles[i];
+      for (File selectedFile : selectedIOFiles) {
         FilePathImpl filePath = FilePathImpl.create(selectedFile);
-        if ((filePath != null) &&  !result.contains(filePath)) {
+        if ((filePath != null) && !result.contains(filePath)) {
           result.add(filePath);
         }
       }
