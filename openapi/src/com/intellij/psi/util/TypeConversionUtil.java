@@ -961,6 +961,9 @@ public class TypeConversionUtil {
     return type != null && isPrimitiveWrapper(type.getCanonicalText());
   }
 
+  public static PsiType typeParameterErasure(final PsiTypeParameter typeParameter) {
+    return typeParameterErasure(typeParameter, PsiSubstitutor.EMPTY);
+  }
 
   private static PsiType typeParameterErasure(final PsiTypeParameter typeParameter, final PsiSubstitutor beforeSubstitutor) {
     final PsiClassType[] extendsList = typeParameter.getExtendsList().getReferencedTypes();

@@ -84,7 +84,7 @@ outer:
           for(int j = 0; j < i; j++){
             final CandidateInfo conflict = newConflictsArray[j];
             if (conflict == method) break;
-            switch(isMoreSpecific((MethodCandidateInfo)method, (MethodCandidateInfo)conflict)){
+            switch(isMoreSpecific(((MethodCandidateInfo)method).getElement(), ((MethodCandidateInfo)conflict).getElement())){
               case TRUE:
                 conflicts.remove(conflict);
                 break;
@@ -224,9 +224,7 @@ outer:
     return Specifics.TRUE;
   }
 
-  private Specifics isMoreSpecific(final MethodCandidateInfo info1, final MethodCandidateInfo info2) {
-    PsiMethod method1 = info1.getElement();
-    PsiMethod method2 = info2.getElement();
+  private Specifics isMoreSpecific(final PsiMethod method1, final PsiMethod method2) {
     final PsiClass class1 = method1.getContainingClass();
     final PsiClass class2 = method2.getContainingClass();
     Specifics isMoreSpecific = null;
@@ -240,69 +238,60 @@ outer:
     if (params1.length == args.length && params2.length != args.length) return Specifics.TRUE;
     if (params2.length == args.length && params1.length != args.length) return Specifics.FALSE;
 
-    if (info1.getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY) {
-      assert params1.length == params2.length;
+    final PsiTypeParameter[] typeParameters1 = method1.getTypeParameters();
+    final PsiTypeParameter[] typeParameters2 = method2.getTypeParameters();
+    PsiSubstitutor substitutor1 = PsiSubstitutor.EMPTY;
+    PsiSubstitutor substitutor2 = PsiSubstitutor.EMPTY;
 
-      for (int i = 0; i < params1.length; i++) {
-        PsiType type1 = params1[i].getType();
-        PsiType type2 = params2[i].getType();
-        PsiType argType = i < args.length ? args[i].getType() : null;
-
-        final Specifics specifics = checkSubtyping(type1, type2, argType);
-        if (specifics == null) continue;
-        switch(specifics) {
-          case TRUE:
-            if (isMoreSpecific == Specifics.FALSE) return Specifics.CONFLICT;
-            isMoreSpecific = specifics;
-            break;
-          case FALSE:
-            if (isMoreSpecific == Specifics.TRUE) return Specifics.CONFLICT;
-            isMoreSpecific = specifics;
-            break;
-          case CONFLICT:
-            return Specifics.CONFLICT;
-        }
-      }
-    } else {
-      assert info1.getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS &&
-             info2.getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
-
-      for (int i = 0; i < Math.max(params1.length, params2.length); i++) {
-        PsiType type1 = i < params1.length - 1 ? params1[i].getType() : ((PsiArrayType)params1[params1.length - 1].getType()).getComponentType();
-        type1 = TypeConversionUtil.erasure(type1);
-        PsiType type2 = i < params2.length - 1 ? params2[i].getType() : ((PsiArrayType)params2[params2.length - 1].getType()).getComponentType();
-        type2 = TypeConversionUtil.erasure(type2);
-        PsiType argType = i < args.length ? args[i].getType() : null;
-        final Specifics specifics = checkSubtyping(type1, type2, argType);
-        if (specifics == null) continue;
-        switch(specifics) {
-          case TRUE:
-            if (isMoreSpecific == Specifics.FALSE) return Specifics.CONFLICT;
-            isMoreSpecific = specifics;
-            break;
-          case FALSE:
-            if (isMoreSpecific == Specifics.TRUE) return Specifics.CONFLICT;
-            isMoreSpecific = specifics;
-            break;
-          case CONFLICT:
-            return Specifics.CONFLICT;
-        }
-      }
+    final int max = Math.max(params1.length, params2.length);
+    PsiType[] types1 = new PsiType[max];
+    PsiType[] types2 = new PsiType[max];
+    for (int i = 0; i < max; i++) {
+      types1[i] = i < params1.length ? params1[i].getType() : ((PsiArrayType)params1[params1.length - 1].getType()).getComponentType();
+      types2[i] = i < params2.length ? params2[i].getType() : ((PsiArrayType)params2[params2.length - 1].getType()).getComponentType();
     }
 
-    if (isMoreSpecific == null){
-      if (class1 != class2){
-        if (class2.isInheritor(class1, true)
-            || class1.isInterface() && !class2.isInterface()){
+    if (typeParameters1.length > 0) {
+      final PsiResolveHelper resolveHelper = myArgumentsList.getManager().getResolveHelper();
+      substitutor1 = resolveHelper.inferTypeArguments(typeParameters1, types1, types2, PsiUtil.getLanguageLevel(myArgumentsList));
+    } else if (typeParameters2.length > 0) {
+      final PsiResolveHelper resolveHelper = myArgumentsList.getManager().getResolveHelper();
+      substitutor2 = resolveHelper.inferTypeArguments(typeParameters2, types2, types1, PsiUtil.getLanguageLevel(myArgumentsList));
+    }
+
+      assert types1.length == types2.length;
+
+    for (int i = 0; i < types1.length; i++) {
+      PsiType type1 = substitutor1.substitute(types1[i]);
+      PsiType type2 = substitutor2.substitute(types2[i]);
+      PsiType argType = i < args.length ? args[i].getType() : null;
+
+      final Specifics specifics = checkSubtyping(type1, type2, argType);
+      if (specifics == null) continue;
+      switch (specifics) {
+        case TRUE:
+          if (isMoreSpecific == Specifics.FALSE) return Specifics.CONFLICT;
+          isMoreSpecific = specifics;
+          break;
+        case FALSE:
+          if (isMoreSpecific == Specifics.TRUE) return Specifics.CONFLICT;
+          isMoreSpecific = specifics;
+          break;
+        case CONFLICT:
+          return Specifics.CONFLICT;
+      }
+    }
+    if (isMoreSpecific == null) {
+      if (class1 != class2) {
+        if (class2.isInheritor(class1, true) || class1.isInterface() && !class2.isInterface()) {
           isMoreSpecific = Specifics.FALSE;
         }
-        else if (class1.isInheritor(class2, true)
-                 || class2.isInterface()){
-            isMoreSpecific = Specifics.TRUE;
-          }
+        else if (class1.isInheritor(class2, true) || class2.isInterface()) {
+          isMoreSpecific = Specifics.TRUE;
+        }
       }
     }
-    if (isMoreSpecific == null){
+    if (isMoreSpecific == null) {
       return Specifics.CONFLICT;
     }
 

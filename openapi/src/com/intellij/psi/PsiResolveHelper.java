@@ -109,6 +109,11 @@ public interface PsiResolveHelper {
                                     PsiElement parent,
                                     final boolean forCompletion);
 
+  PsiSubstitutor inferTypeArguments(PsiTypeParameter[] typeParameters,
+                                    PsiType[] leftTypes,
+                                    PsiType[] rightTypes,
+                                    LanguageLevel languageLevel);
+
   PsiType getSubstitutionForTypeParameter(PsiTypeParameter typeParam,
                                           PsiType param,
                                           PsiType arg,
