@@ -17,8 +17,10 @@ class ClassPath {
   private ArrayList<Loader> myLoaders = new ArrayList<Loader>();
   private HashMap<URL,Loader> myLoadersMap = new HashMap<URL, Loader>();
   @NonNls private static final String FILE_PROTOCOL = "file";
+  private boolean myCanLockJars;
 
-  public ClassPath(URL[] urls) {
+  public ClassPath(URL[] urls, boolean canLockJars) {
+    myCanLockJars = canLockJars;
     push(urls);
   }
 
@@ -69,14 +71,14 @@ class ClassPath {
     return myLoaders.get(i);
   }
 
-  private static Loader getLoader(final URL url) throws IOException {
+  private Loader getLoader(final URL url) throws IOException {
     String s = url.getFile();
 
     if (s != null && StringUtil.endsWithChar(s, '/')) {
       if (FILE_PROTOCOL.equals(url.getProtocol())) return new FileLoader(url);
     }
     else {
-      return new JarLoader(url);
+      return new JarLoader(url, myCanLockJars);
     }
 
     //add custom loaders here

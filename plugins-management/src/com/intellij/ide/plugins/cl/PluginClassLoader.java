@@ -23,7 +23,7 @@ public class PluginClassLoader extends UrlClassLoader {
   private final File myLibDirectory;
 
   public PluginClassLoader(List<URL> urls, ClassLoader[] parents, PluginId pluginId, File pluginRoot) {
-    super(urls, null);
+    super(urls, null, true);
     myParents = parents;
     myPluginId = pluginId;
 

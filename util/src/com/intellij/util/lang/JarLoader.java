@@ -14,16 +14,29 @@ import java.util.zip.ZipFile;
 
 class JarLoader extends Loader {
   private URL myURL;
+  private final boolean myCanLockJar;
+  private ZipFile myZipFile;
   private Set<String> myPackages = null;
   @NonNls private static final String JAR_PROTOCOL = "jar";
   @NonNls private static final String FILE_PROTOCOL = "file";
 
-  JarLoader(URL url) throws IOException {
+  JarLoader(URL url, boolean canLockJar) throws IOException {
     super(new URL(JAR_PROTOCOL, "", -1, url + "!/"));
     myURL = url;
+    myCanLockJar = canLockJar;
   }
 
   private ZipFile getZipFile() throws IOException {
+    if (myZipFile != null) return myZipFile;
+    if (myCanLockJar) {
+      myZipFile = _getZipFile();
+      return myZipFile;
+    }
+
+    return _getZipFile();
+  }
+
+  private ZipFile _getZipFile() throws IOException {
     if (FILE_PROTOCOL.equals(myURL.getProtocol())) {
       String s = FileUtil.unquote(myURL.getFile());
       if (!(new File(s)).exists()) {
@@ -41,13 +54,22 @@ class JarLoader extends Loader {
     myPackages = new HashSet<String>();
     myPackages.add("");
 
-    final Enumeration<? extends ZipEntry> entries = getZipFile().entries();
+    final ZipFile zipFile = getZipFile();
+    final Enumeration<? extends ZipEntry> entries = zipFile.entries();
     while (entries.hasMoreElements()) {
       ZipEntry zipEntry = entries.nextElement();
       final String name = zipEntry.getName();
       final int i = name.lastIndexOf("/");
       String packageName = i > 0 ? name.substring(0, i) : "";
       myPackages.add(packageName);
+    }
+
+    releaseZipFile(zipFile);
+  }
+
+  private void releaseZipFile(final ZipFile zipFile) throws IOException {
+    if (!myCanLockJar) {
+      zipFile.close();
     }
   }
 
@@ -68,7 +90,7 @@ class JarLoader extends Loader {
         if (entry != null) return new MyResource(name, new URL(getBaseURL(), name));
       }
       finally {
-        file.close();
+        releaseZipFile(file);
       }
     }
     catch (Exception e) {
@@ -112,36 +134,36 @@ class JarLoader extends Loader {
       try {
         final ZipEntry entry = file.getEntry(myName);
         if (entry == null) {
-          file.close();
+          releaseZipFile(file);
           return null;
         }
         final InputStream inputStream = new BufferedInputStream(file.getInputStream(entry));
         return new FilterInputStream(inputStream) {
           public void close() throws IOException {
             super.close();
-            file.close();
+            releaseZipFile(file);
           }
         };
       }
       catch (IOException e) {
-        file.close();
+        releaseZipFile(file);
         return null;
       }
     }
 
     public int getContentLength() {
       try {
-        final ZipFile jarFile = getZipFile();
-        if (jarFile == null) return -1;
+        final ZipFile file = getZipFile();
+        if (file == null) return -1;
 
         try {
-          final ZipEntry entry = jarFile.getEntry(myName);
+          final ZipEntry entry = file.getEntry(myName);
           if (entry == null) return -1;
 
           return (int)entry.getSize();
         }
         finally {
-          jarFile.close();
+          releaseZipFile(file);
         }
       }
       catch (IOException e) {

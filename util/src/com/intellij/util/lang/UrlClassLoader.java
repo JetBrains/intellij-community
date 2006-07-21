@@ -19,9 +19,13 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   public UrlClassLoader(List<URL> urls, ClassLoader parent) {
+    this(urls, parent, false);
+  }
+
+  public UrlClassLoader(List<URL> urls, ClassLoader parent, boolean canLockJars) {
     super(parent);
 
-    myClassPath = new ClassPath(urls.toArray(new URL[urls.size()]));
+    myClassPath = new ClassPath(urls.toArray(new URL[urls.size()]), canLockJars);
     myURLs = new ArrayList<URL>(urls);
   }
 

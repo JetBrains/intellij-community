@@ -597,7 +597,7 @@ public class PluginManager {
 
     UrlClassLoader newClassLoader = null;
     try {
-      newClassLoader = new UrlClassLoader(classpathElements, null);
+      newClassLoader = new UrlClassLoader(classpathElements, null, true);
 
       // prepare plugins
       if (!isLoadingOfExternalPluginsDisabled()) {
