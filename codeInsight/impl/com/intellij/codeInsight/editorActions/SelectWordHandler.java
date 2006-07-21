@@ -96,6 +96,7 @@ public class SelectWordHandler extends EditorActionHandler {
       }
 
       element = element.getNextSibling();
+      if (element == null) return;
       caretOffset = element.getTextRange().getStartOffset();
     }
 
