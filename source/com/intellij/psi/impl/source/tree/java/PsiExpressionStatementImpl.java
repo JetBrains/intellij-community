@@ -57,4 +57,12 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
   public String toString() {
     return "PsiExpressionStatement";
   }
+
+  public void deleteChildInternal(ASTNode child) {
+    if (getChildRole(child) == ChildRole.EXPRESSION) {
+      getTreeParent().deleteChildInternal(this);
+    } else {
+      super.deleteChildInternal(child);
+    }
+  }
 }
