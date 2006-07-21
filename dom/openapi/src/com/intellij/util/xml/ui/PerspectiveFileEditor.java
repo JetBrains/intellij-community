@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -23,13 +24,17 @@ import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.awt.event.FocusEvent;
+import java.awt.event.AWTEventListener;
+import java.awt.*;
 
 /**
  * User: Sergey.Vasiliev
  */
-abstract public class PerspectiveFileEditor extends UserDataHolderBase implements DocumentsEditor, Committable {
+abstract public class PerspectiveFileEditor extends UserDataHolderBase implements DocumentsEditor, Committable, NavigatableFileEditor {
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private final Project myProject;
   private final VirtualFile myFile;
@@ -81,6 +86,27 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
 
   abstract protected DomElement getSelectedDomElement();
   abstract protected void setSelectedDomElement(DomElement domElement);
+
+  public boolean canNavigateTo(@NotNull final Navigatable navigatable) {
+    if (navigatable instanceof OpenFileDescriptor) {
+      final VirtualFile file = ((OpenFileDescriptor)navigatable).getFile();
+      return file != null && isMyFile(file);
+    }
+    return true;
+  }
+
+  protected boolean isMyFile(VirtualFile file) {
+    return file.equals(myFile);
+  }
+
+  public void navigateTo(@NotNull final Navigatable navigatable) {
+    final JComponent focusedComponent = getPreferredFocusedComponent();
+    if (focusedComponent != null) {
+      if (!focusedComponent.requestFocusInWindow()) {
+        focusedComponent.requestFocus();
+      }
+    }
+  }
 
   public final void addWatchedElement(final DomElement domElement) {
     addWatchedDocument(getDocumentManager().getDocument(domElement.getRoot().getFile()));
@@ -214,5 +240,98 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
       myPropertyChangeSupport.firePropertyChange(FileEditor.PROP_VALID, Boolean.TRUE, Boolean.FALSE);
     }
     return !myInvalidated;
+  }
+
+  private static Thread focusCatcher = new FocusDrawer();
+
+  static {
+    focusCatcher.start();
+  }
+
+  private static class FocusDrawer extends Thread implements AWTEventListener {
+    private Component myCurrent;
+    private Component myPrevious;
+    private boolean myTemporary;
+
+    public FocusDrawer() {
+      Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.FOCUS_EVENT_MASK);
+    }
+
+    public void run() {
+      try {
+        while (true) {
+          paintFocusBorders(false);
+
+          sleep(100);
+        }
+      }
+      catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+
+    private void paintFocusBorders(boolean clean) {
+      if (myCurrent != null) {
+        Graphics currentFocusGraphics = myCurrent.getGraphics();
+        if (currentFocusGraphics != null) {
+          if (clean) {
+            currentFocusGraphics.setXORMode(Color.RED);
+          }
+          currentFocusGraphics.setColor(Color.RED);
+          drawDottedRectangle(currentFocusGraphics, 1, 1, myCurrent.getSize().width - 2, myCurrent.getSize().height - 2);
+        }
+      }
+
+      if (myPrevious != null) {
+        Graphics previousFocusGraphics = myPrevious.getGraphics();
+        if (previousFocusGraphics != null) {
+          if (clean) {
+            previousFocusGraphics.setXORMode(Color.BLUE);
+          }
+          previousFocusGraphics.setColor(Color.BLUE);
+          drawDottedRectangle(previousFocusGraphics, 1, 1, myPrevious.getSize().width - 2, myPrevious.getSize().height - 2);
+        }
+      }
+    }
+
+    public static void drawDottedRectangle(Graphics g, int x, int y, int x1, int y1) {
+      int i1;
+      for(i1 = x; i1 <= x1; i1 += 2){
+        g.drawLine(i1, y, i1, y);
+      }
+
+      for(i1 = i1 != x1 + 1 ? y + 2 : y + 1; i1 <= y1; i1 += 2){
+        g.drawLine(x1, i1, x1, i1);
+      }
+
+      for(i1 = i1 != y1 + 1 ? x1 - 2 : x1 - 1; i1 >= x; i1 -= 2){
+        g.drawLine(i1, y1, i1, y1);
+      }
+
+      for(i1 = i1 != x - 1 ? y1 - 2 : y1 - 1; i1 >= y; i1 -= 2){
+        g.drawLine(x, i1, x, i1);
+      }
+    }
+
+    public void eventDispatched(AWTEvent event) {
+      if (event instanceof FocusEvent) {
+        FocusEvent focusEvent = (FocusEvent) event;
+        Component fromComponent = focusEvent.getComponent();
+        Component oppositeComponent = focusEvent.getOppositeComponent();
+
+        paintFocusBorders(true);
+
+        switch (event.getID()) {
+          case FocusEvent.FOCUS_GAINED:
+            myCurrent = fromComponent;
+            myPrevious = oppositeComponent;
+            break;
+          case FocusEvent.FOCUS_LOST:
+            myTemporary = focusEvent.isTemporary();
+          default:
+            break;
+        }
+      }
+    }
   }
 }
