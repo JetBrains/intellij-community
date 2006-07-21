@@ -3,8 +3,8 @@ package com.intellij.ide.startup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashMap;
 
 import java.io.IOException;

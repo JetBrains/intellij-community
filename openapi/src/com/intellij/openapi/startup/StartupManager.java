@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.startup;
 
+import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.openapi.project.Project;
 
 public abstract class StartupManager {
@@ -27,4 +28,6 @@ public abstract class StartupManager {
   public abstract void registerPostStartupActivity(Runnable runnable);
 
   public abstract void runWhenProjectIsInitialized(Runnable runnable);
+
+  public abstract FileSystemSynchronizer getFileSystemSynchronizer();
 }
