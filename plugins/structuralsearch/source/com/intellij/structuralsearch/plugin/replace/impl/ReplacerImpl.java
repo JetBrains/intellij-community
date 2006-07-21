@@ -304,7 +304,7 @@ public class ReplacerImpl {
             elementParent.addBefore(replacement.getFirstChild(), el);
           }
 
-          el.delete();
+          el.getNode().getTreeParent().removeChild(el.getNode());
         } else {
           // preserve comments
           handleModifierList(el, replacement, context);
