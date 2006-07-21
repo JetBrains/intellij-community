@@ -1,16 +1,16 @@
 package com.intellij.mock;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.impl.EmptyMarkupModel;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
+import com.intellij.openapi.editor.impl.EmptyMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.Disposable;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -132,10 +132,12 @@ public class MockDocument implements DocumentEx {
   public void removePropertyChangeListener(PropertyChangeListener listener) {
   }
 
+  @SuppressWarnings({"unchecked"})
   public <T> T getUserData(Key<T> key) {
     return (T)myUserData.get(key);
   }
 
+  @SuppressWarnings({"unchecked"})
   public <T> void putUserData(Key<T> key, T value) {
     myUserData.put(key, value);
   }
@@ -189,7 +191,6 @@ public class MockDocument implements DocumentEx {
   }
 
   public void suppressGuardedExceptions() {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   public void unSuppressGuardedExceptions() {
@@ -198,6 +199,9 @@ public class MockDocument implements DocumentEx {
 
   public boolean isInEventsHandling() {
     return false;
+  }
+
+  public void clearLineModificationFlags() {
   }
 
   public void setCyclicBufferSize(int bufferSize) {

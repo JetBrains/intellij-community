@@ -1,18 +1,18 @@
 package com.intellij.openapi.editor.impl.injected;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.Disposable;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -136,6 +136,7 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
     return myDelegate.createRangeMarker(startOffset, endOffset, surviveOnExternalChange);
   }
 
+  @SuppressWarnings({"Deprecation"})
   public MarkupModel getMarkupModel() {
     return myDelegate.getMarkupModel();
   }
@@ -243,6 +244,9 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
     return myDelegate.isInEventsHandling();
   }
 
+  public void clearLineModificationFlags() {
+  }
+
   public RangeMarker getTextRange() {
     return myHostRange;
   }
@@ -278,8 +282,7 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
     if (line > getLineCount()- mySuffixLineCount) {
       return getLineCount();
     }
-    int hostLine = myDelegate.getLineNumber(myHostRange.getStartOffset()) + line - (myPrefixLineCount -1);
-    return hostLine;
+    return myDelegate.getLineNumber(myHostRange.getStartOffset()) + line - (myPrefixLineCount -1);
   }
 
   public int hostToInjectedLine(int hostLine) {

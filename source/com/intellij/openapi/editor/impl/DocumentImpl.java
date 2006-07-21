@@ -1,5 +1,6 @@
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -12,10 +13,9 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.Disposable;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CoModifiableList;
 import com.intellij.util.containers.WeakList;
@@ -391,6 +391,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myEventsHandling;
   }
 
+  public void clearLineModificationFlags() {
+    myLineSet.clearModificationFlags();
+  }
+
   private DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString) {
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp);
 
@@ -660,9 +664,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         "file text set",
         null
       );
-
     }
-    else replaceString(0, getTextLength(), text);
+    else {
+      replaceString(0, getTextLength(), text);
+    }
+
+    clearLineModificationFlags();
   }
 
   public RangeMarker createRangeMarker(final TextRange textRange) {

@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class FileDocumentManager {
   public static FileDocumentManager getInstance() {
@@ -27,6 +28,8 @@ public abstract class FileDocumentManager {
   }
 
   public abstract Document getDocument(VirtualFile file);
+
+  @Nullable
   public abstract Document getCachedDocument(VirtualFile file);
 
   public abstract VirtualFile getFile(Document document);

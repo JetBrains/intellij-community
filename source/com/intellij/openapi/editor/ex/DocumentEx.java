@@ -25,6 +25,8 @@ public interface DocumentEx extends Document {
   void unSuppressGuardedExceptions();
 
   boolean isInEventsHandling();
+
+  void clearLineModificationFlags();
 }
 
 

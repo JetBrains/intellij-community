@@ -43,6 +43,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.PendingEventDispatcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -140,6 +141,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return EditorFactory.getInstance().createDocument(text);
   }
 
+  @Nullable
   public Document getCachedDocument(VirtualFile file) {
     Reference<Document> reference = file.getUserData(DOCUMENT_KEY);
     Document document = reference != null ? reference.get() : null;
@@ -269,8 +271,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       if (commited){
         myUnsavedDocuments.remove(document);
         LOG.assertTrue(!myUnsavedDocuments.contains(document));
+        ((DocumentEx)document).clearLineModificationFlags();
       }
-
     }
   }
 

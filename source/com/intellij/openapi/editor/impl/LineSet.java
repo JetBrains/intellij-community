@@ -135,7 +135,7 @@ public class LineSet{
     }
   }
 
-  private void clearModificationFlags() {
+  public void clearModificationFlags() {
     for (int i = 0; i < mySegments.getSegmentCount(); i++) {
       mySegments.setSegmentData(i, mySegments.getSegmentData(i) & ~MODIFIED_MASK);
     }
