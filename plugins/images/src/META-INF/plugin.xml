@@ -56,12 +56,7 @@
         <action class="org.intellij.images.actions.ToggleTransparencyChessboardAction"
                 id="Images.ToggleTransparencyChessboard"
                 icon="/org/intellij/images/icons/ToggleTransparencyChessboard.png">
-            <keyboard-shortcut first-keystroke="control BACK_SLASH" keymap="$default"/>
         </action>
-        <group id="Images.FileViewPopupMenu">
-            <reference id="Images.EditExternaly"/>
-            <reference id="Images.ShowThumbnails"/>
-        </group>
         <group id="Images.EditorToolbar">
             <reference id="Images.ToggleTransparencyChessboard" />
             <action class="org.intellij.images.editor.actions.ToggleGridAction"
@@ -88,8 +83,6 @@
                 <keyboard-shortcut first-keystroke="control DIVIDE" keymap="$default"/>
                 <keyboard-shortcut first-keystroke="control SLASH" keymap="$default"/>
             </action>
-            <separator/>
-            <reference id="Images.EditExternaly"/>
         </group>
         <group id="Images.EditorPopupMenu">
             <reference id="CutCopyPasteGroup" />
@@ -105,6 +98,7 @@
             <separator />
             <reference id="VersionControlsGroup" />
             <separator />
+            <reference id="Images.EditExternaly"/>
             <reference id="ExternalToolsGroup" />
         </group>
         <group id="Images.ThumbnailsToolbar">
@@ -121,8 +115,6 @@
             <separator/>
             <reference id="Images.ToggleTransparencyChessboard" />
             <separator/>
-            <reference id="Images.EditExternaly"/>
-            <separator/>
             <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction"
                     id="Images.Thumbnails.Hide"
                     icon="/actions/cancel.png">
@@ -134,7 +126,7 @@
             <reference id="EditSource" />
             <action class="org.intellij.images.thumbnail.actions.EnterAction"
                     id="Images.Thumbnails.EnterAction">
-                <!--<keyboard-shortcut first-keystroke="ENTER" keymap="$default" />-->
+                <keyboard-shortcut first-keystroke="ENTER" keymap="$default" />
             </action>
             <separator />
             <reference id="Images.ThumbnailsToolbar"/>
@@ -149,6 +141,7 @@
             <reference id="VersionControlsGroup" />
             <reference id="CompareTwoFiles" />
             <separator />
+            <reference id="Images.EditExternaly"/>
             <reference id="ExternalToolsGroup" />
         </group>
     </actions>

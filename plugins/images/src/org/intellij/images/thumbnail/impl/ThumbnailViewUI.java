@@ -33,6 +33,7 @@ import com.intellij.ui.UIHelper;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
+import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.ui.ThumbnailComponent;
 import org.intellij.images.ui.ThumbnailComponentUI;
@@ -60,7 +61,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
     private static final Navigatable[] EMPTY_NAVIGATABLE_ARRAY = new Navigatable[]{};
 
-    private final ThumbnailViewImpl thumbnailView;
+    private final ThumbnailView thumbnailView;
     private final UIHelper.CopyPasteSupport copyPasteSupport;
     private final DeleteProvider deleteProvider;
     private ThumbnailListCellRenderer cellRenderer;
@@ -438,6 +439,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 }
             }
             return navigatables.toArray(EMPTY_NAVIGATABLE_ARRAY);
+        } else if (ThumbnailView.class.getName().equals(dataId)) {
+            return thumbnailView;
         }
 
         return null;

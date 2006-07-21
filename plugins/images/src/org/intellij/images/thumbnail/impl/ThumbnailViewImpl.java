@@ -48,6 +48,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
         ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
         toolWindow = windowManager.registerToolWindow(TOOLWINDOW_ID, new ThumbnailViewUI(this), ToolWindowAnchor.BOTTOM);
         toolWindow.setIcon(TOOL_WINDOW_ICON);
+        setVisible(false);
     }
 
     private ThumbnailViewUI getUI() {
