@@ -199,9 +199,9 @@ public class LightVirtualFile extends VirtualFile {
   }
 
   public void setContent(Object requestor, CharSequence content, boolean fireEvent) {
-    long oldStamp = myModStamp;
     myContent = content;
     if (fireEvent) {
+      long oldStamp = myModStamp;
       myModStamp = LocalTimeCounter.currentTime();
       myListener.contentsChanged(new VirtualFileEvent(requestor, this, null, oldStamp, myModStamp));
     }
