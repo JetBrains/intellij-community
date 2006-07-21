@@ -443,7 +443,7 @@ public abstract class ChooseByNameBase{
 
   protected abstract boolean isCloseByFocusLost();
 
-  private void showTextFieldPanel() {
+  protected void showTextFieldPanel() {
     final JLayeredPane layeredPane = getLayeredPane();
     final Dimension preferredTextFieldPanelSize = myTextFieldPanel.getPreferredSize();
     final int x = (layeredPane.getWidth() - preferredTextFieldPanelSize.width) / 2;

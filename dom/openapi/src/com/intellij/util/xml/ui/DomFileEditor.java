@@ -26,6 +26,7 @@ import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,6 +38,9 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
   private final String myName;
   private final T myComponent;
 
+  protected DomFileEditor(final DomElement element, final String name, final T component) {
+    this(element.getManager().getProject(), element.getRoot().getFile().getVirtualFile(), name, component);
+  }
   protected DomFileEditor(final Project project, final VirtualFile file, final String name, final T component) {
     super(project, file);
     myComponent = component;
@@ -64,6 +68,11 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
     if (checkIsValid()) {
       myComponent.commit();
     }
+  }
+
+  @Nullable
+  public JComponent getPreferredFocusedComponent() {
+    return myComponent.getComponent();
   }
 
   protected final T getDomComponent() {

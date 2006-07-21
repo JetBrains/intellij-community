@@ -205,6 +205,10 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     }
 */
     myGotoByNamePanel = new ChooseByNamePanel(myProject, createChooseByNameModel(), name, myScope.isSearchInLibraries()) {
+
+      protected void showTextFieldPanel() {
+      }
+
       protected void close(boolean isOk) {
         super.close(isOk);
 
