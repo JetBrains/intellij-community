@@ -19,9 +19,11 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFileEx {
 
@@ -80,9 +82,9 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     final FileViewProvider provider = getViewProvider().clone();
     final LightPsiFileImpl clone = (LightPsiFileImpl)provider.getPsi(getLanguage());
 
-    final HashMap<Key, Object> copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
+    final Map<Key, Object> copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
     if (copyableMap != null) {
-      final HashMap<Key, Object> mapclone = (HashMap<Key, Object>)copyableMap.clone();
+      final Map<Key, Object> mapclone = ((THashMap<Key, Object>)copyableMap).clone();
       clone.putUserData(COPYABLE_USER_MAP_KEY, mapclone);
     }
 

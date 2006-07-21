@@ -20,12 +20,13 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implements PsiFileEx {
@@ -223,9 +224,9 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     FileViewProvider provider = getViewProvider().clone();
     PsiFileImpl clone = (PsiFileImpl)provider.getPsi(getLanguage());
 
-    HashMap<Key,Object> copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
+    Map<Key,Object> copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
     if (copyableMap != null){
-      final HashMap<Key,Object> mapclone = (HashMap<Key, Object>)copyableMap.clone();
+      final Map<Key,Object> mapclone = ((THashMap<Key, Object>)copyableMap).clone();
       clone.putUserData(COPYABLE_USER_MAP_KEY, mapclone);
     }
     if(myTreeElementPointer != null){
