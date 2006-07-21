@@ -40,7 +40,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
 
 
   protected MyNode myRoot = new MyRootNode();
-  protected JTree myTree;
+  protected Tree myTree;
 
   private JPanel myOptionsPanel;
   protected JPanel myWholePanel;

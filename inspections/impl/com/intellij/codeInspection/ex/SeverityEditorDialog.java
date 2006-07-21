@@ -40,6 +40,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -125,8 +126,7 @@ public class SeverityEditorDialog extends DialogWrapper {
       final MyTextAttributesDescription description = new MyTextAttributesDescription(info.getHighlightInfoType().toString(),
                                                                                       null,
                                                                                       new TextAttributes(),
-                                                                                      info.getHighlightInfoType().getAttributesKey(),
-                                                                                      EditorColorsManager.getInstance().getGlobalScheme());
+                                                                                      info.getHighlightInfoType().getAttributesKey());
       myOptionsPanel.apply(description, null);
       @NonNls Element textAttributes = new Element("temp");
       try {
@@ -142,8 +142,7 @@ public class SeverityEditorDialog extends DialogWrapper {
       final MyTextAttributesDescription description = new MyTextAttributesDescription(info.getHighlightInfoType().toString(),
                                                                                       null,
                                                                                       info.getAttributes(),
-                                                                                      info.getHighlightInfoType().getAttributesKey(),
-                                                                                      EditorColorsManager.getInstance().getGlobalScheme());
+                                                                                      info.getHighlightInfoType().getAttributesKey());
       @NonNls Element textAttributes = new Element("temp");
       try {
         info.getAttributes().writeExternal(textAttributes);
@@ -175,10 +174,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     removeAction.setEnableCondition(new Condition<MyHighlightInfoTypeWithAtrributesDescription>() {
       public boolean value(final MyHighlightInfoTypeWithAtrributesDescription pair) {
         final HighlightInfoType info = pair.getHighlightInfoType();
-        if (info == null) {
-          return false;
-        }
-        return !isDefaultSetting(info);
+        return info != null && !isDefaultSetting(info);
       }
     });
     controller.addAction(new AnAction(ExecutionBundle.message("move.up.action.name"), null, IconLoader.getIcon("/actions/moveUp.png")) {
@@ -266,7 +262,8 @@ public class SeverityEditorDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    final EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    final EditorColorsManager editorColorsManager = EditorColorsManager.getInstance();
+    final EditorColorsScheme colorsScheme = editorColorsManager.getGlobalScheme();
     if (colorsScheme instanceof DefaultColorsScheme) {
       final int res = Messages.showYesNoCancelDialog(myPanel, InspectionsBundle.message("highlight.severity.default.color.scheme.warning"), ApplicationBundle.message("title.cannot.modify.default.scheme"), Messages.getQuestionIcon());
       if (res == DialogWrapper.OK_EXIT_CODE){
@@ -284,7 +281,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     for (int i = 0; i < listModel.getSize(); i++) {
       final MyHighlightInfoTypeWithAtrributesDescription info =
         (MyHighlightInfoTypeWithAtrributesDescription)listModel.getElementAt(i);
-      info.getSeverity().setVal((listModel.getSize() - i) * 100);
+      info.getSeverity().setVal((listModel.getSize() - i + 1) * 100); //last value from server
       if (!isDefaultSetting(info.getHighlightInfoType())) {
         currentTypes.add(info.getHighlightInfoType());
         final Color stripeColor = info.getAttributes().getErrorStripeColor();
@@ -295,6 +292,12 @@ public class SeverityEditorDialog extends DialogWrapper {
     infoTypes.removeAll(currentTypes);
     for (HighlightInfoType.HighlightInfoTypeImpl info : infoTypes) {
       SeverityRegistrar.unregisterSeverity(info.getSeverity(null));
+    }
+    try {
+      editorColorsManager.saveAllSchemes();
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
     super.doOKAction();
   }
@@ -337,12 +340,8 @@ public class SeverityEditorDialog extends DialogWrapper {
   }
 
   private static class MyTextAttributesDescription extends TextAttributesDescription {
-    public MyTextAttributesDescription(final String name,
-                                       final String group,
-                                       final TextAttributes attributes,
-                                       final TextAttributesKey type,
-                                       final EditorColorsScheme scheme) {
-      super(name, group, attributes, type, scheme);
+    public MyTextAttributesDescription(final String name, final String group, final TextAttributes attributes, final TextAttributesKey type) {
+      super(name, group, attributes, type, null);
     }
 
     public void apply(EditorColorsScheme scheme) {

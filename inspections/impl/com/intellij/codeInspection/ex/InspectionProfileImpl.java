@@ -71,6 +71,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NonNls private static final String ROOT_ELEMENT_TAG = "inspections";
   private String myEnabledTool = null;
   @NonNls private static final String USED_LEVELS = "used_levels";
+  private boolean myOverrideSeverities = true;
+
   private InspectionToolRegistrar myRegistrar;
 
 //private String myBaseProfileName;
@@ -106,6 +108,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
                                final InspectionToolRegistrar registrar) {
     super(inspectionProfile, file);
     myRegistrar = registrar;
+    myBaseProfile = DEFAULT_PROFILE;
   }
 
   public InspectionProfileImpl(@NonNls String name) {
@@ -222,7 +225,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    if (myFile == null && myTools.isEmpty()){
+    if (myFile == null && myTools.isEmpty()){ //can't load tools in any other way
       initInspectionTools();
     }
     myDisplayLevelMap.clear();
@@ -239,9 +242,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
     }
 
-    final Element highlightElement = element.getChild(USED_LEVELS);
-    if (highlightElement != null) {
-      SeverityRegistrar.getInstance().readExternal(highlightElement);
+    if (myOverrideSeverities) {
+      final Element highlightElement = element.getChild(USED_LEVELS);
+      if (highlightElement != null) {
+        SeverityRegistrar.getInstance().readExternal(highlightElement);
+      }
     }
 
     for (final Object o : element.getChildren(INSPECTION_TOOL_TAG)) {
@@ -354,7 +359,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myEnabledTool = displayName;
   }
 
-  public void load() {
+  private void load(boolean overrideSeverities){
+    myOverrideSeverities = overrideSeverities;
     try {
       if (myFile != null) {
         Document document = JDOMUtil.loadDocument(myFile);
@@ -374,6 +380,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         }
       }, ModalityState.NON_MMODAL);
     }
+    myOverrideSeverities = true;
+  }
+
+  public void load() {
+    load(true);
   }
 
   public boolean isDefault() {
@@ -400,7 +411,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     if (mySource != null){
       copyToolsConfigurations(mySource);
     }
-    load();
+    load(false);
   }
 
   public ModifiableModel getModifiableModel() {

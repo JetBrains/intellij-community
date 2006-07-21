@@ -880,6 +880,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public boolean isModified() {
     if (myModified) return setSelectedProfileModified(true);
+    if (mySelectedProfile.isChanged()) return true;
     if (!Comparing.strEqual(myInitialProfile, mySelectedProfile.getName())) return true;
     for (Descriptor descriptor : myDescriptors) {
       if (mySelectedProfile.isToolEnabled(descriptor.getKey()) != descriptor.isEnabled()) {

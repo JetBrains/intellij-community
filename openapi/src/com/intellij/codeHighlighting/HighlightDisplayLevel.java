@@ -36,7 +36,7 @@ public class HighlightDisplayLevel {
   public static final HighlightDisplayLevel INFO = new HighlightDisplayLevel(HighlightSeverity.INFO, createIconByMask(CodeInsightColors.INFO_ATTRIBUTES.getDefaultAttributes().getErrorStripeColor()));
   public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, createIconByMask(new Color(30, 160, 0)));
 
-  private final Icon myIcon;
+  private Icon myIcon;
   private final HighlightSeverity mySeverity;
 
   public static HighlightDisplayLevel find(String name) {
@@ -63,7 +63,12 @@ public class HighlightDisplayLevel {
 
   public static void registerSeverity(final HighlightSeverity severity, final Color renderColor) {
     Icon severityIcon = createIconByMask(renderColor);
-    new HighlightDisplayLevel(severity, severityIcon);
+    final HighlightDisplayLevel level = ourMap.get(severity.toString());
+    if (level == null) {
+      new HighlightDisplayLevel(severity, severityIcon);
+    } else {
+      level.myIcon = severityIcon;
+    }
   }
 
   public static Icon createIconByMask(final Color renderColor) {
