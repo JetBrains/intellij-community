@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.CommonBundle;
+import com.intellij.jsf.model.application.Application;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.openapi.actionSystem.*;
@@ -39,6 +40,7 @@ import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -413,16 +415,31 @@ public class RepositoryBrowserDialog extends DialogWrapper {
           sourceURL = dialog.getTargetURL();
         }
 
+        final SVNURL sURL = sourceURL;
+        final SVNURL tURL = targetURL;
+
+        Runnable command = null;
         if (dialog.isUnifiedDiff()) {
-          File targetFile = dialog.getTargetFile();
-          targetFile.getParentFile().mkdirs();
-          doUnifiedDiff(targetFile, sourceURL, targetURL);
+          final File targetFile = dialog.getTargetFile();
+          command = new Runnable() {
+            public void run() {
+              targetFile.getParentFile().mkdirs();
+              doUnifiedDiff(targetFile, sURL, tURL);
+            }
+          };
         } else {
-          try {
-            doGraphicalDiff(sourceURL, targetURL);
-          } catch (SVNException e1) {
-          }
+          command = new Runnable() {
+            public void run() {
+              try {
+                doGraphicalDiff(sURL, tURL);
+              } catch (SVNException e1) {
+                Messages.showErrorDialog(myProject, e1.getErrorMessage().getFullMessage(), "Error");
+              }
+            }
+          };
         }
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(command, "Computing Difference", false,
+                myProject);
       }
     }
   }
@@ -757,9 +774,22 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
     }, diffEditor);
     Map<String, Change> changes = diffEditor.getChangesMap();
+    if (changes.isEmpty()) {
+      // display no changes dialog.
+      final String text = "Not textual difference found between '"
+              + SVNPathUtil.tail(sourceURL.toString()) +
+              " and '" +
+              SVNPathUtil.tail(targetURL.toString()) + "'";
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          Messages.showInfoMessage(myProject, text, "No Difference Found");
+        }
+      });
+      return;
+    }
     final Collection<Change> changesList = changes.values();
 
-    CommittedChangeList changeList = new CommittedChangeList() {
+    final CommittedChangeList changeList = new CommittedChangeList() {
       public String getCommitterName() {
         return "";
       }
@@ -776,8 +806,12 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         return "";
       }
     };
-    String title = "Compare of '" + SVNPathUtil.tail(sourceURL.toString()) + " and '" + SVNPathUtil.tail(targetURL.toString()) + "'";
-    AbstractVcsHelper.getInstance(myProject).showChangesBrowser(changeList, title);
+    final String title = "Compare of '" + SVNPathUtil.tail(sourceURL.toString()) + " and '" + SVNPathUtil.tail(targetURL.toString()) + "'";
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        AbstractVcsHelper.getInstance(myProject).showChangesBrowser(changeList, title);
+      }
+    });
   }
 
 }
