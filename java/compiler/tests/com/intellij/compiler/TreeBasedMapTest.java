@@ -19,6 +19,23 @@ import java.util.Set;
  */
 public class TreeBasedMapTest extends TestCase {
 
+  public void testSize() {
+    final TreeBasedMap<String> map = new TreeBasedMap<String>(new StringInterner(), '/');
+
+    map.put("aaa/bbb/ccc", "ValueAAABBBCCC");
+    map.put("aaa/bbb/ddd", "ValueAAABBBDDD");
+
+    assertEquals(2, map.size());
+    assertEquals("ValueAAABBBDDD", map.get("aaa/bbb/ddd"));
+    assertEquals("ValueAAABBBCCC", map.get("aaa/bbb/ccc"));
+
+    map.put("aaa/bbb/ddd", "AnotherValue");
+    
+    assertEquals(2, map.size());
+    assertEquals("AnotherValue", map.get("aaa/bbb/ddd"));
+    assertEquals("ValueAAABBBCCC", map.get("aaa/bbb/ccc"));
+  }
+
   public void testAdd() {
     final TreeBasedMap<String> map = new TreeBasedMap<String>(new StringInterner(), '/');
     map.put("", "ValueEmpty");
