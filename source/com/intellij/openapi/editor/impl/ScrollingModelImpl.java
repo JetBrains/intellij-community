@@ -124,7 +124,7 @@ public class ScrollingModelImpl implements ScrollingModel {
   private Point calcOffsetsToScroll(LogicalPosition pos, ScrollType scrollType, Rectangle viewRect) {
     Point targetLocation = myEditor.logicalPositionToXY(pos);
 
-    if (myEditor.getSettings().isRefrainFromScrolling()) {
+    if (myEditor.getSettings().isRefrainFromScrolling() && viewRect.contains(targetLocation)) {
       if (scrollType == ScrollType.CENTER ||
           scrollType == ScrollType.CENTER_DOWN ||
           scrollType == ScrollType.CENTER_UP) {
