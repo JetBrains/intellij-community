@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.RepositoryVersion;
 import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
@@ -157,4 +158,11 @@ public abstract class AbstractVcsHelper {
   public abstract void showCodeSmellErrors(final List<CodeSmellInfo> smells);
     
   public abstract void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path);
+
+  /**
+   * Shows the "Rollback Changes" dialog with the specified list of changes.
+   *
+   * @param changes the changes to show in the dialog.
+   */
+  public abstract void showRollbackChangesDialog(List<Change> changes);
 }

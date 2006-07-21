@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserDialog;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
+import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.DifferenceType;
 import com.intellij.openapi.vcs.checkin.VcsOperation;
@@ -169,7 +170,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
         
     }
 
-    protected void reportError(Exception exception) {
+  public void showRollbackChangesDialog(List<Change> changes) {
+    RollbackChangesDialog.rollbackChanges(myProject, changes);
+  }
+
+  protected void reportError(Exception exception) {
         exception.printStackTrace();
         Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"), Messages.getErrorIcon());
     }
