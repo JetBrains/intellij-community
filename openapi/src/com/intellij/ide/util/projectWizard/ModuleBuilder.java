@@ -123,7 +123,7 @@ public abstract class ModuleBuilder {
     if (myAddSupportContexts != null) {
       for (AddSupportContext supportContext : myAddSupportContexts) {
         if (supportContext.isAddSupport()) {
-          supportContext.installSupport(module, rootModel);
+          supportContext.installSupportInAction(module, rootModel);
         }
       }
     }

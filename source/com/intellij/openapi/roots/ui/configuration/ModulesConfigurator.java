@@ -176,31 +176,27 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     J2EEModuleUtilEx.checkJ2EEModulesAcyclic(models);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        try {
-          final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
-          projectRootManager.multiCommit(myModuleModel, rootModels);
-        }
-        finally {
-          myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-
-          final ArrayList<ModuleEditor> editors = new ArrayList<ModuleEditor>(myModuleEditors);
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              for (final ModuleEditor moduleEditor : editors) {
-                final Module module = moduleEditor.getModule();
-                if (module != null) {
-                  final ModuleBuilder builder = moduleEditor.getModuleBuilder();
-                  if (builder != null) {
-                    builder.addSupport(module);
-                  }
-                }
-              }
-            }
-          });
-        }
-      }
-    });
+       public void run() {
+         try {
+           final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
+           projectRootManager.multiCommit(myModuleModel, rootModels);
+         }
+         finally {
+           myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+           for (Module module: myModuleModel.getModules()) {
+             if (!module.isDisposed()) {
+               final ModuleEditor moduleEditor = getModuleEditor(module);
+               if (moduleEditor != null) {
+                 final ModuleBuilder builder = moduleEditor.getModuleBuilder();
+                 if (builder != null) {
+                   builder.addSupport(module);
+                 }
+               }
+             }
+           }
+         }
+       }
+     });
 
     if (!J2EEModuleUtilEx.checkDependentModulesOutputPathConsistency(myProject, J2EEModuleUtil.getAllJ2EEModules(myProject), true)) {
       throw new ConfigurationException(null);

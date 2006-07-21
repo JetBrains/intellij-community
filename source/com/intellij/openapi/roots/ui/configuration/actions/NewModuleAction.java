@@ -48,6 +48,7 @@ public class NewModuleAction extends AnAction {
           }
         }
       });
+
       if (ex != null) {
         if (ex instanceof LoadCancelledException) {
           LoadCancelledException cancelled = (LoadCancelledException)ex;
