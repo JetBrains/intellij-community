@@ -52,7 +52,7 @@ public class CompositeCacheManager implements CacheManager{
 
   public boolean processFilesWithWord(Processor<PsiFile> processor, String word, short occurenceMask, GlobalSearchScope scope, final boolean caseSensitively) {
     for (CacheManager cacheManager : myManagers) {
-      if (!cacheManager.processFilesWithWord(processor, word, occurenceMask, scope, true)) return false;
+      if (!cacheManager.processFilesWithWord(processor, word, occurenceMask, scope, caseSensitively)) return false;
     }
     return true;
   }
