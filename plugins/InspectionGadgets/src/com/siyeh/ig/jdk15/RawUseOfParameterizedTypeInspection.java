@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
+import java.util.Map;
 
 public class RawUseOfParameterizedTypeInspection extends VariableInspection {
 
@@ -145,7 +146,7 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
         }
 
         private void checkReferenceElement(PsiJavaCodeReferenceElement reference,
-                                           boolean isInnerClass) {
+                                           boolean isQualifier) {
             if (reference == null) {
                 return;
             }
@@ -164,10 +165,16 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
                 return;
             }
             final PsiClass aClass = (PsiClass)element;
-            if (isInnerClass) {
-                if (aClass.hasModifierProperty(PsiModifier.STATIC)
-                        || aClass.isInterface()) {
-                    return;
+            if (isQualifier) {
+                final PsiJavaCodeReferenceElement parent =
+                        (PsiJavaCodeReferenceElement)reference.getParent();
+                final PsiElement referee = parent.resolve();
+                if (referee instanceof PsiClass) {
+                    final PsiClass innerClass = (PsiClass)referee;
+                    if (innerClass.hasModifierProperty(PsiModifier.STATIC)
+                            || innerClass.isInterface()) {
+                        return;
+                    }
                 }
             }
             if (!aClass.hasTypeParameters()) {
