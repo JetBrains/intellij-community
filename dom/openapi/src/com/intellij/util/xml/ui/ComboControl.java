@@ -6,18 +6,29 @@ package com.intellij.util.xml.ui;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
+import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
+import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
+import com.intellij.lang.annotation.HighlightSeverity;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicComboBoxUI;
+import javax.swing.plaf.basic.BasicComboBoxEditor;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
+
+import sun.swing.DefaultLookup;
 
 /**
  * @author peter
@@ -163,7 +174,8 @@ public class ComboControl extends BaseControl<JComboBox, String> {
   }
 
   static JComboBox initComboBox(final JComboBox comboBox, final Condition<String> validity) {
-    comboBox.setEditable(false);
+    comboBox.setEditable(true);
+    comboBox.setEditor(new MyComboBoxEditor());
     comboBox.setPrototypeDisplayValue(Pair.create("A", null));
     comboBox.setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -222,6 +234,83 @@ public class ComboControl extends BaseControl<JComboBox, String> {
       component.setEditable(true);
     }
     component.setSelectedItem(Pair.create(value, myIcons.get(value)));
-    component.setEditable(false);
   }
+
+
+  protected void updateComponent() {
+    final DomElement domElement = getDomElement();
+        if (domElement == null || !domElement.isValid()) return;
+
+    final JComboBox comboBox = getComponent();
+
+    final Project project = getProject();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            if (!getDomWrapper().isValid()) return;
+
+            final DomElement domElement = getDomElement();
+            if (!project.isOpen() || domElement == null || !domElement.isValid()) return;
+
+            final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
+            final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(domElement);
+            final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(domElement, true);
+            final List<DomElementProblemDescriptor> warningProblems =
+              holder.getProblems(domElement, true, true, HighlightSeverity.WARNING);
+
+            Color background = getDefaultBackground();
+            comboBox.setToolTipText(null);
+
+            if (errorProblems.size() > 0) {
+              background = getErrorBackground();
+              comboBox.setToolTipText(TooltipUtils.getTooltipText(errorProblems));
+           }
+            else if (warningProblems.size() > 0) {
+              background = getWarningBackground();
+              comboBox.setToolTipText(TooltipUtils.getTooltipText(warningProblems));
+            }
+
+            background = ((Pair<String,Icon>)comboBox.getSelectedItem()).first.trim().length() > 0 ? getDefaultBackground() : background;
+
+            comboBox.setBackground(background);
+            comboBox.getEditor().getEditorComponent().setBackground(background);
+          }
+        });
+
+  }
+
+  private static class MyComboBoxEditor implements ComboBoxEditor {
+    private JLabel myLabel;
+    private Pair<String,Icon> myCurrentItem;
+
+    public MyComboBoxEditor() {
+      myLabel = new JLabel();
+
+    }
+
+    public Component getEditorComponent() {
+      return myLabel;
+    }
+
+    public void setItem(Object anObject) {
+      myCurrentItem = anObject instanceof Pair ? (Pair<String,Icon>)anObject : EMPTY;
+
+      myLabel.setText(myCurrentItem.first);
+      myLabel.setIcon(myCurrentItem.second);
+    }
+
+    public Object getItem() {
+      return myCurrentItem;
+    }
+
+    public void selectAll() {
+    }
+
+    public void addActionListener(ActionListener l) {
+
+    }
+
+    public void removeActionListener(ActionListener l) {
+    }
+  }
+
 }
