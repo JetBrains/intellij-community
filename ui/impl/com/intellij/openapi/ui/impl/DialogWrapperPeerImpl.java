@@ -19,14 +19,13 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.SpeedSearchBase;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NotNull;
 
 public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogWrapper");
@@ -465,6 +464,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       super.hide();
       if (myFocusTrackback != null) {
         myFocusTrackback.restoreFocus();
+        myFocusTrackback = null;
       }
     }
 
