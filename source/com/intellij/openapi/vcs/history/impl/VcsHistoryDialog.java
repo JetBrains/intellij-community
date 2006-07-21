@@ -149,7 +149,8 @@ public class VcsHistoryDialog extends DialogWrapper {
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         if (myList.getSelectedRowCount() == 1) {
-          myComments.setText(myRevisions.get(myList.getSelectedRow()).getCommitMessage());
+          VcsFileRevision revision = (VcsFileRevision) myList.getItems().get(myList.getSelectedRow());
+          myComments.setText(revision.getCommitMessage());
           myComments.setCaretPosition(0);
         }
         else {
