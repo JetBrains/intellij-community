@@ -52,7 +52,7 @@ public abstract class FileDocumentManager {
     if (project != null) {
       final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       if (file != null) {
-        final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{file});
+        final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file);
         return !operationStatus.hasReadonlyFiles();
       } else {
         document.fireReadOnlyModificationAttempt();
