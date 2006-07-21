@@ -67,13 +67,26 @@ public class ChangesBrowser extends JPanel implements DataProvider {
 
     for (ChangeList list : changeLists) {
       myAllChanges.addAll(list.getChanges());
-      if (list instanceof LocalChangeList && ((LocalChangeList)list).isDefault() && initialListSelection == null) {
-        initialListSelection = list;
+      if (list instanceof LocalChangeList && initialListSelection == null) {
+        for(Change c: list.getChanges()) {
+          if (changes.contains(c)) {
+            initialListSelection = list;
+            break;
+          }
+        }
       }
     }
 
     if (initialListSelection == null) {
-      initialListSelection = changeLists.get(0);
+      for(ChangeList list: changeLists) {
+        if (list instanceof LocalChangeList && ((LocalChangeList) list).isDefault()) {
+          initialListSelection = list;
+          break;
+        }
+      }
+      if (initialListSelection == null) {
+        initialListSelection = changeLists.get(0);
+      }
     }
 
     myViewer = new ChangesTreeList(myProject, changes, capableOfExcludingChanges);
