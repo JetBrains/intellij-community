@@ -12,6 +12,7 @@ import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -102,7 +103,13 @@ public class SvnChangeProvider implements ChangeProvider {
           wcClient.doDelete(file, true, false);
         }
         else {
-          wcClient.doRevert(file, false);
+          SVNInfo info = wcClient.doInfo(file, SVNRevision.BASE);
+          if (info != null && info.getKind() == SVNNodeKind.FILE) {
+            wcClient.doRevert(file, false);
+          } else {
+            // do update to restore missing directory.
+            myVcs.createUpdateClient().doUpdate(file, SVNRevision.HEAD, true);
+          }
         }
       }
       catch (SVNException e) {
