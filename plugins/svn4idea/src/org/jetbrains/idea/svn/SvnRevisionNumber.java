@@ -72,4 +72,8 @@ public class SvnRevisionNumber implements VcsRevisionNumber {
   public int hashCode() {
     return myRevision.hashCode();
   }
+
+  public String toString() {
+    return myRevision.toString();
+  }
 }

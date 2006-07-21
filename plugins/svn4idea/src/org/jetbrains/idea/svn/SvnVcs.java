@@ -280,6 +280,10 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     return mySvnHistoryProvider;
   }
 
+  public VcsHistoryProvider getVcsBlockHistoryProvider() {
+    return mySvnHistoryProvider;
+  }
+
   public UpdateEnvironment getStatusEnvironment() {
     return mySvnStatusEnvironment;
   }

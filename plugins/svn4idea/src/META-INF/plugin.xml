@@ -73,6 +73,7 @@
       <reference id="Compare.LastVersion" text="Compare with revision at HEAD"/>
       <reference id="Compare.Selected"/>
       <reference id="Vcs.ShowTabbedFileHistory"/>
+      <reference id="Vcs.ShowHistoryForBlock"/>
       <reference id="Annotate"/>
       <action id="Subversion.Copy" class="org.jetbrains.idea.svn.actions.CopyAction"/>
       <separator/>
