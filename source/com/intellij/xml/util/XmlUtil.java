@@ -67,6 +67,7 @@ public class XmlUtil {
   @NonNls public static final String XML_SCHEMA_INSTANCE_URI = "http://www.w3.org/2001/XMLSchema-instance";
 
   @NonNls public static final String XSLT_URI = "http://www.w3.org/1999/XSL/Transform";
+  @NonNls public static final String XINCLUDE_URI = "http://www.w3.org/2001/XInclude";
 
   @NonNls public static final String ANT_URI = "http://ant.apache.org/schema.xsd";
   @NonNls public static final String XHTML_URI = "http://www.w3.org/1999/xhtml";

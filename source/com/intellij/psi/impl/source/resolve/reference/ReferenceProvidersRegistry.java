@@ -520,6 +520,24 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       provider
     );
 
+    registerXmlAttributeValueReferenceProvider(
+      new String[] { "href" },
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new AndFilter(
+              new ClassFilter(XmlTag.class),
+              new TextFilter("include")
+            ),
+            new NamespaceFilter(XmlUtil.XINCLUDE_URI)
+          ),
+          2
+        )
+      ),
+      true,
+      getProviderByType(PATH_REFERENCES_PROVIDER)
+    );
+
     final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider();
     registerReferenceProvider(
       new ElementFilter() {
