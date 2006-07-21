@@ -17,8 +17,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.TabbedPaneWrapper;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -132,12 +130,6 @@ public class EditorOptionsPanel {
     mySmartPasteCombo.addItem(INSERT_IMPORTS_ALWAYS);
     mySmartPasteCombo.addItem(INSERT_IMPORTS_ASK);
     mySmartPasteCombo.addItem(INSERT_IMPORTS_NONE);
-
-    myCbCollapseMethodBodies.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        myCbCollapseAccessors.setSelected(myCbCollapseMethodBodies.isSelected());
-      }
-    });
 
     myStripTrailingSpacesCombo.addItem(STRIP_CHANGED);
     myStripTrailingSpacesCombo.addItem(STRIP_ALL);
