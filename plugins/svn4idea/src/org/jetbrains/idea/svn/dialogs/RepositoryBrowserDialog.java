@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.CommonBundle;
-import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.openapi.actionSystem.*;
@@ -32,24 +31,29 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.status.SvnDiffEditor;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.browser.*;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.ISVNReporter;
+import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -58,10 +62,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
+import java.io.*;
+import java.util.*;
 
 public class RepositoryBrowserDialog extends DialogWrapper {
 
@@ -153,6 +155,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       group.add(new HistoryAction());
     }
     group.add(new CheckoutAction());
+    group.add(new DiffAction());
     group.addSeparator();
     group.add(new ImportAction());
     group.add(new ExportAction());
@@ -378,6 +381,52 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
     }
   }
+
+  protected class DiffAction extends AnAction {
+    public void update(AnActionEvent e) {
+      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
+      e.getPresentation().setText("Compare With...", true);
+      if (node != null) {
+        SVNDirEntry entry = node.getSVNDirEntry();
+        e.getPresentation().setEnabled(entry == null || entry.getKind() == SVNNodeKind.DIR);
+      } else {
+        e.getPresentation().setEnabled(false);
+      }
+    }
+    public void actionPerformed(AnActionEvent e) {
+      // show dialog for comment and folder name, then create folder
+      // then refresh selected node.
+      Project p = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+      SVNURL root;
+      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
+      while (node.getSVNDirEntry() != null) {
+        node = (RepositoryTreeNode) node.getParent();
+      }
+      root = node.getURL();
+      SVNURL sourceURL = getRepositoryBrowser().getSelectedNode().getURL();
+      DiffOptionsDialog dialog = new DiffOptionsDialog(p, root, sourceURL);
+      dialog.show();
+      if (dialog.isOK()) {
+        SVNURL targetURL = dialog.getTargetURL();
+        if (dialog.isReverseDiff()) {
+          targetURL = sourceURL;
+          sourceURL = dialog.getTargetURL();
+        }
+
+        if (dialog.isUnifiedDiff()) {
+          File targetFile = dialog.getTargetFile();
+          targetFile.getParentFile().mkdirs();
+          doUnifiedDiff(targetFile, sourceURL, targetURL);
+        } else {
+          try {
+            doGraphicalDiff(sourceURL, targetURL);
+          } catch (SVNException e1) {
+          }
+        }
+      }
+    }
+  }
+
   protected class CopyAction extends AnAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Branch or Tag...");
@@ -674,6 +723,61 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       getRepositoryBrowser().getSelectedNode().reload();
 
     }
+  }
+  private void doUnifiedDiff(File targetFile, SVNURL sourceURL, SVNURL targetURL) {
+    OutputStream os = null;
+    try {
+      os = new BufferedOutputStream(new FileOutputStream(targetFile));
+      myVCS.createDiffClient().doDiff(sourceURL, SVNRevision.HEAD, targetURL, SVNRevision.HEAD, true, false, os);
+    } catch (IOException e1) {
+      //
+    } catch (SVNException e1) {
+      //
+    } finally {
+      if (os != null) {
+        try {
+          os.close();
+        } catch (IOException e1) {
+          //
+        }
+      }
+    }
+  }
+
+  private void doGraphicalDiff(SVNURL sourceURL, SVNURL targetURL) throws SVNException {
+    SVNRepository repository = myVCS.createRepository(sourceURL.toString());
+    final long rev = repository.getLatestRevision();
+    // generate Map of path->Change
+    SvnDiffEditor diffEditor = new SvnDiffEditor(myVCS.createRepository(sourceURL.toString()),
+            myVCS.createRepository(targetURL.toString()));
+    repository.diff(targetURL, rev, rev, null, true, true, new ISVNReporterBaton() {
+      public void report(ISVNReporter reporter) throws SVNException {
+        reporter.setPath("", null, rev, false);
+        reporter.finishReport();
+      }
+    }, diffEditor);
+    Map<String, Change> changes = diffEditor.getChangesMap();
+    final Collection<Change> changesList = changes.values();
+
+    CommittedChangeList changeList = new CommittedChangeList() {
+      public String getCommitterName() {
+        return "";
+      }
+      public Date getCommitDate() {
+        return new Date(0);
+      }
+      public Collection<Change> getChanges() {
+        return changesList;
+      }
+      public String getName() {
+        return "";
+      }
+      public String getComment() {
+        return "";
+      }
+    };
+    String title = "Compare of '" + SVNPathUtil.tail(sourceURL.toString()) + " and '" + SVNPathUtil.tail(targetURL.toString()) + "'";
+    AbstractVcsHelper.getInstance(myProject).showChangesBrowser(changeList, title);
   }
 
 }
