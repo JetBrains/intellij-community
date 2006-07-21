@@ -51,12 +51,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class VcsUtil
 {
-  public VcsUtil() {}
-
   public static void markFileAsUpToDate(VirtualFile file, Project project) {
     markAsUpToDate(project, file.isDirectory(), file.getPath());
     FileStatusManager.getInstance(project).fileStatusChanged(file);
@@ -284,7 +281,7 @@ public class VcsUtil
   }
 
   /**
-   * @param  "Change" description.
+   * @param  change "Change" description.
    * @return Return true if the "Change" object is created for "Rename" operation:
    * in this case name of files for "before" and "after" revisions must not
    * coniside.
@@ -292,12 +289,26 @@ public class VcsUtil
   public static boolean isRenameChange( Change change )
   {
     boolean isRenamed = false;
-    if( change.getBeforeRevision() != null && change.getAfterRevision() != null )
+    try
     {
-      String prevFile = change.getBeforeRevision().getFile().getPath();
-      String newFile  = change.getAfterRevision().getFile().getPath();
-      isRenamed = !prevFile.equals( newFile );
+      if( change.getBeforeRevision() != null && change.getAfterRevision() != null )
+      {
+        String prevFile = change.getBeforeRevision().getFile().getPath();
+        String newFile  = change.getAfterRevision().getFile().getPath();
+        isRenamed = !prevFile.equals( newFile );
+      }
     }
+    catch( NullPointerException e ) {}
     return isRenamed;
+  }
+
+  /**
+   * @param  change "Change" description.
+   * @return Return true if the "Change" object is created for "New" operation:
+   *         "before" revision is obviously NULL, while "after" revision is not.
+   */
+  public static boolean isChangeForNew( Change change )
+  {
+    return (change.getBeforeRevision() == null) && (change.getAfterRevision() != null);
   }
 }
