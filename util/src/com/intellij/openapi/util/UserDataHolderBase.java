@@ -111,7 +111,12 @@ public class UserDataHolderBase implements UserDataHolder, Cloneable{
         map = new THashMap<Key, Object>(1, 0.9f);
         putUserData(COPYABLE_USER_MAP_KEY, map);
       }
+
+
+
       if (value != null){
+
+        
         map.put(key, value);
       }
       else{

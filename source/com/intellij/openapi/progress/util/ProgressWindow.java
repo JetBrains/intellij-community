@@ -172,10 +172,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
     super.stop();
     if (myDialog != null) {
       myDialog.hide();
-      if (myFocusTrackback != null) {
-        myFocusTrackback.restoreFocus();
-        myFocusTrackback = null;
-      }
+      myFocusTrackback.restoreFocus();
     }
     myStoppedAlready = true;
 

@@ -143,6 +143,9 @@ public class FocusTrackback {
 
   public void dispose() {
     getStackForRoot(myRoot).remove(this);
+    myParentWindow = null;
+    myRoot = null;
+    myFocusOwner = null;
   }
 
   private boolean isDead() {

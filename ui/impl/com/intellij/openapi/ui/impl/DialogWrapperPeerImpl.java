@@ -41,7 +41,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   /**
    * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
-   * 
+   *
    * @param project     parent window for the dialog will be calculated based on focused window for the
    *                    specified <code>project</code>. This parameter can be <code>null</code>. In this case parent window
    *                    will be suggested based on current focused window.
@@ -464,7 +464,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       super.hide();
       if (myFocusTrackback != null) {
         myFocusTrackback.restoreFocus();
-        myFocusTrackback = null;
       }
     }
 
