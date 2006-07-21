@@ -161,6 +161,10 @@ public class CvsChangeProvider implements ChangeProvider {
       builder.processUnversionedFile(file);
     }
 
+    for(Entry entry: dirContent.getDeletedDirectories()) {
+      builder.processLocallyDeletedFile(CvsVfsUtil.getFileFor(dir, entry.getFileName()));      
+    }
+
     for (Entry entry : dirContent.getDeletedFiles()) {
       builder.processLocallyDeletedFile(CvsVfsUtil.getFileFor(dir, entry.getFileName()));
     }

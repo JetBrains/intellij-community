@@ -153,6 +153,9 @@ public class CvsStatusProvider {
             result.addDirectory(new VirtualFileEntry(virtualFile, entry));
           }
         }
+        else if (!entry.isRemoved() && !FileTypeManager.getInstance().isFileIgnored(fileName)) {
+          result.addDeletedDirectory(entry);          
+        }
       }
       else {
         if (nameToFileMap.containsKey(fileName) || entry.isRemoved()) {

@@ -13,6 +13,7 @@ import java.util.Collection;
 
 public class DirectoryContent {
   private final Collection<VirtualFileEntry> myDirectories = new ArrayList<VirtualFileEntry>();
+  private final Collection<Entry> myDeletedDirectories = new ArrayList<Entry>();
   private final Collection<VirtualFile> myUnknownDirectories = new ArrayList<VirtualFile>();
   private final Collection<VirtualFileEntry> myFiles = new ArrayList<VirtualFileEntry>();
   private final Collection<Entry> myDeletedFiles = new ArrayList<Entry>();
@@ -26,6 +27,10 @@ public class DirectoryContent {
 
   public void addDirectory(VirtualFileEntry directoryEntry) {
       myDirectories.add(directoryEntry);
+  }
+
+  public void addDeletedDirectory(Entry entry) {
+    myDeletedDirectories.add(entry);
   }
 
   public void addUnknownDirectory(VirtualFile directoryFile) {
@@ -49,6 +54,8 @@ public class DirectoryContent {
   }
 
   public Collection<VirtualFileEntry> getDirectories() { return myDirectories; }
+
+  public Collection<Entry> getDeletedDirectories() { return myDeletedDirectories; }
 
   public Collection<VirtualFile> getUnknownDirectories() { return myUnknownDirectories; }
 
