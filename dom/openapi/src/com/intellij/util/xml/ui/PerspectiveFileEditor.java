@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.awt.event.FocusEvent;
-import java.awt.event.AWTEventListener;
-import java.awt.*;
 
 /**
  * User: Sergey.Vasiliev
@@ -241,97 +238,5 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     }
     return !myInvalidated;
   }
-
-  private static Thread focusCatcher = new FocusDrawer();
-
-  static {
-    focusCatcher.start();
-  }
-
-  private static class FocusDrawer extends Thread implements AWTEventListener {
-    private Component myCurrent;
-    private Component myPrevious;
-    private boolean myTemporary;
-
-    public FocusDrawer() {
-      Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.FOCUS_EVENT_MASK);
-    }
-
-    public void run() {
-      try {
-        while (true) {
-          paintFocusBorders(false);
-
-          sleep(100);
-        }
-      }
-      catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-
-    private void paintFocusBorders(boolean clean) {
-      if (myCurrent != null) {
-        Graphics currentFocusGraphics = myCurrent.getGraphics();
-        if (currentFocusGraphics != null) {
-          if (clean) {
-            currentFocusGraphics.setXORMode(Color.RED);
-          }
-          currentFocusGraphics.setColor(Color.RED);
-          drawDottedRectangle(currentFocusGraphics, 1, 1, myCurrent.getSize().width - 2, myCurrent.getSize().height - 2);
-        }
-      }
-
-      if (myPrevious != null) {
-        Graphics previousFocusGraphics = myPrevious.getGraphics();
-        if (previousFocusGraphics != null) {
-          if (clean) {
-            previousFocusGraphics.setXORMode(Color.BLUE);
-          }
-          previousFocusGraphics.setColor(Color.BLUE);
-          drawDottedRectangle(previousFocusGraphics, 1, 1, myPrevious.getSize().width - 2, myPrevious.getSize().height - 2);
-        }
-      }
-    }
-
-    public static void drawDottedRectangle(Graphics g, int x, int y, int x1, int y1) {
-      int i1;
-      for(i1 = x; i1 <= x1; i1 += 2){
-        g.drawLine(i1, y, i1, y);
-      }
-
-      for(i1 = i1 != x1 + 1 ? y + 2 : y + 1; i1 <= y1; i1 += 2){
-        g.drawLine(x1, i1, x1, i1);
-      }
-
-      for(i1 = i1 != y1 + 1 ? x1 - 2 : x1 - 1; i1 >= x; i1 -= 2){
-        g.drawLine(i1, y1, i1, y1);
-      }
-
-      for(i1 = i1 != x - 1 ? y1 - 2 : y1 - 1; i1 >= y; i1 -= 2){
-        g.drawLine(x, i1, x, i1);
-      }
-    }
-
-    public void eventDispatched(AWTEvent event) {
-      if (event instanceof FocusEvent) {
-        FocusEvent focusEvent = (FocusEvent) event;
-        Component fromComponent = focusEvent.getComponent();
-        Component oppositeComponent = focusEvent.getOppositeComponent();
-
-        paintFocusBorders(true);
-
-        switch (event.getID()) {
-          case FocusEvent.FOCUS_GAINED:
-            myCurrent = fromComponent;
-            myPrevious = oppositeComponent;
-            break;
-          case FocusEvent.FOCUS_LOST:
-            myTemporary = focusEvent.isTemporary();
-          default:
-            break;
-        }
-      }
-    }
-  }
+  
 }
