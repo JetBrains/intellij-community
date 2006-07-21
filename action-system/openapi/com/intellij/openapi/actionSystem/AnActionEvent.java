@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Container for the information necessary to execute or update an {@link AnAction}.
@@ -36,8 +38,8 @@ public final class AnActionEvent {
   private final Presentation myPresentation;
   private final int myModifiers;
   private boolean myWorksInInjected;
-  @NonNls private static final String ourInjectedId = "$injected$.";
-  private static final StringBuilder ourIdBuilder = new StringBuilder(ourInjectedId);
+  @NonNls private static final String ourInjectedPrefix = "$injected$.";
+  private static final Map<String, String> ourInjectedIds = new HashMap<String, String>();
 
   /**
    * @throws IllegalArgumentException <code>dataContext</code> is <code>null</code> or
@@ -80,16 +82,21 @@ public final class AnActionEvent {
 
   @NonNls
   public static String injectedId(String dataId) {
-    synchronized(ourIdBuilder) {
-      ourIdBuilder.setLength(ourInjectedId.length());
-      ourIdBuilder.append(dataId);
-      return ourIdBuilder.toString();
+    synchronized(ourInjectedIds) {
+      String injected = ourInjectedIds.get(dataId);
+      if (injected == null) {
+        injected = ourInjectedPrefix + dataId;
+        ourInjectedIds.put(dataId, injected);
+      }
+      return injected;
     }
   }
+  
   @NonNls
   public static String uninjectedId(String dataId) {
-    return StringUtil.trimStart(dataId, ourInjectedId);
+    return StringUtil.trimStart(dataId, ourInjectedPrefix);
   }
+
   /**
    * Returns the context which allows to retrieve information about the state of IDEA related to
    * the action invocation (active editor, selection and so on).
