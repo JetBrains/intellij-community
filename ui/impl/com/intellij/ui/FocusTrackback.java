@@ -52,7 +52,7 @@ public class FocusTrackback {
     }
   }
 
-  private boolean wrongOS() {
+  private static boolean wrongOS() {
     return !SystemInfo.isMac;
   }
 
@@ -101,7 +101,7 @@ public class FocusTrackback {
     dispose();
   }
 
-  private List<FocusTrackback> getStackForRoot(final Window root) {
+  private static List<FocusTrackback> getStackForRoot(final Window root) {
     List<FocusTrackback> stack = ourRootWindowToParentsStack.get(root);
     if (stack == null) {
       stack = new ArrayList<FocusTrackback>();
@@ -110,7 +110,8 @@ public class FocusTrackback {
     return stack;
   }
 
-  private Window findUtlimateParent(final Window parent) {
+  @Nullable
+  private static Window findUtlimateParent(final Window parent) {
     Window root = parent == null ? JOptionPane.getRootFrame() : parent;
     while (root != null) {
       final Container next = root.getParent();
