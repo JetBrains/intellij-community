@@ -105,8 +105,11 @@ public class TreeBasedMap<T> {
   public void put(String key, T value) {
     final Node<T> node = myRoot.findRelative(key, true, myInterner);
     assert node != null;
+    final boolean mappingExisted = node.mappingExists();
     node.setValue(value);
-    mySize++;
+    if (!mappingExisted) {
+      mySize++;
+    }
   }
 
   public void remove(String key) {
