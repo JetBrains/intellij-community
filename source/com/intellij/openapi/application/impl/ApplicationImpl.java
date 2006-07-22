@@ -263,13 +263,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     for (String fileName : fileNameToRootElementMap.keySet()) {
       Element root = fileNameToRootElementMap.get(fileName);
 
-      try {
-        JDOMUtil.writeDocument(new Document(root), path + File.separatorChar + fileName,
-                               CodeStyleSettingsManager.getSettings(null).getLineSeparator());
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+      JDOMUtil.writeDocument(new Document(root), path + File.separatorChar + fileName,
+                             CodeStyleSettingsManager.getSettings(null).getLineSeparator());
     }
 
     deleteBackupFiles(path);
@@ -935,7 +930,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           save(optionsPath);
         }
         catch (final Throwable ex) {
-          ex.printStackTrace();
+          LOG.info("Saving application settings failed", ex);
           invokeLater(new Runnable() {
             public void run() {
               Messages.showMessageDialog(ApplicationBundle.message("application.save.settings.error", ex.getLocalizedMessage()),
