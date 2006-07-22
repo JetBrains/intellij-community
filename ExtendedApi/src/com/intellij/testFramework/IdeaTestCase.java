@@ -39,7 +39,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -55,11 +54,6 @@ import java.util.HashSet;
 /**
  * @author mike
  */
-@SuppressWarnings({
-  "HardCodedStringLiteral",
-  "AssignmentToStaticFieldFromInstanceMethod",
-  "JUnitTestCaseInProductSource",
-  "CallToPrintStackTrace"})
 @NonNls public abstract class IdeaTestCase extends UsefulTestCase implements DataProvider {
   protected static final String PROFILE = "Configurable";
   static {
@@ -168,9 +162,7 @@ import java.util.HashSet;
   protected Module createModule(final String moduleName) {
     final VirtualFile projectFile = myProject.getProjectFile();
     assertNotNull(projectFile);
-    final VirtualFile projectDirectory = projectFile.getParent();
-    assertNotNull(projectDirectory);
-    final File moduleFile = new File(projectDirectory.getPath().replace('/', File.separatorChar),
+    final File moduleFile = new File(projectFile.getParent().getPath().replace('/', File.separatorChar),
                                      moduleName + ".iml");
     try {
       moduleFile.createNewFile();
@@ -180,7 +172,6 @@ import java.util.HashSet;
     }
     myFilesToDelete.add(moduleFile);
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
-    assertNotNull(virtualFile);
     Module module = ModuleManager.getInstance(myProject).newModule(virtualFile.getPath());
     module.getModuleFile();
     return module;
@@ -322,7 +313,7 @@ import java.util.HashSet;
 
     boolean b = file.delete();
     if (!b && file.exists() && !myAssertionsInTestDetected) {
-      fail("Can't delete " + file.getAbsolutePath() + " in " + getFullName());
+      assertTrue("Can't delete " + file.getAbsolutePath() + " in " + getFullName(), false);
     }
   }
 
@@ -430,7 +421,7 @@ import java.util.HashSet;
     }
   }
 
-  protected void runBareRunnable(Runnable runnable) throws Throwable {
+  protected void runBareRunnable(Runnable runnable) throws Throwable, InvocationTargetException {
     SwingUtilities.invokeAndWait(runnable);
   }
 
@@ -552,15 +543,16 @@ import java.util.HashSet;
     return tempDirectory;
   }
 
-  @Nullable
   protected static VirtualFile getVirtualFile(final File file) {
+    VirtualFile virtualFile;
     try {
-      return LocalFileSystem.getInstance().findFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
+      virtualFile = LocalFileSystem.getInstance().findFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
     }
     catch (IOException e) {
-      fail();
-      throw new RuntimeException(e);
+      assertTrue(false);
+      virtualFile = null;
     }
+    return virtualFile;
   }
 
   private static class MyThreadGroup extends ThreadGroup {

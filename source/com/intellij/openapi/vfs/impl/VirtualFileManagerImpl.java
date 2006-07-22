@@ -410,4 +410,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
       );
     }
   }
+
+  public void cleanupForNextTest() {
+    myRefreshCount = 0;
+    myRefreshEventsToFire = null;
+  }
 }
