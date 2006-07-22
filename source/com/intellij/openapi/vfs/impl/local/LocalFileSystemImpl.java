@@ -586,7 +586,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
   }
 
-  @SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way too many garbage is produced otherwise in AbstractList.iterator()
+  @SuppressWarnings({"ForLoopReplaceableByForEach"})
   void refresh(VirtualFile file,
                boolean recursive,
                boolean storeStatus,
@@ -594,41 +594,46 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                boolean asynchronous,
                final boolean isRoot,
                final boolean noWatcher) {
+    synchronized (LOCK) {
+      if (!myFilePathsToWatchManual.isEmpty()) {
+        final String filePath = file.getPath();
+        for (int i = 0; i < myFilePathsToWatchManual.size(); i++) {
+          String pathToWatchManual = myFilePathsToWatchManual.get(i);
+          if (FileUtil.startsWith(filePath, pathToWatchManual)) {
+            ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous);
+            if ((isRoot || recursive) && ((VirtualFileImpl)file).areChildrenCached()) {
+              VirtualFile[] children = file.getChildren();
+              for (int j = 0; j < children.length; j++) {
+                VirtualFile child = children[j];
+                refreshInner(child, recursive, modalityState, asynchronous, false, true);
+              }
+            }
+            return;
+          }
+        }
+      }
+    }
+
+    if (storeStatus) {
+      storeRefreshStatusToFiles();
+    }
+
+    refreshInner(file, recursive, modalityState, asynchronous, isRoot, noWatcher);
+  }
+
+  @SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way too many garbage is produced otherwise in AbstractList.iterator()
+  void refreshInner(VirtualFile file, boolean recursive, ModalityState modalityState, boolean asynchronous, final boolean isRoot, final boolean noWatcher) {
     if (noWatcher || !FileWatcher.isAvailable() || !recursive && !asynchronous) { // We're unable to definitely refresh syncronously by means of file watcher.
       ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous);
       if ((recursive || isRoot) && ((VirtualFileImpl)file).areChildrenCached()) {
         final VirtualFile[] children = file.getChildren();
         for (int i = 0; i < children.length; i++) {
           VirtualFile child = children[i];
-          refresh(child, recursive, false, modalityState, asynchronous, false, noWatcher);
+          refreshInner(child, recursive, modalityState, asynchronous, false, noWatcher);
         }
       }
     }
     else {
-      synchronized (LOCK) {
-        if (!myFilePathsToWatchManual.isEmpty()) {
-          final String filePath = file.getPath();
-          for (int i = 0; i < myFilePathsToWatchManual.size(); i++) {
-            String pathToWatchManual = myFilePathsToWatchManual.get(i);
-            if (FileUtil.startsWith(filePath, pathToWatchManual)) {
-              ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous);
-              if ((isRoot || recursive) && ((VirtualFileImpl) file).areChildrenCached()) {
-                VirtualFile[] children = file.getChildren();
-                for (int j = 0; j < children.length; j++) {
-                  VirtualFile child = children[j];
-                  refresh(child, recursive, false, modalityState, asynchronous, false, true);
-                }
-              }
-              return;
-            }
-          }
-        }
-      }
-
-      if (storeStatus) {
-        storeRefreshStatusToFiles();
-      }
-
       Key status;
       synchronized (myRefreshStatusMap) {
         status = myRefreshStatusMap.remove(file);
@@ -650,7 +655,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                 !((VirtualFileImpl)child).getPhysicalFile().exists()) {
               continue; // should be already handled above (see SCR6145)
             }
-            refresh(child, recursive, false, modalityState, asynchronous, false, noWatcher);
+            refreshInner(child, recursive,  modalityState, asynchronous, false, noWatcher);
           }
         }
       }

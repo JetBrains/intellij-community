@@ -555,8 +555,7 @@ public class VirtualFileImpl extends VirtualFile {
             );
           }
           if (recursive) {
-            ourFileSystem.refresh(child, true, true, modalityState, asynchronous, false, false);
-            //child.refreshInternal(recursive, modalityState, false, asynchronous);
+            ourFileSystem.refreshInner(child, true, modalityState, asynchronous, false, false);
           }
         }
         else {
