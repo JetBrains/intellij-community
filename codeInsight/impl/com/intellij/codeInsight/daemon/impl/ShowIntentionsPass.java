@@ -71,7 +71,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
 
   ShowIntentionsPass(Project project, Editor editor, IntentionAction[] intentionActions, boolean isSecondPass) {
-    super(editor.getDocument());
+    super(project, editor.getDocument());
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     myIsSecondPass = isSecondPass;

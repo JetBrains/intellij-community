@@ -13,7 +13,7 @@ class CodeFoldingPass extends TextEditorHighlightingPass {
   private Editor myEditor;
 
   public CodeFoldingPass(Project project, Editor editor) {
-    super(editor.getDocument());
+    super(project, editor.getDocument());
     myProject = project;
     myEditor = editor;
   }

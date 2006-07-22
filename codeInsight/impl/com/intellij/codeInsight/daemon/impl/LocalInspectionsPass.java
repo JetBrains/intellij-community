@@ -62,7 +62,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
                               Document document,
                               int startOffset,
                               int endOffset) {
-    super(document);
+    super(project, document);
     myProject = project;
     myFile = file;
     myDocument = document;

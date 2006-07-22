@@ -104,7 +104,7 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
       public HighlightingPass[] createPassesForEditor() {
         return ContainerUtil.map2Array(getDocuments(), HighlightingPass.class, new Function<Document, HighlightingPass>() {
           public HighlightingPass fun(final Document document) {
-            return new TextEditorHighlightingPass(document) {
+            return new TextEditorHighlightingPass(getProject(), document) {
               public void doCollectInformation(ProgressIndicator progress) {
                 final PsiFile file = getDocumentManager().getPsiFile(document);
                 if (file instanceof XmlFile) {

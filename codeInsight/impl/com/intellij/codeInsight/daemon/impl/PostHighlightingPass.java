@@ -97,7 +97,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
                               int startOffset,
                               int endOffset,
                               boolean isCompiled) {
-    super(document);
+    super(project, document);
     myProject = project;
     myFile = file;
     myEditor = editor;

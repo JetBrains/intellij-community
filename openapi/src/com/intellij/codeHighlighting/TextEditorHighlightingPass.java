@@ -33,23 +33,44 @@ package com.intellij.codeHighlighting;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 
 public abstract class TextEditorHighlightingPass implements HighlightingPass {
   protected final Document myDocument;
+  private final Project myProject;
   private final long myInitialStamp;
 
-  protected TextEditorHighlightingPass(Document document) {
+
+  protected TextEditorHighlightingPass(final Project project, final Document document) {
     myDocument = document;
+    myProject = project;
     myInitialStamp = document.getModificationStamp();
   }
 
+  @Deprecated
+  protected TextEditorHighlightingPass(Document document) {
+    this(null, document);
+  }
+
   public final void collectInformation(ProgressIndicator progress) {
-    if (myDocument.getModificationStamp() != myInitialStamp) return; //Document has changed.
+    if (!isValid()) return; //Document has changed.
     doCollectInformation(progress);
   }
 
+  private boolean isValid() {
+    if (myDocument.getModificationStamp() != myInitialStamp) return false;
+    if (myProject != null) {
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+      if (file == null || !file.isValid()) return false;
+    }
+
+    return true;
+  }
+
   public final void applyInformationToEditor() {
-    if (myDocument.getModificationStamp() != myInitialStamp) return; // Document has changed.
+    if (!isValid()) return; // Document has changed.
     doApplyInformationToEditor();
   }
 

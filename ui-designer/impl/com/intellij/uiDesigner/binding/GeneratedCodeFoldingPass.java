@@ -28,7 +28,7 @@ public class GeneratedCodeFoldingPass extends TextEditorHighlightingPass {
   private List<TextRange> myFoldingData;
 
   protected GeneratedCodeFoldingPass(final PsiFile psiFile, final Editor editor) {
-    super(editor.getDocument());
+    super(psiFile.getProject(), editor.getDocument());
     myPsiFile = psiFile;
     myEditor = editor;
   }

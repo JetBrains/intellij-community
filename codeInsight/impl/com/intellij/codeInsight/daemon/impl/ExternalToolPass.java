@@ -33,7 +33,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
                           Editor editor,
                           int startOffset,
                           int endOffset) {
-    super(editor.getDocument());
+    super(file.getProject(), editor.getDocument());
     myFile = file;
     myStartOffset = startOffset;
     myEndOffset = endOffset;

@@ -105,7 +105,9 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     ArrayList<TextEditorHighlightingPass> passes = new ArrayList<TextEditorHighlightingPass>();
 
     renewFile();
-    if (myFile != null && DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(myFile)) {
+    if (myFile == null) return new TextEditorHighlightingPass[0];
+
+    if (DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(myFile)) {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       for (int aPassesToPerform : passesToPerform) {
         appendPass(passes, aPassesToPerform);

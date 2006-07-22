@@ -46,7 +46,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
     int startOffset,
     int endOffset
     ) {
-    super(document);
+    super(project, document);
     myProject = project;
     myFile = file;
     myDocument = document;
