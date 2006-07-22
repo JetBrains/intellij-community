@@ -219,8 +219,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     };
 
-    ((MarkupModelImpl)myDocument.getMarkupModel(myProject)).addMarkupModelListener(myMarkupModelListener);
-    ((MarkupModelImpl)getMarkupModel()).addMarkupModelListener(myMarkupModelListener);
+    ((MarkupModelEx)myDocument.getMarkupModel(myProject)).addMarkupModelListener(myMarkupModelListener);
+    ((MarkupModelEx)getMarkupModel()).addMarkupModelListener(myMarkupModelListener);
 
     myDocument.addDocumentListener(myFoldingModel);
     myDocument.addDocumentListener(myCaretModel);

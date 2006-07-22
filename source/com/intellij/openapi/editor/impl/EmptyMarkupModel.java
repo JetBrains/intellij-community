@@ -5,6 +5,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -73,5 +74,11 @@ public class EmptyMarkupModel implements MarkupModelEx {
 
   public boolean containsHighlighter(RangeHighlighter highlighter) {
     return false;
+  }
+
+  public void addMarkupModelListener(MarkupModelListener listener) {
+  }
+
+  public void removeMarkupModelListener(MarkupModelListener listener) {
   }
 }
