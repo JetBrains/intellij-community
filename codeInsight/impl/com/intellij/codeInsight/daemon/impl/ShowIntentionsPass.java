@@ -233,7 +233,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   private boolean showAddImportHint(HighlightInfo info, PsiElement element) {
-    if (!element.isWritable()) return false;
+    if (!element.isValid() || !element.isWritable()) return false;
     if (!DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled()) return false;
     if (!DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(myFile)) return false;
 
