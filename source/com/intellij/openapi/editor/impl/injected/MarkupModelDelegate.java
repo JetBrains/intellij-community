@@ -1,10 +1,11 @@
 package com.intellij.openapi.editor.impl.injected;
 
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.HighlighterList;
+import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.editor.impl.HighlighterList;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,5 +71,14 @@ class MarkupModelDelegate extends UserDataHolderBase implements MarkupModelEx {
 
   public boolean containsHighlighter(final RangeHighlighter highlighter) {
     return myHostModel.containsHighlighter(highlighter);
+  }
+
+  public void addMarkupModelListener(MarkupModelListener listener) {
+    myHostModel.addMarkupModelListener(listener);
+  }
+
+
+  public void removeMarkupModelListener(MarkupModelListener listener) {
+    myHostModel.removeMarkupModelListener(listener);
   }
 }
