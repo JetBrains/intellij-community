@@ -582,7 +582,7 @@ public class VirtualFileImpl extends VirtualFile {
           ourFileSystem.getManager().addEventToFireByRefresh(
             new Runnable() {
               public void run() {
-                if (!isValid()) return;
+                if (timeStamp == myTimeStamp || !isValid()) return;
 
                 ourFileSystem.fireBeforeContentsChange(null, VirtualFileImpl.this);
                 long oldModificationStamp = getModificationStamp();
