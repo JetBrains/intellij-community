@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
-import java.util.Map;
 
 public class RawUseOfParameterizedTypeInspection extends VariableInspection {
 
@@ -141,20 +140,9 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
         }
 
         private void checkReferenceElement(
-                @Nullable PsiJavaCodeReferenceElement reference) {
-            checkReferenceElement(reference, false);
-        }
-
-        private void checkReferenceElement(PsiJavaCodeReferenceElement reference,
-                                           boolean isQualifier) {
+                PsiJavaCodeReferenceElement reference) {
             if (reference == null) {
                 return;
-            }
-            final PsiElement qualifier = reference.getQualifier();
-            if (qualifier instanceof PsiJavaCodeReferenceElement) {
-                final PsiJavaCodeReferenceElement qualifierReference =
-                        (PsiJavaCodeReferenceElement)qualifier;
-                checkReferenceElement(qualifierReference, true);
             }
             final PsiType[] typeParameters = reference.getTypeParameters();
             if (typeParameters.length > 0) {
@@ -165,16 +153,13 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
                 return;
             }
             final PsiClass aClass = (PsiClass)element;
-            if (isQualifier) {
-                final PsiJavaCodeReferenceElement parent =
-                        (PsiJavaCodeReferenceElement)reference.getParent();
-                final PsiElement referee = parent.resolve();
-                if (referee instanceof PsiClass) {
-                    final PsiClass innerClass = (PsiClass)referee;
-                    if (innerClass.hasModifierProperty(PsiModifier.STATIC)
-                            || innerClass.isInterface()) {
-                        return;
-                    }
+            final PsiElement qualifier = reference.getQualifier();
+            if (qualifier instanceof PsiJavaCodeReferenceElement) {
+                final PsiJavaCodeReferenceElement qualifierReference =
+                        (PsiJavaCodeReferenceElement)qualifier;
+                if (!aClass.hasModifierProperty(PsiModifier.STATIC) &&
+                        !aClass.isInterface() && !aClass.isEnum()) {
+                    checkReferenceElement(qualifierReference);
                 }
             }
             if (!aClass.hasTypeParameters()) {
