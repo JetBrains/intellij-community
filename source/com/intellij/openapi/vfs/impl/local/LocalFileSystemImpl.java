@@ -596,11 +596,11 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                final boolean noWatcher) {
     if (noWatcher || !FileWatcher.isAvailable() || !recursive && !asynchronous) { // We're unable to definitely refresh syncronously by means of file watcher.
       ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous);
-      if (!recursive && isRoot && ((VirtualFileImpl)file).areChildrenCached()) {
+      if ((recursive || isRoot) && ((VirtualFileImpl)file).areChildrenCached()) {
         final VirtualFile[] children = file.getChildren();
         for (int i = 0; i < children.length; i++) {
           VirtualFile child = children[i];
-          ((VirtualFileImpl)child).refreshInternal(false, modalityState, false, asynchronous);
+          refresh(child, recursive, false, modalityState, asynchronous, false, noWatcher);
         }
       }
     }
@@ -650,7 +650,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                 !((VirtualFileImpl)child).getPhysicalFile().exists()) {
               continue; // should be already handled above (see SCR6145)
             }
-            refresh(child, recursive, false, modalityState, asynchronous, false, false);
+            refresh(child, recursive, false, modalityState, asynchronous, false, noWatcher);
           }
         }
       }
