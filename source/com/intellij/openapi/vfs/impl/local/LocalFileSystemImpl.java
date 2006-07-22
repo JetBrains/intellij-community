@@ -612,11 +612,11 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
             String pathToWatchManual = myFilePathsToWatchManual.get(i);
             if (FileUtil.startsWith(filePath, pathToWatchManual)) {
               ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous);
-              if (isRoot && !recursive && ((VirtualFileImpl) file).areChildrenCached()) {
+              if ((isRoot || recursive) && ((VirtualFileImpl) file).areChildrenCached()) {
                 VirtualFile[] children = file.getChildren();
                 for (int j = 0; j < children.length; j++) {
                   VirtualFile child = children[j];
-                  ((VirtualFileImpl)child).refreshInternal(false, modalityState, false, asynchronous);
+                  refresh(child, recursive, false, modalityState, asynchronous, false, noWatcher);
                 }
               }
               return;
