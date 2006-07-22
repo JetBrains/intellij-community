@@ -616,7 +616,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                 VirtualFile[] children = file.getChildren();
                 for (int j = 0; j < children.length; j++) {
                   VirtualFile child = children[j];
-                  refresh(child, recursive, false, modalityState, asynchronous, false, noWatcher);
+                  refresh(child, recursive, false, modalityState, asynchronous, false, true);
                 }
               }
               return;
