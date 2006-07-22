@@ -653,6 +653,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     myUpdateAlarm.addRequest(
         new Runnable() {
         public void run() {
+          if (myProject.isDisposed()) return;
+          
           updateImmediately();
         }
       },
