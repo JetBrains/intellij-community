@@ -42,9 +42,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.ui.DialogUtil;
 import org.jetbrains.annotations.NonNls;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import javax.swing.*;
@@ -65,7 +63,6 @@ public class SvnConfigurable implements Configurable, ActionListener {
   private FileChooserDescriptor myBrowserDescriptor;
 
   @NonNls private static final String HELP_ID = "project.propSubversion";
-  @NonNls private static final String AUTH_DIR_NAME = "auth";
 
   public SvnConfigurable(Project project) {
     myProject = project;
@@ -232,10 +229,6 @@ public class SvnConfigurable implements Configurable, ActionListener {
         int result = Messages.showYesNoDialog(myComponent, SvnBundle.message("confirmation.text.delete.stored.authentication.information"),
                                               SvnBundle.message("confirmation.title.clear.authentication.cache"),
                                                            Messages.getWarningIcon());
-        if (result == 0) {
-          File authDir = new File(path, AUTH_DIR_NAME);
-          SVNFileUtil.deleteAll(authDir, false);
-        }
         SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
         SvnApplicationSettings.getInstance().clearAuthenticationInfo();
       }

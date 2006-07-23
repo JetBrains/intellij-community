@@ -41,7 +41,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
 
         public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
             // get from key-ring, use realm.
-            Map info = SvnApplicationSettings.getInstance().getAuthenticationInfo(realm);
+            Map info = SvnApplicationSettings.getInstance().getAuthenticationInfo(realm, kind);
             // convert info to SVNAuthentication.
             if (info != null && !info.isEmpty() && info.get("username") != null) {
                 if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
@@ -76,6 +76,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
                 return;
             }
             Map info = new HashMap();
+            info.put("kind", kind);
             // convert info to SVNAuthentication.
             info.put("username", auth.getUserName());
             if (auth instanceof SVNPasswordAuthentication) {
@@ -94,7 +95,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
                     info.put("port", Integer.toString(sshAuth.getPortNumber()));
                 }
             }
-            SvnApplicationSettings.getInstance().saveAuthenticationInfo(realm, info);
+            SvnApplicationSettings.getInstance().saveAuthenticationInfo(realm, kind, info);
         }
 
     }
