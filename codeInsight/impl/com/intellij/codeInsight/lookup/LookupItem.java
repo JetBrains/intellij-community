@@ -53,7 +53,7 @@ public final class LookupItem implements Comparable{
     if (o instanceof PsiElement){
       PsiElement element = (PsiElement)o;
       Project project = element.getProject();
-      myObject = SmartPointerManager.getInstance(project).createSmartPsiElementPointer((PsiElement)o);
+      myObject = element.isPhysical() ? SmartPointerManager.getInstance(project).createSmartPsiElementPointer((PsiElement)o) : element;
     }
     else{
       myObject = o;
