@@ -548,13 +548,14 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
         final Component component = dtde.getDropTargetContext().getComponent();
         updateCurrentEvent(component, dtde.getLocation(), dtde.getDropAction());
 
-        if (myCurrentEvent != null && myCurrentEvent.isDropPossible()) {
+        final DnDEventImpl event = myCurrentEvent;
+        if (event != null && event.isDropPossible()) {
           dtde.acceptDrop(dtde.getDropAction());
 
           // do not wrap this into WriteAction!
           doDrop(component);
 
-          if (myCurrentEvent.shouldRemoveHighlightings()) {
+          if (event.shouldRemoveHighlightings()) {
             hideCurrentHighlighter();
           }
           dtde.dropComplete(true);
