@@ -44,6 +44,7 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -109,12 +110,16 @@ public class VcsUtil
     return getSelectionFromPsiElement(context);
   }
 
+  @Nullable
   private static VcsSelection getSelectionFromPsiElement(VcsContext context) {
     PsiElement psiElement = context.getPsiElement();
     if (psiElement == null) {
       return null;
     }
     if (!psiElement.isValid()) {
+      return null;
+    }
+    if (psiElement instanceof PsiCompiledElement) {
       return null;
     }
 
