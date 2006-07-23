@@ -18,9 +18,10 @@ import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.ArrayList;
-import java.util.Stack;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.awt.*;
 
 public class VirtualFileManagerImpl extends VirtualFileManagerEx implements ApplicationComponent {
 
@@ -42,7 +43,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
   private int myRefreshCount = 0;
   private ArrayList<Runnable> myRefreshEventsToFire = null;
-  private Stack<Runnable> myPostRefreshRunnables = new Stack<Runnable>();
+  private List<Runnable> myPostRefreshRunnables = new CopyOnWriteArrayList<Runnable>();
   private final ProgressManager myProgressManager;
 
 
@@ -180,7 +181,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
       public void run() {
         ApplicationManager.getApplication().assertIsDispatchThread();
         myRefreshCount++;
-        myPostRefreshRunnables.push(postAction);
+        if (postAction != null) {
+          myPostRefreshRunnables.add(postAction);
+        }
         if (myRefreshCount == 1) {
           myRefreshEventsToFire = new ArrayList<Runnable>();
           myRefreshEventsToFire.add(new FireBeforeRefresh(asynchronous));
@@ -211,7 +214,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     Runnable action = new Runnable() {
       public void run() {
         ApplicationManager.getApplication().assertIsDispatchThread();
-        Runnable postRunnable = myPostRefreshRunnables.pop();
 
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
@@ -267,14 +269,16 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                     }
                   }
                 }
+
+                for (final Runnable runnable : myPostRefreshRunnables) {
+                  runnable.run();
+                }
+
+                myPostRefreshRunnables.clear();
               }
             }
           }
         );
-
-        if (postRunnable != null){
-          postRunnable.run();
-        }
       }
     };
 
@@ -409,10 +413,5 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
         ", requestor = " + event.getRequestor()
       );
     }
-  }
-
-  public void cleanupForNextTest() {
-    myRefreshCount = 0;
-    myRefreshEventsToFire = null;
   }
 }

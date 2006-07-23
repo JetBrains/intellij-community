@@ -564,7 +564,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     final Runnable runnable = new Runnable() {
       public void run() {
         final ModalityState modalityState = EventQueue.isDispatchThread() ? ModalityState.current() : ModalityState.NON_MMODAL;
-        getManager().beforeRefreshStart(asynchronous, modalityState, EmptyRunnable.getInstance());
+        getManager().beforeRefreshStart(asynchronous, modalityState, null);
 
         for (VirtualFile file : files) {
           LOG.assertTrue(!file.isDirectory());

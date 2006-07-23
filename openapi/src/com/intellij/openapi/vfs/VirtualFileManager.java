@@ -68,9 +68,10 @@ public abstract class VirtualFileManager {
 
   /**
    * The same as {@link #refresh(boolean asynchronous)} but also runs <code>postRunnable</code>
-   * after the operation is completed.
+   * after the operation is completed. Note that postRunnable might be called asynchronously even for synchrounous refresh
+   * due to accumulating refresh semantics.
    */
-  public abstract void refresh(boolean asynchronous, @NotNull Runnable postAction);
+  public abstract void refresh(boolean asynchronous, @Nullable Runnable postAction);
 
   /**
    * Searches for the file specified by given URL. URL is a string which uniquely identifies file in all
