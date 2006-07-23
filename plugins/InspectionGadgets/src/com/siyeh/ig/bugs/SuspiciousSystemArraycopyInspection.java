@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Bas Leijdekkers
+ * Copyright 20050-2006 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,9 +109,14 @@ public class SuspiciousSystemArraycopyInspection extends StatementInspection {
             if (notArrayReported) {
                 return;
             }
-            if (!srcType.equals(destType)) {
+            final PsiType srcDeepComponentType = srcType.getDeepComponentType();
+            final PsiType destDeepComponentType =
+                    destType.getDeepComponentType();
+            if (!destDeepComponentType.isAssignableFrom(srcDeepComponentType)) {
                 final String errorString = InspectionGadgetsBundle.message(
-                        "suspicious.system.arraycopy.problem.descriptor6");
+                        "suspicious.system.arraycopy.problem.descriptor6",
+                        srcType.getCanonicalText(),
+                        destType.getCanonicalText());
                 registerError(dest, errorString);
             }
         }
