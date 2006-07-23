@@ -138,7 +138,6 @@ public class MarkResolvedAction extends BasicAction {
       throw new VcsException(e);
     }
     finally {
-      ChangeListManager.getInstance(project).ensureUpToDate(false);
       for(int i = 0; i < files.length; i++) {
         VcsDirtyScopeManager.getInstance(project).fileDirty(files[i]);
         files[i].refresh(true, false);
