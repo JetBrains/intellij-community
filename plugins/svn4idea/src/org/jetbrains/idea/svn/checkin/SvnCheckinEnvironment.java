@@ -32,6 +32,8 @@ import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +49,7 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -201,6 +204,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
 
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    final Collection<VirtualFile> deletedFiles = new ArrayList<VirtualFile>();
     if (progress != null) {
       committer.setEventHandler(new ISVNEventHandler() {
         public void handleEvent(SVNEvent event, double p) {
@@ -212,6 +216,13 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
             progress.setText2(SvnBundle.message("progress.text2.adding", path));
           }
           else if (event.getAction() == SVNEventAction.COMMIT_DELETED) {
+            String filePath = event.getFile().getAbsolutePath();
+            filePath = filePath.replace(File.separatorChar, '/');
+            filePath = "file://" + filePath;
+            VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(filePath);
+            if (vf != null) {
+              deletedFiles.add(vf);
+            }
             progress.setText2(SvnBundle.message("progress.text2.deleting", path));
           }
           else if (event.getAction() == SVNEventAction.COMMIT_MODIFIED) {
@@ -243,6 +254,11 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
     else {
       doCommit(committables, progress, committer, comment, force, recursive, exception);
+    }
+    for(VirtualFile f : deletedFiles) {
+      // TODO this should be somehow called before external 'delete' event is received by vfs.
+      //
+      //f.delete(this);
     }
     return exception;
   }
