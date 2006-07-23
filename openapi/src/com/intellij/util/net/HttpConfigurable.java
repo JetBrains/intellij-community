@@ -24,6 +24,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.apache.commons.codec.binary.Base64;
 import org.jdom.Element;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.net.*;
 
@@ -87,8 +88,23 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
       protected PasswordAuthentication getPasswordAuthentication() {
         if (PROXY_AUTHENTICATION &&
             ! KEEP_PROXY_PASSWORD) {
-          AuthenticationDialog dlg = new AuthenticationDialog(getRequestingHost(), getRequestingPrompt());
-          dlg.setVisible(true);
+          Runnable runnable = new Runnable() {
+            public void run() {
+              AuthenticationDialog dlg = new AuthenticationDialog(getRequestingHost(), getRequestingPrompt());
+              dlg.setVisible(true);
+            }
+          };
+          if (SwingUtilities.isEventDispatchThread()) {
+            runnable.run();
+          }
+          else {
+            try {
+              SwingUtilities.invokeAndWait(runnable);
+            }
+            catch (Exception e) {
+              // ignore
+            }
+          }
         }
         return new PasswordAuthentication(PROXY_LOGIN,
                                           getPlainProxyPassword().toCharArray());
@@ -109,6 +125,8 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
     setAuthenticator();
 
     URLConnection connection = new URL (url).openConnection();
+    connection.setConnectTimeout(3 * 1000);
+    connection.setReadTimeout(3 * 1000);
     connection.connect();
     connection.getInputStream();
     if (connection instanceof HttpURLConnection) {

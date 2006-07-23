@@ -9,6 +9,9 @@ import com.intellij.errorreport.itn.ITNProxy;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NonNls;
@@ -39,6 +42,7 @@ public class ErrorReportSender {
   }
 
   class SendTask {
+    private Project myProject;
     private NotifierBean notifierBean;
     private ErrorBean errorBean;
     private Throwable throwable;
@@ -47,14 +51,9 @@ public class ErrorReportSender {
     private ITask [] prepareTasks = null;
     private ITask [] doTasks = null;
 
-    public SendTask(Throwable throwable) {
+    public SendTask(final Project project, Throwable throwable) {
+      myProject = project;
       this.throwable = throwable;
-    }
-
-    public SendTask(ErrorBean errorBean, Throwable throwable, NotifierBean notifierBean) {
-      this.errorBean = errorBean;
-      this.throwable = throwable;
-      this.notifierBean = notifierBean;
     }
 
     public int getThreadId () {
@@ -111,21 +110,40 @@ public class ErrorReportSender {
             }
 
             public void run() {
-              try {
-                errorBean.setExceptionHashCode(exceptionBean.getHashCode());
+              errorBean.setExceptionHashCode(exceptionBean.getHashCode());
 
-                if (notifierBean.getItnLogin() != null && notifierBean.getItnLogin().length() > 0) {
-                  int threadId = ITNProxy.postNewThread(
-                    notifierBean.getItnLogin(),
-                    notifierBean.getItnPassword(),
-                    errorBean, exceptionBean,
-                    IdeaLogger.getOurCompilationTimestamp());
-                  exceptionBean.setItnThreadId(threadId);
+              final Ref<Exception> err = new Ref<Exception>();
+              Runnable runnable = new Runnable() {
+                public void run() {
+                  try {
+                    HttpConfigurable.getInstance().prepareURL(PREPARE_URL);
 
-                  authorized = true;
+                    if (notifierBean.getItnLogin() != null && notifierBean.getItnLogin().length() > 0) {
+                      int threadId = ITNProxy.postNewThread(
+                        notifierBean.getItnLogin(),
+                        notifierBean.getItnPassword(),
+                        errorBean, exceptionBean,
+                        IdeaLogger.getOurCompilationTimestamp());
+                      exceptionBean.setItnThreadId(threadId);
+
+                      authorized = true;
+                    }
+                  }
+                  catch (Exception ex) {
+                    err.set(ex);
+                  }
                 }
-              } catch (Exception e) {
-                throw new SendException(e);
+              };
+              if (myProject == null) {
+                runnable.run();
+              }
+              else {
+                ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable,
+                                                                                  DiagnosticBundle.message("title.submitting.error.report"),
+                                                                                  false, myProject);
+              }
+              if (!err.isNull()) {
+                throw new SendException(err.get());
               }
             }
           }
@@ -144,11 +162,10 @@ public class ErrorReportSender {
 
   private SendTask sendTask;
 
-  public void prepareError (Throwable exception)
+  public void prepareError(Project project, Throwable exception)
     throws IOException, XmlRpcException, NewBuildException, ThreadClosedException {
-    HttpConfigurable.getInstance().prepareURL(PREPARE_URL);
 
-    sendTask = new SendTask (exception);
+    sendTask = new SendTask (project, exception);
     TaskRunner prepareRunner = new TaskRunner(sendTask.getPrepareSteps());
 
     try {

@@ -85,6 +85,8 @@ public class ITNProxy {
 
   private static HttpURLConnection post (String url, Map<String,String> params) throws IOException, MalformedURLException {
     HttpURLConnection connection = (HttpURLConnection) new URL (url).openConnection();
+    connection.setReadTimeout(10 * 1000);
+    connection.setConnectTimeout(10 * 1000);
     connection.setRequestMethod(HTTP_POST);
     connection.setDoInput(true);
     connection.setDoOutput(true);

@@ -9,11 +9,15 @@ import com.intellij.errorreport.error.NewBuildException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.errorreport.error.ThreadClosedException;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.DataManager;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.net.IOExceptionDialog;
 import org.jetbrains.annotations.NonNls;
 
@@ -52,12 +56,15 @@ public class ITNReporter extends ErrorReportSubmitter {
     int threadId = 0;
     SubmittedReportInfo.SubmissionStatus submissionStatus = SubmittedReportInfo.SubmissionStatus.FAILED;
 
+    final DataContext dataContext = DataManager.getInstance().getDataContext(parentComponent);
+    Project project = (Project) dataContext.getData(DataConstants.PROJECT);
+
     do {
       // prepare
       try {
         ErrorReportSender sender = ErrorReportSender.getInstance();
 
-        sender.prepareError(event.getThrowable());
+        sender.prepareError(project, event.getThrowable());
 
         EAPSendErrorDialog dlg = new EAPSendErrorDialog();
         dlg.show();
