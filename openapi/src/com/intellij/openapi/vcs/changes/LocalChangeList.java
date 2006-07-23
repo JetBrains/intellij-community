@@ -38,13 +38,17 @@ public class LocalChangeList implements Cloneable, ChangeList {
   }
 
   public synchronized Collection<Change> getChanges() {
+    createReadChangesCache();
+    return myReadChangesCache;
+  }
+
+  private void createReadChangesCache() {
     if (myReadChangesCache == null) {
       myReadChangesCache = new HashSet<Change>(myChanges);
       if (myOutdatedChanges != null) {
         myReadChangesCache.addAll(myOutdatedChanges);
       }
     }
-    return myReadChangesCache;
   }
 
   public String getName() {
@@ -84,28 +88,29 @@ public class LocalChangeList implements Cloneable, ChangeList {
   }
 
   synchronized void addChange(Change change) {
-    myReadChangesCache = null;
+    if (!myIsInUpdate) myReadChangesCache = null;
     myChanges.add(change);
   }
 
   synchronized boolean removeChange(Change change) {
     boolean wasRemoved = myChanges.remove(change);
-    if (wasRemoved) {
+    if (wasRemoved && !myIsInUpdate) {
       myReadChangesCache = null;
     }
     return wasRemoved;
   }
 
   synchronized void startProcessingChanges(final VcsDirtyScope scope) {
+    createReadChangesCache();
     myChangesBeforeUpdate = new ChangeHashSet(myChanges);
     myOutdatedChanges = new ArrayList<Change>();
     for (Change oldBoy : myChangesBeforeUpdate) {
       final ContentRevision before = oldBoy.getBeforeRevision();
       final ContentRevision after = oldBoy.getAfterRevision();
       if (before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())) {
+        myIsInUpdate = true;
         removeChange(oldBoy);
         myOutdatedChanges.add(oldBoy);
-        myIsInUpdate = true;
       }
     }
     if (isDefault()) {
