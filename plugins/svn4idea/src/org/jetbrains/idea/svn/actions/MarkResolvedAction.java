@@ -38,7 +38,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.SelectFilesDialog;
@@ -136,8 +138,13 @@ public class MarkResolvedAction extends BasicAction {
       throw new VcsException(e);
     }
     finally {
+      ChangeListManager.getInstance(project).ensureUpToDate(false);
       for(int i = 0; i < files.length; i++) {
         VcsDirtyScopeManager.getInstance(project).fileDirty(files[i]);
+        files[i].refresh(true, false);
+        if (files[i].getParent() != null) {
+          files[i].getParent().refresh(true, false);
+        }
       }
 
     }
