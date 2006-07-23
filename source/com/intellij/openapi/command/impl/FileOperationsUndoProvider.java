@@ -1,5 +1,6 @@
 package com.intellij.openapi.command.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.localVcs.changes.LocalVcsChanges;
 import com.intellij.localVcs.changes.LvcsChange;
 import com.intellij.openapi.Disposable;
@@ -7,12 +8,14 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.localVcs.*;
+import com.intellij.openapi.localVcs.LocalVcs;
+import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
+import com.intellij.openapi.localVcs.LvcsObject;
+import com.intellij.openapi.localVcs.LvcsRevision;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
-import com.intellij.CommonBundle;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -186,6 +189,10 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
       return;
     }
 
+    if (!getLocalVcs().isUnderVcs(vFile)) {
+      return;
+    }
+
     final DocumentReference newRef = new DocumentReferenceByVirtualFile(vFile);
     
     if (!vFile.isDirectory() && vFile.getFileType().isBinary()) {
@@ -199,10 +206,6 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
         }
       });
 
-    }
-
-    if (!getLocalVcs().isUnderVcs(vFile)) {
-      return;
     }
 
     DocumentReference oldRef = myUndoManager.findInvalidatedReferenceByUrl(vFile.getUrl());
