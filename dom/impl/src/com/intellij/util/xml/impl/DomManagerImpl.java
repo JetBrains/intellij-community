@@ -4,6 +4,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -162,7 +163,13 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     myElementFactory = psiManager.getElementFactory();
     solver.registerFileHighlightFilter(new Condition<VirtualFile>() {
       public boolean value(final VirtualFile file) {
-        return isDomFile(psiManager.findFile(file));
+        final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+          public @Nullable PsiFile compute() {
+            return psiManager.findFile(file);
+          }
+        });
+
+        return isDomFile(psiFile);
       }
     }, project);
   }
@@ -390,7 +397,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return getCachedElement(tag);
   }
 
-  public final boolean isDomFile(PsiFile file) {
+  public final boolean isDomFile(@Nullable PsiFile file) {
     return file instanceof XmlFile && getFileElement((XmlFile)file) != null;
   }
 
