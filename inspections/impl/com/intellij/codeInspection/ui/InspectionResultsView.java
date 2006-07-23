@@ -731,9 +731,15 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
 
     public void actionPerformed(AnActionEvent e) {
-      if (EditInspectionToolsSettingsAction.editToolSettings(myProject, (InspectionProfileImpl) myInspectionProfile, false, null, InspectionProjectProfileManager.getInstance(myProject))){
-        //InspectionResultsView.this.update();
+      final InspectionTool tool = myTree.getSelectedTool();
+      if (tool != null) {
+        final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName()); //do not search for dead code entry point tool
+        if (key != null){
+          new EditInspectionToolsSettingsAction(key).editToolSettings(myProject, (InspectionProfileImpl) myInspectionProfile, false);
+          return;
+        }
       }
+      EditInspectionToolsSettingsAction.editToolSettings(myProject, (InspectionProfileImpl) myInspectionProfile, false, null, InspectionProjectProfileManager.getInstance(myProject));
     }
 
     public void update(AnActionEvent e) {
