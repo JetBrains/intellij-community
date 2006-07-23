@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.application.Application;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +41,8 @@ import java.nio.charset.Charset;
  */
 public abstract class VirtualFile implements UserDataHolder, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VirtualFile");
+  public static final Key<Object> REQUESTOR_MARKER = new Key<Object>("REQUESTOR_MARKER");
+  
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
 
   private Charset myCharset = null;

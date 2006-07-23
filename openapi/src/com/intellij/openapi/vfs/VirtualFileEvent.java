@@ -31,7 +31,7 @@ public class VirtualFileEvent extends EventObject {
 
   public VirtualFileEvent(Object requestor, VirtualFile file, String fileName, boolean isDirectory, VirtualFile parent){
     super(file);
-    myRequestor = requestor;
+    myRequestor = requestor != null ? requestor : file.getUserData(VirtualFile.REQUESTOR_MARKER);
     myFile = file;
     myFileName = fileName;
     myIsDirectory = isDirectory;
@@ -44,7 +44,7 @@ public class VirtualFileEvent extends EventObject {
     myFileName = file.getName();
     myIsDirectory = false;
     myParent = parent;
-    myRequestor = requestor;
+    myRequestor = requestor != null ? requestor : file.getUserData(VirtualFile.REQUESTOR_MARKER);
     myOldModificationStamp = oldModificationStamp;
     myNewModificationStamp = newModificationStamp;
   }
