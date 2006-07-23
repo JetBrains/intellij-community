@@ -3,19 +3,19 @@
  */
 package com.intellij.ide.startup;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
-import com.intellij.ide.IdeBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.*;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jetbrains.annotations.NonNls;
-
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class StartupActionScriptManager {
   @NonNls private static final String ACTION_SCRIPT_FILE = "action.script";
 
@@ -59,7 +59,9 @@ public class StartupActionScriptManager {
         // problem with scrambled code
         // fas fixed, but still appear because corrupted file still exists
         // return empty list.
-        System.err.println(IdeBundle.message("error.action.script.corrupted", ApplicationNamesInfo.getInstance().getProductName()));
+        System.err.println(MessageFormat.format(
+          "Internal {0} file was corrupted. Problem is fixed.\nIf some plugins has been installed/uninstalled, please re-install/-uninstall them.",
+          ApplicationNamesInfo.getInstance().getProductName()));
         return new ArrayList<ActionCommand>();
       }
     }
@@ -121,9 +123,10 @@ public class StartupActionScriptManager {
       if (! parentFile.exists())
         if (! myDestination.getParentFile().mkdirs()) {
           JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                        IdeBundle.message("error.cannot.create.plugin.parent.directory", parentFile.getAbsolutePath(),
-                                                          myDestination.getAbsolutePath(), parentFile.getParent()), IdeBundle.message("title.installing.plugin"),
-                                                                JOptionPane.ERROR_MESSAGE);
+                                        MessageFormat.format("<html>Cannot create parent directory [{0}] of {1}<br>Please, check your access rights on folder <br>{2}",
+                                        parentFile.getAbsolutePath(), myDestination.getAbsolutePath(), parentFile.getParent()),
+                                        "Installing Plugin",
+                                        JOptionPane.ERROR_MESSAGE);
         }
 
       if (!mySource.exists()) {
@@ -132,9 +135,9 @@ public class StartupActionScriptManager {
       }
       else if (!canCreateFile(myDestination)) {
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                      IdeBundle.message("error.cannot.copy.plugin.file", mySource.getAbsolutePath(),
-                                                        myDestination.getAbsolutePath(), myDestination.getParent()),
-                                      IdeBundle.message("title.installing.plugin"), JOptionPane.ERROR_MESSAGE);
+                                      MessageFormat.format("<html>Cannot copy {0}<br>to<br>{1}<br>Please, check your access rights on folder <br>{2}",
+                                                           mySource.getAbsolutePath(),  myDestination.getAbsolutePath(), myDestination.getParent()),
+                                      "Installing Plugin", JOptionPane.ERROR_MESSAGE);
       }
       else {
         FileUtil.copy(mySource, myDestination);
@@ -171,12 +174,20 @@ public class StartupActionScriptManager {
       }
       else if (!canCreateFile(myDestination)) {
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                      IdeBundle.message("error.cannot.unzip.plugin.file", mySource.getAbsolutePath(),
-                                                        myDestination.getAbsolutePath(), myDestination),
-                                      IdeBundle.message("title.installing.plugin"), JOptionPane.ERROR_MESSAGE);
+                                      MessageFormat.format("<html>Cannot unzip {0}<br>to<br>{1}<br>Please, check your access rights on folder <br>{2}",
+                                                           mySource.getAbsolutePath(), myDestination.getAbsolutePath(), myDestination),
+                                      "Installing Plugin", JOptionPane.ERROR_MESSAGE);
       }
       else {
-        ZipUtil.extract(mySource, myDestination, myFilenameFilter);
+        try {
+          ZipUtil.extract(mySource, myDestination, myFilenameFilter);
+        }
+        catch(Exception ex) {
+          JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                                        MessageFormat.format("<html>Failed to extract ZIP file {0}<br>to<br>{1}<br>You may need to re-download the plugin you tried to install.",
+                                                             mySource.getAbsolutePath(), myDestination.getAbsolutePath()),
+                                        "Installing Plugin", JOptionPane.ERROR_MESSAGE);
+        }
       }
     }
 
@@ -199,9 +210,9 @@ public class StartupActionScriptManager {
         //noinspection HardCodedStringLiteral
         System.err.println("Action " + this + " failed.");
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                      IdeBundle.message("error.cannot.delete.plugin.file", mySource.getAbsolutePath(),
-                                                        mySource.getAbsolutePath()),
-                                      IdeBundle.message("title.installing.plugin"), JOptionPane.ERROR_MESSAGE);
+                                      MessageFormat.format("<html>Cannot delete {0}<br>Please, check your access rights on folder <br>{1}",
+                                                           mySource.getAbsolutePath(), mySource.getAbsolutePath()),
+                                      "Installing Plugin", JOptionPane.ERROR_MESSAGE);
       }
     }
   }
