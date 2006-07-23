@@ -68,8 +68,7 @@ public abstract class VirtualFileManager {
 
   /**
    * The same as {@link #refresh(boolean asynchronous)} but also runs <code>postRunnable</code>
-   * after the operation is completed. Note that postRunnable might be called asynchronously even for synchrounous refresh
-   * due to accumulating refresh semantics.
+   * after the operation is completed.
    */
   public abstract void refresh(boolean asynchronous, @Nullable Runnable postAction);
 
