@@ -17,6 +17,7 @@ package com.siyeh.ig.imports;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FileInspection;
@@ -42,6 +43,14 @@ public class UnusedImportInspection extends FileInspection {
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
         return new DeleteImportFix();
+    }
+
+    public PsiElementVisitor buildVisitor(ProblemsHolder holder,
+                                          boolean isOnTheFly) {
+        //if (isOnTheFly) {
+        //    return null;
+        //}
+        return super.buildVisitor(holder, isOnTheFly);
     }
 
     public BaseInspectionVisitor buildVisitor() {

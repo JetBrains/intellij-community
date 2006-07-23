@@ -20,15 +20,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 class ImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
 
-    private final Collection<PsiImportStatement> importStatements;
+    private final List<PsiImportStatement> importStatements;
 
     ImportsAreUsedVisitor(PsiImportStatement[] importStatements) {
         super();
         this.importStatements = new ArrayList(Arrays.asList(importStatements));
+        Collections.reverse(this.importStatements);
     }
 
     public void visitElement(PsiElement element) {
@@ -46,7 +48,7 @@ class ImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
 
     private void followReferenceToImport(
             PsiJavaCodeReferenceElement reference) {
-        if (reference.getQualifier()!=null) {
+        if (reference.getQualifier() != null) {
             //it's already fully qualified, so the import statement wasn't
             // responsible
             return;
@@ -60,7 +62,9 @@ class ImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
         if (qualifiedName == null) {
             return;
         }
-        for (PsiImportStatement importStatement : importStatements) {
+        final List<PsiImportStatement> importStatementsCopy =
+                new ArrayList(importStatements);
+        for (PsiImportStatement importStatement : importStatementsCopy) {
             final String importName = importStatement.getQualifiedName();
             if (importName == null) {
                 return;
@@ -72,15 +76,25 @@ class ImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
                     final String packageName = qualifiedName.substring(0,
                             lastComponentIndex);
                     if (importName.equals(packageName)) {
-                        importStatements.remove(importStatement);
+                        removeAll(importName);
                         break;
                     }
                 }
             } else {
                 if (importName.equals(qualifiedName)) {
-                    importStatements.remove(importStatement);
+                    removeAll(importName);
                     break;
                 }
+            }
+        }
+    }
+
+    private void removeAll(String importName) {
+        for (int i = importStatements.size() - 1; i >= 0; i--) {
+            final PsiImportStatement statement = importStatements.get(i);
+            final String qualifiedName = statement.getQualifiedName();
+            if (importName.equals(qualifiedName)) {
+                importStatements.remove(i);
             }
         }
     }
