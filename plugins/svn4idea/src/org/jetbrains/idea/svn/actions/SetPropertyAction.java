@@ -37,6 +37,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -107,6 +109,13 @@ public class SetPropertyAction extends BasicAction {
         }
         catch (SVNException e) {
           throw new VcsException(e);
+        }
+      }
+      for(int i = 0; i < file.length; i++) {
+        if (recursive && file[i].isDirectory()) {
+          VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(file[i], true);
+        } else {
+          VcsDirtyScopeManager.getInstance(project).fileDirty(file[i]);
         }
       }
     }

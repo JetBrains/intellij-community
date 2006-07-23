@@ -180,11 +180,17 @@ public class PropertiesComponent extends JPanel {
     return (String) myTable.getValueAt(row, 0);
   }
 
-  private void updateFileStatus() {
+  private void updateFileStatus(boolean recursive) {
     if (myFile != null && myVcs != null) {
       String url = "file://" + myFile.getPath().replace(File.separatorChar, '/');
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
-      VcsDirtyScopeManager.getInstance(myVcs.getProject()).fileDirty(file);
+      if (file != null) {
+        if (recursive && file.isDirectory()) {
+          VcsDirtyScopeManager.getInstance(myVcs.getProject()).dirDirtyRecursively(file, true);
+        } else {
+          VcsDirtyScopeManager.getInstance(myVcs.getProject()).fileDirty(file);
+        }
+      }
     }
   }
 
@@ -212,7 +218,7 @@ public class PropertiesComponent extends JPanel {
 
     public void actionPerformed(AnActionEvent e) {
       setFile(myVcs, myFile);
-      updateFileStatus();
+      updateFileStatus(false);
     }
   }
 
@@ -248,7 +254,7 @@ public class PropertiesComponent extends JPanel {
         }
       }
       setFile(myVcs, myFile);
-      updateFileStatus();
+      updateFileStatus(false);
     }
   }
 
@@ -269,7 +275,7 @@ public class PropertiesComponent extends JPanel {
         // show error message.
       }
       setFile(myVcs, myFile);
-      updateFileStatus();
+      updateFileStatus(false);
     }
   }
 
@@ -289,10 +295,11 @@ public class PropertiesComponent extends JPanel {
       SetPropertyDialog dialog = new SetPropertyDialog(project, new File[] {myFile}, null,
               myFile.isDirectory());
       dialog.show();
+      boolean recursive = false;
       if (dialog.isOK()) {
         String name = dialog.getPropertyName();
         String value = dialog.getPropertyValue();
-        boolean recursive = dialog.isRecursive();
+        recursive = dialog.isRecursive();
         SVNWCClient wcClient = new SVNWCClient(null, null);
         try {
           wcClient.doSetProperty(myFile, name, value, false, recursive, null);
@@ -302,7 +309,7 @@ public class PropertiesComponent extends JPanel {
         }
       }
       setFile(myVcs, myFile);
-      updateFileStatus();
+      updateFileStatus(recursive);
     }
   }
 
@@ -318,13 +325,13 @@ public class PropertiesComponent extends JPanel {
 
     public void actionPerformed(AnActionEvent e) {
       Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
-      SetPropertyDialog dialog = new SetPropertyDialog(project, new File[] {myFile}, getSelectedPropertyName(),
-              myFile.isDirectory());
+      SetPropertyDialog dialog = new SetPropertyDialog(project, new File[] {myFile}, getSelectedPropertyName(), myFile.isDirectory());
       dialog.show();
+      boolean recursive = false;
       if (dialog.isOK()) {
         String name = dialog.getPropertyName();
         String value = dialog.getPropertyValue();
-        boolean recursive = dialog.isRecursive();
+        recursive = dialog.isRecursive();
         SVNWCClient wcClient = new SVNWCClient(null, null);
         try {
           wcClient.doSetProperty(myFile, name, value, false, recursive, null);
@@ -334,7 +341,7 @@ public class PropertiesComponent extends JPanel {
         }
       }
       setFile(myVcs, myFile);
-      updateFileStatus();
+      updateFileStatus(recursive);
     }
   }
 
