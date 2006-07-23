@@ -99,6 +99,22 @@ public class FilePathImpl implements FilePath {
     }
   }
 
+  public FilePath getParentPath() {
+    if (myVirtualParent != null && myVirtualParent.isValid()) {
+      return new FilePathImpl(myVirtualParent);
+    }
+
+    // can't use File.getParentPath() because the path may not correspond to an actual file on disk,
+    // and adding a drive letter would not be appropriate (IDEADEV-7405)
+    // path containing exactly one separator is assumed to be root path
+    final String path = myFile.getPath();
+    int pos = path.lastIndexOf(File.separatorChar);
+    if (pos < 0 || pos == path.indexOf(File.separatorChar)) {
+      return null;
+    }
+    return new FilePathImpl(new File(path.substring(0, pos)));
+  }
+
   public VirtualFile getVirtualFile() {
     if (myVirtualFile != null && !myVirtualFile.isValid()) {
       myVirtualFile = null;

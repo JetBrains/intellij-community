@@ -212,7 +212,7 @@ public class TreeModelBuilder {
       }
     }
 
-    FilePath parentPath = getParentPath(path);
+    FilePath parentPath = path.getParentPath();
     if (parentPath == null) {
       return rootNode;
     }
@@ -226,10 +226,6 @@ public class TreeModelBuilder {
     }
 
     return parentNode;
-  }
-
-  public static FilePath getParentPath(final FilePath path) {
-    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(path.getIOFile().getParentFile());
   }
 
   private ChangesBrowserNode getNodeForModule(Module module,

@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -46,4 +47,7 @@ public interface FilePath {
   boolean isDirectory();
 
   boolean isUnder(FilePath parent, boolean strict);
+
+  @Nullable
+  FilePath getParentPath();
 }

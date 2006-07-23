@@ -96,7 +96,7 @@ class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
       else {
         if (myShowFlatten) {
           append(path.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          final FilePath parent = TreeModelBuilder.getParentPath(path);
+          final FilePath parent = path.getParentPath();
           append(" (" + parent.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         else {
