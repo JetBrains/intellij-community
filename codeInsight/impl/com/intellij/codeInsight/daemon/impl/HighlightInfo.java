@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,17 +34,16 @@ public class HighlightInfo {
   private Boolean myNeedsUpdateOnTyping = null;
   private static final Key<HighlightInfoFilter[]> FILTERS = new Key<HighlightInfoFilter[]>("HighlightInfoFilter[]");
   public JComponent fileLevelComponent;
+  private final TextAttributes forcedTextAttributes;
 
   public HighlightSeverity getSeverity() {
     return severity;
   }
 
-  private TextAttributes forcedTextAttributes;
-
   public TextAttributes getTextAttributes() {
     return forcedTextAttributes == null ? getAttributesByType(type) : forcedTextAttributes;
   }
-  public static TextAttributes getAttributesByType(HighlightInfoType type) {
+  public static TextAttributes getAttributesByType(@NotNull HighlightInfoType type) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributesKey key = type.getAttributesKey();
     return scheme.getAttributes(key);
@@ -66,23 +66,23 @@ public class HighlightInfo {
     return attributes == null ? null : attributes.getErrorStripeColor();
   }
 
-  public static HighlightInfo createHighlightInfo(HighlightInfoType type, @NotNull PsiElement element, String description) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull PsiElement element, String description) {
     return createHighlightInfo(type, element, description, htmlEscapeToolTip(description));
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls
   private static String htmlEscapeToolTip(String description) {
     return description == null ? null : "<html><body>"+XmlUtil.escapeString(description)+"</body></html>";
   }
 
-  public static HighlightInfo createHighlightInfo(HighlightInfoType type, @NotNull PsiElement element, String description, String toolTip) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull PsiElement element, String description, String toolTip) {
     TextRange range = element.getTextRange();
     int start = range.getStartOffset();
     int end = range.getEndOffset();
     return createHighlightInfo(type, start, end, description, toolTip);
   }
 
-  public static HighlightInfo createHighlightInfo(HighlightInfoType type, @NotNull PsiElement element, String description, String toolTip, boolean isEndOfLine) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull PsiElement element, String description, String toolTip, boolean isEndOfLine) {
     if (isEndOfLine){
       TextRange range = element.getTextRange();
       int end = range.getEndOffset();
@@ -95,7 +95,7 @@ public class HighlightInfo {
   }
 
 
-  public static HighlightInfo createHighlightInfo(HighlightInfoType type, int start, int end, String description, String toolTip) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, int start, int end, String description, String toolTip) {
     HighlightInfoFilter[] filters = getFilters();
     HighlightInfo highlightInfo = new HighlightInfo(type, start, end, description, toolTip);
     for (HighlightInfoFilter filter : filters) {
@@ -106,7 +106,7 @@ public class HighlightInfo {
     return highlightInfo;
   }
 
-  private static HighlightInfoFilter[] getFilters() {
+  @NotNull private static HighlightInfoFilter[] getFilters() {
     final Application app = ApplicationManager.getApplication();
     HighlightInfoFilter[] filters = app.getUserData(FILTERS);
     if (filters == null) {
@@ -116,21 +116,19 @@ public class HighlightInfo {
     return filters;
   }
 
-  public static HighlightInfo createHighlightInfo(HighlightInfoType type, int start, int end, String description) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, int start, int end, String description) {
     return createHighlightInfo(type, start, end, description, htmlEscapeToolTip(description));
   }
 
-  public static HighlightInfo createHighlightInfo(HighlightInfoType type, TextRange textRange, String description) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, String description) {
     return createHighlightInfo(type, textRange.getStartOffset(), textRange.getEndOffset(), description);
   }
-  public static HighlightInfo createHighlightInfo(HighlightInfoType type, TextRange textRange, String description, String toolTip) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, String description, String toolTip) {
     return createHighlightInfo(type, textRange.getStartOffset(), textRange.getEndOffset(), description, toolTip);
   }
-  public static HighlightInfo createHighlightInfo(HighlightInfoType type, TextRange textRange, String description, TextAttributes textAttributes) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, String description, TextAttributes textAttributes) {
     // do not use HighlightInfoFilter
-    HighlightInfo highlightInfo = new HighlightInfo(type, textRange.getStartOffset(), textRange.getEndOffset(), description, htmlEscapeToolTip(description));
-    highlightInfo.forcedTextAttributes = textAttributes;
-    return highlightInfo;
+    return new HighlightInfo(textAttributes, type, textRange.getStartOffset(), textRange.getEndOffset(), description, htmlEscapeToolTip(description),type.getSeverity(null), false, null);
   }
 
   public boolean needUpdateOnTyping() {
@@ -178,16 +176,7 @@ public class HighlightInfo {
   private GutterIconRenderer gutterIconRenderer;
 
   public HighlightInfo(HighlightInfoType type, int startOffset, int endOffset, String description, String toolTip) {
-    this.type = type;
-    this.startOffset = startOffset;
-    this.endOffset = endOffset;
-    fixStartOffset = startOffset;
-    fixEndOffset = endOffset;
-    this.description = description;
-    severity = type.getSeverity(null);
-    this.toolTip = toolTip;
-    LOG.assertTrue(startOffset >= 0);
-    LOG.assertTrue(startOffset <= endOffset);
+    this(null, type, startOffset, endOffset, description, toolTip, type.getSeverity(null), false, null);
   }
 
   public HighlightInfo(TextAttributes textAttributes,
@@ -198,7 +187,9 @@ public class HighlightInfo {
                        String toolTip,
                        HighlightSeverity severity,
                        boolean afterEndOfLine,
-                       boolean needsUpdateOnTyping) {
+                       Boolean needsUpdateOnTyping) {
+    LOG.assertTrue(startOffset >= 0);
+    LOG.assertTrue(startOffset <= endOffset);
     forcedTextAttributes = textAttributes;
     this.type = type;
     this.startOffset = startOffset;
@@ -226,7 +217,7 @@ public class HighlightInfo {
     return startOffset;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @NonNls
   public String toString() {
     return "HighlightInfo(" +
            "text='" + text + "'" +
@@ -235,7 +226,7 @@ public class HighlightInfo {
            ")";
   }
 
-  public static HighlightInfo createHighlightInfo(HighlightInfoType type, ASTNode childByRole, String localizedMessage) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull ASTNode childByRole, String localizedMessage) {
     return createHighlightInfo(type, SourceTreeToPsiMap.treeElementToPsi(childByRole), localizedMessage);
   }
 
@@ -247,16 +238,13 @@ public class HighlightInfo {
     this.gutterIconRenderer = gutterIconRenderer;
   }
 
-  public static HighlightInfo createHighlightInfo(final HighlightInfoType type,
-                                                  final PsiElement element,
+  public static HighlightInfo createHighlightInfo(@NotNull final HighlightInfoType type,
+                                                  @NotNull final PsiElement element,
                                                   final String message,
                                                   final TextAttributes attributes) {
     TextRange textRange = element.getTextRange();
     // do not use HighlightInfoFilter
-    TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(type.getAttributesKey());
-    HighlightInfo highlightInfo = new HighlightInfo(textAttributes, type, textRange.getStartOffset(), textRange.getEndOffset(), message, htmlEscapeToolTip(message), type.getSeverity(element), false, false);
-    highlightInfo.forcedTextAttributes = attributes;
-    return highlightInfo;
+    return new HighlightInfo(attributes, type, textRange.getStartOffset(), textRange.getEndOffset(), message, htmlEscapeToolTip(message), type.getSeverity(element), false, false);
   }
 
   public static class IntentionActionDescriptor {
