@@ -36,7 +36,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
   @NonNls
   public String toString() {
-    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    final @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append("AntProject[");
       final String name = getName();
@@ -87,8 +87,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
   @Nullable
   public AntTarget getDefaultTarget() {
-    final PsiReference[] references = getReferences();
-    for (PsiReference ref : references) {
+    for (final PsiReference ref : getReferences()) {
       final GenericReference reference = (GenericReference)ref;
       if (reference.getType().isAssignableTo(ReferenceType.ANT_TARGET)) {
         return (AntTarget)reference.resolve();
@@ -99,8 +98,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
   @Nullable
   public AntTarget getTarget(final String name) {
-    AntTarget[] targets = getTargets();
-    for (final AntTarget target : targets) {
+    for (final AntTarget target : getTargets()) {
       if (name.equals(target.getName())) {
         return target;
       }
@@ -114,9 +112,9 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       // this is necessary to avoid recurrent getImportedFiles() and stack overflow
       myImports = AntFile.NO_FILES;
       List<AntFile> imports = new ArrayList<AntFile>();
-      for (XmlTag tag : getSourceElement().getSubTags()) {
+      for (final XmlTag tag : getSourceElement().getSubTags()) {
         if ("import".equals(tag.getName())) {
-          AntFile imported = AntImportImpl.getImportedFile(tag.getAttributeValue("file"), this);
+          final AntFile imported = AntImportImpl.getImportedFile(tag.getAttributeValue("file"), this);
           if (imported != null) {
             imports.add(imported);
           }
@@ -146,7 +144,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
   public boolean isEnvironmentProperty(@NotNull final String propName) {
     checkEnvList();
-    for (String prefix : myEnvPrefixes) {
+    for (final String prefix : myEnvPrefixes) {
       if (propName.startsWith(prefix)) {
         return true;
       }
@@ -238,7 +236,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       if (rootTag == null) return;
       AntTypeDefinition propertyDef = getAntFile().getBaseTypeDefinition(Property.class.getName());
       AntProject fakeProject = new AntProjectImpl(null, rootTag, myDefinition);
-      for (XmlTag tag : rootTag.getSubTags()) {
+      for (final XmlTag tag : rootTag.getSubTags()) {
         final AntPropertyImpl property = new AntPropertyImpl(fakeProject, tag, propertyDef) {
           public PsiFile getContainingFile() {
             return getSourceElement().getContainingFile();
@@ -254,7 +252,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   }
 
   private void setPredefinedProperties() {
-    for (AntProperty property : myPredefinedProps) {
+    for (final AntProperty property : myPredefinedProps) {
       setProperty(property.getName(), property);
     }
   }
