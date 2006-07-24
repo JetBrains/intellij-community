@@ -186,8 +186,8 @@ outer:
         return false;
       }
     }
-    return Comparing.equal(substitutor1.substitute(method1.getReturnType()),
-                           substitutor2.substitute(method2.getReturnType()));
+
+    return true;
   }
 
   private Specifics checkSubtyping(PsiType type1, PsiType type2, final PsiType argType) {
