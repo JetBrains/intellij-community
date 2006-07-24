@@ -779,6 +779,7 @@ class RunConfigurable extends BaseConfigurable {
       if (getRunManager().isTemporary(originalConfiguration)) {
         getRunManager().makeStable(originalConfiguration.getConfiguration());
       }
+      myTree.repaint();
     }
 
     public void update(final AnActionEvent e) {
