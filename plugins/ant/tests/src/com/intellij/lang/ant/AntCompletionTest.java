@@ -140,6 +140,29 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     checkResultByFile(testName + "-out.xml");
   }
 
+  public void testEndTagCompletion() throws Exception {
+    if (true) return;
+    final String testName = getTestName(false);
+    configureByFile(testName + ".xml");
+    performNormalCompletion();
+
+    checkResultByFile(testName + "-out.xml");
+  }
+
+  //public void testPropertyCompletion() throws Exception {
+  //  final String testName = getTestName(false);
+  //  doTestFor(
+  //    new String [] { testName, testName + ".properties" },
+  //    "xml"
+  //  );
+  //}
+  //
+  //private void doTestFor(final String[] fileNames, final String ext) {
+  //  final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
+  //  final JavaModuleFixtureBuilder javaModuleFixtureBuilder = testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class);
+  //  //javaModuleFixtureBuilder.addContentRoot();
+  //}
+
   private void select() {
     select(Lookup.NORMAL_SELECT_CHAR, getSelected());
   }

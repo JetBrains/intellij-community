@@ -1,0 +1,3 @@
+<project default="">
+  <target name="mytarget"></target><caret>
+</project>
