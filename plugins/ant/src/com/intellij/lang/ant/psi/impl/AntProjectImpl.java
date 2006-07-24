@@ -173,7 +173,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
   @SuppressWarnings({"UseOfObsoleteCollectionType"})
   void loadPredefinedProperties(final Hashtable properties, final Map<String, String> externalProps) {
-    final Enumeration props = properties.keys();
+    final Enumeration props = (properties != null) ? properties.keys() : (new Hashtable()).keys();
     @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     builder.append("<project name=\"fake\">");
     try {
