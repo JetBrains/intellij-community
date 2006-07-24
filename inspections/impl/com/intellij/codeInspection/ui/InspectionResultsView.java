@@ -37,6 +37,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -213,8 +215,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         return true;
       }
     };
-    group.add(actionsManager.createCollapseAllAction(treeExpander));
     group.add(actionsManager.createExpandAllAction(treeExpander));
+    group.add(actionsManager.createCollapseAllAction(treeExpander));
     group.add(actionsManager.createPrevOccurenceAction(getOccurenceNavigator()));
     group.add(actionsManager.createNextOccurenceAction(getOccurenceNavigator()));
     group.add(myGlobalInspectionContext.createToggleAutoscrollAction());
@@ -231,11 +233,15 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createShowDiffOnlyAction(this));
     specialGroup.add(new EditSettingsAction());
     specialGroup.add(new DisableInspectionAction());
-    specialGroup.add(new InvokeQuickFixAction(this));
+    final InvokeQuickFixAction invokeQuickFixAction = new InvokeQuickFixAction(this);
+    specialGroup.add(invokeQuickFixAction);
     specialGroup.add(new SuppressInspectionToolbarAction(this));
-    westPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION, specialGroup, false).getComponent(), BorderLayout.EAST);
-
+    final JComponent toolbarComponent = ActionManager.getInstance()
+      .createActionToolbar(ActionPlaces.CODE_INSPECTION, specialGroup, false).getComponent();
+    westPanel.add(toolbarComponent, BorderLayout.EAST);
     add(westPanel, BorderLayout.WEST);
+    final Component actionButton = toolbarComponent.getComponent(ArrayUtil.find(specialGroup.getChildren(null), invokeQuickFixAction));
+    invokeQuickFixAction.setupPopupCoordinates(new RelativePoint(actionButton, new Point(0, actionButton.getHeight())));
   }
 
   public void dispose(){

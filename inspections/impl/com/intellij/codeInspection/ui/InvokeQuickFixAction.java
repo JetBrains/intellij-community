@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.util.List;
  */
 class InvokeQuickFixAction extends AnAction {
   private InspectionResultsView myView;
+  private RelativePoint myPoint;
 
   public InvokeQuickFixAction(final InspectionResultsView view) {
     super(InspectionsBundle.message("inspection.action.apply.quickfix"), InspectionsBundle.message("inspection.action.apply.quickfix.description"), IconLoader.getIcon("/actions/createFromUsage.png"));
@@ -98,6 +100,10 @@ class InvokeQuickFixAction extends AnAction {
                               JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                               false);
 
-    popup.showInBestPositionFor(dataContext);
+    popup.show(myPoint);
+  }
+
+  public void setupPopupCoordinates(RelativePoint point) {
+    myPoint = point;
   }
 }
