@@ -8,8 +8,6 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.javaee.JavaeeModuleProperties;
-import com.intellij.javaee.VerificationException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -167,14 +165,6 @@ public class CachedValueImpl<T> implements CachedValue<T> {
       PsiFile containingFile = element.getContainingFile();
       if (containingFile == null) return -1;
       return containingFile.getModificationStamp();
-    }
-    else if (dependency instanceof JavaeeModuleProperties) {
-      try {
-        ((JavaeeModuleProperties)dependency).getMainDeploymentDescriptor().checkIsValid();
-      }
-      catch (VerificationException e) {
-        return -1;
-      }
     }
 
     if (dependency == PsiModificationTracker.MODIFICATION_COUNT) {
