@@ -128,7 +128,7 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
   }
 
   public final void commit() {
-    if (!isCommitted()) {
+    if (myDomWrapper.isValid() && !isCommitted()) {
       setValueToXml(getValue());
       updateComponent();
     }
