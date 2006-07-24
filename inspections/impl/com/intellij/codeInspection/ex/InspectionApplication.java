@@ -116,6 +116,7 @@ public class InspectionApplication {
           PsiClass psiObjectClass = PsiManager.getInstance(myProject).findClass("java.lang.Object");
           if (psiObjectClass == null) {
             logError(InspectionsBundle.message("inspection.no.jdk.error.message"));
+            System.exit(1);
             return;
           }
           inspectionContext.launchInspectionsOffline(scope, myOutPath, myRunWithEditorSettings, im);
