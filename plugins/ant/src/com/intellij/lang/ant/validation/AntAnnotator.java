@@ -29,7 +29,7 @@ public class AntAnnotator implements Annotator {
       AntElement parent = se.getAntParent();
       AntTypeDefinition def = se.getTypeDefinition();
       final String name = se.getSourceElement().getName();
-      final TextRange absoluteRange = new TextRange(0, name.length()).shiftRight(se.getSourceElement().getTextOffset());
+      final TextRange absoluteRange = new TextRange(0, name.length()).shiftRight(se.getSourceElement().getTextOffset() + 1);
       if (def == null) {
         final Annotation annotation = holder.createErrorAnnotation(absoluteRange, AntBundle.message("undefined.element", name));
         boolean defined = false;
@@ -75,17 +75,20 @@ public class AntAnnotator implements Annotator {
     for (final XmlAttribute attr : sourceElement.getAttributes()) {
       final String name = attr.getName();
       final AntAttributeType type = def.getAttributeType(name);
-      if (type == null) {
-        holder.createErrorAnnotation(attr.getFirstChild(), AntBundle.message("attribute.is.not.allowed.here", name));
-      }
-      else {
-        final String value = attr.getValue();
-        if (type == AntAttributeType.INTEGER) {
-          try {
-            Integer.parseInt(value);
-          }
-          catch (NumberFormatException e) {
-            holder.createErrorAnnotation(attr.getFirstChild(), AntBundle.message("integer.attribute.has.invalid.value", name));
+      final PsiElement attrName = attr.getFirstChild();
+      if (attrName != null) {
+        if (type == null) {
+          holder.createErrorAnnotation(attrName, AntBundle.message("attribute.is.not.allowed.here", name));
+        }
+        else {
+          final String value = attr.getValue();
+          if (type == AntAttributeType.INTEGER) {
+            try {
+              Integer.parseInt(value);
+            }
+            catch (NumberFormatException e) {
+              holder.createErrorAnnotation(attrName, AntBundle.message("integer.attribute.has.invalid.value", name));
+            }
           }
         }
       }
