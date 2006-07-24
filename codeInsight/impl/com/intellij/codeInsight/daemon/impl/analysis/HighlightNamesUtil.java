@@ -34,8 +34,7 @@ public class HighlightNamesUtil {
     TextAttributes regularAttributes = HighlightInfo.getAttributesByType(type);
     if (element == null) return regularAttributes;
     TextAttributes scopeAttributes = getScopeAttributes(element);
-    TextAttributes attributes = TextAttributes.merge(scopeAttributes, regularAttributes);
-    return attributes;
+    return TextAttributes.merge(scopeAttributes, regularAttributes);
   }
 
   @Nullable
@@ -46,9 +45,12 @@ public class HighlightNamesUtil {
       TextRange range = elementToHighlight.getTextRange();
       if (elementToHighlight instanceof PsiJavaCodeReferenceElement) {
         final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)elementToHighlight;
-        final TextRange paramListRange = referenceElement.getParameterList().getTextRange();
-        if (paramListRange.getEndOffset() > paramListRange.getStartOffset()) {
-          range = new TextRange(range.getStartOffset(), paramListRange.getStartOffset());
+        PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+        if (parameterList != null) {
+          final TextRange paramListRange = parameterList.getTextRange();
+          if (paramListRange.getEndOffset() > paramListRange.getStartOffset()) {
+            range = new TextRange(range.getStartOffset(), paramListRange.getStartOffset());
+          }
         }
       }
 
@@ -156,7 +158,7 @@ public class HighlightNamesUtil {
     for (NamedScope namedScope : scopes) {
       PackageSet packageSet = namedScope.getValue();
       String name = namedScope.getName();
-      if (packageSet.contains(file, namedScopeManager)) {
+      if (packageSet != null && packageSet.contains(file, namedScopeManager)) {
         TextAttributesKey scopeKey = ColorAndFontOptions.getScopeTextAttributeKey(name);
         TextAttributes attributes = scheme.getAttributes(scopeKey);
         if (attributes != null) return attributes;

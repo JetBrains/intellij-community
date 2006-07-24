@@ -15,19 +15,24 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
 public class NamedScope {
   private String myName;
   private PackageSet myValue;
 
-  public NamedScope(String name, PackageSet value) {
+  public NamedScope(@NotNull String name, @Nullable PackageSet value) {
     myName = name;
     myValue = value;
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
 
+  @Nullable
   public PackageSet getValue() {
     return myValue;
   }
