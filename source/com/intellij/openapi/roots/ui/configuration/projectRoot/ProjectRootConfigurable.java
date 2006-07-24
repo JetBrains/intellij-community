@@ -473,7 +473,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
 
   public JComponent createComponent() {
-    return new MyDataProviderWrapper();
+    return new MyDataProviderWrapper(super.createComponent());
   }
 
   protected void processRemovedItems() {
@@ -751,9 +751,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   private class MyDataProviderWrapper extends JPanel implements DataProvider {
-    public MyDataProviderWrapper() {
+    public MyDataProviderWrapper(final JComponent component) {
       super(new BorderLayout());
-      add(myWholePanel, BorderLayout.CENTER);
+      add(component, BorderLayout.CENTER);
     }
 
     @Nullable
