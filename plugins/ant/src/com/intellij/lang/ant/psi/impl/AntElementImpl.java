@@ -34,6 +34,10 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     public String getName() {
       return "AntNull";
     }
+
+    public boolean isValid() {
+      return true;
+    }
   };
 
   private final AntElement myParent;
