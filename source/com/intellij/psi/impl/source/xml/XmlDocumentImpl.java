@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -22,13 +23,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
-import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.javaee.ExternalResourceManager;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -179,6 +179,8 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       if (fileFromText instanceof XmlFile) {
         return (XmlNSDescriptor)((XmlFile)fileFromText).getDocument().getMetaData();
       }
+    } catch(ProcessCanceledException ex) {
+      throw ex;
     } catch(RuntimeException ex) {} // e.g. dtd isn't mapped to xml type
     
     return null;
