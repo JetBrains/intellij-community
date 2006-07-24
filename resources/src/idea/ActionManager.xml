@@ -1505,6 +1505,9 @@
 
     <action id="Graph.ShowHideGrid" class="com.intellij.javaee.diagram.y.actions.ShowHideGridAction" text="Show/Hide Grid"/>
 
+    <action id="Graph.Print" class="com.intellij.javaee.diagram.y.actions.printing.PrintGraphAction" text="Print Graph"/>
+    <action id="Graph.Print.Preview" class="com.intellij.javaee.diagram.y.actions.printing.PrintPreviewAction" text="Print Preview"/>
+
     <!-- ***** yFiles layouts ********************** -->
     <action id="Graph.Layout.CircularLayouter" class="com.intellij.javaee.diagram.y.actions.layout.CircularLayouterAction"
             text="Circular">
@@ -1541,6 +1544,10 @@
 
       <separator/>
       <reference ref="Graph.ShowHideGrid"/>
+
+      <separator/>
+      <reference ref="Graph.Print"/>
+      <reference ref="Graph.Print.Preview"/>
 
       <separator/>
       <reference ref="Graph.CommonLayoutGroup"/>
