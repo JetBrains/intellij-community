@@ -75,13 +75,15 @@ public abstract class AntGenericReference extends GenericReference {
     return ourRefType;
   }
 
+  public ReferenceType getSoftenType() {
+    return ourRefType;
+  }
+
   public boolean shouldBeSkippedByAnnotator() {
     return false;
   }
 
-  public ReferenceType getSoftenType() {
-    return ourRefType;
-  }
+  public void setShouldBeSkippedByAnnotator(boolean value) {}  
 
   @NotNull
   public IntentionAction[] getFixes() {

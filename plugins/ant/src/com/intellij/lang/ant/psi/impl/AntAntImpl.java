@@ -2,7 +2,9 @@ package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntAnt;
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.impl.reference.AntTargetReference;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
@@ -37,7 +39,7 @@ public class AntAntImpl extends AntTaskImpl implements AntAnt {
   @NotNull
   public String getFileName() {
     String result = getSourceElement().getAttributeValue(getFileReferenceAttribute());
-    if( result == null) {
+    if (result == null) {
       result = DEFAULT_ANTFILE;
     }
     return result;
@@ -46,5 +48,16 @@ public class AntAntImpl extends AntTaskImpl implements AntAnt {
   @Nullable
   public String getTargetName() {
     return getSourceElement().getAttributeValue("target");
+  }
+
+  @NotNull
+  public PsiReference[] getReferences() {
+    final PsiReference[] result = super.getReferences();
+    for (final PsiReference reference : result) {
+      if (reference instanceof AntTargetReference) {
+        ((AntTargetReference)reference).setShouldBeSkippedByAnnotator(findFileByName(getFileName()) == null);
+      }
+    }
+    return result;
   }
 }

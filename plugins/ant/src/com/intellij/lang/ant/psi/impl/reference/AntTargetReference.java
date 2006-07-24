@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 public class AntTargetReference extends AntGenericReference {
 
   private static final ReferenceType ourRefType = new ReferenceType(ReferenceType.ANT_TARGET);
+  private boolean myShouldBeSkippedByAnnotator;
 
   public AntTargetReference(final GenericReferenceProvider provider,
                             final AntElement antElement,
@@ -28,6 +29,7 @@ public class AntTargetReference extends AntGenericReference {
                             final TextRange textRange,
                             final XmlAttribute attribute) {
     super(provider, antElement, str, textRange, attribute);
+    setShouldBeSkippedByAnnotator(false);
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
@@ -108,6 +110,14 @@ public class AntTargetReference extends AntGenericReference {
 
   public String getUnresolvedMessagePattern() {
     return AntBundle.message("cannot.resolve.target", getCanonicalText());
+  }
+
+  public boolean shouldBeSkippedByAnnotator() {
+    return myShouldBeSkippedByAnnotator;
+  }
+
+  public void setShouldBeSkippedByAnnotator(boolean value) {
+    myShouldBeSkippedByAnnotator = value;
   }
 
   @NotNull

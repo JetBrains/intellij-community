@@ -110,8 +110,8 @@
   <target name="all_lexers2" depends="xml,<error>oldxml2</error>">
   </target>
 
-  <error><wrongTag /></error>
-  <target <error>aaa="bbb"</error> />
+  <<error>wrongTag</error> />
+  <target <error>aaa</error>="bbb" />
 
   <!-- Duplicate target should be detected -->
   <error><target name="DuplicateTarget"/></error>
