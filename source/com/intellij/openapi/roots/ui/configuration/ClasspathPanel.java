@@ -207,21 +207,16 @@ public class ClasspathPanel extends JPanel {
   private void navigate() {
     final int selectedRow = myEntryTable.getSelectedRow();
     final OrderEntry entry = myModel.getItemAt(selectedRow).getEntry();
-    String nameToSelect = null;
+    Object toSelect = null;
+    final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(myRootModel.getModule().getProject());
     if (entry instanceof ModuleOrderEntry){
-      nameToSelect = ((ModuleOrderEntry)entry).getModuleName();
+      toSelect = ((ModuleOrderEntry)entry).getModule();
     } else if (entry instanceof LibraryOrderEntry){
-      final LibraryOrderEntry libraryOrderEntry = ((LibraryOrderEntry)entry);
-      nameToSelect = libraryOrderEntry.getLibraryName();
-      if (nameToSelect == null){
-        nameToSelect = ProjectRootConfigurable.trancateModuleLibraryName(libraryOrderEntry);
-      }
+      toSelect = ((LibraryOrderEntry)entry).getLibrary();
     } else if (entry instanceof JdkOrderEntry){
-      nameToSelect = ((JdkOrderEntry)entry).getJdkName();
+      toSelect = ((JdkOrderEntry)entry).getJdk();
     }
-    if (nameToSelect != null){
-      ProjectRootConfigurable.getInstance(myRootModel.getModule().getProject()).selectNodeInTree(nameToSelect);
-    }
+    rootConfigurable.selectNodeInTree(toSelect);
   }
 
 

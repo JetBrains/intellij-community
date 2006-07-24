@@ -358,6 +358,10 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     selectNodeInTree(nodeByName);
   }
 
+  public void selectNodeInTree(final Object object){
+    selectNodeInTree(findNodeByObject(myRoot, object));
+  }
+
   protected static MyNode findNodeByName(final TreeNode root, final String profileName) {
     return findNodeByCondition(root, new Condition<NamedConfigurable>() {
       public boolean value(final NamedConfigurable configurable) {
@@ -367,6 +371,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
   }
 
   protected static MyNode findNodeByObject(final TreeNode root, final Object editableObject) {
+    if (editableObject == null) return null; //do not suggest root node
     return findNodeByCondition(root, new Condition<NamedConfigurable>() {
       public boolean value(final NamedConfigurable configurable) {
         return Comparing.equal(editableObject, configurable.getEditableObject());
