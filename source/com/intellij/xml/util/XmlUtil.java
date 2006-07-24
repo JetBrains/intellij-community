@@ -1081,6 +1081,9 @@ public class XmlUtil {
         case'&':
           entity = "&amp;";
           break;
+        case 160: // unicode char for &nbsp;
+          entity = "&nbsp;";
+          break;
         default:
           entity = null;
           break;
