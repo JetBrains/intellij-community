@@ -124,7 +124,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       public String convert(final TreePath treePath) {
         return ((MyNode)treePath.getLastPathComponent()).getDisplayName();
       }
-    });
+    }, true);
   }
 
 

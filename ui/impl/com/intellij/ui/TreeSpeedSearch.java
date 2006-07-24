@@ -6,10 +6,15 @@ import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
+import javax.swing.text.Position;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
+  private boolean myCanExpand;
+
   private static final Convertor<TreePath, String> TO_STRING = new Convertor<TreePath, String>() {
     public String convert(TreePath object) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)object.getLastPathComponent();
@@ -31,7 +36,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
 
   /**
    * @deprecated You should use {@link TreeSpeedSearch#TreeSpeedSearch(JTree)}
-   * @see com.intellij.util.ui.Tree#getNextMatch(String, int, javax.swing.text.Position.Bias)
+   * @see Tree#getNextMatch(String, int, Position.Bias)
    */
   public TreeSpeedSearch(JTree tree, Convertor<TreePath, String> toStringConvertor) {
     super(tree);
@@ -43,8 +48,13 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   }
 
   public TreeSpeedSearch(Tree tree, Convertor<TreePath, String> toString) {
+    this(tree, toString, false);
+  }
+
+  public TreeSpeedSearch(Tree tree, Convertor<TreePath, String> toString, boolean canExpand) {
     super(tree);
     myToStringConvertor = toString;
+    myCanExpand = canExpand;
   }
 
   protected void selectElement(Object element, String selectedText) {
@@ -57,11 +67,28 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   }
 
   protected Object[] getAllElements() {
+    if (myCanExpand) {
+      final Object root = myComponent.getModel().getRoot();
+      if (root instanceof DefaultMutableTreeNode) {
+        final List<TreePath> paths = new ArrayList<TreePath>();
+        TreeUtil.traverse((DefaultMutableTreeNode)root, new TreeUtil.Traverse() {
+          public boolean accept(Object node) {
+            if (node instanceof DefaultMutableTreeNode){
+              final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
+              paths.add(new TreePath(treeNode.getPath()));
+            }
+            return true;
+          }
+        });
+        return paths.toArray(new TreePath[paths.size()]);
+      }
+    }
     TreePath[] paths = new TreePath[myComponent.getRowCount()];
-    for(int i = 0; i < paths.length; i++){
+    for (int i = 0; i < paths.length; i++) {
       paths[i] = myComponent.getPathForRow(i);
     }
     return paths;
+
   }
 
   protected String getElementText(Object element) {

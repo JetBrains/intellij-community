@@ -105,7 +105,7 @@ public class ModulesConfigurable implements NamedConfigurable<Project> {
 
     //myWarningLabel.setUI(new MultiLineLabelUI());
     myPanel.add(myWarningLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                       GridBagConstraints.BOTH, new Insets(10, 6, 0, 0), 0, 0));
+                                                       GridBagConstraints.BOTH, new Insets(10, 6, 10, 0), 0, 0));
   }
 
   public void disposeUIResources() {
@@ -139,9 +139,8 @@ public class ModulesConfigurable implements NamedConfigurable<Project> {
             cycle += ", " + model.getModule().getName();
           }
           if (modules.size() > 1) {
-            @NonNls final String br = "<br>";
-            cycles += br + cycle.substring(2);
-            count++;
+            @NonNls final String br = "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
+            cycles += br + (++count) + ". " + cycle.substring(2);            
           }
         }
         @NonNls final String leftBrace = "<html>";
