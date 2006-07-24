@@ -2,6 +2,7 @@ package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
+import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
@@ -33,7 +34,7 @@ public class AntElementFactory {
     if (element instanceof XmlComment) {
       return new AntCommentImpl(parent, element);
     }
-    if(element instanceof XmlEntityRef) {
+    if (element instanceof XmlEntityRef) {
       return new AntEntityRefImpl(parent, element);
     }
     if (!(element instanceof XmlTag)) return null;
@@ -71,13 +72,17 @@ public class AntElementFactory {
     }
     boolean importedType = false;
     if (typeDef == null) {
-      for (final AntFile imported : parent.getAntProject().getImportedFiles()) {
-        imported.getAntProject().getChildren();
-        for (AntTypeDefinition def : imported.getBaseTypeDefinitions()) {
-          if (id.equals(def.getTypeId())) {
-            importedType = true;
-            typeDef = def;
-            break;
+      final AntProject project = parent.getAntProject();
+      for (final AntFile imported : project.getImportedFiles()) {
+        final AntProject importedProject = imported.getAntProject();
+        if (!project.equals(importedProject)) {
+          importedProject.getChildren();
+          for (AntTypeDefinition def : imported.getBaseTypeDefinitions()) {
+            if (id.equals(def.getTypeId())) {
+              importedType = true;
+              typeDef = def;
+              break;
+            }
           }
         }
       }
