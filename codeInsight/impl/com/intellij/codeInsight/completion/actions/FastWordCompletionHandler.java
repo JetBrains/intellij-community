@@ -47,14 +47,13 @@ public class FastWordCompletionHandler implements CodeInsightActionHandler {
 
     Set variants = computeVariants(editor);
 
-    if (variants.isEmpty()) return;
-
     for (Iterator i = variants.iterator(); i.hasNext();) {
       String s = (String)i.next();
 
       if (!s.startsWith(oldPrefix)) i.remove();
     }
 
+    if (variants.isEmpty()) return;
 
     String nextVariant = (String)variants.iterator().next();
 
