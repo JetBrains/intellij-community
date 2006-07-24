@@ -26,6 +26,7 @@ public class StatusBarUpdater {
       public void caretPositionChanged(CaretEvent e) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            if (!myProject.isOpen()) return;
             updateStatus();
           }
         });
