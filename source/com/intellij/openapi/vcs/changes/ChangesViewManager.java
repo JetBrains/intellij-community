@@ -161,8 +161,8 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
     DefaultActionGroup visualActionsGroup = new DefaultActionGroup();
     final Expander expander = new Expander();
-    visualActionsGroup.add(CommonActionsManager.getInstance().createCollapseAllAction(expander));
     visualActionsGroup.add(CommonActionsManager.getInstance().createExpandAllAction(expander));
+    visualActionsGroup.add(CommonActionsManager.getInstance().createCollapseAllAction(expander));
 
     ToggleShowFlattenAction showFlattenAction = new ToggleShowFlattenAction();
     showFlattenAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P,

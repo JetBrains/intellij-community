@@ -324,8 +324,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return new AnAction[]{
       canPerformReRun() ? new ReRunAction() : null,
       new CloseAction(),
-      collapseAllAction,
       expandAllAction,
+      collapseAllAction,
       actionsManager.createPrevOccurenceAction(myRootPanel),
       actionsManager.createNextOccurenceAction(myRootPanel),
       actionsManager.installAutoscrollToSourceHandler(myProject, myTree, new MyAutoScrollToSourceOptionProvider()),
