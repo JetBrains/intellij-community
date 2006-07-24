@@ -83,7 +83,7 @@ public class AntChangeVisitor implements XmlChangeVisitor {
   private static void updateBuildFile(final AntFile file) {
     final AntConfiguration antConfiguration = AntConfiguration.getInstance(file.getProject());
     for (final AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
-      if (file.equals(file)) {
+      if (file.equals(buildFile.getAntFile())) {
         antConfiguration.updateBuildFile(buildFile);
         break;
       }
