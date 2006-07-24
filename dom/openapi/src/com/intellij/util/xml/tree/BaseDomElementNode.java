@@ -49,7 +49,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
   public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
     if (inputEvent instanceof MouseEvent) {
-      ((MouseEvent)inputEvent).consume();
+      inputEvent.consume();
     }
     final DomElement domElement = getDomElement();
     if (domElement.isValid()) {
