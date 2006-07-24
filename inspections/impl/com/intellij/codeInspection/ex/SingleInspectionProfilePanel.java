@@ -828,6 +828,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       ModifiableModel profile = mySelectedProfile.getParentProfile().getModifiableModel();
       ((InspectionProfileImpl)profile).getExpandedNodes().saveVisibleState(myTree);
       profile.save();
+      myProfileManager.updateProfile(profile);
     }
     myAlarm.cancelAllRequests();
     myProfileFilter.dispose();
