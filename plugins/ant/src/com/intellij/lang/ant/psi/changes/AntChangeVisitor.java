@@ -1,6 +1,8 @@
 package com.intellij.lang.ant.psi.changes;
 
 import com.intellij.lang.ant.AntSupport;
+import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntOuterProjectElement;
 import com.intellij.openapi.util.TextRange;
@@ -22,6 +24,7 @@ public class AntChangeVisitor implements XmlChangeVisitor {
       .getPsi(AntSupport.getLanguage());
     if (antFile != null) {
       antFile.clearCaches();
+      updateBuildFile(antFile);
     }
   }
 
@@ -73,6 +76,17 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     AntTypeDef typeDef = PsiTreeUtil.getParentOfType(element, AntTypeDef.class);
     if (typeDef != null) {
       typeDef.clearCaches();
+    }
+    updateBuildFile(file);
+  }
+
+  private static void updateBuildFile(final AntFile file) {
+    final AntConfiguration antConfiguration = AntConfiguration.getInstance(file.getProject());
+    for (final AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
+      if (file.equals(file)) {
+        antConfiguration.updateBuildFile(buildFile);
+        break;
+      }
     }
   }
 }
