@@ -269,7 +269,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         targetAttrs.put("description", AntAttributeType.STRING);
         final HashMap<AntTypeId, String> targetElements = new HashMap<AntTypeId, String>();
         for (AntTypeDefinition def : getBaseTypeDefinitions()) {
-          targetElements.put(def.getTypeId(), def.getClassName());
+          if (def.isTask() || targetElements.get(def.getTypeId()) == null) {
+            targetElements.put(def.getTypeId(), def.getClassName());
+          }
         }
         myTargetDefinition = new AntTypeDefinitionImpl(new AntTypeId("target"), Target.class.getName(), false, targetAttrs, targetElements);
         registerCustomType(myTargetDefinition);
