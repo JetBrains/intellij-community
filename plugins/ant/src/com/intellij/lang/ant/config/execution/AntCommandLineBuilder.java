@@ -113,9 +113,17 @@ public class AntCommandLineBuilder {
   public JavaParameters getCommandLine() {
     if (myDone) return myCommandLine;
     ParametersList programParameters = myCommandLine.getProgramParametersList();
-    programParameters.addAll(myExpandedProperties);
+    for (final String property : myExpandedProperties) {
+      if (property != null) {
+        programParameters.add(property);
+      }
+    }
     programParameters.add("-buildfile", myBuildFilePath);
-    programParameters.addAll(myTargets);
+    for (final String target : myTargets) {
+      if (target != null) {
+        programParameters.add(target);
+      }
+    }
     myDone = true;
     return myCommandLine;
   }
