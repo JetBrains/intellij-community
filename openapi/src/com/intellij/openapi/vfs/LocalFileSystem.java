@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -82,4 +83,6 @@ public abstract class LocalFileSystem extends VirtualFileSystem {
 
   public abstract void registerAuxiliaryFileOperationsHandler(LocalFileOperationsHandler handler);
   public abstract void unregisterAuxiliaryFileOperationsHandler(LocalFileOperationsHandler handler);
+
+  public abstract boolean processCachedFilesInSubtree(final VirtualFile file, Processor<VirtualFile> processor);
 }

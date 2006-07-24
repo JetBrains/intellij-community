@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -16,6 +15,7 @@ import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import com.intellij.util.Processor;
 import com.intellij.vfs.local.win32.FileWatcher;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -952,6 +952,30 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     if (!myHandlers.remove(handler)) {
       LOG.error("Handler" + handler + " haven't been registered or already unregistered.");
     }
+  }
+
+  public boolean processCachedFilesInSubtree(final VirtualFile file, Processor<VirtualFile> processor) {
+    if (!processFile(file, processor)) return false;
+
+    if (file.isDirectory()) {
+      for (final VirtualFileImpl unaccounted : myUnaccountedFiles.values()) {
+        if (unaccounted != null && VfsUtil.isAncestor(file, unaccounted, true)) {
+          if (!processFile(unaccounted, processor)) return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  private static boolean processFile(VirtualFile file, Processor<VirtualFile> processor) {
+    if (!processor.process(file)) return false;
+    if (file.isDirectory() && ((VirtualFileImpl)file).areChildrenCached()) {
+      for (final VirtualFile child : file.getChildren()) {
+        if (!processFile(child, processor)) return false;
+      }
+    }
+    return true;
   }
 
   private boolean auxDelete(VirtualFileImpl file) throws IOException {
