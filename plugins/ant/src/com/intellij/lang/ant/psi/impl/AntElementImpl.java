@@ -25,10 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AntElementImpl extends MetadataPsiElementBase implements AntElement {
 
@@ -40,8 +37,10 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   };
 
   private final AntElement myParent;
-  private AntElement[] myChildren = null;
-  private PsiReference[] myReferences = null;
+  private AntElement[] myChildren;
+  private PsiReference[] myReferences;
+  private PsiElement myPrev;
+  private PsiElement myNext;
   protected Map<String, AntProperty> myProperties;
   private AntProperty[] myPropertiesArray;
 
@@ -73,7 +72,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     }
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     throw new IncorrectOperationException("Can't rename ant element");
   }
 
@@ -116,36 +115,40 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
 
   @Nullable
   public PsiElement getNextSibling() {
-    final PsiElement parent = getAntParent();
-    if (parent != null) {
-      final PsiElement[] thisLevelElements = parent.getChildren();
-      PsiElement thisElement = null;
-      for (PsiElement element : thisLevelElements) {
-        if (thisElement != null) {
-          return element;
-        }
-        if (element == this) {
-          thisElement = element;
+    if (myNext == null) {
+      final PsiElement parent = getAntParent();
+      if (parent != null) {
+        PsiElement temp = null;
+        for (final PsiElement element : parent.getChildren()) {
+          if (temp != null) {
+            myNext = element;
+            break;
+          }
+          if (element == this) {
+            temp = element;
+          }
         }
       }
     }
-    return null;
+    return myNext;
   }
 
   @Nullable
   public PsiElement getPrevSibling() {
-    PsiElement prev = null;
-    final PsiElement parent = getAntParent();
-    if (parent != null) {
-      final PsiElement[] thisLevelElements = parent.getChildren();
-      for (PsiElement element : thisLevelElements) {
-        if (element == this) {
-          break;
+    if (myPrev == null) {
+      PsiElement prev = null;
+      final PsiElement parent = getAntParent();
+      if (parent != null) {
+        for (final PsiElement element : parent.getChildren()) {
+          if (element == this) {
+            break;
+          }
+          prev = element;
         }
-        prev = element;
       }
+      myPrev = prev;
     }
-    return prev;
+    return myPrev;
   }
 
   public void clearCaches() {
@@ -155,6 +158,8 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     myReferences = null;
     myProperties = null;
     myPropertiesArray = null;
+    myPrev = null;
+    myNext = null;
   }
 
   @Nullable
@@ -232,6 +237,10 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     }
   }
 
+  public AntElementRole getRole() {
+    return AntElementRole.NULL_ROLE;
+  }
+
   public boolean isPhysical() {
     return getSourceElement().isPhysical();
   }
@@ -265,13 +274,13 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
       temp = temp.getAntParent();
     }
     final AntProject project = element.getAntProject();
-    if ((result = resolvePropertyInProject(project, propName)) != null) {
+    if ((result = resolvePropertyInElement(project, propName)) != null) {
       return result;
     }
     for (final AntFile file : project.getImportedFiles()) {
       final AntProject importedProject = file.getAntProject();
       importedProject.getChildren();
-      if ((result = resolvePropertyInProject(importedProject, propName)) != null) {
+      if ((result = resolvePropertyInElement(importedProject, propName)) != null) {
         return result;
       }
     }
@@ -288,35 +297,18 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return result;
   }
 
-  private static PsiElement resolvePropertyInProject(final AntProject project, final String propName) {
-    PsiElement result = project.getProperty(propName);
+  private static PsiElement resolvePropertyInElement(final AntStructuredElement element, final String propName) {
+    PsiElement result = element.getProperty(propName);
     if (result == null) {
-      for (PsiElement child : project.getChildren()) {
-        if (child instanceof AntProperty) {
-          AntProperty prop = (AntProperty)child;
-          final PropertiesFile propFile = prop.getPropertiesFile();
-          if (propFile != null) {
-            String prefix = prop.getPrefix();
-            if (prefix != null && !prefix.endsWith(".")) {
-              prefix += '.';
-            }
-            final String key = (prefix == null) ? propName : prefix + propName;
-            final Property property = propFile.findPropertyByKey(key);
-            if (property != null) {
-              result = property;
-              break;
-            }
-          }
-        }
-      }
+      result = resolvePropertyInChildishPropertyFiles(element, propName);
     }
     return result;
   }
 
-  private static PsiElement resolveTargetProperty(final AntTarget target, final String propName, final HashSet<PsiElement> stack) {
+  private static PsiElement resolveTargetProperty(final AntTarget target, final String propName, final Set<PsiElement> stack) {
     PsiElement result = null;
     if (!stack.contains(target)) {
-      result = target.getProperty(propName);
+      result = resolvePropertyInElement(target, propName);
       if (result == null) {
         stack.add(target);
         for (AntTarget dependie : target.getDependsTargets()) {
@@ -327,7 +319,26 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return result;
   }
 
-  public AntElementRole getRole() {
-    return AntElementRole.NULL_ROLE;
+  private static PsiElement resolvePropertyInChildishPropertyFiles(final AntStructuredElement element, final String propName) {
+    PsiElement result = null;
+    for (PsiElement child : element.getChildren()) {
+      if (child instanceof AntProperty) {
+        AntProperty prop = (AntProperty)child;
+        final PropertiesFile propFile = prop.getPropertiesFile();
+        if (propFile != null) {
+          String prefix = prop.getPrefix();
+          if (prefix != null && !prefix.endsWith(".")) {
+            prefix += '.';
+          }
+          final String key = (prefix == null) ? propName : prefix + propName;
+          final Property property = propFile.findPropertyByKey(key);
+          if (property != null) {
+            result = property;
+            break;
+          }
+        }
+      }
+    }
+    return result;
   }
 }
