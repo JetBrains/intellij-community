@@ -107,10 +107,13 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
         }
         else {
           for (Object element : chosenElements) {
-            final String choosenElementText = myModel.getElementName(element).toLowerCase();
-            if (!choosenElementText.startsWith(enteredText)) {
-              FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.camelprefix");
-              break;
+            final String name = myModel.getElementName(element);
+            if (name != null) {
+              final String choosenElementText = name.toLowerCase();
+              if (!choosenElementText.startsWith(enteredText)) {
+                FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.camelprefix");
+                break;
+              }
             }
           }
         }
