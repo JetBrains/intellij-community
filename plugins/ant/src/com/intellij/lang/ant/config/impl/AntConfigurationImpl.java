@@ -124,7 +124,8 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
           }
           if (selectedTarget != null) {
             myEventToTargetMap.put(event, selectedTarget);
-          } else {
+          }
+          else {
             myEventToTargetMap.remove(event);
           }
         }
@@ -389,7 +390,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
     return getTargetForEvent(event);
   }
 
-  public void setTargetForBeforeRunEvent(final AntBuildFile buildFile, final String targetName, ConfigurationType type, String runConfigurationName) {
+  public void setTargetForBeforeRunEvent(final AntBuildFile buildFile,
+                                         final String targetName,
+                                         ConfigurationType type,
+                                         String runConfigurationName) {
     setTargetForEvent(buildFile, targetName, new ExecuteBeforeRunEvent(type, runConfigurationName));
   }
 
@@ -456,15 +460,11 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
                                             final AntBuildFile buildFile) {
     for (final AntBuildTarget target : targets) {
       final String actionId = ((AntBuildTargetBase)target).getActionId();
-      if (actionId == null) {
-        continue;
+      if (actionId != null && !registeredIds.contains(actionId)) {
+        registeredIds.add(actionId);
+        actionManager.registerAction(actionId, new TargetAction(buildFile, target.getName(), new String[]{target.getName()},
+                                                                target.getNotEmptyDescription()));
       }
-      if (registeredIds.contains(actionId)) {
-        continue;
-      }
-      registeredIds.add(actionId);
-      actionManager.registerAction(actionId, new TargetAction(buildFile, target.getName(), new String[]{target.getName()},
-                                                              target.getNotEmptyDescription()));
     }
   }
 
