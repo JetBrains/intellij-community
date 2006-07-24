@@ -60,15 +60,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   @NonNls private static final String OPTION = "option";
   @NonNls private static final String VALUE = "value";
 
-  private AntConfiguration myAntConfiguration;
-
   public RunManagerImpl(final Project project,
                         PropertiesComponent propertiesComponent,
-                        ConfigurationType[] configurationTypes,
-                        AntConfiguration antConfiguration) {
+                        ConfigurationType[] configurationTypes) {
     myConfig = new RunManagerConfig(propertiesComponent, this);
     myProject = project;
-    myAntConfiguration = antConfiguration;
     myRefactoringElementListenerProvider = new MyRefactoringElementListenerProvider();
     initializeConfigurationTypes(configurationTypes);
 
@@ -128,10 +124,13 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void createStepsBeforeRun(final RunnerAndConfigurationSettingsImpl template, final RunConfiguration configuration) {
-    final RunConfiguration templateConfiguration = template.getConfiguration();
-    final AntBuildTarget antBuildTarget = myAntConfiguration.getTargetForBeforeRunEvent(templateConfiguration.getType(), templateConfiguration.getName());
-    if (antBuildTarget != null){
-      myAntConfiguration.setTargetForBeforeRunEvent(antBuildTarget.getModel().getBuildFile(), antBuildTarget.getName(), templateConfiguration.getType(), configuration.getName());
+    AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
+    if (antConfiguration != null) {
+      final RunConfiguration templateConfiguration = template.getConfiguration();
+      final AntBuildTarget antBuildTarget = antConfiguration.getTargetForBeforeRunEvent(templateConfiguration.getType(), templateConfiguration.getName());
+      if (antBuildTarget != null){
+        antConfiguration.setTargetForBeforeRunEvent(antBuildTarget.getModel().getBuildFile(), antBuildTarget.getName(), templateConfiguration.getType(), configuration.getName());
+      }
     }
   }
 
