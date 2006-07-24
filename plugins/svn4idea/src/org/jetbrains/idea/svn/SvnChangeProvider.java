@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -56,6 +57,7 @@ public class SvnChangeProvider implements ChangeProvider {
     final List<VcsException> exceptions = new ArrayList<VcsException>();
     for (Change change : changes) {
       final File ioFile = ChangesUtil.getFilePath(change).getIOFile();
+      System.out.println("reverting: " + ioFile);
       try {
         SVNWCClient client = myVcs.createWCClient();
         client.setEventHandler(new ISVNEventHandler() {
@@ -71,7 +73,10 @@ public class SvnChangeProvider implements ChangeProvider {
         client.doRevert(ioFile, false);
       }
       catch (SVNException e) {
-        exceptions.add(new VcsException(e));
+        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
+          // skip errors on unversioned resources.
+          exceptions.add(new VcsException(e));
+        }
       }
     }
 
