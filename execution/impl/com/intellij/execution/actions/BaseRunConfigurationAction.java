@@ -3,10 +3,14 @@ package com.intellij.execution.actions;
 import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.LocatableConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 
@@ -20,6 +24,12 @@ abstract class BaseRunConfigurationAction extends AnAction {
     final ConfigurationContext context = new ConfigurationContext(dataContext);
     final RunnerAndConfigurationSettings configuration = context.getConfiguration();
     if (configuration == null) return;
+    final Project project = context.getProject();
+    final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
+    final RunnerAndConfigurationSettingsImpl template = runManager.getConfigurationTemplate(configuration.getFactory());
+    final RunConfiguration templateConfiguration = template.getConfiguration();
+    runManager.createStepsBeforeRun(template, configuration.getConfiguration());
+    runManager.setCompileMethodBeforeRun(configuration.getConfiguration(), runManager.getCompileMethodBeforeRun(templateConfiguration));
     perform(context);
   }
 

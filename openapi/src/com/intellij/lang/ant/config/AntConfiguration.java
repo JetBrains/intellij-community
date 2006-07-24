@@ -17,7 +17,9 @@
 
 package com.intellij.lang.ant.config;
 
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
@@ -31,6 +33,7 @@ public abstract class AntConfiguration implements ProjectComponent {
 
   private static final Map<Project, AntConfiguration> CONFIGURATIONS = new HashMap<Project, AntConfiguration>();
   private final Project myProject;
+  public static final String ANT = AntBundle.message("run.ant.target.step.before.run");
 
   protected AntConfiguration(final Project project) {
     myProject = project;
@@ -77,4 +80,8 @@ public abstract class AntConfiguration implements ProjectComponent {
   public abstract boolean hasTasksToExecuteBeforeRun(final RunConfiguration configuration);
 
   public abstract boolean executeTaskBeforeRun(final DataContext context, final RunConfiguration configuration);
+
+  public abstract AntBuildTarget getTargetForBeforeRunEvent(ConfigurationType type, String runConfigurationName);
+
+  public abstract void setTargetForBeforeRunEvent(final AntBuildFile buildFile, final String targetName, ConfigurationType type, String runConfigurationName);
 }

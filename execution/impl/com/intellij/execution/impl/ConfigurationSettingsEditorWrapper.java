@@ -1,16 +1,20 @@
 package com.intellij.execution.impl;
 
-import com.intellij.execution.RunManagerConfig;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.Function;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * User: anna
@@ -20,30 +24,67 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
 
   private JPanel myComponentPlace;
   private JCheckBox myCbStoreProjectConfiguration;
-  private JComboBox myCompileMethod;
   private JPanel myWholePanel;
+  private JPanel myCompilationMethodPanel;
+
   private ConfigurationSettingsEditor myEditor;
-  private String myCompileBeforeRunning;
+  private Map<String,Boolean> myCompileBeforeRunning;
   private boolean myStoreProjectConfiguration;
 
   public ConfigurationSettingsEditorWrapper(final RunnerAndConfigurationSettingsImpl settings) {
     myEditor = new ConfigurationSettingsEditor(settings);
     Disposer.register(this, myEditor);
 
-    final DefaultComboBoxModel comboBoxModel = (DefaultComboBoxModel)myCompileMethod.getModel();
-    for (String method : RunManagerConfig.METHODS) {
-      comboBoxModel.addElement(method);
-    }
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
-    myCompileBeforeRunning = runManager.getCompileMethodBeforeRun(runConfiguration);
-    myCompileMethod.setSelectedItem(myCompileBeforeRunning);
 
-    myCompileMethod.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myCompileBeforeRunning = (String)myCompileMethod.getSelectedItem();
+    myCompileBeforeRunning = runManager.getCompileMethodBeforeRun(runConfiguration);
+
+    final Set<String> list = runManager.getPossibleActionsBeforeRun();
+    myCompilationMethodPanel.setLayout(new GridBagLayout());
+    int gridy = 0;
+    for (final String method : list) {
+      final Boolean checked = myCompileBeforeRunning.get(method);
+      final JCheckBox checkBox = new JCheckBox(method, checked != null && checked.booleanValue());
+
+      final GridBagConstraints gc =
+        new GridBagConstraints(0, gridy, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+      myCompilationMethodPanel.add(checkBox, gc);
+      final Function<RunConfiguration, String> actionByName = runManager.getActionByName(method);
+      final FixedSizeButton button;
+      final JLabel label;
+      if (actionByName != null) {
+        final String descriptionByName = runManager.getDescriptionByName(method, runConfiguration);
+        label = new JLabel(descriptionByName != null ? descriptionByName : "");
+        gc.gridx++;
+        myCompilationMethodPanel.add(label, gc);
+        button = new FixedSizeButton(20);
+        gc.gridx++;
+        myCompilationMethodPanel.add(button, gc);
+        button.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            final String description = actionByName.fun(runConfiguration);
+            label.setText(description != null ? description : "");
+          }
+        });
+        gc.gridx++;
+        gc.weightx = 1;
+        myCompilationMethodPanel.add(Box.createHorizontalBox(), gc);
+      } else {
+        button = null;
+        label = null;
       }
-    });
+      checkBox.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          myCompileBeforeRunning.put(method, checkBox.isSelected());
+          if (button != null && label != null){
+            button.setEnabled(checkBox.isSelected());
+            label.setEnabled(checkBox.isSelected());
+          }
+        }
+      });
+      gridy++;
+    }
 
     myStoreProjectConfiguration = runManager.isConfigurationShared(settings);
     myCbStoreProjectConfiguration.setSelected(myStoreProjectConfiguration);
@@ -55,7 +96,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   }
 
   public void setCompileMethodState(boolean state){
-    myCompileMethod.setEnabled(state);
+    UIUtil.setEnabled(myCompilationMethodPanel, state, true);
   }
 
   @NotNull
@@ -90,7 +131,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   }
 
 
-  public String getCompileMethodBeforeRunning() {
+  public Map<String, Boolean> getCompileMethodBeforeRunning() {
     return myCompileBeforeRunning;
   }
 

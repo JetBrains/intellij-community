@@ -11,6 +11,8 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 /**
  * Manages {@link RunConfiguration}s.
  *
@@ -39,9 +41,11 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract RunnerAndConfigurationSettingsImpl[] getConfigurationSettings(ConfigurationType type);
 
-  public abstract void addConfiguration(RunnerAndConfigurationSettingsImpl settings, boolean isShared, String method);
+  public abstract void addConfiguration(RunnerAndConfigurationSettingsImpl settings, boolean isShared, Map<String,Boolean> method);
+
+  public abstract void addConfiguration(final RunnerAndConfigurationSettingsImpl settings, final boolean isShared);
 
   public abstract boolean isConfigurationShared(RunnerAndConfigurationSettingsImpl settings);
 
-  public abstract String getCompileMethodBeforeRun(RunConfiguration settings);
+  public abstract Map<String,Boolean> getCompileMethodBeforeRun(RunConfiguration settings);
 }

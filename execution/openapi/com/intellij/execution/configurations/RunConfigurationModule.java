@@ -102,6 +102,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
 
   public void setModule(final Module module) {
     myModule = module;
+    myModuleName = null;
   }
 
   public String getModuleName() {

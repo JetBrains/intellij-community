@@ -5,15 +5,12 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.util.StoringPropertyContainer;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.config.BooleanProperty;
+
+import java.util.Map;
 
 public class RunManagerConfig {
   public static final String MAKE = ExecutionBundle.message("before.run.property.make");
-  public static final String NONE = ExecutionBundle.message("before.run.property.none");
-  public static final String MAKE_ANT = ExecutionBundle.message("before.run.property.make.ant");
-  public static final String ANT = ExecutionBundle.message("before.run.property.ant");
-  public static final String [] METHODS = new String[]{NONE, MAKE, ANT, MAKE_ANT};
 
   private static final BooleanProperty SHOW_SETTINGS = new BooleanProperty("showSettingsBeforeRunnig", true);
   private static final BooleanProperty COMPILE_BERFORE_RUNNING = new BooleanProperty("compileBeforeRunning", true);
@@ -43,10 +40,12 @@ public class RunManagerConfig {
   }
 
   public boolean isCompileBeforeRunning(RunProfile runProfile){
-    return isCompileBeforeRunning() &&
-           (!(runProfile instanceof RunConfiguration) ||
-            Comparing.strEqual(myManager.getCompileMethodBeforeRun((RunConfiguration)runProfile), MAKE) ||
-            Comparing.strEqual(myManager.getCompileMethodBeforeRun((RunConfiguration)runProfile), MAKE_ANT));
+    if (runProfile instanceof RunConfiguration){
+      final Map<String,Boolean> beforeRun = myManager.getCompileMethodBeforeRun((RunConfiguration)runProfile);
+      final Boolean makeBeforeRun = beforeRun.get(MAKE);
+      if (makeBeforeRun == null || !makeBeforeRun.booleanValue()) return false;
+    }
+    return isCompileBeforeRunning();
   }
 
 }

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author dyoma
@@ -91,17 +92,26 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     final Runnable antAwareRunnable = new Runnable() {
       public void run() {
         final AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
-        if (configuration instanceof RunConfiguration &&
-            antConfiguration != null && antConfiguration.hasTasksToExecuteBeforeRun((RunConfiguration)configuration)) {
-          final Thread thread = new Thread(new Runnable() {
-            public void run() {
-              final DataContext dataContext = MapDataContext.singleData(DataConstants.PROJECT, myProject);
-              if (antConfiguration.executeTaskBeforeRun(dataContext, (RunConfiguration)configuration)) {
-                ApplicationManager.getApplication().invokeLater(startRunnable);
+        if (configuration instanceof RunConfiguration) {
+          final RunConfiguration runConfiguration = (RunConfiguration)configuration;
+          final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
+          final Map<String, Boolean> beforeRun = runManager.getCompileMethodBeforeRun(runConfiguration);
+          final Boolean enabled = beforeRun.get(AntConfiguration.ANT);
+          if (enabled != null && enabled.booleanValue() && antConfiguration != null &&
+              antConfiguration.hasTasksToExecuteBeforeRun(runConfiguration)) {
+            final Thread thread = new Thread(new Runnable() {
+              public void run() {
+                final DataContext dataContext = MapDataContext.singleData(DataConstants.PROJECT, myProject);
+                if (antConfiguration.executeTaskBeforeRun(dataContext, runConfiguration)) {
+                  ApplicationManager.getApplication().invokeLater(startRunnable);
+                }
               }
-            }
-          });
-          thread.start();
+            });
+            thread.start();
+          }
+          else {
+            startRunnable.run();
+          }
         }
         else {
           startRunnable.run();

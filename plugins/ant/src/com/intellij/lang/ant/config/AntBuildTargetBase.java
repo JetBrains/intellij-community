@@ -17,8 +17,6 @@ public interface AntBuildTargetBase extends AntBuildTarget {
   @Nullable
   String getActionId();
 
-  AntBuildModelBase getModel();
-
   @Nullable
   OpenFileDescriptor getOpenFileDescriptor();
 

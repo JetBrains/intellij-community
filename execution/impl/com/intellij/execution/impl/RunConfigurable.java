@@ -215,12 +215,6 @@ class RunConfigurable extends BaseConfigurable {
         setupDialogBounds();
       }
     });
-    info.getEditor().addSettingsEditorListener(new SettingsEditorListener<RunnerAndConfigurationSettingsImpl>() {
-      public void stateChanged(SettingsEditor settingsEditor) {
-        update();
-        setupDialogBounds();
-      }
-    });
 
     info.addNameListner(new DocumentListener() {
       public void insertUpdate(DocumentEvent e) {

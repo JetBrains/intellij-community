@@ -1,10 +1,7 @@
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntBuildTargetBase;
-import com.intellij.lang.ant.config.AntConfigurationBase;
-import com.intellij.lang.ant.config.ExecutionEvent;
+import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.impl.ExecuteCompositeTargetEvent;
 import com.intellij.lang.ant.config.impl.MetaTarget;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -81,7 +78,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     final AntBuildTargetBase target = getTarget();
     if (!addShortcutText(target.getActionId())) {
       if (target.isDefault()) {
-        addShortcutText(target.getModel().getDefaultTargetActionId());
+        addShortcutText(((AntBuildModelBase)target.getModel()).getDefaultTargetActionId());
       }
     }
 

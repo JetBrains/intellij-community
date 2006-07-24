@@ -3,6 +3,7 @@ package com.intellij.execution.actions;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
@@ -82,10 +83,13 @@ public class CreateAction extends BaseRunConfigurationAction {
     }
 
     public void perform(final ConfigurationContext context) {
-      final RunManagerEx runManager = context.getRunManager();
+      final RunManagerImpl runManager = (RunManagerImpl)context.getRunManager();
       final RunnerAndConfigurationSettingsImpl configuration = context.getConfiguration();
-      final RunnerAndConfigurationSettingsImpl template = ((RunManagerImpl)runManager).getConfigurationTemplate(configuration.getFactory());
-      runManager.addConfiguration(configuration, runManager.isConfigurationShared(template), runManager.getCompileMethodBeforeRun(template.getConfiguration()));
+      final RunnerAndConfigurationSettingsImpl template = runManager.getConfigurationTemplate(configuration.getFactory());
+      final RunConfiguration templateConfiguration = template.getConfiguration();
+      runManager.addConfiguration(configuration, runManager.isConfigurationShared(template), runManager.getCompileMethodBeforeRun(
+        templateConfiguration));
+      runManager.createStepsBeforeRun(template, configuration.getConfiguration());
       runManager.setActiveConfiguration(configuration);
     }
   }

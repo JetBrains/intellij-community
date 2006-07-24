@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.config.impl;
 
+import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.DataAccessor;
@@ -35,6 +36,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ActionRunner;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.Function;
 import com.intellij.util.StringSetSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.config.AbstractProperty;
@@ -106,6 +108,40 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
     myPsiManager = PsiManager.getInstance(project);
     myToolWindowManager = ToolWindowManager.getInstance(project);
     myStartupManager = StartupManager.getInstance(project);
+  }
+
+  public void registerAntTargetBeforeRun(final RunManager runManager, final Project project) {
+    runManager.registerActionBeforeRun(ANT, new Function<RunConfiguration, String>() {
+      public String fun(final RunConfiguration runConfiguration) {
+        ExecuteBeforeRunEvent event = findExecuteBeforeRunEvent(runConfiguration);
+        Pair<AntBuildFile, String> selectedTarget = myEventToTargetMap.get(event);
+        final TargetChooserDialog dlg = new TargetChooserDialog(project, selectedTarget, AntConfigurationImpl.this);
+        dlg.show();
+        if (dlg.isOK()) {
+          selectedTarget = dlg.getSelectedTarget();
+          if (event == null) {
+            event = new ExecuteBeforeRunEvent(runConfiguration.getType(), runConfiguration.getName());
+          }
+          if (selectedTarget != null) {
+            myEventToTargetMap.put(event, selectedTarget);
+          } else {
+            myEventToTargetMap.remove(event);
+          }
+        }
+        final String targetName = selectedTarget != null ? selectedTarget.getSecond() : null;
+        return getPresentableDescription(targetName);
+      }
+    }, new Function<RunConfiguration, String>() {
+      public String fun(final RunConfiguration runConfiguration) {
+        final ExecuteBeforeRunEvent event = findExecuteBeforeRunEvent(runConfiguration);
+        final AntBuildTarget buildTarget = getTargetForEvent(event);
+        return buildTarget != null ? getPresentableDescription(buildTarget.getName()) : "";
+      }
+    });
+  }
+
+  private static String getPresentableDescription(final String targetName) {
+    return targetName != null ? "\'" + targetName + "\'" : "";
   }
 
   public void projectOpened() {
@@ -346,6 +382,15 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
   public boolean executeTaskBeforeRun(final DataContext context, final RunConfiguration configuration) {
     final ExecuteBeforeRunEvent foundEvent = findExecuteBeforeRunEvent(configuration);
     return runTargetSynchronously(context, foundEvent);
+  }
+
+  public AntBuildTarget getTargetForBeforeRunEvent(ConfigurationType type, String runConfigurationName) {
+    ExecutionEvent event = new ExecuteBeforeRunEvent(type, runConfigurationName);
+    return getTargetForEvent(event);
+  }
+
+  public void setTargetForBeforeRunEvent(final AntBuildFile buildFile, final String targetName, ConfigurationType type, String runConfigurationName) {
+    setTargetForEvent(buildFile, targetName, new ExecuteBeforeRunEvent(type, runConfigurationName));
   }
 
   private AntBuildModelBase createModel(final AntBuildFile buildFile) {

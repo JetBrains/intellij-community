@@ -137,7 +137,7 @@ public class CheckboxTree extends Tree {
         setBackground(null);
 
         myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-        CheckboxTreeCellRenderer.this.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
+        customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
       }
       return this;
     }

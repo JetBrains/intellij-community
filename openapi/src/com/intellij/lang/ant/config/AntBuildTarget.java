@@ -30,4 +30,6 @@ public interface AntBuildTarget {
   boolean isDefault();
 
   void run(DataContext dataContext, AntBuildListener buildListener);
+
+  AntBuildModel getModel();
 }

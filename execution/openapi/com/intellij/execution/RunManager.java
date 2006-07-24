@@ -19,6 +19,9 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.Function;
+
+import java.util.Set;
 
 /**
  * User: anna
@@ -45,4 +48,11 @@ public abstract class RunManager {
 
   public abstract RunnerAndConfigurationSettings createRunConfiguration(String name, ConfigurationFactory type);
 
+  public abstract void registerActionBeforeRun(String actionName, Function<RunConfiguration, String> action, Function<RunConfiguration, String> retrieveDescription);
+
+  public abstract Set<String> getPossibleActionsBeforeRun();
+
+  public abstract Function<RunConfiguration, String> getActionByName(String actionName);
+
+  public abstract String getDescriptionByName(String actionName, RunConfiguration runConfiguration);
 }
