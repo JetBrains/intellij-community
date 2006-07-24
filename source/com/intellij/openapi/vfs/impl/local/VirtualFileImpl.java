@@ -408,14 +408,7 @@ public class VirtualFileImpl extends VirtualFile {
         public void run() {
           LOG.info("Executing request:" + this);
 
-          final ProgressIndicator indicator = ourFileSystem.getManager().getRefreshIndicator(asynchronous);
-          indicator.start();
-          indicator.setText(VfsBundle.message("file.synchronize.progress"));
-
           ApplicationManager.getApplication().runReadAction(runnable);
-
-          indicator.stop();
-
 
           endTask.run();
         }

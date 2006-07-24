@@ -71,11 +71,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   public void disposeComponent() {
   }
 
-  @NotNull
-  public ProgressIndicator getRefreshIndicator(final boolean asynchronous) {
-    return asynchronous ? myAsyncRefreshIndicator : myRefreshIndicator;
-  }
-
   private void registerFileSystem(VirtualFileSystem fileSystem) {
     myFileSystems.add(fileSystem);
     fileSystem.addVirtualFileListener(myVirtualFileListenerMulticaster.getMulticaster());
@@ -180,6 +175,18 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     Runnable action = new Runnable() {
       public void run() {
         ApplicationManager.getApplication().assertIsDispatchThread();
+        final ProgressIndicator indicator = asynchronous ? myAsyncRefreshIndicator : myRefreshIndicator;
+        if (asynchronous) {
+          if (getAsynchronousRefreshCount() == 0) {
+            indicator.start();
+          }
+        } else {
+          if (mySynchronousRefreshCount == 0) {
+            indicator.start();
+          }
+        }
+        indicator.setText(VfsBundle.message("file.synchronize.progress"));
+
         myRefreshCount++;
         if (!asynchronous) mySynchronousRefreshCount++;
         myPostRefreshRunnables.push(postAction);
@@ -195,6 +202,10 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     else {
       action.run();
     }
+  }
+
+  private int getAsynchronousRefreshCount() {
+    return myRefreshCount - mySynchronousRefreshCount;
   }
 
   private class FireBeforeRefresh implements Runnable {
@@ -233,6 +244,17 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
               if (!asynchronous) mySynchronousRefreshCount--;
               LOG.assertTrue(myRefreshCount >= 0 && mySynchronousRefreshCount >= 0);
 
+              final ProgressIndicator indicator = asynchronous ? myAsyncRefreshIndicator : myRefreshIndicator;
+              if (asynchronous) {
+                if (getAsynchronousRefreshCount() == 0) {
+                  indicator.stop();
+                }
+              }
+              else {
+                if (mySynchronousRefreshCount == 0) {
+                  indicator.stop();
+                }
+              }
 
               if (myRefreshCount > 0) {
                 myRefreshEventsToFire.clear();

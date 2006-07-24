@@ -397,8 +397,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
     final Runnable endTask = new Runnable() {
       public void run() {
-        getManager().getRefreshIndicator(asynchronous).stop();
-
         getManager().afterRefreshFinish(asynchronous, modalityState);
       }
     };
@@ -406,10 +404,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     final Runnable runnable = new Runnable() {
       public void run() {
         getManager().beforeRefreshStart(asynchronous, modalityState, null);
-
-        final ProgressIndicator indicator = getManager().getRefreshIndicator(asynchronous);
-        indicator.start();
-        indicator.setText(VfsBundle.message("file.synchronize.progress"));
 
         storeRefreshStatusToFiles();
 
