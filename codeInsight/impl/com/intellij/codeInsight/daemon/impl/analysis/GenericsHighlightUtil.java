@@ -910,13 +910,20 @@ public class GenericsHighlightUtil {
     PsiElement declarationScope = parameter.getDeclarationScope();
     if (declarationScope instanceof PsiMethod) {
       PsiParameter[] params = ((PsiMethod)declarationScope).getParameterList().getParameters();
-      if (parameter.isVarArgs() && params[params.length - 1] != parameter) {
-        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                               parameter,
-                                                               JavaErrorMessages.message("vararg.not.last.parameter"));
-        String displayName = UncheckedWarningLocalInspection.DISPLAY_NAME;
-        QuickFixAction.registerQuickFixAction(info, new MakeVarargParameterLastFix(parameter), null, displayName);
-        return info;
+      if (parameter.isVarArgs()) {
+        if (!PsiUtil.getLanguageLevel(parameter).hasEnumKeywordAndAutoboxing()) {
+          return HighlightInfo
+            .createHighlightInfo(HighlightInfoType.ERROR, parameter, JavaErrorMessages.message("varargs.prior.15"));
+        }
+
+        if (params[params.length - 1] != parameter) {
+          HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                                 parameter,
+                                                                 JavaErrorMessages.message("vararg.not.last.parameter"));
+          String displayName = UncheckedWarningLocalInspection.DISPLAY_NAME;
+          QuickFixAction.registerQuickFixAction(info, new MakeVarargParameterLastFix(parameter), null, displayName);
+          return info;
+        }
       }
     }
     return null;
