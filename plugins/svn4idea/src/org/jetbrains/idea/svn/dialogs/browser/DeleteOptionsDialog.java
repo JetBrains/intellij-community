@@ -79,6 +79,7 @@ public class DeleteOptionsDialog extends DialogWrapper {
     }
     Object[] model = messages != null ? messages.toArray() : new Object[] {""};
     final JComboBox messagesBox = new JComboBox(model);
+    messagesBox.setRenderer(new MessageBoxCellRenderer());
     panel.add(messagesBox, gc);
 
     String lastMessage = VcsConfiguration.getInstance(myProject).getLastNonEmptyCommitMessage();

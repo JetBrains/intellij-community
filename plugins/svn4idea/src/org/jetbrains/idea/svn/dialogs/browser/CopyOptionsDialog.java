@@ -1,27 +1,25 @@
 package org.jetbrains.idea.svn.dialogs.browser;
 
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
-import javax.swing.event.DocumentListener;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -188,6 +186,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     }
     Object[] model = messages != null ? messages.toArray() : new Object[] {""};
     final JComboBox messagesBox = new JComboBox(model);
+    messagesBox.setRenderer(new MessageBoxCellRenderer());
     panel.add(messagesBox, gc);
 
     String lastMessage = VcsConfiguration.getInstance(myProject).getLastNonEmptyCommitMessage();
@@ -233,4 +232,5 @@ public class CopyOptionsDialog extends DialogWrapper {
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }
+
 }
