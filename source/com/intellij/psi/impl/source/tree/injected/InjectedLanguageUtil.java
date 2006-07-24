@@ -110,11 +110,11 @@ public class InjectedLanguageUtil {
 
     final ASTNode parsedNode = psiFile.getNode();
     if (!(parsedNode instanceof FileElement)) return null;
+    String sourceRawText = prefix + text.substring(rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset()) + suffix;
     if (textEscaper != null) {
-      patchLeafs(parsedNode, text, rangeInsideHost, textEscaper, prefix, suffix);
+      patchLeafs(parsedNode, textEscaper, sourceRawText, prefix.length());
     }
     String parsedText = parsedNode.getText();
-    String sourceRawText = prefix + text.substring(rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset()) + suffix;
     LOG.assertTrue(parsedText.equals(sourceRawText));
 
     parsedNode.putUserData(TreeElement.MANAGER_KEY, psiManager);
@@ -182,27 +182,27 @@ public class InjectedLanguageUtil {
   }
 
   private static <T extends PsiLanguageInjectionHost> void patchLeafs(final ASTNode parsedNode,
-                                                                      final String hostText,
-                                                                      final TextRange rangeInsideHost,
                                                                       final LiteralTextEscaper<T> literalTextEscaper,
-                                                                      final String prefix,
-                                                                      final String suffix) {
-    final String text = prefix + hostText.substring(rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset()) + suffix;
+                                                                      final String physicalText,
+                                                                      final int prefixLength) {
+
     final Map<LeafElement, String> newTexts = new THashMap<LeafElement, String>();
     ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementVisitor(){
+      int currentSourceOffset;
       protected boolean visitNode(TreeElement element) {
         return true;
       }
 
       public void visitLeaf(LeafElement leaf) {
         TextRange range = leaf.getTextRange();
-        int offsetInSource = literalTextEscaper.getOffsetInSource(range.getStartOffset()) + prefix.length();
-        int endOffsetInSource = literalTextEscaper.getOffsetInSource(range.getEndOffset()) + prefix.length();
-        String sourceSubText = text.substring(offsetInSource, endOffsetInSource);
+        int offsetInSource = currentSourceOffset + prefixLength;
+        int endOffsetInSource = literalTextEscaper.getOffsetInSource(range.getEndOffset()) + prefixLength;
+        String sourceSubText = physicalText.substring(offsetInSource, endOffsetInSource);
         String leafText = leaf.getText();
         if (!Comparing.strEqual(leafText, sourceSubText)) {
           newTexts.put(leaf, sourceSubText);
         }
+        currentSourceOffset = endOffsetInSource;
       }
     });
     for (LeafElement leaf : newTexts.keySet()) {

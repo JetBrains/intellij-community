@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.jsp.jspJava;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -33,19 +32,19 @@ import java.util.Set;
 
 public class OuterLanguageElement extends LeafElement implements PsiElement{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement");
-  private JspxFileViewProvider myViewProvider;
+  private FileViewProvider myViewProvider;
   private TextRange myRange;
   private XmlText myFollowingText;
 
 
-  public OuterLanguageElement(IElementType type, JspxFileViewProvider viewProvider, TextRange range, XmlText followingText) {
+  public OuterLanguageElement(IElementType type, FileViewProvider viewProvider, TextRange range, XmlText followingText) {
     super(type);
     myViewProvider = viewProvider;
     myRange = range;
     myFollowingText = followingText;
   }
 
-  public OuterLanguageElement(JspxFileViewProvider viewProvider, TextRange range, XmlText followingText) {
+  public OuterLanguageElement(FileViewProvider viewProvider, TextRange range, XmlText followingText) {
     this(JspElementType.HOLDER_TEMPLATE_DATA, viewProvider, range, followingText);
   }
 
