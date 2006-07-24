@@ -3,32 +3,27 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
-import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
-import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicComboBoxUI;
-import javax.swing.plaf.basic.BasicComboBoxEditor;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
-
-import sun.swing.DefaultLookup;
 
 /**
  * @author peter
@@ -269,7 +264,9 @@ public class ComboControl extends BaseControl<JComboBox, String> {
               comboBox.setToolTipText(TooltipUtils.getTooltipText(warningProblems));
             }
 
-            background = ((Pair<String,Icon>)comboBox.getSelectedItem()).first.trim().length() > 0 ? getDefaultBackground() : background;
+            final Pair<String, Icon> pair = (Pair<String, Icon>)comboBox.getSelectedItem();
+            final String s = pair.first;
+            background = s != null && s.trim().length() > 0 ? getDefaultBackground() : background;
 
             comboBox.setBackground(background);
             comboBox.getEditor().getEditorComponent().setBackground(background);
