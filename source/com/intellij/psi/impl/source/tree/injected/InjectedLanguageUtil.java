@@ -120,7 +120,7 @@ public class InjectedLanguageUtil {
     parsedNode.putUserData(TreeElement.MANAGER_KEY, psiManager);
     virtualFile.setContent(null, documentRange.getText(), false);
     FileDocumentManagerImpl.registerDocument(documentRange, virtualFile);
-    psiFile = (PsiFile)registerDocumentRange(documentRange, psiFile);
+    psiFile = registerDocumentRange(documentRange, psiFile);
 
     ((MyFileViewProvider)psiFile.getViewProvider()).setVirtualFile(virtualFile);
     ((SingleRootFileViewProvider)psiFile.getViewProvider()).forceCachedPsi(psiFile);
@@ -403,7 +403,7 @@ public class InjectedLanguageUtil {
       injectionHost.getInjectedPsi();
     }
   }
-  private static PsiElement registerDocumentRange(final DocumentRange documentRange, final PsiFile injectedPsi) {
+  private static PsiFile registerDocumentRange(final DocumentRange documentRange, final PsiFile injectedPsi) {
     DocumentEx hostDocument = documentRange.getDelegate();
     List<DocumentRange> injected = hostDocument.getUserData(INJECTED_FILES_KEY);
 
@@ -417,14 +417,14 @@ public class InjectedLanguageUtil {
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(injectedPsi.getProject());
     for (DocumentRange oldDocument : injected) {
       PsiFileImpl oldFile = (PsiFileImpl)documentManager.getPsiFile(oldDocument);
+      assert oldFile.getViewProvider() instanceof MyFileViewProvider : oldFile.getViewProvider();
       RangeMarker oldRangeMarker = oldDocument.getTextRange();
       TextRange oldTextRange = new TextRange(oldRangeMarker.getStartOffset(), oldRangeMarker.getEndOffset());
       ASTNode injectedNode = injectedPsi.getNode();
       ASTNode oldFileNode = oldFile.getNode();
       assert injectedNode != null;
       assert oldFileNode != null;
-      if (oldTextRange.intersects(textRange) &&
-          !injectedNode.getText().equals(oldFileNode.getText())) {
+      if (oldTextRange.intersects(textRange) && !injectedNode.getText().equals(oldFileNode.getText())) {
         // replace psi
         FileElement newFileElement = (FileElement)injectedNode.copyElement();
         FileElement oldFileElement = oldFile.getTreeElement();
