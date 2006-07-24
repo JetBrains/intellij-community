@@ -46,4 +46,18 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   public void testSanity2() throws Exception { doTest(); }
 
   public void testRefid() throws Exception { doTest(); }
+
+  public void testExternalValidator() throws Exception { doTest(); }
+
+  @Bombed(year = 2006, month = Calendar.AUGUST, day = 29, user = "lvo", time = 12, description = "Using property files")
+  public void testProperties() throws Exception {
+    configureByFiles(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"),
+        getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".properties")
+      },
+      null
+    );
+    doDoTest(true, false);
+  }
 }

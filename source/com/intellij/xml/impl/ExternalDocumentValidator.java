@@ -12,6 +12,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.XmlUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.reference.SoftReference;
@@ -306,6 +307,13 @@ public class ExternalDocumentValidator {
       ) {
       return;
     }
+
+    final XmlDocument document = ((XmlFile)containingFile).getDocument();
+    final XmlTag rootTag = document != null ? document.getRootTag() : null;
+    if (rootTag == null) return;
+
+    if (com.intellij.xml.util.XmlUtil.ANT_URI.equals(rootTag.getNamespace())) return;
+
     final Project project = context.getProject();
 
     SoftReference<ExternalDocumentValidator> validatorReference = project.getUserData(validatorInstanceKey);
