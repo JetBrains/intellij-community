@@ -94,6 +94,8 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
   public RefactoringElementListener getListener(PsiElement element) {
     if (element instanceof PsiClass) {
       String className = ((PsiClass)element).getQualifiedName();
+      if (className == null) return null;
+
       final Module[] modules = ModuleManager.getInstance(myProject).getModules();
       RefactoringElementListenerComposite listener = null;
       for (Module module : modules) {
