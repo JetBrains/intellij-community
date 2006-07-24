@@ -10,6 +10,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.javaee.ejb.role.*;
+import com.intellij.javaee.ejb.EjbHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -261,10 +262,10 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
 
       setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && (body == null || body.getStatements().length == 0));
 
-      final EjbRolesUtil ejbRolesUtil = EjbRolesUtil.getEjbRolesUtil();
-      EjbClassRole classRole = ejbRolesUtil.getEjbRole(method.getContainingClass());
+      final EjbHelper helper = EjbHelper.getEjbHelper();
+      EjbClassRole classRole = helper.getEjbRole(method.getContainingClass());
       if (classRole != null) {
-        EjbMethodRole role = ejbRolesUtil.getEjbRole(method);
+        EjbMethodRole role = helper.getEjbRole(method);
         if (role != null) {
           EjbMethodRoleEnum roleType = role.getType();
           if (role instanceof EjbDeclMethodRole) {

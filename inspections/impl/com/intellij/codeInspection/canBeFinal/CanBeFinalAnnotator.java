@@ -3,6 +3,7 @@ package com.intellij.codeInspection.canBeFinal;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.javaee.ejb.role.*;
+import com.intellij.javaee.ejb.EjbHelper;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 
@@ -178,13 +179,13 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
       final PsiElement element = refMethod.getElement();
       if (element instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)element;
-        final EjbRolesUtil ejbRolesUtil = EjbRolesUtil.getEjbRolesUtil();
-        EjbClassRole classRole = ejbRolesUtil.getEjbRole(method.getContainingClass());
+        final EjbHelper helper = EjbHelper.getEjbHelper();
+        EjbClassRole classRole = helper.getEjbRole(method.getContainingClass());
         if (classRole != null) {
           if (!refMethod.hasSuperMethods()) {
             ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
           }
-          EjbMethodRole role = ejbRolesUtil.getEjbRole(method);
+          EjbMethodRole role = helper.getEjbRole(method);
           if (role instanceof EjbDeclMethodRole || role instanceof EjbImplMethodRole) {
             ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
           }
