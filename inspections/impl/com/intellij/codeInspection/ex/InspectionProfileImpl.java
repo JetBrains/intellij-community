@@ -500,6 +500,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         state.equals(myBaseProfile.getToolState(key))) {
       if (toolSettingsAreEqual(key, this, myBaseProfile)){ //settings may differ
         myDisplayLevelMap.remove(key);
+      } else {
+        myDisplayLevelMap.put(key, state);
       }
     }
     else {
