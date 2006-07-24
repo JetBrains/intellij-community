@@ -92,7 +92,9 @@ public class ReflectionCache {
   }
 
   public static boolean isAssignable(Class ancestor, Class descendant) {
-    return ourAssignables.get(ancestor).get(descendant);
+    synchronized (ourAssignables) {
+      return ourAssignables.get(ancestor).get(descendant);
+    }
   }
 
   public static boolean isInterface(Class aClass) {
