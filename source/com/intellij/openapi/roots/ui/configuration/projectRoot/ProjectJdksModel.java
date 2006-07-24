@@ -217,6 +217,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
   }
 
   public void doAdd(final SdkType type, JComponent parent, final Consumer<ProjectJdk> updateTree) {
+    myModified = true;
     final String home = SdkEditor.selectSdkHome(parent, type);
     if (home == null) {
       return;
@@ -237,7 +238,6 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     myProjectJdks.put(newJdk, newJdk);
     updateTree.consume(newJdk);
     mySdkEventsDispatcher.getMulticaster().sdkAdded(newJdk);
-    myModified = true;
   }
 
   public ProjectJdk findSdk(@Nullable final ProjectJdk modelJdk) {

@@ -92,6 +92,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   private MyNode myApplicationServerLibrariesNode;
   private LibrariesModifiableModel myApplicationServerLibrariesProvider;
 
+  private boolean myDisposed = true;
+
   public ProjectRootConfigurable(Project project, ModuleManager manager) {
     myProject = project;
     myModuleManager = manager;
@@ -177,6 +179,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myApplicationServerLibrariesNode = createLibrariesNode(ApplicationServersManager.getInstance().getLibraryTable(), myApplicationServerLibrariesProvider, getApplicationServerLibrariesProvider());
 
     ((DefaultTreeModel)myTree.getModel()).reload();
+
+    myDisposed = false;
   }
 
   protected void updateSelection(NamedConfigurable configurable) {
@@ -457,6 +461,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   public void disposeUIResources() {
+    myDisposed = true;
     myJdksTreeModel.disposeUIResources();
     myModulesConfigurator.disposeUIResources();
     myModule2LibrariesMap.clear();
@@ -737,8 +742,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
   }
 
-  public void addJdkNode(final ProjectJdk jdk) {
-    addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel), true), myJdksNode);
+  public boolean addJdkNode(final ProjectJdk jdk) {
+    if (!myDisposed) {
+      addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel), true), myJdksNode);
+      return true;
+    }
+    return false;
   }
 
   private class MyDataProviderWrapper extends JPanel implements DataProvider {
@@ -806,21 +815,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
   }
 
-  public DefaultActionGroup createAddJdksGroup(){
-    DefaultActionGroup group = new DefaultActionGroup();
-    myJdksTreeModel.createAddActions(group, myTree, new Consumer<ProjectJdk>() {
-      public void consume(final ProjectJdk projectJdk) {
-        addJdkNode(projectJdk);
-      }
-    });
-    return group;
-  }
-
   private PopupStep createJdksStep(DataContext dataContext) {
     DefaultActionGroup group = new DefaultActionGroup();
     myJdksTreeModel.createAddActions(group, myTree, new Consumer<ProjectJdk>() {
       public void consume(final ProjectJdk projectJdk) {
         addJdkNode(projectJdk);
+        selectNodeInTree(findNodeByObject(myJdksNode, projectJdk));
       }
     });
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();

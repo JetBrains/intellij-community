@@ -1,11 +1,13 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
@@ -59,12 +61,22 @@ public class ProjectJdkStep extends ModuleWizardStep {
         } else {
           final Project project = context.getProject();
           final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(project);
-          rootConfigurable.getProjectJdksModel().doAdd(type, myPanel, new Consumer<ProjectJdk>() {
+          final ProjectJdksModel projectJdksModel = rootConfigurable.getProjectJdksModel();
+          final boolean[] successfullyAdded = new boolean[1];
+          projectJdksModel.doAdd(type, myPanel, new Consumer<ProjectJdk>() {
             public void consume(final ProjectJdk jdk) {
-              rootConfigurable.addJdkNode(jdk);
+              successfullyAdded[0] = rootConfigurable.addJdkNode(jdk);
               myJdkChooser.updateList(jdk);
             }
           });
+          if (!successfullyAdded[0]){
+            try {
+              projectJdksModel.apply();
+            }
+            catch (ConfigurationException e1) {
+              //name can't be wrong
+            }
+          }
         }
       }
     });

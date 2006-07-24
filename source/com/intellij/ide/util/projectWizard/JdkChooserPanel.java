@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -111,8 +112,11 @@ public class JdkChooserPanel extends JPanel {
       jdks = ProjectJdkTable.getInstance().getAllJdks();
     }
     else {
-      final Collection<ProjectJdk> collection =
-        ProjectRootConfigurable.getInstance(myProject).getProjectJdksModel().getProjectJdks().values();
+      final ProjectJdksModel projectJdksModel = ProjectRootConfigurable.getInstance(myProject).getProjectJdksModel();
+      if (!projectJdksModel.isModified()){ //should be initialized
+        projectJdksModel.reset();
+      }
+      final Collection<ProjectJdk> collection = projectJdksModel.getProjectJdks().values();
       jdks = collection.toArray(new ProjectJdk[collection.size()]);
     }
     Arrays.sort(jdks, new Comparator<ProjectJdk>() {
