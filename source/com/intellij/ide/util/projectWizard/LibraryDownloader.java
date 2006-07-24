@@ -73,8 +73,10 @@ public class LibraryDownloader {
         try {
           for (int i = 0; i < myLibraryInfos.length; i++) {
             LibraryInfo info = myLibraryInfos[i];
-            indicator.checkCanceled();
-            indicator.setText(J2EEBundle.message("progress.0.of.1.file.downloaded.text", i, myLibraryInfos.length));
+            if (indicator != null) {
+              indicator.checkCanceled();
+              indicator.setText(J2EEBundle.message("progress.0.of.1.file.downloaded.text", i, myLibraryInfos.length));
+            }
 
             final VirtualFile existing = dir.findChild(getExpectedFileName(info));
             long size = existing != null ? existing.getLength() : -1;
