@@ -1,0 +1,34 @@
+<project default="copy_files" basedir=".">
+  <property name="main.idea.path" value="C:/idea.4247"/>
+  <property name="idea.path" value="${main.idea.path}/debug"/>
+
+  <property name="project.path" value="C:/somewhere" />
+  <property name="project.path2" value="." />
+
+  <target name="copy_files">
+  <taskdef name="obfuscate2"
+    classname="com.yworks.yguard.ObfuscatorTask"
+    classpath="<error>${project.path}/build/libs/yguard.jar</error>"/>
+
+  <taskdef name="obfuscate"
+    classname="com.yworks.yguard.ObfuscatorTask"
+    classpath="${project.path2}/yguard.jar"/>
+
+    <obfuscate>
+      <property name="naming-scheme" value="mix"/>
+      <property name="language-conformity" value="legal"/>
+      <inoutpair in="${idea.path}/WS.zip" out="${idea.path}/WebServices.jar"/>
+
+      <expose linenumbertable="true">
+        <class classes="public" methods="public" fields="none">
+            <patternset>
+                <include name="com.*Action"/>
+            </patternset>
+        </class>
+      </expose>
+      <externalclasses>
+        <pathelement location="${main.idea.path}/lib/openapi.jar"/>
+      </externalclasses>
+    </obfuscate>
+  </target>
+</project>
