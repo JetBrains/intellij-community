@@ -233,12 +233,12 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
               if (!asynchronous) mySynchronousRefreshCount--;
               LOG.assertTrue(myRefreshCount >= 0 && mySynchronousRefreshCount >= 0);
 
-              if (mySynchronousRefreshCount == 0) {
-                myVirtualFileManagerListenerMulticaster.getMulticaster().afterRefreshFinish(asynchronous);
-              }
 
               if (myRefreshCount > 0) {
                 myRefreshEventsToFire.clear();
+                if (mySynchronousRefreshCount == 0) {
+                  myVirtualFileManagerListenerMulticaster.getMulticaster().afterRefreshFinish(asynchronous);
+                }
               }
               else {
                 final FileSystemSynchronizer synchronizer;
@@ -255,6 +255,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                 }
 
                 myRefreshEventsToFire = null;
+                myVirtualFileManagerListenerMulticaster.getMulticaster().afterRefreshFinish(asynchronous);
 
                 if (asynchronous) {
                   int filesCount = synchronizer.collectFilesToUpdate();
