@@ -113,14 +113,23 @@ public class JavaMethodSignature {
   }
 
   public static JavaMethodSignature getSignature(Method method) {
-    JavaMethodSignature methodSignature = ourSignatures.get(method);
-    if (methodSignature == null) {
-      ourSignatures.put(method, methodSignature = getSignature(method.getName(), method.getParameterTypes()));
+    JavaMethodSignature methodSignature;
+    synchronized (ourSignatures) {
+      methodSignature = ourSignatures.get(method);
+      if (methodSignature == null) {
+        ourSignatures.put(method, methodSignature = getSignature(method.getName(), method.getParameterTypes()));
+      }
     }
     return methodSignature;
   }
 
   public static JavaMethodSignature getSignature(final String name, final Class<?>... parameterTypes) {
+    synchronized (ourSignatures) {
+      return _getSignature(name, parameterTypes);
+    }
+  }
+
+  private static JavaMethodSignature _getSignature(final String name, final Class<?>... parameterTypes) {
     final JavaMethodSignature methodSignature;
     final Pair<String, Class[]> key = new Pair<String, Class[]>(name, parameterTypes);
     JavaMethodSignature oldSignature = ourSignatures2.get(key);
