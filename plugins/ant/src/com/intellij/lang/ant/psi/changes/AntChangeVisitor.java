@@ -5,6 +5,8 @@ import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntOuterProjectElement;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.*;
@@ -12,7 +14,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class AntChangeVisitor implements XmlChangeVisitor {
+
+  private final Set<AntBuildFile> myDirtyFiles = new HashSet<AntBuildFile>();
 
   public void visitXmlAttributeSet(final XmlAttributeSet xmlAttributeSet) {
     clearParentCaches(xmlAttributeSet.getTag());
@@ -52,7 +59,7 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     clearParentCaches(xmlTextChanged.getText());
   }
 
-  private static void clearParentCaches(final XmlElement el) {
+  private void clearParentCaches(final XmlElement el) {
     final TextRange textRange = el.getTextRange();
     final AntFile file = (AntFile)el.getContainingFile().getViewProvider().getPsi(AntSupport.getLanguage());
     if (file == null) return;
@@ -80,11 +87,22 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     updateBuildFile(file);
   }
 
-  private static void updateBuildFile(final AntFile file) {
+  private void updateBuildFile(final AntFile file) {
     final AntConfiguration antConfiguration = AntConfiguration.getInstance(file.getProject());
     for (final AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
       if (file.equals(buildFile.getAntFile())) {
-        antConfiguration.updateBuildFile(buildFile);
+        myDirtyFiles.add(buildFile);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            final int size = myDirtyFiles.size();
+            if (size > 0) {
+              for (final AntBuildFile dirtyFile : myDirtyFiles) {
+                antConfiguration.updateBuildFile(dirtyFile);
+              }
+              myDirtyFiles.clear();
+            }
+          }
+        }, ModalityState.NON_MMODAL);
         break;
       }
     }
