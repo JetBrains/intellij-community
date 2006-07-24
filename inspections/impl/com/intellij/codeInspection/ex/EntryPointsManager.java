@@ -160,6 +160,7 @@ public class EntryPointsManager implements JDOMExternalizable, ProjectComponent{
   }
 
   public void projectClosed() {
+    cleanup();
   }
 
   public void initComponent() { }

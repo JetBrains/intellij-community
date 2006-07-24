@@ -837,7 +837,10 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   public void cleanup() {
     super.cleanup();
-    getEntryPointsManager().cleanup();
+    final Project project = getContext().getProject();
+    if (!project.isDisposed()){
+      getEntryPointsManager().cleanup();
+    }
   }
 
   private EntryPointsManager getEntryPointsManager() {
