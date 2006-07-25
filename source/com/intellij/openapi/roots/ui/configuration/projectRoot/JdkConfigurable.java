@@ -5,6 +5,7 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.ui.SdkEditor;
@@ -37,7 +38,7 @@ public class JdkConfigurable implements NamedConfigurable<ProjectJdk> {
   }
 
   public String getBannerSlogan() {
-    return myProjectJdk.getName();
+    return ProjectBundle.message("project.roots.jdk.banner.text");
   }
 
   public String getDisplayName() {
