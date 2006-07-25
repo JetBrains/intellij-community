@@ -69,7 +69,7 @@ public class DomReflectionUtil {
       if (resolved instanceof TypeVariable) {
         final TypeVariable typeVariable = (TypeVariable)resolved;
         index = ContainerUtil.findByEquals(ReflectionCache.getTypeParameters(anInterface), typeVariable);
-        assert index >= 0 : typeVariable + " " + Arrays.asList(ReflectionCache.getTypeParameters(anInterface));
+        assert index >= 0 : typeVariable + " " + anInterface + Arrays.asList(ReflectionCache.getTypeParameters(anInterface));
         final Type type = genericInterfaces[i];
         if (type instanceof Class) {
           return Object.class;
