@@ -218,9 +218,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
         builder.append("\"/>");
       }
       // TODO: remove this fake:
-      builder.append("<property name=\"ant.home\" value=\"\">");
-      builder.append("<property name=\"ant.version\" value=\"1.6");
-      builder.append("\"/>");
+      builder.append("<property name=\"ant.home\" value=\"\"/>");
+      builder.append("<property name=\"ant.version\" value=\"1.6.5\"/>");
       builder.append("<property name=\"ant.project.name\" value=\"");
       final String name = getName();
       builder.append((name == null) ? "" : name);
