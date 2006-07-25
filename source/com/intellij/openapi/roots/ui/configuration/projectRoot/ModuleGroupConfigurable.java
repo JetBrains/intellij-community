@@ -54,8 +54,8 @@ public class ModuleGroupConfigurable implements NamedConfigurable<ModuleGroup> {
     return null;
   }
 
-  public JComponent createComponent() { //todo
-    return new PanelWithText("");
+  public JComponent createComponent() {
+    return new PanelWithText(ProjectBundle.message("project.roots.module.groups.text"));
   }
 
   public boolean isModified() {
