@@ -16,11 +16,17 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.util.xml.DomElement;
+import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public abstract class EditedElementDescription<T extends DomElement> {
+  @Nullable
+  public XmlFile getEditedFile() {
+    return null;
+  }
   public abstract T find();
   public abstract void initialize(T element);
   public abstract T addElement();

@@ -22,13 +22,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.StableElement;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author peter
@@ -79,18 +80,28 @@ public class MockDomElementsEditor {
 
       public void commit() {
         super.commit();
-        new WriteCommandAction(project) {
-          protected void run(Result result) throws Throwable {
-            for (final Map.Entry<EditedElementDescription<? extends DomElement>, DomElement> entry : myDomElements.entrySet()) {
-              final EditedElementDescription description = entry.getKey();
-              final DomElement editedElement = entry.getValue();
-              if (description.find() == null && editedElement.getXmlTag() != null) {
-                DomElement element = description.addElement();
-                element.copyFrom(editedElement);
-                description.initialize(element);
-                removeWatchedElement(editedElement);
-                ((StableElement)editedElement).invalidate();
+        final List<EditedElementDescription> descriptions = new ArrayList<EditedElementDescription>();
+        final Set<PsiFile> changedFiles = new HashSet<PsiFile>();
+        for (final Map.Entry<EditedElementDescription<? extends DomElement>, DomElement> entry : myDomElements.entrySet()) {
+          final EditedElementDescription description = entry.getKey();
+            final DomElement editedElement = entry.getValue();
+            if (description.find() == null && editedElement.getXmlTag() != null) {
+              descriptions.add(description);
+              final XmlFile xmlFile = description.getEditedFile();
+              if (xmlFile != null) {
+                changedFiles.add(xmlFile);
               }
+            }
+        }
+        new WriteCommandAction(project, changedFiles.toArray(new PsiFile[changedFiles.size()])) {
+          protected void run(Result result) throws Throwable {
+            for (EditedElementDescription description : descriptions) {
+              final DomElement editedElement = myDomElements.get(description);
+              DomElement element = description.addElement();
+              element.copyFrom(editedElement);
+              description.initialize(element);
+              removeWatchedElement(editedElement);
+              ((StableElement)editedElement).invalidate();
             }
           }
         }.execute();
