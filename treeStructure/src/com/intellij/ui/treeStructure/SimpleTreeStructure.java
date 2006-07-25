@@ -26,7 +26,7 @@ public abstract class SimpleTreeStructure extends AbstractTreeStructure {
   public void commit() {
   }
 
-  public final boolean hasSomethingToCommit() {
+  public boolean hasSomethingToCommit() {
     return false;
   }
 

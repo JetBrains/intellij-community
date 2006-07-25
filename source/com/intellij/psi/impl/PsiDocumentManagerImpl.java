@@ -483,6 +483,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   public static boolean isCommitingDocument(final Document doc) {
-    return doc.getUserData(KEY_COMMITING) != null;
+    return doc.getUserData(KEY_COMMITING) == Boolean.TRUE;
   }
 }
