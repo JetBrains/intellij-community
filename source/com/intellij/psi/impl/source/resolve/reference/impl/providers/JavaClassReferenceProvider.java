@@ -6,11 +6,13 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.quickFix.JavaClassReferenceQuickFixProvider;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxStaticImportStatement;
@@ -444,10 +446,17 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
           resolveResult = JspxStaticImportStatement.resolveMember(qName, manager, getElement().getResolveScope());
         }
         if (resolveResult == null) {
-          final PsiFile containingFile = myElement.getContainingFile();
+          PsiFile containingFile = myElement.getContainingFile();
+
           if (containingFile instanceof PsiJavaFile) {
+            if (containingFile instanceof JspFile) {
+              containingFile = containingFile.getViewProvider().getPsi(StdLanguages.JAVA);
+              if (containingFile == null) return JavaResolveResult.EMPTY;
+            }
+            
             final ClassResolverProcessor processor = new ClassResolverProcessor(getCanonicalText(), myElement);
             containingFile.processDeclarations(processor, PsiSubstitutor.EMPTY, null, myElement);
+
             if (processor.getResult().length == 1) {
               final JavaResolveResult javaResolveResult = processor.getResult()[0];
 
