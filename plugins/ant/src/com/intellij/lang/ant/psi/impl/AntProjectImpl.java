@@ -25,6 +25,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   final static AntTarget[] EMPTY_TARGETS = new AntTarget[0];
   private AntTarget[] myTargets;
   private AntFile[] myImports;
+  private boolean myInGettingChildren;
   private List<AntProperty> myPredefinedProps = new ArrayList<AntProperty>();
   @NonNls private List<String> myEnvPrefixes;
   @NonNls private static final String myDefaultEnvPrefix = "env.";
@@ -272,9 +273,18 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   }
 
   protected AntElement[] getChildrenInner() {
-    final AntElement[] children = super.getChildrenInner();
-    fixUndefinedElements(this, children);
-    return children;
+    if (!myInGettingChildren) {
+      myInGettingChildren = true;
+      try {
+        final AntElement[] children = super.getChildrenInner();
+        fixUndefinedElements(this, children);
+        return children;
+      }
+      finally {
+        myInGettingChildren = false;
+      }
+    }
+    return AntElement.EMPTY_ARRAY;
   }
 
   private static void fixUndefinedElements(final AntElement parent, final AntElement[] elements) {
