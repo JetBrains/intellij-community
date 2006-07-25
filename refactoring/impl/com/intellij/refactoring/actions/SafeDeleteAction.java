@@ -9,6 +9,10 @@ import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 
 public class SafeDeleteAction extends BaseRefactoringAction {
+  public SafeDeleteAction() {
+    setInjectedContext(true);
+  }
+
   public boolean isAvailableInEditorOnly() {
     return false;
   }
