@@ -301,8 +301,19 @@ public class CompletionVariant {
                                          CompletionContext context, CompletionVariantItem item){
     if(item.myCompletion instanceof ElementFilter){
       final CompletionProcessor processor = new CompletionProcessor(context, position, (ElementFilter)item.myCompletion);
+
       if (reference instanceof PsiMultiReference) {
+        int javaReferenceStart = -1;
+
         for (PsiReference ref : ((PsiMultiReference)reference).getReferences()) {
+          if (ref instanceof PsiJavaReference) {
+            if (javaReferenceStart == -1) {
+              javaReferenceStart = ref.getElement().getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset();
+            } else {
+              int newStart = ref.getElement().getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset();
+              if (newStart == javaReferenceStart) continue;
+            }
+          }
           addReferenceCompletions(ref, position, set, context, item);
         }
       }
