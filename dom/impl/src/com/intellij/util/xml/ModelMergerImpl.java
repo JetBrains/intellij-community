@@ -218,8 +218,11 @@ public class ModelMergerImpl implements ModelMerger {
     }
   }
 
-  protected Object getPrimaryKey(Object implementation) throws IllegalAccessException, InvocationTargetException {
-    if (implementation instanceof GenericValue) return Boolean.TRUE; // ((GenericValue)implementation).getValue();
+  @Nullable
+  protected Object getPrimaryKey(Object implementation, final boolean singleValuedInvocation) throws IllegalAccessException, InvocationTargetException {
+    if (implementation instanceof GenericValue) {
+      return singleValuedInvocation? Boolean.TRUE : ((GenericValue)implementation).getValue();
+    }
     final Method method = getPrimaryKeyMethod(implementation.getClass());
     if (method == null) return null;
 
@@ -328,9 +331,9 @@ public class ModelMergerImpl implements ModelMerger {
                             final FactoryMap<Object, List<Set<Object>>> map,
                             final int index,
                             final List<Object> results,
-                            final boolean mergeIfPKNull) throws IllegalAccessException, InvocationTargetException {
-    final Object primaryKey = getPrimaryKey(o);
-    if (primaryKey != null || mergeIfPKNull) {
+                            final boolean singleValuedInvocation) throws IllegalAccessException, InvocationTargetException {
+    final Object primaryKey = getPrimaryKey(o, singleValuedInvocation);
+    if (primaryKey != null || singleValuedInvocation) {
       final List<Set<Object>> list = map.get(primaryKey);
       int objIndex = counts.get(primaryKey)[index]++;
       if (list.size() <= objIndex) {
