@@ -567,6 +567,18 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
   }
 
   public void processMouseEvent(final MouseEvent e) {
+    if (MouseEvent.MOUSE_RELEASED == e.getID() && !isSelectionEmpty() && !e.isShiftDown()) {
+      if (isOverSelection(e.getPoint())) {
+        clearSelection();
+        final TreePath path = getPathForLocation(e.getPoint().x, e.getPoint().y);
+        if (path != null) {
+          setSelectionPath(path);
+          e.consume();
+        }
+      }
+    }
+
+
     super.processMouseEvent(e);
   }
 
