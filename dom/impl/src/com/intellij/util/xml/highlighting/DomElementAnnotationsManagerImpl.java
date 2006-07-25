@@ -8,6 +8,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -102,7 +103,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
         } else {
           myAnnotationBasedDomElementsAnnotator.annotate(rootElement, holder);
         }
-        return new Result<DomElementsProblemsHolder>(holder, fileElement);
+        return new Result<DomElementsProblemsHolder>(holder, fileElement, ProjectRootManager.getInstance(fileElement.getManager().getProject()));
       }
     }, false);
   }
