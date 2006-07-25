@@ -19,19 +19,20 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
  * Date: Dec 3, 2004
  */
 public class IdeaLicenseHelper {
-  @NonNls private static final String LICENSE_PATH_PREFERRED = "idea50.key";
+  @NonNls private static final String LICENSE_PATH_PREFERRED = "idea60.key";
+  @NonNls private static final String LICENSE_PATH_50 = "idea50.key";
+  @NonNls private static final String LICENSE_PATH_60BETA = "idea60beta.key";
   @NonNls private static final String LICENSE_PATH_40 = "idea40.key";
   @NonNls private static final String LICENSE_PATH_SYSTEM = "idea.license";
 
@@ -44,6 +45,14 @@ public class IdeaLicenseHelper {
     final File config = new File(configPath, LICENSE_PATH_PREFERRED);
     if (config.exists()){
       return config;
+    }
+    final File idea60beta = new File(configPath, LICENSE_PATH_60BETA);
+    if (idea60beta.exists()){
+      return idea60beta;
+    }    
+    final File idea5 = new File(configPath, LICENSE_PATH_50);
+    if (idea5.exists()){
+      return idea5;
     }
     final File idea4 = new File(configPath, LICENSE_PATH_40);
     if (idea4.exists()){
