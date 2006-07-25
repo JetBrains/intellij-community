@@ -237,15 +237,11 @@ public class FileManagerImpl implements FileManager {
     }
   }
 
-  public PsiFile findFile(VirtualFile vFile) {
+  public PsiFile findFile(@NotNull VirtualFile vFile) {
     final ProjectEx project = (ProjectEx)myManager.getProject();
     if (project.isDummy() || project.isDefault()) return null;
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    if (vFile == null) {
-      LOG.assertTrue(false);
-      return null;
-    }
     if (!vFile.isValid()) {
       LOG.assertTrue(false, "Invalid file: " + vFile);
     }
@@ -255,7 +251,7 @@ public class FileManagerImpl implements FileManager {
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
-  public PsiFile getCachedPsiFile(VirtualFile vFile) {
+  public PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     LOG.assertTrue(vFile.isValid());
     LOG.assertTrue(!myDisposed);
@@ -268,7 +264,7 @@ public class FileManagerImpl implements FileManager {
     }
   }
 
-  public GlobalSearchScope getResolveScope(PsiElement element) {
+  public GlobalSearchScope getResolveScope(@NotNull PsiElement element) {
     final ProgressManager progressManager = ProgressManager.getInstance();
     progressManager.checkCanceled();
 
@@ -323,7 +319,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   @NotNull
-  public GlobalSearchScope getUseScope(PsiElement element) {
+  public GlobalSearchScope getUseScope(@NotNull PsiElement element) {
     VirtualFile vFile;
     if (element instanceof PsiDirectory) {
       vFile = ((PsiDirectory)element).getVirtualFile();
@@ -378,7 +374,7 @@ public class FileManagerImpl implements FileManager {
                                                                                      vFile.getModificationStamp(), true, false);
   }
 
-  public PsiDirectory findDirectory(VirtualFile vFile) {
+  public PsiDirectory findDirectory(@NotNull VirtualFile vFile) {
     LOG.assertTrue(myInitialized, "Access to psi files should be performed only after startup activity");
     LOG.assertTrue(!myDisposed, "Access to psi files should not be performed after disposal");
 
@@ -407,7 +403,7 @@ public class FileManagerImpl implements FileManager {
     }
   }
 
-  public PsiPackage findPackage(String packageName) {
+  public PsiPackage findPackage(@NotNull String packageName) {
     Query<VirtualFile> dirs = myProjectRootManager.getFileIndex().getDirsByPackageName(packageName, false);
     if (dirs.findFirst() == null) return null;
     return new PsiPackageImpl(myManager, packageName);
@@ -417,7 +413,7 @@ public class FileManagerImpl implements FileManager {
     return myRootManager.getRootDirectories(rootType);
   }
 
-  public PsiClass[] findClasses(String qName, GlobalSearchScope scope) {
+  public PsiClass[] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
       RepositoryManager repositoryManager = myManager.getRepositoryManager();
       long[] classIds = repositoryManager.getIndex().getClassesByQualifiedName(qName, null);
       if (classIds.length == 0) return PsiClass.EMPTY_ARRAY;
@@ -437,7 +433,7 @@ public class FileManagerImpl implements FileManager {
       return result.toArray(new PsiClass[result.size()]);
     }
 
-  public PsiClass findClass(String qName, GlobalSearchScope scope) {
+  public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     if (!myUseRepository) {
       return findClassWithoutRepository(qName);
     }
@@ -688,7 +684,7 @@ public class FileManagerImpl implements FileManager {
     myVFileToPsiFileMap = fileToPsiFileMap;
   }
 
-  public void reloadFromDisk(PsiFile file) {
+  public void reloadFromDisk(@NotNull PsiFile file) {
     reloadFromDisk(file, false);
   }
 

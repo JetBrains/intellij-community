@@ -30,7 +30,6 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
   private final int myPrefixLineCount;
   private final int mySuffixLineCount;
 
-
   public DocumentRange(DocumentEx delegate, TextRange range, String prefix,String suffix) {
     myDelegate = delegate;
     myPrefix = prefix;
