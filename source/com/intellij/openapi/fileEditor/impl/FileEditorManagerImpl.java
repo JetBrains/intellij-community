@@ -34,10 +34,8 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiTreeChangeAdapter;
-import com.intellij.psi.PsiTreeChangeEvent;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -204,7 +202,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   //-------------------------------------------------------
 
 
-  public VirtualFile getFile(final FileEditor editor) {
+  public VirtualFile getFile(@NotNull final FileEditor editor) {
     final EditorComposite editorComposite = getEditorComposite(editor);
     if (editorComposite != null) {
       return editorComposite.getFile();
@@ -757,10 +755,12 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   @Nullable
   public Editor openTextEditor(final OpenFileDescriptor descriptor, final boolean focusEditor) {
     final Collection<FileEditor> fileEditors = openEditor(descriptor, focusEditor);
-    for (FileEditor editor : fileEditors) {
-      if (editor instanceof TextEditor) {
+    for (FileEditor fileEditor : fileEditors) {
+      if (fileEditor instanceof TextEditor) {
         setSelectedEditor(descriptor.getFile(), TextEditorProvider.getInstance().getEditorTypeId());
-        return ((TextEditor)editor).getEditor();
+        Editor editor = ((TextEditor)fileEditor).getEditor();
+        PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(editor.getDocument());
+        return InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile);
       }
     }
 
@@ -855,7 +855,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return result.toArray(new FileEditor[result.size()]);
   }
 
-  public void showEditorAnnotation(FileEditor editor, JComponent annotationComoponent) {
+  public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
     final EditorComposite composite = getEditorComposite(editor);
     if (composite != null) {
       composite.getPane(editor).addInfo(annotationComoponent);
@@ -863,7 +863,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   }
 
 
-  public void removeEditorAnnotation(FileEditor editor, JComponent annotationComoponent) {
+  public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
     final EditorComposite composite = getEditorComposite(editor);
     if (composite != null) {
       composite.getPane(editor).removeInfo(annotationComoponent);
