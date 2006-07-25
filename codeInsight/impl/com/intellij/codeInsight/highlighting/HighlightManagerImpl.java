@@ -10,6 +10,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.impl.injected.EditorDelegate;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -120,7 +121,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
                                                                                HighlighterLayer.SELECTION - 1,
                                                                                attributes,
                                                                                HighlighterTargetArea.EXACT_RANGE);
-    HighlightInfo info = new HighlightInfo(editor, flags);
+    HighlightInfo info = new HighlightInfo(editor instanceof EditorDelegate ? ((EditorDelegate)editor).getDelegate() : editor, flags);
     Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, true);
     map.put(highlighter, info);
     return highlighter;
