@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
@@ -77,11 +77,10 @@ public class TreeModelBuilder {
     if (!locallyDeletedFiles.isEmpty()) {
       ChangesBrowserNode locallyDeletedNode = new ChangesBrowserNode(VcsBundle.message("changes.nodetitle.locally.deleted.files"));
       model.insertNodeInto(locallyDeletedNode, root, root.getChildCount());
-      final VcsContextFactory factory = PeerFactory.getInstance().getVcsContextFactory();
       final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
       final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
       for (File file : locallyDeletedFiles) {
-        final ChangesBrowserNode node = new ChangesBrowserNode(factory.createFilePathOn(file));
+        final ChangesBrowserNode node = new ChangesBrowserNode(new FilePathImpl(file));
         model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, locallyDeletedNode), 0);
       }
     }
