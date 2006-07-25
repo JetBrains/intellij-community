@@ -43,7 +43,7 @@ public class AntCreatePropertyAction extends BaseIntentionAction {
     try {
       builder.append(getFamilyName());
       builder.append(" '");
-      builder.append(myRef.getCanonicalText());
+      builder.append(myRef.getCanonicalRepresentationText());
       builder.append('\'');
       if (myPropFile != null) {
         builder.append(' ');
@@ -61,7 +61,7 @@ public class AntCreatePropertyAction extends BaseIntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final String name = myRef.getCanonicalText();
+    final String name = myRef.getCanonicalRepresentationText();
     final Navigatable result;
     if (myPropFile != null) {
       result = (Navigatable)myPropFile.addProperty(PropertiesElementFactory.createProperty(myPropFile.getProject(), name, ""));

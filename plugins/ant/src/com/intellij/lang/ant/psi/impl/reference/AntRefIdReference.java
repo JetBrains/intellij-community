@@ -13,6 +13,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringSetSpinAllocator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -43,13 +44,18 @@ public class AntRefIdReference extends AntGenericReference {
     throw new IncorrectOperationException("Can bind only to ant structured elements.");
   }
 
+
+  public AntStructuredElement getElement() {
+    return (AntStructuredElement)super.getElement();
+  }
+
   public String getUnresolvedMessagePattern() {
-    return AntBundle.message("cannot.resolve.refid", getCanonicalText());
+    return AntBundle.message("cannot.resolve.refid", getCanonicalRepresentationText());
   }
 
   public PsiElement resolve() {
-    final AntStructuredElement element = (AntStructuredElement)getElement();
-    final String id = getCanonicalText();
+    final AntStructuredElement element = getElement();
+    final String id = getCanonicalRepresentationText();
     AntElement refId = element.getElementByRefId(id);
     if (refId == null) {
       for (final AntFile file : element.getAntProject().getImportedFiles()) {
@@ -94,6 +100,7 @@ public class AntRefIdReference extends AntGenericReference {
     return super.getFixes();
   }
 
+  @Nullable
   private static AntElement resolveTargetRefId(final AntTarget target, final String id, final Set<PsiElement> stack) {
     AntElement result = null;
     if (!stack.contains(target)) {

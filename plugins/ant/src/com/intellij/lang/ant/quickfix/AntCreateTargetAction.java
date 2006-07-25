@@ -45,7 +45,7 @@ public class AntCreateTargetAction extends BaseIntentionAction {
     try {
       builder.append(getFamilyName());
       builder.append(" '");
-      builder.append(myRef.getCanonicalText());
+      builder.append(myRef.getCanonicalRepresentationText());
       builder.append('\'');
       if (myFile != null) {
         builder.append(' ');
@@ -69,7 +69,7 @@ public class AntCreateTargetAction extends BaseIntentionAction {
       (myFile == null) ? AntPsiUtil.getSubProjectElement(element) : PsiTreeUtil.getChildOfType(antProject, AntStructuredElement.class);
     final XmlTag projectTag = antProject.getSourceElement();
     XmlTag targetTag = projectTag.createChildTag("target", projectTag.getNamespace(), null, false);
-    targetTag.setAttribute("name", myRef.getCanonicalText());
+    targetTag.setAttribute("name", myRef.getCanonicalRepresentationText());
     targetTag = (XmlTag)((anchor == null) ? projectTag.add(targetTag) : projectTag.addBefore(targetTag, anchor.getSourceElement()));
     ((Navigatable)targetTag).navigate(true);
   }

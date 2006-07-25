@@ -68,7 +68,7 @@ public class AntTargetReference extends AntGenericReference {
 
 
   public PsiElement resolve() {
-    final String name = getCanonicalText();
+    final String name = getCanonicalRepresentationText();
     AntElement element = getElement();
     AntProject project = element.getAntProject();
     AntTarget result = project.getTarget(name);
@@ -109,7 +109,7 @@ public class AntTargetReference extends AntGenericReference {
   }
 
   public String getUnresolvedMessagePattern() {
-    return AntBundle.message("cannot.resolve.target", getCanonicalText());
+    return AntBundle.message("cannot.resolve.target", getCanonicalRepresentationText());
   }
 
   public boolean shouldBeSkippedByAnnotator() {

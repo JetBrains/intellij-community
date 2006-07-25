@@ -93,4 +93,13 @@ public abstract class AntGenericReference extends GenericReference {
   protected XmlAttribute getAttribute() {
     return myAttribute;
   }
+
+  public String getCanonicalRepresentationText() {
+    final AntElement element = getElement();
+    final String value = getCanonicalText();
+    if( element instanceof AntStructuredElement) {
+      return ((AntStructuredElement)element).computeAttributeValue(value);
+    }
+    return element.getAntProject().computeAttributeValue(value);
+  }
 }
