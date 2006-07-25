@@ -64,7 +64,7 @@ class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
         append(" (" + filePath.getIOFile().getParentFile().getPath() + ", " + getChangeStatus(change).getText() + ")",
                SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
-      else if (node.getCount() != 0) {
+      else if (node.getCount() != 1 || node.getDirectoryCount() != 0) {
         appendCount(node);
       }
 
