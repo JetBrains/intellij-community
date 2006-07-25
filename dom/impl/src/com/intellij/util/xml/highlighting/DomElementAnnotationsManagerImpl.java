@@ -102,7 +102,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
         } else {
           myAnnotationBasedDomElementsAnnotator.annotate(rootElement, holder);
         }
-        return new Result<DomElementsProblemsHolder>(holder, fileElement.getFile());
+        return new Result<DomElementsProblemsHolder>(holder, fileElement);
       }
     }, false);
   }

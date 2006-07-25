@@ -135,6 +135,13 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       throw new AssertionError("Incompatible implementation classes: " + o1 + " & " + o2);
     }
   };
+  private static final DomChangeAdapter MODIFICATION_TRACKER = new DomChangeAdapter() {
+    protected void elementChanged(DomElement element) {
+      if (element.isValid()) {
+        ((DomFileElementImpl)element.getRoot()).onModified();
+      }
+    }
+  };
 
   public DomManagerImpl(final PomModel pomModel,
                         final Project project,
@@ -195,6 +202,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   protected final void fireEvent(DomEvent event) {
+    event.accept(MODIFICATION_TRACKER);
     myListeners.getMulticaster().eventOccured(event);
   }
 

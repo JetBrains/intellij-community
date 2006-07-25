@@ -114,6 +114,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   private final DomManagerImpl myManager;
   private DomRootInvocationHandler myRootHandler;
   private Map<Key,Object> myUserData = new HashMap<Key, Object>();
+  private long myModificationCount;
 
   protected DomFileElementImpl(final XmlFile file,
                                final Class<T> rootElementClass,
@@ -285,5 +286,13 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   public <T> void putUserData(Key<T> key, T value) {
     myUserData.put(key, value);
+  }
+
+  public final long getModificationCount() {
+    return myModificationCount;
+  }
+
+  public final void onModified() {
+    myModificationCount++;
   }
 }
