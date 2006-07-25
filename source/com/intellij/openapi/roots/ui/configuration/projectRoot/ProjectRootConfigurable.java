@@ -838,7 +838,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     });
     group.add(new AnAction(ProjectBundle.message("add.new.project.library.text")) {
       public void actionPerformed(AnActionEvent e) {
-        LibraryTableEditor.editLibraryTable(getProjectLibrariesProvider(), myProject).createAddLibraryAction(true, myWholePanel).actionPerformed(null);
+        final LibraryTableEditor editor = LibraryTableEditor.editLibraryTable(getProjectLibrariesProvider(), myProject);
+        editor.createAddLibraryAction(true, myWholePanel).actionPerformed(null);
+        Disposer.dispose(editor);
       }
 
       public void update(AnActionEvent e) {
@@ -847,15 +849,18 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     });
     group.add(new AnAction(ProjectBundle.message("add.new.application.server.library.text")) {
       public void actionPerformed(AnActionEvent e) {
-        LibraryTableEditor.editLibraryTable(getApplicationServerLibrariesProvider(), myProject).createAddLibraryAction(true, myWholePanel)
-          .actionPerformed(null);
+        final LibraryTableEditor editor = LibraryTableEditor.editLibraryTable(getApplicationServerLibrariesProvider(), myProject);
+        editor.createAddLibraryAction(true, myWholePanel).actionPerformed(null);
+        Disposer.dispose(editor);
       }
     });
     group.add(new AnAction(ProjectBundle.message("add.new.module.library.text")) {
       public void actionPerformed(AnActionEvent e) {
         Module module = (Module)getSelectedObject();
         final LibraryTableModifiableModelProvider modifiableModelProvider = getModifiableModelProvider(myModulesConfigurator.getModuleEditor(module).getModifiableRootModelProxy());
-        LibraryTableEditor.editLibraryTable(modifiableModelProvider, myProject).createAddLibraryAction(true, myWholePanel).actionPerformed(null);
+        final LibraryTableEditor editor = LibraryTableEditor.editLibraryTable(modifiableModelProvider, myProject);
+        editor.createAddLibraryAction(true, myWholePanel).actionPerformed(null);
+        Disposer.dispose(editor);
       }
 
       public void update(AnActionEvent e) {

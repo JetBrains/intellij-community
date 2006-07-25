@@ -30,6 +30,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryFileChooser;
@@ -410,30 +411,32 @@ public class ClasspathPanel extends JPanel {
       if (dialog == null) {
         return;
       }
-      final List<ItemType> chosen;
-      //try {
-      dialog.doChoose();
-      if (!dialog.isOK()) {
-        return;
+      try {
+        final List<ItemType> chosen;
+        dialog.doChoose();
+        if (!dialog.isOK()) {
+          return;
+        }
+        chosen = dialog.getChosenElements();
+        if (chosen.size() == 0) {
+          return;
+        }
+        //int insertionIndex = myEntryTable.getSelectedRow();
+        for (ItemType item : chosen) {
+          //myModel.addItemAt(createTableItem(item), insertionIndex++);
+          myModel.addItem(createTableItem(item));
+        }
+        myModel.fireTableDataChanged();
+        final ListSelectionModel selectionModel = myEntryTable.getSelectionModel();
+        //selectionModel.setSelectionInterval(insertionIndex - chosen.size(), insertionIndex - 1);
+        selectionModel.setSelectionInterval(myModel.getRowCount() - chosen.size(), myModel.getRowCount() - 1);
+        TableUtil.scrollSelectionToVisible(myEntryTable);
       }
-      chosen = dialog.getChosenElements();
-      if (chosen.size() == 0) {
-        return;
-      }
-      /*} was already disposed on close !!
       finally {
-        Disposer.dispose(dialog);
-      }*/
-      //int insertionIndex = myEntryTable.getSelectedRow();
-      for (ItemType item : chosen) {
-        //myModel.addItemAt(createTableItem(item), insertionIndex++);
-        myModel.addItem(createTableItem(item));
+        if (dialog instanceof ChooseNamedLibraryAction.MyChooserDialog) {
+          Disposer.dispose(dialog);
+        }
       }
-      myModel.fireTableDataChanged();
-      final ListSelectionModel selectionModel = myEntryTable.getSelectionModel();
-      //selectionModel.setSelectionInterval(insertionIndex - chosen.size(), insertionIndex - 1);
-      selectionModel.setSelectionInterval(myModel.getRowCount() - chosen.size(), myModel.getRowCount() - 1);
-      TableUtil.scrollSelectionToVisible(myEntryTable);
     }
 
     protected abstract TableItem createTableItem(final ItemType item);
@@ -997,33 +1000,7 @@ public class ClasspathPanel extends JPanel {
 
     @SuppressWarnings({"NonStaticInitializer"})
     protected ChooserDialog<Library> createChooserDialog() {
-      return new ChooserDialog<Library>() {
-        private LibraryTableEditor myEditor;
-        private boolean myIsOk;
-
-        {
-          myEditor = LibraryTableEditor.editLibraryTable(myLibraryTableModelProvider, myProject);
-          Disposer.register(this, myEditor);
-        }
-
-        public List<Library> getChosenElements() {
-          final List<Library> chosen = new ArrayList<Library>(Arrays.asList(myEditor.getSelectedLibraries()));
-          chosen.removeAll(getAlreadyAddedLibraries());
-          return chosen;
-        }
-
-        public void doChoose() {
-          final Iterator iter = myLibraryTableModelProvider.getModifiableModel().getLibraryIterator();
-          myIsOk = myEditor.openDialog(ClasspathPanel.this, iter.hasNext()? Collections.singleton((Library)iter.next()) : Collections.<Library>emptyList(), false);
-        }
-
-        public boolean isOK() {
-          return myIsOk;
-        }
-
-        public void dispose() {
-        }
-      };
+      return new MyChooserDialog();
     }
 
     private Collection<Library> getAlreadyAddedLibraries() {
@@ -1031,11 +1008,39 @@ public class ClasspathPanel extends JPanel {
       final Set<Library> result = new HashSet<Library>(orderEntries.length);
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof LibraryOrderEntry && orderEntry.isValid()) {
-          result.add(((LibraryOrderEntry)orderEntry).getLibrary());
+          final LibraryImpl library = (LibraryImpl)((LibraryOrderEntry)orderEntry).getLibrary();
+          result.add(library.getSource());
         }
       }
       return result;
     }
 
+    private class MyChooserDialog implements ChooserDialog<Library> {
+      private LibraryTableEditor myEditor;
+      private boolean myIsOk;
+
+      MyChooserDialog(){
+        myEditor = LibraryTableEditor.editLibraryTable(myLibraryTableModelProvider, myProject);
+        Disposer.register(this, myEditor);
+      }
+
+      public List<Library> getChosenElements() {
+        final List<Library> chosen = new ArrayList<Library>(Arrays.asList(myEditor.getSelectedLibraries()));
+        chosen.removeAll(getAlreadyAddedLibraries());
+        return chosen;
+      }
+
+      public void doChoose() {
+        final Iterator iter = myLibraryTableModelProvider.getModifiableModel().getLibraryIterator();
+        myIsOk = myEditor.openDialog(ClasspathPanel.this, iter.hasNext()? Collections.singleton((Library)iter.next()) : Collections.<Library>emptyList(), false);
+      }
+
+      public boolean isOK() {
+        return myIsOk;
+      }
+
+      public void dispose() {
+      }
+    }
   }
 }
