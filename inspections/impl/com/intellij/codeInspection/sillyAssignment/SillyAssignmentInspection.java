@@ -50,10 +50,7 @@ public class SillyAssignmentInspection extends LocalInspectionTool {
 
   @Nullable
   public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
-    return new PsiRecursiveElementVisitor() {
-      public void visitElement(PsiElement element) {
-        super.visitElement(element);
-      }
+    return new PsiElementVisitor() {
 
       public void visitAssignmentExpression(PsiAssignmentExpression expression) {
         checkSillyAssignment(expression, holder);
