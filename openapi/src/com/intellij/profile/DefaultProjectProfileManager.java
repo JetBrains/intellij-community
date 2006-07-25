@@ -25,6 +25,7 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,8 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
     if (USE_PROJECT_LEVEL_SETTINGS){
       final NamedScopesHolder scopeManager = DependencyValidationManager.getInstance(myProject);
       for (NamedScope scope : myScopeToProfileMap.keySet()) {
-        if (scope.getValue().contains(psiFile, scopeManager)) {
+        final PackageSet packageSet = scope.getValue();
+        if (packageSet != null && packageSet.contains(psiFile, scopeManager)) {
           return myScopeToProfileMap.get(scope);
         }
       }
@@ -89,7 +91,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
     return myApplicationProfileManager.getRootProfile().getName();
   }
 
-  public Profile getProfile(String name) {
+  public Profile getProfile(@NotNull String name) {
     return USE_PROJECT_LEVEL_SETTINGS ? myProfiles.get(name) : myApplicationProfileManager.getProfile(name);
   }
 
@@ -235,7 +237,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
   }
 
   public Profile getProjectProfileImpl(){
-    if (PROJECT_PROFILE == null || !myProfiles.containsKey(PROJECT_PROFILE)){
+    if (PROJECT_PROFILE == null || myProfiles.isEmpty()){
       @NonNls final String projectProfileName = "Project Default";
       setProjectProfile(projectProfileName);
       final Profile projectProfile = myApplicationProfileManager.createProfile();
@@ -243,6 +245,9 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
       projectProfile.setLocal(false);
       projectProfile.setName(projectProfileName);
       myProfiles.put(projectProfileName, projectProfile);
+    } else if (!myProfiles.containsKey(PROJECT_PROFILE)){
+      final String projectProfileAttempt = myProfiles.keySet().iterator().next();
+      setProjectProfile(projectProfileAttempt);
     }
     return myProfiles.get(PROJECT_PROFILE);
   }
