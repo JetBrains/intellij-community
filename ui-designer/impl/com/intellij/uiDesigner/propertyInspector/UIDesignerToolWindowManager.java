@@ -68,6 +68,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
                                                                                    myToolWindowPanel,
                                                                                    ToolWindowAnchor.LEFT);
         myToolWindow.setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/toolWindowUIDesigner.png"));
+        myToolWindow.setAvailable(false, null);
       }
     });
   }
