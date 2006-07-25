@@ -165,7 +165,7 @@ public class EditorDelegate implements EditorEx {
   }
 
   @NotNull
-  public VisualPosition xyToVisualPosition(final Point p) {
+  public VisualPosition xyToVisualPosition(@NotNull final Point p) {
     return logicalToVisualPosition(xyToLogicalPosition(p));
   }
 
@@ -183,18 +183,18 @@ public class EditorDelegate implements EditorEx {
   }
 
   @NotNull
-  public LogicalPosition xyToLogicalPosition(final Point p) {
+  public LogicalPosition xyToLogicalPosition(@NotNull final Point p) {
     LogicalPosition hostPos = myDelegate.xyToLogicalPosition(p);
     return parentToInjected(hostPos);
   }
 
   @NotNull
-  public Point logicalPositionToXY(final LogicalPosition pos) {
+  public Point logicalPositionToXY(@NotNull final LogicalPosition pos) {
     return myDelegate.logicalPositionToXY(injectedToParent(pos));
   }
 
   @NotNull
-  public Point visualPositionToXY(final VisualPosition pos) {
+  public Point visualPositionToXY(@NotNull final VisualPosition pos) {
     return logicalPositionToXY(visualToLogicalPosition(pos));
   }
 
@@ -212,7 +212,7 @@ public class EditorDelegate implements EditorEx {
     return myDelegate.getComponent();
   }
 
-  public void addEditorMouseListener(final EditorMouseListener listener) {
+  public void addEditorMouseListener(@NotNull final EditorMouseListener listener) {
     EditorMouseListener wrapper = new EditorMouseListener() {
       public void mousePressed(EditorMouseEvent e) {
         listener.mousePressed(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
@@ -246,7 +246,7 @@ public class EditorDelegate implements EditorEx {
     myDelegate.addEditorMouseListener(wrapper);
   }
 
-  public void removeEditorMouseListener(final EditorMouseListener listener) {
+  public void removeEditorMouseListener(@NotNull final EditorMouseListener listener) {
     for (int i = 0; i < myMouseListenerWrappers.size(); i++) {
       EditorMouseListener wrapper = myMouseListenerWrappers.get(i);
       if (wrapper.equals(listener)) {
@@ -258,7 +258,7 @@ public class EditorDelegate implements EditorEx {
     LOG.error("Listener not found");
   }
 
-  public void addEditorMouseMotionListener(final EditorMouseMotionListener listener) {
+  public void addEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
     EditorMouseMotionListener wrapper = new EditorMouseMotionListener() {
       public void mouseMoved(EditorMouseEvent e) {
         listener.mouseMoved(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
@@ -280,7 +280,7 @@ public class EditorDelegate implements EditorEx {
     myDelegate.addEditorMouseMotionListener(wrapper);
   }
 
-  public void removeEditorMouseMotionListener(final EditorMouseMotionListener listener) {
+  public void removeEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
     for (int i = 0; i < myMouseMotionListenerWrappers.size(); i++) {
       EditorMouseMotionListener wrapper = myMouseMotionListenerWrappers.get(i);
       if (wrapper.equals(listener)) {
@@ -324,7 +324,7 @@ public class EditorDelegate implements EditorEx {
     return myDelegate.getScrollPane();
   }
 
-  public int logicalPositionToOffset(final LogicalPosition pos) {
+  public int logicalPositionToOffset(@NotNull final LogicalPosition pos) {
     return myDocument.getLineStartOffset(pos.line) + calcColumnNumber(pos.column, pos.line);
   }
   private int calcColumnNumber(int offset, int lineIndex) {
@@ -332,7 +332,10 @@ public class EditorDelegate implements EditorEx {
 
     CharSequence text = myDocument.getCharsSequence();
     int start = myDocument.getLineStartOffset(lineIndex);
+
     if (offset==0) return 0;
+    int end = myDocument.getLineEndOffset(lineIndex);
+    if (offset > end-start) offset = end - start;
     return EditorUtil.calcColumnNumber(this, text, start, start+offset, myDelegate.getTabSize());
   }
 
@@ -348,12 +351,12 @@ public class EditorDelegate implements EditorEx {
 
   // assuming there is no folding in injected documents
   @NotNull
-  public VisualPosition logicalToVisualPosition(final LogicalPosition pos) {
+  public VisualPosition logicalToVisualPosition(@NotNull final LogicalPosition pos) {
     return new VisualPosition(pos.line, pos.column);
   }
 
   @NotNull
-  public LogicalPosition visualToLogicalPosition(final VisualPosition pos) {
+  public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition pos) {
     return new LogicalPosition(pos.line, pos.column);
   }
 
@@ -361,7 +364,7 @@ public class EditorDelegate implements EditorEx {
     return myDelegate.getDataContext();
   }
 
-  public EditorMouseEventArea getMouseEventArea(final MouseEvent e) {
+  public EditorMouseEventArea getMouseEventArea(@NotNull final MouseEvent e) {
     return myDelegate.getMouseEventArea(e);
   }
 

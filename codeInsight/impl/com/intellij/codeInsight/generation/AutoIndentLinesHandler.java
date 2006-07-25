@@ -55,6 +55,9 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
 
     if (selectionEndMarker == null){
       if (line1 < document.getLineCount() - 1){
+        if (document.getLineStartOffset(line1 + 1) + col >= document.getTextLength()) {
+          col = document.getLineEndOffset(line1 + 1) - document.getLineStartOffset(line1 + 1);
+        }
         LogicalPosition pos = new LogicalPosition(line1 + 1, col);
         editor.getCaretModel().moveToLogicalPosition(pos);
         editor.getSelectionModel().removeSelection();

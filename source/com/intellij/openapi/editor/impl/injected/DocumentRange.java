@@ -96,10 +96,14 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
   }
 
   public void replaceString(final int startOffset, final int endOffset, final CharSequence s) {
-    LOG.assertTrue(startOffset >= myPrefix.length());
-    LOG.assertTrue(startOffset <= getTextLength() - mySuffix.length());
-    LOG.assertTrue(endOffset >= myPrefix.length());
-    LOG.assertTrue(endOffset <= getTextLength() - mySuffix.length());
+    if (startOffset < myPrefix.length() || startOffset > getTextLength() - mySuffix.length() || endOffset < myPrefix.length() || endOffset > getTextLength() - mySuffix.length()) {
+      LOG.assertTrue(s.equals(getText().substring(startOffset, endOffset)));
+      return;
+    }
+    //LOG.assertTrue(startOffset >= myPrefix.length());
+    //LOG.assertTrue(startOffset <= getTextLength() - mySuffix.length());
+    //LOG.assertTrue(endOffset >= myPrefix.length());
+    //LOG.assertTrue(endOffset <= getTextLength() - mySuffix.length());
     myDelegate.replaceString(injectedToHost(startOffset), injectedToHost(endOffset), s);
   }
 
@@ -263,8 +267,8 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
   }
 
   public int hostToInjected(int offset) {
-    if (offset < getTextRange().getStartOffset()) return 0;
-    if (offset >= getTextRange().getEndOffset()) return getTextRange().getEndOffset()-getTextRange().getStartOffset();
+    if (offset < getTextRange().getStartOffset()) return getPrefix().length();
+    if (offset >= getTextRange().getEndOffset()) return getTextRange().getEndOffset()-getTextRange().getStartOffset() + getPrefix().length();
     return offset - getTextRange().getStartOffset() + getPrefix().length();
   }
 
