@@ -98,7 +98,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
     final PsiCodeFragment file = (PsiCodeFragment)PsiDocumentManager.getInstance(project).getPsiFile(editorTextField.getDocument());
     EditorTextFieldControlHighlighter.getEditorTextFieldControlHighlighter(project).addFile(file, new Factory<DomElement>() {
       public DomElement create() {
-        return getDomElement();
+        return isValid() ? getDomElement() : null;
       }
     });
 

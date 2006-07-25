@@ -82,7 +82,7 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
         }
 
         public void focusLost(FocusEvent e) {
-          if (!e.isTemporary() && myDomWrapper.isValid()) {
+          if (!e.isTemporary() && isValid()) {
             commit();
           }
         }
@@ -128,10 +128,14 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
   }
 
   public final void commit() {
-    if (myDomWrapper.isValid() && !isCommitted()) {
+    if (isValid() && !isCommitted()) {
       setValueToXml(getValue());
       updateComponent();
     }
+  }
+
+  protected final boolean isValid() {
+    return myDomWrapper.isValid();
   }
 
   private static boolean valuesAreEqual(final Object valueInXml, final Object valueInControl) {

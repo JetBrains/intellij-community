@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -70,6 +70,29 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
         }
       }
     }, this);
+    //todo[peter] move this listener to DOM
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+      public void propertyChanged(VirtualFilePropertyEvent event) {
+        checkIsValid();
+      }
+
+      public void contentsChanged(VirtualFileEvent event) {
+        checkIsValid();
+      }
+
+      public void fileCreated(VirtualFileEvent event) {
+        checkIsValid();
+      }
+
+      public void fileDeleted(VirtualFileEvent event) {
+        checkIsValid();
+      }
+
+      public void fileMoved(VirtualFileMoveEvent event) {
+        checkIsValid();
+      }
+    }, this);
+
     myUndoHelper.startListeningDocuments();
 
     final PsiFile psiFile = getPsiFile();
