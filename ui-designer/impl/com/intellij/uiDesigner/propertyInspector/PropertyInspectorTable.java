@@ -22,10 +22,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TableUtil;
+import com.intellij.ui.*;
 import com.intellij.uiDesigner.ErrorAnalyzer;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.Properties;
@@ -596,17 +593,27 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       setValueAt(value, editingRow, editingColumn);
     }
     catch (final Exception exc) {
-      final Throwable cause = exc.getCause();
-      if(cause != null){
-        Messages.showMessageDialog(cause.getMessage(), UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
-      }
-      else{
-        Messages.showMessageDialog(exc.getMessage(), UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
-      }
+      showInvalidInput(exc);
     }
     finally {
       removeEditor();
     }
+  }
+
+  private static void showInvalidInput(final Exception exc) {
+    final Throwable cause = exc.getCause();
+    String message;
+    if(cause != null){
+      message = cause.getMessage();
+    }
+    else{
+      message = exc.getMessage();
+    }
+    if (message == null || message.length() == 0) {
+      message = UIDesignerBundle.message("error.no.message");
+    }
+    Messages.showMessageDialog(UIDesignerBundle.message("error.setting.value", message),
+                               UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
   }
 
   /**
@@ -852,13 +859,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
           value = cellEditor.getCellEditorValue();
         }
         catch (final Exception exc) {
-          final Throwable cause = exc.getCause();
-          if(cause != null){
-            Messages.showMessageDialog(cause.getMessage(), UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
-          }
-          else{
-            Messages.showMessageDialog(exc.getMessage(), UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
-          }
+          showInvalidInput(exc);
           return;
         }
         boolean valueAccepted = myModel.setValueAtRow(editingRow, value);
@@ -883,6 +884,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
      * This renderer paints first column with property names
      */
     private final ColoredTableCellRenderer myPropertyNameRenderer;
+    private final ColoredTableCellRenderer myErrorRenderer;
     private final Icon myExpandIcon;
     private final Icon myCollapseIcon;
     private final Icon myIndentedExpandIcon;
@@ -904,6 +906,13 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
           setFocusBorderAroundIcon(true);
         }
       };
+
+      myErrorRenderer = new ColoredTableCellRenderer() {
+        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+          setPaintFocusBorder(false);
+        }
+      };
+
       myExpandIcon=IconLoader.getIcon("/com/intellij/uiDesigner/icons/expandNode.png");
       myCollapseIcon=IconLoader.getIcon("/com/intellij/uiDesigner/icons/collapseNode.png");
       for(int i=0; i<myIndentIcons.length; i++) {
@@ -970,20 +979,27 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         }
       }
       else if(column==1){ // painter for second column
-        final PropertyRenderer renderer=property.getRenderer();
-        //noinspection unchecked
-        final JComponent component = renderer.getComponent(myEditor.getRootContainer(), getSelectionValue(property),
-                                                           selected, hasFocus);
-        if (!selected) {
-          component.setBackground(background);
+        try {
+          final PropertyRenderer renderer=property.getRenderer();
+          //noinspection unchecked
+          final JComponent component = renderer.getComponent(myEditor.getRootContainer(), getSelectionValue(property),
+                                                             selected, hasFocus);
+          if (!selected) {
+            component.setBackground(background);
+          }
+          if (isModifiedForSelection(property)) {
+            component.setFont(table.getFont().deriveFont(Font.BOLD));
+          }
+          else {
+            component.setFont(table.getFont());
+          }
+          return component;
         }
-        if (isModifiedForSelection(property)) {
-          component.setFont(table.getFont().deriveFont(Font.BOLD));
+        catch(Exception ex) {
+          myErrorRenderer.clear();
+          myErrorRenderer.append(UIDesignerBundle.message("error.getting.value", ex.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
+          return myErrorRenderer;
         }
-        else {
-          component.setFont(table.getFont());
-        }
-        return component;
       }
       else{
         throw new IllegalArgumentException("wrong column: "+column);
@@ -1065,8 +1081,15 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     public Component getTableCellEditorComponent(final JTable table, final Object value, final boolean isSelected, final int row, final int column){
       LOG.assertTrue(value!=null);
       final Property property=(Property)value;
-      //noinspection unchecked
-      return myEditor.getComponent(mySelection.get(0), getSelectionValue(property), false);
+      try {
+        //noinspection unchecked
+        return myEditor.getComponent(mySelection.get(0), getSelectionValue(property), false);
+      }
+      catch(Exception ex) {
+        SimpleColoredComponent errComponent = new SimpleColoredComponent();
+        errComponent.append(UIDesignerBundle.message("error.getting.value", ex.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
+        return errComponent;
+      }
     }
   }
 

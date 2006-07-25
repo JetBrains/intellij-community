@@ -130,6 +130,6 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
 
     final URL[] _urls = urls.toArray(new URL[urls.size()]);
     //final URLClassLoader classLoader = new URLClassLoader(_urls, null);
-    return (ClassLoader)new UrlClassLoader(Arrays.asList(_urls), null);
+    return new UrlClassLoader(Arrays.asList(_urls), null);
   }
 }
