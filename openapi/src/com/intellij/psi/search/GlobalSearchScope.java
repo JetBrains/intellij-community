@@ -23,12 +23,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -136,7 +138,7 @@ public abstract class GlobalSearchScope extends SearchScope {
     return new PackageScope(aPackage, includeSubpackages, false);
   }
 
-  public static SearchScope fileScope(PsiFile psiFile) {
+  public static SearchScope fileScope(@NotNull PsiFile psiFile) {
     return new FileScope(psiFile);
   }
 
@@ -307,7 +309,7 @@ public abstract class GlobalSearchScope extends SearchScope {
       for (VirtualFile scopeDir : myDirs) {
         boolean inDir = myIncludeSubpackages
                         ? VfsUtil.isAncestor(scopeDir, file, false)
-                        : file.getParent().equals(scopeDir);
+                        : Comparing.equal(file.getParent(), scopeDir);
         if (inDir) return true;
       }
       return false;
@@ -368,18 +370,18 @@ public abstract class GlobalSearchScope extends SearchScope {
   }
 
   private static class FileScope extends GlobalSearchScope {
-    private final PsiFile myPsiFile;
+    private final VirtualFile myVirtualFile;
     private final Module myModule;
 
     public FileScope(PsiFile psiFile) {
-      myPsiFile = psiFile;
-      Project project = myPsiFile.getProject();
+      myVirtualFile = psiFile.getVirtualFile();
+      Project project = psiFile.getProject();
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      myModule = fileIndex.getModuleForFile(myPsiFile.getVirtualFile());
+      myModule = myVirtualFile != null ? fileIndex.getModuleForFile(myVirtualFile) : null;
     }
 
     public boolean contains(VirtualFile file) {
-      return myPsiFile.getVirtualFile().equals(file);
+      return Comparing.equal(myVirtualFile, file);
     }
 
     public int compare(VirtualFile file1, VirtualFile file2) {
@@ -413,8 +415,13 @@ public abstract class GlobalSearchScope extends SearchScope {
       if (psiFile == null) return false;
       NamedScopesHolder holder = NamedScopeManager.getInstance(myProject);
       final PsiDirectory containingDirectory = psiFile.getContainingDirectory();
-      return psiFile instanceof PsiJavaFile ||
-             (containingDirectory != null && containingDirectory.getPackage() != null) ? mySet.getValue().contains(psiFile, holder) : myIncludeNonJavaFiles;
+      final PackageSet packageSet = mySet.getValue();
+      if (psiFile instanceof PsiJavaFile || (containingDirectory != null && containingDirectory.getPackage() != null)) {
+        return packageSet != null && packageSet.contains(psiFile, holder);
+      }
+      else {
+        return myIncludeNonJavaFiles;
+      }
     }
 
     public String getDisplayName() {
