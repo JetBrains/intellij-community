@@ -127,8 +127,16 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiMetaDa
             }
           }
           else if (token.getTokenType() == XmlTokenType.XML_CONTENT_ANY) {
-            XmlElementDescriptor[] elements = ((XmlNSDescriptorImpl) NSDescriptor).getElements();
-            result.addAll(Arrays.asList(elements));
+            if (NSDescriptor instanceof XmlNSDescriptorImpl) {
+              result.addAll(Arrays.asList(((XmlNSDescriptorImpl) NSDescriptor).getElements()));
+            } else if (NSDescriptor instanceof XmlNSDescriptorSequence) {
+
+              for (XmlNSDescriptor xmlNSDescriptor : ((XmlNSDescriptorSequence)NSDescriptor).getSequence()) {
+                if (xmlNSDescriptor instanceof XmlNSDescriptorImpl) {
+                  result.addAll(Arrays.asList(((XmlNSDescriptorImpl) xmlNSDescriptor).getElements()));
+                }
+              }
+            }
           }
         }
         return true;
