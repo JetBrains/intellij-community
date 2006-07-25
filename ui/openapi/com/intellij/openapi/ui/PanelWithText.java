@@ -8,14 +8,14 @@
  * Date: 16-Jul-2006
  * Time: 17:27:18
  */
-package com.intellij.openapi.roots.ui.configuration.projectRoot;
+package com.intellij.openapi.ui;
 
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 
-class PanelWithText extends JPanel {
+public class PanelWithText extends JPanel {
   private JLabel myLabel = new JLabel();
 
   public PanelWithText() {

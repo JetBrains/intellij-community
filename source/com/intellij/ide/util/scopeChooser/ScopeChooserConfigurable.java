@@ -212,7 +212,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       public String convert(final TreePath treePath) {
         return ((MyNode)treePath.getLastPathComponent()).getDisplayName();
       }
-    });
+    }, true);
   }
 
   protected void processRemovedItems() {
@@ -302,11 +302,16 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       JBPopupFactory.getInstance()
         .createWizardStep(new BaseListPopupStep<String>(IdeBundle.message("add.scope.popup.title"), new String[]{localScopeChoice, sharedScopeChoice}) {
           public PopupStep onChosen(final String s, final boolean finalChoice) {
-            if (Comparing.strEqual(s, localScopeChoice)){
-              addScope(myLocalScopesManager, myLocalScopesNode, LOCAL_SCOPES);
-            } else {
-              addScope(mySharedScopesManager, mySharedScopesNode, SHARED_SCOPES);
-            }
+            SwingUtilities.invokeLater(new Runnable() {
+              public void run() {
+                if (Comparing.strEqual(s, localScopeChoice)) {
+                  addScope(myLocalScopesManager, myLocalScopesNode, LOCAL_SCOPES);
+                }
+                else {
+                  addScope(mySharedScopesManager, mySharedScopesNode, SHARED_SCOPES);
+                }
+              }
+            });
             return PopupStep.FINAL_CHOICE;
           }
 

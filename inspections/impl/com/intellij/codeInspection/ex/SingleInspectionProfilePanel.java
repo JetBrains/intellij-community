@@ -940,6 +940,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     public String getName() {
       return myTextField.getText();
     }
+
+    public JComponent getPreferredFocusedComponent() {
+      return myTextField;
+    }
   }
 
   public static class MyTreeNode extends DefaultMutableTreeNode {

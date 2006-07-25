@@ -14,6 +14,7 @@ import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.ui.PanelWithText;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
