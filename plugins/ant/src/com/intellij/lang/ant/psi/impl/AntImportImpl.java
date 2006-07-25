@@ -44,6 +44,11 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
     return getImportedFile(getFileName(), this);
   }
 
+  public void clearCaches() {
+    super.clearCaches();
+    getAntFile().clearCaches();
+  }
+
   @Nullable
   static AntFile getImportedFile(final String name, final AntStructuredElementImpl element) {
     if (name == null) return null;
