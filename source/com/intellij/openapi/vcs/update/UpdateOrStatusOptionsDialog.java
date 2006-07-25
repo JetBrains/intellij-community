@@ -97,7 +97,7 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
         configurable.apply();
       }
       catch (ConfigurationException e) {
-        Messages.showErrorDialog(myProject, VcsBundle.message("messge.text.cannot.save.sattings", e.getLocalizedMessage()), getRealTitle());
+        Messages.showErrorDialog(myProject, VcsBundle.message("messge.text.cannot.save.settings", e.getLocalizedMessage()), getRealTitle());
         return;
       }
     }
