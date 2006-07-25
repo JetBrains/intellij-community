@@ -35,8 +35,11 @@ public final class VGapProperty extends AbstractIntProperty<RadContainer> {
       CardLayout layout = (CardLayout) component.getLayout();
       return layout.getVgap();
     }
-    final AbstractLayout layoutManager=(AbstractLayout)component.getLayout();
-    return layoutManager.getVGap();
+    if (component.getLayout() instanceof AbstractLayout) {
+      final AbstractLayout layoutManager=(AbstractLayout)component.getLayout();
+      return layoutManager.getVGap();
+    }
+    return null;
   }
 
   protected void setValueImpl(final RadContainer component, final Integer value) throws Exception {
