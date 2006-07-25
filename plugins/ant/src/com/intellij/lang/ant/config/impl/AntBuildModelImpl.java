@@ -1,6 +1,5 @@
 package com.intellij.lang.ant.config.impl;
 
-import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.TargetAction;
 import com.intellij.lang.ant.psi.AntFile;
@@ -29,7 +28,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   @Nullable
   public String getName() {
     final AntProject project = getAntProject();
-    return (project == null) ? AntBundle.message("unnamed.string.presentation") : project.getName();
+    return (project == null) ? null : project.getName();
   }
 
   public AntBuildTarget[] getTargets() {
