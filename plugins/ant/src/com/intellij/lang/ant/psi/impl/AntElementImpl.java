@@ -191,6 +191,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return myPropertiesArray;
   }
 
+  @Nullable
   public AntElement lightFindElementAt(int offset) {
     synchronized (PsiLock.LOCK) {
       if (myChildren == null) return this;
@@ -267,7 +268,9 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return element;
   }
 
+  @Nullable
   public static PsiElement resolveProperty(@NotNull final AntElement element, final String propName) {
+    if(propName == null) return null;
     PsiElement result;
     AntElement temp = element;
     while (temp != null) {
@@ -301,6 +304,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return result;
   }
 
+  @Nullable
   private static PsiElement resolvePropertyInElement(final AntStructuredElement element, final String propName) {
     PsiElement result = element.getProperty(propName);
     if (result == null) {
@@ -309,6 +313,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return result;
   }
 
+  @Nullable
   private static PsiElement resolveTargetProperty(final AntTarget target, final String propName, final Set<PsiElement> stack) {
     PsiElement result = null;
     if (!stack.contains(target)) {
@@ -323,6 +328,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return result;
   }
 
+  @Nullable
   private static PsiElement resolvePropertyInChildishPropertyFiles(final AntStructuredElement element, final String propName) {
     PsiElement result = null;
     for (PsiElement child : element.getChildren()) {

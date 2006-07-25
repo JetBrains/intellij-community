@@ -34,5 +34,6 @@ public interface AntElement extends PsiAntElement {
    * @param offset
    * @return
    */
+  @Nullable
   AntElement lightFindElementAt(int offset);
 }
