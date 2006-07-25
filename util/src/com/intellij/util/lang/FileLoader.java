@@ -1,7 +1,7 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import sun.misc.Resource;
 
 import java.io.*;
@@ -22,22 +22,8 @@ class FileLoader extends Loader {
       throw new IllegalArgumentException("url");
     }
     else {
-      final String s = url.toExternalForm();
-
-      if (s.startsWith("file://")) {
-        String path = s.substring("file://".length()).replace('/', File.separatorChar);
-        if (SystemInfo.isUnix) path = "/" + path;
-        myRootDir = new File(path);
-      }
-      else if (s.startsWith("file:/")) {
-        String path = s.substring("file:/".length()).replace('/', File.separatorChar);
-        if (SystemInfo.isUnix) path = "/" + path;
-        myRootDir = new File(path);
-      }
-      else {
-        LOG.assertTrue(false, s);
-      }
-
+      final String s = FileUtil.unquote(url.getFile());
+      myRootDir = new File(s);
       myRootDirAbsolutePath = myRootDir.getAbsolutePath();
     }
   }
