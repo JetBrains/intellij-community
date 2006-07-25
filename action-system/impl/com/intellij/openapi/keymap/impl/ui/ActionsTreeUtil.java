@@ -248,7 +248,7 @@ public class ActionsTreeUtil {
       if (antConfiguration != null) {
         final Map<AntBuildFile, Group> buildFileToGroup = new HashMap<AntBuildFile, Group>();
         for (final String id : ids) {
-          if (filtered == null || !filtered.value(actionManager.getActionOrStub(id))) continue;
+          if (filtered != null && !filtered.value(actionManager.getActionOrStub(id))) continue;
           final AntBuildFile buildFile = antConfiguration.findBuildFileByActionId(id);
           if (buildFile == null) {
             LOG.info("no buildfile found for actionId=" + id);
@@ -309,7 +309,7 @@ public class ActionsTreeUtil {
     HashMap<String, Group> toolGroupNameToGroup = new HashMap<String, Group>();
 
     for (String id : ids) {
-      if (filtered == null || !filtered.value(actionManager.getActionOrStub(id))) continue;
+      if (filtered != null && !filtered.value(actionManager.getActionOrStub(id))) continue;
       String groupName = toolManager.getGroupByActionId(id);
 
       if (groupName != null && groupName.trim().length() == 0) {
