@@ -3,10 +3,8 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
@@ -119,20 +117,6 @@ public class DomUtil {
       return ((GenericAttributeValue)domValue).getXmlAttributeValue();
     } else {
       return domValue.getXmlTag();
-    }
-  }
-
-  @NotNull
-  public static TextRange getValueRange(GenericDomValue domValue) {
-    if (domValue instanceof GenericAttributeValue) {
-      return new TextRange(1, ((GenericAttributeValue)domValue).getXmlAttributeValue().getTextLength() - 1);
-    } else {
-      final XmlTag tag = domValue.getXmlTag();
-      assert tag != null;
-      XmlTagValue tagValue = tag.getValue();
-      final TextRange valueRange = tagValue.getTextRange();
-      final int tagOffset = tag.getTextOffset();
-      return new TextRange(valueRange.getStartOffset() - tagOffset, valueRange.getEndOffset() - tagOffset);
     }
   }
 
