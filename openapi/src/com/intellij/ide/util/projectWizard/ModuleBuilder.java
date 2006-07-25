@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +62,7 @@ public abstract class ModuleBuilder {
     myModuleFilePath = acceptParameter(path);
   }
 
+  @Nullable
   public String getModuleFileDirectory() {
     if (myModuleFilePath == null) {
       return null;
@@ -103,16 +105,19 @@ public abstract class ModuleBuilder {
     final Module module = createModule(moduleModel);
     moduleModel.commit();
 
-    final Runnable runnable = new Runnable() {
-      public void run() {
-         addSupport(module);
-      }
-    };
     if (runFromProjectWizard) {
-      StartupManager.getInstance(module.getProject()).registerPostStartupActivity(runnable);
+      StartupManager.getInstance(module.getProject()).registerPostStartupActivity(new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            addSupport(module);
+          }
+        });
+      }
+    });
     }
     else {
-      runnable.run();
+      addSupport(module);
     }
     return module;
   }
@@ -127,8 +132,10 @@ public abstract class ModuleBuilder {
         }
       }
     }
+    rootModel.commit();
   }
 
+  @Nullable
   public AddSupportContext[] getAddSupportContexts() {
     return myAddSupportContexts;
   }
