@@ -13,6 +13,7 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.actions.*;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.compiler.FormLayoutUtils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.*;
@@ -149,7 +150,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
       RowSpec rowSpec = layout.getRowSpec(i);
       writer.startElement(UIFormXmlConstants.ELEMENT_ROWSPEC);
       try {
-        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, Utils.getEncodedSpec(rowSpec));
+        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, FormLayoutUtils.getEncodedSpec(rowSpec));
       }
       finally {
         writer.endElement();
@@ -159,7 +160,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
       ColumnSpec columnSpec = layout.getColumnSpec(i);
       writer.startElement(UIFormXmlConstants.ELEMENT_COLSPEC);
       try {
-        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, Utils.getEncodedSpec(columnSpec));
+        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, FormLayoutUtils.getEncodedSpec(columnSpec));
       }
       finally {
         writer.endElement();

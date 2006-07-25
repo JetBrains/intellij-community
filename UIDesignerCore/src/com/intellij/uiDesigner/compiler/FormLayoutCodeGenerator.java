@@ -50,8 +50,8 @@ public class FormLayoutCodeGenerator extends LayoutCodeGenerator {
 
     generator.newInstance(ourFormLayoutType);
     generator.dup();
-    generator.push(Utils.getEncodedColumnSpecs(formLayout));
-    generator.push(Utils.getEncodedRowSpecs(formLayout));
+    generator.push(FormLayoutUtils.getEncodedColumnSpecs(formLayout));
+    generator.push(FormLayoutUtils.getEncodedRowSpecs(formLayout));
 
     generator.invokeConstructor(ourFormLayoutType, ourFormLayoutConstructor);
 

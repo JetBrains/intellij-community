@@ -6,6 +6,7 @@ package com.intellij.uiDesigner.make;
 
 import com.intellij.uiDesigner.compiler.FormLayoutCodeGenerator;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.compiler.FormLayoutUtils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
@@ -27,8 +28,8 @@ public class FormLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.startMethodCall(variable, "setLayout");
 
     generator.startConstructor(FormLayout.class.getName());
-    generator.push(Utils.getEncodedColumnSpecs(layout));
-    generator.push(Utils.getEncodedRowSpecs(layout));
+    generator.push(FormLayoutUtils.getEncodedColumnSpecs(layout));
+    generator.push(FormLayoutUtils.getEncodedRowSpecs(layout));
     generator.endConstructor();
 
     generator.endMethod();

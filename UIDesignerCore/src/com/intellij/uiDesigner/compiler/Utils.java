@@ -15,12 +15,10 @@
  */
 package com.intellij.uiDesigner.compiler;
 
-import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.jgoodies.forms.layout.FormLayout;
-import com.jgoodies.forms.layout.FormSpec;
-import org.jdom.input.SAXBuilder;
+import com.intellij.uiDesigner.lw.*;
 import org.jdom.Document;
+import org.jdom.input.SAXBuilder;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -29,15 +27,13 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.swing.*;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import java.awt.*;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
-import java.util.Set;
 import java.util.HashSet;
-import java.awt.LayoutManager;
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -292,32 +288,6 @@ public final class Utils {
       }
       return componentClass;
     }
-  }
-
-  public static String getEncodedRowSpecs(final FormLayout formLayout) {
-    StringBuffer result = new StringBuffer();
-    for(int i=1; i<=formLayout.getRowCount(); i++) {
-      if (result.length() > 0) {
-        result.append(",");
-      }
-      result.append(getEncodedSpec(formLayout.getRowSpec(i)));
-    }
-    return result.toString();
-  }
-
-  public static String getEncodedColumnSpecs(final FormLayout formLayout) {
-    StringBuffer result = new StringBuffer();
-    for(int i=1; i<=formLayout.getColumnCount(); i++) {
-      if (result.length() > 0) {
-        result.append(",");
-      }
-      result.append(getEncodedSpec(formLayout.getColumnSpec(i)));
-    }
-    return result.toString();
-  }
-
-  public static String getEncodedSpec(final FormSpec formSpec) {
-    return formSpec.toString().replace("dluX", "dlu").replace("dluY", "dlu");
   }
 
   public static int alignFromConstraints(final GridConstraints gc, final boolean horizontal) {
