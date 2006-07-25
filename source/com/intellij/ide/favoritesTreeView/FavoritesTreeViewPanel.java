@@ -9,9 +9,11 @@ import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
@@ -39,8 +41,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.BorderLayout;
-import java.awt.GraphicsEnvironment;
+import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.*;
@@ -144,7 +145,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
           if (userObject instanceof FavoritesTreeNodeDescriptor) {
             final FavoritesTreeNodeDescriptor favoritesTreeNodeDescriptor = (FavoritesTreeNodeDescriptor)userObject;
             AbstractTreeNode treeNode = favoritesTreeNodeDescriptor.getElement();
-            String locationString = treeNode.getPresentation().getLocationString();
+            final ItemPresentation presentation = treeNode.getPresentation();
+            String locationString = presentation != null ? presentation.getLocationString() : null;
             if (locationString != null && locationString.length() > 0) {
               append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
             }
@@ -519,9 +521,10 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         if (parentDescriptor != null) {
           final Object parentElement = parentDescriptor.getElement();
           if (parentElement instanceof AbstractTreeNode) {
-            final AbstractTreeNode<PsiDirectory> parentNode = (AbstractTreeNode<PsiDirectory>)parentElement;
-            if (parentNode.getValue() != null) {
-              return parentNode.getValue();
+            final AbstractTreeNode parentNode = (AbstractTreeNode)parentElement;
+            final Object directory = parentNode.getValue();
+            if (directory instanceof PsiDirectory) {
+              return (PsiDirectory)directory;
             }
           }
         }
@@ -536,7 +539,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     }
 
     public PsiDirectory getOrChooseDirectory() {
-      return com.intellij.ide.util.PackageUtil.getOrChooseDirectory(this);
+      return PackageUtil.getOrChooseDirectory(this);
     }
   }
 
