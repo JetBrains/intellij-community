@@ -21,16 +21,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.text.CharSequenceReader;
 import net.n3.nanoxml.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.net.MalformedURLException;
 import java.util.Properties;
 import java.util.Stack;
 
@@ -44,17 +45,65 @@ public class NanoXmlUtil {
   }
 
   public static void parseFile(PsiFile psiFile, final IXMLBuilder builder) {
-    final Document document = FileDocumentManager.getInstance().getDocument(psiFile.getVirtualFile());
-    assert document != null;
-    final CharSequenceReader documentReader = new CharSequenceReader(document.getCharsSequence());
+    try {
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      assert virtualFile != null;
+      final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
 
-    parse(documentReader, builder);
+      if (document != null) {
+        parse(new CharSequenceReader(document.getCharsSequence()), builder);
+      }
+      else {
+        parse(virtualFile.getInputStream(), builder);
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+  }
+
+  public static void parse(final InputStream is, final IXMLBuilder builder) {
+    IXMLReader r;
+
+    try {
+      r = new MyXMLReader(is);
+      parse(r, builder);
+    }
+    catch(IOException e) {
+      LOG.error(e);
+    }
+    finally {
+      try {
+        is.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
   }
 
   public static void parse(final Reader reader, final IXMLBuilder builder) {
+    IXMLReader r = new MyXMLReader(reader);
+
+    try {
+      parse(r, builder);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    finally {
+      try {
+        reader.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+  }
+
+  private static void parse(final IXMLReader r, final IXMLBuilder builder) {
     try {
       final IXMLParser parser = XMLParserFactory.createDefaultXMLParser();
-      IXMLReader r = new MyXMLReader(reader);
       parser.setReader(r);
       parser.setBuilder(builder);
       parser.setValidator(new EmptyValidator());
@@ -66,11 +115,14 @@ public class NanoXmlUtil {
         if (e.getException() instanceof ParserStoppedException) return;
         LOG.debug(e);
       }
-      finally {
-        reader.close();
-      }
     }
-    catch (Exception e) {
+    catch (ClassNotFoundException e) {
+      LOG.error(e);
+    }
+    catch (InstantiationException e) {
+      LOG.error(e);
+    }
+    catch (IllegalAccessException e) {
       LOG.error(e);
     }
   }
@@ -112,10 +164,11 @@ public class NanoXmlUtil {
     public void addPCData(Reader reader, String systemID, int lineNr) throws Exception {
     }
 
-    protected String readText(final Reader reader) throws IOException {
+    protected static String readText(final Reader reader) throws IOException {
       return new String(StreamUtil.readTextAndConvertSeparators(reader));
     }
 
+    @Nullable
     public Object getResult() throws Exception {
       return null;
     }
@@ -124,7 +177,7 @@ public class NanoXmlUtil {
       return myLocation.peek();
     }
 
-    protected void stop() {
+    protected static void stop() {
       throw new ParserStoppedException();
     }
   }
@@ -196,7 +249,12 @@ public class NanoXmlUtil {
     }
 
 
-    public Reader openStream(String publicID, String systemID) throws MalformedURLException, FileNotFoundException, IOException {
+    public MyXMLReader(InputStream stream) throws IOException {
+      super(stream);
+    }
+
+    @Override
+    public Reader openStream(String publicID, String systemID) throws IOException {
       return new StringReader(" ");
     }
   }
