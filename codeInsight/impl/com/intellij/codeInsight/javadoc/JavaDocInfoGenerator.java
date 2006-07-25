@@ -186,7 +186,11 @@ class JavaDocInfoGenerator {
     }
     else {
       if (myProvider!=null) {
-        return myProvider.generateDoc(myElement,myElement.getUserData(JavaDocManager.ORIGINAL_ELEMENT_KEY));
+        final SmartPsiElementPointer elementPointer = myElement.getUserData(JavaDocManager.ORIGINAL_ELEMENT_KEY);
+        return myProvider.generateDoc(
+          myElement,
+          elementPointer != null ? elementPointer.getElement() : null
+        );
       }
       return null;
     }

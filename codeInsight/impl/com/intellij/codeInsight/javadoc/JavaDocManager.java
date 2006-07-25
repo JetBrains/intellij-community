@@ -59,7 +59,7 @@ public class JavaDocManager implements ProjectComponent {
   private WeakReference<JBPopup> myDocInfoHintRef;
   private Component myPreviouslyFocused = null;
   private HashMap<FileType,DocumentationProvider> documentationProviders = new HashMap<FileType, DocumentationProvider>();
-  public static final Key<PsiElement> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
+  public static final Key<SmartPsiElementPointer> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
   public static final @NonNls String HTML_EXTENSION = ".html";
   public static final @NonNls String PACKAGE_SUMMARY_FILE = "package-summary.html";
   public static final @NonNls String PSI_ELEMENT_PROTOCOL = "psi_element://";
@@ -257,7 +257,10 @@ public class JavaDocManager implements ProjectComponent {
 
     JavaDocInfoComponent component = new JavaDocInfoComponent(this);
     try {
-      element.putUserData(ORIGINAL_ELEMENT_KEY,originalElement);
+      element.putUserData(
+        ORIGINAL_ELEMENT_KEY,
+        SmartPointerManager.getInstance(originalElement.getProject()).createSmartPsiElementPointer(originalElement)
+      );
     } catch (RuntimeException ex) {
       // PsiPackage does not allow putUserData
     }
@@ -376,7 +379,10 @@ public class JavaDocManager implements ProjectComponent {
       }
     } else {
       DocumentationProvider provider = getProviderFromElement(element);
-      if (provider!=null) url = provider.getUrlFor(element,element.getUserData(ORIGINAL_ELEMENT_KEY));
+      if (provider!=null) {
+        final SmartPsiElementPointer originalElementPointer = element.getUserData(ORIGINAL_ELEMENT_KEY);
+        url = provider.getUrlFor(element, originalElementPointer != null ? originalElementPointer.getElement() : null);
+      }
     }
 
     return url == null ? null : url.replace('\\', '/');
@@ -591,7 +597,8 @@ public class JavaDocManager implements ProjectComponent {
   }
 
   public DocumentationProvider getProviderFromElement(final PsiElement element) {
-    PsiElement originalElement = element!=null ? element.getUserData(ORIGINAL_ELEMENT_KEY):null;
+    SmartPsiElementPointer originalElementPointer = element!=null ? element.getUserData(ORIGINAL_ELEMENT_KEY):null;
+    PsiElement originalElement = originalElementPointer != null ? originalElementPointer.getElement() : null;
     PsiFile containingFile = (originalElement!=null)?originalElement.getContainingFile() : (element!=null)?element.getContainingFile():null;
     VirtualFile vfile = (containingFile!=null)?containingFile.getVirtualFile() : null;
 
