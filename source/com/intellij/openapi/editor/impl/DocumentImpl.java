@@ -256,6 +256,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public void replaceText(CharSequence chars, long newModificationStamp) {
     replaceString(0, getTextLength(), chars, newModificationStamp); //TODO: optimization!!!
+    clearLineModificationFlags();
   }
 
   public int getListenersCount() {
