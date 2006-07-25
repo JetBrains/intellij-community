@@ -56,6 +56,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
 
   @NotNull
   public Property[] getChildren(final RadComponent component){
+    if (!(component instanceof RadContainer)) return Property.EMPTY_ARRAY;
     BorderType borderType = ((RadContainer) component).getBorderType();
     if (borderType.equals(BorderType.EMPTY)) {
       return new Property[]{
