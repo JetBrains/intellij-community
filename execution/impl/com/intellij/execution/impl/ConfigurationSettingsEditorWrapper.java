@@ -74,13 +74,11 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
         button = null;
         label = null;
       }
+      enableSettings(button, checkBox, label);
       checkBox.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           myCompileBeforeRunning.put(method, checkBox.isSelected());
-          if (button != null && label != null){
-            button.setEnabled(checkBox.isSelected());
-            label.setEnabled(checkBox.isSelected());
-          }
+          enableSettings(button, checkBox, label);
         }
       });
       gridy++;
@@ -93,6 +91,13 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
         myStoreProjectConfiguration = myCbStoreProjectConfiguration.isSelected();
       }
     });
+  }
+
+  private static void enableSettings(final FixedSizeButton button, final JCheckBox checkBox, final JLabel label) {
+    if (button != null && label != null) {
+      button.setEnabled(checkBox.isSelected());
+      label.setEnabled(checkBox.isSelected());
+    }
   }
 
   public void setCompileMethodState(boolean state){
