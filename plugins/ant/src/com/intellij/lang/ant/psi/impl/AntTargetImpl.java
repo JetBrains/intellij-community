@@ -65,7 +65,7 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
     if (myDependsTargets == null) {
       final String depends = getSourceElement().getAttributeValue("depends");
       if (depends == null || depends.length() == 0) {
-        myDependsTargets = AntProjectImpl.EMPTY_TARGETS;
+        myDependsTargets = EMPTY_TARGETS;
       }
       else {
         AntProject project = (AntProject)getAntParent();

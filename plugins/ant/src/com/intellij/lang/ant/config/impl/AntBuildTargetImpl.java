@@ -3,6 +3,7 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.TargetAction;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
+import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -36,7 +37,8 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
   }
 
   public boolean isDefault() {
-    return myTarget == myModel.getAntProject().getDefaultTarget();
+    final AntProject project = myModel.getAntProject();
+    return project != null && myTarget == project.getDefaultTarget();
   }
 
   @Nullable

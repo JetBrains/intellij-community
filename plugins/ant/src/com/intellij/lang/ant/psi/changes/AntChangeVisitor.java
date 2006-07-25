@@ -5,14 +5,13 @@ import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntOuterProjectElement;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.Alarm;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -20,6 +19,7 @@ import java.util.Set;
 public class AntChangeVisitor implements XmlChangeVisitor {
 
   private final Set<AntBuildFile> myDirtyFiles = new HashSet<AntBuildFile>();
+  private final Alarm myAlarm = new Alarm();
 
   public void visitXmlAttributeSet(final XmlAttributeSet xmlAttributeSet) {
     clearParentCaches(xmlAttributeSet.getTag());
@@ -92,7 +92,8 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     for (final AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
       if (file.equals(buildFile.getAntFile())) {
         myDirtyFiles.add(buildFile);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        myAlarm.cancelAllRequests();
+        myAlarm.addRequest(new Runnable() {
           public void run() {
             final int size = myDirtyFiles.size();
             if (size > 0) {
@@ -102,7 +103,7 @@ public class AntChangeVisitor implements XmlChangeVisitor {
               myDirtyFiles.clear();
             }
           }
-        }, ModalityState.NON_MMODAL);
+        }, 300);
         break;
       }
     }

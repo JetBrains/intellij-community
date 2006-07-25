@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.config.impl;
 
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.TargetAction;
 import com.intellij.lang.ant.psi.AntFile;
@@ -20,13 +21,15 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   @Nullable
   public String getDefaultTargetName() {
-    final AntTarget target = getAntProject().getDefaultTarget();
+    final AntProject project = getAntProject();
+    final AntTarget target = (project == null) ? null : project.getDefaultTarget();
     return (target == null) ? "" : target.getName();
   }
 
   @Nullable
   public String getName() {
-    return getAntProject().getName();
+    final AntProject project = getAntProject();
+    return (project == null) ? AntBundle.message("unnamed.string.presentation") : project.getName();
   }
 
   public AntBuildTarget[] getTargets() {
@@ -59,7 +62,8 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   @Nullable
   public AntBuildTargetBase findTarget(final String name) {
-    final AntTarget antTarget = getAntProject().getTarget(name);
+    final AntProject project = getAntProject();
+    final AntTarget antTarget = (project == null) ? null : project.getTarget(name);
     if (antTarget != null) {
       for (final AntBuildTargetBase buildTarget : getTargetsList()) {
         if (buildTarget.getAntTarget() == antTarget) {
@@ -89,7 +93,8 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   }
 
   private List<AntBuildTargetBase> getTargetsList() {
-    final AntTarget[] targets = getAntProject().getTargets();
+    final AntProject project = getAntProject();
+    final AntTarget[] targets = (project == null) ? AntTarget.EMPTY_TARGETS : project.getTargets();
     final List<AntBuildTargetBase> list = new ArrayList<AntBuildTargetBase>(targets.length);
     for (final AntTarget target : targets) {
       list.add(new AntBuildTargetImpl(target, this));

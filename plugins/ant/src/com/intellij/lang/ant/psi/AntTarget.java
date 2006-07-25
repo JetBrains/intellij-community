@@ -5,6 +5,8 @@ import org.jetbrains.annotations.Nullable;
 
 public interface AntTarget extends AntStructuredElement {
 
+  AntTarget[] EMPTY_TARGETS = new AntTarget[0];
+
   @Nullable
   String getDescription();
 

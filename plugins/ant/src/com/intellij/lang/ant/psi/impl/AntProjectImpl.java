@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class AntProjectImpl extends AntStructuredElementImpl implements AntProject {
-  final static AntTarget[] EMPTY_TARGETS = new AntTarget[0];
   private AntTarget[] myTargets;
   private AntFile[] myImports;
   private boolean myInGettingChildren;
@@ -83,7 +82,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     for (final AntElement child : getChildren()) {
       if (child instanceof AntTarget) targets.add((AntTarget)child);
     }
-    return myTargets = targets.toArray(new AntTarget[targets.size()]);
+    final int size = targets.size();
+    return myTargets = (size == 0) ? AntTarget.EMPTY_TARGETS : targets.toArray(new AntTarget[size]);
   }
 
   @Nullable

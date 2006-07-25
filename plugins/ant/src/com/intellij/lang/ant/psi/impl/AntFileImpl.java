@@ -184,7 +184,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         final XmlDocument document = baseFile.getDocument();
         assert document != null;
         final XmlTag tag = document.getRootTag();
-        assert tag != null;
+        if (tag == null) return null;
         final String fileText = baseFile.getText();
         final int projectStart = tag.getTextRange().getStartOffset();
         if (projectStart > 0) {
