@@ -167,6 +167,10 @@
       <implementation-class>com.intellij.util.xml.impl.DomManagerImpl</implementation-class>
       <skipForDummyProject/>
     </component>
+    <component>
+      <implementation-class>com.intellij.util.xml.ui.CommittableUtil</implementation-class>
+      <skipForDummyProject/>
+    </component>
 
     <component>
       <interface-class>com.intellij.util.xml.DomElementsNavigationManager</interface-class>

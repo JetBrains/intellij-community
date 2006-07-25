@@ -33,7 +33,8 @@ public class UndoHelper {
 
   public UndoHelper(final Project project, final Committable committable) {
     myProject = project;
-
+    final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+    final CommittableUtil committableUtil = project.getComponent(CommittableUtil.class);
     CommandProcessor.getInstance().addCommandListener(new CommandAdapter() {
       public void commandStarted(CommandEvent event) {
         undoTransparentActionStarted();
@@ -45,8 +46,8 @@ public class UndoHelper {
 
       public void undoTransparentActionFinished() {
         if (myDirty) {
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-          CommittableUtil.queueReset(committable);
+          psiDocumentManager.commitAllDocuments();
+          committableUtil.queueReset(committable);
         }
       }
 
