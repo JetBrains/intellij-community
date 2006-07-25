@@ -50,22 +50,16 @@ public class SvnRevisionPanel extends JPanel {
       }
     });
 
-    myRevisionField.setEditable(false);
+//    myRevisionField.setEditable(false);
     myRevisionField.setEnabled(false);
 
     mySpecified.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (mySpecified.isSelected()) {
-          if (myRevisionField.getText().length() == 0) {
-            if (!chooseRevision()) {
-              myHead.setSelected(true);
-              myRevisionField.setEnabled(false);
-            } else {
-              myRevisionField.setEnabled(true);
-            }
-          } else {
-            myRevisionField.setEnabled(true);
+          if (myRevisionField.getText().trim().length() == 0) {
+            myRevisionField.setText("HEAD");
           }
+          myRevisionField.setEnabled(true);
         } else {
           myRevisionField.setEnabled(false);
         }

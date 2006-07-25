@@ -72,6 +72,9 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
         if (e.getSource() == myRevisionBox) {
           myRevisionText.setEnabled(myRevisionBox.isSelected());
           if (myRevisionBox.isSelected()) {
+            if ("".equals(myRevisionText.getText().trim())) {
+              myRevisionText.setText("HEAD");
+            }
             myRevisionText.getTextField().selectAll();
             myRevisionText.requestFocus();
           }
@@ -92,6 +95,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
 
     myRevisionText.setText(SVNRevision.HEAD.toString());
     myRevisionText.getTextField().selectAll();
+    myRevisionText.setEnabled(myRevisionBox.isSelected());
     myURLText.setEnabled(false);
   }
 
