@@ -112,13 +112,20 @@ public class AntPropertyReference extends AntGenericReference {
     List<IntentionAction> result = new ArrayList<IntentionAction>();
     final AntProject project = getElement().getAntProject();
     result.add(new AntCreatePropertyAction(this));
-    for (final PsiElement child : project.getChildren()) {
-      if (child instanceof AntProperty) {
-        PropertiesFile propFile = ((AntProperty)child).getPropertiesFile();
-        if (propFile != null) {
-          result.add(new AntCreatePropertyAction(this, propFile));
+    final Set<String> files = StringSetSpinAllocator.alloc();
+    try {
+      for (final PsiElement child : project.getChildren()) {
+        if (child instanceof AntProperty) {
+          final PropertiesFile propFile = ((AntProperty)child).getPropertiesFile();
+          if (propFile != null && !files.contains(propFile.getName())) {
+            files.add(propFile.getName());
+            result.add(new AntCreatePropertyAction(this, propFile));
+          }
         }
       }
+    }
+    finally {
+      StringSetSpinAllocator.dispose(files);
     }
     return result.toArray(new IntentionAction[result.size()]);
   }
