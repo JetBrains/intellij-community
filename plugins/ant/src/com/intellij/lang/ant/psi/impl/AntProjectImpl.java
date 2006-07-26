@@ -155,17 +155,21 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
   @Nullable
   public AntProperty getProperty(final String name) {
+    if (getParent() == null) return null;
     checkPropertiesMap();
     return super.getProperty(name);
   }
 
   public void setProperty(final String name, final AntProperty element) {
-    checkPropertiesMap();
-    super.setProperty(name, element);
+    if (getParent() != null) {
+      checkPropertiesMap();
+      super.setProperty(name, element);
+    }
   }
 
   @NotNull
   public AntProperty[] getProperties() {
+    if (getParent() == null) return AntProperty.EMPTY_ARRAY;
     checkPropertiesMap();
     return super.getProperties();
   }
@@ -234,8 +238,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       if (document == null) return;
       final XmlTag rootTag = document.getRootTag();
       if (rootTag == null) return;
-      AntTypeDefinition propertyDef = getAntFile().getBaseTypeDefinition(Property.class.getName());
-      AntProject fakeProject = new AntProjectImpl(null, rootTag, myDefinition);
+      final AntTypeDefinition propertyDef = getAntFile().getBaseTypeDefinition(Property.class.getName());
+      final AntProject fakeProject = new AntProjectImpl(null, rootTag, myDefinition);
       for (final XmlTag tag : rootTag.getSubTags()) {
         final AntPropertyImpl property = new AntPropertyImpl(fakeProject, tag, propertyDef) {
           public PsiFile getContainingFile() {
