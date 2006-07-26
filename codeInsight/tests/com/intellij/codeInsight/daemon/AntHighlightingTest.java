@@ -27,8 +27,6 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/ant";
   private boolean myIgnoreInfos;
 
-  public void testDummy() {}
-
   private void doTest() throws Exception {
     doTest(BASE_PATH + "/" + getTestName(false) + ".xml", false, false);
   }
@@ -77,6 +75,11 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
+  @Bombed(year = 2006, month = Calendar.AUGUST, day = 29, user = "lvo", time = 12, description = "Fix properties from file")
+  public void testPropertiesFromFile() throws Exception {
+    doTest();
+  }
+
   public void testAntFileProperties() throws Exception {
     doTest();
   }
@@ -96,7 +99,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
       myIgnoreInfos = true;
       IdeaTestUtil.assertTiming(
       "Should be quite performant !",
-        1000,
+        3500,
         new Runnable() {
           public void run() {
             doDoTest(true, false);
