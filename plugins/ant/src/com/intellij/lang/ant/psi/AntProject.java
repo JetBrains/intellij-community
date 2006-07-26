@@ -23,7 +23,6 @@ public interface AntProject extends AntStructuredElement {
   @NotNull
   AntFile[] getImportedFiles();
 
-  @Nullable
   void addEnvironmentPropertyPrefix(@NotNull final String envPrefix);
 
   boolean isEnvironmentProperty(@NotNull final String propName);

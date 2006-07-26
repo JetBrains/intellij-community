@@ -215,13 +215,6 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       builder.append("<property name=\"basedir\" value=\"");
       builder.append(basedir);
       builder.append("\"/>");
-      final VirtualFile file = getContainingFile().getVirtualFile();
-      if (file != null) {
-        builder.append("<property name=\"ant.file\" value=\"");
-        builder.append(file.getPath());
-        builder.append("\"/>");
-      }
-      // TODO: remove this fake:
       builder.append("<property name=\"ant.home\" value=\"\"/>");
       builder.append("<property name=\"ant.version\" value=\"1.6.5\"/>");
       builder.append("<property name=\"ant.project.name\" value=\"");
@@ -231,10 +224,22 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       builder.append("<property name=\"ant.java.version\" value=\"");
       builder.append(SystemInfo.JAVA_VERSION);
       builder.append("\"/>");
+      final VirtualFile file = getContainingFile().getVirtualFile();
+      if (file != null) {
+        final String path = file.getPath();
+        builder.append("<property name=\"ant.file\" value=\"");
+        builder.append(path);
+        builder.append("\"/>");
+        if (name != null) {
+          builder.append("<property name=\"ant.file.");
+          builder.append(name);
+          builder.append("\" value=\"${ant.file}\"/>");
+        }
+      }
       builder.append("</project>");
       final PsiElementFactory elementFactory = getManager().getElementFactory();
-      final XmlFile fakeFile = (XmlFile)elementFactory.createFileFromText("dummy.xml", builder.toString());
-      final XmlDocument document = fakeFile.getDocument();
+      final XmlFile xmlFile = (XmlFile)elementFactory.createFileFromText("dummy.xml", builder.toString());
+      final XmlDocument document = xmlFile.getDocument();
       if (document == null) return;
       final XmlTag rootTag = document.getRootTag();
       if (rootTag == null) return;

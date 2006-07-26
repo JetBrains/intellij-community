@@ -57,12 +57,12 @@ public class AntElementFactory {
       final AntTypeDefinition parentDef = ((AntStructuredElement)parent).getTypeDefinition();
       if (parentDef != null) {
         final String className = parentDef.getNestedClassName(id);
-        if (className != null) {
+        if (className != null && file != null) {
           typeDef = file.getBaseTypeDefinition(className);
         }
       }
     }
-    if (typeDef == null) {
+    if (typeDef == null && file != null) {
       for (AntTypeDefinition def : file.getBaseTypeDefinitions()) {
         if (id.equals(def.getTypeId())) {
           typeDef = def;
