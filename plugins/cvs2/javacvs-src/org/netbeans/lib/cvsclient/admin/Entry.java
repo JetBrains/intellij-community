@@ -251,7 +251,7 @@ public final class Entry implements Cloneable {
 		try {
 			this.lastModified = getLastModifiedDateFormatter().parse(conflictStringWithoutConflictMarker);
 		}
-		catch (ParseException ex) {
+		catch (Exception ex) {
 			lastModified = null;
                   //noinspection HardCodedStringLiteral
                   System.err.println("[Entry] can't parse conflict '" + conflictStringWithoutConflictMarker + "'");
