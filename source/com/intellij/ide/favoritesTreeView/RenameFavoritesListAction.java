@@ -1,14 +1,14 @@
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.InputValidator;
-import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ArrayUtil;
 
 /**
@@ -49,7 +49,9 @@ public class RenameFavoritesListAction extends AnAction {
                                                           }
                                                         });
 
-    favoritesManager.renameFavoritesList(listName, newName);
+    if (listName != null) {
+      favoritesManager.renameFavoritesList(listName, newName);
+    }
   }
 
   public void update(AnActionEvent e) {

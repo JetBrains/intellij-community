@@ -462,6 +462,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     String subId = ids.second;
     if (ids.equals(Pair.create(myCurrentViewId, myCurrentViewSubId))) return;
     final AbstractProjectViewPane newPane = getProjectViewPaneById(id);
+    if (newPane == null) return;
     newPane.setSubId(subId);
     String[] subIds = newPane.getSubIds();
 
