@@ -157,7 +157,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
             assert rhs != null;
             return lhs.getText() + negatedComparison + rhs.getText();
         } else{
-            if(ParenthesesUtils.getPrecendence(exp) >
+            if(ParenthesesUtils.getPrecedence(exp) >
                     ParenthesesUtils.PREFIX_PRECEDENCE){
                 return  "!(" + exp.getText() + ')';
             } else{

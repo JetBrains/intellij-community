@@ -89,7 +89,7 @@ public class ParenthesesUtils{
         return parenthesized;
     }
 
-    public static int getPrecendence(PsiExpression expression){
+    public static int getPrecedence(PsiExpression expression){
         if(expression instanceof PsiThisExpression ||
            expression instanceof PsiLiteralExpression ||
            expression instanceof PsiSuperExpression ||
@@ -263,8 +263,8 @@ public class ParenthesesUtils{
         }
         final PsiExpression parentExpression =
                 (PsiExpression) parenthesizedExpression.getParent();
-        final int parentPrecedence = getPrecendence(parentExpression);
-        final int childPrecedence = getPrecendence(body);
+        final int parentPrecedence = getPrecedence(parentExpression);
+        final int childPrecedence = getPrecedence(body);
         if(parentPrecedence < childPrecedence){
             return '(' + removeParentheses(body) + ')';
         } else if(parentPrecedence == childPrecedence){

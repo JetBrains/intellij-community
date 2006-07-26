@@ -91,8 +91,8 @@ public class UnnecessaryParenthesesInspection extends ExpressionInspection {
                 return;
             }
             final int parentPrecedence =
-                    ParenthesesUtils.getPrecendence((PsiExpression)parent);
-            final int childPrecedence = ParenthesesUtils.getPrecendence(child);
+                    ParenthesesUtils.getPrecedence((PsiExpression)parent);
+            final int childPrecedence = ParenthesesUtils.getPrecedence(child);
             if (parentPrecedence > childPrecedence) {
                 registerError(expression);
                 return;

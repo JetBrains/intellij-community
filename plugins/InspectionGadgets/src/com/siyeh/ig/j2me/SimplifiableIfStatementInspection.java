@@ -29,6 +29,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,36 +87,8 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
             return "";
         }
         if (elseBranch instanceof PsiReturnStatement) {
-            final PsiReturnStatement thenReturnStatement =
-                    (PsiReturnStatement)thenBranch;
-            final PsiExpression thenReturnValue =
-                    thenReturnStatement.getReturnValue();
-            if (thenReturnValue == null) {
-                return "";
-            }
-            final PsiReturnStatement elseReturnStatement =
-                    (PsiReturnStatement)elseBranch;
-            final PsiExpression elseReturnValue =
-                    elseReturnStatement.getReturnValue();
-            if (elseReturnValue == null) {
-                return "";
-            }
-            if (BoolUtils.isTrue(thenReturnValue)) {
-                return "return " + condition.getText() + " || " +
-                        elseReturnValue.getText() + ';';
-            } else if (BoolUtils.isFalse(thenReturnValue)) {
-                return "return " +
-                        BoolUtils.getNegatedExpressionText(condition) + " && " +
-                        elseReturnValue.getText() + ';';
-            }
-            if (BoolUtils.isTrue(elseReturnValue)) {
-                return "return " +
-                        BoolUtils.getNegatedExpressionText(condition) + " || " +
-                        thenReturnValue.getText() + ';';
-            } else {
-                return "return " + condition.getText() + " && " +
-                        thenReturnValue.getText() + ';';
-            }
+            return calculateReplacementReturnStatement(thenBranch, elseBranch,
+                    condition);
         }
         final PsiExpressionStatement thenStatement =
                 (PsiExpressionStatement)thenBranch;
@@ -125,7 +98,14 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
                 (PsiAssignmentExpression)thenStatement.getExpression();
         final PsiAssignmentExpression elseAssignment =
                 (PsiAssignmentExpression)elseStatement.getExpression();
-        final PsiExpression lExpression = thenAssignment.getLExpression();
+        return calculateReplacementAssignmentStatement(thenAssignment,
+                elseAssignment, condition);
+    }
+
+    private static String calculateReplacementAssignmentStatement(
+            PsiAssignmentExpression thenAssignment,
+            PsiAssignmentExpression elseAssignment, PsiExpression condition) {
+        final PsiExpression lhs = thenAssignment.getLExpression();
         final PsiExpression thenRhs = thenAssignment.getRExpression();
         if (thenRhs == null) {
             return "";
@@ -136,20 +116,108 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
         }
         final PsiJavaToken token = elseAssignment.getOperationSign();
         if (BoolUtils.isTrue(thenRhs)) {
-            return lExpression.getText() + ' ' + token.getText() + ' ' +
-                    condition.getText() + " || " + elseRhs.getText() + ';';
+            if (ParenthesesUtils.getPrecedence(elseRhs) >
+                    ParenthesesUtils.OR_PRECEDENCE) {
+                return lhs.getText() + ' ' + token.getText() + ' ' +
+                        condition.getText() + " || (" + elseRhs.getText() + ");";
+            } else {
+                return lhs.getText() + ' ' + token.getText() + ' ' +
+                        condition.getText() + " || " + elseRhs.getText() + ';';
+            }
         } else if (BoolUtils.isFalse(thenRhs)) {
-            return lExpression.getText() + ' ' + token.getText() + ' ' +
-                    BoolUtils.getNegatedExpressionText(condition) + " && " +
-                    elseRhs.getText() + ';';
+            if (ParenthesesUtils.getPrecedence(elseRhs) >
+                    ParenthesesUtils.AND_PRECEDENCE) {
+                return lhs.getText() + ' ' + token.getText() + ' ' +
+                        BoolUtils.getNegatedExpressionText(condition) +
+                        " && (" + elseRhs.getText() + ");";
+            } else {
+                return lhs.getText() + ' ' + token.getText() + ' ' +
+                        BoolUtils.getNegatedExpressionText(condition) + " && " +
+                        elseRhs.getText() + ';';
+            }
         }
         if (BoolUtils.isTrue(elseRhs)) {
-            return lExpression.getText() + ' ' + token.getText() + ' ' +
-                    BoolUtils.getNegatedExpressionText(condition) + " || " +
-                    thenRhs.getText() + ';';
+            if (ParenthesesUtils.getPrecedence(thenRhs) >
+                    ParenthesesUtils.OR_PRECEDENCE) {
+                return lhs.getText() + ' ' + token.getText() + ' ' +
+                        BoolUtils.getNegatedExpressionText(condition) +
+                        " || (" + thenRhs.getText() + ");";
+            } else {
+                return lhs.getText() + ' ' + token.getText() + ' ' +
+                        BoolUtils.getNegatedExpressionText(condition) + " || " +
+                        thenRhs.getText() + ';';
+            }
         } else {
-            return lExpression.getText() + ' ' + token.getText() + ' ' +
-                    condition.getText() + " && " + thenRhs.getText() + ';';
+            if (ParenthesesUtils.getPrecedence(thenRhs) >
+                    ParenthesesUtils.AND_PRECEDENCE) {
+                return lhs.getText() + ' ' + token.getText() + ' ' +
+                        condition.getText() + " && (" + thenRhs.getText() + ");";
+            } else {
+                return lhs.getText() + ' ' + token.getText() + ' ' +
+                        condition.getText() + " && " + thenRhs.getText() + ';';
+            }
+        }
+    }
+
+    @NonNls
+    private static String calculateReplacementReturnStatement(
+            PsiStatement thenBranch, PsiStatement elseBranch,
+            PsiExpression condition) {
+        final PsiReturnStatement thenReturnStatement =
+                (PsiReturnStatement)thenBranch;
+        final PsiExpression thenReturnValue =
+                thenReturnStatement.getReturnValue();
+        if (thenReturnValue == null) {
+            return "";
+        }
+        final PsiReturnStatement elseReturnStatement =
+                (PsiReturnStatement)elseBranch;
+        final PsiExpression elseReturnValue =
+                elseReturnStatement.getReturnValue();
+        if (elseReturnValue == null) {
+            return "";
+        }
+        if (BoolUtils.isTrue(thenReturnValue)) {
+            if (ParenthesesUtils.getPrecedence(elseReturnValue) >
+                    ParenthesesUtils.OR_PRECEDENCE) {
+                return "return " + condition.getText() + " || (" +
+                        elseReturnValue.getText() + ");";
+            } else {
+                return "return " + condition.getText() + " || " +
+                        elseReturnValue.getText() + ';';
+            }
+        } else if (BoolUtils.isFalse(thenReturnValue)) {
+            if (ParenthesesUtils.getPrecedence(elseReturnValue) >
+                    ParenthesesUtils.AND_PRECEDENCE) {
+                return "return " +
+                        BoolUtils.getNegatedExpressionText(condition) +
+                        " && (" + elseReturnValue.getText() + ");";
+            } else {
+                return "return " +
+                        BoolUtils.getNegatedExpressionText(condition) +
+                        " && " + elseReturnValue.getText() + ';';
+            }
+        }
+        if (BoolUtils.isTrue(elseReturnValue)) {
+            if (ParenthesesUtils.getPrecedence(thenReturnValue) >
+                    ParenthesesUtils.OR_PRECEDENCE) {
+                return "return " +
+                        BoolUtils.getNegatedExpressionText(condition) +
+                        " || (" + thenReturnValue.getText() + ");";
+            } else {
+                return "return " +
+                        BoolUtils.getNegatedExpressionText(condition) +
+                        " || " + thenReturnValue.getText() + ';';
+            }
+        } else {
+            if (ParenthesesUtils.getPrecedence(thenReturnValue) >
+                    ParenthesesUtils.AND_PRECEDENCE) {
+                return "return " + condition.getText() + " && (" +
+                        thenReturnValue.getText() + ");";
+            } else {
+                return "return " + condition.getText() + " && " +
+                        thenReturnValue.getText() + ';';
+            }
         }
     }
 
@@ -160,6 +228,7 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
     private static class SimplifiableIfStatementFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "constant.conditional.expression.simplify.quickfix");

@@ -94,7 +94,7 @@ public class BooleanConstructorInspection extends ExpressionInspection{
             } else if(languageLevel.equals(LanguageLevel.JDK_1_3)){
                 final PsiType argType = arg.getType();
                 if(PsiType.BOOLEAN.equals(argType)){
-                    if(ParenthesesUtils.getPrecendence(arg) >
+                    if(ParenthesesUtils.getPrecedence(arg) >
                             ParenthesesUtils.CONDITIONAL_PRECEDENCE){
                         newExpression = text + "?Boolean.TRUE:Boolean.FALSE";
                     } else{

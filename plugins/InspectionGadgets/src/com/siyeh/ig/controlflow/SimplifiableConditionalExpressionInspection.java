@@ -64,7 +64,7 @@ public class SimplifiableConditionalExpressionInspection
 
         if (BoolUtils.isTrue(thenExpression)) {
             final String elseExpressionText;
-            if (ParenthesesUtils.getPrecendence(elseExpression) >
+            if (ParenthesesUtils.getPrecedence(elseExpression) >
                     ParenthesesUtils.OR_PRECEDENCE) {
                 elseExpressionText = '(' + elseExpression.getText() + ')';
             } else {
@@ -73,7 +73,7 @@ public class SimplifiableConditionalExpressionInspection
             return condition.getText() + " || " + elseExpressionText;
         } else if (BoolUtils.isFalse(thenExpression)) {
             final String elseExpressionText;
-            if (ParenthesesUtils.getPrecendence(elseExpression) >
+            if (ParenthesesUtils.getPrecedence(elseExpression) >
                     ParenthesesUtils.AND_PRECEDENCE) {
                 elseExpressionText = '(' + elseExpression.getText() + ')';
             } else {
@@ -84,7 +84,7 @@ public class SimplifiableConditionalExpressionInspection
         }
         if (BoolUtils.isFalse(elseExpression)) {
             final String thenExpressionText;
-            if (ParenthesesUtils.getPrecendence(thenExpression) >
+            if (ParenthesesUtils.getPrecedence(thenExpression) >
                     ParenthesesUtils.AND_PRECEDENCE) {
                 thenExpressionText = '(' + thenExpression.getText() + ')';
             } else {
@@ -93,7 +93,7 @@ public class SimplifiableConditionalExpressionInspection
             return condition.getText() + " && " + thenExpressionText;
         } else {
             final String thenExpressionText;
-            if (ParenthesesUtils.getPrecendence(thenExpression) >
+            if (ParenthesesUtils.getPrecedence(thenExpression) >
                     ParenthesesUtils.OR_PRECEDENCE) {
                 thenExpressionText = '(' + thenExpression.getText() + ')';
             } else {

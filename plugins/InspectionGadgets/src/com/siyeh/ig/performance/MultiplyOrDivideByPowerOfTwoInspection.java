@@ -73,7 +73,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
             }
         }
         final String lhsText;
-        if (ParenthesesUtils.getPrecendence(lhs) >
+        if (ParenthesesUtils.getPrecedence(lhs) >
                 ParenthesesUtils.SHIFT_PRECEDENCE) {
             lhsText = '(' + lhs.getText() + ')';
         } else {
@@ -84,7 +84,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
         final PsiElement parent = expression.getParent();
         if (parent instanceof PsiExpression) {
             if (!(parent instanceof PsiParenthesizedExpression) &&
-                    ParenthesesUtils.getPrecendence((PsiExpression)parent) <
+                    ParenthesesUtils.getPrecedence((PsiExpression)parent) <
                             ParenthesesUtils.SHIFT_PRECEDENCE) {
                 expString = '(' + expString + ')';
             }

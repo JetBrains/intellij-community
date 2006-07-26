@@ -94,7 +94,7 @@ public class StringEqualityInspection extends ExpressionInspection {
                 return;
             }
             @NonNls final String expString;
-            if (ParenthesesUtils.getPrecendence(strippedLhs) >
+            if (ParenthesesUtils.getPrecedence(strippedLhs) >
                 ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
                 expString = '(' + strippedLhs.getText() + ").equals(" +
                             strippedRhs.getText() + ')';
