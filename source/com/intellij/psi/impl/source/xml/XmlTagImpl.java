@@ -460,7 +460,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     initNamespaceMaps(parent);
     if(myNamespaceMap != null){
       List<String> keysByValue = myNamespaceMap.getKeysByValue(namespace);
-      final String ns = keysByValue == null ? null : keysByValue.get(0);
+      final String ns = (keysByValue == null || keysByValue.size() == 0)? null : keysByValue.get(0);
       if(ns != null) return ns;
     }
     if(parent instanceof XmlTag) return ((XmlTag)parent).getPrefixByNamespace(namespace);
