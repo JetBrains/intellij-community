@@ -23,11 +23,15 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
 
   public AntTypeDefImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
+  }
+
+  public void init() {
+    super.init();
     getDefinition();
   }
 
   public String toString() {
-    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append("AntTypeDef[");
       builder.append(getSourceElement().getName());
@@ -106,7 +110,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     final String classpath = getClassPath();
     if (classpath != null) {
       try {
-        URL[] urls;
+        final URL[] urls;
         if (classpath.indexOf(':') < 0) {
           urls = new URL[]{new URL("file://" + classpath)};
         }
@@ -137,7 +141,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
     final String name = getDefinedName();
     final String uri = getUri();
-    AntTypeId id = (uri == null) ? new AntTypeId(name) : new AntTypeId(name, uri);
+    final AntTypeId id = (uri == null) ? new AntTypeId(name) : new AntTypeId(name, uri);
     if (clazz == null) {
       myNewDefinition = null;
     }

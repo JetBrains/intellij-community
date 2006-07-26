@@ -25,11 +25,15 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
 
   public AntMacroDefImpl(final AntStructuredElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
+  }
+
+  public void init() {
+    super.init();
     invalidateMacroDefinition();
   }
 
   public String toString() {
-    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append(ANT_MACRODEF_NAME);
       builder.append("[");
@@ -80,7 +84,7 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
       (myMacroDefinition == null) ? new HashMap<AntTypeId, String>() : myMacroDefinition.getNestedElementsMap();
     for (AntElement child : getChildren()) {
       if (child instanceof AntStructuredElement) {
-        AntStructuredElement se = (AntStructuredElement)child;
+        final AntStructuredElement se = (AntStructuredElement)child;
         final String name = se.getName();
         if (name != null) {
           final String tagName = se.getSourceElement().getName();
@@ -116,7 +120,7 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
     }
     getAntParent().registerCustomType(myMacroDefinition);
     // define itself as nested task for sequential
-    AntAllTasksContainerImpl sequential = PsiTreeUtil.getChildOfType(this, AntAllTasksContainerImpl.class);
+    final AntAllTasksContainerImpl sequential = PsiTreeUtil.getChildOfType(this, AntAllTasksContainerImpl.class);
     if (sequential != null) {
       final AntTypeDefinition sequentialDef = sequential.getTypeDefinition();
       if (sequentialDef != null) {

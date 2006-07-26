@@ -58,13 +58,16 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return AntSupport.getLanguage();
   }
 
+  public void init() {
+  }
+
   @NotNull
   public XmlElement getSourceElement() {
     return (XmlElement)super.getSourceElement();
   }
 
   public String toString() {
-    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append("AntElement[");
       builder.append((this == ourNull) ? "null" : getSourceElement().toString());
@@ -333,7 +336,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     PsiElement result = null;
     for (PsiElement child : element.getChildren()) {
       if (child instanceof AntProperty) {
-        AntProperty prop = (AntProperty)child;
+        final AntProperty prop = (AntProperty)child;
         final PropertiesFile propFile = prop.getPropertiesFile();
         if (propFile != null) {
           String prefix = prop.getPrefix();

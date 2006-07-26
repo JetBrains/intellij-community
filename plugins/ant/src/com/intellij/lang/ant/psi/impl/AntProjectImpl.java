@@ -24,7 +24,6 @@ import java.util.*;
 public class AntProjectImpl extends AntStructuredElementImpl implements AntProject {
   private AntTarget[] myTargets;
   private AntFile[] myImports;
-  private boolean myInGettingChildren;
   private List<AntProperty> myPredefinedProps = new ArrayList<AntProperty>();
   @NonNls private List<String> myEnvPrefixes;
   @NonNls private static final String myDefaultEnvPrefix = "env.";

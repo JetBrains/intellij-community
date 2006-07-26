@@ -41,6 +41,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   private int myLastFoundElementOffset = -1;
   private AntElement myLastFoundElement;
   private boolean myIsImported;
+  protected boolean myInGettingChildren;
 
   public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement, @NonNls final String nameElementAttribute) {
     super(parent, sourceElement);
@@ -77,7 +78,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public String toString() {
-    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append("AntStructuredElement[");
       builder.append(getSourceElement().getName());
@@ -209,7 +210,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     AntElement parent = this;
     do {
       if (parent instanceof AntStructuredElement) {
-        AntStructuredElementImpl se = (AntStructuredElementImpl)parent;
+        final AntStructuredElementImpl se = (AntStructuredElementImpl)parent;
         if (se.myReferencedElements != null) {
           final AntElement refse = se.myReferencedElements.get(refid);
           if (refse != null) {
@@ -285,40 +286,52 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   protected AntElement[] getChildrenInner() {
-    final List<AntElement> children = new ArrayList<AntElement>();
-    if (hasIdElement()) {
-      children.add(getIdElement());
-    }
-    if (hasNameElement()) {
-      children.add(getNameElement());
-    }
-    for (final PsiElement element : getSourceElement().getChildren()) {
-      if (element instanceof XmlElement) {
-        final AntElement antElement = AntElementFactory.createAntElement(this, (XmlElement)element);
-        if (antElement != null) {
-          children.add(antElement);
-          if (antElement instanceof AntStructuredElement) {
-            antElement.getChildren();
+    if (!myInGettingChildren) {
+      myInGettingChildren = true;
+      try {
+        final List<AntElement> children = new ArrayList<AntElement>();
+        if (hasIdElement()) {
+          children.add(getIdElement());
+        }
+        if (hasNameElement()) {
+          children.add(getNameElement());
+        }
+        for (final PsiElement element : getSourceElement().getChildren()) {
+          if (element instanceof XmlElement) {
+            final AntElement antElement = AntElementFactory.createAntElement(this, (XmlElement)element);
+            if (antElement != null) {
+              children.add(antElement);
+              if (antElement instanceof AntStructuredElement) {
+                antElement.getChildren();
+              }
+            }
           }
         }
+        for (final AntElement child : children) {
+          child.init();
+        }
+        final int count = children.size();
+        return (count > 0) ? children.toArray(new AntElement[count]) : AntElement.EMPTY_ARRAY;
+      }
+      finally {
+        myInGettingChildren = false;
       }
     }
-    final int count = children.size();
-    return (count > 0) ? children.toArray(new AntElement[count]) : AntElement.EMPTY_ARRAY;
+    return AntElement.EMPTY_ARRAY;
   }
 
   @NotNull
   protected AntElement getIdElement() {
     if (myIdElement == null) {
       myIdElement = ourNull;
-      AntElement parent = getAntParent();
+      final AntElement parent = getAntParent();
       if (parent instanceof AntStructuredElement) {
         final XmlAttribute idAttr = getSourceElement().getAttribute("id", null);
         if (idAttr != null) {
           final XmlAttributeValue valueElement = idAttr.getValueElement();
           if (valueElement != null) {
             myIdElement = new AntNameElementImpl(this, valueElement);
-            AntStructuredElement se = (AntStructuredElement)parent;
+            final AntStructuredElement se = (AntStructuredElement)parent;
             se.registerRefId(myIdElement.getName(), this);
           }
         }
@@ -331,7 +344,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   protected AntElement getNameElement() {
     if (myNameElement == null) {
       myNameElement = ourNull;
-      XmlAttribute nameAttr = getSourceElement().getAttribute(myNameElementAttribute, null);
+      final XmlAttribute nameAttr = getSourceElement().getAttribute(myNameElementAttribute, null);
       if (nameAttr != null) {
         final XmlAttributeValue valueElement = nameAttr.getValueElement();
         if (valueElement != null) {
@@ -358,7 +371,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     elementStack.add(this);
     int startProp = 0;
     while ((startProp = value.indexOf("${", startProp)) >= 0) {
-      int endProp = value.indexOf('}', startProp + 2);
+      final int endProp = value.indexOf('}', startProp + 2);
       if (endProp <= startProp + 2) {
         startProp += 2;
         continue;

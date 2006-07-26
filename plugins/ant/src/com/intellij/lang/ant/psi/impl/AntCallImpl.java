@@ -25,7 +25,7 @@ public class AntCallImpl extends AntTaskImpl implements AntCall {
   }
 
   public String toString() {
-    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append("AntCall to ");
       final AntTarget target = getTarget();

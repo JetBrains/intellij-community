@@ -19,7 +19,7 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
   }
 
   public String toString() {
-    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append("AntImport[");
       builder.append(getFileName());
@@ -52,7 +52,7 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
   @Nullable
   static AntFile getImportedFile(final String name, final AntStructuredElementImpl element) {
     if (name == null) return null;
-    PsiFile psiFile = element.findFileByName(name);
+    final PsiFile psiFile = element.findFileByName(name);
     if (psiFile != null) {
       if (psiFile instanceof AntFile) return (AntFile)psiFile;
       if (psiFile instanceof XmlFile) {

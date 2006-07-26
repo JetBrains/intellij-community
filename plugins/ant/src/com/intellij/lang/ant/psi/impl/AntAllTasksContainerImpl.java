@@ -13,18 +13,10 @@ public class AntAllTasksContainerImpl extends AntTaskImpl implements AntAllTasks
                                   final XmlElement sourceElement,
                                   final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
-    if (definition.getNestedElements().length == 0) {
-      // allow all tasks as nested elements
-      for (AntTypeDefinition def : getAntFile().getBaseTypeDefinitions()) {
-        if (def.isTask()) {
-          definition.registerNestedType(def.getTypeId(), def.getClassName());
-        }
-      }
-    }
   }
 
   public String toString() {
-    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append("AntAllTasksContainer[");
       builder.append(getSourceElement().getName());
@@ -33,6 +25,18 @@ public class AntAllTasksContainerImpl extends AntTaskImpl implements AntAllTasks
     }
     finally {
       StringBuilderSpinAllocator.dispose(builder);
+    }
+  }
+
+  public void init() {
+    super.init();
+    if (myDefinition.getNestedElements().length == 0) {
+      // allow all tasks as nested elements
+      for (AntTypeDefinition def : getAntFile().getBaseTypeDefinitions()) {
+        if (def.isTask()) {
+          myDefinition.registerNestedType(def.getTypeId(), def.getClassName());
+        }
+      }
     }
   }
 }

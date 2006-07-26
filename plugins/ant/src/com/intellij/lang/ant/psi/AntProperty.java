@@ -21,7 +21,9 @@ public interface AntProperty extends AntTask {
 
   void setPropertiesFile(final String name) throws IncorrectOperationException;
 
+  @Nullable
   String getPrefix();
 
+  @Nullable
   String getEnvironment();
 }

@@ -6,6 +6,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class AntNameElementImpl extends AntElementImpl {
@@ -14,16 +15,17 @@ class AntNameElementImpl extends AntElementImpl {
     super(parent, sourceElement);
   }
 
+  @Nullable
   public String getText() {
     return getName();
   }
 
   public String getName() {
-    XmlAttribute attr = getAttribute();
+    final XmlAttribute attr = getAttribute();
     return (attr == null) ? null : attr.getValue();
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     final XmlAttribute attr = getAttribute();
     if (attr == null) {
       throw new IncorrectOperationException("AntNameElement should wrap a XmlElement with a XmlAttribute available on the path to root!");

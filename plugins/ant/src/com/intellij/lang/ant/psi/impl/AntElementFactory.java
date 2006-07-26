@@ -89,7 +89,7 @@ public class AntElementFactory {
     }
     AntStructuredElementImpl result = null;
     if (typeDef != null) {
-      AntElementCreator antElementCreator = ourAntTypeToKnownAntElementCreatorMap.get(typeDef.getClassName());
+      final AntElementCreator antElementCreator = ourAntTypeToKnownAntElementCreatorMap.get(typeDef.getClassName());
       if (antElementCreator != null) {
         result = (AntStructuredElementImpl)antElementCreator.create(parent, tag);
       }

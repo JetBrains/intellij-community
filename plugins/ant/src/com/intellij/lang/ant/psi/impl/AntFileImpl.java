@@ -68,6 +68,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     super(viewProvider, AntSupport.getLanguage());
   }
 
+  public void init() {
+  }
+
   @NotNull
   public FileType getFileType() {
     return getViewProvider().getVirtualFile().getFileType();
@@ -335,7 +338,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
             final String nestedElement = (String)nestedEnum.nextElement();
             final Class clazz = (Class)helper.getNestedElementMap().get(nestedElement);
             if (myTypeDefinitions.get(clazz.getName()) == null) {
-              AntTypeDefinition nestedDef = createTypeDefinition(new AntTypeId(nestedElement), clazz, false);
+              final AntTypeDefinition nestedDef = createTypeDefinition(new AntTypeId(nestedElement), clazz, false);
               if (nestedDef != null) {
                 myTypeDefinitions.put(nestedDef.getClassName(), nestedDef);
               }
@@ -364,7 +367,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();
     final Enumeration attrEnum = helper.getAttributes();
     while (attrEnum.hasMoreElements()) {
-      String attr = (String)attrEnum.nextElement();
+      final String attr = (String)attrEnum.nextElement();
       final Class attrClass = helper.getAttributeType(attr);
       if (int.class.equals(attrClass)) {
         attributes.put(attr, AntAttributeType.INTEGER);

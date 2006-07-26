@@ -21,11 +21,15 @@ public class AntPresetDefImpl extends AntAllTasksContainerImpl implements AntPre
 
   public AntPresetDefImpl(final AntStructuredElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
+  }
+
+  public void init() {
+    super.init();
     invalidatePresetDefinition();
   }
 
   public String toString() {
-    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append(ANT_PRESETDEF_NAME);
       builder.append("[");
@@ -56,7 +60,7 @@ public class AntPresetDefImpl extends AntAllTasksContainerImpl implements AntPre
     myPresetDefinition = null;
     if (!hasNameElement()) return;
     final String thisClassName = toString();
-    AntStructuredElementImpl extented = PsiTreeUtil.getChildOfType(this, AntStructuredElementImpl.class);
+    final AntStructuredElementImpl extented = PsiTreeUtil.getChildOfType(this, AntStructuredElementImpl.class);
     final AntTypeId typeId = new AntTypeId(getName());
     if (extented != null) {
       final AntTypeDefinitionImpl extentedDef = (AntTypeDefinitionImpl)extented.getTypeDefinition();

@@ -31,11 +31,19 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     if (myPropHolder instanceof AntCall) {
       myPropHolder = myPropHolder.getAntProject();
     }
-    if (getName() != null) {
-      myPropHolder.setProperty(getName(), this);
+  }
+
+  public void init() {
+    super.init();
+    final String name = getName();
+    if (name != null) {
+      myPropHolder.setProperty(name, this);
     }
-    else if (getEnvironment() != null) {
-      getAntProject().addEnvironmentPropertyPrefix(getEnvironment());
+    else {
+      final String environment = getEnvironment();
+      if (environment != null) {
+        getAntProject().addEnvironmentPropertyPrefix(environment);
+      }
     }
   }
 
@@ -88,7 +96,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
       }
       value = computeAttributeValue(sourceElement.getAttributeValue("location"));
       if (value != null) {
-        String baseDir = getAntProject().getBaseDir();
+        final String baseDir = getAntProject().getBaseDir();
         if (baseDir != null) {
           return new File(baseDir, value).getAbsolutePath();
         }
@@ -130,12 +138,14 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     getSourceElement().setAttribute("file", name);
   }
 
+  @Nullable
   public String getPrefix() {
-    return getSourceElement().getAttributeValue("prefix");
+    return computeAttributeValue(getSourceElement().getAttributeValue("prefix"));
   }
 
+  @Nullable
   public String getEnvironment() {
-    return getSourceElement().getAttributeValue("environment");
+    return computeAttributeValue(getSourceElement().getAttributeValue("environment"));
   }
 
   public void clearCaches() {

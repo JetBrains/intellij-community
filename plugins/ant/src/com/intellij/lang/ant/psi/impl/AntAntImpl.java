@@ -20,7 +20,7 @@ public class AntAntImpl extends AntTaskImpl implements AntAnt {
   }
 
   public String toString() {
-    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append("Ant[");
       builder.append(getFileName());
@@ -38,7 +38,7 @@ public class AntAntImpl extends AntTaskImpl implements AntAnt {
 
   @NotNull
   public String getFileName() {
-    String result = getSourceElement().getAttributeValue(getFileReferenceAttribute());
+    final String result = getSourceElement().getAttributeValue(getFileReferenceAttribute());
     if (result == null) {
       return DEFAULT_ANTFILE;
     }
