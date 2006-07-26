@@ -82,7 +82,7 @@ public class AntExplorer extends JPanel implements DataProvider {
   public AntExplorer(final Project project) {
     super(new BorderLayout(0, 2));
     myProject = project;
-    DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode());
+    final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode());
     myTree = new Tree(model);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
@@ -93,14 +93,14 @@ public class AntExplorer extends JPanel implements DataProvider {
     TreeUtil.installActions(myTree);
     new TreeSpeedSearch(myTree);
     myTree.addMouseListener(new PopupHandler() {
-      public void invokePopup(Component comp, int x, int y) {
+      public void invokePopup(final Component comp, final int x, final int y) {
         popupInvoked(comp, x, y);
       }
     });
     myTree.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 2) {
-          TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
+          final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
           if (path != null) {
             runSelection(DataManager.getInstance().getDataContext(myTree));
           }
@@ -149,7 +149,7 @@ public class AntExplorer extends JPanel implements DataProvider {
   }
 
   private JPanel createToolbarPanel() {
-    DefaultActionGroup group = new DefaultActionGroup();
+    final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new AddAction());
     group.add(new RemoveAction());
     group.add(new RunAction());
@@ -159,8 +159,8 @@ public class AntExplorer extends JPanel implements DataProvider {
     group.add(myAntBuildFilePropertiesAction);
     group.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction(HelpID.ANT));
 
-    ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANT_EXPLORER_TOOLBAR, group, true);
-    JPanel buttonsPanel = new JPanel(new BorderLayout());
+    final ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANT_EXPLORER_TOOLBAR, group, true);
+    final JPanel buttonsPanel = new JPanel(new BorderLayout());
     buttonsPanel.add(actionToolBar.getComponent(), BorderLayout.CENTER);
     return buttonsPanel;
   }
@@ -203,12 +203,12 @@ public class AntExplorer extends JPanel implements DataProvider {
   }
 
   public void removeBuildFile() {
-    AntBuildFile buildFile = getCurrentBuildFile();
+    final AntBuildFile buildFile = getCurrentBuildFile();
     if (buildFile == null) {
       return;
     }
-    String fileName = buildFile.getPresentableUrl();
-    int result = Messages.showYesNoDialog(myProject, AntBundle.message("remove.the.reference.to.file.confirmation.text", fileName),
+    final String fileName = buildFile.getPresentableUrl();
+    final int result = Messages.showYesNoDialog(myProject, AntBundle.message("remove.the.reference.to.file.confirmation.text", fileName),
                                           AntBundle.message("confirm.remove.dialog.title"), Messages.getQuestionIcon());
     if (result != 0) {
       return;
@@ -219,7 +219,7 @@ public class AntExplorer extends JPanel implements DataProvider {
   public void setBuildFileProperties(DataContext dataContext) {
     final AntBuildFile buildFile = getCurrentBuildFile();
     if (BuildFilePropertiesPanel.editBuildFile(getCurrentBuildFile())) {
-      AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
+      final AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
       antConfiguration.updateBuildFile(buildFile);
       myBuilder.refresh();
       myTree.repaint();
@@ -230,25 +230,25 @@ public class AntExplorer extends JPanel implements DataProvider {
     if (!canRunSelection()) {
       return;
     }
-    AntBuildFileBase buildFile = getCurrentBuildFile();
-    TreePath[] paths = myTree.getSelectionPaths();
-    String[] targets = getTargetNamesFromPaths(paths);
+    final AntBuildFileBase buildFile = getCurrentBuildFile();
+    final TreePath[] paths = myTree.getSelectionPaths();
+    final String[] targets = getTargetNamesFromPaths(paths);
     ExecutionHandler.runBuild(buildFile, targets, null, dataContext, AntBuildListener.NULL);
   }
 
   private boolean canRunSelection() {
-    TreePath[] paths = myTree.getSelectionPaths();
+    final TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) {
       return false;
     }
-    AntBuildFile buildFile = getCurrentBuildFile();
+    final AntBuildFile buildFile = getCurrentBuildFile();
     if (buildFile == null) {
       return false;
     }
-    for (TreePath path : paths) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      Object userObject = node.getUserObject();
-      AntBuildFileNodeDescriptor buildFileNodeDescriptor;
+    for (final TreePath path : paths) {
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      final Object userObject = node.getUserObject();
+      final AntBuildFileNodeDescriptor buildFileNodeDescriptor;
       if (userObject instanceof AntTargetNodeDescriptor) {
         buildFileNodeDescriptor = (AntBuildFileNodeDescriptor)((DefaultMutableTreeNode)node.getParent()).getUserObject();
       }
@@ -264,12 +264,12 @@ public class AntExplorer extends JPanel implements DataProvider {
 
   private static String[] getTargetNamesFromPaths(TreePath[] paths) {
     final List<String> targets = new ArrayList<String>();
-    for (TreePath path : paths) {
-      Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+    for (final TreePath path : paths) {
+      final Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
       if (!(userObject instanceof AntTargetNodeDescriptor)) {
         continue;
       }
-      AntBuildTarget target = ((AntTargetNodeDescriptor)userObject).getTarget();
+      final AntBuildTarget target = ((AntTargetNodeDescriptor)userObject).getTarget();
       if (target instanceof MetaTarget) {
         targets.addAll(Arrays.asList(((MetaTarget)target).getTargetNames()));
       }
@@ -282,12 +282,12 @@ public class AntExplorer extends JPanel implements DataProvider {
 
   private static AntBuildTarget[] getTargetObjectsFromPaths(TreePath[] paths) {
     final List<AntBuildTargetBase> targets = new ArrayList<AntBuildTargetBase>();
-    for (TreePath path : paths) {
-      Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+    for (final TreePath path : paths) {
+      final Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
       if (!(userObject instanceof AntTargetNodeDescriptor)) {
         continue;
       }
-      AntBuildTargetBase target = ((AntTargetNodeDescriptor)userObject).getTarget();
+      final AntBuildTargetBase target = ((AntTargetNodeDescriptor)userObject).getTarget();
       targets.add(target);
 
     }
@@ -306,13 +306,13 @@ public class AntExplorer extends JPanel implements DataProvider {
 
   @Nullable
   private AntBuildFileNodeDescriptor getCurrentBuildFileNodeDescriptor() {
-    TreePath path = myTree.getSelectionPath();
+    final TreePath path = myTree.getSelectionPath();
     if (path == null) {
       return null;
     }
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
     while (node != null) {
-      Object userObject = node.getUserObject();
+      final Object userObject = node.getUserObject();
       if (userObject instanceof AntBuildFileNodeDescriptor) {
         return (AntBuildFileNodeDescriptor)userObject;
       }
@@ -323,14 +323,14 @@ public class AntExplorer extends JPanel implements DataProvider {
 
   private void popupInvoked(final Component comp, final int x, final int y) {
     Object userObject = null;
-    TreePath path = myTree.getSelectionPath();
+    final TreePath path = myTree.getSelectionPath();
     if (path != null) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       if (node != null) {
         userObject = node.getUserObject();
       }
     }
-    DefaultActionGroup group = new DefaultActionGroup();
+    final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new RunAction());
     group.add(new CreateMetaTargetAction());
     group.add(new RemoveMetaTargetsOrBuildFileAction());
@@ -339,8 +339,8 @@ public class AntExplorer extends JPanel implements DataProvider {
       group.add(new RemoveBuildFileAction(this));
     }
     if (userObject instanceof AntTargetNodeDescriptor) {
-      AntBuildTargetBase target = ((AntTargetNodeDescriptor)userObject).getTarget();
-      DefaultActionGroup executeOnGroup = new DefaultActionGroup(AntBundle.message("ant.explorer.execute.on.action.group.name"), true);
+      final AntBuildTargetBase target = ((AntTargetNodeDescriptor)userObject).getTarget();
+      final DefaultActionGroup executeOnGroup = new DefaultActionGroup(AntBundle.message("ant.explorer.execute.on.action.group.name"), true);
       executeOnGroup.add(new ExecuteOnEventAction(target, ExecuteBeforeCompilationEvent.getInstance()));
       executeOnGroup.add(new ExecuteOnEventAction(target, ExecuteAfterCompilationEvent.getInstance()));
       executeOnGroup.addSeparator();
@@ -349,14 +349,14 @@ public class AntExplorer extends JPanel implements DataProvider {
       group.add(new AssignShortcutAction(target.getActionId()));
     }
     group.add(myAntBuildFilePropertiesAction);
-    ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.ANT_EXPLORER_POPUP, group);
+    final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.ANT_EXPLORER_POPUP, group);
     popupMenu.getComponent().show(comp, x, y);
   }
 
   @Nullable
   public Object getData(@NonNls String dataId) {
     if (DataConstants.NAVIGATABLE.equals(dataId)) {
-      AntBuildFile buildFile = getCurrentBuildFile();
+      final AntBuildFile buildFile = getCurrentBuildFile();
       if (buildFile == null) {
         return null;
       }
@@ -364,17 +364,17 @@ public class AntExplorer extends JPanel implements DataProvider {
       if (file == null) {
         return null;
       }
-      TreePath treePath = myTree.getLeadSelectionPath();
+      final TreePath treePath = myTree.getLeadSelectionPath();
       if (treePath == null) {
         return null;
       }
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
       if (node == null) {
         return null;
       }
       if (node.getUserObject()instanceof AntTargetNodeDescriptor) {
-        AntTargetNodeDescriptor targetNodeDescriptor = (AntTargetNodeDescriptor)node.getUserObject();
-        AntBuildTargetBase buildTarget = targetNodeDescriptor.getTarget();
+        final AntTargetNodeDescriptor targetNodeDescriptor = (AntTargetNodeDescriptor)node.getUserObject();
+        final AntBuildTargetBase buildTarget = targetNodeDescriptor.getTarget();
         final OpenFileDescriptor descriptor = buildTarget.getOpenFileDescriptor();
         if (descriptor != null) {
           final VirtualFile descriptorFile = descriptor.getFile();
@@ -397,23 +397,23 @@ public class AntExplorer extends JPanel implements DataProvider {
       return myTreeExpander;
     }
     else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
-      TreePath[] paths = myTree.getSelectionPaths();
+      final TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) {
         return null;
       }
-      ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-      for (TreePath path : paths) {
+      final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+      for (final TreePath path : paths) {
         for (DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
              node != null;
              node = (DefaultMutableTreeNode)node.getParent()) {
-          Object userObject = node.getUserObject();
+          final Object userObject = node.getUserObject();
           if (!(userObject instanceof AntBuildFileNodeDescriptor)) {
             continue;
           }
-          AntBuildFile buildFile = ((AntBuildFileNodeDescriptor)userObject).getBuildFile();
+          final AntBuildFile buildFile = ((AntBuildFileNodeDescriptor)userObject).getBuildFile();
           if (buildFile != null) {
-            VirtualFile virtualFile = buildFile.getVirtualFile();
-            if (virtualFile != null) {
+            final VirtualFile virtualFile = buildFile.getVirtualFile();
+            if (virtualFile != null && virtualFile.isValid()) {
               result.add(virtualFile);
             }
           }
@@ -436,9 +436,9 @@ public class AntExplorer extends JPanel implements DataProvider {
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+      final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
       if (userObject instanceof AntNodeDescriptor) {
-        AntNodeDescriptor descriptor = (AntNodeDescriptor)userObject;
+        final AntNodeDescriptor descriptor = (AntNodeDescriptor)userObject;
         descriptor.customize(this);
       }
       else {
@@ -484,14 +484,13 @@ public class AntExplorer extends JPanel implements DataProvider {
     }
 
     public void update(AnActionEvent event) {
-      Presentation presentation = event.getPresentation();
-
-      String place = event.getPlace();
+      final Presentation presentation = event.getPresentation();
+      final String place = event.getPlace();
       if (ActionPlaces.ANT_EXPLORER_TOOLBAR.equals(place)) {
         presentation.setText(AntBundle.message("run.ant.file.or.target.action.name"));
       }
       else {
-        TreePath[] paths = myTree.getSelectionPaths();
+        final TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null && paths.length == 1 &&
             ((DefaultMutableTreeNode)paths[0].getLastPathComponent()).getUserObject()instanceof AntBuildFileNodeDescriptor) {
           presentation.setText(AntBundle.message("run.ant.build.action.name"));
@@ -569,7 +568,7 @@ public class AntExplorer extends JPanel implements DataProvider {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      ExecuteOnRunDialog dialog = new ExecuteOnRunDialog(myProject, myTarget, myBuildFile);
+      final ExecuteOnRunDialog dialog = new ExecuteOnRunDialog(myProject, myTarget, myBuildFile);
       dialog.show();
       myBuilder.refresh();
     }
@@ -704,8 +703,7 @@ public class AntExplorer extends JPanel implements DataProvider {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      EditKeymapsDialog dialog = new EditKeymapsDialog(myProject, myActionId);
-      dialog.show();
+      new EditKeymapsDialog(myProject, myActionId).show();
     }
 
     public void update(AnActionEvent e) {
@@ -717,8 +715,8 @@ public class AntExplorer extends JPanel implements DataProvider {
     private Keymap myCurrentKeymap = null;
 
     public KeymapListener() {
-      KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
-      Keymap activeKeymap = keymapManager.getActiveKeymap();
+      final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
+      final Keymap activeKeymap = keymapManager.getActiveKeymap();
       listenTo(activeKeymap);
       keymapManager.addKeymapManagerListener(this);
     }
