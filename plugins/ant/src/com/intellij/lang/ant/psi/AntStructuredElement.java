@@ -24,6 +24,7 @@ public interface AntStructuredElement extends AntElement {
   @Nullable
   PsiFile findFileByName(final String name);
 
+  @Nullable
   String computeAttributeValue(String value);
 
   void registerRefId(final String id, AntElement element);

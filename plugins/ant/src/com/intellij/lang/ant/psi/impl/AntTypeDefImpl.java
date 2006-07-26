@@ -6,11 +6,11 @@ import com.intellij.lang.ant.psi.AntTypeDef;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.apache.tools.ant.Task;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.psi.impl.AntTypeDefImpl");
   private AntTypeDefinitionImpl myNewDefinition;
 
   public AntTypeDefImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
@@ -44,32 +43,39 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
   }
 
+  @Nullable
   public String getDefinedName() {
-    return getSourceElement().getAttributeValue(getNameElementAttribute());
+    return computeAttributeValue(getSourceElement().getAttributeValue(getNameElementAttribute()));
   }
 
+  @Nullable
   public String getClassName() {
-    return getSourceElement().getAttributeValue("classname");
+    return computeAttributeValue(getSourceElement().getAttributeValue("classname"));
   }
 
+  @Nullable
   public String getClassPath() {
-    return getSourceElement().getAttributeValue("classpath");
+    return computeAttributeValue(getSourceElement().getAttributeValue("classpath"));
   }
 
+  @Nullable
   public String getClassPathRef() {
-    return getSourceElement().getAttributeValue("classpathref");
+    return computeAttributeValue(getSourceElement().getAttributeValue("classpathref"));
   }
 
+  @Nullable
   public String getLoaderRef() {
-    return getSourceElement().getAttributeValue("loaderref");
+    return computeAttributeValue(getSourceElement().getAttributeValue("loaderref"));
   }
 
+  @Nullable
   public String getFormat() {
-    return getSourceElement().getAttributeValue("format");
+    return computeAttributeValue(getSourceElement().getAttributeValue("format"));
   }
 
+  @Nullable
   public String getUri() {
-    return getSourceElement().getAttributeValue("uri");
+    return computeAttributeValue(getSourceElement().getAttributeValue("uri"));
   }
 
   public void clearCaches() {
@@ -114,7 +120,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
         loader = new URLClassLoader(urls, loader);
       }
       catch (MalformedURLException e) {
-        LOG.error(e);
+        // ignore
       }
     }
     Class clazz;

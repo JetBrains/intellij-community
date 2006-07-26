@@ -99,7 +99,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     return super.getName();
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull final String name) throws IncorrectOperationException {
     if (hasNameElement()) {
       getNameElement().setName(name);
     }
@@ -184,7 +184,9 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     return antFile.getViewProvider().getManager().findFile(vFile);
   }
 
-  public String computeAttributeValue(String value) {
+  @Nullable
+  public String computeAttributeValue(final String value) {
+    if (value == null) return null;
     final HashSet<PsiElement> set = PsiElementHashSetSpinAllocator.alloc();
     try {
       return computeAttributeValue(value, set);
@@ -217,7 +219,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       }
       parent = parent.getAntParent();
     }
-    while (!(parent instanceof AntFile));
+    while (parent != null && !(parent instanceof AntFile));
     return null;
   }
 
@@ -247,7 +249,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public boolean isTypeDefined() {
-    return myDefinition != null && myDefinition.getDefiningElement()instanceof AntTypeDefImpl;
+    return myDefinition != null && myDefinition.getDefiningElement() instanceof AntTypeDefImpl;
   }
 
   public boolean isPresetDefined() {
@@ -391,10 +393,4 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     }
     return value;
   }
-
-  private boolean isIdElement(PsiElement element) {
-    return getIdElement() == element;
-  }
-
-
 }

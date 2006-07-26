@@ -37,7 +37,7 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
 
   @Nullable
   public String getFileName() {
-    return getSourceElement().getAttributeValue("file");
+    return computeAttributeValue(getSourceElement().getAttributeValue("file"));
   }
 
   public AntFile getImportedFile() {

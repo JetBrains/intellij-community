@@ -84,9 +84,9 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     if (sourceElement.getAttributeValue(getNameElementAttribute()) != null) {
       String value = sourceElement.getAttributeValue("value");
       if (value != null) {
-        return value;
+        return computeAttributeValue(value);
       }
-      value = sourceElement.getAttributeValue("location");
+      value = computeAttributeValue(sourceElement.getAttributeValue("location"));
       if (value != null) {
         String baseDir = getAntProject().getBaseDir();
         if (baseDir != null) {

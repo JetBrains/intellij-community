@@ -40,14 +40,14 @@ public class AntAntImpl extends AntTaskImpl implements AntAnt {
   public String getFileName() {
     String result = getSourceElement().getAttributeValue(getFileReferenceAttribute());
     if (result == null) {
-      result = DEFAULT_ANTFILE;
+      return DEFAULT_ANTFILE;
     }
-    return result;
+    return computeAttributeValue(result);
   }
 
   @Nullable
   public String getTargetName() {
-    return getSourceElement().getAttributeValue("target");
+    return computeAttributeValue(getSourceElement().getAttributeValue("target"));
   }
 
   @NotNull
