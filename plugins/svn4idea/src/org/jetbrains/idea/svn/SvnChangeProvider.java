@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -161,6 +162,14 @@ public class SvnChangeProvider implements ChangeProvider {
     } catch (SVNException e) {
       if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
         builder.processUnversionedFile(path.getVirtualFile());
+        // process children recursively!
+        if (recursively && path.isDirectory()) {
+          VirtualFile[] children = path.getVirtualFile().getChildren();
+          for(int i = 0; i < children.length; i++) {
+            FilePath filePath = VcsUtil.getFilePath(children[i].getPath());
+            processFile(filePath, stClient, builder, recursively);
+          }
+        }
       }
         //
     }
