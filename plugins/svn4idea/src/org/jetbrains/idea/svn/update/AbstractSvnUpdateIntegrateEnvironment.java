@@ -189,9 +189,11 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     }
 
     public void checkCancelled() throws SVNCancelException {
-      myProgressIndicator.checkCanceled();
-      if (myProgressIndicator.isCanceled()) {
-        SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"));
+      if (myProgressIndicator != null) {
+        myProgressIndicator.checkCanceled();
+        if (myProgressIndicator.isCanceled()) {
+          SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"));
+        }
       }
     }
   }
