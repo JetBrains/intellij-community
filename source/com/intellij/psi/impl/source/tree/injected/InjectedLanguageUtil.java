@@ -221,13 +221,13 @@ public class InjectedLanguageUtil {
   public static Editor getEditorForInjectedLanguage(final Editor editor, PsiFile file) {
     if (editor == null || file == null || editor instanceof EditorDelegate) return editor;
 
-    PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
     int offset = editor.getCaretModel().getOffset();
     return getEditorForInjectedLanguage(editor, file, offset);
   }
 
   public static Editor getEditorForInjectedLanguage(final Editor editor, final PsiFile file, final int offset) {
     if (editor == null || file == null || editor instanceof EditorDelegate) return editor;
+    PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
     PsiLanguageInjectionHost injectionHost = findInjectionHost(file.findElementAt(offset));
     if (injectionHost == null && offset != 0) {
       injectionHost = findInjectionHost(file.findElementAt(offset-1));

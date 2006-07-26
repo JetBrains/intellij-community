@@ -60,10 +60,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiImportList;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.ui.content.*;
 import com.intellij.util.ContentsUtil;
@@ -738,6 +735,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   private List<CodeSmellInfo> findCodeSmells(final PsiFile psiFile, final ProgressIndicator progress, final Document document) {
 
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     final List<CodeSmellInfo> result = new ArrayList<CodeSmellInfo>();
 
     GeneralHighlightingPass action1 = new GeneralHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), false, true);
