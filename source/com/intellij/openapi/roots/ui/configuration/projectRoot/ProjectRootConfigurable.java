@@ -587,7 +587,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   private void showDependencies() {
-    final List<String> dependencies = getDependencies();
+    final Set<String> dependencies = getDependencies();
     if (dependencies == null || dependencies.size() == 0){
       Messages.showInfoMessage(myTree, FindBundle.message("find.usage.view.no.usages.text"), FindBundle.message("find.pointcut.applications.not.found.title"));
       return;
@@ -596,7 +596,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     final Rectangle rowBounds = myTree.getRowBounds(selectedRow);
     final Point location = rowBounds.getLocation();
     location.x += rowBounds.width;
-    JBPopupFactory.getInstance().createWizardStep(new BaseListPopupStep<String>(ProjectBundle.message("dependencies.used.in.popup.title"), dependencies) {
+    JBPopupFactory.getInstance().createWizardStep(new BaseListPopupStep<String>(ProjectBundle.message("dependencies.used.in.popup.title"),
+                                                                                dependencies.toArray(new String[dependencies.size()])) {
 
       public PopupStep onChosen(final String nameToSelect, final boolean finalChoice) {
         selectNodeInTree(nameToSelect);
@@ -611,7 +612,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   @Nullable
-  private List<String> getDependencies() {
+  private Set<String> getDependencies() {
     final Object selectedObject = getSelectedObject();
     if (selectedObject instanceof Module) {
       return getDependencies(new Condition<OrderEntry>() {
@@ -623,9 +624,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     else if (selectedObject instanceof Library) {
       if (((Library)selectedObject).getTable() == null) { //module library navigation
         final MyNode node = (MyNode)myTree.getSelectionPath().getLastPathComponent();
-        final List<String> list = new ArrayList<String>();
-        list.add(((MyNode)node.getParent()).getDisplayName());
-        return list;
+        final Set<String> set = new HashSet<String>();
+        set.add(((MyNode)node.getParent()).getDisplayName());
+        return set;
       }
       return getDependencies(new Condition<OrderEntry>() {
         public boolean value(final OrderEntry orderEntry) {
@@ -647,8 +648,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     return null;
   }
 
-  private List<String> getDependencies(Condition<OrderEntry> condition) {
-    final List<String> result = new ArrayList<String>();
+  private Set<String> getDependencies(Condition<OrderEntry> condition) {
+    final Set<String> result = new TreeSet<String>();
     final Module[] modules = myModulesConfigurator.getModules();
     for (Module module : modules) {
       final ModifiableRootModel rootModel = myModulesConfigurator.getModuleEditor(module).getModifiableRootModel();
