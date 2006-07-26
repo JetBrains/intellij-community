@@ -142,7 +142,7 @@ public class RunContentBuilder implements LogConsoleManager {
   public void addLogConsole(final String path, final boolean skipContent, final Project project, final String name, final RunConfigurationBase configuration) {
     final LogConsole log = new LogConsole(project, new File(path), skipContent, name){
       public boolean isActive() {
-        return ((JTabbedPane)myComponent).getSelectedComponent() == this;
+        return myComponent instanceof JTabbedPane && ((JTabbedPane)myComponent).getSelectedComponent() == this;
       }
     };
     log.attachStopLogConsoleTrackingListener(myExecutionResult.getProcessHandler());
