@@ -48,7 +48,9 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
     for (ProjectViewNode element : copy) {
       if (element.getValue() instanceof PsiClass) {
         PsiClass aClass = ((PsiClass)element.getValue());
-        PsiFile[] forms = aClass.getManager().getSearchHelper().findFormsBoundToClass(aClass.getQualifiedName());
+        final String qName = aClass.getQualifiedName();
+        if (qName == null) continue;
+        PsiFile[] forms = aClass.getManager().getSearchHelper().findFormsBoundToClass(qName);
         Collection<AbstractTreeNode> formNodes = findFormsIn(children, forms);
         if (formNodes.size() > 0) {
           Collection<PsiFile> formFiles = convertToFiles(formNodes);
