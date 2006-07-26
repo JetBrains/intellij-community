@@ -71,4 +71,8 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     );
     doDoTest(true, false);
   }
+
+  public void testAntFileProperties() throws Exception {
+    doTest();
+  }
 }
