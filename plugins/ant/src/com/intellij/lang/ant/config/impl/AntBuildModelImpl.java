@@ -5,6 +5,8 @@ import com.intellij.lang.ant.config.actions.TargetAction;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -61,16 +63,12 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   @Nullable
   public AntBuildTargetBase findTarget(final String name) {
-    final AntProject project = getAntProject();
-    final AntTarget antTarget = (project == null) ? null : project.getTarget(name);
-    if (antTarget != null) {
-      for (final AntBuildTargetBase buildTarget : getTargetsList()) {
-        if (buildTarget.getAntTarget() == antTarget) {
-          return buildTarget;
-        }
+    return ApplicationManager.getApplication().runReadAction(new Computable<AntBuildTargetBase>() {
+      @Nullable
+      public AntBuildTargetBase compute() {
+        return findTargetImpl(name, AntBuildModelImpl.this);
       }
-    }
-    return null;
+    });
   }
 
   @Nullable
@@ -92,11 +90,33 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   }
 
   private List<AntBuildTargetBase> getTargetsList() {
-    final AntProject project = getAntProject();
+    return ApplicationManager.getApplication().runReadAction(new Computable<List<AntBuildTargetBase>>() {
+      public List<AntBuildTargetBase> compute() {
+        return getTargetListImpl(AntBuildModelImpl.this);
+      }
+    });
+  }
+
+  @Nullable
+  private static AntBuildTargetBase findTargetImpl(final String name, final AntBuildModelImpl model) {
+    final AntProject project = model.getAntProject();
+    final AntTarget antTarget = (project == null) ? null : project.getTarget(name);
+    if (antTarget != null) {
+      for (final AntBuildTargetBase buildTarget : model.getTargetsList()) {
+        if (buildTarget.getAntTarget() == antTarget) {
+          return buildTarget;
+        }
+      }
+    }
+    return null;
+  }
+
+  private static List<AntBuildTargetBase> getTargetListImpl(final AntBuildModelBase model) {
+    final AntProject project = model.getAntProject();
     final AntTarget[] targets = (project == null) ? AntTarget.EMPTY_TARGETS : project.getTargets();
     final List<AntBuildTargetBase> list = new ArrayList<AntBuildTargetBase>(targets.length);
     for (final AntTarget target : targets) {
-      list.add(new AntBuildTargetImpl(target, this));
+      list.add(new AntBuildTargetImpl(target, model));
     }
     return list;
   }
