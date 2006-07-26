@@ -658,11 +658,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
 
     public void beforeValidityChanged(VirtualFilePointer[] pointers) {
+      if (!myProjectOpened) return;
       assertPointersCorrect(pointers);
       beforeRootsChange(false);
     }
 
     public void validityChanged(VirtualFilePointer[] pointers) {
+      if (!myProjectOpened) return;
       assertPointersCorrect(pointers);
       rootsChanged(false, !myInsideRefresh);
       if (myInsideRefresh) myChangesDetected = true;
