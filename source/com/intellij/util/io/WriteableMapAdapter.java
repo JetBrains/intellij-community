@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * @author max
  */
-public class WriteableMapAdapter<K,V> implements WriteableMap<K,V> {
+public class WriteableMapAdapter<K,V> implements WriteableMap<V> {
   private Map<K,V> myMap;
   private ByteBufferMap.KeyProvider myKeyProvider;
   private K[] myKeys;

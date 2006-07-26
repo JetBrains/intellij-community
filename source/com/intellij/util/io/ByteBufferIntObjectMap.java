@@ -1,73 +1,29 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import gnu.trove.TIntArrayList;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Collection;
 
-public class ByteBufferMap<K,V> {
+public class ByteBufferIntObjectMap<V> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.ByteBufferMap");
 
   private final RandomAccessDataInput myBuffer;
   private final int myStartOffset;
-  private final KeyProvider<K> myKeyProvider;
-  private final ValueProvider<V> myValueProvider;
+  private final ByteBufferMap.ValueProvider<V> myValueProvider;
   private int myMod;
   private final int myEndOffset;
 
-  public static interface KeyProvider<K> {
-    int hashCode(K key);
-
-    void write(DataOutput out, K key) throws IOException;
-
-    int length(K key);
-
-    K get(DataInput in) throws IOException;
-
-    /**
-     * Should move the buffer pointer to the key end.
-     */
-    boolean equals(DataInput in, K key) throws IOException;
-  }
-
-  public static interface ValueProvider<V> {
-    void write(DataOutput out, V value) throws IOException;
-
-    int length(V value);
-
-    V get(DataInput in) throws IOException;
-  }
-
-  public static <V> void writeMap(DataOutput stream,
-                              ValueProvider<V> valueProvider,
-                              WriteableMap<V> map,
-                              double searchFactor) throws IOException {
-    new ByteBufferMapWriteHandler<V>(stream, valueProvider, map, searchFactor).execute();
-  }
-
-  public static <V> int calcMapLength(ValueProvider<V> valueProvider,
-                                  WriteableMap<V> map,
-                                  double searchFactor) throws IOException {
-    return new ByteBufferMapWriteHandler<V>(null, valueProvider, map, searchFactor).calcLength();
-  }
-
-  public ByteBufferMap(RandomAccessDataInput buffer,
+  public ByteBufferIntObjectMap(RandomAccessDataInput buffer,
                        int startOffset,
                        int endOffset,
-                       KeyProvider<K> keyProvider,
-                       ValueProvider<V> valueProvider) {
-    assert (keyProvider != null);
+                       ByteBufferMap.ValueProvider<V> valueProvider) {
     assert (valueProvider != null);
     assert (startOffset < endOffset);
 
     myBuffer = buffer;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
-    myKeyProvider = keyProvider;
     myValueProvider = valueProvider;
 
     buffer.setPosition(startOffset);
@@ -79,8 +35,8 @@ public class ByteBufferMap<K,V> {
     }
   }
 
-  public V get(K key) {
-    int hash = hash(myKeyProvider.hashCode(key));
+  public V get(int key) {
+    int hash = hash(key);
     int keyGroupOffset = readKeyGroupOffset(hash);
     if (keyGroupOffset == -1) return null;
     if (!(myStartOffset < keyGroupOffset && keyGroupOffset < myEndOffset)){
@@ -92,7 +48,7 @@ public class ByteBufferMap<K,V> {
       int keyGroupSize = myBuffer.readInt();
       assert (keyGroupSize > 0);
       for (int i = 0; i < keyGroupSize; i++) {
-        if (myKeyProvider.equals(myBuffer, key)) {
+        if (key == myBuffer.readInt()) {
           int valueOffset = myBuffer.readInt();
           assert (valueOffset > 0);
 
@@ -111,14 +67,13 @@ public class ByteBufferMap<K,V> {
     return null;
   }
 
-  @SuppressWarnings({"unchecked"})
-  public K[] getKeys(Class<K> keyClass) {
-    ArrayList<K> result = new ArrayList<K>();
-    getKeys(keyClass, result);
-    return result.toArray((K[])Array.newInstance(keyClass, result.size()));
+  public TIntArrayList getKeys() {
+    TIntArrayList result = new TIntArrayList();
+    getKeys(result);
+    return result;
   }
 
-  public void getKeys(Class<K> keyClass, Collection<K> dst) {
+  public void getKeys(TIntArrayList dst) {
     try {
       myBuffer.setPosition(myStartOffset + 4 /* mod */);
 
@@ -145,7 +100,7 @@ public class ByteBufferMap<K,V> {
       while (myBuffer.getPosition() <= lastKeyGroupOffset) {
         int groupSize = myBuffer.readInt();
         for (int i = 0; i < groupSize; i++) {
-          dst.add(myKeyProvider.get(myBuffer));
+          dst.add(myBuffer.readInt());
 
           int valueOffset = myBuffer.readInt(); /* value offset */
           if( firstValueOffset == -1 ) firstValueOffset = valueOffset + myStartOffset;

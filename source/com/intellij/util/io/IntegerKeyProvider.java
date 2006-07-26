@@ -7,11 +7,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Dmitry.Shtukenberg
- * Date: Apr 28, 2004
- * Time: 4:52:43 PM
- * To change this template use File | Settings | File Templates.
+   * @deprecated use {@link ByteBufferIntObjectMap} instead
  */
 public class IntegerKeyProvider implements ByteBufferMap.KeyProvider<Integer> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.StringKeyProvider");

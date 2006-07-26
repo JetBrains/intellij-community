@@ -7,7 +7,7 @@ import java.io.UnsupportedEncodingException;
 /**
  * @author max
  */
-public interface WriteableMap<K,V> {
+public interface WriteableMap<V> {
 //Object[] keySet();
 //V get(K key);
   int[] getHashCodesArray(); // Returns array of all key hash codes in the map

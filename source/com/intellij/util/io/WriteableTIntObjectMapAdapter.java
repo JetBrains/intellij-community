@@ -12,7 +12,7 @@ import java.io.IOException;
  * Time: 4:36:27 PM
  * To change this template use File | Settings | File Templates.
  */
-public class WriteableTIntObjectMapAdapter <V> implements WriteableMap<Integer, V> {
+public class WriteableTIntObjectMapAdapter <V> implements WriteableMap<V> {
   private TIntObjectHashMap<V> hashmap;
   private int[] hashkeys;
 

@@ -6,19 +6,17 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
 
-class ByteBufferMapWriteHandler<K,V> {
+class ByteBufferMapWriteHandler<V> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.ByteBufferMapWriteHandler");
 
-//  private final ByteBufferMap.KeyProvider myKeyProvider;
   private final ByteBufferMap.ValueProvider<V> myValueProvider;
-  private final WriteableMap<K,V> myMap;
+  private final WriteableMap<V> myMap;
 
   private final int[] myKeyHashes;
   private final int myMod;
   private DataOutput myOut;
-//  private ProgressIndicator myProgress;
 
-  public ByteBufferMapWriteHandler(DataOutput stream, /*ByteBufferMap.KeyProvider keyProvider, */ByteBufferMap.ValueProvider<V> valueProvider, WriteableMap<K,V> map, double searchFactor) {
+  public ByteBufferMapWriteHandler(DataOutput stream, /*ByteBufferMap.KeyProvider keyProvider, */ByteBufferMap.ValueProvider<V> valueProvider, WriteableMap<V> map, double searchFactor) {
     myValueProvider = valueProvider;
     myMap = map;
 
@@ -29,7 +27,6 @@ class ByteBufferMapWriteHandler<K,V> {
   }
 
   public void execute() throws IOException {
-//    myProgress = ProgressManager.getInstance().getProgressIndicator(); //Q: not goot to use ProgressManager in util package?
 
     executeImpl( true );
   }
@@ -42,9 +39,9 @@ class ByteBufferMapWriteHandler<K,V> {
     if( write ) myOut.writeInt(myMod);
     int offset = 4;
 
-    int overflowList[] = new int[myKeyHashes.length];
-    int firstOverflowElem[] = new int[myMod];
-    int occurs[] = new int[myMod];
+    int[] overflowList = new int[myKeyHashes.length];
+    int[] firstOverflowElem = new int[myMod];
+    int[] occurs = new int[myMod];
     Arrays.fill(firstOverflowElem, -1);
 
     // Creating hash table and overflow lists
