@@ -179,12 +179,14 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
     ProblemDescriptor[] problems = new ProblemDescriptor[result.size()];
     for (int i = 0; i < problems.length; i++) {
       PsiVariable problemVariable = result.get(i);
+      final PsiIdentifier nameIdenitier = problemVariable.getNameIdentifier();
+      PsiElement problemElement = nameIdenitier != null ? nameIdenitier : problemVariable;
       if (problemVariable instanceof PsiParameter){
-      problems[i] = manager.createProblemDescriptor(problemVariable.getNameIdentifier(),
-                                                    InspectionsBundle.message("inspection.can.be.local.parameter.problem.descriptor"),
-                                                    myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        problems[i] = manager.createProblemDescriptor(problemElement,
+                                                      InspectionsBundle.message("inspection.can.be.local.parameter.problem.descriptor"),
+                                                      myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       } else {
-        problems[i] = manager.createProblemDescriptor(problemVariable.getNameIdentifier(),
+        problems[i] = manager.createProblemDescriptor(problemElement,
                                                       InspectionsBundle.message("inspection.can.be.local.variable.problem.descriptor"),
                                                       myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
