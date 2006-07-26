@@ -6,7 +6,6 @@ package com.intellij.uiDesigner.projectView;
 
 import com.intellij.ide.favoritesTreeView.FavoriteNodeProvider;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.uiDesigner.projectView.Form;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -15,10 +14,10 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -69,6 +68,7 @@ public class UIDesignerFavoriteNodeProvider implements ApplicationComponent, Fav
         catch (Exception e) {
           return null;
         }
+        if (className == null) return null;
         final PsiClass classToBind = PsiManager.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
         if (classToBind != null) {
           Form form = new Form(classToBind);

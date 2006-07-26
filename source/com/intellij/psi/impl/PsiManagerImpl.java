@@ -463,7 +463,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     return findClass(qualifiedName, GlobalSearchScope.allScope(myProject));
   }
 
-  public PsiClass findClass(String qualifiedName, GlobalSearchScope scope) {
+  public PsiClass findClass(@NotNull String qualifiedName, GlobalSearchScope scope) {
     myProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
     for (PsiElementFinder finder : myElementFinders) {
@@ -1143,7 +1143,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   private class PsiElementFinderImpl implements PsiElementFinder {
-    public PsiClass findClass(String qualifiedName, GlobalSearchScope scope) {
+    public PsiClass findClass(@NotNull String qualifiedName, GlobalSearchScope scope) {
       PsiClass psiClass = myFileManager.findClass(qualifiedName, scope);
 
       if (psiClass == null && myCurrentMigration != null) {

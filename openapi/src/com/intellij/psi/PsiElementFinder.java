@@ -35,7 +35,7 @@ public interface PsiElementFinder {
    * @see PsiManager#findClass(String, com.intellij.psi.search.GlobalSearchScope)
    */
   @Nullable
-  PsiClass findClass(String qualifiedName, GlobalSearchScope scope);
+  PsiClass findClass(@NotNull String qualifiedName, GlobalSearchScope scope);
 
   /**
    * Searches the specified scope within the project for classes with the specified full-qualified
