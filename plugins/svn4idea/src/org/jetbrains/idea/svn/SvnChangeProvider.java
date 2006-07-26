@@ -159,6 +159,9 @@ public class SvnChangeProvider implements ChangeProvider {
         processFile(path, stClient, builder);
       }
     } catch (SVNException e) {
+      if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+        builder.processUnversionedFile(path.getVirtualFile());
+      }
         //
     }
   }
