@@ -119,6 +119,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NonNls private static final String ID_ATTRIBUTE = "id";
   @NonNls protected static final String IGNORE_CHANGEMARKERS_KEY = "idea.ignore.changemarkers";
   private final List<CheckinHandlerFactory> myRegisteredBeforeCheckinHandlers = new ArrayList<CheckinHandlerFactory>();
+  private boolean myHaveEmptyContentRevisions = true;
 
   private final Object TRACKERS_LOCK = new Object();
 
@@ -563,7 +564,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (change != null) {
       final ContentRevision beforeRevision = change.getBeforeRevision();
       if (beforeRevision != null) {
-        return beforeRevision.getContent();
+        final String content = beforeRevision.getContent();
+        if (content == null) myHaveEmptyContentRevisions = true;
+        return content;
       }
       return null;
     }
@@ -798,5 +801,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public void unregisterCheckinHandlerFactory(CheckinHandlerFactory handler) {
     myRegisteredBeforeCheckinHandlers.remove(handler);
+  }
+
+  boolean hasEmptyContentRevisions() {
+    return myHaveEmptyContentRevisions;
+  }
+
+  void resetHaveEmptyContentRevisions() {
+    myHaveEmptyContentRevisions = false;
   }
 }

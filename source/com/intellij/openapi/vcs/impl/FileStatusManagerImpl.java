@@ -43,7 +43,6 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   private final ProjectLevelVcsManager myVcsManager;
   private List<FileStatusListener> myListeners = new ArrayList<FileStatusListener>();
   private MyDocumentAdapter myDocumentListener;
-  private boolean myInitialUpdateDone = false;
 
   private final Map<VirtualFileSystem, FileStatusProvider> myVFSToProviderMap = new HashMap<VirtualFileSystem, FileStatusProvider>();
 
@@ -85,8 +84,9 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       }
 
       public void changeListUpdateDone() {
-        if (!myInitialUpdateDone) {
-          myInitialUpdateDone = true;
+        ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl) myVcsManager;
+        if (vcsManager.hasEmptyContentRevisions()) {
+          vcsManager.resetHaveEmptyContentRevisions();
           fileStatusesChanged();
         }
       }
