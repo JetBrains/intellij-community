@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -116,8 +117,12 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
     Problem problem = wolf.convertToProblem(message);
     if (problem != null && problem.getVirtualFile() != null) {
-      VirtualFile virtualFile = problem.getVirtualFile();
-      Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+      final VirtualFile virtualFile = problem.getVirtualFile();
+      Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
+        public Document compute() {
+          return FileDocumentManager.getInstance().getDocument(virtualFile);
+        }
+      });
 
       Long compileStart = compileContext.getUserData(CompileDriver.COMPILATION_START_TIMESTAMP);
       if (document != null && compileStart != null && compileStart.longValue() > document.getModificationStamp()) {
