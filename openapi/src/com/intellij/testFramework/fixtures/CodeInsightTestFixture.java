@@ -41,16 +41,23 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   String getTempDirPath();
 
   /**
-   * Runs highliting test for the given file
-   * @param filePath path relative to the one set by {@link #setTestDataPath(String)}
+   * Runs highliting test for the given files
+   * Checks for {@link #ERROR_MARKER} markers by default
+   *
+   * @param filePaths the first file is tested only; the others are just copied along the first
+   * @param checkWarnings Enables {@link #WARNING_MARKER} support
+   * @param checkInfos Enables {@link #INFO_MARKER} support
+   * @param checkWeakWarnings Enables {@link #INFORMATION_MARKER} support
    */
-  void testHighlighting(String filePath, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings);
+  void testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, String... filePaths);
 
   /**
-   * Runs highliting test for the given file
-   * @param filePath path relative to the one set by {@link #setTestDataPath(String)}
+   * Runs highliting test for the given files.
+   * The same as testHighlighting(boolean, boolean, boolean, String...) with all options set
+   *
+   * @param filePaths the first file is tested only; the others are just copied along the first
    */
-  void testHighlighting(String filePath);
+  void testHighlighting(String... filePaths);
 
   void testCompletion(String fileBefore, String fileAfter);
 }

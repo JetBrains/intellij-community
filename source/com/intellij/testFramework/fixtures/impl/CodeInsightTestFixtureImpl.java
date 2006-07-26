@@ -4,48 +4,49 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.ExpectedHighlightingData;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInsight.completion.CodeCompletionHandler;
+import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
+import com.intellij.mock.MockProgressIndicator;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.completion.CodeCompletionHandler;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.mock.MockProgressIndicator;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.testFramework.ExpectedHighlightingData;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import junit.framework.TestCase;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.ArrayList;
 import java.io.File;
 import java.io.IOException;
-
-import junit.framework.TestCase;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author Dmitry Avdeev
@@ -65,7 +66,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
       final File file = new File(myTestDataPath + "/temp");
         file.mkdir();
       return file;
-*/      
+*/
     }
   };
   private final IdeaProjectTestFixture myProjectFixture;
@@ -82,19 +83,22 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     return myTempDirFixture.getTempDirPath();
   }
 
-  public void testHighlighting(String filePath, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
-    configureByFile(filePath);
-    collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings);
-  }
+  public void testHighlighting(final boolean checkWarnings,
+                               final boolean checkInfos,
+                               final boolean checkWeakWarnings,
+                               final String... filePaths) {
 
-  public void testHighlighting(final String filePath) {
     new WriteCommandAction(myProjectFixture.getProject()) {
 
       protected void run(final Result result) throws Throwable {
-        testHighlighting(filePath, true, true, true);
-
+        configureByFiles(filePaths);
+        collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings);
       }
     }.execute();
+  }
+
+  public void testHighlighting(final String... filePaths) {
+    testHighlighting(true, true, true, filePaths);
   }
 
   public void testCompletion(String fileBefore, String fileAfter) {
@@ -119,6 +123,14 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     myProjectFixture.tearDown();
   }
 
+  protected void configureByFiles(@NonNls String... filePaths) {
+    myFile = null;
+    myEditor = null;
+    for (String filePath : filePaths) {
+      configureByFile(filePath);
+    }
+  }
+
   protected void configureByFile(@NonNls String filePath) {
     String fullPath = getTestDataPath() + filePath;
 
@@ -129,8 +141,8 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
 
   protected void configureByFile(VirtualFile file) {
     VirtualFile copy = myTempDirFixture.copyFile(file);
-    myFile = myPsiManager.findFile(copy);
-    myEditor = createEditor(copy);
+    if (myFile == null) myFile = myPsiManager.findFile(copy);
+    if (myEditor == null) myEditor = createEditor(copy);
   }
 
   @Nullable
@@ -145,7 +157,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
 
   protected Collection<HighlightInfo> collectAndCheckHighlightings(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
     final Project project = getProject();
-    ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(),checkWarnings, checkWeakWarnings, checkInfos);
+    ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -289,16 +301,16 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
       int selEndCol = selEndMarker.getEndOffset() - StringUtil.lineColToOffset(newFileText, selEndLine, 0);
 
       TestCase.assertEquals("selectionStartLine", selStartLine + 1,
-                   StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionStart()) + 1);
+                            StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionStart()) + 1);
 
-      TestCase.assertEquals("selectionStartCol", selStartCol + 1,
-                   myEditor.getSelectionModel().getSelectionStart() - StringUtil.lineColToOffset(newFileText, selStartLine, 0) + 1);
+      TestCase.assertEquals("selectionStartCol", selStartCol + 1, myEditor.getSelectionModel().getSelectionStart() -
+                                                                  StringUtil.lineColToOffset(newFileText, selStartLine, 0) + 1);
 
       TestCase.assertEquals("selectionEndLine", selEndLine + 1,
-                   StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1);
+                            StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1);
 
       TestCase.assertEquals("selectionEndCol", selEndCol + 1,
-                   myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(newFileText, selEndLine, 0) + 1);
+                            myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(newFileText, selEndLine, 0) + 1);
     }
     else {
       TestCase.assertTrue("has no selection", !myEditor.getSelectionModel().hasSelection());
