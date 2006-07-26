@@ -49,6 +49,10 @@ public class PaletteWindow extends JPanel implements DataProvider {
   }
 
   public void refreshPalette() {
+    refreshPalette(null);
+  }
+
+  public void refreshPalette(@Nullable VirtualFile selectedFile) {
     for(PaletteGroupHeader groupHeader: myGroupHeaders) {
       groupHeader.getComponentList().removeListSelectionListener(myListSelectionListener);
     }
@@ -57,7 +61,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
     myGroupHeaders.clear();
     myGroups.clear();
 
-    final ArrayList<PaletteGroup> currentGroups = collectCurrentGroups();
+    final ArrayList<PaletteGroup> currentGroups = collectCurrentGroups(selectedFile);
     String[] tabNames = collectTabNames(currentGroups);
     if (tabNames.length == 1) {
       if (oldTabNames.length != 1) {
@@ -119,11 +123,15 @@ public class PaletteWindow extends JPanel implements DataProvider {
     return result.toArray(new String[result.size()]);
   }
 
-  private ArrayList<PaletteGroup> collectCurrentGroups() {
+  private ArrayList<PaletteGroup> collectCurrentGroups(@Nullable VirtualFile selectedFile) {
     ArrayList<PaletteGroup> result = new ArrayList<PaletteGroup>();
-    VirtualFile[] editedFiles = FileEditorManager.getInstance(myProject).getSelectedFiles();
-    if (editedFiles.length > 0) {
-      VirtualFile selectedFile = editedFiles [0];
+    if (selectedFile == null) {
+      VirtualFile[] editedFiles = FileEditorManager.getInstance(myProject).getSelectedFiles();
+      if (editedFiles.length > 0) {
+        selectedFile = editedFiles [0];
+      }
+    }
+    if (selectedFile != null) {
       for(PaletteItemProvider provider: myProviders) {
         PaletteGroup[] groups = provider.getActiveGroups(selectedFile);
         Collections.addAll(result, groups);
@@ -132,10 +140,10 @@ public class PaletteWindow extends JPanel implements DataProvider {
     return result;
   }
 
-  public void refreshPaletteIfChanged() {
-    Set<PaletteGroup> currentGroups = new HashSet<PaletteGroup>(collectCurrentGroups());
+  public void refreshPaletteIfChanged(VirtualFile selectedFile) {
+    Set<PaletteGroup> currentGroups = new HashSet<PaletteGroup>(collectCurrentGroups(selectedFile));
     if (!currentGroups.equals(myGroups)) {
-      refreshPalette();
+      refreshPalette(selectedFile);
     }
   }
 

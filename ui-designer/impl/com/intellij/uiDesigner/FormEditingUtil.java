@@ -624,14 +624,20 @@ public final class FormEditingUtil {
     if (root == null) return;
 
     ComponentTreeBuilder builder = UIDesignerToolWindowManager.getInstance(component.getProject()).getComponentTreeBuilder();
-    builder.beginUpdateSelection();
+    // this can return null if the click to select the control also requested to grab the focus -
+    // the component tree will be instantiated after the event has been processed completely
+    if (builder != null) {
+      builder.beginUpdateSelection();
+    }
     try {
       clearSelection(root);
       selectComponent(editor, component);
       editor.setSelectionAnchor(component);
     }
     finally {
-      builder.endUpdateSelection();
+      if (builder != null) {
+        builder.endUpdateSelection();
+      }
     }
   }
 

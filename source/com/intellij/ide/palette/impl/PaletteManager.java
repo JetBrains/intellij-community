@@ -132,8 +132,8 @@ public class PaletteManager implements ProjectComponent {
     mySelectionListeners.remove(l);
   }
 
-  private void processFileEditorChange() {
-    myPaletteWindow.refreshPaletteIfChanged();
+  private void processFileEditorChange(@Nullable VirtualFile selectedFile) {
+    myPaletteWindow.refreshPaletteIfChanged(selectedFile);
     if (myPaletteWindow.getActiveGroupCount() == 0) {
       myPaletteToolWindow.setAvailable(false, null);
     }
@@ -171,15 +171,15 @@ public class PaletteManager implements ProjectComponent {
 
   private class MyFileEditorManagerListener implements FileEditorManagerListener {
     public void fileOpened(FileEditorManager source, VirtualFile file) {
-      processFileEditorChange();
+      processFileEditorChange(file);
     }
 
     public void fileClosed(FileEditorManager source, VirtualFile file) {
-      processFileEditorChange();
+      processFileEditorChange(null);
     }
 
     public void selectionChanged(FileEditorManagerEvent event) {
-      processFileEditorChange();
+      processFileEditorChange(event.getNewFile());
     }
   }
 }

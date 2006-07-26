@@ -96,9 +96,9 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   public void disposeComponent() {
   }
 
-  private void processFileEditorChange() {
+  private void processFileEditorChange(UIFormEditor newEditor) {
     if (myToolWindow == null) return;
-    GuiEditor activeFormEditor = getActiveFormEditor();
+    GuiEditor activeFormEditor = newEditor != null ? newEditor.getEditor() : null;
     if (myComponentTreeBuilder != null) {
       Disposer.dispose(myComponentTreeBuilder);
       myComponentTreeBuilder = null;
@@ -162,15 +162,16 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
 
   private class MyFileEditorManagerListener implements FileEditorManagerListener {
     public void fileOpened(FileEditorManager source, VirtualFile file) {
-      processFileEditorChange();
+      processFileEditorChange(getActiveFormFileEditor());
     }
 
     public void fileClosed(FileEditorManager source, VirtualFile file) {
-      processFileEditorChange();
+      processFileEditorChange(getActiveFormFileEditor());
     }
 
     public void selectionChanged(FileEditorManagerEvent event) {
-      processFileEditorChange();
+      UIFormEditor newEditor = (event.getNewEditor() instanceof UIFormEditor) ? (UIFormEditor) event.getNewEditor() : null;
+      processFileEditorChange(newEditor);
     }
   }
 
