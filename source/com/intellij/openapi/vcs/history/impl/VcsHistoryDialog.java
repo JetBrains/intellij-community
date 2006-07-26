@@ -203,54 +203,57 @@ public class VcsHistoryDialog extends DialogWrapper {
   private synchronized void loadContentsFor(final VcsFileRevision[] revisions) {
     if (myIsInLoading) return;
     myIsInLoading = true;
-    synchronized (myCachedContents) {
+    try {
+      synchronized (myCachedContents) {
 
-      final VcsFileRevision[] revisionsToLoad = revisionsNeededToBeLoaded(revisions);
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-          progressIndicator.pushState();
-          try {
-            for (int i = 0; i < revisionsToLoad.length; i++) {
-              final VcsFileRevision vcsFileRevision = revisionsToLoad[i];
-              progressIndicator.setText2(VcsBundle.message("progress.text2.loading.revision", vcsFileRevision.getRevisionNumber()));
-              progressIndicator.setFraction((double)i / (double)revisionsToLoad.length);
-              if (!myCachedContents.containsKey(vcsFileRevision)) {
-                try {
-                  vcsFileRevision.loadContent();
-                }
-                catch (final VcsException e) {
-                  ApplicationManager.getApplication().invokeLater(new Runnable() {
-                    public void run() {
-                      Messages.showErrorDialog(VcsBundle.message("message.text.cannot.load.version.bocause.of.error",
-                                                                 vcsFileRevision.getRevisionNumber(), e.getLocalizedMessage()), VcsBundle.message("message.title.load.version"));
-                    }
-                  });
-                } catch (ProcessCanceledException ex){
-                  return;
-                }
-                String content = null;
-                try {
-                  content = new String(vcsFileRevision.getContent(),
-                                       myFile.getCharset().name());
-                }
-                catch (IOException e) {
-                  LOG.error(e);
-                }
-                myCachedContents.put(vcsFileRevision, content);
+        final VcsFileRevision[] revisionsToLoad = revisionsNeededToBeLoaded(revisions);
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          public void run() {
+            ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+            progressIndicator.pushState();
+            try {
+              for (int i = 0; i < revisionsToLoad.length; i++) {
+                final VcsFileRevision vcsFileRevision = revisionsToLoad[i];
+                progressIndicator.setText2(VcsBundle.message("progress.text2.loading.revision", vcsFileRevision.getRevisionNumber()));
+                progressIndicator.setFraction((double)i / (double)revisionsToLoad.length);
+                if (!myCachedContents.containsKey(vcsFileRevision)) {
+                  try {
+                    vcsFileRevision.loadContent();
+                  }
+                  catch (final VcsException e) {
+                    ApplicationManager.getApplication().invokeLater(new Runnable() {
+                      public void run() {
+                        Messages.showErrorDialog(VcsBundle.message("message.text.cannot.load.version.bocause.of.error",
+                                                                   vcsFileRevision.getRevisionNumber(), e.getLocalizedMessage()), VcsBundle.message("message.title.load.version"));
+                      }
+                    });
+                  } catch (ProcessCanceledException ex){
+                    return;
+                  }
+                  String content = null;
+                  try {
+                    content = new String(vcsFileRevision.getContent(),
+                                         myFile.getCharset().name());
+                  }
+                  catch (IOException e) {
+                    LOG.error(e);
+                  }
+                  myCachedContents.put(vcsFileRevision, content);
 
+                }
               }
             }
-          }
-          finally {
-            myIsInLoading = false;
-            progressIndicator.popState();
-          }
+            finally {
+              progressIndicator.popState();
+            }
 
-        }
-      }, VcsBundle.message("progress.title.loading.contents"), false, myProject);
+          }
+        }, VcsBundle.message("progress.title.loading.contents"), false, myProject);
+      }
     }
-
+    finally {
+      myIsInLoading = false;
+    }
   }
 
   protected VcsFileRevision[] revisionsNeededToBeLoaded(VcsFileRevision[] revisions) {
@@ -301,7 +304,7 @@ public class VcsHistoryDialog extends DialogWrapper {
   }
 
   private synchronized void updateDiff(int first, int second) {
-    if (myIsDisposed) return;
+    if (myIsDisposed || myIsInLoading) return;
     List items = ((ListTableModel)myList.getModel()).getItems();
     VcsFileRevision firstRev = (VcsFileRevision)items.get(first);
     VcsFileRevision secondRev = (VcsFileRevision)items.get(second);
