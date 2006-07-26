@@ -10,6 +10,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
@@ -520,7 +521,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       for (ChangeList list : myChangeLists) {
         for (Change change : list.getChanges()) {
           final ContentRevision afterRevision = change.getAfterRevision();
-          if (afterRevision != null && afterRevision.getFile().getVirtualFile() == file) return change;
+          if (afterRevision != null) {
+            String revisionPath = FileUtil.toSystemIndependentName(afterRevision.getFile().getPath());
+            if (FileUtil.pathsEqual(revisionPath, file.getPath())) return change;
+          }
         }
       }
 
