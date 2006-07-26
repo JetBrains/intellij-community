@@ -1,14 +1,13 @@
 package com.intellij.psi.scope.conflictResolvers;
 
-import com.intellij.openapi.util.Comparing;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 
 import java.util.Iterator;
 import java.util.List;
@@ -31,7 +30,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     int conflictsCount = conflicts.size();
     if (conflictsCount <= 0) return null;
     if (conflictsCount == 1) return conflicts.get(0);
-    if (conflictsCount > 1){
+    if (conflictsCount > 1) {
 
       int maxCheckLevel = -1;
       int[] checkLevels = new int[conflictsCount];
@@ -43,28 +42,29 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         maxCheckLevel = Math.max(maxCheckLevel, level);
       }
 
-      for(int i = conflictsCount - 1; i>= 0; i--){
+      for (int i = conflictsCount - 1; i >= 0; i--) {
         // check for level
-        if (checkLevels[i] < maxCheckLevel){
+        if (checkLevels[i] < maxCheckLevel) {
           conflicts.remove(i);
         }
       }
 
       conflictsCount = conflicts.size();
-      if(conflictsCount == 1) return conflicts.get(0);
+      if (conflictsCount == 1) return conflicts.get(0);
 
       checkParametersNumber(conflicts, myArgumentsList.getExpressions().length);
       conflictsCount = conflicts.size();
-      if(conflictsCount == 1) return conflicts.get(0);
+      if (conflictsCount == 1) return conflicts.get(0);
 
       final boolean applicable = checkApplicability(conflicts);
       conflictsCount = conflicts.size();
-      if(conflictsCount == 1) return conflicts.get(0);
+      if (conflictsCount == 1) return conflicts.get(0);
 
       CandidateInfo[] conflictsArray;
       conflictsArray = conflicts.toArray(new CandidateInfo[conflictsCount]);
-outer:
-      for(int i = 0; i < conflictsCount; i++){
+
+      outer:
+      for (int i = 0; i < conflictsCount; i++) {
         final CandidateInfo method = conflictsArray[i];
         // check overriding
         for (final CandidateInfo info : conflicts) {
@@ -76,15 +76,20 @@ outer:
             continue outer;
           }
         }
+      }
 
-        // Specifics
-        if (applicable){
-          final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflicts.size()]);
+      conflictsCount = conflicts.size();
+      if (conflictsCount == 1) return conflicts.get(0);
 
-          for(int j = 0; j < i; j++){
+      // Specifics
+      if (applicable) {
+        final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflicts.size()]);
+        for (int i = 0; i < conflictsCount; i++) {
+          final CandidateInfo method = newConflictsArray[i];
+          for (int j = 0; j < i; j++) {
             final CandidateInfo conflict = newConflictsArray[j];
             if (conflict == method) break;
-            switch(isMoreSpecific(((MethodCandidateInfo)method).getElement(), ((MethodCandidateInfo)conflict).getElement())){
+            switch (isMoreSpecific(((MethodCandidateInfo)method).getElement(), ((MethodCandidateInfo)conflict).getElement())) {
               case TRUE:
                 conflicts.remove(conflict);
                 break;
