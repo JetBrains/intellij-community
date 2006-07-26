@@ -597,6 +597,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     for (PsiDocTag tag : tags) {
       if ("throws".equals(tag.getName()) || "exception".equals(tag.getName())) {
         final PsiDocTagValue value = tag.getValueElement();
+        if (value == null) continue;
         final PsiElement firstChild = value.getFirstChild();
         if (firstChild == null) continue;
         final PsiElement psiElement = firstChild.getFirstChild();
