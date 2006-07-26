@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.Reference;
 import java.util.List;
@@ -39,29 +40,31 @@ public class ControlFlowFactory {
     }
   }
 
-  public static ControlFlow getControlFlow(PsiElement element, ControlFlowPolicy policy) throws AnalysisCanceledException {
+  public static ControlFlow getControlFlow(@NotNull PsiElement element, @NotNull ControlFlowPolicy policy) throws AnalysisCanceledException {
     return getControlFlow(element, policy, true, true);
   }
 
-  public static ControlFlow getControlFlow(PsiElement element, ControlFlowPolicy policy, boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
+  public static ControlFlow getControlFlow(@NotNull PsiElement element, @NotNull ControlFlowPolicy policy, boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
     return getControlFlow(element, policy, true, evaluateConstantIfCondition);
   }
 
-  public static ControlFlow getControlFlow(PsiElement element,
-                                           ControlFlowPolicy policy,
+  public static ControlFlow getControlFlow(@NotNull PsiElement element,
+                                           @NotNull ControlFlowPolicy policy,
                                            boolean enableShortCircuit,
                                            boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
-    List<Reference<ControlFlowContext>> refs = element.getUserData(CONTROL_FLOW_KEY);
-    Pair<Integer, ControlFlow> result = findControlFlow(refs, element, policy, evaluateConstantIfCondition);
-    ControlFlow flow = result == null ? null : result.getSecond();
-    if (flow == null) {
-      flow = new ControlFlowAnalyzer(element, policy, enableShortCircuit, evaluateConstantIfCondition).buildControlFlow();
-      registerControlFlow(element, flow, evaluateConstantIfCondition, policy);
+    synchronized (element) {
+      List<Reference<ControlFlowContext>> refs = element.getUserData(CONTROL_FLOW_KEY);
+      Pair<Integer, ControlFlow> result = findControlFlow(refs, element, policy, evaluateConstantIfCondition);
+      ControlFlow flow = result == null ? null : result.getSecond();
+      if (flow == null) {
+        flow = new ControlFlowAnalyzer(element, policy, enableShortCircuit, evaluateConstantIfCondition).buildControlFlow();
+        registerControlFlow(element, flow, evaluateConstantIfCondition, policy);
+      }
+      if (flow instanceof ControlFlowSubRange && LOG.isDebugEnabled()) {
+        LOG.debug("CF optimization subrange works for "+element+"("+(element.getText().length() > 40 ? element.getText().substring(0,40) : element.getText())+")");
+      }
+      return flow;
     }
-    if (flow instanceof ControlFlowSubRange && LOG.isDebugEnabled()) {
-      LOG.debug("CF optimization subrange works for "+element+"("+(element.getText().length() > 40 ? element.getText().substring(0,40) : element.getText())+")");
-    }
-    return flow;
   }
 
   private static Pair<Integer, ControlFlow> findControlFlow(final List<Reference<ControlFlowContext>> refs,
@@ -98,24 +101,30 @@ public class ControlFlowFactory {
     return null;
   }
 
-  static void flushControlFlows(PsiElement element) {
-    element.putUserData(CONTROL_FLOW_KEY, null);
-  }
-  static void registerControlFlow(PsiElement element, ControlFlow flow, boolean evaluateConstantIfCondition, ControlFlowPolicy policy) {
-    List<Reference<ControlFlowContext>> refs = element.getUserData(CONTROL_FLOW_KEY);
-    Pair<Integer, ControlFlow> result = findControlFlow(refs, element, policy, evaluateConstantIfCondition);
-    if (result != null) {
-      int index = result.getFirst();
-      refs.set(index, createFlowContext(element, evaluateConstantIfCondition, policy, flow));
+  static void flushControlFlows(@NotNull PsiElement element) {
+    synchronized (element) {
+      element.putUserData(CONTROL_FLOW_KEY, null);
     }
-    else {
-      addFlow(refs, element, evaluateConstantIfCondition, policy, flow);
+  }
+  static void registerControlFlow(@NotNull PsiElement element, @NotNull ControlFlow flow, boolean evaluateConstantIfCondition, @NotNull ControlFlowPolicy policy) {
+    synchronized (element) {
+      List<Reference<ControlFlowContext>> refs = element.getUserData(CONTROL_FLOW_KEY);
+      Pair<Integer, ControlFlow> result = findControlFlow(refs, element, policy, evaluateConstantIfCondition);
+      if (result != null) {
+        int index = result.getFirst();
+        refs.set(index, createFlowContext(element, evaluateConstantIfCondition, policy, flow));
+      }
+      else {
+        addFlow(refs, element, evaluateConstantIfCondition, policy, flow);
+      }
     }
   }
 
-  private static void addFlow(List<Reference<ControlFlowContext>> refs, final PsiElement element,
+  private static void addFlow(List<Reference<ControlFlowContext>> refs,
+                              final PsiElement element,
                               final boolean evaluateConstantIfCondition,
-                              final ControlFlowPolicy policy, final ControlFlow flow) {
+                              final ControlFlowPolicy policy,
+                              final ControlFlow flow) {
     if (refs == null) {
       refs = new SmartList<Reference<ControlFlowContext>>();
       element.putUserData(CONTROL_FLOW_KEY, refs);
@@ -126,7 +135,8 @@ public class ControlFlowFactory {
 
   private static Reference<ControlFlowContext> createFlowContext(final PsiElement element,
                                                                  final boolean evaluateConstantIfCondition,
-                                                                 final ControlFlowPolicy policy, final ControlFlow flow) {
+                                                                 final ControlFlowPolicy policy,
+                                                                 final ControlFlow flow) {
     final long modificationCount = element.getManager().getModificationTracker().getModificationCount();
     final ControlFlowContext controlFlowContext = new ControlFlowContext(evaluateConstantIfCondition, policy, flow, modificationCount);
     return new SoftReference<ControlFlowContext>(controlFlowContext);
