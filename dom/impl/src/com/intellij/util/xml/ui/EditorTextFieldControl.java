@@ -155,11 +155,6 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
           background = getWarningBackground();
         }
         textField.setBackground(background);
-
-        final Editor editor = textField.getEditor();
-        if (editor != null && isCommitted()) {
-          DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
-        }
       }
     });
 
