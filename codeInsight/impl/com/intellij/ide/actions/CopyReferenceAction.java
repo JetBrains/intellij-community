@@ -229,6 +229,7 @@ public class CopyReferenceAction extends AnAction {
     if (elementAtCaret != null) {
       shortenReference(elementAtCaret);
     }
+    CodeInsightUtil.forcePsiPostprocessAndRestoreElement(file);
     CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
 
     int caretOffset = rangeMarker.getEndOffset();

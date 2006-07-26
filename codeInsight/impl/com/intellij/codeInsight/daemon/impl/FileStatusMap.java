@@ -5,12 +5,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.WeakHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -42,7 +43,7 @@ public class FileStatusMap {
   public static final int OVERRIDEN_MARKERS = 2;
   public static final int LOCAL_INSPECTIONS = 3;
 
-  public FileStatusMap(Project project) {
+  public FileStatusMap(@NotNull Project project) {
     myProject = project;
   }
 
@@ -59,7 +60,7 @@ public class FileStatusMap {
     }
   }
 
-  public void markFileDirty(Document document) {
+  public void markFileDirty(@NotNull Document document) {
     synchronized(myDocumentToStatusMap){
       myDocumentToStatusMap.remove(document);
     }
@@ -70,7 +71,7 @@ public class FileStatusMap {
     }
   }
 
-  public void markFileUpToDate(Document document, int part) {
+  public void markFileUpToDate(@NotNull Document document, int part) {
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
@@ -94,7 +95,7 @@ public class FileStatusMap {
     }
   }
 
-  public PsiElement getFileDirtyScope(Document document, int part) {
+  public PsiElement getFileDirtyScope(@NotNull Document document, int part) {
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
@@ -120,7 +121,7 @@ public class FileStatusMap {
     }
   }
 
-  public void markFileScopeDirtyDefensively(PsiFile file) {
+  public void markFileScopeDirtyDefensively(@NotNull PsiFile file) {
     // mark whole file dirty in case no subsequent PSI events will come, but file requires rehighlighting nevertheless
     // e.g. in the case of quick typing/backspacing char
     synchronized(myDocumentToStatusMap){
@@ -132,7 +133,7 @@ public class FileStatusMap {
     }
   }
 
-  public void markFileScopeDirty(Document document, PsiElement scope) {
+  public void markFileScopeDirty(@NotNull Document document, @NotNull PsiElement scope) {
     synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) return; // all dirty already
@@ -156,7 +157,7 @@ public class FileStatusMap {
     return commonParent;
   }
 
-  public RefCountHolder getRefCountHolder(Document document, PsiFile file) {
+  public RefCountHolder getRefCountHolder(@NotNull Document document, @NotNull PsiFile file) {
     RefCountHolder refCountHolder;
     synchronized (myRefCountHolderLock) {
       refCountHolder = document.getUserData(REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY);
