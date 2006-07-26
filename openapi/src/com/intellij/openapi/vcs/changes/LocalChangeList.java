@@ -7,10 +7,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * @author max
@@ -39,15 +36,19 @@ public class LocalChangeList implements Cloneable, ChangeList {
 
   public synchronized Collection<Change> getChanges() {
     createReadChangesCache();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("getChanges() for changelist " + getName() + ": " + myReadChangesCache.size() + " changes");
+    }
     return myReadChangesCache;
   }
 
   private void createReadChangesCache() {
     if (myReadChangesCache == null) {
-      myReadChangesCache = new HashSet<Change>(myChanges);
+      final HashSet<Change> changes = new HashSet<Change>(myChanges);
       if (myOutdatedChanges != null) {
-        myReadChangesCache.addAll(myOutdatedChanges);
+        changes.addAll(myOutdatedChanges);
       }
+      myReadChangesCache = Collections.unmodifiableCollection(changes);
     }
   }
 
