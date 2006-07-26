@@ -57,7 +57,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     return AntElementRole.PROJECT_ROLE;
   }
 
-  public void clearCaches() {
+  public synchronized void clearCaches() {
     super.clearCaches();
     myTargets = null;
     myImports = null;
@@ -76,7 +76,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   }
 
   @NotNull
-  public AntTarget[] getTargets() {
+  public synchronized AntTarget[] getTargets() {
     if (myTargets != null) return myTargets;
     final List<AntTarget> targets = new ArrayList<AntTarget>();
     for (final AntElement child : getChildren()) {
@@ -98,7 +98,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   }
 
   @Nullable
-  public AntTarget getTarget(final String name) {
+  public synchronized AntTarget getTarget(final String name) {
     for (final AntTarget target : getTargets()) {
       if (name.equals(target.getName())) {
         return target;
@@ -108,11 +108,11 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   }
 
   @NotNull
-  public AntFile[] getImportedFiles() {
+  public synchronized AntFile[] getImportedFiles() {
     if (myImports == null) {
       // this is necessary to avoid recurrent getImportedFiles() and stack overflow
       myImports = AntFile.NO_FILES;
-      List<AntFile> imports = new ArrayList<AntFile>();
+      final List<AntFile> imports = new ArrayList<AntFile>();
       for (final XmlTag tag : getSourceElement().getSubTags()) {
         if ("import".equals(tag.getName())) {
           final AntFile imported = AntImportImpl.getImportedFile(tag.getAttributeValue("file"), this);
@@ -129,7 +129,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     return myImports;
   }
 
-  public void addEnvironmentPropertyPrefix(@NotNull final String envPrefix) {
+  public synchronized void addEnvironmentPropertyPrefix(@NotNull final String envPrefix) {
     checkEnvList();
     final String env = (envPrefix.endsWith(".")) ? envPrefix : envPrefix + '.';
     if (myEnvPrefixes.indexOf(env) < 0) {
@@ -143,7 +143,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     }
   }
 
-  public boolean isEnvironmentProperty(@NotNull final String propName) {
+  public synchronized boolean isEnvironmentProperty(@NotNull final String propName) {
     checkEnvList();
     for (final String prefix : myEnvPrefixes) {
       if (propName.startsWith(prefix)) {
@@ -273,7 +273,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     }
   }
 
-  private void checkEnvList() {
+  private synchronized void checkEnvList() {
     if (myEnvPrefixes == null) {
       myEnvPrefixes = new ArrayList<String>();
       myEnvPrefixes.add(myDefaultEnvPrefix);
