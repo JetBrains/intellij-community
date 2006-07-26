@@ -337,9 +337,9 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
       TreeUtil.remove((TreeElement)child);
       ((CompositeElement)parent).subtreeChanged();
 
-      if (event != null) {
+      /*if (event != null) {
         myPsiManager.childRemoved(event);
-      }
+      }*/
 
       //System.out.println("DELETED from " + parent + ": " + child);
     }
