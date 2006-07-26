@@ -244,6 +244,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
 
   @Nullable
   private PsiElement getSelectedElement() {
+    if (myTree == null) return null;
     TreePath path = myTree.getSelectionPath();
     if (path == null) {
       return null;
