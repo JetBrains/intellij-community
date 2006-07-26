@@ -158,7 +158,7 @@ public class InspectionApplication {
       LOG.error(e);
       InspectionMain.printHelp();
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.error(e);
       System.exit(1);
     }
