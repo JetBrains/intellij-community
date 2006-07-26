@@ -142,7 +142,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
     }
 
     final JComponent cmp = ProgressManager.getInstance().getProvidedFunComponent(myProject, "<unknown>");
-    if (cmp != null) {
+    if (cmp != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       Runnable installer = new Runnable() {
         public void run() {
           if (isRunning() && !isCanceled() && getFraction() < 0.15 && myDialog!=null) {
@@ -366,6 +366,9 @@ public class ProgressWindow extends BlockingProgressIndicator {
 
       myTitlePanel.addMouseMotionListener(new MouseMotionAdapter() {
         public void mouseDragged(MouseEvent e) {
+          if (myLastClicked == null) {
+            return;
+          }
           final Point draggedTo = new RelativePoint(e).getScreenPoint();
           draggedTo.x -= myLastClicked.x;
           draggedTo.y -= myLastClicked.y;
