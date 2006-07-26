@@ -26,7 +26,7 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
 
   @NonNls
   public String toString() {
-    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append("AntTarget:[");
       builder.append(getName());
@@ -68,9 +68,9 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
         myDependsTargets = EMPTY_TARGETS;
       }
       else {
-        AntProject project = (AntProject)getAntParent();
+        final AntProject project = getAntProject();
         final List<AntTarget> targets = new ArrayList<AntTarget>();
-        for (String name : depends.split(",")) {
+        for (final String name : depends.split(",")) {
           final AntTarget antTarget = project.getTarget(name);
           if (antTarget != null) {
             targets.add(antTarget);
