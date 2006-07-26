@@ -589,8 +589,15 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     }
 
     public void actionPerformed(ActionEvent e) {
-      if (apply()) {
-        setCancelButtonText(CommonBundle.getCloseButtonText());
+      if (myPerformAction) return;
+      myPerformAction = true;
+      try {
+        if (apply()) {
+          setCancelButtonText(CommonBundle.getCloseButtonText());
+        }
+      }
+      finally {
+        myPerformAction = false;
       }
     }
   }

@@ -136,7 +136,9 @@ public class SingleConfigurableEditor extends DialogWrapper {
     }
 
     public void actionPerformed(ActionEvent event) {
+      if (myPerformAction) return;
       try {
+        myPerformAction = true;
         if (myConfigurable.isModified()) {
           myConfigurable.apply();
           setCancelButtonText(CommonBundle.getCloseButtonText());
@@ -150,6 +152,8 @@ public class SingleConfigurableEditor extends DialogWrapper {
           Messages.showMessageDialog(myParentComponent, e.getMessage(), e.getTitle(),
                                      Messages.getErrorIcon());
         }
+      } finally {
+        myPerformAction = false;
       }
     }
   }
