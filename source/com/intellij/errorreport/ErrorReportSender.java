@@ -26,8 +26,7 @@ import java.io.IOException;
  * To change this template use Options | File Templates.
  */
 public class ErrorReportSender {
-  @NonNls public static final String PREPARE_URL = "http://www.intellij.net/websupport/error/";
-  @NonNls public static String REPORT_URL = "http://www.intellij.net/websupport/error/report?sender=i";
+  @NonNls public static final String PREPARE_URL = "http://www.intellij.net/";
   //public static String REPORT_URL = "http://unit-038:8080/error/report?sender=i";
 
   @NonNls public static final String PRODUCT_CODE = "idea";
