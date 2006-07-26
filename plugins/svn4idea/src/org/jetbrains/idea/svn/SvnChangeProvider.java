@@ -57,7 +57,6 @@ public class SvnChangeProvider implements ChangeProvider {
     final List<VcsException> exceptions = new ArrayList<VcsException>();
     for (Change change : changes) {
       final File ioFile = ChangesUtil.getFilePath(change).getIOFile();
-      System.out.println("reverting: " + ioFile);
       try {
         SVNWCClient client = myVcs.createWCClient();
         client.setEventHandler(new ISVNEventHandler() {
@@ -148,16 +147,19 @@ public class SvnChangeProvider implements ChangeProvider {
     return exceptions;
   }
 
-  private void processFile(FilePath path, SVNStatusClient stClient, final ChangelistBuilder builder, boolean recursively)
-    throws SVNException {
-    if (path.isDirectory()) {
-      stClient.doStatus(path.getIOFile(), recursively, false, false, false, new ISVNStatusHandler() {
-        public void handleStatus(SVNStatus status) throws SVNException {
-          processStatus(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(status.getFile()), status, builder);
-        }
-      });
-    } else {
-      processFile(path, stClient, builder);
+  private void processFile(FilePath path, SVNStatusClient stClient, final ChangelistBuilder builder, boolean recursively) {
+    try {
+      if (path.isDirectory()) {
+        stClient.doStatus(path.getIOFile(), recursively, false, false, false, new ISVNStatusHandler() {
+          public void handleStatus(SVNStatus status) throws SVNException {
+            processStatus(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(status.getFile()), status, builder);
+          }
+        });
+      } else {
+        processFile(path, stClient, builder);
+      }
+    } catch (SVNException e) {
+        //
     }
   }
 
