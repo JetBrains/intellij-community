@@ -11,9 +11,13 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.idea.Bombed;
+import com.intellij.idea.IdeaTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @by Maxim.Mossienko
@@ -21,6 +25,7 @@ import java.util.Calendar;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/ant";
+  private boolean myIgnoreInfos;
 
   public void testDummy() {}
 
@@ -74,5 +79,36 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testAntFileProperties() throws Exception {
     doTest();
+  }
+
+  @Bombed(year = 2006, month = Calendar.AUGUST, day = 29, user = "lvo", time = 12, description = "Performance test")
+  public void testBigFile() throws Exception {
+    configureByFiles(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"),
+        getVirtualFile(BASE_PATH + "/" + "buildserver.xml"),
+        getVirtualFile(BASE_PATH + "/" + "buildserver.properties")
+      },
+      null
+    );
+
+    IdeaTestUtil.assertTiming(
+      "Should be quite performant !",
+      1000,
+      new Runnable() {
+        public void run() {
+          doDoTest(true, false);
+        }
+      }
+    );
+  }
+
+
+  protected Collection<HighlightInfo> doHighlighting() {
+    final Collection<HighlightInfo> infos = super.doHighlighting();
+    if (!myIgnoreInfos) {
+      return infos;
+    }
+    return Collections.emptyList();
   }
 }

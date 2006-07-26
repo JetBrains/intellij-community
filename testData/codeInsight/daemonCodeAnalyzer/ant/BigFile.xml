@@ -1,0 +1,922 @@
+<project name="BuildServer" default="dist" basedir=".">
+  <!--
+  Comment out skip.scramble property to enable obfuscation
+  Uncomment the property to disable obfuscation
+  -->
+  <!--<property name="skip.scramble" value="true"/>-->
+
+  <property file="buildserver.properties"/>
+
+  <property environment="env"/>
+
+  <condition property="skip.scramble">
+    <and>
+    <not><isset property="skip.scramble"/></not>
+    <isset property="fast"/>
+    </and>
+  </condition>
+
+  <!-- Define properties from environment if buildserver.properties is not available -->
+  <property name="jdk.home.idea_jdk" value="${env.JAVA_HOME}"/>
+
+  <property name="jdk13-args" value="-source 1.3 -target 1.1"/>
+  <property name="compiler.args.runtime-util" value="${jdk13-args}"/>
+  <property name="compiler.args.ant-runtime" value="${jdk13-args}"/>
+  <property name="compiler.args.ant-server-logging" value="${jdk13-args}"/>
+  <property name="compiler.args.common-runtime" value="${jdk13-args}"/>
+  <property name="compiler.args.messages" value="${jdk13-args}"/>
+  <property name="compiler.args.runtime-util" value="${jdk13-args}"/>
+  <property name="compiler.args.xml-rpc-wrapper" value="${jdk13-args}"/>
+  <property name="compiler.args.server-logging" value="${jdk13-args}"/>
+
+  <property name="compiler.args.maven-runtime" value="-source 1.4 -target 1.4"/>
+
+  <import file="buildserver.xml"/>
+
+  <taskdef name="javac2" classname="com.intellij.ant.Javac2">
+    <classpath>
+      <pathelement location="${module.build-server4idea_sources.basedir}/build-server4idea/lib/javac2.jar"/>
+      <pathelement location="${module.build-server4idea_sources.basedir}/build-server4idea/lib/asm.jar"/>
+      <pathelement location="${module.build-server4idea_sources.basedir}/build-server4idea/lib/asm-commons.jar"/>
+      <pathelement location="${module.build-server4idea_sources.basedir}/build-server4idea/lib/jdom.jar"/>
+      <pathelement location="${module.build-server4idea_sources.basedir}/build-server4idea/lib/jgoodies-forms.jar"/>
+    </classpath>
+  </taskdef>
+
+  <path id="library.tomcat.classpath">
+    <pathelement location="${basedir}/tools/tomcat/common/lib/naming-factory-dbcp.jar"/>
+    <pathelement location="${basedir}/tools/tomcat/common/lib/jasper-compiler.jar"/>
+    <pathelement location="${basedir}/tools/tomcat/common/lib/servlet-api.jar"/>
+    <pathelement location="${basedir}/tools/tomcat/common/lib/commons-el.jar"/>
+    <pathelement location="${basedir}/tools/tomcat/common/lib/jasper-compiler-jdt.jar"/>
+    <pathelement location="${basedir}/tools/tomcat/common/lib/naming-factory.jar"/>
+    <pathelement location="${basedir}/tools/tomcat/common/lib/jasper-runtime.jar"/>
+    <pathelement location="${basedir}/tools/tomcat/common/lib/jsp-api.jar"/>
+    <pathelement location="${basedir}/tools/tomcat/common/lib/naming-resources.jar"/>
+  </path>
+
+  <property name="next.successful.build.id" value="SNAPSHOT"/>
+  <property name="successful.build.number" value="${next.successful.build.id}"/>
+  <property name="version" value="${successful.build.number}"/>
+
+  <property name="dist" value="${basedir}/dist"/>
+  <property name="agentDist" value="${dist}/agent"/>
+  <property name="agentDistLib" value="${agentDist}/lib"/>
+  <property name="j2ee.path.jar" value="buildServer-${version}.war"/>
+
+  <property name="test-reports" value="${basedir}/test-reports"/>
+  <property name="html-reports" value="${test-reports}/html"/>
+
+  <condition property="dotNet">
+    <and>
+      <os family="windows"/>
+      <isset property="DotNetFramework1.1" />
+      <isset property="DotNetFramework2.0" />
+    </and>
+  </condition>
+
+  <condition property="underWindows">
+      <os  family="windows" />
+  </condition>
+
+  <target name="init">
+    <delete dir="${dist}" quiet="true"/>
+    <delete dir="${basedir}/temp" quiet="true"/>
+  </target>
+
+  <target name="sources">
+
+    <echo message="creating ${dist}/sources-${version}.jar"/>
+    <jar destfile="${dist}/sources-${version}.jar">
+      <fileset dir="agentInstaller/src" />
+      <fileset dir="agentInstaller-UI/src" />
+      <fileset dir="agent/src" />
+      <fileset dir="ant-runner-server/src" />
+      <fileset dir="ant-runner/src" />
+      <fileset dir="ant-runtime/src" />
+      <fileset dir="ant-server-logging/src" />
+      <fileset dir="artefacts/src" />
+      <fileset dir="build-server4idea/src" />
+      <fileset dir="build/src" />
+      <fileset dir="common-runtime/src" />
+      <fileset dir="common/src" />
+      <fileset dir="coverage-agent/src" />
+      <fileset dir="coverage-server/src" />
+      <fileset dir="cvs-support/src" />
+      <fileset dir="DotNetCommon-runtime/src" />
+      <fileset dir="email-notificator/src" />
+      <fileset dir="idea-runner-server/src" />
+      <fileset dir="idea-runner/src" />
+      <fileset dir="inspections-runner/src" />
+      <fileset dir="inspections-util/src" />
+      <fileset dir="jabber-notificator/src" />
+      <fileset dir="launcher/src" />
+      <fileset dir="license-common/src" />
+      <fileset dir="license-keygen/src" />
+      <fileset dir="maven-runner-server/src" />
+      <fileset dir="maven-runner/src" />
+      <fileset dir="maven-runtime/src" />
+      <fileset dir="messages/src" />
+      <fileset dir="MSBuild-runner-server/src" />
+      <fileset dir="MSBuild-runner/src" />
+      <fileset dir="NAnt-runner-server/src" />
+      <fileset dir="NAnt-runner/src" />
+      <fileset dir="NAnt/src" />
+      <fileset dir="ntdomain-login/src" />
+      <fileset dir="patches-impl/src" />
+      <fileset dir="patches/src" />
+      <fileset dir="perforce/src" />
+      <fileset dir="remote-server-proxy/src" />
+      <fileset dir="runtime-util/src" />
+      <fileset dir="server-logging/src" />
+      <fileset dir="server-model/src" />
+      <fileset dir="server-openapi/src" />
+      <fileset dir="server-side-inspections/src" />
+      <fileset dir="server/src" />
+      <fileset dir="Solution2005-runner-server/src" />
+      <fileset dir="Solution2005-runner/src" />
+      <fileset dir="svn/src" />
+      <fileset dir="utils/src" />
+      <fileset dir="web-openapi/src" />
+      <fileset dir="web/src" />
+      <fileset dir="win32-notificator/src" />
+      <fileset dir="xml-rpc-wrapper/src" />
+    </jar>
+
+    <echo message="creating ${dist}/openApi-${version}.jar"/>
+    <jar destfile="${dist}/openApi-${version}.jar">
+      <fileset dir="ant-runtime/src" includes="**/AntTaskExtension.java"/>
+      <fileset dir="common-runtime/src" />
+      <fileset dir="common/src" />
+      <fileset dir="messages/src" />
+      <fileset dir="runtime-util/src" />
+      <fileset dir="server-model/src" />
+      <fileset dir="server-openapi/src" />
+      <fileset dir="utils/src" />
+      <fileset dir="web-openapi/src" />
+      <fileset dir="xml-rpc-wrapper/src" />
+    </jar>
+
+  </target>
+
+  <target name="dist" depends="scramble,sources">
+
+    <delete dir="${agentDist}" quiet="true"/>
+
+    <property name="ant_jar" value="ant165.jar"/>
+    <jar file="${dist}/${ant_jar}" basedir="tools" includes="ant/**"/>
+
+    <property name="maven_jar" value="maven-2.1.jar"/>
+    <jar file="${dist}/${maven_jar}" basedir="tools" includes="maven-2.1/**"/>
+
+    <property name="idea_jar" value="idea_dist.jar"/>
+    <jar file="${dist}/${idea_jar}">
+      <fileset dir="${basedir}/tools">
+        <include name="idea/lib/**"/>
+        <include name="idea/bin/**"/>
+        <include name="idea/plugins/**"/>
+      </fileset>
+    </jar>
+
+    <copy file="${basedir}/Win32Notify/Win32NotifyInstall/ReleaseMsi/Win32NotifyInstall.msi" tofile="${dist}/windowsTrayNotifier.msi"/>
+
+    <jar update="true" destfile="${dist}/${j2ee.path.jar}">
+      <zipfileset file="${dist}/buildAgent.zip" prefix="update"/>
+      <zipfileset file="${dist}/buildAgentInstaller.jar" prefix="update"/>
+      <zipfileset file="${dist}/agentInstaller.jar" prefix="update"/>
+
+      <zipfileset file="${dist}/antPlugin.zip" prefix="update/plugins"/>
+      <zipfileset file="${dist}/iprPlugin.zip" prefix="update/plugins"/>
+      <zipfileset file="${dist}/dotnetPlugin.zip" prefix="update/plugins"/>
+      <zipfileset file="${dist}/coveragePlugin.zip" prefix="update/plugins"/>
+      <zipfileset file="${dist}/mavenPlugin.zip" prefix="update/plugins"/>
+      <zipfileset file="${dist}/inspectionPlugin.zip" prefix="update/plugins"/>
+
+      <zipfileset file="${dist}/${ant_jar}" prefix="update/plugins"/>
+      <zipfileset file="${dist}/${maven_jar}" prefix="update/plugins"/>
+      <zipfileset file="${dist}/${idea_jar}" prefix="update/plugins"/>
+
+      <zipfileset file="${dist}/agentInstaller.exe" prefix="update" />
+      <zipfileset file="${dist}/buildServerPlugin.zip" prefix="update" />
+      <zipfileset file="${dist}/windowsTrayNotifier.msi" prefix="update"/>
+    </jar>
+
+    <delete file="${dist}/buildAgentInstaller.jar"/>
+    <delete file="${dist}/agentInstaller.jar"/>
+    <delete file="${dist}/${ant_jar}"/>
+    <delete file="${dist}/${maven_jar}"/>
+    <delete file="${dist}/${idea_jar}"/>
+    <delete dir="${dist}" includes="*Plugin.zip" excludes="buildServerPlugin.zip"/>
+
+    <antcall target="tomcatDist"/>
+  </target>
+
+  <target name="tomcatDist" unless="fast">
+    <!--  Prepare Tomcat distribution -->
+    <property name="tdir" value="${dist}/TeamCity"/>
+    <mkdir dir="${tdir}"/>
+    <copy todir="${tdir}">
+      <fileset dir="${basedir}/tools/tomcat"/>
+    </copy>
+
+    <copy todir="${tdir}">
+      <fileset dir="${dist}" includes="openApi*"/>
+    </copy>
+
+    <mkdir dir="${tdir}/webapps/ROOT"/>
+    <unwar src="${dist}/${j2ee.path.jar}" dest="${tdir}/webapps/ROOT"/>
+
+    <mkdir dir="${tdir}/buildAgent"/>
+    <unzip src="${dist}/buildAgent.zip" dest="${tdir}/buildAgent"/>
+
+    <copy tofile="${tdir}/buildAgent/bin/buildAgent.properties"
+          file="${tdir}/buildAgent/bin/buildAgent.dist.properties"/>
+
+    <copy todir="${tdir}/bin">
+      <fileset dir="${basedir}/bin">
+
+        <include name="runAll.sh"/>
+        <include name="runAll.bat"/>
+        <include name="team-server-log4j.xml"/>
+        <include name="log4j.dtd"/>
+
+      </fileset>
+    </copy>
+
+    <fixcrlf srcdir="${tdir}/bin" includes="*.sh" eol="lf" eof="remove"/>
+    <fixcrlf srcdir="${tdir}/buildAgent/bin" includes="*.sh" eol="lf" eof="remove"/>
+
+    <tar tarfile="${dist}/TeamCity.tar" longfile="gnu">
+      <tarfileset dir="${dist}" mode="755">
+          <include name="TeamCity/bin/*.sh"/>
+          <include name="TeamCity/buildAgent/bin/*.sh"/>
+      </tarfileset>
+      <tarfileset dir="${dist}">
+          <include name="TeamCity/**"/>
+          <exclude name="TeamCity/bin/*.sh"/>
+          <exclude name="TeamCity/buildAgent/bin/*.sh"/>
+      </tarfileset>
+    </tar>
+    <gzip zipfile="${dist}/TeamCity-${version}.tar.gz" src="${dist}/TeamCity.tar"/>
+
+    <delete file="${dist}/TeamCity.tar"/>
+    <delete dir="${tdir}"/>
+
+  </target>
+
+  <target name="buildServerDist" depends="init,all,generate-eap-license,j2ee.build.jar.web"
+          description="Build distibution of Build Server">
+    <mkdir dir="${dist}"/>
+    <move file="${j2ee.path.jar}" todir="${dist}"/>
+
+    <antcall target="precompile-jsp"/>
+  </target>
+
+  <target name="generate-eap-license" depends="compile.module.license-keygen.production">
+    <property name="licenses_file" value="${web.output.dir}/license.keys"/>
+    <java classname="jetbrains.buildServer.license.keygen.EAPLicenseFileGen">
+      <arg value="${licenses_file}"/>
+      <classpath refid="license-keygen.module.classpath"/>
+      <classpath>
+        <pathelement path="${license-keygen.output.dir}"/>
+      </classpath>
+    </java>
+  </target>
+
+  <target name="buildPlugin" description="Build IDEA's plugin">
+
+    <property name="pluginDir" value="${dist}/pluginDist"/>
+    <property name="pluginDist" value="${pluginDir}/buildServerPlugin"/>
+    <property name="pluginDistLib" value="${pluginDist}/lib"/>
+
+    <mkdir dir="${pluginDist}"/>
+    <mkdir dir="${pluginDistLib}"/>
+
+    <copy file="build-server4idea/META-INF/plugin.xml" todir="${build-server4idea_sources.output.dir}/META-INF"/>
+
+    <jar file="${pluginDistLib}/buildServer4Idea.jar" basedir="${build-server4idea_sources.output.dir}"/>
+    <jar file="${pluginDistLib}/patches.jar" basedir="patches/classes"/>
+    <jar file="${pluginDistLib}/patches-impl.jar" basedir="patches-impl/classes"/>
+
+    <copy file="${agentDistLib}/buildServerRemoteServerProxy.jar" todir="${pluginDistLib}"/>
+    <copy file="${agentDistLib}/buildServerServerModel.jar" todir="${pluginDistLib}"/>
+    <copy file="${agentDistLib}/buildServerXmlRpcWrapper.jar" todir="${pluginDistLib}"/>
+    <copy file="${agentDistLib}/buildServerMessages.jar" todir="${pluginDistLib}"/>
+    <copy file="${agentDistLib}/utils.jar" todir="${pluginDistLib}"/>
+
+    <copy file="lib/xpp3_min-1.1.3.4.M.jar" todir="${pluginDistLib}"/>
+    <copy file="lib/xstream-1.1.2.jar" todir="${pluginDistLib}"/>
+    <copy file="lib/commons-beanutils-core.jar" todir="${pluginDistLib}"/>
+
+    <copy file="build-server4idea/lib/commons-httpclient-3.0-rc4.jar" todir="${pluginDistLib}"/>
+    <copy file="build-server4idea/lib/commons-logging.jar" todir="${pluginDistLib}"/>
+
+    <zip file="${dist}/buildServerPlugin.zip" basedir="${pluginDir}"/>
+    <delete dir="${pluginDir}"  quiet="true"/>
+  </target>
+
+  <target name="agentNTServiceLauncher" if="agentNTServiceLauncher.exe4j.present">
+    <delete file="${dist}/bin/agentd.exe" />
+    <!--<property name="agentJRE" value="${agentDist}\jre"/>
+    <delete dir="${agentJRE}"/>
+    <mkdir dir="${agentJRE}"/>
+    <copy todir="${agentJRE}">
+      <fileset dir="\\build-unit\buildserver.jre" />
+    </copy>
+-->
+    <delete file="${basedir}/agent.service.exe4j"/>
+    <copy file="${basedir}/agent.service.exe4j.template" tofile="${basedir}/agent.service.exe4j"/>
+
+    <replace file="${basedir}/agent.service.exe4j" value="${dist}/agent">
+      <replacetoken><![CDATA[##DISTAGENT##]]></replacetoken>
+    </replace>
+
+    <taskdef name="exe4j"
+             classname="com.exe4j.Exe4JTask"
+             classpath="${exe4j.installation}\bin\exe4j.jar"/>
+    <exe4j projectfile="${basedir}/agent.service.exe4j"
+           release="1.0.${version}.0"
+           />
+  </target>
+
+
+  <target name="buildAgentDist" description="Build distibution of Build Server Agent">
+
+    <mkdir dir="${agentDistLib}"/>
+
+    <copy todir="${agentDistLib}">
+      <fileset dir="lib">
+        <include name="*.jar"/>
+        <exclude name="idea.jar"/>
+        <exclude name="extensions.jar"/>
+        <exclude name="h2.jar"/>
+        <exclude name="hsqldb.jar"/>
+      </fileset>
+      <fileset dir="agent/lib">
+        <include name="*.jar"/>
+      </fileset>
+      <fileset dir="tools/idea/lib">
+        <include name="annotations.jar"/>
+        <include name="openapi.jar"/>
+        <include name="resources*.jar"/>
+      </fileset>
+    </copy>
+
+    <manifest file="manifest.mf">
+      <attribute name="Built-By" value="JetBrains BuildServer"/>
+      <attribute name="Implementation-Version" value="${version}"/>
+    </manifest>
+
+    <jar file="${agentDistLib}/buildServerAgent.jar" basedir="agent/classes" manifest="manifest.mf"/>
+    <jar file="${agentDistLib}/buildServerCommonRuntime.jar" basedir="common-runtime/classes"
+         manifest="manifest.mf"/>
+    <jar file="${agentDistLib}/buildServerCommon.jar" basedir="common/classes" manifest="manifest.mf"/>
+    <jar file="${agentDistLib}/buildServerRuntimeUtil.jar" basedir="runtime-util/classes" manifest="manifest.mf"/>
+    <jar file="${agentDistLib}/buildServerServerModel.jar" basedir="server-model/classes" manifest="manifest.mf"/>
+    <jar file="${agentDistLib}/buildServerMessages.jar" basedir="messages/classes" manifest="manifest.mf"/>
+    <jar file="${agentDistLib}/buildServerServerLogging.jar" basedir="server-logging/classes" manifest="manifest.mf"/>
+    <jar file="${agentDistLib}/buildServerXmlRpcWrapper.jar" basedir="xml-rpc-wrapper/classes"
+         manifest="manifest.mf"/>
+    <jar file="${agentDistLib}/buildServerRemoteServerProxy.jar" basedir="remote-server-proxy/classes"
+         manifest="manifest.mf"/>
+    <jar file="${agentDistLib}/launcher.jar" basedir="launcher/classes" manifest="manifest.mf"/>
+    <jar file="${agentDistLib}/patches-impl.jar" basedir="patches-impl/classes" manifest="manifest.mf"/>
+    <jar file="${agentDistLib}/patches.jar" basedir="patches/classes" manifest="manifest.mf"/>
+    <jar file="${agentDistLib}/utils.jar" basedir="utils/classes" manifest="manifest.mf"/>
+
+    <mkdir dir="${agentDist}/bin"/>
+    <copy todir="${agentDist}/bin">
+      <fileset dir="bin">
+        <include name="*"/>
+        <exclude name="*.log"/>
+        <exclude name="runAll.*"/>
+      </fileset>
+    </copy>
+
+    <fixcrlf srcdir="${agentDist}/bin" includes="*.sh" eol="lf" eof="remove"/>
+    <chmod file="${agentDist}/bin/agent.sh" perm="ugo+rx"/>
+
+    <!-- -->
+    <condition property="agentNTServiceLauncher.exe4j.present">
+      <and>
+        <isset property="exe4j.installation" />
+        <os family="windows"/>
+      </and>
+    </condition>
+
+    <antcall target="agentNTServiceLauncher"/>
+
+    <zip file="${dist}/buildAgent.zip" basedir="${agentDist}"/>
+
+    <antcall target="dotnetBuild" />
+
+    <antcall target="izPack"/>
+    <antcall target="izPackToExe"/>
+
+    <!--
+    Please do not uncomment this line. it causes build to fail
+    <delete dir="${agentDist}"/>
+    -->
+  </target>
+
+  <target name="izPack" unless="fast" if="underWindows">
+    <property name="iz" value="${dist}/iz" />
+    <delete dir="${iz}" />
+    <mkdir dir="${iz}" />
+
+    <jar file="${iz}/jdk-searcher.jar" basedir="jdk-searcher/classes"/>
+    <jar file="${iz}/agentInstaller.jar">
+      <fileset dir="agentInstaller/classes">
+        <include name="jetbrains/**"/>
+      </fileset>
+    </jar>
+    <jar file="${iz}/agentInstaller-UI.jar" basedir="agentInstaller-UI/classes">
+      <manifest>
+        <attribute name="Class-Path" value="agentInstaller.jar jdk-searcher.jar jniwrap.jar winpack.jar"/>
+      </manifest>
+    </jar>
+    <copy toDir="${iz}" file="${basedir}/lib/jniwrap.jar"/>
+    <copy toDir="${iz}" file="${basedir}/lib/winpack.jar"/>
+
+    <jar file="${iz}/AgentPropertiesPanel.jar" basedir="agentInstaller-izPack/classes" />
+    <copy file="${iz}/AgentPropertiesPanel.jar" toFile="${iz}/StartServicePanel.jar" />
+
+    <!--
+    This code adds custom panel to izPack. Not used.
+    <delete file="${iz}/standalone-compiler.jar"/>
+    <copy file="${basedir}/agentInstaller/lib/standalone-compiler.jar" toDir="${iz}"/>
+
+    <jar update="true" destfile="${iz}/standalone-compiler.jar">
+      <zipfileset file="${iz}/AgentPropertiesPanel.jar" prefix="bin/panels" />
+      <zipfileset file="${iz}/StartServicePanel.jar" prefix="bin/panels" />
+    </jar>
+
+    <taskdef name="izpack" classpath="${iz}/standalone-compiler.jar"
+             classname="com.izforge.izpack.ant.IzPackTask"/>-->
+    <taskdef name="izpack" classpath="${basedir}/agentInstaller/lib/standalone-compiler.jar"
+             classname="com.izforge.izpack.ant.IzPackTask"/>
+
+    <copy toDir="${iz}">
+      <fileset dir="${basedir}/agentInstaller/src/izPack">
+        <include name="*"/>
+      </fileset>
+    </copy>
+    <copy todir="${basedir}/bin/native/3rdparty">
+      <fileset dir="${basedir}/bin">
+          <include name="**jniwrap**"/>
+      </fileset>
+    </copy>
+    <copy toDir="${basedir}">
+      <fileset dir="${basedir}/agentInstaller/">
+        <include name="bin/native/**"/>
+      </fileset>
+    </copy>
+
+    <echo message="Makes the installer using IzPack"/>
+    <izpack input="${basedir}/agentInstaller/src/buildAgentInstaller.xml"
+            output="${dist}/buildAgentInstaller.jar"
+            installerType="standard"
+            basedir="${iz}"
+            compression="bzip2"
+            compressionlevel="9"
+        />
+
+    <copy file="${iz}/agentInstaller.jar" toDir="${dist}"/>
+
+    <signjar alias="1" storetype="pkcs12"
+             keystore="${basedir}/agent/crt.txt" storepass="izzygoos" maxmemory="128m">
+      <fileset dir="${dist}">
+        <include name="agentInstaller.jar"/>
+        <include name="buildAgentInstaller.jar"/>
+      </fileset>
+    </signjar>
+
+    <sleep milliseconds="200"/>
+
+    <delete dir="${iz}" />
+    <delete dir="${basedir}/bin/native"/>
+  </target>
+
+  <target name="izPackToExe" unless="fast" if="underWindows">
+     <delete dir="${agentDist}/exe"/>
+     <mkdir dir="${agentDist}/exe"/>
+
+    <copy todir="${agentDist}/exe">
+      <fileset dir="${basedir}/tools/izPackLauncher">
+        <include name="**/*"/>
+      </fileset>
+      <fileset dir="${dist}">
+        <include name="agentInstaller.jar"/>
+        <include name="agentInstaller-UI.jar"/>
+        <include name="buildAgentInstaller.jar"/>
+      </fileset>
+      <fileset dir="${basedir}/agentInstaller/src">
+        <include name="launcher.ini"/>
+      </fileset>
+    </copy>
+
+    <delete file="${agentDist}/installer.7z" />
+
+    <exec executable="${basedir}/tools/7zip/7z.exe" dir="${agentDist}/exe">
+      <arg line="a -t7z -mx=9 &quot;..\installer.7z&quot; **"/>
+    </exec>
+
+    <concat destfile="${dist}/agentInstaller.exe" binary="yes">
+      <fileset file="${basedir}/tools/7zip/7zS.sfx"/>
+      <fileset file="${basedir}/agentInstaller/src/7zConfig.txt" />
+      <fileset file="${agentDist}/installer.7z" />
+    </concat>
+
+    <delete dir="${agentDist}/exe" />
+    <delete file="${agentDist}/installer.7z" />
+  </target>
+
+  <target name="dotnetBuild" if="dotnet">
+     <exec dir="${basedir}/Dotnet-listeners/" executable="${basedir}/tools/nant/bin/nant.exe"/>
+  </target>
+
+  <target name="buildAgentPlugins">
+    <!--ANT plugin-->
+    <property name="antPluginLib" value="${dist}/antPlugin/lib"/>
+    <property name="iprPluginLib" value="${dist}/iprPlugin/lib"/>
+
+    <mkdir dir="${antPluginLib}"/>
+    <mkdir dir="${iprPluginLib}"/>
+
+    <jar file="${antPluginLib}/buildServerAntRunner.jar" basedir="ant-runner/classes" manifest="manifest.mf"/>
+
+    <jar file="${iprPluginLib}/buildServerIprRunner.jar" manifest="manifest.mf">
+      <fileset dir="idea-runner/classes"/>
+    </jar>
+    <copy todir="${iprPluginLib}">
+      <fileset dir="idea-runner/lib">
+        <include name="*.jar"/>
+      </fileset>
+    </copy>
+
+    <jar file="${antPluginLib}/buildServerAntRunntime.jar" basedir="ant-runtime/classes" manifest="manifest.mf"/>
+    <jar file="${antPluginLib}/buildServerAntServerLogging.jar" basedir="ant-server-logging/classes"
+         manifest="manifest.mf"/>
+
+    <zip basedir="${dist}" destfile="${dist}/antPlugin.zip">
+      <include name="antPlugin/**"/>
+    </zip>
+    <delete dir="${dist}/antPlugin"/>
+
+    <zip basedir="${dist}" destfile="${dist}/iprPlugin.zip">
+      <include name="iprPlugin/**"/>
+    </zip>
+    <delete dir="${dist}/iprPlugin"/>
+
+    <!-- DotNet plugins -->
+
+
+    <property name="dotNetBase" value="${dist}/dotnetPlugin"/>
+    <property name="dotNetLibs" value="${dotNetBase}/bin"/>
+    <property name="classes" value="${dotNetBase}/lib"/>
+
+    <mkdir dir="${dotNetLibs}"/>
+    <mkdir dir="${classes}"/>
+
+    <jar file="${classes}/dotNetCommonRuntime.jar" basedir="${basedir}/DotNetCommon-runtime/classes" manifest="manifest.mf"/>
+    <jar file="${classes}/nantRunner.jar"          basedir="${basedir}/NAnt-runner/classes" manifest="manifest.mf"/>
+    <jar file="${classes}/msBuildRunner.jar"       basedir="${basedir}/MSBuild-runner/classes" manifest="manifest.mf"/>
+    <jar file="${classes}/solution2005Runner.jar"  basedir="${basedir}/Solution2005-runner/classes" manifest="manifest.mf"/>
+
+    <copy todir="${dotNetLibs}">
+        <fileset dir="${basedir}/DotNet-listeners/bin">
+            <include name="*.dll"/>
+            <include name="*.pdb"/>
+        </fileset>
+    </copy>
+
+    <zip basedir="${dist}" destfile="${dist}/dotnetPlugin.zip">
+        <include name="dotnetPlugin/**"/>
+    </zip>
+
+    <delete dir="${dotNetBase}"/>
+
+    <!-- Coverage plugin -->
+    <mkdir dir="${dist}/coveragePlugin/lib"/>
+    <jar file="${dist}/coveragePlugin/lib/buildServerCoverageAgent.jar" basedir="coverage-agent/classes" manifest="manifest.mf"/>
+
+    <copy todir="${dist}/coveragePlugin/lib" file="coverage-agent/lib/emma.jar"/>
+    <zip basedir="${dist}" destfile="${dist}/coveragePlugin.zip">
+        <include name="coveragePlugin/**"/>
+    </zip>
+    <delete dir="${dist}/coveragePlugin"/>
+
+<!-- Maven2 plugin -->
+<mkdir dir="${dist}/mavenPlugin/lib"/>
+    <jar file="${dist}/mavenPlugin/lib/buildServerMaven2Agent.jar" basedir="maven-runner/classes"/>
+    <jar file="${dist}/mavenPlugin/lib/maven2AgentRuntime.jar" basedir="maven-runtime/classes"/>
+    <zip basedir="${dist}" destfile="${dist}/mavenPlugin.zip">
+        <include name="mavenPlugin/**"/>
+    </zip>
+    <delete dir="${dist}/mavenPlugin"/>
+
+    <!--inspections plugin-->
+    <property name="inspectionPluginLib" value="${dist}/inspectionPlugin/lib"/>
+    <mkdir dir="${inspectionPluginLib}"/>
+
+    <jar file="${inspectionPluginLib}/buildServerInspectionRunner.jar" manifest="manifest.mf">
+      <fileset dir="inspections-runner/classes"/>
+      <fileset dir="inspections-util/classes"/>
+    </jar>
+    <jar file="${inspectionPluginLib}/buildServerInspectionServerLogging.jar" basedir="server-side-inspections/classes"
+         manifest="manifest.mf"/>
+
+    <zip basedir="${dist}" destfile="${dist}/inspectionPlugin.zip">
+      <include name="inspectionPlugin/**"/>
+    </zip>
+    <delete dir="${dist}/inspectionPlugin"/>
+
+  </target>
+
+  <!--  ===================================================================  -->
+  <!--  Complete build -->
+  <!--  ===================================================================  -->
+  <target name="masterbuild" depends="init,all,test,dist"/>
+
+  <!--  ===================================================================  -->
+  <!--  Complete build -->
+  <!--  ===================================================================  -->
+  <target name="testsbuild" depends="init,all,test"/>
+
+  <!--  ===================================================================  -->
+  <!--  All tests                                                    -->
+  <!--  ===================================================================  -->
+  <target name="test" description="Run all tests">
+    <!--<started activity="Preparing tests" type="TestInit"/>-->
+    <!--<progress message="deleting test reports" />-->
+    <delete dir="${test-reports}" quiet="true"/>
+    <!--<progress message="Making dir ${test-reports}" />-->
+    <mkdir dir="${test-reports}"/>
+    <!--<finished activity="Preparing tests" type="TestInit"/>-->
+
+    <property name="PKG" value=""/>
+    <echo message="${PKG}" file="pkg.txt"/>
+    <replace file="pkg.txt" token="." value="/"/>
+
+    <loadfile property="PKG2" srcfile="pkg.txt"/>
+
+    <condition property="PKG1" value="${PKG2}.java">
+        <contains string="${PKG2}" substring="Test"/>
+    </condition>
+    <condition property="PKG1" value="**/*Test.java">
+        <not>
+          <isset property="PKG2"/>
+        </not>
+    </condition>
+    <property name="PKG1" value="${PKG2}**/*Test.java"/>
+
+
+    <delete file="pkg.txt"/>
+
+    <echo message="======>  Running tests from ${PKG1}"/>
+
+    <property name="suspend" value="n"/>
+    <property name="use.mysql.db" value=""/>
+
+    <!--<progress message="Starting junit" />-->
+
+
+    <junit printsummary="yes"
+           haltonfailure="no" showoutput="no"
+           failureProperty="failure_found"
+           fork="yes"
+           forkmode="once" reloading="no" includeantruntime="true">
+         <classpath>
+        <fileset dir="${jdk.home.idea_jdk}/lib" >
+          <include name="tools.jar"/>
+        </fileset>
+        <fileset dir="${basedir}/tools/tomcat/common/lib/">
+          <include name="*.jar"/>
+        </fileset>
+        <fileset dir=".">
+          <include name="**/lib/**/*.jar"/>
+          <exclude name="web/exploded/**/lib/*.jar"/>
+          <exclude name="**/testData/**/*.jar"/>
+          <exclude name="**/work/**/*.jar"/>
+          <exclude name="build-server4idea/lib/patches.jar"/>
+          <exclude name="dist/**/*.jar"/>
+        </fileset>
+        <dirset dir=".">
+          <include name="**/classes"/>
+          <include name="**/classesTest"/>
+        <exclude name="**/work/**/classes*"/>
+        </dirset>
+        <fileset dir="${ant.home}">
+          <include name="**/lib/*.jar"/>
+        </fileset>
+      </classpath>
+
+      <jvmarg value="-ea"/>
+      <jvmarg value="-Xmx512m"/>
+      <jvmarg value="-DBUILDSERVER_ROOT=${basedir}"/>
+      <jvmarg line="-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=${suspend},address=5555"/>
+      <jvmarg line="-Xbootclasspath/p:${basedir}/tools/idea/lib/boot.jar -Didea.load.plugins=false -Didea.home.path=${basedir}/tools/idea"/>
+
+      <sysproperty key="ant.home" value="${ant.home}"/>
+      <sysproperty key="java.awt.headless" value="true"/>
+      <sysproperty key="use.mysql.db" value="${use.mysql.db}"/>
+      <sysproperty key="emma.rt.control" value="false"/>
+      <sysproperty key="report.html.out.file" value="${report.html.out.file}"/>
+      <sysproperty key="dotNet" value="${dotNet}"/>
+      <sysproperty key="DotNetFramework2.0" value="${DotNetFramework2.0}"/>
+      <sysproperty key="DotNetFramework1.1" value="${DotNetFramework1.1}"/>
+
+      <formatter type="xml"/>
+
+      <batchtest todir="${test-reports}">
+        <fileset dir="test/src">
+          <include name="${PKG1}"/>
+          <!--<exclude name="**/AntRunnerTest.java"/>-->
+          <!--<exclude name="**/LargeHistoryTest.java"/>-->
+          <!--<exclude name="**/Inspection*Test.java"/>-->
+          <exclude name="testData/*Test.java"/>
+        </fileset>
+        <fileset dir="common/testSource">
+          <include name="${PKG1}"/>
+        </fileset>
+        <fileset dir="web-test/src">
+          <include name="${PKG1}"/>
+        </fileset>
+        <fileset dir="patches-tests/src">
+          <include name="${PKG1}"/>
+        </fileset>
+        <fileset dir="perforce-test/src">
+          <include name="${PKG1}"/>
+        </fileset>
+        <fileset dir="svn-test/src">
+          <include name="${PKG1}"/>
+        </fileset>
+        <fileset dir="cvs-support-tests/testSrc">
+          <include name="${PKG1}"/>
+        </fileset>
+        <fileset dir="build-server4idea-tests/src">
+          <include name="${PKG1}"/>
+        </fileset>
+        <fileset dir="inspection-tests/src">
+          <include name="${PKG1}"/>
+        </fileset>
+
+
+      </batchtest>
+    </junit>
+
+    <!--
+    <mkdir dir="${html-reports}"/>
+    <junitreport todir="${test-reports}">
+      <fileset dir="${test-reports}">
+        <include name="TEST-*.xml"/>
+      </fileset>
+      <report format="frames" todir="${html-reports}"/>
+    </junitreport>
+    -->
+
+    <antcall target="check_test"/>
+  </target>
+
+  <target name="check_test" if="failure_found">
+    <fail message="Failures found"/>
+  </target>
+
+  <target name="testq">
+    <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true">
+
+      <classpath>
+        <fileset dir="${ant.home}">
+          <include name="**/*.jar"/>
+        </fileset>
+      </classpath>
+      <jvmarg
+          line="-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5009"/>
+
+      <arg value="-f"/>
+      <arg value="build.xml"/>
+      <arg value="check_test"/>
+    </java>
+  </target>
+
+  <target name="scramble" unless="skip.scramble" depends="buildServerDist,buildAgentDist,buildAgentPlugins,buildPlugin">
+
+    <java
+      classname="GenerateZkmScript"
+      fork="true"
+      failonerror="true">
+
+      <arg value="${basedir}"/>
+      <arg value="${dist}"/>
+      <arg value="${basedir}/build/script.zkm.stub"/>
+
+      <classpath>
+        <pathelement location="${basedir}/build/classes"/>
+      </classpath>
+    </java>
+
+    <java
+      classname="ZKM"
+      fork="true"
+      failonerror="true">
+      <jvmarg value="-mx700m"/>
+
+      <arg value="-v"/>
+      <arg value="${dist}/script.zkm"/>
+
+      <classpath>
+        <fileset dir="${basedir}">
+          <include name="**/lib/*.jar"/>
+          <exclude name="dist/**/*.jar"/>
+          <exclude name="web/**/*.jar"/>
+          <exclude name="agentInstaller/**/*.jar"/>
+          <exclude name="build/**/*.jar"/>
+          <exclude name="**/test*/**/*.jar"/>
+          <exclude name="**/tools/**/*.jar"/>
+        </fileset>
+        <fileset dir="${basedir}">
+          <include name="web/lib/*.jar"/>
+          <include name="tools/ant/lib/*.jar"/>
+          <include name="tools/maven*/**/*.jar"/>
+          <include name="tools/surefire*/*.jar"/>
+          <include name="tools/tomcat/**/lib/*.jar"/>
+          <include name="tools/idea/lib/openapi.jar"/>
+          <include name="tools/idea/lib/idea.jar"/>
+        </fileset>
+        <pathelement location="${basedir}/build/lib/ZKM.jar"/>
+      </classpath>
+    </java>
+
+    <mkdir dir="${dist}/unscrambled" />
+    <copy todir="${dist}/unscrambled">
+      <fileset dir="${dist}">
+        <include name="*.zip"/>
+        <include name="*.war"/>
+      </fileset>
+    </copy>
+    <move todir="${dist}/unscrambled">
+      <fileset dir="${basedir}">
+        <include name="ChangeLog.txt"/>
+        <include name="ZKM*.txt"/>
+      </fileset>
+      <fileset dir="${dist}">
+        <include name="script.zkm"/>
+      </fileset>
+    </move>
+
+    <move todir="${dist}">
+      <fileset dir="${dist}/scrambled">
+        <include name="*.*"/>
+      </fileset>
+    </move>
+    <delete dir="${dist}/scrambled"/>
+
+  </target>
+
+  <target name="precompile-jsp" unless="fast">
+    <property name="tmp.dir.web" value="${module.web.basedir}/temp"/>
+    <mkdir dir="${tmp.dir.web}"/>
+
+    <unwar src="${dist}/${j2ee.path.jar}" dest="${tmp.dir.web}"/>
+
+    <property name="webapp.dir" location="${tmp.dir.web}"/>
+    <property name="generated.web.xml" location="${webapp.dir}/WEB-INF/generated_web.xml"/>
+
+    <path id="jspc.classpath">
+      <pathelement location="${webapp.dir}/WEB-INF/classes"/>
+      <fileset dir="${webapp.dir}/WEB-INF/lib">
+        <include name="*.jar"/>
+      </fileset>
+      <path refid="library.tomcat.classpath"/>
+      <pathelement location="${webapp.dir}/lib/jstl.jar"/>
+      <pathelement location="${webapp.dir}/lib/standard.jar"/>
+      <fileset dir="${basedir}/tools/tomcat/bin">
+        <include name="*.jar"/>
+      </fileset>
+      <fileset dir="${basedir}/tools/tomcat/server/lib">
+        <include name="*.jar"/>
+      </fileset>
+    </path>
+
+    <taskdef classname="org.apache.jasper.JspC" name="jasper2" >
+      <classpath refid="jspc.classpath"/>
+    </taskdef>
+
+    <jasper2 validateXml="false" uriroot="${webapp.dir}" webXmlFragment="${generated.web.xml}" outputDir="${webapp.dir}/WEB-INF/src" compilerSourceVM="1.5"/>
+
+    <javac classpathref="jspc.classpath" source="1.5" srcdir="${webapp.dir}/WEB-INF/src" destdir="${webapp.dir}/WEB-INF/classes"/>
+
+    <loadfile property="jsp-servlets" srcfile="${generated.web.xml}"/>
+
+    <replace file="${webapp.dir}/WEB-INF/web.xml" token="&lt;!-- PRECOMPILED JSPS -->" value="${jsp-servlets}"/>
+
+    <jar update="true" destfile="${dist}/${j2ee.path.jar}">
+      <zipfileset dir="${webapp.dir}/WEB-INF/classes" prefix="WEB-INF/classes"/>
+      <zipfileset file="${webapp.dir}/WEB-INF/web.xml" prefix="WEB-INF"/>
+    </jar>
+
+    <delete dir="${tmp.dir.web}" failonerror="false"/>
+  </target>
+
+
+</project>
