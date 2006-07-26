@@ -13,27 +13,35 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.completion.CodeCompletionHandler;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.mock.MockProgressIndicator;
 
 import java.util.Collection;
 import java.util.ArrayList;
 import java.io.File;
+import java.io.IOException;
 
 import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +71,6 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
   private final IdeaProjectTestFixture myProjectFixture;
 
   public CodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture) {
-
     myProjectFixture = projectFixture;
   }
 
@@ -90,13 +97,19 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     }.execute();
   }
 
+  public void testCompletion(String fileBefore, String fileAfter) {
+    configureByFile(fileBefore);
+    new CodeCompletionHandler().invoke(getProject(), myEditor, myFile);
+    checkResultByFile(fileAfter, false);
+  }
+
   public void setUp() throws Exception {
     myProjectFixture.setUp();
-    myPsiManager = (PsiManagerImpl)PsiManager.getInstance(myProjectFixture.getProject());
+    myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
   }
 
   public void tearDown() throws Exception {
-    FileEditorManager editorManager = FileEditorManager.getInstance(myProjectFixture.getProject());
+    FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     VirtualFile[] openFiles = editorManager.getOpenFiles();
     for (VirtualFile openFile : openFiles) {
       editorManager.closeFile(openFile);
@@ -122,7 +135,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
 
   @Nullable
   protected Editor createEditor(VirtualFile file) {
-    final Project project = myProjectFixture.getProject();
+    final Project project = getProject();
     final FileEditorManager instance = FileEditorManager.getInstance(project);
     if (file.getFileType() != null && file.getFileType().isBinary()) {
       return null;
@@ -131,7 +144,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
   }
 
   protected Collection<HighlightInfo> collectAndCheckHighlightings(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
-    final Project project = myProjectFixture.getProject();
+    final Project project = getProject();
     ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(),checkWarnings, checkWeakWarnings, checkInfos);
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -200,4 +213,96 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
   public String getTestDataPath() {
     return myTestDataPath;
   }
+
+  protected Project getProject() {
+    return myProjectFixture.getProject();
+  }
+
+  protected void checkResultByFile(@NonNls String filePath, boolean stripTrailingSpaces) {
+
+    Project project = myProjectFixture.getProject();
+
+    project.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+    if (stripTrailingSpaces) {
+      ((DocumentEx)myEditor.getDocument()).stripTrailingSpaces(false);
+    }
+
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+    String fullPath = getTestDataPath() + filePath;
+
+    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    TestCase.assertNotNull("Cannot find file " + fullPath, vFile);
+    String fileText = null;
+    try {
+      fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
+    }
+    catch (IOException e) {
+      TestCase.fail("Cannot load " + vFile);
+    }
+    Document document = EditorFactory.getInstance().createDocument(fileText);
+
+    int caretIndex = fileText.indexOf(CARET_MARKER);
+    int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
+    int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
+
+    final RangeMarker caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
+    final RangeMarker selStartMarker = selStartIndex >= 0 ? document.createRangeMarker(selStartIndex, selStartIndex) : null;
+    final RangeMarker selEndMarker = selEndIndex >= 0 ? document.createRangeMarker(selEndIndex, selEndIndex) : null;
+
+    if (caretMarker != null) {
+      document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
+    }
+    if (selStartMarker != null) {
+      document.deleteString(selStartMarker.getStartOffset(), selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
+    }
+    if (selEndMarker != null) {
+      document.deleteString(selEndMarker.getStartOffset(), selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
+    }
+
+    String newFileText = document.getText();
+    String newFileText1 = newFileText;
+    if (stripTrailingSpaces) {
+      Document document1 = EditorFactory.getInstance().createDocument(newFileText);
+      ((DocumentEx)document1).stripTrailingSpaces(false);
+      newFileText1 = document1.getText();
+    }
+
+    String text = myFile.getText();
+    text = StringUtil.convertLineSeparators(text, "\n");
+
+    TestCase.assertEquals("Text mismatch in file " + filePath, newFileText1, text);
+
+    if (caretMarker != null) {
+      int caretLine = StringUtil.offsetToLineNumber(newFileText, caretMarker.getStartOffset());
+      int caretCol = caretMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, caretLine, 0);
+
+      TestCase.assertEquals("caretLine", caretLine + 1, myEditor.getCaretModel().getLogicalPosition().line + 1);
+      TestCase.assertEquals("caretColumn", caretCol + 1, myEditor.getCaretModel().getLogicalPosition().column + 1);
+    }
+
+    if (selStartMarker != null && selEndMarker != null) {
+      int selStartLine = StringUtil.offsetToLineNumber(newFileText, selStartMarker.getStartOffset());
+      int selStartCol = selStartMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, selStartLine, 0);
+
+      int selEndLine = StringUtil.offsetToLineNumber(newFileText, selEndMarker.getEndOffset());
+      int selEndCol = selEndMarker.getEndOffset() - StringUtil.lineColToOffset(newFileText, selEndLine, 0);
+
+      TestCase.assertEquals("selectionStartLine", selStartLine + 1,
+                   StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionStart()) + 1);
+
+      TestCase.assertEquals("selectionStartCol", selStartCol + 1,
+                   myEditor.getSelectionModel().getSelectionStart() - StringUtil.lineColToOffset(newFileText, selStartLine, 0) + 1);
+
+      TestCase.assertEquals("selectionEndLine", selEndLine + 1,
+                   StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1);
+
+      TestCase.assertEquals("selectionEndCol", selEndCol + 1,
+                   myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(newFileText, selEndLine, 0) + 1);
+    }
+    else {
+      TestCase.assertTrue("has no selection", !myEditor.getSelectionModel().hasSelection());
+    }
+  }
+
 }

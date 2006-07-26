@@ -40,6 +40,10 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   String getTempDirPath();
 
+  /**
+   * Runs highliting test for the given file
+   * @param filePath path relative to the one set by {@link #setTestDataPath(String)}
+   */
   void testHighlighting(String filePath, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings);
 
   /**
@@ -47,4 +51,6 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @param filePath path relative to the one set by {@link #setTestDataPath(String)}
    */
   void testHighlighting(String filePath);
+
+  void testCompletion(String fileBefore, String fileAfter);
 }
