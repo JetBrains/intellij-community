@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl.reference.providers;
 
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
@@ -24,15 +25,15 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
-    AntStructuredElement antElement = (AntStructuredElement)element;
+    final AntStructuredElement antElement = (AntStructuredElement)element;
     final XmlTag sourceElement = antElement.getSourceElement();
     final XmlAttribute[] attributes = sourceElement.getAttributes();
     if (attributes.length > 0) {
       final List<PsiReference> refs = PsiReferenceListSpinAllocator.alloc();
       try {
-        boolean isTarget = antElement instanceof AntTarget;
-        boolean isSet = "isset".equals(sourceElement.getName());
-        for (XmlAttribute attr : attributes) {
+        final boolean isTarget = antElement instanceof AntTarget;
+        final boolean isSet = "isset".equals(sourceElement.getName());
+        for (final XmlAttribute attr : attributes) {
           @NonNls final String attName = attr.getName();
           if (isTarget && ("if".equals(attName) || "unless".equals(attName))) {
             getAttributeReference(antElement, attr, refs);
@@ -73,7 +74,9 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
       while ((startIndex = value.indexOf("${", endIndex + 1)) > endIndex) {
         startIndex += 2;
         endIndex = value.indexOf('}', startIndex);
-        if (endIndex < 0) break;
+        if (endIndex < 0) {
+          endIndex = startIndex;
+        }
         if (endIndex >= startIndex) {
           final String propName = value.substring(startIndex, endIndex);
           if (project.isEnvironmentProperty(propName) && AntElementImpl.resolveProperty(element, propName) == null) {
@@ -101,9 +104,17 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
       return;
     }
     final XmlAttributeValue xmlAttributeValue = attr.getValueElement();
-    if (xmlAttributeValue != null && resolvedProp != null) {
+    if (xmlAttributeValue != null) {
       final int offsetInPosition = xmlAttributeValue.getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1;
-      refs.add(new AntPropertyReference(this, element, value, new TextRange(offsetInPosition, offsetInPosition + value.length()), attr));
+      refs.add(new AntPropertyReference(this, element, value, new TextRange(offsetInPosition, offsetInPosition + value.length()), attr) {
+        public boolean shouldBeSkippedByAnnotator() {
+          return getCanonicalText().length() > 0;
+        }
+
+        public String getUnresolvedMessagePattern() {
+          return AntBundle.message("please.specify.a.property");
+        }
+      });
     }
   }
 
