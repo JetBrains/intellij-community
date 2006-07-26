@@ -173,13 +173,21 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myFile.getProject());
       Document document = documentManager.getDocument(myFile);
-      LOG.assertTrue(!documentManager.isUncommited(document));
-      myMarker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
 
-      mySyncStartOffset = range.getStartOffset();
-      mySyncEndOffset = range.getEndOffset();
-      mySyncMarkerIsValid = true;
-      myType = anchor.getClass();
+      // LOG.assertTrue(!documentManager.isUncommited(document));
+
+      if (documentManager.isUncommited(document)) {
+        mySyncMarkerIsValid = false;
+        myMarker = document.createRangeMarker(0, 0, false);
+      }
+      else {
+        myMarker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
+
+        mySyncStartOffset = range.getStartOffset();
+        mySyncEndOffset = range.getEndOffset();
+        mySyncMarkerIsValid = true;
+        myType = anchor.getClass();
+      }
     }
 
     public Document getDocumentToSynchronize() {
