@@ -92,15 +92,21 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
       null
     );
 
-    IdeaTestUtil.assertTiming(
+    try {
+      myIgnoreInfos = true;
+      IdeaTestUtil.assertTiming(
       "Should be quite performant !",
-      1000,
-      new Runnable() {
-        public void run() {
-          doDoTest(true, false);
+        1000,
+        new Runnable() {
+          public void run() {
+            doDoTest(true, false);
+          }
         }
-      }
-    );
+      );
+    }
+    finally {
+      myIgnoreInfos = false;
+    }
   }
 
 
