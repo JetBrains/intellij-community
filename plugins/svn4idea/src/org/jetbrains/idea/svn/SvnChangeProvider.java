@@ -167,6 +167,7 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   private void processStatus(final FilePath filePath, final SVNStatus status, final ChangelistBuilder builder) {
+    SvnFileStatusProvider.loadEntriesFile(filePath);
     if (status != null) {
       FileStatus fStatus = SvnFileStatusProvider.convertStatus(status, filePath.getIOFile());
 
