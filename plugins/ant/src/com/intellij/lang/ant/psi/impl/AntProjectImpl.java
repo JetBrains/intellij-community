@@ -281,15 +281,9 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
   protected AntElement[] getChildrenInner() {
     if (!myInGettingChildren) {
-      myInGettingChildren = true;
-      try {
-        final AntElement[] children = super.getChildrenInner();
-        fixUndefinedElements(this, children);
-        return children;
-      }
-      finally {
-        myInGettingChildren = false;
-      }
+      final AntElement[] children = super.getChildrenInner();
+      fixUndefinedElements(this, children);
+      return children;
     }
     return AntElement.EMPTY_ARRAY;
   }
