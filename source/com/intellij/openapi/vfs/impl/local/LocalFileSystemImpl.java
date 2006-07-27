@@ -4,18 +4,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
-import com.intellij.util.Processor;
 import com.intellij.vfs.local.win32.FileWatcher;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -641,7 +640,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         if (status == DIRTY_STATUS) {
           ((VirtualFileImpl)file).refreshInternal(false, modalityState, false, asynchronous);
         }
-        if ((isRoot && !recursive) && ((VirtualFileImpl)file).areChildrenCached()) { //if recursive, then we have already processed children in refreshInternal
+        if ((isRoot || recursive) && ((VirtualFileImpl)file).areChildrenCached()) { //if recursive, then we have already processed children in refreshInternal
           VirtualFile[] children = file.getChildren();
           for (int i = 0; i < children.length; i++) {
             VirtualFile child = children[i];
@@ -649,7 +648,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                 !((VirtualFileImpl)child).getPhysicalFile().exists()) {
               continue; // should be already handled above (see SCR6145)
             }
-            refreshInner(child, false,  modalityState, asynchronous, false, noWatcher);
+            refreshInner(child, recursive,  modalityState, asynchronous, false, noWatcher);
           }
         }
       }
