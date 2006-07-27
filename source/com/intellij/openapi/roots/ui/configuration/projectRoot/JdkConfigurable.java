@@ -38,7 +38,7 @@ public class JdkConfigurable implements NamedConfigurable<ProjectJdk> {
   }
 
   public String getBannerSlogan() {
-    return ProjectBundle.message("project.roots.jdk.banner.text");
+    return ProjectBundle.message("project.roots.jdk.banner.text", myProjectJdk.getName());
   }
 
   public String getDisplayName() {
