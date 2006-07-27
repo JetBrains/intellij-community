@@ -55,7 +55,10 @@ public class PsiMultiReference implements PsiPolyVariantReference {
           strict = true;
         }
       }
-      if(reference.resolve() != null){
+      
+      if(reference instanceof PsiPolyVariantReference && ((PsiPolyVariantReference)reference).multiResolve(false).length > 0 ||
+         reference.resolve() != null
+        ){
         myChoosenOne = i;
         strict = true;
       }
