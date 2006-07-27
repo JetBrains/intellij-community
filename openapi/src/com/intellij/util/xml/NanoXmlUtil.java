@@ -47,7 +47,11 @@ public class NanoXmlUtil {
   public static void parseFile(PsiFile psiFile, final IXMLBuilder builder) {
     try {
       final VirtualFile virtualFile = psiFile.getVirtualFile();
-      assert virtualFile != null;
+      if (virtualFile == null) {
+        parse(new StringReader(psiFile.getText()), builder);
+        return;
+      }
+
       final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
 
       if (document != null) {
