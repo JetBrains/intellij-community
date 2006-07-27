@@ -36,15 +36,14 @@ public abstract class AddDomElementAction extends AnAction {
   public void update(AnActionEvent e) {
     if (!isEnabled(e)) return;
 
-    boolean enabled = false;
     final AnAction[] actions = getChildren(e);
     for (final AnAction action : actions) {
+      e.getPresentation().setEnabled(true);
       action.update(e);
       if (e.getPresentation().isEnabled()) {
-        enabled = true;
+        break;
       }
     }
-    e.getPresentation().setEnabled(enabled);
     if (actions.length == 1) {
       e.getPresentation().setText(actions[0].getTemplatePresentation().getText());
     } else {
