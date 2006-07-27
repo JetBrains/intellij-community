@@ -695,6 +695,16 @@ public class TypedHandler implements TypedActionHandler {
           }
         }
         return false;
+      } else {
+        // check if right after empty end
+        PsiElement previousElement = provider.findElementAt(offset - 1, XMLLanguage.class);
+        if (previousElement instanceof XmlToken) {
+          final IElementType tokenType = ((XmlToken)previousElement).getTokenType();
+
+          if (tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END) {
+            return true;
+          }
+        }
       }
 
       PsiElement parent = element.getParent();
