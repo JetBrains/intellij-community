@@ -244,10 +244,16 @@ public class CvsChangeProvider implements ChangeProvider {
       if (myContent == null) {
         try {
           final GetFileContentOperation operation = GetFileContentOperation.createForFile(myPath);
-          CvsVcs2.executeQuietOperation(CvsBundle.message("operation.name.get.file.content"), operation, myVcs.getProject());
-          final byte[] fileBytes = operation.getFileBytes();
+          final CvsOperationExecutor cvsOperationExecutor =
+            CvsVcs2.executeQuietOperation(CvsBundle.message("operation.name.get.file.content"), operation, myVcs.getProject());
+          if (!cvsOperationExecutor.hasNoErrors()) {
+            myContent = null;
+          }
+          else {
+            final byte[] fileBytes = operation.getFileBytes();
 
-          myContent = fileBytes == null ? null : new String(fileBytes, myPath.getCharset().name());
+            myContent = fileBytes == null ? null : new String(fileBytes, myPath.getCharset().name());
+          }
         }
         catch (Exception e) {
           myContent = null;
