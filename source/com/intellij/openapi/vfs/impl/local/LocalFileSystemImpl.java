@@ -640,7 +640,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         if (status == DIRTY_STATUS) {
           ((VirtualFileImpl)file).refreshInternal(false, modalityState, false, asynchronous);
         }
-        if ((isRoot || recursive) && ((VirtualFileImpl)file).areChildrenCached()) { //if recursive, then we have already processed children in refreshInternal
+        if ((isRoot || recursive) && ((VirtualFileImpl)file).areChildrenCached()) { //here above refresh was not recursive, so in case of recursive we need to trigger it here
           VirtualFile[] children = file.getChildren();
           for (int i = 0; i < children.length; i++) {
             VirtualFile child = children[i];
