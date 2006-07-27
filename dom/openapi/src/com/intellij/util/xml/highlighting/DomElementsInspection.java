@@ -24,7 +24,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,7 +33,7 @@ abstract public class DomElementsInspection extends LocalInspectionTool {
 
   @Nullable
   public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
-    if (isAcceptable(file) || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (isAcceptable(file)) {
       return findProblems(file, manager, isOnTheFly);
     }
 
