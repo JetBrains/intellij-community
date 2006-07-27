@@ -142,6 +142,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       }
     }
   };
+  private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
 
   public DomManagerImpl(final PomModel pomModel,
                         final Project project,
@@ -475,6 +476,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     for (final Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : ((DomFileDescription<?>)description).getImplementations().entrySet()) {
       registerImplementation((Class)entry.getKey(), entry.getValue());
     }
+    myTypeChooserManager.copyFrom(description.getTypeChooserManager());
     final DomElementsAnnotator annotator = description.createAnnotator();
     final Class<? extends DomElement> rootClass = description.getRootElementClass();
     if (annotator != null) {
@@ -537,6 +539,10 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   public final DomElement getIdentityScope(DomElement element) {
     final DomFileDescription description = findFileDescription(element);
     return description == null ? element.getParent() : description.getIdentityScope(element);
+  }
+
+  public TypeChooserManager getTypeChooserManager() {
+    return myTypeChooserManager;
   }
 
   public final VisitorDescription getVisitorDescription(Class<? extends DomElementVisitor> aClass) {

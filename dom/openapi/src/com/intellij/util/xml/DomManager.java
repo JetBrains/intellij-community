@@ -8,12 +8,10 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceFactory;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Processor;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,5 +74,7 @@ public abstract class DomManager implements ProjectComponent {
   public abstract DomElement getResolvingScope(GenericDomValue element);
 
   public abstract DomElement getIdentityScope(DomElement element);
+
+  public abstract TypeChooserManager getTypeChooserManager();
 
 }

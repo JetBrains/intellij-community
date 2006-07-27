@@ -12,7 +12,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -88,7 +91,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myTagName = tagName;
     myAbstractType = type;
 
-    final Type concreteInterface = TypeChooserManager.getClassChooser(type).chooseType(tag);
+    final Type concreteInterface = manager.getTypeChooserManager().getTypeChooser(type).chooseType(tag);
     final Converter converter = getConverter(new Function<Class<? extends Annotation>, Annotation>() {
       @Nullable
       public Annotation fun(final Class<? extends Annotation> s) {

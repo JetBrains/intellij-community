@@ -6,20 +6,21 @@ package com.intellij.util.xml.ui.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.ui.DomCollectionControl;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-import java.lang.reflect.Type;
 
 /**
  * User: Sergey.Vasiliev
@@ -96,10 +97,13 @@ public abstract class AddDomElementAction extends AnAction {
 
   @NotNull
   public AnAction[] getChildren(final AnActionEvent e) {
+    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    if (project == null) return AnAction.EMPTY_ARRAY;
+
     DomCollectionChildDescription[] descriptions = getDomCollectionChildDescriptions(e);
     final List<AnAction> actions = new ArrayList<AnAction>();
     for (DomCollectionChildDescription description : descriptions) {
-      final TypeChooser chooser = TypeChooserManager.getClassChooser(description.getType());
+      final TypeChooser chooser = DomManager.getDomManager(project).getTypeChooserManager().getTypeChooser(description.getType());
       for (Type type : chooser.getChooserTypes()) {
 
         final Class<?> rawType = DomReflectionUtil.getRawType(type);

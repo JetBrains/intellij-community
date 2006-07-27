@@ -6,8 +6,8 @@ package com.intellij.util.xml.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -72,10 +72,10 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
         final T t = (T)getDomCollectionChildDescription().addValue(getParentDomElement(), getElementClass());
         tuneNewValue(t);
         aClass[0] = parent.getGenericInfo().getCollectionChildDescription(t.getXmlElementName()).getType();
-        oldChoosers[0] = TypeChooserManager.getClassChooser(aClass[0]);
+        oldChoosers[0] = domManager.getTypeChooserManager().getTypeChooser(aClass[0]);
         final SmartPsiElementPointer pointer =
           SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(t.getXmlTag());
-        TypeChooserManager.registerClassChooser(aClass[0], new TypeChooser() {
+        domManager.getTypeChooserManager().registerTypeChooser(aClass[0], new TypeChooser() {
           public Type chooseType(final XmlTag tag) {
             if (tag == pointer.getElement()) {
               return getElementClass();
@@ -95,7 +95,7 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
       }
     }.execute().getResultObject();
     if (result != null) {
-      TypeChooserManager.registerClassChooser(aClass[0], oldChoosers[0]);
+      domManager.getTypeChooserManager().registerTypeChooser(aClass[0], oldChoosers[0]);
     }
     return result.getWrappedElement();
   }

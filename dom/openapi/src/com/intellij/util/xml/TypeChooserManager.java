@@ -3,22 +3,22 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.xml.XmlTag;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
-import java.lang.reflect.Type;
 
 /**
  * @author peter
  */
 public class TypeChooserManager {
-  private static final Map<Type, TypeChooser> ourClassChoosers = new HashMap<Type, TypeChooser>();
+  private final Map<Type, TypeChooser> myClassChoosers = new HashMap<Type, TypeChooser>();
 
-  public static TypeChooser getClassChooser(final Type type) {
-    final TypeChooser typeChooser = ourClassChoosers.get(type);
+  public TypeChooser getTypeChooser(final Type type) {
+    final TypeChooser typeChooser = myClassChoosers.get(type);
     return typeChooser != null ? typeChooser : new TypeChooser() {
       public Type chooseType(final XmlTag tag) {
         return type;
@@ -33,20 +33,24 @@ public class TypeChooserManager {
     };
   }
 
-  public static void registerClassChooser(final Type aClass, final TypeChooser typeChooser, Disposable parentDisposable) {
-    registerClassChooser(aClass, typeChooser);
+  public void registerTypeChooser(final Type aClass, final TypeChooser typeChooser, Disposable parentDisposable) {
+    registerTypeChooser(aClass, typeChooser);
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
-        unregisterClassChooser(aClass);
+        unregisterTypeChooser(aClass);
       }
     });
   }
 
-  public static void registerClassChooser(final Type aClass, final TypeChooser typeChooser) {
-    ourClassChoosers.put(aClass, typeChooser);
+  public void registerTypeChooser(final Type aClass, final TypeChooser typeChooser) {
+    myClassChoosers.put(aClass, typeChooser);
   }
 
-  public static void unregisterClassChooser(Type aClass) {
-    ourClassChoosers.remove(aClass);
+  public void unregisterTypeChooser(Type aClass) {
+    myClassChoosers.remove(aClass);
+  }
+
+  public final void copyFrom(TypeChooserManager manager) {
+    myClassChoosers.putAll(manager.myClassChoosers);
   }
 }

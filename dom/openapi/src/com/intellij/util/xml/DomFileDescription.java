@@ -16,19 +16,19 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.InstanceMap;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
-import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.HashMap;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author peter
@@ -37,7 +37,8 @@ public abstract class DomFileDescription<T> {
   private final InstanceMap<ScopeProvider> myScopeProviders = new InstanceMap<ScopeProvider>();
   protected final Class<T> myRootElementClass;
   protected final String myRootTagName;
-  private Map<Class<? extends DomElement>,Class<? extends DomElement>> myImplementations = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
+  private final Map<Class<? extends DomElement>,Class<? extends DomElement>> myImplementations = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
+  private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
 
   protected DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName) {
     myRootElementClass = rootElementClass;
@@ -48,8 +49,17 @@ public abstract class DomFileDescription<T> {
     myImplementations.put(domElementClass, implementationClass);
   }
 
-  protected static void registerClassChooser(final Type aClass, final TypeChooser typeChooser, Disposable parentDisposable) {
-    TypeChooserManager.registerClassChooser(aClass, typeChooser, parentDisposable);
+  @Deprecated
+  protected final void registerClassChooser(final Type aClass, final TypeChooser typeChooser, Disposable parentDisposable) {
+    registerTypeChooser(aClass, typeChooser);
+  }
+
+  protected final void registerTypeChooser(final Type aClass, final TypeChooser typeChooser) {
+    myTypeChooserManager.registerTypeChooser(aClass, typeChooser);
+  }
+
+  public final TypeChooserManager getTypeChooserManager() {
+    return myTypeChooserManager;
   }
 
   protected abstract void initializeFileDescription();

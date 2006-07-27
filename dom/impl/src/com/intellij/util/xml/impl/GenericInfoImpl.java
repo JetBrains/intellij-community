@@ -3,18 +3,19 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.reflect.*;
+import com.intellij.util.xml.reflect.DomChildrenDescription;
+import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -632,7 +633,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   public final Type[] getConcreteInterfaceVariants() {
-    return TypeChooserManager.getClassChooser(myClass).getChooserTypes();
+    return myDomManager.getTypeChooserManager().getTypeChooser(myClass).getChooserTypes();
   }
 
   public boolean isTagValueElement() {
