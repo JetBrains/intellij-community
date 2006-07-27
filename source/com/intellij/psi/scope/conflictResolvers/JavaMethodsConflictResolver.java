@@ -258,13 +258,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     if (typeParameters1.length > 0) {
       final PsiResolveHelper resolveHelper = myArgumentsList.getManager().getResolveHelper();
-      substitutor1 = resolveHelper.inferTypeArguments(typeParameters1, types1, types2, PsiUtil.getLanguageLevel(myArgumentsList));
-    } else if (typeParameters2.length > 0) {
-      final PsiResolveHelper resolveHelper = myArgumentsList.getManager().getResolveHelper();
-      substitutor2 = resolveHelper.inferTypeArguments(typeParameters2, types2, types1, PsiUtil.getLanguageLevel(myArgumentsList));
+      substitutor1 = resolveHelper.inferTypeArguments(typeParameters1, types1, types2, PsiUtil.getLanguageLevel(myArgumentsList), typeParameters2.length == 0);
     }
-
-      assert types1.length == types2.length;
+    if (typeParameters2.length > 0) {
+      final PsiResolveHelper resolveHelper = myArgumentsList.getManager().getResolveHelper();
+      substitutor2 = resolveHelper.inferTypeArguments(typeParameters2, types2, types1, PsiUtil.getLanguageLevel(myArgumentsList), typeParameters1.length == 0);
+    }
 
     for (int i = 0; i < types1.length; i++) {
       PsiType type1 = substitutor1.substitute(types1[i]);

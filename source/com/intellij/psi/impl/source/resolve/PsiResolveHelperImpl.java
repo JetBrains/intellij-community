@@ -253,7 +253,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
   }
 
   public PsiSubstitutor inferTypeArguments(PsiTypeParameter[] typeParameters, PsiType[] leftTypes, PsiType[] rightTypes,
-                                           final LanguageLevel languageLevel) {
+                                           final LanguageLevel languageLevel, final boolean inferInAnyCase) {
     if (leftTypes.length != rightTypes.length) throw new IllegalArgumentException("Types must be of the same length");
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     for (PsiTypeParameter typeParameter : typeParameters) {
@@ -280,8 +280,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
         }
       }
 
-      if (substitution == null) substitution = TypeConversionUtil.typeParameterErasure(typeParameter);
-      substitutor = substitutor.put(typeParameter, substitution);
+      if (substitution == null && inferInAnyCase) substitution = TypeConversionUtil.typeParameterErasure(typeParameter);
+      if (substitution != null) substitutor = substitutor.put(typeParameter, substitution);
     }
     return substitutor;
   }

@@ -112,7 +112,7 @@ public interface PsiResolveHelper {
   PsiSubstitutor inferTypeArguments(PsiTypeParameter[] typeParameters,
                                     PsiType[] leftTypes,
                                     PsiType[] rightTypes,
-                                    LanguageLevel languageLevel);
+                                    LanguageLevel languageLevel, final boolean inferInAnyCase);
 
   PsiType getSubstitutionForTypeParameter(PsiTypeParameter typeParam,
                                           PsiType param,
