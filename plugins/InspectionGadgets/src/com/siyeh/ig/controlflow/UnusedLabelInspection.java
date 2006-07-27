@@ -53,6 +53,7 @@ public class UnusedLabelInspection extends StatementInspection {
 
     private static class UnusedLabelFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "unused.label.remove.quickfix");
@@ -61,15 +62,15 @@ public class UnusedLabelInspection extends StatementInspection {
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement label = descriptor.getPsiElement();
-            final PsiLabeledStatement statement =
+            final PsiLabeledStatement labeledStatement =
                     (PsiLabeledStatement)label.getParent();
-            assert statement != null;
-            final PsiStatement labeledStatement = statement.getStatement();
-            if (labeledStatement == null) {
+            assert labeledStatement != null;
+            final PsiStatement statement = labeledStatement.getStatement();
+            if (statement == null) {
                 return;
             }
-            final String statementText = labeledStatement.getText();
-            replaceStatement(statement, statementText);
+            final String statementText = statement.getText();
+            replaceStatement(labeledStatement, statementText);
         }
     }
 
@@ -104,9 +105,10 @@ public class UnusedLabelInspection extends StatementInspection {
         }
 
         public void visitElement(@NotNull PsiElement element) {
-            if (!found) {
-                super.visitElement(element);
+            if (found) {
+                return;
             }
+            super.visitElement(element);
         }
 
         public void visitContinueStatement(
@@ -115,7 +117,6 @@ public class UnusedLabelInspection extends StatementInspection {
                 return;
             }
             super.visitContinueStatement(continueStatement);
-
             final PsiIdentifier labelIdentifier =
                     continueStatement.getLabelIdentifier();
             if (labelMatches(labelIdentifier)) {
@@ -131,7 +132,6 @@ public class UnusedLabelInspection extends StatementInspection {
             super.visitBreakStatement(breakStatement);
             final PsiIdentifier labelIdentifier =
                     breakStatement.getLabelIdentifier();
-
             if (labelMatches(labelIdentifier)) {
                 found = true;
             }

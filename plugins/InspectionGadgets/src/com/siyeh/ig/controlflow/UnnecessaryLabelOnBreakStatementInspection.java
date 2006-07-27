@@ -52,6 +52,7 @@ public class UnnecessaryLabelOnBreakStatementInspection
     private static class UnnecessaryLabelOnBreakStatementFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "unnecessary.label.remove.quickfix");
@@ -62,8 +63,12 @@ public class UnnecessaryLabelOnBreakStatementInspection
             final PsiElement breakKeywordElement = descriptor.getPsiElement();
             final PsiBreakStatement breakStatement =
                     (PsiBreakStatement)breakKeywordElement.getParent();
-            replaceStatement(breakStatement,
-                    PsiKeyword.BREAK);
+            final PsiIdentifier identifier =
+                    breakStatement.getLabelIdentifier();
+            if (identifier == null) {
+                return;
+            }
+            identifier.delete();
         }
     }
 
