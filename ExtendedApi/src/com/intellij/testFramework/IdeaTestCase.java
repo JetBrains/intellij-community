@@ -555,6 +555,12 @@ import java.util.HashSet;
     return virtualFile;
   }
 
+  protected File createTempDirectory() throws IOException {
+    File dir = FileUtil.createTempDirectory("unitTest", null);
+    myFilesToDelete.add(dir);
+    return dir;
+  }
+
   private static class MyThreadGroup extends ThreadGroup {
     private Throwable myThrowable;
     @NonNls private static final String IDEATEST_THREAD_GROUP = "IDEATest";

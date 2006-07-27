@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,12 +16,12 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.Collection;
-
-import org.jetbrains.annotations.NonNls;
 
 @NonNls public class PsiTestUtil {
   public static VirtualFile createTestProjectStructure(Project project,
@@ -84,6 +85,27 @@ import org.jetbrains.annotations.NonNls;
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();
     final ContentEntry contentEntry = rootModel.addContentEntry(vDir);
     contentEntry.addSourceFolder(vDir, false);
+    rootModel.commit();
+  }
+
+  public static void addSourceRoot(Module module, final VirtualFile vDir) {
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+    final ModifiableRootModel rootModel = rootManager.getModifiableModel();
+    final ContentEntry[] contentEntries = rootModel.getContentEntries();
+    ContentEntry entry = ContainerUtil.find(contentEntries, new Condition<ContentEntry>() {
+      public boolean value(final ContentEntry object) {
+        return VfsUtil.isAncestor(object.getFile(), vDir, false);
+      }
+    });
+    if (entry == null) entry = rootModel.addContentEntry(vDir);
+    entry.addSourceFolder(vDir, false);
+    rootModel.commit();
+  }
+  
+  public static void addContentRoot(Module module, VirtualFile vDir) {
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+    final ModifiableRootModel rootModel = rootManager.getModifiableModel();
+    rootModel.addContentEntry(vDir);
     rootModel.commit();
   }
 

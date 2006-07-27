@@ -7,19 +7,20 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.impl.ModuleImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
+import org.jdom.JDOMException;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-
-import org.jdom.JDOMException;
 
 public abstract class ModuleTestCase extends IdeaTestCase {
   protected final Collection<Module> myModulesToDispose = new ArrayList<Module>();
@@ -127,5 +128,16 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     if (moduleProperties != null){
       module.doInitJdomExternalizable(JavaeeModuleProperties.class, moduleProperties);
     }
+  }
+
+  protected Module createModuleFromTestData(final String dirInTestData, final String newModuleFileName, final ModuleType moduleType)
+    throws IOException {
+    final File dirInTestDataFile = new File(dirInTestData);
+    assertTrue(dirInTestDataFile.isDirectory());
+    final File moduleDir = createTempDirectory();
+    FileUtil.copyDir(dirInTestDataFile, moduleDir);
+    final Module module = createModule(moduleDir + "/" + newModuleFileName, moduleType);
+    PsiTestUtil.addContentRoot(module, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir));
+    return module;
   }
 }

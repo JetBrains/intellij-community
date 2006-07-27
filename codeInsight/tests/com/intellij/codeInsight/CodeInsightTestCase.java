@@ -6,9 +6,9 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -19,13 +19,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestData;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.Writer;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -133,84 +135,121 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     if (clearModelBeforeConfiguring()) {
       rootModel.clear();
     }
-    File dir = createTempDirectory();
-    myFilesToDelete.add(dir);
-    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
-    EditorInfo[] editorInfos = new EditorInfo[vFiles.length];
+    File toDirIO = createTempDirectory();
+    VirtualFile toDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(toDirIO.getCanonicalPath().replace(File.separatorChar, '/'));
 
-    final VirtualFile[] newVFiles = new VirtualFile[vFiles.length];
-
-    boolean projectCopied = false;
-
-    List<Writer> writersToClose = new ArrayList<Writer>(vFiles.length);
-    List<OutputStream> streamsToClose = new ArrayList<OutputStream>(0);
-
-    for (int i = 0; i < vFiles.length; i++) {
-      VirtualFile vFile = vFiles[i];
-
-      assertNotNull(vFile);
-      byte[] content = vFile.getFileType().isBinary() ? vFile.contentsToByteArray(): null;
-      final String fileText =  vFile.getFileType().isBinary() ? null: StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
-
-      String newFileText = null;
-      if (fileText != null) {
-        EditorInfo editorInfo = new EditorInfo(fileText);
-        editorInfos[i] = editorInfo;
-
-        newFileText = editorInfo.getNewFileText();
-      }
-
-      VirtualFile newVFile;
-      if (projectRoot != null) {
-        if (!projectCopied) {
-          FileUtil.copyDir(projectRoot, dir);
-          projectCopied = true;
+    final LinkedHashMap<VirtualFile, EditorInfo> editorInfos;
+    if (projectRoot != null) {
+      FileUtil.copyDir(projectRoot, toDirIO);
+      VirtualFile fromDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectRoot);
+      editorInfos = copyFilesFillingEditorInfos(fromDir, toDir, ContainerUtil.map2Array(vFiles, String.class, new Function<VirtualFile, String>() {
+        public String fun(final VirtualFile s) {
+          return s.getPath().substring(projectRoot.getPath().length());
         }
-        String path = vDir.getPath() + vFile.getPath().substring(projectRoot.getPath().length());
-        newVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-
-        doWrite(newFileText, newVFile, content, streamsToClose);
+      }));
+    } else {
+      editorInfos = new LinkedHashMap<VirtualFile, EditorInfo>();
+      for (final VirtualFile vFile : vFiles) {
+        editorInfos.putAll(copyFilesFillingEditorInfos(vFile.getParent(), toDir, vFile.getName()));
       }
-      else {
-        newVFile = vDir.createChildData(this, vFile.getName());
-        doWrite(newFileText, newVFile, content, streamsToClose);
-      }
-
-      newVFiles[i]=newVFile;
     }
 
-    for(int i = writersToClose.size() -1; i >= 0 ; --i) {
-      writersToClose.get(i).close();
+    if (isAddDirToContentRoot()) {
+      final ContentEntry contentEntry = rootModel.addContentEntry(toDir);
+      if (isAddDirToSource()) contentEntry.addSourceFolder(toDir, false);
+    }
+    rootModel.commit();
+
+    openEditors(editorInfos);
+
+    return toDir;
+  }
+
+  protected LinkedHashMap<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(final String testDataFromDir,
+                                                                               final VirtualFile toDir,
+                                                                               final String... relativePaths) throws IOException {
+    return copyFilesFillingEditorInfos(LocalFileSystem.getInstance().refreshAndFindFileByPath(
+      PathManagerEx.getTestDataPath() + "/" + testDataFromDir), toDir, relativePaths);
+  }
+
+  protected LinkedHashMap<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(final VirtualFile fromDir, final VirtualFile toDir, final String... relativePaths) throws IOException {
+    LinkedHashMap<VirtualFile, EditorInfo> editorInfos = new LinkedHashMap<VirtualFile, EditorInfo>();
+
+    List<OutputStream> streamsToClose = new ArrayList<OutputStream>();
+
+    for (String relativePath : relativePaths) {
+      if (relativePath.startsWith("/")) {
+        relativePath = relativePath.substring(1);
+      }
+      final VirtualFile fromFile = fromDir.findFileByRelativePath(relativePath);
+      assertNotNull(fromDir.getPath() + "/" + relativePath, fromFile);
+      VirtualFile toFile = toDir.findFileByRelativePath(relativePath);
+      if (toFile == null) {
+        final File file = new File(toDir.getPath(), relativePath);
+        file.getParentFile().mkdirs();
+        file.createNewFile();
+        toFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        assertNotNull(file.getCanonicalPath(), toFile);
+      }
+
+      editorInfos.put(toFile, copyContent(fromFile, toFile, streamsToClose));
     }
 
     for(int i = streamsToClose.size() -1; i >= 0 ; --i) {
       streamsToClose.get(i).close();
     }
+    return editorInfos;
+  }
 
-    if (isAddDirToContentRoot()) {
-      final ContentEntry contentEntry = rootModel.addContentEntry(vDir);
-      if (isAddDirToSource()) contentEntry.addSourceFolder(vDir, false);
+  /*protected LinkedHashMap<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(final VirtualFile fromDir, final VirtualFile toDir) throws IOException {
+    final LinkedHashMap<VirtualFile, EditorInfo> map = new LinkedHashMap<VirtualFile, EditorInfo>();
+    copyFilesFillingEditorInfos(fromDir, toDir, map);
+    return map;
+  }
+
+
+  private void copyFilesFillingEditorInfos(final VirtualFile fromDir, final VirtualFile toDir, LinkedHashMap<VirtualFile, EditorInfo> editorInfos) throws IOException {
+
+    List<OutputStream> streamsToClose = new ArrayList<OutputStream>();
+
+    final VirtualFile[] files = fromDir.getChildren();
+    for (final VirtualFile fromFile : files) {
+      if (fromFile.isDirectory()) {
+        copyFilesFillingEditorInfos(fromFile, toDir.createChildDirectory(this, fromFile.getName()), editorInfos);
+      } else {
+        final VirtualFile toFile = toDir.createChildData(this, fromFile.getName());
+        editorInfos.put(toFile, copyContent(fromFile, toFile, streamsToClose));
+      }
     }
-    rootModel.commit();
 
-    for (int i = 0; i < newVFiles.length; i++) {
-      VirtualFile newVFile = newVFiles[i];
+    for(int i = streamsToClose.size() -1; i >= 0 ; --i) {
+      streamsToClose.get(i).close();
+    }
+  }*/
 
+  private EditorInfo copyContent(final VirtualFile from, final VirtualFile to, final List<OutputStream> streamsToClose) throws IOException {
+    byte[] content = from.getFileType().isBinary() ? from.contentsToByteArray(): null;
+    final String fileText =  from.getFileType().isBinary() ? null: StringUtil.convertLineSeparators(VfsUtil.loadText(from), "\n");
+
+    EditorInfo editorInfo = fileText != null ? new EditorInfo(fileText) : null;
+    String newFileText = fileText != null ? editorInfo.getNewFileText() : null;
+    doWrite(newFileText, to, content, streamsToClose);
+    return editorInfo;
+  }
+
+  protected void openEditors(final LinkedHashMap<VirtualFile, EditorInfo> editorInfos) {
+    for (VirtualFile newVFile : editorInfos.keySet()) {
       PsiFile file = myPsiManager.findFile(newVFile);
-      if (myFile==null) myFile = file;
+      if (myFile == null) myFile = file;
 
       Editor editor = createEditor(newVFile);
-      if (myEditor==null) myEditor = editor;
+      if (myEditor == null) myEditor = editor;
 
-      EditorInfo editorInfo = editorInfos[i];
+      EditorInfo editorInfo = editorInfos.get(newVFile);
       if (editorInfo != null) {
         editorInfo.applyToEditor(editor);
       }
     }
-
-
-
-    return vDir;
   }
 
   private void doWrite(final String newFileText, final VirtualFile newVFile, final byte[] content, final List<OutputStream> streamsToClose) throws IOException {
@@ -221,11 +260,6 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       outputStream.write(content);
       streamsToClose.add(outputStream);
     }
-  }
-
-  protected File createTempDirectory() throws IOException {
-    File dir = FileUtil.createTempDirectory("unitTest", null);
-    return dir;
   }
 
   protected boolean isAddDirToContentRoot() {
@@ -441,4 +475,5 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   public Editor getEditor() {
     return myEditor;
   }
+
 }
