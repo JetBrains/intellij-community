@@ -619,11 +619,11 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   void refreshInner(VirtualFile file, boolean recursive, ModalityState modalityState, boolean asynchronous, final boolean isRoot, final boolean noWatcher) {
     if (noWatcher || !FileWatcher.isAvailable() || !recursive && !asynchronous) { // We're unable to definitely refresh syncronously by means of file watcher.
       ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous);
-      if ((recursive || isRoot) && ((VirtualFileImpl)file).areChildrenCached()) {
+      if ((isRoot && !recursive) && ((VirtualFileImpl)file).areChildrenCached()) {  //if recursive, then we have already processed children in refreshInternal
         final VirtualFile[] children = file.getChildren();
         for (int i = 0; i < children.length; i++) {
           VirtualFile child = children[i];
-          refreshInner(child, recursive, modalityState, asynchronous, false, noWatcher);
+          refreshInner(child, false, modalityState, asynchronous, false, noWatcher);
         }
       }
     }
@@ -641,7 +641,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         if (status == DIRTY_STATUS) {
           ((VirtualFileImpl)file).refreshInternal(false, modalityState, false, asynchronous);
         }
-        if ((isRoot || recursive) && ((VirtualFileImpl)file).areChildrenCached()) {
+        if ((isRoot && !recursive) && ((VirtualFileImpl)file).areChildrenCached()) { //if recursive, then we have already processed children in refreshInternal
           VirtualFile[] children = file.getChildren();
           for (int i = 0; i < children.length; i++) {
             VirtualFile child = children[i];
@@ -649,7 +649,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                 !((VirtualFileImpl)child).getPhysicalFile().exists()) {
               continue; // should be already handled above (see SCR6145)
             }
-            refreshInner(child, recursive,  modalityState, asynchronous, false, noWatcher);
+            refreshInner(child, false,  modalityState, asynchronous, false, noWatcher);
           }
         }
       }
