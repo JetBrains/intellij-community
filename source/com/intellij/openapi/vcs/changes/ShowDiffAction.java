@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,7 +34,23 @@ public class ShowDiffAction extends AnAction {
     Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
     if (project == null || changes == null) return;
 
-    showDiffForChange(changes, 0, project);
+    int index = 0;
+    if (changes.length == 1) {
+      final Change selectedChange = changes[0];
+      ChangeList changeList = ChangeListManager.getInstance(project).getChangeList(selectedChange);
+      if (changeList != null) {
+        final Collection<Change> changesInList = changeList.getChanges();
+        changes = changesInList.toArray(new Change[changesInList.size()]);
+        for(int i=0; i<changes.length; i++) {
+          if (changes [i] == selectedChange) { 
+            index = i;
+            break;
+          }
+        }
+      }
+    }
+
+    showDiffForChange(changes, index, project);
   }
 
   public static void showDiffForChange(final Change[] changes, final int index, final Project project) {
