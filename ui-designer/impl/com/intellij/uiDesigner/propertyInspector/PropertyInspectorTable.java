@@ -1024,7 +1024,14 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       ErrorInfo errInfo = getErrorInfoForRow(row);
 
       SimpleTextAttributes result;
-      boolean modified = isModifiedForSelection(property);
+      boolean modified;
+      try {
+        modified = isModifiedForSelection(property);
+      }
+      catch(Exception ex) {
+        // ignore exceptions here - they'll be reported as red property values
+        modified = false;
+      }
       if (errInfo == null) {
         result = modified ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
       }
