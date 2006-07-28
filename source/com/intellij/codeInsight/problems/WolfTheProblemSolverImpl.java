@@ -408,10 +408,12 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     if (virtualFile == null) return null;
     HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>() {
       public HighlightInfo compute() {
-        return HighlightInfo
-          .createHighlightInfo(HighlightInfoType.ERROR, getTextRange(virtualFile, line, column), StringUtil.join(message, "\n"));
+        TextRange textRange = getTextRange(virtualFile, line, column);
+        if (textRange == null) return null;
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, StringUtil.join(message, "\n"));
       }
     });
+    if (info == null) return null;
     return new ProblemImpl(virtualFile, info, false);
   }
 
