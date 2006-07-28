@@ -58,6 +58,7 @@ public class CodeInsightUtil {
       endOffset = element2.getTextRange().getStartOffset();
       element2 = file.getViewProvider().findElementAt(endOffset - 1, StdLanguages.JAVA);
     }
+    if (element2 == null || element1 == null) return null;
     final PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
     final T element = klass.isAssignableFrom(commonParent.getClass()) ?
                                      (T)commonParent :
