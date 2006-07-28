@@ -104,7 +104,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           item = null;
           break;
         }
-        if (item.getObject()instanceof PsiMethod && item1.getObject()instanceof PsiMethod) {
+        if (item.getObject() instanceof PsiMethod && item1.getObject() instanceof PsiMethod) {
           if (!signatureSensitive) {
             final PsiParameter[] parms = ((PsiMethod)item1.getObject()).getParameterList().getParameters();
             if (parms.length > 0) {
@@ -135,7 +135,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
 
     if (item != null) {
-      if (item.getObject()instanceof DeferredUserLookupValue) {
+      if (item.getObject() instanceof DeferredUserLookupValue) {
         if (!((DeferredUserLookupValue)item.getObject()).handleUserSelection(item, context.project)) {
           return;
         }
@@ -275,7 +275,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         final PsiVariable variable = (PsiVariable)parent;
         if (lastElement.equals(variable.getNameIdentifier())) {
           myPreferencePolicy = completionData.completeFieldName(lookupSet, context, variable);
-          if (parent.getLastChild()instanceof PsiErrorElement) return;
+          if (parent.getLastChild() instanceof PsiErrorElement) return;
           myPreferencePolicy = completionData.completeMethodName(lookupSet, context, variable);
         }
       }
@@ -316,10 +316,12 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
     complete(context, insertedElement, completionData, lookupSet);
-    final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-    completionData.addKeywordVariants(keywordVariants, context, insertedElement);
-    CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
-    CompletionUtil.highlightMembersOfContainer(lookupSet);
+    if (lookupSet.size() == 0 || !CodeInsightUtil.isAntFile(file)) {
+      final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
+      completionData.addKeywordVariants(keywordVariants, context, insertedElement);
+      CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
+      CompletionUtil.highlightMembersOfContainer(lookupSet);
+    }
 
     final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
     final LookupData data = new LookupData(items, context.getPrefix());
