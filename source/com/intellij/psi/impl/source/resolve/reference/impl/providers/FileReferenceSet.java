@@ -50,17 +50,31 @@ public class FileReferenceSet {
   @Nullable
   public static FileReferenceSet createSet(PsiElement element, final boolean soft) {
 
-    FileReferenceInfo info = new FileReferenceInfo(element);
-    if (info.isValid()) {
-      return new FileReferenceSet(info.getText(), element, info.getOffset(), ReferenceType.FILE_TYPE, null, true) {
-        protected boolean isSoft() {
-          return soft;
-        }
-      };
+    String text;
+    int offset;
+
+    if (element instanceof XmlAttributeValue) {
+      text = ((XmlAttributeValue)element).getValue();
+      offset = 1;
+    }
+    else if (element instanceof XmlTag) {
+      final XmlTag tag = ((XmlTag)element);
+      final XmlTagValue value = tag.getValue();
+      final String s = value.getText();
+      text = s.trim();
+      offset = value.getTextRange().getStartOffset() + s.indexOf(text) - element.getTextOffset();
     }
     else {
       return null;
     }
+    if (text != null) {
+      text = WebUtil.trimURL(text);
+    }
+    return new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, null, true) {
+      protected boolean isSoft() {
+        return soft;
+      }
+    };
   }
 
 
@@ -267,48 +281,4 @@ public class FileReferenceSet {
     }
     myOptions.put(key,value);
   }
-
-  
-  public static class FileReferenceInfo {
-
-    private String text;
-    private int offset;
-
-    FileReferenceInfo(PsiElement element) {
-
-      if (element instanceof XmlAttributeValue) {
-        text = ((XmlAttributeValue)element).getValue();
-        offset = 1;
-      }
-      else if (element instanceof XmlTag) {
-        final XmlTag tag = ((XmlTag)element);
-        final XmlTagValue value = tag.getValue();
-        final String s = value.getText();
-        text = s.trim();
-        offset = value.getTextRange().getStartOffset() + s.indexOf(text) - element.getTextOffset();
-      }
-      else {
-        text = null;
-      }
-      if (text != null) {
-        int paramOffset = text.indexOf('?');
-        if (paramOffset >= 0) {
-          text = text.substring(0, paramOffset);
-        }
-      }
-    }
-
-    public int getOffset() {
-      return offset;
-    }
-
-    public String getText() {
-      return text;
-    }
-
-    public boolean isValid() {
-      return text != null;
-    }
-  }
-
 }
