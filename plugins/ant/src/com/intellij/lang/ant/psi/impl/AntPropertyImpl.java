@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -90,28 +89,9 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   public String getValue() {
     final XmlTag sourceElement = getSourceElement();
     if (sourceElement.getAttributeValue(getNameElementAttribute()) != null) {
-      String value = sourceElement.getAttributeValue("value");
-      if (value != null) {
-        return computeAttributeValue(value);
-      }
-      value = computeAttributeValue(sourceElement.getAttributeValue("location"));
-      if (value != null) {
-        final String baseDir = getAntProject().getBaseDir();
-        if (baseDir != null) {
-          return new File(baseDir, value).getAbsolutePath();
-        }
-        return value;
-      }
+      return getPropertyValue();
     }
     return null;
-  }
-
-  public void setValue(final String value) throws IncorrectOperationException {
-    final XmlTag sourceElement = getSourceElement();
-    if (sourceElement.getAttribute(getNameElementAttribute(), null) == null) {
-      throw new IncorrectOperationException("Can't set value of an unnamed property");
-    }
-    sourceElement.setAttribute("value", value);
   }
 
   @Nullable
@@ -134,10 +114,6 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     return (myPropertiesFile == AntElementImpl.ourNull) ? null : (PropertiesFile)myPropertiesFile;
   }
 
-  public void setPropertiesFile(final String name) throws IncorrectOperationException {
-    getSourceElement().setAttribute("file", name);
-  }
-
   @Nullable
   public String getPrefix() {
     return computeAttributeValue(getSourceElement().getAttributeValue("prefix"));
@@ -152,5 +128,22 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     super.clearCaches();
     myPropHolder.clearCaches();
     myPropertiesFile = null;
+  }
+
+  @Nullable
+  protected String getPropertyValue() {
+    final XmlTag sourceElement = getSourceElement();
+    String value = sourceElement.getAttributeValue("value");
+    if (value != null) {
+      return computeAttributeValue(value);
+    }
+    value = computeAttributeValue(sourceElement.getAttributeValue("location"));
+    if (value != null) {
+      final String baseDir = getAntProject().getBaseDir();
+      if (baseDir != null) {
+        return new File(baseDir, value).getAbsolutePath();
+      }
+    }
+    return value;
   }
 }

@@ -42,7 +42,7 @@ public class AntAntImpl extends AntTaskImpl implements AntAnt {
     if (result == null) {
       return DEFAULT_ANTFILE;
     }
-    return computeAttributeValue(result);
+    return result;
   }
 
   @Nullable

@@ -6,7 +6,6 @@ import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,10 +44,6 @@ public class AntCallImpl extends AntTaskImpl implements AntCall {
       result.setDependsTargets(getDependsTargets());
     }
     return result;
-  }
-
-  public void setTarget(AntTarget target) throws IncorrectOperationException {
-    getSourceElement().setAttribute("target", target.getName());
   }
 
   @NotNull
