@@ -21,8 +21,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -194,6 +194,8 @@ public class HighlightInfo {
     this.type = type;
     this.startOffset = startOffset;
     this.endOffset = endOffset;
+    fixStartOffset = startOffset;
+    fixEndOffset = endOffset;
     this.description = description;
     this.toolTip = toolTip;
     this.severity = severity;
