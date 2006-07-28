@@ -491,16 +491,20 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
                 tag, attrName, null);
             final String localizedMessage = XmlErrorMessages.message("element.doesnt.have.required.attribute", name, attrName);
             final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
-            RequiredAttributesInspection inspection = (RequiredAttributesInspection)((LocalInspectionToolWrapper)profile.getInspectionTool(RequiredAttributesInspection.SHORT_NAME)).getTool();
-            reportOneTagProblem(
-              tag,
-              attrName,
-              localizedMessage,
-              insertRequiredAttributeIntention,
-              HighlightDisplayKey.find(RequiredAttributesInspection.SHORT_NAME),
-              inspection,
-              XmlEntitiesInspection.NOT_REQUIRED_ATTRIBUTE
-            );
+            final LocalInspectionToolWrapper toolWrapper =
+              (LocalInspectionToolWrapper)profile.getInspectionTool(RequiredAttributesInspection.SHORT_NAME);
+            if (toolWrapper != null) {
+              RequiredAttributesInspection inspection = (RequiredAttributesInspection)toolWrapper.getTool();
+              reportOneTagProblem(
+                tag,
+                attrName,
+                localizedMessage,
+                insertRequiredAttributeIntention,
+                HighlightDisplayKey.find(RequiredAttributesInspection.SHORT_NAME),
+                inspection,
+                XmlEntitiesInspection.NOT_REQUIRED_ATTRIBUTE
+              );
+            }
           }
         }
       }
