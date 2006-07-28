@@ -361,6 +361,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         //try to find icon in idea class path
         presentation.setIcon(IconLoader.getIcon(iconPath));
       }
+      catch (NoClassDefFoundError ignored) {
+        //try to find icon in idea class path
+        presentation.setIcon(IconLoader.getIcon(iconPath));
+      }
     }
   }
 
