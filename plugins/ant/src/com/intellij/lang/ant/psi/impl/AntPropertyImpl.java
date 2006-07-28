@@ -85,11 +85,16 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     return "file";
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
   public String getValue() {
     final XmlTag sourceElement = getSourceElement();
-    if (sourceElement.getAttributeValue(getNameElementAttribute()) != null) {
+    final String tagName = sourceElement.getName();
+    if ("property".equals(tagName) || "param".equals(tagName)) {
       return getPropertyValue();
+    }
+    else if ("dirname".equals(tagName)) {
+      return getDirnameValue();
     }
     return null;
   }
@@ -131,7 +136,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   }
 
   @Nullable
-  protected String getPropertyValue() {
+  private String getPropertyValue() {
     final XmlTag sourceElement = getSourceElement();
     String value = sourceElement.getAttributeValue("value");
     if (value != null) {
@@ -143,6 +148,16 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
       if (baseDir != null) {
         return new File(baseDir, value).getAbsolutePath();
       }
+    }
+    return value;
+  }
+
+  @Nullable
+  private String getDirnameValue() {
+    final XmlTag sourceElement = getSourceElement();
+    final String value = computeAttributeValue(sourceElement.getAttributeValue("file"));
+    if (value != null) {
+      return new File(value).getParent();
     }
     return value;
   }
