@@ -334,7 +334,8 @@ public class FileUtil {
     if (!file.exists()) {
       String parentDirPath = file.getParent();
       if (parentDirPath != null) {
-        return new File(parentDirPath).mkdirs();
+        final File parentFile = new File(parentDirPath);
+        return parentFile.exists() && parentFile.isDirectory() || parentFile.mkdirs();
       }
     }
     return false;
