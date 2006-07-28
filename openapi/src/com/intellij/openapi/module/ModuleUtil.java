@@ -147,7 +147,7 @@ public class ModuleUtil {
     return element.getUserData(KEY_MODULE);
   }
 
-  public static void getDependencies(Module module, Set<Module> modules) {
+  public static void getDependencies(@NotNull Module module, Set<Module> modules) {
     if (modules.contains(module)) return;
     modules.add(module);
     Module[] dependencies = ModuleRootManager.getInstance(module).getDependencies();

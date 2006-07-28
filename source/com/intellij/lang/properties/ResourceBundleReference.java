@@ -29,6 +29,9 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
   @NotNull public ResolveResult[] multiResolve(final boolean incompleteCode) {
     PropertiesReferenceManager referenceManager = myElement.getProject().getComponent(PropertiesReferenceManager.class);
     final Module module = ModuleUtil.findModuleForPsiElement(myElement);
+    if (module == null) {
+      return ResolveResult.EMPTY_ARRAY;
+    }
     List<PropertiesFile> propertiesFiles = referenceManager.findPropertiesFiles(module, myBundleName);
     final ResolveResult[] result = new ResolveResult[propertiesFiles.size()];
     for(int i=0; i<propertiesFiles.size(); i++) {

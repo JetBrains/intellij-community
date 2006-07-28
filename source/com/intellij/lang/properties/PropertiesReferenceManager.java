@@ -187,7 +187,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
   }
 
   @NotNull
-  public List<PropertiesFile> findPropertiesFiles(final Module module, final String bundleName) {
+  public List<PropertiesFile> findPropertiesFiles(@NotNull final Module module, final String bundleName) {
     final ArrayList<PropertiesFile> result = new ArrayList<PropertiesFile>();
     processPropertiesFiles(module, new PropertiesFileProcessor() {
       public void process(String baseName, PropertiesFile propertiesFile) {
@@ -234,7 +234,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
     void process(String baseName, PropertiesFile propertiesFile);
   }
 
-  private void processPropertiesFiles(final Module module, PropertiesFileProcessor processor) {
+  private void processPropertiesFiles(@NotNull final Module module, PropertiesFileProcessor processor) {
     updateChangedFiles();
     final Set<Module> dependentModules = new THashSet<Module>();
     ModuleUtil.getDependencies(module, dependentModules);
