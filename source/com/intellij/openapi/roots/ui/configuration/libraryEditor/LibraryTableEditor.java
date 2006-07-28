@@ -6,7 +6,7 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -177,7 +177,7 @@ public class LibraryTableEditor implements Disposable {
   }
 
   public static boolean showEditDialog(final Component parent, LibraryTable libraryTable, final Collection<Library> selection) {
-    final LibraryTableEditor libraryTableEditor = LibraryTableEditor.editLibraryTable(libraryTable);
+    final LibraryTableEditor libraryTableEditor = editLibraryTable(libraryTable);
     final boolean ok = libraryTableEditor.openDialog(parent, selection, true);
     if (selection != null && ok) {
       selection.clear();
@@ -384,7 +384,6 @@ public class LibraryTableEditor implements Disposable {
     return new AddLibraryAction(select, parent);
   }
 
-  @SuppressWarnings({"BoundFieldAssignment"})
   public void dispose() {
   }
 
@@ -405,7 +404,7 @@ public class LibraryTableEditor implements Disposable {
     }
 
     public void actionPerformed(ActionEvent e) {
-      final Module contextModule = (Module)DataManager.getInstance().getDataContext(myAddLibraryButton).getData(DataConstantsEx.MODULE_CONTEXT);
+      final Module contextModule = (Module)DataManager.getInstance().getDataContext(myAddLibraryButton).getData(DataConstants.MODULE_CONTEXT);
       myFileChooserDescriptor.setContextModule(contextModule);
       final VirtualFile[] files;
       final String name;
@@ -615,7 +614,7 @@ public class LibraryTableEditor implements Disposable {
               removeLibrary(((LibraryElement)selectedElement).getLibrary());
             }
             else if (selectedElement instanceof ItemElement) {
-              final ItemElement itemElement = ((ItemElement)selectedElement);
+              final ItemElement itemElement = (ItemElement)selectedElement;
               final Library library = itemElement.getLibrary();
               getLibraryEditor(library).removeRoot(itemElement.getUrl(), itemElement.getRootType());
             }
@@ -689,7 +688,7 @@ public class LibraryTableEditor implements Disposable {
     for (Iterator it = myTableModifiableModel.getLibraryIterator(); it.hasNext(); ) {
       final Library lib = (Library)it.next();
       final LibraryEditor editor = getLibraryEditor(lib);
-      final String libName = (editor != null)? editor.getName() : lib.getName();
+      final String libName = editor != null ? editor.getName() : lib.getName();
       if (libraryName.equals(libName)) {
         return true;
       }
@@ -856,7 +855,7 @@ public class LibraryTableEditor implements Disposable {
         if (!hasCapitals(pattern)) { // be case-sensitive only if user types capitals
           str = str.toLowerCase();
         }
-        if (pattern.indexOf(File.separator) >= 0) {
+        if (pattern.contains(File.separator)) {
           return compare(str,pattern);
         }
         final StringTokenizer tokenizer = new StringTokenizer(str, File.separator);

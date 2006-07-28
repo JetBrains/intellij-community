@@ -68,7 +68,7 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   }
 
   public boolean isValid() {
-    return true;
+    return !isDisposed();
   }
 
   public <R> R accept(RootPolicy<R> policy, R initialValue) {

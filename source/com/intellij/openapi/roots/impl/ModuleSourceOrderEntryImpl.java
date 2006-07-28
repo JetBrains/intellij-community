@@ -1,13 +1,12 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.project.ProjectBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +47,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
   }
 
   public boolean isValid() {
-    return true;
+    return !isDisposed();
   }
 
   public Module getOwnerModule() {
@@ -74,7 +73,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
 
   @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
-    final ArrayList result = new ArrayList();
+    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     if (OrderRootType.SOURCES.equals(type)) {
       result.addAll(Arrays.asList(myRootModel.getSourceRoots()));
     }
@@ -86,23 +85,19 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
         result.add(outputPathForTests);
       }
     }
-    return (VirtualFile[])result.toArray(new VirtualFile[result.size()]);
-  }
-
-  public VirtualFilePointer[] getFilePointers(OrderRootType type) {
-    return new VirtualFilePointer[0];
+    return result.toArray(new VirtualFile[result.size()]);
   }
 
   @NotNull
   public String[] getUrls(OrderRootType type) {
-    final ArrayList result = new ArrayList();
+    final ArrayList<String> result = new ArrayList<String>();
     if (OrderRootType.SOURCES.equals(type)) {
       final ContentEntry[] content = myRootModel.getContentEntries();
       for (ContentEntry contentEntry : content) {
         final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
         for (SourceFolder sourceFolder : sourceFolders) {
           final String url = sourceFolder.getUrl();
-          if (url != null) result.add(url);
+          result.add(url);
         }
       }
     }
@@ -114,7 +109,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
         result.add(outputPathForTests);
       }
     }
-    return (String[])result.toArray(new String[result.size()]);
+    return result.toArray(new String[result.size()]);
 
   }
 

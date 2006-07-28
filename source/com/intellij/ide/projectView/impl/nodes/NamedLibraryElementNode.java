@@ -66,14 +66,13 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   }
 
   public static boolean orderEntryContainsFile(OrderEntry orderEntry, VirtualFile file) {
-    if (containsFileInOrderType(orderEntry, OrderRootType.CLASSES, file)) return true;
-    if (containsFileInOrderType(orderEntry, OrderRootType.SOURCES, file)) return true;
-    if (containsFileInOrderType(orderEntry, OrderRootType.JAVADOC, file)) return true;
-
-    return false;
+    return containsFileInOrderType(orderEntry, OrderRootType.CLASSES, file) ||
+           containsFileInOrderType(orderEntry, OrderRootType.SOURCES, file) ||
+           containsFileInOrderType(orderEntry, OrderRootType.JAVADOC, file);
   }
 
   private static boolean containsFileInOrderType(final OrderEntry orderEntry, final OrderRootType orderType, final VirtualFile file) {
+    if (!orderEntry.isValid()) return false;
     VirtualFile[] files = orderEntry.getFiles(orderType);
     for (VirtualFile virtualFile : files) {
       boolean ancestor = VfsUtil.isAncestor(virtualFile, file, false);

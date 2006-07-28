@@ -117,7 +117,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
 
   public boolean isValid() {
-    return myModule != null;
+    return !isDisposed() && myModule != null;
   }
 
   public <R> R accept(RootPolicy<R> policy, R initialValue) {

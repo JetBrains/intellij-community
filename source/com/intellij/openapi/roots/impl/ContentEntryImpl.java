@@ -30,8 +30,8 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   private final VirtualFilePointer myRoot;
   private RootModelImpl myRootModel;
   @NonNls final static String ELEMENT_NAME = "content";
-  private final TreeSet mySourceFolders = new TreeSet(ContentFolderComparator.INSTANCE);
-  private final TreeSet myExcludeFolders = new TreeSet(ContentFolderComparator.INSTANCE);
+  private final TreeSet<ContentFolder> mySourceFolders = new TreeSet<ContentFolder>(ContentFolderComparator.INSTANCE);
+  private final TreeSet<ContentFolder> myExcludeFolders = new TreeSet<ContentFolder>(ContentFolderComparator.INSTANCE);
   @NonNls private static final String URL_ATTR = "url";
 
 
@@ -85,19 +85,19 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   }
 
   public SourceFolder[] getSourceFolders() {
-    return (SourceFolder[])mySourceFolders.toArray(new SourceFolder[mySourceFolders.size()]);
+    return mySourceFolders.toArray(new SourceFolder[mySourceFolders.size()]);
   }
 
   public VirtualFile[] getSourceFolderFiles() {
     final SourceFolder[] sourceFolders = getSourceFolders();
-    ArrayList result = new ArrayList();
+    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (SourceFolder sourceFolder : sourceFolders) {
       final VirtualFile file = sourceFolder.getFile();
       if (file != null) {
         result.add(file);
       }
     }
-    return (VirtualFile[])result.toArray(new VirtualFile[result.size()]);
+    return result.toArray(new VirtualFile[result.size()]);
   }
 
   public ExcludeFolder[] getExcludeFolders() {
@@ -106,9 +106,9 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
 
   private ExcludeFolder[] calculateExcludeFolders() {
     if (!myRootModel.isExcludeOutput() && !myRootModel.isExcludeExplodedDirectory()) { // optimization
-      return (ExcludeFolder[])myExcludeFolders.toArray(new ExcludeFolder[myExcludeFolders.size()]);
+      return myExcludeFolders.toArray(new ExcludeFolder[myExcludeFolders.size()]);
     }
-    final ArrayList result = new ArrayList(myExcludeFolders);
+    final ArrayList<ContentFolder> result = new ArrayList<ContentFolder>(myExcludeFolders);
     if (myRootModel.isExcludeOutput()) {
       if (!myRootModel.isCompilerOutputPathInherited()) {
         addExcludeForOutputPath(myRootModel.myCompilerOutputPath, result);
@@ -126,10 +126,10 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     if (myRootModel.isExcludeExplodedDirectory()) {
       addExcludeForOutputPath(myRootModel.myExplodedDirectory, result);
     }
-    return (ExcludeFolder[])result.toArray(new ExcludeFolder[result.size()]);
+    return result.toArray(new ExcludeFolder[result.size()]);
   }
 
-  private void addExcludeForOutputPath(final VirtualFilePointer outputPath, ArrayList result) {
+  private void addExcludeForOutputPath(final VirtualFilePointer outputPath, ArrayList<ContentFolder> result) {
     if (outputPath == null) return;
     final VirtualFile outputPathFile = outputPath.getFile();
     final VirtualFile file = myRoot.getFile();
@@ -140,14 +140,14 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
 
   public VirtualFile[] getExcludeFolderFiles() {
     final ExcludeFolder[] excludeFolders = getExcludeFolders();
-    ArrayList result = new ArrayList();
+    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (ExcludeFolder excludeFolder : excludeFolders) {
       final VirtualFile file = excludeFolder.getFile();
       if (file != null) {
         result.add(file);
       }
     }
-    return (VirtualFile[])result.toArray(new VirtualFile[result.size()]);
+    return result.toArray(new VirtualFile[result.size()]);
   }
 
   public SourceFolder addSourceFolder(VirtualFile file, boolean isTestSource) {
@@ -205,7 +205,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     public static final ContentFolderComparator INSTANCE = new ContentFolderComparator();
 
     public int compare(ContentFolder o1, ContentFolder o2) {
-      return ((ContentFolder)o1).getUrl().compareTo(((ContentFolder)o2).getUrl());
+      return ((ContentFolder)o2).getUrl().compareTo(o1.getUrl());
     }
   }
 

@@ -145,7 +145,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   }
 
   public boolean isValid() {
-    return getJdk() != null;
+    return !isDisposed() && getJdk() != null;
   }
 
   public <R> R accept(RootPolicy<R> policy, R initialValue) {

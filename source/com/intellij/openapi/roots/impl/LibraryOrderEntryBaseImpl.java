@@ -5,17 +5,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
+import java.util.Map;
 
 /**
  *  @author dsl
@@ -23,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryBaseImpl");
   protected final RootModelImpl myRootModel;
-  private final HashMap<OrderRootType, VirtualFilePointerContainer> myRootContainers;
+  private final Map<OrderRootType, VirtualFilePointerContainer> myRootContainers;
   private final MyRootSetChangedListener myRootSetChangedListener = new MyRootSetChangedListener();
   private RootProvider myCurrentlySubscribedRootProvider = null;
   protected final ProjectRootManagerImpl myProjectRootManagerImpl;
@@ -77,13 +74,6 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   public VirtualFile[] getFiles(OrderRootType type) {
     return myRootContainers.get(type).getDirectories();
   }
-
-  public VirtualFilePointer[] getFilePointers(OrderRootType type) {
-    final List list = myRootContainers.get(type).getList();
-    return (VirtualFilePointer[])list.toArray(new VirtualFilePointer[list.size()]);
-  }
-
-  public abstract boolean isValid();
 
   @NotNull
   public String[] getUrls(OrderRootType type) {

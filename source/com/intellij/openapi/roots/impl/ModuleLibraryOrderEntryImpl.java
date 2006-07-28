@@ -107,7 +107,7 @@ class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
   }
 
   public boolean isValid() {
-    return true;
+    return !isDisposed();
   }
 
   public <R> R accept(RootPolicy<R> policy, R initialValue) {

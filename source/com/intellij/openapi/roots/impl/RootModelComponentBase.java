@@ -7,6 +7,7 @@ package com.intellij.openapi.roots.impl;
  */
 public abstract class RootModelComponentBase {
   RootModelImpl myRootModel;
+  private boolean myDisposed;
 
   RootModelComponentBase(RootModelImpl rootModel) {
     rootModel.myComponents.add(this);
@@ -31,5 +32,10 @@ public abstract class RootModelComponentBase {
 
   protected void dispose() {
     myRootModel.myComponents.remove(this);
+    myDisposed = true;
+  }
+
+  protected boolean isDisposed() {
+    return myDisposed;
   }
 }
