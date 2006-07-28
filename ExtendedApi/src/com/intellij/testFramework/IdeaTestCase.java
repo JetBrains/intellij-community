@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
@@ -35,6 +36,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import junit.framework.TestCase;
@@ -559,6 +561,10 @@ import java.util.HashSet;
     File dir = FileUtil.createTempDirectory("unitTest", null);
     myFilesToDelete.add(dir);
     return dir;
+  }
+
+  protected PsiFile getPsiFile(final Document document) {
+    return PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
   }
 
   private static class MyThreadGroup extends ThreadGroup {

@@ -214,4 +214,11 @@ public class ArrayUtil {
     }
     return 0;
   }
+
+  public static void swap(Object[] array, int i1, int i2) {
+    final Object t = array[i1];
+    array[i1] = array[i2];
+    array[i2] = t;
+  }
+
 }

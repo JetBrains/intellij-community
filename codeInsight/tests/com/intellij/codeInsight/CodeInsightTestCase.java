@@ -19,8 +19,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestData;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -160,16 +160,16 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
     rootModel.commit();
 
-    openEditors(editorInfos);
+    openEditorsAndActivateFirst(editorInfos);
 
     return toDir;
   }
 
-  protected LinkedHashMap<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(final String testDataFromDir,
+  protected LinkedHashMap<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(String testDataFromDir,
                                                                                final VirtualFile toDir,
                                                                                final String... relativePaths) throws IOException {
-    return copyFilesFillingEditorInfos(LocalFileSystem.getInstance().refreshAndFindFileByPath(
-      PathManagerEx.getTestDataPath() + "/" + testDataFromDir), toDir, relativePaths);
+    if (!testDataFromDir.startsWith("/")) testDataFromDir = "/" + testDataFromDir;
+    return copyFilesFillingEditorInfos(LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + testDataFromDir), toDir, relativePaths);
   }
 
   protected LinkedHashMap<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(final VirtualFile fromDir, final VirtualFile toDir, final String... relativePaths) throws IOException {
@@ -237,19 +237,33 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return editorInfo;
   }
 
-  protected void openEditors(final LinkedHashMap<VirtualFile, EditorInfo> editorInfos) {
-    for (VirtualFile newVFile : editorInfos.keySet()) {
-      PsiFile file = myPsiManager.findFile(newVFile);
-      if (myFile == null) myFile = file;
+  protected final void setActiveEditor(Editor editor) {
+    myEditor = editor;
+    myFile = getPsiFile(editor.getDocument());
+  }
 
-      Editor editor = createEditor(newVFile);
-      if (myEditor == null) myEditor = editor;
+  protected List<Editor> openEditorsAndActivateFirst(final LinkedHashMap<VirtualFile, EditorInfo> editorInfos) {
+    final List<Editor> list = openEditors(editorInfos);
+    setActiveEditor(list.get(0));
+    return list;
+  }
 
-      EditorInfo editorInfo = editorInfos.get(newVFile);
-      if (editorInfo != null) {
-        editorInfo.applyToEditor(editor);
+  protected final List<Editor> openEditors(final LinkedHashMap<VirtualFile, EditorInfo> editorInfos) {
+    return ContainerUtil.map(editorInfos.keySet(), new Function<VirtualFile, Editor>() {
+      public Editor fun(final VirtualFile newVFile) {
+        PsiFile file = myPsiManager.findFile(newVFile);
+        if (myFile == null) myFile = file;
+
+        Editor editor = createEditor(newVFile);
+        if (myEditor == null) myEditor = editor;
+
+        EditorInfo editorInfo = editorInfos.get(newVFile);
+        if (editorInfo != null) {
+          editorInfo.applyToEditor(editor);
+        }
+        return editor;
       }
-    }
+    });
   }
 
   private void doWrite(final String newFileText, final VirtualFile newVFile, final byte[] content, final List<OutputStream> streamsToClose) throws IOException {

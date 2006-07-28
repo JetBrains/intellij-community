@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -223,5 +224,10 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     assertNotNull(intentionAction);
     intentionAction.invoke(myProject, myEditor, myFile);
+  }
+
+  public void checkHighlighting(Editor editor, boolean checkWarnings, boolean checkInfos) {
+    setActiveEditor(editor);
+    doDoTest(checkWarnings, checkInfos);
   }
 }
