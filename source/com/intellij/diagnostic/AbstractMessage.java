@@ -41,7 +41,7 @@ public abstract class AbstractMessage {
     return mySubmissionInfo;
   }
 
-  public boolean isSumbitted() {
+  public boolean isSubmitted() {
     return mySubmissionInfo != null &&
           (mySubmissionInfo.getStatus() == SubmittedReportInfo.SubmissionStatus.NEW_ISSUE ||
            mySubmissionInfo.getStatus() == SubmittedReportInfo.SubmissionStatus.DUPLICATE);

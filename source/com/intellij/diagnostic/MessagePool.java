@@ -69,9 +69,9 @@ public class MessagePool {
     List<AbstractMessage> result = new ArrayList<AbstractMessage>();
     for (int i = 0; i < myIdeFatals.size(); i++) {
       AbstractMessage each = myIdeFatals.get(i);
-      if (!each.isRead() && !each.isSumbitted()) {
+      if (!each.isRead() && !each.isSubmitted()) {
         result.add(each);
-      } else if ((each.isRead() && aIncludeReadMessages) || (each.isSumbitted() && aIncludeSubmittedMessages)) {
+      } else if ((each.isRead() && aIncludeReadMessages) || (each.isSubmitted() && aIncludeSubmittedMessages)) {
         result.add(each);
       }
     }

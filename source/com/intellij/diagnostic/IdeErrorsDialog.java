@@ -9,7 +9,6 @@ package com.intellij.diagnostic;
  */
 
 import com.intellij.ExtensionPoints;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.reporter.ScrData;
 import com.intellij.ide.util.PropertiesComponent;
@@ -117,7 +116,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       txt.append(DiagnosticBundle.message("error.list.message.info",
                  DateFormatUtil.formatDate(new Date(), message.getDate()), myModel.get(myIndex).size()));
 
-      if (message.isSumbitted()) {
+      if (message.isSubmitted()) {
         final SubmittedReportInfo info = message.getSubmissionInfo();
         if (info.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED) {
           txt.append(DiagnosticBundle.message("error.list.message.submission.failed"));
@@ -257,11 +256,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     final BlameAction blameAction = new BlameAction();
     blameGroup.add(blameAction);
     blameAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), getRootPane());
-
-    final ViewRequestAction viewRequestAction = new ViewRequestAction();
-    blameGroup.add(viewRequestAction);
-    // These two cannot be enabled simultaneously this we can assign same shortcut.
-    viewRequestAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), getRootPane());
 
     final ActionToolbar blameToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, blameGroup, true);
     return blameToolbar;
@@ -409,7 +403,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
 
       final ErrorReportSubmitter submitter = getSubmitter(logMessage);
-      if (logMessage.isSumbitted() || submitter == null) {
+      if (logMessage.isSubmitted() || submitter == null) {
         presentation.setEnabled(false);
         return;
       }
@@ -446,39 +440,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     private IdeaLoggingEvent getEvent(final AbstractMessage logMessage) {
       return new IdeaLoggingEvent(logMessage.getMessage(), logMessage.getThrowable());
-    }
-  }
-
-  private class ViewRequestAction extends AnAction {
-    public ViewRequestAction() {
-      super(DiagnosticBundle.message("error.list.open.action"),
-            DiagnosticBundle.message("error.list.open.action.description"), IconLoader.getIcon("/debugger/watches.png"));
-    }
-
-    public void update(AnActionEvent e) {
-      final Presentation presentation = e.getPresentation();
-      final AbstractMessage logMessage = getMessageAt(myIndex);
-      if (logMessage == null) {
-        presentation.setEnabled(false);
-        return;
-      }
-
-      if (!logMessage.isSumbitted()) {
-        presentation.setEnabled(false);
-        return;
-      }
-
-      final SubmittedReportInfo info = logMessage.getSubmissionInfo();
-      presentation.setEnabled(info.getURL() != null);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      final AbstractMessage logMessage = getMessageAt(myIndex);
-      final SubmittedReportInfo info = logMessage.getSubmissionInfo();
-      final String url = info.getURL();
-      if (url != null) {
-        BrowserUtil.launchBrowser(url);
-      }
     }
   }
 
