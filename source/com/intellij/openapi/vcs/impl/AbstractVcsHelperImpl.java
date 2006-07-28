@@ -93,6 +93,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   public void showCodeSmellErrors(final List<CodeSmellInfo> smellList) {
 
+    Collections.sort(smellList, new Comparator<CodeSmellInfo>() {
+      public int compare(final CodeSmellInfo o1, final CodeSmellInfo o2) {
+        return o1.getTextRange().getStartOffset() - o2.getTextRange().getStartOffset();
+      }
+    });
+
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myProject.isDisposed()) return;
@@ -703,6 +709,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     final List<CodeSmellInfo> result = new ArrayList<CodeSmellInfo>();
     final PsiManager manager = PsiManager.getInstance(myProject);
     final FileDocumentManager fileManager = FileDocumentManager.getInstance();
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
@@ -735,7 +742,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   private List<CodeSmellInfo> findCodeSmells(final PsiFile psiFile, final ProgressIndicator progress, final Document document) {
 
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     final List<CodeSmellInfo> result = new ArrayList<CodeSmellInfo>();
 
     GeneralHighlightingPass action1 = new GeneralHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), false, true);
