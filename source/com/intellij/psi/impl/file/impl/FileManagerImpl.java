@@ -716,9 +716,9 @@ public class FileManagerImpl implements FileManager {
           }
         }
         else if (file instanceof ClsFileImpl) {
-          if (((ClsFileImpl)file).isContentsLoaded()) {
+          //if (((ClsFileImpl)file).isContentsLoaded()) {
             ((ClsFileImpl)file).unloadContent();
-          }
+          //}
         }
 
         myManager.childrenChanged(event);
