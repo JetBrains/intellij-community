@@ -59,7 +59,6 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   @NotNull private final Project myProject;
   private ConfigurationFile myFile;
   private ModuleType myModuleType = null;
-  private boolean myIsDisposed = false;
   private MyVirtualFileListener myVirtualFileListener;
   private boolean isModuleAdded;
   private Map<String, String> myOptions = new HashMap<String, String>();
@@ -212,7 +211,6 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   public void dispose() {
     isModuleAdded = false;
     disposeComponents();
-    myIsDisposed = true;
     VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
     Extensions.disposeArea(this);
     super.dispose();
@@ -390,10 +388,6 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     return moduleName;
   }
 
-  public boolean isDisposed() {
-    return myIsDisposed;
-  }
-
   public void moduleAdded() {
     isModuleAdded = true;
     final Object[] components = getComponents(false);
@@ -410,11 +404,11 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     setOption(ELEMENT_TYPE, type.getId());
   }
 
-  public void setOption(String optionName, String optionValue) {
+  public void setOption(@NotNull String optionName, @NotNull String optionValue) {
     myOptions.put(optionName, optionValue);
   }
 
-  public String getOptionValue(String optionName) {
+  public String getOptionValue(@NotNull String optionName) {
     return myOptions.get(optionName);
   }
 

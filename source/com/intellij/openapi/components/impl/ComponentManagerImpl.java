@@ -271,7 +271,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myComponentInterfaces.toArray(new Class[myComponentInterfaces.size()]);
   }
 
-  public boolean hasComponent(Class interfaceClass) {
+  public boolean hasComponent(@NotNull Class interfaceClass) {
     return myInterfaceToClassMap.containsKey(interfaceClass);
   }
 
@@ -521,7 +521,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     if (element == null) return;
     final boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
     for (final Object o : element.getChildren(COMPONENT_ELEMENT)) {
-      Element child = (Element)o;
+      @NonNls Element child = (Element)o;
       boolean skipForDummyProject = child.getChild("skipForDummyProject") != null;
       if (!loadDummies && skipForDummyProject) {
         continue;
@@ -541,7 +541,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       Map<String, String> options = null;
 
       final List optionElements = child.getChildren(OPTION_ELEMENT);
-      if (optionElements.size() != 0) {
+      if (!optionElements.isEmpty()) {
         options = new HashMap<String, String>();
         for (final Object optionElement : optionElements) {
           Element e = (Element)optionElement;

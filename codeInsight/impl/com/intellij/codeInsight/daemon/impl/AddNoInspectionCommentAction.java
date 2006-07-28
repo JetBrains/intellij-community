@@ -18,10 +18,10 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class AddNoInspectionCommentAction implements IntentionAction {
-  PsiElement myContext;
+  private final PsiElement myContext;
   private static final @NonNls String COMMENT_START_TEXT = "//noinspection ";
 
-  private String myID;
+  private final String myID;
 
   public AddNoInspectionCommentAction(LocalInspectionTool tool, PsiElement context) {
     myID = tool.getID();

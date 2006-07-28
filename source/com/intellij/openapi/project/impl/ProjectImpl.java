@@ -70,7 +70,6 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
 
   @NonNls private static final String WORKSPACE_EXTENSION = ".iws";
   @NonNls private static final String PROJECT_LAYER = "project-components";
-  private boolean myDisposed = false;
   private PomModel myModel = null;
 
   private final boolean myOptimiseTestLoadSpeed;
@@ -125,17 +124,12 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
     return myDummy;
   }
 
-  public boolean isDisposed() {
-    return myDisposed;
-  }
-
   public boolean isOpen() {
     return ProjectManagerEx.getInstanceEx().isProjectOpened(this);
   }
 
   public boolean isInitialized() {
-    if (!isOpen() || isDisposed()) return false;
-    return StartupManagerEx.getInstanceEx(this).startupActivityPassed();
+    return isOpen() && !isDisposed() && StartupManagerEx.getInstanceEx(this).startupActivityPassed();
   }
 
   public PomModel getModel() {
@@ -437,7 +431,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
     super.init();
 
     ((ModuleManagerImpl)ModuleManager.getInstance(this)).loadModules();
-    myProjectManagerListener = new ProjectImpl.MyProjectManagerListener();
+    myProjectManagerListener = new MyProjectManagerListener();
     myManager.addProjectManagerListener(this, myProjectManagerListener);
   }
 
@@ -552,7 +546,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
   }
 
   public void dispose() {
-    LOG.assertTrue(!myDisposed);
+    LOG.assertTrue(!isDisposed());
     if (myProjectManagerListener != null) {
       myManager.removeProjectManagerListener(this, myProjectManagerListener);
     }
@@ -565,7 +559,6 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
     myWorkspaceFile = null;
     myProjectManagerListener = null;
     super.dispose();
-    myDisposed = true;
   }
 
   private void projectOpened() {
