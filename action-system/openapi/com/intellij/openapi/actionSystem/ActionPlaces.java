@@ -57,6 +57,7 @@ public abstract class ActionPlaces {
   public static final String USAGE_VIEW_TOOLBAR = "UsageViewToolbar";
   public static final String STRUCTURE_VIEW_POPUP = "StructureViewPopup";
   public static final String STRUCTURE_VIEW_TOOLBAR = "StructureViewToolbar";
+  public static final String NAVIGATION_BAR = "NavBar";
 
   public static final String TODO_VIEW_POPUP = "TodoViewPopup";
   public static final String TODO_VIEW_TOOLBAR = "TodoViewToolbar";

@@ -67,7 +67,9 @@ public class ExternalToolsGroup extends SimpleActionGroup {
       ActionPlaces.TYPE_HIERARCHY_VIEW_POPUP.equals(context) ||
       ActionPlaces.CALL_HIERARCHY_VIEW_POPUP.equals(context) ||
       ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP.equals(context) ||
-      ActionPlaces.SCOPE_VIEW_POPUP.equals(context)
+      ActionPlaces.FAVORITES_VIEW_POPUP.equals(context) ||
+      ActionPlaces.SCOPE_VIEW_POPUP.equals(context) ||
+      ActionPlaces.NAVIGATION_BAR.equals(context)
     ){
       return tool.isShownInProjectViews();
     }
