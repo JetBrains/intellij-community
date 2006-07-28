@@ -60,7 +60,7 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
         queryNames.add("save");
         queryNames.add("size");
         queryNames.add("store");
-        queryNames.add("storeToXml");
+        queryNames.add("storeToXML");
         queryNames.add("subList");
         queryNames.add("toArray");
         queryNames.add("values");
