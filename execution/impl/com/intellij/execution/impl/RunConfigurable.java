@@ -412,7 +412,7 @@ class RunConfigurable extends BaseConfigurable {
       final ConfigurationSettingsEditorWrapper settingsEditorWrapper = ((ConfigurationSettingsEditorWrapper)stableConfiguration.getEditor());
       manager.addConfiguration(stableConfiguration.getSettings(),
                                settingsEditorWrapper.isStoreProjectConfiguration(),
-                               settingsEditorWrapper.getCompileMethodBeforeRunning());
+                               settingsEditorWrapper.getStepsBeforeLaunch());
     }
     if (tempConfiguration != null) {
       manager.setTemporaryConfiguration((RunnerAndConfigurationSettingsImpl)tempConfiguration.getSettings());

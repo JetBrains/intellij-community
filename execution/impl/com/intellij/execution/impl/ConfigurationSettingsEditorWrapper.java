@@ -25,11 +25,14 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private JPanel myComponentPlace;
   private JCheckBox myCbStoreProjectConfiguration;
   private JPanel myWholePanel;
-  private JPanel myCompilationMethodPanel;
+
+  private JPanel myStepsPanel;
+  private Map<String,Boolean> myStepsBeforeLaunch;
+  private final StepBeforeLaunchRow[] myStepsBeforeLaunchRows;
+
+  private boolean myStoreProjectConfiguration;
 
   private ConfigurationSettingsEditor myEditor;
-  private Map<String,Boolean> myCompileBeforeRunning;
-  private boolean myStoreProjectConfiguration;
 
   public ConfigurationSettingsEditorWrapper(final RunnerAndConfigurationSettingsImpl settings) {
     myEditor = new ConfigurationSettingsEditor(settings);
@@ -38,50 +41,16 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
 
-    myCompileBeforeRunning = runManager.getCompileMethodBeforeRun(runConfiguration);
+    myStepsBeforeLaunch = runManager.getCompileMethodBeforeRun(runConfiguration);
 
     final Set<String> list = runManager.getPossibleActionsBeforeRun();
-    myCompilationMethodPanel.setLayout(new GridBagLayout());
-    int gridy = 0;
+    myStepsBeforeLaunchRows = new StepBeforeLaunchRow[list.size()];
+    myStepsPanel.setLayout(new GridLayout(list.size(), 1));
+    int idx = 0;
     for (final String method : list) {
-      final Boolean checked = myCompileBeforeRunning.get(method);
-      final JCheckBox checkBox = new JCheckBox(method, checked != null && checked.booleanValue());
-
-      final GridBagConstraints gc =
-        new GridBagConstraints(0, gridy, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
-      myCompilationMethodPanel.add(checkBox, gc);
-      final Function<RunConfiguration, String> actionByName = runManager.getActionByName(method);
-      final FixedSizeButton button;
-      final JLabel label;
-      if (actionByName != null) {
-        final String descriptionByName = runManager.getDescriptionByName(method, runConfiguration);
-        label = new JLabel(descriptionByName != null ? descriptionByName : "");
-        gc.gridx++;
-        myCompilationMethodPanel.add(label, gc);
-        button = new FixedSizeButton(20);
-        gc.gridx++;
-        myCompilationMethodPanel.add(button, gc);
-        button.addActionListener(new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            final String description = actionByName.fun(runConfiguration);
-            label.setText(description != null ? description : "");
-          }
-        });
-        gc.gridx++;
-        gc.weightx = 1;
-        myCompilationMethodPanel.add(Box.createHorizontalBox(), gc);
-      } else {
-        button = null;
-        label = null;
-      }
-      enableSettings(button, checkBox, label);
-      checkBox.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          myCompileBeforeRunning.put(method, checkBox.isSelected());
-          enableSettings(button, checkBox, label);
-        }
-      });
-      gridy++;
+      final StepBeforeLaunchRow stepRow = new StepBeforeLaunchRow(runManager, runConfiguration, myStepsBeforeLaunch, method);
+      myStepsPanel.add(stepRow);
+      myStepsBeforeLaunchRows[idx++] = stepRow;
     }
 
     myStoreProjectConfiguration = runManager.isConfigurationShared(settings);
@@ -93,15 +62,10 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     });
   }
 
-  private static void enableSettings(final FixedSizeButton button, final JCheckBox checkBox, final JLabel label) {
-    if (button != null && label != null) {
-      button.setEnabled(checkBox.isSelected());
-      label.setEnabled(checkBox.isSelected());
-    }
-  }
-
   public void setCompileMethodState(boolean state){
-    UIUtil.setEnabled(myCompilationMethodPanel, state, true);
+    for (StepBeforeLaunchRow stepRow : myStepsBeforeLaunchRows) {
+      stepRow.enableRow(state);
+    }
   }
 
   @NotNull
@@ -127,7 +91,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private void additionalApply(final RunnerAndConfigurationSettingsImpl settings) {
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
-    runManager.setCompileMethodBeforeRun(runConfiguration, myCompileBeforeRunning);
+    runManager.setCompileMethodBeforeRun(runConfiguration, myStepsBeforeLaunch);
     runManager.shareConfiguration(runConfiguration, myStoreProjectConfiguration);
   }
 
@@ -136,11 +100,71 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   }
 
 
-  public Map<String, Boolean> getCompileMethodBeforeRunning() {
-    return myCompileBeforeRunning;
+  public Map<String, Boolean> getStepsBeforeLaunch() {
+    return myStepsBeforeLaunch;
   }
 
   public boolean isStoreProjectConfiguration() {
     return myStoreProjectConfiguration;
+  }
+
+  private class StepBeforeLaunchRow extends JPanel {
+    private JCheckBox myCheckBox;
+    private FixedSizeButton myButton;
+
+    public StepBeforeLaunchRow(final RunManagerImpl runManager,
+                              final RunConfiguration runConfiguration,
+                              final Map<String, Boolean> methodsBeforeRun,
+                              final String methodName) {
+      super(new GridBagLayout());
+      final Boolean checked = methodsBeforeRun.get(methodName);
+      myCheckBox = new JCheckBox(methodName, checked != null && checked.booleanValue());
+      GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0 , 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0, 0);
+      add(myCheckBox, gc);
+      final Function<RunConfiguration, String> actionByName = runManager.getActionByName(methodName);
+      gc.weightx = 1;
+      if (actionByName != null) {
+        final String descriptionByName = runManager.getDescriptionByName(methodName, runConfiguration);
+        myCheckBox.setText(getCheckboxText(descriptionByName, methodName));
+
+        myButton = new FixedSizeButton(20);
+        add(myButton, gc);
+
+        myButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            final String description = actionByName.fun(runConfiguration);
+            myCheckBox.setText(getCheckboxText(description, methodName));
+          }
+        });
+      } else {
+        add(Box.createHorizontalBox(), gc);
+      }
+      enableSettings();
+      myCheckBox.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          methodsBeforeRun.put(methodName, myCheckBox.isSelected());
+          enableSettings();
+        }
+      });
+    }
+
+    private String getCheckboxText(final String description, final String methodName) {
+      return methodName + " " + (description != null ? description : "");
+    }
+
+    private void enableSettings() {
+      if (myButton != null) {
+        myButton.setEnabled(myCheckBox.isSelected());
+      }
+    }
+
+    public void enableRow(boolean state){
+      myCheckBox.setEnabled(state);
+      if (state) {
+        enableSettings();
+      } else {
+        UIUtil.setEnabled(this, false, true);
+      }
+    }
   }
 }
