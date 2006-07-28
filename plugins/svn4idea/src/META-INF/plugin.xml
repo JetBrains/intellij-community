@@ -46,7 +46,7 @@
       <action id="Subversion.BrowseSVNRepository" class="org.jetbrains.idea.svn.actions.BrowseRepositoryAction"
         />
       <separator/>
-      <add-to-group group-id="FileMenu" anchor="before" relative-to-action="ExportToHTML"/>
+      <add-to-group group-id="VcsGroups" anchor="after" relative-to-action="VcsGlobalGroup"/>
     </group>
 
     <group id="SubversionFilePopupGroup" popup="true" class="org.jetbrains.idea.svn.actions.SubversionGroup">
