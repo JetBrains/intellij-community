@@ -56,7 +56,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       conflictsCount = conflicts.size();
       if (conflictsCount == 1) return conflicts.get(0);
 
-      final boolean applicable = checkApplicability(conflicts);
+      final int applicabilityLevel = checkApplicability(conflicts);
+      final boolean applicable = applicabilityLevel > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
+
       conflictsCount = conflicts.size();
       if (conflictsCount == 1) return conflicts.get(0);
 
@@ -89,7 +91,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           for (int j = 0; j < i; j++) {
             final CandidateInfo conflict = newConflictsArray[j];
             if (conflict == method) break;
-            switch (isMoreSpecific(((MethodCandidateInfo)method).getElement(), ((MethodCandidateInfo)conflict).getElement())) {
+            switch (isMoreSpecific(((MethodCandidateInfo)method).getElement(), ((MethodCandidateInfo)conflict).getElement(), applicabilityLevel)) {
               case TRUE:
                 conflicts.remove(conflict);
                 break;
@@ -135,7 +137,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
   }
 
-  private static boolean checkApplicability(List<CandidateInfo> conflicts) {
+  private static int checkApplicability(List<CandidateInfo> conflicts) {
     int maxApplicabilityLevel = 0;
     boolean toFilter = false;
     for (CandidateInfo conflict : conflicts) {
@@ -158,7 +160,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
     }
 
-    return maxApplicabilityLevel > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
+    return maxApplicabilityLevel;
   }
 
   private static int getCheckLevel(MethodCandidateInfo method){
@@ -229,7 +231,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return Specifics.TRUE;
   }
 
-  private Specifics isMoreSpecific(final PsiMethod method1, final PsiMethod method2) {
+  private Specifics isMoreSpecific(final PsiMethod method1, final PsiMethod method2, final int applicabilityLevel) {
     final PsiClass class1 = method1.getContainingClass();
     final PsiClass class2 = method2.getContainingClass();
     Specifics isMoreSpecific = null;
@@ -252,8 +254,15 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     PsiType[] types1 = new PsiType[max];
     PsiType[] types2 = new PsiType[max];
     for (int i = 0; i < max; i++) {
-      types1[i] = i < params1.length ? params1[i].getType() : ((PsiArrayType)params1[params1.length - 1].getType()).getComponentType();
-      types2[i] = i < params2.length ? params2[i].getType() : ((PsiArrayType)params2[params2.length - 1].getType()).getComponentType();
+      PsiType type1 = params1[Math.min(i, params1.length - 1)].getType();
+      PsiType type2 = params2[Math.min(i, params2.length - 1)].getType();
+      if (applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
+        type1 = type1 instanceof PsiEllipsisType ? ((PsiArrayType)type1).getComponentType() : type1;
+        type2 = type2 instanceof PsiEllipsisType ? ((PsiArrayType)type2).getComponentType() : type2;
+      }
+
+      types1[i] = type1;
+      types2[i] = type2;
     }
 
     if (typeParameters1.length == 0 || typeParameters2.length == 0) {
