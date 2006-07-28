@@ -123,13 +123,13 @@ public class LibraryDownloader {
     return VirtualFile.EMPTY_ARRAY;
   }
 
-  private VirtualFile chooseDirectoryForLibraries() {
+  private @Nullable VirtualFile chooseDirectoryForLibraries() {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setTitle(J2EEBundle.message("dialog.directory.for.libraries.title"));
 
     final VirtualFile[] files;
     if (myProject != null) {
-      files = FileChooser.chooseFiles(myProject, descriptor);
+      files = FileChooser.chooseFiles(myProject, descriptor, myProject.getProjectFile().getParent());
     }
     else {
       files = FileChooser.chooseFiles(myParent, descriptor);
