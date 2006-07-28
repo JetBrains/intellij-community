@@ -184,7 +184,9 @@ public class XmlFoldingBuilder implements FoldingBuilder {
     if (range == null) return false;
     
     if(range.getStartOffset() >= 0 && 
-       range.getEndOffset() <= elementToFold.getContainingFile().getTextRange().getEndOffset()) {
+       range.getEndOffset() <= elementToFold.getContainingFile().getTextRange().getEndOffset() &&
+       range.getEndOffset() <= document.getTextLength() // psi and document maybe not in sync after error
+      ) {
 
       int startLine = document.getLineNumber(range.getStartOffset());
       int endLine = document.getLineNumber(range.getEndOffset() - 1);
