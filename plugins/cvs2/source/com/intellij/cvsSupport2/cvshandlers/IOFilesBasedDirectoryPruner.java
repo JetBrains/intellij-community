@@ -4,6 +4,7 @@ import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.admin.EntriesHandler;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
@@ -36,8 +37,8 @@ public class IOFilesBasedDirectoryPruner {
     if (file.isFile()) return false;
 
     if (myProgressIndicator != null) {
-      myProgressIndicator.setText(com.intellij.CvsBundle.message("progress.text.prune.empty.directories"));
-      myProgressIndicator.setText2(com.intellij.CvsBundle.message("progress.text.processing", file.getAbsolutePath()));
+      myProgressIndicator.setText(CvsBundle.message("progress.text.prune.empty.directories"));
+      myProgressIndicator.setText2(CvsBundle.message("progress.text.processing", file.getAbsolutePath()));
     }
 
     final File[] subFiles = file.listFiles();
@@ -54,7 +55,12 @@ public class IOFilesBasedDirectoryPruner {
 
     canPrune &= !containsFileEntries(file);
 
-    return canPrune && FileUtil.delete(file);
+    if (!canPrune) return false;
+
+    if (!FileUtil.delete(file)) return false;
+
+    CvsUtil.removeEntryFor(file);
+    return true;
   }
 
   private boolean containsFileEntries(final File file) {
@@ -73,7 +79,7 @@ public class IOFilesBasedDirectoryPruner {
     return false;
   }
 
-  private boolean isAdminDirectory(final File file) {
+  private static boolean isAdminDirectory(final File file) {
     return file.isDirectory() && file.getName().equals(CvsUtil.CVS);
   }
 
