@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Function;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -250,10 +248,11 @@ public class ComboControl extends BaseControl<JComboBox, String> {
     final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (!project.isOpen()) return;
         if (!getDomWrapper().isValid()) return;
 
         final DomElement domElement = getDomElement();
-        if (!project.isOpen() || domElement == null || !domElement.isValid()) return;
+        if (domElement == null || !domElement.isValid()) return;
 
         final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
         final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(domElement);
