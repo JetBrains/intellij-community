@@ -53,12 +53,17 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
     }, this);
   }
 
+  private boolean areValid() {
+    for (final DomElement domElement : myDomElements) {
+      if (!domElement.isValid()) return false;
+    }
+    return true;
+  }
+
   private void updatePanel() {
     myAlarm.cancelAllRequests();
 
-    for (final DomElement domElement : myDomElements) {
-      if (!domElement.isValid()) return;
-    }
+    if (!areValid()) return;
 
     repaint();
     setToolTipText(myErrorStripeRenderer.getTooltipMessage());
@@ -69,7 +74,8 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
   }
 
   private boolean isHighlightingFinished() {
-    return DomElementAnnotationsManager.getInstance(myDomElements[0].getManager().getProject()).isHighlightingFinished(myDomElements);
+    return !areValid() ||
+           DomElementAnnotationsManager.getInstance(myDomElements[0].getManager().getProject()).isHighlightingFinished(myDomElements);
   }
 
   private void addUpdateRequest() {
