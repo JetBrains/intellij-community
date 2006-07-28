@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.*;
 
 /**
@@ -47,9 +48,9 @@ public class ModelMergerImpl implements ModelMerger {
       public Object invokeMethod(final Method method, final Object[] args, final Object[] implementations)
         throws IllegalAccessException, InvocationTargetException {
 
-        return getMergedImplementations(method, args,
-                                        DomReflectionUtil.getRawType(DomReflectionUtil.extractCollectionElementType(method.getGenericReturnType())),
-                                        implementations);
+        final Type type = DomReflectionUtil.extractCollectionElementType(method.getGenericReturnType());
+        assert type != null : "No generic return type in method " + method;
+        return getMergedImplementations(method, args, DomReflectionUtil.getRawType(type), implementations);
       }
     });
 
