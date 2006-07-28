@@ -34,12 +34,17 @@ public class RollbackChangesDialog extends DialogWrapper {
       return;
     }
 
+    ArrayList<Change> validChanges = new ArrayList<Change>();
     Set<LocalChangeList> lists = new THashSet<LocalChangeList>();
     for (Change change : changes) {
-      lists.add(manager.getChangeList(change));
+      final LocalChangeList list = manager.getChangeList(change);
+      if (list != null) {
+        lists.add(list);
+        validChanges.add(change);
+      }
     }
 
-    rollback(project, new ArrayList<LocalChangeList>(lists), new ArrayList<Change>(changes));
+    rollback(project, new ArrayList<LocalChangeList>(lists), validChanges);
   }
 
   public static void rollback(final Project project, final List<LocalChangeList> changeLists, final List<Change> changes) {
@@ -51,7 +56,6 @@ public class RollbackChangesDialog extends DialogWrapper {
 
     myProject = project;
     myBrowser = new ChangesBrowser(project, changeLists, changes, null, true, true);
-
 
     setOKButtonText(VcsBundle.message("changes.action.rollback.text"));
     setTitle(VcsBundle.message("changes.action.rollback.title"));

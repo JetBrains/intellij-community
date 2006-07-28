@@ -115,6 +115,10 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     myViewer.setShowFlatten(PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY));
   }
 
+  public void addRollbackAction() {
+    myToolBarGroup.add(new RollbackAction());
+  }
+
   public void addToolbarAction(AnAction action) {
     myToolBarGroup.add(action);
   }
@@ -291,10 +295,6 @@ public class ChangesBrowser extends JPanel implements DataProvider {
       myViewer);
 
     myToolBarGroup.add(directoriesAction);
-
-    if (!myReadOnly) {
-      myToolBarGroup.add(new RollbackAction());
-    }
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myToolBarGroup, true).getComponent();
   }
