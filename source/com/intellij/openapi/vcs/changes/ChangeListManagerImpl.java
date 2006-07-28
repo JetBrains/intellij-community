@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
@@ -81,6 +82,13 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @NonNls private static final String ATT_CHANGE_AFTER_PATH = "afterPath";
   private List<CommitExecutor> myExecutors = new ArrayList<CommitExecutor>();
 
+  private VcsListener myVcsListener = new VcsListener() {
+    public void moduleVcsChanged(Module module, @Nullable AbstractVcs newVcs) {
+      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+      scheduleUpdate();
+    }
+  };
+
   public static ChangeListManagerImpl getInstanceImpl(final Project project) {
     return (ChangeListManagerImpl) project.getComponent(ChangeListManager.class);
   }
@@ -96,6 +104,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         myInitialized = true;
+        ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
       }
     });
   }
@@ -110,6 +119,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public void projectClosed() {
     myDisposed = true;
+    ProjectLevelVcsManager.getInstance(myProject).removeVcsListener(myVcsListener);
     cancelUpdates();
     synchronized(myPendingUpdatesLock) {
       waitForUpdateDone(null);
