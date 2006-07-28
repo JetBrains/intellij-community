@@ -15,6 +15,10 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.mock.MockConfirmation;
@@ -99,11 +103,9 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
     final Component component = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
     LOG.assertTrue(component != null);
 
-    ListPopupStep<ActionItem> step =
-      createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics);
+    PopupStep step = createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics);
 
     return new ListPopupImpl(step, maxRowCount){
-
       protected void dispose() {
         if (disposeCallback != null) {
           disposeCallback.run();
@@ -190,7 +192,12 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
     JComponent focusOwner=(JComponent)focusManager.getFocusOwner();
 
     if (focusOwner == null) {
-      throw new IllegalArgumentException("focusOwner cannot be null");
+      Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      IdeFrame frame = project == null ? null : ((WindowManagerEx)WindowManager.getInstance()).getFrame(project);
+      focusOwner = frame == null ? null : frame.getRootPane();
+      if (focusOwner == null) {
+        throw new IllegalArgumentException("focusOwner cannot be null");
+      }
     }
 
     final Rectangle visibleRect = focusOwner.getVisibleRect();
