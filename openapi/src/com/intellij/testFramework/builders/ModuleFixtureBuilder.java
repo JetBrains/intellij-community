@@ -24,7 +24,22 @@ import com.intellij.testFramework.fixtures.ModuleFixture;
  */
 public interface ModuleFixtureBuilder<T extends ModuleFixture> {
 
+  /**
+   * Add content root to the module configuration.
+   *
+   * @param contentRootPath path to your content folder
+   * @return current builder
+   */
   ModuleFixtureBuilder<T> addContentRoot(final String contentRootPath);
+
+  /**
+   * Add source root to the module configuration.
+   * {@link #addContentRoot(String)} should be called first
+   *
+   * @param sourceRootPath path to your source folder (relative to the first content root)
+   * @return current builder
+   */
+  ModuleFixtureBuilder<T> addSourceRoot(String sourceRootPath);
 
   T getFixture();
 }

@@ -11,6 +11,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
@@ -29,6 +30,7 @@ abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements Modu
   private static int ourIndex;
 
   private final List<String> myContentRoots = new ArrayList<String>();
+  private final List<String> mySourceRoots = new ArrayList<String>();
   private final ModuleType myModuleType;
   protected final TestFixtureBuilder<? extends IdeaProjectTestFixture> myFixtureBuilder;
 
@@ -39,6 +41,12 @@ abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements Modu
 
   public ModuleFixtureBuilder<T> addContentRoot(final String contentRootPath) {
     myContentRoots.add(contentRootPath);
+    return this;
+  }
+
+  public ModuleFixtureBuilder<T> addSourceRoot(final String sourceRootPath) {
+    assert myContentRoots.size() > 0 : "content root should be added first";
+    mySourceRoots.add(sourceRootPath);
     return this;
   }
 
@@ -76,10 +84,21 @@ abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements Modu
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();
 
+    boolean mainRoot = true;
     for (String contentRoot : myContentRoots) {
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentRoot);
       assert virtualFile != null : "cannot find content root: " + contentRoot;
-      rootModel.addContentEntry(virtualFile);
+      final ContentEntry contentEntry = rootModel.addContentEntry(virtualFile);
+
+      if (mainRoot) {
+        for (String sourceRoot: mySourceRoots) {
+          final String s = contentRoot + "/" + sourceRoot;
+          final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(s);
+          assert vf != null : "cannot find source root: " + s;
+          contentEntry.addSourceFolder(vf, false);
+        }
+        mainRoot = false;
+      }
     }
 
     rootModel.commit();
