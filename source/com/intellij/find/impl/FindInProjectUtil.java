@@ -6,7 +6,6 @@ import com.intellij.find.*;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.Document;
@@ -89,7 +88,7 @@ public class FindInProjectUtil {
       directoryName = directories.length == 1 ? directories[0].getVirtualFile().getPresentableUrl():null;
     }
 
-    Module module = (Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT);
+    Module module = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
     if (module != null) {
       model.setModuleName(module.getName());
     }
@@ -102,15 +101,16 @@ public class FindInProjectUtil {
 
   @Nullable
   public static PsiDirectory getPsiDirectory(final FindModel findModel, Project project) {
-    if (findModel.isProjectScope() || findModel.getDirectoryName() == null) {
+    String directoryName = findModel.getDirectoryName();
+    if (findModel.isProjectScope() || directoryName == null) {
       return null;
     }
 
     final PsiManager psiManager = PsiManager.getInstance(project);
-    String path = findModel.getDirectoryName().replace(File.separatorChar, '/');
+    String path = directoryName.replace(File.separatorChar, '/');
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
     if (virtualFile == null || !virtualFile.isDirectory()) {
-      if (path.indexOf(JarFileSystem.JAR_SEPARATOR) < 0) {
+      if (!path.contains(JarFileSystem.JAR_SEPARATOR)) {
         path += JarFileSystem.JAR_SEPARATOR;
       }
       virtualFile = JarFileSystem.getInstance().findFileByPath(path);
@@ -180,14 +180,14 @@ public class FindInProjectUtil {
 
     final Collection<PsiFile> psiFiles = getFilesToSearchIn(findModel, project, psiDirectory);
     final FileDocumentManager manager = FileDocumentManager.getInstance();
-    boolean skipAllLarge = false;
-    boolean processAllLarge = false;
     try {
       int i =0;
       long totalFilesSize = 0;
       final int[] count = new int[]{0};
       boolean warningShown = false;
 
+      boolean skipAllLarge = false;
+      boolean processAllLarge = false;
       for (final PsiFile psiFile : psiFiles) {
         ProgressManager.getInstance().checkCanceled();
         final VirtualFile virtualFile = psiFile.getVirtualFile();
@@ -342,71 +342,35 @@ public class FindInProjectUtil {
     });
   }
   private static Collection<PsiFile> getFilesToSearchInReadAction(final FindModel findModel, final Project project, final PsiDirectory psiDirectory) {
-    Module module = findModel.getModuleName() == null ? null : ModuleManager.getInstance(project).findModuleByName(findModel.getModuleName());
+    String moduleName = findModel.getModuleName();
+    Module module = moduleName == null ? null : ModuleManager.getInstance(project).findModuleByName(moduleName);
     final FileIndex fileIndex = module == null ?
                                 ProjectRootManager.getInstance(project).getFileIndex() :
                                 ModuleRootManager.getInstance(module).getFileIndex();
 
     final Pattern fileMaskRegExp = createFileMaskRegExp(findModel);
     if (psiDirectory == null || (findModel.isWithSubdirectories() && fileIndex.isInContent(psiDirectory.getVirtualFile()))) {
-      if (canOptimizeForFastWordSearch(findModel)) {
-        // optimization
-        CacheManager cacheManager = ((PsiManagerImpl)PsiManager.getInstance(project)).getCacheManager();
+      // optimization
+      final Collection<PsiFile> filesForFastWordSearch = getFilesForFastWordSearch(findModel, project, psiDirectory, fileMaskRegExp, module);
+      if (canOptimizeForFastWordSearch(findModel) && filesForFastWordSearch != null) return filesForFastWordSearch;
 
-        GlobalSearchScope scope = psiDirectory == null ?
-                                  module == null ?
-                                  GlobalSearchScope.projectScope(project) :
-                                  moduleContentScope(module) :
-                                                             GlobalSearchScope.directoryScope(psiDirectory, true);
-
-        List<String> words = StringUtil.getWordsIn(findModel.getStringToFind());
-        // if no words specified in search box, fallback to brute force search
-        if (words.size() != 0) {
-          // search for longer strings first
-          Collections.sort(words, new Comparator<String>() {
-            public int compare(final String o1, final String o2) {
-              return o2.length() - o1.length();
-            }
-          });
-          Set<PsiFile> resultFiles = new THashSet<PsiFile>();
-          for (int i = 0; i < words.size(); i++) {
-            String word = words.get(i);
-            PsiFile[] files = cacheManager.getFilesWithWord(word, UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
-
-            final List<PsiFile> psiFiles = Arrays.asList(files);
-            if (i == 0) {
-              resultFiles.addAll(psiFiles);
-            }
-            else {
-              resultFiles.retainAll(psiFiles);
-            }
-            filterMaskedFiles(resultFiles, fileMaskRegExp);
-            if (resultFiles.size() == 0) break;
-          }
-          return resultFiles;
-        }
-      }
       class EnumContentIterator implements ContentIterator {
-        List<VirtualFile> myVirtualFiles = new ArrayList<VirtualFile>();
+        List<PsiFile> myFiles = new ArrayList<PsiFile>(filesForFastWordSearch == null ? Collections.<PsiFile>emptyList() : filesForFastWordSearch);
+        final PsiManager psiManager = PsiManager.getInstance(project);
 
-        public boolean processFile(VirtualFile fileOrDir) {
-          if (!fileOrDir.isDirectory() &&
-              (fileMaskRegExp == null || fileMaskRegExp.matcher(fileOrDir.getName()).matches()) ) {
-            myVirtualFiles.add(fileOrDir);
+        public boolean processFile(VirtualFile virtualFile) {
+          if (!virtualFile.isDirectory() &&
+              (fileMaskRegExp == null || fileMaskRegExp.matcher(virtualFile.getName()).matches()) ) {
+            final PsiFile psiFile = psiManager.findFile(virtualFile);
+            if (psiFile != null && (filesForFastWordSearch == null || !filesForFastWordSearch.contains(psiFile))) {
+              myFiles.add(psiFile);
+            }
           }
           return true;
         }
 
-        public Collection<PsiFile> getFiles() {
-          final ArrayList<PsiFile> psiFiles = new ArrayList<PsiFile>(myVirtualFiles.size());
-          final PsiManager manager = PsiManager.getInstance(project);
-          for (VirtualFile virtualFile : myVirtualFiles) {
-            final PsiFile psiFile = manager.findFile(virtualFile);
-            if (psiFile != null) {
-              psiFiles.add(psiFile);
-            }
-          }
-          return psiFiles;
+        private Collection<PsiFile> getFiles() {
+          return myFiles;
         }
       }
       final EnumContentIterator iterator = new EnumContentIterator();
@@ -428,6 +392,42 @@ public class FindInProjectUtil {
                              createFileMaskRegExp(findModel));
       return fileList;
     }
+  }
+
+  @Nullable
+  private static Collection<PsiFile> getFilesForFastWordSearch(final FindModel findModel, final Project project,
+                                                               final PsiDirectory psiDirectory, final Pattern fileMaskRegExp,
+                                                               final Module module) {
+    CacheManager cacheManager = ((PsiManagerImpl)PsiManager.getInstance(project)).getCacheManager();
+
+    GlobalSearchScope scope = psiDirectory == null
+                              ? module == null ? GlobalSearchScope.projectScope(project) : moduleContentScope(module)
+                              : GlobalSearchScope.directoryScope(psiDirectory, true);
+    List<String> words = StringUtil.getWordsIn(findModel.getStringToFind());
+    // if no words specified in search box, fallback to brute force search
+    if (words.isEmpty()) return null;
+    // hope long words are rare
+    Collections.sort(words, new Comparator<String>() {
+      public int compare(final String o1, final String o2) {
+        return o2.length() - o1.length();
+      }
+    });
+    Set<PsiFile> resultFiles = new THashSet<PsiFile>();
+    for (int i = 0; i < words.size(); i++) {
+      String word = words.get(i);
+      PsiFile[] files = cacheManager.getFilesWithWord(word, UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
+
+      final List<PsiFile> psiFiles = Arrays.asList(files);
+      if (i == 0) {
+        resultFiles.addAll(psiFiles);
+      }
+      else {
+        resultFiles.retainAll(psiFiles);
+      }
+      filterMaskedFiles(resultFiles, fileMaskRegExp);
+      if (resultFiles.isEmpty()) break;
+    }
+    return resultFiles;
   }
 
   private static GlobalSearchScope moduleContentScope(final Module module) {
@@ -466,16 +466,12 @@ public class FindInProjectUtil {
       findModel.getStringToFind().indexOf('$') < 0;
   }
 
-  private static void addToUsages(Project project,
-                                  Document document,
-                                  AsyncFindUsagesProcessListener consumer,
-                                  FindModel findModel,
-                                  final PsiFile psiFile,
-                                  final int[] count) {
-
-    if (psiFile == null) {
-      return;
-    }
+  private static void addToUsages(@NotNull Project project,
+                                  @NotNull Document document,
+                                  @NotNull AsyncFindUsagesProcessListener consumer,
+                                  @NotNull FindModel findModel,
+                                  @NotNull final PsiFile psiFile,
+                                  @NotNull final int[] count) {
     CharSequence text = document.getCharsSequence();
     int textLength = document.getTextLength();
     if (text != null) {
@@ -483,7 +479,7 @@ public class FindInProjectUtil {
       FindManager findManager = FindManager.getInstance(project);
       while (offset < textLength) {
         FindResult result = findManager.findString(text, offset, findModel);
-        if (result == null || !result.isStringFound()) break;
+        if (!result.isStringFound()) break;
 
         UsageInfo info = new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset());
         consumer.foundUsage(info);
@@ -504,10 +500,7 @@ public class FindInProjectUtil {
                                             final Runnable findUsagesRunnable,
                                             final Runnable showResultsRunnable,
                                             Project project) {
-
-    final ProgressIndicator progressIndicator1 = Patches.MAC_HIDE_QUIT_HACK
-                                                 ? (ProgressIndicator)progressIndicator
-                                                 : new SmoothProgressAdapter(progressIndicator, project);
+    final ProgressIndicator progressIndicator1 = Patches.MAC_HIDE_QUIT_HACK ? progressIndicator : new SmoothProgressAdapter(progressIndicator, project);
     UsageViewImplUtil.runProcessWithProgress(progressIndicator1, findUsagesRunnable, showResultsRunnable);
   }
 

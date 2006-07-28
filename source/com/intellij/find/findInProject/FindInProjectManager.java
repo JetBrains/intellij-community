@@ -16,12 +16,13 @@ import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
 public class FindInProjectManager implements ProjectComponent {
   private Project myProject;
-  private ArrayList myUsagesContents = new ArrayList();
+  private ArrayList<Content> myUsagesContents = new ArrayList<Content>();
   private boolean myToOpenInNewTab = false;
   private boolean myIsFindInProgress = false;
 
@@ -29,6 +30,7 @@ public class FindInProjectManager implements ProjectComponent {
 
   public void projectClosed() {}
 
+  @NotNull
   public String getComponentName() {
     return "FindInProjectManager";
   }
@@ -46,16 +48,15 @@ public class FindInProjectManager implements ProjectComponent {
   }
 
   public void findInProject(DataContext dataContext) {
-    ArrayList contentsToDelete = new ArrayList();
-    for(int i = 0; i < myUsagesContents.size(); i++){
-      Content content = (Content)myUsagesContents.get(i);
-      if (content.getComponent().getParent() == null){
+    ArrayList<Content> contentsToDelete = new ArrayList<Content>();
+    for (Content content : myUsagesContents) {
+      if (content.getComponent().getParent() == null) {
         contentsToDelete.add(content);
       }
     }
 
-    for(int i = 0; i < contentsToDelete.size(); i++){
-      myUsagesContents.remove(contentsToDelete.get(i));
+    for (Content aContentsToDelete : contentsToDelete) {
+      myUsagesContents.remove(aContentsToDelete);
     }
 
     boolean isOpenInNewTabEnabled;
@@ -67,7 +68,7 @@ public class FindInProjectManager implements ProjectComponent {
     }
     else {
       toOpenInNewTab[0] = myToOpenInNewTab;
-      isOpenInNewTabEnabled = (UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0);
+      isOpenInNewTabEnabled = UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
     }
 
     final FindManager findManager = FindManager.getInstance(myProject);
@@ -81,7 +82,7 @@ public class FindInProjectManager implements ProjectComponent {
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     if (editor != null){
       String s = editor.getSelectionModel().getSelectedText();
-      if (s != null && (s.indexOf("\r") == -1) && (s.indexOf("\n") == -1)){
+      if (s != null && !s.contains("\r") && !s.contains("\n")){
         findModel.setStringToFind(s);
       }
     }
