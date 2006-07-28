@@ -172,7 +172,8 @@ public class CreateClassDialog extends DialogWrapper {
       public void run() {
         try {
           final PsiDirectory baseDir = myModule == null? null : PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName);
-          myTargetDirectory = PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, baseDir, true);
+          myTargetDirectory = myModule == null? PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, baseDir, true)
+            : PackageUtil.findOrCreateDirectoryForPackage(myModule, packageName, baseDir, true);
           if (myTargetDirectory == null) {
             errorString[0] = ""; // message already reported by PackageUtil
             return;
