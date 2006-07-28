@@ -143,6 +143,9 @@ public final class Utils {
     catch (NoClassDefFoundError exc) {
       return "Cannot load class " + className + ": " + exc.getMessage();
     }
+    catch(ExceptionInInitializerError exc) {
+      return "Cannot initialize class " + className + ": " + exc.getMessage();
+    }
 
     if (validateConstructor) {
       try {
