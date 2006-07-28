@@ -246,6 +246,9 @@
         <action id="Vcs.RefreshStatuses" class="com.intellij.openapi.vcs.actions.RefreshStatuses"/>
       </group>
 
+      <group id="Vcs.Checkout" class="com.intellij.openapi.vcs.checkout.CheckoutActionGroup" popup="true"/>
+      <separator/>
+
       <separator/>
       <action id="Vcs.MarkSourcesAsCurrent" class="com.intellij.openapi.vcs.actions.MarkSourcesAsCurrent"/>
     </group>
@@ -283,8 +286,6 @@
         <separator/>
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="/actions/sync.png"/>
         <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction"/>
-        <separator/>
-        <group id="Vcs.Checkout" class="com.intellij.openapi.vcs.checkout.CheckoutActionGroup" popup="true"/>
         <separator/>
         <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction"/>
         <action id="Print" class="com.intellij.codeEditor.printing.PrintAction"/>

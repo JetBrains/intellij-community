@@ -60,7 +60,7 @@
 
     <group id="CvsFileGroup">
       <separator/>
-      <add-to-group group-id="FileMenu" anchor="before" relative-to-action="ExportToHTML"/>
+      <add-to-group group-id="VcsGroups" anchor="after" relative-to-action="VcsGlobalGroup"/>
       <action id="Cvs.Import" class="com.intellij.cvsSupport2.actions.ImportAction"/>
       <action id="Cvs.BrowseCVSRepository" class="com.intellij.cvsSupport2.actions.BrowseCvsRepositoryAction"
         />
