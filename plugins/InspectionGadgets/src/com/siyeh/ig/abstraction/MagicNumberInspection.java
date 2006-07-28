@@ -27,36 +27,13 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.JComponent;
-import java.util.HashSet;
-import java.util.Set;
 
 public class MagicNumberInspection extends ExpressionInspection {
 
-    @NonNls private static final String[] s_specialCaseLiteralArray =
-            new String[]{
-                    "0", "1", "2", "3", "4",
-                    "5", "6", "7", "8", "9",
-                    "10", "0L", "1L", "2L", "0l",
-                    "1l", "2l", "0.0", "1.0", "0.0F",
-                    "1.0F", "0.0f", "1.0f", "0.0d", "1.0d",
-                    "0.0D", "1.0D"
-            };
-
-    /** @noinspection StaticCollection*/
-    private static final Set<String> s_specialCaseLiterals =
-            new HashSet<String>(27);
-
 	/** @noinspection PublicField*/
     public boolean m_ignoreInHashCode = true;
-
-    static {
-        for(String string : s_specialCaseLiteralArray) {
-            s_specialCaseLiterals.add(string);
-        }
-    }
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("magic.number.display.name");
@@ -87,16 +64,11 @@ public class MagicNumberInspection extends ExpressionInspection {
         return new IntroduceConstantFix();
     }
 
-    static boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {
-        final String text = expression.getText();
-        return s_specialCaseLiterals.contains(text);
-    }
-
     public BaseInspectionVisitor buildVisitor() {
         return new MagicNumberVisitor();
     }
 
-    private  class MagicNumberVisitor extends BaseInspectionVisitor {
+    private class MagicNumberVisitor extends BaseInspectionVisitor {
 
         public void visitLiteralExpression(
                 @NotNull PsiLiteralExpression expression) {
@@ -146,6 +118,28 @@ public class MagicNumberInspection extends ExpressionInspection {
             }
             final PsiType type = initializer.getType();
             return ClassUtils.isImmutable(type);
+        }
+
+        private boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {
+            final PsiManager manager = expression.getManager();
+            final PsiConstantEvaluationHelper evaluationHelper =
+                    manager.getConstantEvaluationHelper();
+            final Object object = evaluationHelper.computeConstantExpression(
+                    expression);
+            if (object instanceof Integer) {
+                final int i = ((Integer)object).intValue();
+                return i >0 && i <= 10;
+            } else if (object instanceof Long) {
+                final long l = ((Long)object).longValue();
+                return l >= 0L && l <= 2L;
+            } else if (object instanceof Double) {
+                final double d = ((Double)object).doubleValue();
+                return d == 1.0 || d == 0.0;
+            } else if (object instanceof Float) {
+                final float f = ((Float)object).floatValue();
+                return f == 1.0f || f == 0.0f;
+            }
+            return false;
         }
     }
 }
