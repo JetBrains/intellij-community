@@ -69,7 +69,10 @@ public class DomReflectionUtil {
       if (resolved instanceof TypeVariable) {
         final TypeVariable typeVariable = (TypeVariable)resolved;
         index = ContainerUtil.findByEquals(ReflectionCache.getTypeParameters(anInterface), typeVariable);
-        assert index >= 0 : typeVariable + " " + anInterface + Arrays.asList(ReflectionCache.getTypeParameters(anInterface));
+        assert index >= 0 : "Cannot resolve type variable:\n" +
+                            "typeVariable = " + typeVariable + "\n" +
+                            "genericDeclaration = " + declarationToString(typeVariable.getGenericDeclaration()) + "\n" +
+                            "searching in " + declarationToString(anInterface);
         final Type type = genericInterfaces[i];
         if (type instanceof Class) {
           return Object.class;
@@ -81,6 +84,10 @@ public class DomReflectionUtil {
       }
     }
     return null;
+  }
+
+  private static String declarationToString(final GenericDeclaration anInterface) {
+    return anInterface.toString() + Arrays.asList(anInterface.getTypeParameters()) + " loaded by " + ((Class)anInterface).getClassLoader();
   }
 
   public static Class<?> substituteGenericType(final Type genericType, final Type classType) {
