@@ -683,7 +683,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           // need this in order to correctly load plugin-supplied descriptions
           final InspectionProfileEntry tool = descriptor.getTool();
           try {
-            URL descriptionUrl = InspectionToolRegistrar.getDescriptionUrl(tool, descriptor.getDescriptorFileName());
+            URL descriptionUrl = InspectionToolRegistrar.getDescriptionUrl(tool);
             if (descriptionUrl == null) throw new IOException();
             myBrowser.read(new StringReader(SearchUtil.markup(ResourceUtil.loadText(descriptionUrl), myProfileFilter.getFilter())), null);
           }

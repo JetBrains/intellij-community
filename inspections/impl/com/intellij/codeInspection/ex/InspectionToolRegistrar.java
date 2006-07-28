@@ -4,7 +4,6 @@ import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ui.InspectCodePanel;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -173,7 +172,7 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
           try {
             for (InspectionTool tool : tools) {
               processText(tool.getDisplayName().toLowerCase(), tool);
-              final URL description = getDescriptionUrl(tool, tool.getDescriptionFileName());
+              final URL description = getDescriptionUrl(tool);
               if (description != null) {
                 @NonNls String descriptionText = ResourceUtil.loadText(description).toLowerCase();
                 if (descriptionText != null) {
@@ -215,22 +214,17 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
     return myWords2InspectionToolNameMap.keySet();
   }
 
-  public static URL getDescriptionUrl(InspectionProfileEntry tool, String descriptionFileName) {
+  public static URL getDescriptionUrl(@NotNull InspectionProfileEntry tool) {
     Class aClass;
-    if (tool != null) {
-      if (tool instanceof LocalInspectionToolWrapper) {
-        aClass = ((LocalInspectionToolWrapper)tool).getTool().getClass();
-      }
-      else if (tool instanceof GlobalInspectionToolWrapper) {
-        aClass = ((GlobalInspectionToolWrapper)tool).getTool().getClass();
-      }
-      else {
-        aClass = tool.getClass();
-      }
+    if (tool instanceof LocalInspectionToolWrapper) {
+      aClass = ((LocalInspectionToolWrapper)tool).getTool().getClass();
+    }
+    else if (tool instanceof GlobalInspectionToolWrapper) {
+      aClass = ((GlobalInspectionToolWrapper)tool).getTool().getClass();
     }
     else {
-      aClass = InspectCodePanel.class;
+      aClass = tool.getClass();
     }
-    return ResourceUtil.getResource(aClass, "/inspectionDescriptions", descriptionFileName);
+    return ResourceUtil.getResource(aClass, "/inspectionDescriptions", ((InspectionTool)tool).getDescriptionFileName());
   }
 }

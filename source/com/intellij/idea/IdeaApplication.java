@@ -56,9 +56,11 @@ public class IdeaApplication {
     @NonNls final String inspectAppCode = "inspect";
     @NonNls final String diffAppCode = "diff";
     @NonNls final String antAppCode = "ant";
+    @NonNls final String enumarator = "enumerateInspections";
     return args.length > 0 && (Comparing.strEqual(args[0], inspectAppCode) ||
                                Comparing.strEqual(args[0], diffAppCode) ||
-                               Comparing.strEqual(args[0], antAppCode));
+                               Comparing.strEqual(args[0], antAppCode) ||
+                               Comparing.strEqual(args[0], enumarator));
   }
 
   private ApplicationStarter getStarter() {
