@@ -7,6 +7,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.util.HashMap;
 import java.util.Map;
+import java.io.IOException;
 
 /**
  * @author yole
@@ -91,6 +92,9 @@ public final class SimpleTransferable<T> implements Transferable {
       }
       //noinspection unchecked
       return (T) transferData;
+    }
+    catch(IOException e) {
+      return null;
     }
     catch (Exception e) {
       LOG.error(e);
