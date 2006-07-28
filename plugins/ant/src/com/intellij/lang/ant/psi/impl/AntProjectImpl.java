@@ -23,6 +23,7 @@ import java.util.*;
 
 public class AntProjectImpl extends AntStructuredElementImpl implements AntProject {
   private AntTarget[] myTargets;
+  private AntTarget[] myImportedTargets;
   private AntFile[] myImports;
   private List<AntProperty> myPredefinedProps = new ArrayList<AntProperty>();
   @NonNls private List<String> myEnvPrefixes;
@@ -94,6 +95,30 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       }
     }
     return null;
+  }
+
+  @NotNull
+  public AntTarget[] getImportTargets() {
+    if (myImportedTargets == null) {
+      final AntFile[] importedFiles = getImportedFiles();
+      if (importedFiles.length == 0) {
+        myImportedTargets = AntTarget.EMPTY_TARGETS;
+      }
+      else {
+        final List<AntTarget> targets = new ArrayList<AntTarget>();
+        for (final AntFile imported : importedFiles) {
+          final AntProject project = imported.getAntProject();
+          if (project != null) {
+            for (final AntTarget target : project.getTargets()) {
+              targets.add(target);
+            }
+          }
+        }
+        final int size = targets.size();
+        myImportedTargets = (size == 0) ? AntTarget.EMPTY_TARGETS : targets.toArray(new AntTarget[size]);
+      }
+    }
+    return myImportedTargets;
   }
 
   @Nullable

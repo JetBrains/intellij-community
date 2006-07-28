@@ -106,7 +106,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
         if (buildTarget.getAntTarget() == antTarget) {
           return buildTarget;
         }
-      }
+      }                        
     }
     return null;
   }
@@ -117,6 +117,11 @@ public class AntBuildModelImpl implements AntBuildModelBase {
     final List<AntBuildTargetBase> list = new ArrayList<AntBuildTargetBase>(targets.length);
     for (final AntTarget target : targets) {
       list.add(new AntBuildTargetImpl(target, model));
+    }
+    if (project != null) {
+      for (final AntTarget target : project.getImportTargets()) {
+        list.add(new AntBuildTargetImpl(target, model));
+      }
     }
     return list;
   }
