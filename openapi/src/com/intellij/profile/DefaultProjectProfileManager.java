@@ -236,6 +236,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
     PROJECT_PROFILE = projectProfile;
   }
 
+  @NotNull
   public Profile getProjectProfileImpl(){
     if (PROJECT_PROFILE == null || myProfiles.isEmpty()){
       @NonNls final String projectProfileName = "Project Default";
