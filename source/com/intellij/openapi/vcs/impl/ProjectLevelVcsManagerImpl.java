@@ -83,6 +83,7 @@ import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.EditorAdapter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -120,6 +121,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NonNls protected static final String IGNORE_CHANGEMARKERS_KEY = "idea.ignore.changemarkers";
   private final List<CheckinHandlerFactory> myRegisteredBeforeCheckinHandlers = new ArrayList<CheckinHandlerFactory>();
   private boolean myHaveEmptyContentRevisions = true;
+  private EventDispatcher<VcsListener> myEventDispatcher = EventDispatcher.create(VcsListener.class);
 
   private final Object TRACKERS_LOCK = new Object();
 
@@ -801,6 +803,18 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public void unregisterCheckinHandlerFactory(CheckinHandlerFactory handler) {
     myRegisteredBeforeCheckinHandlers.remove(handler);
+  }
+
+  public void addVcsListener(VcsListener listener) {
+    myEventDispatcher.addListener(listener);
+  }
+
+  public void removeVcsListener(VcsListener listener) {
+    myEventDispatcher.removeListener(listener);
+  }
+
+  public void notifyModuleVcsChanged(Module module, AbstractVcs newVcs) {
+    myEventDispatcher.getMulticaster().moduleVcsChanged(module, newVcs);
   }
 
   boolean hasEmptyContentRevisions() {

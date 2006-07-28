@@ -149,4 +149,20 @@ public abstract class ProjectLevelVcsManager {
    * @since 5.1
    */
   public abstract void unregisterCheckinHandlerFactory(CheckinHandlerFactory factory);
+
+  /**
+   * Adds a listener for receiving notifications about changes in VCS configuration for the project.
+   *
+   * @param listener the listener instance.
+   * @since 6.0
+   */
+  public abstract void addVcsListener(VcsListener listener);
+
+  /**
+   * Removes a listener for receiving notifications about changes in VCS configuration for the project.
+   *
+   * @param listener the listener instance.
+   * @since 6.0
+   */
+  public abstract void removeVcsListener(VcsListener listener);
 }

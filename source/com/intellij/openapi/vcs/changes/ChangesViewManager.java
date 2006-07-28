@@ -24,14 +24,14 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.module.Module;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
@@ -39,6 +39,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,12 +61,15 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
   private final Project myProject;
 
   private Alarm myRepaintAlarm;
+  private Alarm myVcsChangeAlarm;
 
   private boolean myDisposed = false;
 
   private ChangeListListener myListener = new MyChangeListListener();
+  private VcsListener myVcsListener = new MyVcsListener();
 
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
+  private ToolWindow myToolWindow;
 
   static ChangesViewManager getInstance(Project project) {
     return project.getComponent(ChangesViewManager.class);
@@ -76,6 +80,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     myView = new ChangesListView(project);
     Disposer.register(project, myView);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
+    myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
   }
 
   public void projectOpened() {
@@ -85,16 +90,25 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
       public void run() {
         final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         if (toolWindowManager != null) {
-          toolWindowManager.registerToolWindow(TOOLWINDOW_ID, createChangeViewComponent(), ToolWindowAnchor.BOTTOM);
+          myToolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, createChangeViewComponent(), ToolWindowAnchor.BOTTOM);
+          updateToolWindowAvailability();
+          ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
         }
       }
     });
   }
 
+  private void updateToolWindowAvailability() {
+    final AbstractVcs[] abstractVcses = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
+    myToolWindow.setAvailable(abstractVcses.length > 0, null);
+  }
+
   public void projectClosed() {
     ChangeListManager.getInstance(myProject).removeChangeListListener(myListener);
+    ProjectLevelVcsManager.getInstance(myProject).removeVcsListener(myVcsListener);
     myDisposed = true;
     myRepaintAlarm.cancelAllRequests();
+    myVcsChangeAlarm.cancelAllRequests();
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     ToolWindowManager.getInstance(myProject).unregisterToolWindow(TOOLWINDOW_ID);
   }
@@ -593,6 +607,17 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
           ChangeListManager.getInstance(project).removeChangeList((LocalChangeList) list);
         }
       }
+    }
+  }
+
+  private class MyVcsListener implements VcsListener {
+    public void moduleVcsChanged(Module module, @Nullable AbstractVcs newVcs) {
+      myVcsChangeAlarm.cancelAllRequests();
+      myVcsChangeAlarm.addRequest(new Runnable() {
+        public void run() {
+          updateToolWindowAvailability();
+        }
+      }, 100, ModalityState.NON_MMODAL);
     }
   }
 }
