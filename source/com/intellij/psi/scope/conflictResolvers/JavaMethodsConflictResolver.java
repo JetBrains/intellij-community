@@ -256,13 +256,19 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       types2[i] = i < params2.length ? params2[i].getType() : ((PsiArrayType)params2[params2.length - 1].getType()).getComponentType();
     }
 
-    if (typeParameters1.length > 0) {
-      final PsiResolveHelper resolveHelper = myArgumentsList.getManager().getResolveHelper();
-      substitutor1 = resolveHelper.inferTypeArguments(typeParameters1, types1, types2, PsiUtil.getLanguageLevel(myArgumentsList), typeParameters2.length == 0);
+    if (typeParameters1.length == 0 || typeParameters2.length == 0) {
+      if (typeParameters1.length > 0) {
+        final PsiResolveHelper resolveHelper = myArgumentsList.getManager().getResolveHelper();
+        substitutor1 = resolveHelper.inferTypeArguments(typeParameters1, types1, types2, PsiUtil.getLanguageLevel(myArgumentsList));
+      }
+      if (typeParameters2.length > 0) {
+        final PsiResolveHelper resolveHelper = myArgumentsList.getManager().getResolveHelper();
+        substitutor2 = resolveHelper.inferTypeArguments(typeParameters2, types2, types1, PsiUtil.getLanguageLevel(myArgumentsList));
+      }
     }
-    if (typeParameters2.length > 0) {
-      final PsiResolveHelper resolveHelper = myArgumentsList.getManager().getResolveHelper();
-      substitutor2 = resolveHelper.inferTypeArguments(typeParameters2, types2, types1, PsiUtil.getLanguageLevel(myArgumentsList), typeParameters1.length == 0);
+    else {
+      substitutor1 = createRawSubstitutor(typeParameters1);
+      substitutor2 = createRawSubstitutor(typeParameters2);
     }
 
     for (int i = 0; i < types1.length; i++) {
@@ -300,6 +306,15 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
 
     return isMoreSpecific;
+  }
+
+  private static PsiSubstitutor createRawSubstitutor(final PsiTypeParameter[] typeParameters) {
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    for (final PsiTypeParameter typeParameter : typeParameters) {
+      substitutor = substitutor.put(typeParameter, null);
+    }
+
+    return substitutor;
   }
 
   public void handleProcessorEvent(PsiScopeProcessor.Event event, Object associatied){}
