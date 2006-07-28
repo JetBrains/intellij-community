@@ -132,6 +132,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     myValuesPanel.removeAll();
     myValuesPanel.setLayout(new CardLayout());
 
+    if (!myProject.isOpen()) return;
     JPanel valuesPanelComponent = new JPanel(new GridBagLayout());
     myValuesPanel.add(valuesPanelComponent, VALUES);
     myValuesPanel.add(myNoPropertySelectedPanel, NO_PROPERTY_SELECTED);
@@ -443,9 +444,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         @NotNull
         public VirtualFile getVirtualFile() {
           PropertiesFile selectedFile = getSelectedPropertiesFile();
-          if (selectedFile == null) return null;
 
-          return selectedFile.getVirtualFile();
+          VirtualFile virtualFile = selectedFile == null ? null : selectedFile.getVirtualFile();
+          assert virtualFile != null;
+          return virtualFile;
         }
 
         public Object getSelectorInFile() {
@@ -489,11 +491,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   @NotNull
-  public FileEditorState getState(FileEditorStateLevel level) {
+  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
     return new ResourceBundleEditorState(getSelectedPropertyName());
   }
 
-  public void setState(FileEditorState state) {
+  public void setState(@NotNull FileEditorState state) {
     String propertyName = ((ResourceBundleEditorState)state).myPropertyName;
     if (propertyName != null) {
       myStructureViewComponent.select(propertyName, true);
@@ -517,11 +519,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   }
 
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
 
   }
 
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
 
   }
 
