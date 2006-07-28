@@ -983,9 +983,10 @@ public abstract class ChooseByNameBase{
         if (cancelled != null && cancelled[0]) {
           throw new ProcessCanceledException();
         }
-
-        if(matcher.matches(name, compiledPattern)) {
-          list.add(name);
+        if (name != null) {
+          if(matcher.matches(name, compiledPattern)) {
+            list.add(name);
+          }
         }
       }
     }
