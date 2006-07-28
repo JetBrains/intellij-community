@@ -254,7 +254,11 @@ public class BuildFilePropertiesPanel {
 
     private static final Comparator<TargetFilter> NAME_COMPARATOR = new Comparator<TargetFilter>() {
       public int compare(TargetFilter o1, TargetFilter o2) {
-        return o1.getTargetName().compareToIgnoreCase(o2.getTargetName());
+        final String name1 = o1.getTargetName();
+        if(name1 == null) return -1;
+        final String name2 = o2.getTargetName();
+        if(name2 == null) return 1;
+        return name1.compareToIgnoreCase(name2);
       }
     };
     private static final ColumnInfo<TargetFilter, String> NAME_COLUMN = new ColumnInfo<TargetFilter, String>(
