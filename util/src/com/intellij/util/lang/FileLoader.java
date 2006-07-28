@@ -101,7 +101,7 @@ class FileLoader extends Loader {
     }
 
     public InputStream getInputStream() throws IOException {
-      return new BufferedInputStream(new FileInputStream(myFile));
+      return new FileInputStream(myFile);
     }
 
     public int getContentLength() throws IOException {

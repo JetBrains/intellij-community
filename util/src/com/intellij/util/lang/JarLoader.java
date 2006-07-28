@@ -2,6 +2,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
 import java.io.*;
@@ -26,6 +27,7 @@ class JarLoader extends Loader {
     myCanLockJar = canLockJar;
   }
 
+  @Nullable
   private ZipFile getZipFile() throws IOException {
     if (myZipFile != null) return myZipFile;
     if (myCanLockJar) {
@@ -36,6 +38,7 @@ class JarLoader extends Loader {
     return _getZipFile();
   }
 
+  @Nullable
   private ZipFile _getZipFile() throws IOException {
     if (FILE_PROTOCOL.equals(myURL.getProtocol())) {
       String s = FileUtil.unquote(myURL.getFile());
@@ -73,6 +76,7 @@ class JarLoader extends Loader {
     }
   }
 
+  @Nullable
   Resource getResource(String name, boolean flag) {
     try {
       if (myPackages == null) {
@@ -87,7 +91,7 @@ class JarLoader extends Loader {
 
       try {
         ZipEntry entry = file.getEntry(name);
-        if (entry != null) return new MyResource(name, new URL(getBaseURL(), name));
+        if (entry != null) return new MyResource(entry, new URL(getBaseURL(), name));
       }
       finally {
         releaseZipFile(file);
@@ -107,16 +111,16 @@ class JarLoader extends Loader {
   }
 
   private class MyResource extends Resource {
-    private final String myName;
+    private final ZipEntry myEntry;
     private final URL myUrl;
 
-    public MyResource(String name, URL url) {
-      myName = name;
+    public MyResource(ZipEntry name, URL url) {
+      myEntry = name;
       myUrl = url;
     }
 
     public String getName() {
-      return myName;
+      return myEntry.getName();
     }
 
     public URL getURL() {
@@ -127,17 +131,13 @@ class JarLoader extends Loader {
       return myURL;
     }
 
+    @Nullable
     public InputStream getInputStream() throws IOException {
       final ZipFile file = getZipFile();
       if (file == null) return null;
 
       try {
-        final ZipEntry entry = file.getEntry(myName);
-        if (entry == null) {
-          releaseZipFile(file);
-          return null;
-        }
-        final InputStream inputStream = new BufferedInputStream(file.getInputStream(entry));
+        final InputStream inputStream = file.getInputStream(myEntry);
         return new FilterInputStream(inputStream) {
           public void close() throws IOException {
             super.close();
@@ -152,23 +152,7 @@ class JarLoader extends Loader {
     }
 
     public int getContentLength() {
-      try {
-        final ZipFile file = getZipFile();
-        if (file == null) return -1;
-
-        try {
-          final ZipEntry entry = file.getEntry(myName);
-          if (entry == null) return -1;
-
-          return (int)entry.getSize();
-        }
-        finally {
-          releaseZipFile(file);
-        }
-      }
-      catch (IOException e) {
-        return -1;
-      }
+      return (int)myEntry.getSize();
     }
   }
 }
