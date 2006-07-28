@@ -11,14 +11,17 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.actions.DeleteAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -28,10 +31,9 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.module.Module;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
@@ -189,30 +191,24 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
 
     DefaultActionGroup menuGroup = new DefaultActionGroup();
-    menuGroup.add(refreshAction);
-
     menuGroup.add(commitAction);
-    /*
-    for (CommitExecutor executor : myExecutors) {
-      menuGroup.add(new CommitUsingExecutorAction(executor));
-    }
-    */
-
     menuGroup.add(rollbackAction);
+    menuGroup.add(toAnotherListAction);
+    menuGroup.add(diffAction);
+    menuGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
+    menuGroup.addSeparator();
+    menuGroup.add(new DeleteUnversionedFilesAction());
+    menuGroup.add(new ScheduleForAdditionAction());
+    menuGroup.add(new ScheduleForRemovalAction());
+    menuGroup.addSeparator();
     menuGroup.add(newChangeListAction);
     menuGroup.add(removeChangeListAction);
     menuGroup.add(setDefaultChangeListAction);
     menuGroup.add(renameAction);
-    menuGroup.add(toAnotherListAction);
-    menuGroup.add(diffAction);
+    menuGroup.addSeparator();
+    menuGroup.add(refreshAction);
     menuGroup.addSeparator();
     menuGroup.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));
-    menuGroup.add(new DeleteAction());
-    menuGroup.add(new ScheduleForAdditionAction());
-    menuGroup.add(new ScheduleForRemovalAction());
-    menuGroup.add(new RollbackDeletionAction());
-    menuGroup.addSeparator();
-    menuGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
 
     myView.setMenuActions(menuGroup);
 
@@ -229,7 +225,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
   }
 
   private static JComponent createToolbarComponent(final DefaultActionGroup group) {
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW, group, false).getComponent();
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false).getComponent();
   }
 
   void updateProgressText(final String text) {
@@ -379,6 +375,13 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
       return unnamedcount == 0 ? "Unnamed" : "Unnamed (" + unnamedcount + ")";
     }
+
+    public void update(AnActionEvent e) {
+      if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
+        ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+        e.getPresentation().setVisible(lists != null && lists.length > 0);
+      }
+    }
   }
 
   public class RenameChangeListAction extends AnAction {
@@ -390,8 +393,12 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
     public void update(AnActionEvent e) {
       ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
-      e.getPresentation().setEnabled(lists != null && lists.length == 1 && lists[0] instanceof LocalChangeList &&
-                                     !((LocalChangeList) lists [0]).isReadOnly());
+      final boolean visible =
+        lists != null && lists.length == 1 && lists[0] instanceof LocalChangeList && !((LocalChangeList)lists[0]).isReadOnly();
+      if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP))
+        e.getPresentation().setVisible(visible);
+      else
+        e.getPresentation().setEnabled(visible);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -416,8 +423,12 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
     public void update(AnActionEvent e) {
       ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
-      e.getPresentation().setEnabled(lists != null && lists.length == 1 &&
-                                     lists[0] instanceof LocalChangeList && !((LocalChangeList)lists[0]).isDefault());
+      final boolean visible =
+        lists != null && lists.length == 1 && lists[0] instanceof LocalChangeList && !((LocalChangeList)lists[0]).isDefault();
+      if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP))
+        e.getPresentation().setVisible(visible);
+      else
+        e.getPresentation().setEnabled(visible);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -456,16 +467,25 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
     public void update(AnActionEvent e) {
       Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      e.getPresentation().setEnabled(ChangesUtil.getChangeListIfOnlyOne(myProject, changes) != null);
+      //noinspection unchecked
+      List<File> files = (List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
+      e.getPresentation().setEnabled(ChangesUtil.getChangeListIfOnlyOne(myProject, changes) != null ||
+                                     (files != null && !files.isEmpty()));
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      final ChangeList list = ChangesUtil.getChangeListIfOnlyOne(myProject, changes);
-      if (list == null) return;
+      List<File> files = (List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
+      if (files != null && !files.isEmpty()) {
+        new RollbackDeletionAction().actionPerformed(e);
+      }
+      else {
+        Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+        final ChangeList list = ChangesUtil.getChangeListIfOnlyOne(myProject, changes);
+        if (list == null) return;
 
-      FileDocumentManager.getInstance().saveAllDocuments();
-      RollbackChangesDialog.rollbackChanges(myProject, Arrays.asList(changes));
+        FileDocumentManager.getInstance().saveAllDocuments();
+        RollbackChangesDialog.rollbackChanges(myProject, Arrays.asList(changes));
+      }
     }
   }
 
@@ -569,7 +589,11 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     public void update(AnActionEvent e) {
       Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
       ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
-      e.getPresentation().setEnabled(canRemoveChangeLists(project, lists));
+      final boolean visible = canRemoveChangeLists(project, lists);
+      if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP))
+          e.getPresentation().setVisible(visible);
+      else
+        e.getPresentation().setEnabled(visible);
     }
 
     private static boolean canRemoveChangeLists(final Project project, final ChangeList[] lists) {
@@ -607,6 +631,25 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
           ChangeListManager.getInstance(project).removeChangeList((LocalChangeList) list);
         }
       }
+    }
+  }
+
+  private static class DeleteUnversionedFilesAction extends AnAction {
+    public DeleteUnversionedFilesAction() {
+      super(IdeBundle.message("action.delete"), "",
+            IconLoader.getIcon("/actions/cancel.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      DeleteProvider deleteProvider = (DeleteProvider)e.getDataContext().getData(DataConstantsEx.DELETE_ELEMENT_PROVIDER);
+      assert deleteProvider != null;
+      deleteProvider.deleteElement(e.getDataContext());
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      DeleteProvider deleteProvider = (DeleteProvider)e.getDataContext().getData(DataConstantsEx.DELETE_ELEMENT_PROVIDER);
+      e.getPresentation().setVisible(deleteProvider != null && deleteProvider.canDeleteElement(e.getDataContext()));
     }
   }
 

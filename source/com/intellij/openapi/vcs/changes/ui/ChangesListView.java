@@ -287,7 +287,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
   }
 
   public void setMenuActions(final ActionGroup menuGroup) {
-    PopupHandler.installPopupHandler(this, menuGroup, ActionPlaces.CHANGES_VIEW, ActionManager.getInstance());
+    PopupHandler.installPopupHandler(this, menuGroup, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
     EditSourceOnDoubleClickHandler.install(this);
   }
 

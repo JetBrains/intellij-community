@@ -89,7 +89,8 @@ public abstract class ActionPlaces {
   public static final String CREATE_EJB_POPUP = "CreateEjbPopup";
   public static final String WELCOME_SCREEN = "WelcomeScreen";
 
-  public static final String CHANGES_VIEW = "ChangesView";
+  public static final String CHANGES_VIEW_TOOLBAR = "ChangesViewToolbar";
+  public static final String CHANGES_VIEW_POPUP = "ChangesViewPopup";
 
 
   private static final String[] ourToolbarPlaces = new String[]{PROJECT_VIEW_TOOLBAR, TESTTREE_VIEW_TOOLBAR, MAIN_TOOLBAR,
