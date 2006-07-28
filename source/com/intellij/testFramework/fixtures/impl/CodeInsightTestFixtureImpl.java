@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -101,10 +102,15 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     testHighlighting(true, true, true, filePaths);
   }
 
-  public void testCompletion(String fileBefore, String fileAfter) {
-    configureByFile(fileBefore);
-    new CodeCompletionHandler().invoke(getProject(), myEditor, myFile);
-    checkResultByFile(fileAfter, false);
+  public void testCompletion(final String[] filesBefore, final String fileAfter) {
+    new WriteCommandAction(myProjectFixture.getProject()) {
+
+      protected void run(final Result result) throws Throwable {
+        configureByFiles(filesBefore);
+        new CodeCompletionHandler().invoke(getProject(), myEditor, myFile);
+        checkResultByFile(fileAfter, false);
+      }
+    }.execute();
   }
 
   public void setUp() throws Exception {

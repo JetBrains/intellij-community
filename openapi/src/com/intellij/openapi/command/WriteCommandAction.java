@@ -16,6 +16,7 @@ import com.intellij.util.SmartList;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.lang.reflect.InvocationTargetException;
 
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private final String myName;
@@ -78,7 +79,10 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
           }
         });
       }
-    } catch (Exception e) {
+    } catch (Throwable e) {
+      if (e instanceof InvocationTargetException) e = e.getCause();
+      if (e instanceof Error) throw (Error)e;
+      else if (e instanceof RuntimeException) throw (RuntimeException)e;
       throw new Error(e);
     }
     return result;

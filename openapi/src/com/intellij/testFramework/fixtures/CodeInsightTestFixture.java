@@ -59,5 +59,5 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    */
   void testHighlighting(String... filePaths);
 
-  void testCompletion(String fileBefore, String fileAfter);
+  void testCompletion(String[] filesBefore, String fileAfter);
 }

@@ -30,7 +30,9 @@ public class RunResult<T> extends Result<T> {
     } catch (Throwable throwable) {
       myThrowable = throwable;
       if (!myActionRunnable.isSilentExecution()) {
-        throw new Error(myThrowable);
+        if (myThrowable instanceof Error) throw (Error)myThrowable;
+        else if (myThrowable instanceof RuntimeException) throw (RuntimeException)myThrowable; 
+        else throw new Error(myThrowable);
       }
     }
     finally {

@@ -108,6 +108,8 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
       failed = true;
     }
     catch (Throwable e) {
+      if (e instanceof Error) throw (Error)e;
+      else if (e instanceof RuntimeException) throw (RuntimeException)e;
       LOG.error(e);
     }
     finally {

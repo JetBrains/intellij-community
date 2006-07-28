@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<project name="Build" default="init" basedir=".">
+    <description>
+        ANT build script
+    </description>
+
+<target name="init">
+    <property file="PropertyCompletion<caret>"/>
+</target>
+</project>
