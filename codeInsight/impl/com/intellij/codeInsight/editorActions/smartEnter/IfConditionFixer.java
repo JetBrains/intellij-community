@@ -27,6 +27,8 @@ public class IfConditionFixer implements Fixer {
           if (then != null) {
             stopOffset = Math.min(stopOffset, then.getTextRange().getStartOffset());
           }
+          stopOffset = Math.min(stopOffset, ifStatement.getTextRange().getEndOffset());
+
           doc.replaceString(ifStatement.getTextRange().getStartOffset(), stopOffset, "if ()");
         } else {
           processor.registerUnresolvedError(ifStatement.getLParenth().getTextRange().getEndOffset());
