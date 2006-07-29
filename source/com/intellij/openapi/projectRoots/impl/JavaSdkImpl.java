@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,6 +42,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   public JavaSdkImpl(JarFileSystem jarFileSystem) {
     super("JavaSDK");
+    System.out.println("NEW JavaSdkImpl"+this);
     myJarFileSystem = jarFileSystem;
   }
 
@@ -199,15 +202,27 @@ public class JavaSdkImpl extends JavaSdk {
     sdkModificator.commitChanges();
   }
 
+  private final Map<String, String> myCachedVersionStrings = new HashMap<String, String>();
+
   public final String getVersionString(final String sdkHome) {
-    String versionString = getVersionStringImpl(sdkHome);
+    String versionString;
+
+    if(myCachedVersionStrings.containsKey(sdkHome)) {
+      return myCachedVersionStrings.get(sdkHome);
+    } else {
+      versionString = getVersionStringImpl(sdkHome);
+    }
     if (versionString != null && versionString.length() == 0) {
       versionString = null;
     }
+
     if (versionString == null){
       Messages.showMessageDialog(ProjectBundle.message("sdk.java.corrupt.error", sdkHome),
                                  ProjectBundle.message("sdk.java.corrupt.title"), Messages.getErrorIcon());
+    } else {
+      myCachedVersionStrings.put(sdkHome, versionString);
     }
+
     return versionString;
   }
 
