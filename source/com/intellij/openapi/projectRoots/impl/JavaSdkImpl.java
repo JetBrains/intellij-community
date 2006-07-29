@@ -42,7 +42,6 @@ public class JavaSdkImpl extends JavaSdk {
 
   public JavaSdkImpl(JarFileSystem jarFileSystem) {
     super("JavaSDK");
-    System.out.println("NEW JavaSdkImpl"+this);
     myJarFileSystem = jarFileSystem;
   }
 
@@ -217,12 +216,16 @@ public class JavaSdkImpl extends JavaSdk {
     }
 
     if (versionString == null){
-      Messages.showMessageDialog(ProjectBundle.message("sdk.java.corrupt.error", sdkHome),
-                                 ProjectBundle.message("sdk.java.corrupt.title"), Messages.getErrorIcon());
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        System.err.println(ProjectBundle.message("sdk.java.corrupt.error", sdkHome));
+        System.exit(1);
+      } else {
+        Messages.showMessageDialog(ProjectBundle.message("sdk.java.corrupt.error", sdkHome),
+                                   ProjectBundle.message("sdk.java.corrupt.title"), Messages.getErrorIcon());
+      }
     } else {
       myCachedVersionStrings.put(sdkHome, versionString);
     }
-
     return versionString;
   }
 
