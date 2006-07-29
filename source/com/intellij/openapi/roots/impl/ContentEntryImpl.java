@@ -205,7 +205,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     public static final ContentFolderComparator INSTANCE = new ContentFolderComparator();
 
     public int compare(ContentFolder o1, ContentFolder o2) {
-      return ((ContentFolder)o2).getUrl().compareTo(o1.getUrl());
+      return o1.getUrl().compareTo(o2.getUrl());
     }
   }
 
