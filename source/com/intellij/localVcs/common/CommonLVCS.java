@@ -763,4 +763,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     return name.replace('.', '_') + "." + Integer.toHexString(path.replace('/', File.separatorChar).hashCode());
   }
 
+  public boolean isInitialized() {
+    return myInitialized;
+  }
 }
