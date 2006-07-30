@@ -1,15 +1,12 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiSwitchStatement;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
 
 public class PsiSwitchStatementImpl extends CompositePsiElement implements PsiSwitchStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiSwitchStatementImpl");
@@ -24,6 +21,14 @@ public class PsiSwitchStatementImpl extends CompositePsiElement implements PsiSw
 
   public PsiCodeBlock getBody() {
     return (PsiCodeBlock)findChildByRoleAsPsiElement(ChildRole.SWITCH_BODY);
+  }
+
+  public PsiJavaToken getLParenth() {
+    return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.LPARENTH);
+  }
+
+  public PsiJavaToken getRParenth() {
+    return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.RPARENTH);
   }
 
   public ASTNode findChildByRole(int role) {

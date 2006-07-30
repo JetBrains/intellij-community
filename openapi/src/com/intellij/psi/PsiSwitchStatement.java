@@ -38,4 +38,10 @@ public interface PsiSwitchStatement extends PsiStatement {
    */
   @Nullable
   PsiCodeBlock getBody();
+
+  @Nullable
+  PsiJavaToken getLParenth();
+
+  @Nullable
+  PsiJavaToken getRParenth();
 }
