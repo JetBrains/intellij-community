@@ -771,6 +771,10 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       myHolder.add(HighlightUtil.checkReferenceList(ref, (PsiReferenceList)parent, result));
     }
 
+    if (parent instanceof PsiAnonymousClass && ref.equals(((PsiAnonymousClass)parent).getBaseClassReference())) {
+      myHolder.addAll(GenericsHighlightUtil.checkOverrideEquivalentMethods((PsiClass)parent));
+    }
+
     if (!myHolder.hasErrorResults()) {
       if (resolved instanceof PsiVariable) {
         PsiVariable variable = (PsiVariable)resolved;
