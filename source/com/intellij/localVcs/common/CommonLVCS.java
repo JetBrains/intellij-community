@@ -70,6 +70,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   private boolean myIsLocked = false;
   private boolean myVcsWasRebuilt = false;
+  private boolean myInitialized = false;
+  private boolean myIsActive = false;
 
   public CommonLVCS(final Project project,
                     final ProjectRootManagerEx projectRootManager,
@@ -93,6 +95,9 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     myRefreshRootsOperation = new DelayedSyncOperation(myProject, this, LocalVcsBundle.message("operation.name.refreshing.roots"));
     startupManagerEx.getFileSystemSynchronizer().registerCacheUpdater(myRefreshRootsOperation);
     projectRootManager.registerChangeUpdater(myRefreshRootsOperation);
+
+    myTracker = new LvcsFileTracker(this);
+    registerAll();
   }
 
   public LvcsConfiguration getConfiguration() {
@@ -142,30 +147,37 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     return myImplementation.getChanges(label1, label2);
   }
 
+  @Nullable
   public synchronized LvcsDirectory findDirectory(final String dirPath, final boolean ignoreDeleted) {
     return myImplementation.findDirectory(dirPath, ignoreDeleted);
   }
 
+  @Nullable
   public synchronized LvcsDirectory findDirectory(final String dirPath, final LvcsLabel label) {
     return myImplementation.findDirectory(dirPath, label);
   }
 
+  @Nullable
   public synchronized LvcsFile findFile(final String filePath, final LvcsLabel label) {
     return myImplementation.findFile(filePath, label);
   }
 
+  @Nullable
   public synchronized LvcsFile findFile(final String filePath, final boolean ignoreDeleted) {
     return myImplementation.findFile(filePath, ignoreDeleted);
   }
 
+  @Nullable
   public synchronized LvcsFileRevision findFileRevisionByDate(final String filePath, long date) {
     return myImplementation.findFileRevisionByDate(filePath, date);
   }
 
+  @Nullable
   public synchronized LvcsFileRevision findFileRevision(final String filePath, final LvcsLabel label) {
     return myImplementation.findFileRevision(filePath, label);
   }
 
+  @Nullable
   public synchronized LvcsFileRevision findFileRevision(final String filePath, final boolean ignoreDeleted) {
     return myImplementation.findFileRevision(filePath, ignoreDeleted);
   }
@@ -189,6 +201,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   };
 
   public synchronized void resynchronizeRoots() {
+    if (!myInitialized) return;
     refreshRoots();
     runSynchronizationUsing(new ImmediateSyncOperation(myProject, this));
   }
@@ -238,6 +251,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     return ProjectRootManager.getInstance(myProject).getContentRoots();
   }
 
+  @Nullable
   public synchronized LvcsDirectory findDirectory(final String path) {
     if (!myIsLocked) return null;
     return myImplementation.findDirectory(path);
@@ -248,6 +262,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     return myImplementation.addDirectory(path, onDisk);
   }
 
+  @Nullable
   public synchronized LvcsFile findFile(final String path) {
     if (!myIsLocked) return null;
     return myImplementation.findFile(path);
@@ -416,6 +431,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     }
   }
 
+  @Nullable
   private static ProgressIndicator getProgress() {
     final Application application = ApplicationManager.getApplication();
     if (application != null) {
@@ -545,10 +561,11 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     ProjectRootManager.getInstance(myProject).addModuleRootListener(this);
 
     getVirtualFileManager().registerRefreshUpdater(myTracker.getRefreshUpdater());
+    myIsActive = true;
   }
 
   public synchronized void unregisterAll() {
-    if (myTracker == null) return;
+    myIsActive = false;
     getVirtualFileManager().unregisterFileContentProvider(this);
     myFileTypeManager.removeFileTypeListener(myFileTypeListener);
     if (myTracker != null) {
@@ -556,7 +573,6 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     }
     ProjectRootManager.getInstance(myProject).removeModuleRootListener(this);
     getVirtualFileManager().unregisterRefreshUpdater(myTracker.getRefreshUpdater());
-    ProjectRootManagerEx.getInstanceEx(myProject).unregisterChangeUpdater(myRefreshRootsOperation);
   }
 
   private synchronized void synchronizeRoots() {
@@ -591,14 +607,13 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   public synchronized void initialize(boolean sync) {
+    if (!myIsActive) registerAll();
     if (myIsLocked) return;
     _init();
     if (!myIsLocked) return;
     if (!myVcsWasRebuilt && LvcsConfiguration.getInstance().ADD_LABEL_ON_PROJECT_OPEN) {
       myImplementation.addLabel(LocalVcsBundle.message("local.vcs.label.name.project.opened"), "");
     }
-    myTracker = new LvcsFileTracker(this);
-    registerAll();
 
     if (sync) {
       resynchronizeRoots();
@@ -614,6 +629,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   synchronized void _init() {
+    myInitialized = true;
     myVcsLocation.mkdirs();
     myVcsLocation.mkdir();
     ProgressIndicator progress = getProgress();
@@ -652,6 +668,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   public void disposeComponent() {
     unregisterAll();
+    ProjectRootManagerEx.getInstanceEx(myProject).unregisterChangeUpdater(myRefreshRootsOperation);
     shutdown();
   }
 

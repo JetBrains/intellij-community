@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mike
@@ -32,18 +33,25 @@ public abstract class LocalVcs {
 
   public abstract String[] getRootPaths();
 
+  @Nullable
   public abstract LvcsFile findFile(String filePath);
 
+  @Nullable
   public abstract LvcsFile findFile(String filePath, boolean ignoreDeleted);
 
+  @Nullable
   public abstract LvcsFileRevision findFileRevisionByDate(final String filePath, long date);
 
+  @Nullable
   public abstract LvcsFile findFile(String filePath, LvcsLabel label);
 
+  @Nullable
   public abstract LvcsDirectory findDirectory(String dirPath);
 
+  @Nullable
   public abstract LvcsDirectory findDirectory(String dirPath, boolean ignoreDeleted);
 
+  @Nullable
   public abstract LvcsDirectory findDirectory(String dirPath, LvcsLabel label);
 
   public abstract LvcsLabel addLabel(String name, String path);
