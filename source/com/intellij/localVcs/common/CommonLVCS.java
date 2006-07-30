@@ -566,6 +566,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   public synchronized void unregisterAll() {
     myIsActive = false;
+    myInitialized = false;
     getVirtualFileManager().unregisterFileContentProvider(this);
     myFileTypeManager.removeFileTypeListener(myFileTypeListener);
     if (myTracker != null) {
