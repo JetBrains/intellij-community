@@ -434,4 +434,14 @@ public class PsiTreeUtil {
     while (skipEmptyElements && nextLeaf != null && nextLeaf.getTextLength() == 0) nextLeaf = nextLeaf(nextLeaf);
     return nextLeaf;
   }
+
+  public static boolean hasErrorElements(@NotNull final PsiElement element) {
+    if (element instanceof PsiErrorElement) return true;
+
+    for (PsiElement child : element.getChildren()) {
+      if (hasErrorElements(child)) return true;
+    }
+
+    return false;
+  }
 }

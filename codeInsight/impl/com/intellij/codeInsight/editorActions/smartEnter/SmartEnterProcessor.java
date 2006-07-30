@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -268,7 +268,11 @@ public class SmartEnterProcessor {
 
     if (statementAtCaret instanceof PsiBlockStatement) return null;
 
-    if (statementAtCaret != null && statementAtCaret.getParent() instanceof PsiForStatement) statementAtCaret = statementAtCaret.getParent();
+    if (statementAtCaret != null && statementAtCaret.getParent() instanceof PsiForStatement) {
+      if (!PsiTreeUtil.hasErrorElements(statementAtCaret)) {
+        statementAtCaret = statementAtCaret.getParent();
+      }
+    }
 
     return statementAtCaret instanceof PsiStatement || statementAtCaret instanceof PsiMember
            ? statementAtCaret

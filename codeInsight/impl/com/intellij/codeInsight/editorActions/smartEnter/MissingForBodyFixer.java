@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,7 +34,8 @@ public class MissingForBodyFixer implements Fixer {
     doc.insertString(eltToInsertAfter.getTextRange().getEndOffset(), text);
   }
 
-  private PsiForStatement getForStatementParent(PsiElement psiElement) {
+  @Nullable
+  private static PsiForStatement getForStatementParent(PsiElement psiElement) {
     PsiForStatement statement = PsiTreeUtil.getParentOfType(psiElement, PsiForStatement.class);
     if (statement == null) return null;
 
@@ -41,14 +43,21 @@ public class MissingForBodyFixer implements Fixer {
     PsiStatement update = statement.getUpdate();
     PsiExpression check = statement.getCondition();
 
-    return isAncestor(init, psiElement) || isAncestor(update, psiElement) || isAncestor(check, psiElement) ? statement : null;
+    return isValidChild(init, psiElement) || isValidChild(update, psiElement) || isValidChild(check, psiElement) ? statement : null;
   }
 
-  private boolean isAncestor(PsiElement ancestor, PsiElement psiElement) {
-    return ancestor != null && PsiTreeUtil.isAncestor(ancestor, psiElement, false);
+  private static boolean isValidChild(PsiElement ancestor, PsiElement psiElement) {
+    if (ancestor != null) {
+      if (PsiTreeUtil.isAncestor(ancestor, psiElement, false)) {
+        if (PsiTreeUtil.hasErrorElements(ancestor)) return false;
+        return true;
+      }
+    }
+
+    return false;
   }
 
-  private int startLine(Document doc, PsiElement psiElement) {
+  private static int startLine(Document doc, PsiElement psiElement) {
     return doc.getLineNumber(psiElement.getTextRange().getStartOffset());
   }
 }
