@@ -40,7 +40,7 @@ import java.util.*;
 /**
  * @author max
  */
-public class ModuleManagerImpl extends ModuleManager implements ProjectComponent, JDOMExternalizable {
+public class ModuleManagerImpl extends ModuleManager implements ProjectComponent, JDOMExternalizable,ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
   private final PendingEventDispatcher<ModuleListener> myModuleEventDispatcher = PendingEventDispatcher.create(ModuleListener.class);
   private final Project myProject;
@@ -65,6 +65,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   @NonNls private static final String ATTRIBUTE_FILEURL = "fileurl";
   @NonNls private static final String ATTRIBUTE_FILEPATH = "filepath";
   @NonNls private static final String ATTRIBUTE_GROUP = "group";
+  private long myModificationCount;
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -93,6 +94,10 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   public void disposeComponent() {
     myModuleModel.disposeModel();
     ProjectRootManager.getInstance(myProject).removeModuleRootListener(myModuleRootListener);
+  }
+
+  public long getModificationCount() {
+    return myModificationCount;
   }
 
   public static final class ModulePath {
@@ -379,6 +384,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   @NotNull
   public Module newModule(@NotNull String filePath) {
+    myModificationCount++;
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.newModule(filePath);
     modifiableModel.commitAssertingNoCircularDependency();
@@ -387,6 +393,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   @NotNull
   public Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType) {
+    myModificationCount++;
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.newModule(filePath, moduleType);
     modifiableModel.commitAssertingNoCircularDependency();
@@ -400,6 +407,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
                                                    JDOMException,
                                                    ModuleWithNameAlreadyExists,
                                                    ModuleCircularDependencyException {
+    myModificationCount++;
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.loadModule(filePath);
     modifiableModel.commit();
@@ -816,6 +824,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   private void commitModel(ModuleModelImpl moduleModel, Runnable runnable) {
+    myModificationCount++;
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final Collection<Module> oldModules = myModuleModel.myPath2ModelMap.values();
     final Collection<Module> newModules = moduleModel.myPath2ModelMap.values();

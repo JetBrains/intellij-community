@@ -1,7 +1,5 @@
 package com.intellij.localVcs.common;
 
-import com.intellij.ide.startup.FileSystemSynchronizer;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.localVcs.impl.OldLvcsImplemetation;
 import com.intellij.openapi.application.Application;
@@ -38,6 +36,7 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.*;
@@ -73,7 +72,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   private boolean myVcsWasRebuilt = false;
 
   public CommonLVCS(final Project project,
-                    final ProjectRootManager projectRootManager,
+                    final ProjectRootManagerEx projectRootManager,
                     final FileTypeManager fileTypeManager,
                     final StartupManagerImpl startupManagerEx,
                     final LvcsConfiguration configuration) {
@@ -90,6 +89,10 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
         runStartupActivity();
       }
     });
+
+    myRefreshRootsOperation = new DelayedSyncOperation(myProject, this, LocalVcsBundle.message("operation.name.refreshing.roots"));
+    startupManagerEx.getFileSystemSynchronizer().registerCacheUpdater(myRefreshRootsOperation);
+    projectRootManager.registerChangeUpdater(myRefreshRootsOperation);
   }
 
   public LvcsConfiguration getConfiguration() {
@@ -319,6 +322,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   private boolean myCanProvideContents = false;
   private DelayedSyncOperation myRefreshRootsOperation;
 
+  @Nullable
   public synchronized ProvidedContent getProvidedContent(VirtualFile file) {
     String path = file.getPath();
     LOG.assertTrue(myCanProvideContents, path);
@@ -540,9 +544,6 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     myFileTypeManager.addFileTypeListener(myFileTypeListener);
     ProjectRootManager.getInstance(myProject).addModuleRootListener(this);
 
-    myRefreshRootsOperation = new DelayedSyncOperation(myProject, this, LocalVcsBundle.message("operation.name.refreshing.roots"));
-
-    ProjectRootManagerEx.getInstanceEx(myProject).registerChangeUpdater(myRefreshRootsOperation);
     getVirtualFileManager().registerRefreshUpdater(myTracker.getRefreshUpdater());
   }
 
@@ -574,10 +575,6 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
     myRefreshRootsOperation.setLvcsAction(startExternalChangesAction());*/
     runSynchronizationUsing(myRefreshRootsOperation);
-
-    StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(myProject);
-    FileSystemSynchronizer synchronizer = startupManager.getFileSystemSynchronizer();
-    synchronizer.registerCacheUpdater(myRefreshRootsOperation);
   }
 
   public static boolean isAction(LvcsLabel label1, LvcsLabel label2) {

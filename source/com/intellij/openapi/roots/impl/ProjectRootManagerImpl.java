@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -88,12 +89,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private Map<String, GlobalSearchScope> myJdkScopes = new HashMap<String, GlobalSearchScope>();
 
   private VirtualFilePointer myCompilerOutput;
+  private boolean myStartupActivityPerformed = false;
 
   public static ProjectRootManagerImpl getInstanceImpl(Project project) {
     return (ProjectRootManagerImpl)getInstance(project);
   }
 
-  public ProjectRootManagerImpl(Project project, FileTypeManager fileTypeManager, DirectoryIndex directoryIndex) {
+  public ProjectRootManagerImpl(Project project, FileTypeManager fileTypeManager, DirectoryIndex directoryIndex, StartupManager startupManager) {
     myProject = (ProjectEx)project;
     myFileTypeListener = new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {
@@ -107,6 +109,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     fileTypeManager.addFileTypeListener(myFileTypeListener);
     myProjectFileIndex = new ProjectFileIndexImpl(myProject, directoryIndex, fileTypeManager);
+    startupManager.registerStartupActivity(new Runnable() {
+      public void run() {
+        myStartupActivityPerformed = true;
+      }
+    });
   }
 
   public void registerChangeUpdater(CacheUpdater updater) {
@@ -533,6 +540,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private void doSynchronize() {
+    if (!myStartupActivityPerformed) return;
+
     final FileSystemSynchronizer synchronizer = new FileSystemSynchronizer();
     for (CacheUpdater updater : myChangeUpdaters) {
       synchronizer.registerCacheUpdater(updater);
