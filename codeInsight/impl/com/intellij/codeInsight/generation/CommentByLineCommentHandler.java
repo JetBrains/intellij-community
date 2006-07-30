@@ -130,6 +130,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     boolean allLineCommented = true;
     CharSequence chars = myDocument.getCharsSequence();
 
+    boolean singleline = myLine1 == myLine2;
+
     for (int line = myLine1; line <= myLine2; line++) {
       final Commenter commenter = findCommenter(line);
       if (commenter == null) return;
@@ -139,7 +141,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         return;
       }
       myCommenters[line - myLine1] = commenter;
-      if (!isLineCommented(line, chars, commenter)) {
+      if (!isLineCommented(line, chars, commenter) && (singleline || !isLineEmpty(line))) {
         allLineCommented = false;
         break;
       }
