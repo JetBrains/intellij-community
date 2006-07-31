@@ -122,6 +122,11 @@ public class AntElementFactory {
           return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Property.class.getName()));
         }
       });
+      ourAntTypeToKnownAntElementCreatorMap.put(Tstamp.class.getName(), new AntElementCreator() {
+        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+          return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Tstamp.class.getName()));
+        }
+      });
       ourAntTypeToKnownAntElementCreatorMap.put(Checksum.class.getName(), new AntElementCreator() {
         public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
           final AntTypeDefinition checksumDef = parent.getAntFile().getBaseTypeDefinition(Checksum.class.getName());

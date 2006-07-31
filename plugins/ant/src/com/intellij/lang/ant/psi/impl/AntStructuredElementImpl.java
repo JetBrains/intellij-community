@@ -384,7 +384,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       String resolvedValue = null;
       if (propElement instanceof AntPropertyImpl) {
         final AntPropertyImpl antProperty = (AntPropertyImpl)propElement;
-        resolvedValue = antProperty.getValue();
+        resolvedValue = antProperty.getValue(prop);
         if (resolvedValue != null) {
           resolvedValue = antProperty.computeAttributeValue(resolvedValue, elementStack);
         }

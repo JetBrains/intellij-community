@@ -7,8 +7,14 @@ public interface AntProperty extends AntTask {
 
   AntProperty[] EMPTY_ARRAY = new AntProperty[0];
 
+  /**
+   * Calculates property value.
+   *
+   * @param propName -- name of a property, some property elements may define several properties.
+   * @return
+   */
   @Nullable
-  String getValue();
+  String getValue(final String propName);
 
   @Nullable
   String getFileName();
