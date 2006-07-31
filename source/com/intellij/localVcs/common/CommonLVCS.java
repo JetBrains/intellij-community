@@ -604,6 +604,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   }
 
   private synchronized void runStartupActivity() {
+    refreshRoots();
     initialize(false);
   }
 
