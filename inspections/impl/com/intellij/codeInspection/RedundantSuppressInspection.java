@@ -8,6 +8,7 @@ import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -47,7 +48,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
     globalContext.getRefManager().iterate(new RefVisitor() {
       public void visitClass(RefClass refClass) {
         if (globalContext.isSuppressed(refClass, getShortName())) return;
-        CommonProblemDescriptor[] descriptors = checkElement(refClass, manager, globalContext);
+        CommonProblemDescriptor[] descriptors = checkElement(refClass, manager, globalContext.getProject());
         if (descriptors != null) {
           problemDescriptionsProcessor.addProblemElement(refClass, descriptors);
         }
@@ -56,9 +57,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
   }
 
   @Nullable
-  public static CommonProblemDescriptor[] checkElement(RefEntity refEntity,
-                                                       InspectionManager manager,
-                                                       GlobalInspectionContext globalContext) {
+  public static CommonProblemDescriptor[] checkElement(RefEntity refEntity, InspectionManager manager, final Project project) {
     if (!(refEntity instanceof RefElement)) return null;
     final PsiElement psiElement = ((RefElement)refEntity).getElement();
     final Map<PsiElement, Collection<String>> suppressedScopes = new THashMap<PsiElement, Collection<String>>();
@@ -76,7 +75,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
       }
 
       public void visitClass(PsiClass aClass) {
-        if (aClass == psiElement) { 
+        if (aClass == psiElement) {
           super.visitClass(aClass);
           checkElement(aClass);
         }
@@ -120,10 +119,11 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
       }
     }
 
+    GlobalInspectionContextImpl globalContext = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).createNewGlobalContext(false);
     final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
     for (InspectionTool tool : suppressedTools) {
       String toolId = tool.getShortName();
-      tool.initialize((GlobalInspectionContextImpl)globalContext);
+      tool.initialize(globalContext);
       Collection<CommonProblemDescriptor> descriptors;
       if (tool instanceof LocalInspectionToolWrapper) {
         LocalInspectionToolWrapper local = (LocalInspectionToolWrapper)tool;
