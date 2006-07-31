@@ -96,7 +96,8 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
     }.execute().getResultObject();
     if (result != null) {
       domManager.getTypeChooserManager().registerTypeChooser(aClass[0], oldChoosers[0]);
+      return result.getWrappedElement();
     }
-    return result.getWrappedElement();
+    return null;
   }
 }
