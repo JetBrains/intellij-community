@@ -10,32 +10,28 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
-import com.intellij.openapi.vcs.ex.LineStatusTracker;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.localVcs.LvcsFile;
-import com.intellij.openapi.localVcs.LocalVcs;
+import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.ex.LineStatusTracker;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Arrays;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.Collection;
 
 public class LineStatusTrackerManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.LineStatusTrackerManager");
@@ -139,11 +135,14 @@ public class LineStatusTrackerManager implements ProjectComponent {
   private void resetTracker(final VirtualFile virtualFile) {
     synchronized (TRACKERS_LOCK) {
       if (System.getProperty(IGNORE_CHANGEMARKERS_KEY) != null) return;
-      final LvcsFile lvcsFile = LocalVcs.getInstance(myProject).findFile(virtualFile.getPath());
-      if (lvcsFile == null) return;
 
       final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
-      if (document == null) return;
+      if (document == null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Skipping resetTracker() because no cached document for " + virtualFile.getPath());
+        }
+        return;
+      }
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("resetting tracker for file " + virtualFile.getPath());
@@ -287,10 +286,11 @@ public class LineStatusTrackerManager implements ProjectComponent {
   private class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() {
       if (myIsDisposed) return;
+      LOG.debug("LineStatusTrackerManager: fileStatusesChanged");
       synchronized (TRACKERS_LOCK) {
-        List<LineStatusTracker> trackers = new ArrayList<LineStatusTracker>(myLineStatusTrackers.values());
-        for (LineStatusTracker tracker : trackers) {
-          resetTracker(tracker);
+        final VirtualFile[] openFiles = FileEditorManager.getInstance(myProject).getOpenFiles();
+        for(VirtualFile openFile: openFiles) {
+          resetTracker(openFile);
         }
       }
     }
