@@ -232,8 +232,10 @@ public class VcsHistoryDialog extends DialogWrapper {
                   }
                   String content = null;
                   try {
-                    content = new String(vcsFileRevision.getContent(),
-                                         myFile.getCharset().name());
+                    final byte[] byteContent = vcsFileRevision.getContent();
+                    if (byteContent != null) {
+                      content = new String(byteContent, myFile.getCharset().name());
+                    }
                   }
                   catch (IOException e) {
                     LOG.error(e);
