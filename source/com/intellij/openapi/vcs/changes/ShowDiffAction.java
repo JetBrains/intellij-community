@@ -26,7 +26,12 @@ public class ShowDiffAction extends AnAction {
   public void update(AnActionEvent e) {
     Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
     Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-    e.getPresentation().setEnabled(project != null && changes != null && changes.length > 0);
+    e.getPresentation().setEnabled(project != null && canShowDiff(changes));
+  }
+
+  private static boolean canShowDiff(Change[] changes) {
+    if (changes == null || changes.length == 0) return false;
+    return !ChangesUtil.getFilePath(changes [0]).isDirectory();
   }
 
   public void actionPerformed(AnActionEvent e) {
