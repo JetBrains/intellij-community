@@ -5,6 +5,7 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,7 @@ import java.util.List;
  * @author peter
  */
 public class DomReflectionUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomReflectionUtil");
   private DomReflectionUtil() {
   }
 
@@ -69,10 +71,10 @@ public class DomReflectionUtil {
       if (resolved instanceof TypeVariable) {
         final TypeVariable typeVariable = (TypeVariable)resolved;
         index = ContainerUtil.findByEquals(ReflectionCache.getTypeParameters(anInterface), typeVariable);
-        assert index >= 0 : "Cannot resolve type variable:\n" +
+        LOG.assertTrue(index >= 0, "Cannot resolve type variable:\n" +
                             "typeVariable = " + typeVariable + "\n" +
                             "genericDeclaration = " + declarationToString(typeVariable.getGenericDeclaration()) + "\n" +
-                            "searching in " + declarationToString(anInterface);
+                            "searching in " + declarationToString(anInterface));
         final Type type = genericInterfaces[i];
         if (type instanceof Class) {
           return Object.class;
