@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -168,7 +169,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
               fireError(ProjectBundle.message("module.cannot.load.error", e.getMessage()), modulePath);
             }
             catch (JDOMException e) {
-              fireError(ProjectBundle.message("module.corrupted.file.error", modulePath.getPath()), modulePath);
+              fireError(ProjectBundle.message("module.corrupted.file.error", modulePath.getPath(), e.getMessage()), modulePath);
             }
             catch (InvalidDataException e) {
               fireError(ProjectBundle.message("module.corrupted.data.error", modulePath.getPath()), modulePath);
@@ -191,7 +192,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
               });
             }
           }
-          if (!ApplicationManager.getApplication().isHeadlessEnvironment() && modulesWithUnknownTypes.size() > 0) {
+          if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !modulesWithUnknownTypes.isEmpty()) {
             String message;
             if (modulesWithUnknownTypes.size() == 1) {
               message = ProjectBundle.message("module.unknown.type.single.error", modulesWithUnknownTypes.get(0).getName());
@@ -611,11 +612,14 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     @NotNull
     public Module loadModule(@NotNull String filePath) throws InvalidDataException,
                                                      IOException,
-                                                     JDOMException,
                                                      ModuleWithNameAlreadyExists {
       assertWritable();
-      return loadModuleInternal(filePath);
-
+      try {
+        return loadModuleInternal(filePath);
+      }
+      catch (JDOMException e) {
+        throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(filePath), e.getMessage()));
+      }
     }
 
     private Module loadModuleInternal(String filePath) throws ModuleWithNameAlreadyExists,
@@ -885,7 +889,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   private void fireModulesRenamed(List<Module> modules) {
-    if (modules.size() > 0) {
+    if (!modules.isEmpty()) {
       myModuleEventDispatcher.getMulticaster().modulesRenamed(myProject, modules);
     }
   }

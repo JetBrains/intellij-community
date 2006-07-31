@@ -24,6 +24,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +36,7 @@ import java.io.IOException;
 public class ExistingModuleLoader extends ModuleBuilder{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ExistingModuleLoader");
 
+  @NotNull
   public Module createModule(ModifiableModuleModel moduleModel) throws InvalidDataException,
                                                                        IOException,
                                                                        ModuleWithNameAlreadyExists,
