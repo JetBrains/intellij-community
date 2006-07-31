@@ -90,6 +90,11 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     if (c instanceof DataProvider) {
       dataProvider = (DataProvider)c;
     }
+    else if (c instanceof JComponent) {
+      JComponent component = (JComponent)c;
+      dataProvider = (DataProvider)component.getClientProperty(CLIENT_PROPERTY_DATA_PROVIDER);
+    }
+    
     return dataProvider;
   }
 

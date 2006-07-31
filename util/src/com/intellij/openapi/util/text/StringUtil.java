@@ -759,6 +759,15 @@ public class StringUtil {
     return result;
   }
 
+  public static String[] surround(String[] strings1, String prefix, String suffix) {
+    String[] result = new String[strings1.length];
+    for (int i = 0; i < result.length; i++) {
+      result[i] = prefix + strings1[i] + suffix;
+    }
+
+    return result;
+  }
+
   @NotNull public static <T> String join(@NotNull Collection<T> items, @NotNull Function<T, String> f, @NotNull @NonNls String separator) {
     final StringBuilder result = new StringBuilder();
     for (T item : items) {

@@ -17,15 +17,16 @@ package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public abstract class DataManager {
   public static DataManager getInstance() {
     return ApplicationManager.getApplication().getComponent(DataManager.class);
   }
+
+  public static final String CLIENT_PROPERTY_DATA_PROVIDER = "DataProvider";
 
   /**
    * @return {@link DataContext} constructed by the current focused component
