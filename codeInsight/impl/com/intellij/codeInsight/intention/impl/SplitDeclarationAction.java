@@ -5,14 +5,17 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class SplitDeclarationAction extends BaseIntentionAction {
+  @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.split.declaration.family");
   }
@@ -31,7 +34,7 @@ public class SplitDeclarationAction extends BaseIntentionAction {
     }
 
     PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
-    if (field != null && isAvaliableOnField(field)) {
+    if (field != null && PsiTreeUtil.getParentOfType(element, PsiDocComment.class) == null && isAvaliableOnField(field)) {
       setText(CodeInsightBundle.message("intention.split.declaration.text"));
       return true;
     }
@@ -123,7 +126,7 @@ public class SplitDeclarationAction extends BaseIntentionAction {
         rExpression = initializer;
       }
       assignment.getRExpression().replace(rExpression);
-      var.getInitializer().delete();
+      initializer.delete();
 
       PsiElement block = decl.getParent();
       if (block instanceof PsiForStatement) {

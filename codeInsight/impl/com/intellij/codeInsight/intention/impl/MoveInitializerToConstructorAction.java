@@ -11,8 +11,10 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -20,10 +22,12 @@ import java.util.*;
  * @author cdr
  */
 public class MoveInitializerToConstructorAction extends BaseIntentionAction {
+  @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @NotNull
   public String getText() {
     return CodeInsightBundle.message("intention.move.initializer.to.constructor");
   }
@@ -33,7 +37,7 @@ public class MoveInitializerToConstructorAction extends BaseIntentionAction {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return false;
     if (element instanceof PsiCompiledElement) return false;
-    final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false, PsiMember.class, PsiCodeBlock.class);
+    final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false, PsiMember.class, PsiCodeBlock.class, PsiDocComment.class);
     if (field == null || field.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (!field.hasInitializer()) return false;
     PsiClass psiClass = field.getContainingClass();
@@ -49,6 +53,7 @@ public class MoveInitializerToConstructorAction extends BaseIntentionAction {
     PsiElement element = file.findElementAt(offset);
     final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
 
+    assert field != null;
     PsiClass aClass = field.getContainingClass();
     PsiMethod[] constructors = aClass.getConstructors();
     Collection<PsiMethod> constructorsToAddInitialization;
