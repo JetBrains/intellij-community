@@ -482,7 +482,7 @@ public class HighlightMethodUtil {
   }
 
   private static String createAmbiguousMethodHtmlTooltip(MethodCandidateInfo[] methodCandidates) {
-    return JavaErrorMessages.message("ambigous.method.html.tooltip",
+    return JavaErrorMessages.message("ambiguous.method.html.tooltip",
                                      new Integer(methodCandidates[0].getElement().getParameterList().getParameters().length + 2),
                                      createAmbiguousMethodHtmlTooltipMethodRow(methodCandidates[0]),
                                      getContainingClassName(methodCandidates[0]),
