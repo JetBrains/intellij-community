@@ -91,7 +91,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           for (int j = 0; j < i; j++) {
             final CandidateInfo conflict = newConflictsArray[j];
             if (conflict == method) break;
-            switch (isMoreSpecific(((MethodCandidateInfo)method).getElement(), ((MethodCandidateInfo)conflict).getElement(), applicabilityLevel)) {
+            switch (isMoreSpecific(method, conflict, applicabilityLevel)) {
               case TRUE:
                 conflicts.remove(conflict);
                 break;
@@ -231,7 +231,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return Specifics.TRUE;
   }
 
-  private Specifics isMoreSpecific(final PsiMethod method1, final PsiMethod method2, final int applicabilityLevel) {
+  private Specifics isMoreSpecific(final CandidateInfo info1, final CandidateInfo info2, final int applicabilityLevel) {
+    PsiMethod method1 = (PsiMethod)info1.getElement();
+    PsiMethod method2 = (PsiMethod)info2.getElement();
     final PsiClass class1 = method1.getContainingClass();
     final PsiClass class2 = method2.getContainingClass();
     Specifics isMoreSpecific = null;
@@ -247,8 +249,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     final PsiTypeParameter[] typeParameters1 = method1.getTypeParameters();
     final PsiTypeParameter[] typeParameters2 = method2.getTypeParameters();
-    PsiSubstitutor substitutor1 = PsiSubstitutor.EMPTY;
-    PsiSubstitutor substitutor2 = PsiSubstitutor.EMPTY;
+    PsiSubstitutor substitutor1 = info1.getSubstitutor();
+    PsiSubstitutor substitutor2 = info2.getSubstitutor();
 
     final int max = Math.max(params1.length, params2.length);
     PsiType[] types1 = new PsiType[max];
