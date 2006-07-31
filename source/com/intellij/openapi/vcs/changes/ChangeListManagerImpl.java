@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
@@ -598,14 +599,23 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public void addUnversionedFiles(final LocalChangeList list, @NotNull final List<VirtualFile> files) {
+    final List<VcsException> exceptions = new ArrayList<VcsException>();
     ChangesUtil.processVirtualFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
       public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
         final ChangeProvider provider = vcs.getChangeProvider();
         if (provider != null) {
-          provider.scheduleUnversionedFilesForAddition(files);
+          exceptions.addAll(provider.scheduleUnversionedFilesForAddition(files));
         }
       }
     });
+
+    if (exceptions.size() > 0) {
+      StringBuilder message = new StringBuilder(VcsBundle.message("error.adding.files.prompt"));
+      for(VcsException ex: exceptions) {
+        message.append("\n").append(ex.getMessage());
+      }
+      Messages.showErrorDialog(myProject, message.toString(), VcsBundle.message("error.adding.files.title"));
+    }
 
     for (VirtualFile file : files) {
       VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
