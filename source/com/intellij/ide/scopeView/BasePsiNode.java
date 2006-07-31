@@ -19,17 +19,20 @@ import javax.swing.*;
  * Date: 30-Jan-2006
  */
 public class BasePsiNode<T extends PsiMember> extends PackageDependenciesNode {
-  private SmartPsiElementPointer myPsiElementPointer;
-  private PsiFile myFile;
+  private SmartPsiElementPointer myPsiElementPointer = null;
+  private PsiFile myFile = null;
 
   public BasePsiNode(final T element) {
-    myPsiElementPointer = SmartPointerManager.getInstance(element.getProject()).createLazyPointer(element);
-    myFile = element.getContainingFile();
+    if (element.isValid()) {
+      myPsiElementPointer = SmartPointerManager.getInstance(element.getProject()).createLazyPointer(element);
+      myFile = element.getContainingFile();
+    }
     setUserObject(toString());
   }
 
   @Nullable
   public PsiElement getPsiElement() {
+    if (myPsiElementPointer == null) return null;
     final PsiElement element = myPsiElementPointer.getElement();
     return element != null && element.isValid() ? element : null;
   }
@@ -43,11 +46,12 @@ public class BasePsiNode<T extends PsiMember> extends PackageDependenciesNode {
   }
 
   private Icon getIcon() {
-    final PsiElement element = myPsiElementPointer.getElement();
+    final PsiElement element = getPsiElement();
     return element != null && element.isValid() ? element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS) : null;
   }
 
   public FileStatus getStatus() {
+    if (myFile == null) return FileStatus.NOT_CHANGED;
     return FileStatusManager.getInstance(myFile.getProject()).getStatus(myFile.getVirtualFile());
   }
 
