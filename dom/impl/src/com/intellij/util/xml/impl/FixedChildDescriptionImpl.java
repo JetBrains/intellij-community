@@ -100,6 +100,11 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     return true;
   }
 
+  public String toString() {
+    return getXmlElementName() + " " + getGetterMethod(0) + 
+           " " + getType();
+  }
+
   public int hashCode() {
     int result = super.hashCode();
     result = 29 * result + myCount;
