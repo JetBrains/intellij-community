@@ -35,7 +35,7 @@ public class DomElementsToggleAction extends ToggleAction {
     }
     myText = ElementPresentationManager.getTypeName(myClass);
 
-    if(getHiders() == null) myTreeView.getRootElement().getRoot().putUserData(BaseDomElementNode.TREE_NODES_HIDERS_KEY, new HashMap<Class, Boolean>());
+    if(getHiders() == null) myTreeView.getRootElement().getRoot().getFile().putUserData(BaseDomElementNode.TREE_NODES_HIDERS_KEY, new HashMap<Class, Boolean>());
 
     if(getHiders().get(myClass) == null) getHiders().put(myClass, true);
   }
@@ -54,7 +54,7 @@ public class DomElementsToggleAction extends ToggleAction {
   }
 
   private Map<Class, Boolean> getHiders() {
-    return myTreeView.getRootElement().getRoot().getUserData(BaseDomElementNode.TREE_NODES_HIDERS_KEY);
+    return myTreeView.getRootElement().getRoot().getFile().getUserData(BaseDomElementNode.TREE_NODES_HIDERS_KEY);
   }
 
   public void setSelected(AnActionEvent e, boolean state) {

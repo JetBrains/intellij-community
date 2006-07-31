@@ -305,6 +305,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   protected void commit(final Document document, final PsiFile file) {
+    if (document.getUserData(KEY_COMMITING) == Boolean.TRUE) return;
+
     document.putUserData(TEMP_TREE_IN_DOCUMENT_KEY, null);
 
     TextBlock textBlock = getTextBlock(document);

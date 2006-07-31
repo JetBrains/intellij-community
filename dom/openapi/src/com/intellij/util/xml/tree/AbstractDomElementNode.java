@@ -45,7 +45,7 @@ abstract public class AbstractDomElementNode extends SimpleNode {
   }
 
   protected boolean shouldBeShown(final Type type) {
-    final Map<Class, Boolean> hiders = getDomElement().getRoot().getUserData(TREE_NODES_HIDERS_KEY);
+    final Map<Class, Boolean> hiders = getDomElement().getRoot().getFile().getUserData(TREE_NODES_HIDERS_KEY);
     if (type == null || hiders == null || hiders.size() == 0) return true;
 
     final Class aClass = DomReflectionUtil.getRawType(type);

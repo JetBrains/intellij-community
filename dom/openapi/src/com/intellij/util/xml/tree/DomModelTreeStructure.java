@@ -4,11 +4,11 @@ import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.util.xml.DomElement;
 
 public class DomModelTreeStructure extends SimpleTreeStructure {
-  private DomElement myDomElement;
+  private final DomElement myDomElement;
   private AbstractDomElementNode myRootNode;
 
-  public DomModelTreeStructure(DomElement fileElement) {
-    myDomElement = fileElement;
+  public DomModelTreeStructure(DomElement root) {
+    myDomElement = root;
   }
 
   protected AbstractDomElementNode createRoot(DomElement rootElement) {

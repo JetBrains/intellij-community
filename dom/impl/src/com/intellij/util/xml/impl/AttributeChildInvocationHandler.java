@@ -74,7 +74,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
   }
 
   public <T extends DomElement> T createStableCopy() {
-    final DomElement parentCopy = getParent().createStableCopy();
+    final DomElement parentCopy = findCallerProxy(CREATE_STABLE_COPY_METHOD).getParent().createStableCopy();
     final DomAttributeChildDescription description = getChildDescription();
     return getManager().createStableValue(new Factory<T>() {
       public T create() {

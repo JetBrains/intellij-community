@@ -7,6 +7,7 @@ import com.intellij.util.xml.ElementPresentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlDocument;
@@ -193,7 +194,11 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   public final <T extends DomElement> T createStableCopy() {
-    return (T)this;
+    return myManager.createStableValue(new Factory<T>() {
+      public T create() {
+        return (T)myManager.getFileElement(myFile);
+      }
+    });
   }
 
   public Collection<DomElement> getAllChildren() {

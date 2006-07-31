@@ -449,6 +449,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
   public final <T extends DomElement> T createStableValue(final Factory<T> provider) {
     final T initial = provider.create();
+    assert initial != null;
     final StableInvocationHandler handler = new StableInvocationHandler<T>(initial, provider);
     final Set<Class> intf = new HashSet<Class>();
     intf.addAll(Arrays.asList(initial.getClass().getInterfaces()));

@@ -10,6 +10,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,7 @@ import java.lang.annotation.Annotation;
  */
 public class DomRootInvocationHandler extends DomInvocationHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomRootInvocationHandler");
-  private DomFileElementImpl myParent;
+  private DomFileElementImpl<?> myParent;
 
   public DomRootInvocationHandler(final Class aClass,
                                   final XmlTag tag,
@@ -55,7 +56,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
   }
 
   public <T extends DomElement> DomFileElementImpl<T> getRoot() {
-    return isValid() ? myParent : null;
+    return isValid() ? (DomFileElementImpl<T>)myParent : null;
   }
 
   public DomElement getParent() {
@@ -63,9 +64,10 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
   }
 
   public <T extends DomElement> T createStableCopy() {
+    final DomFileElement stableCopy = myParent.createStableCopy();
     return getManager().createStableValue(new Factory<T>() {
       public T create() {
-        return (T)myParent.getRootElement();
+        return stableCopy.isValid() ? (T) stableCopy.getRootElement() : null;
       }
     });
   }

@@ -46,14 +46,16 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private static final String ATTRIBUTES = "@";
   public static Method ACCEPT_METHOD = null;
   public static Method ACCEPT_CHILDREN_METHOD = null;
+  protected static Method CREATE_STABLE_COPY_METHOD = null;
 
   static {
     try {
       ACCEPT_METHOD = DomElement.class.getMethod("accept", DomElementVisitor.class);
       ACCEPT_CHILDREN_METHOD = DomElement.class.getMethod("acceptChildren", DomElementVisitor.class);
+      CREATE_STABLE_COPY_METHOD = DomElement.class.getMethod("createStableCopy");
     }
     catch (NoSuchMethodException e) {
-      Logger.getInstance("#com.intellij.util.xml.ui.DomUIFactory").error(e);
+      throw new AssertionError(e);
     }
   }
 

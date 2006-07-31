@@ -105,7 +105,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
 
   public final <T extends DomElement> T createStableCopy() {
     final DomFixedChildDescription description = getChildDescription();
-    final DomElement parentCopy = getParent().createStableCopy();
+    final DomElement parentCopy = findCallerProxy(CREATE_STABLE_COPY_METHOD).getParent().createStableCopy();
     return getManager().createStableValue(new Factory<T>() {
       public T create() {
         return parentCopy.isValid() ? (T)description.getValues(parentCopy).get(myIndex) : null;

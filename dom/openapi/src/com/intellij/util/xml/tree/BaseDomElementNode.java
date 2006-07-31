@@ -109,7 +109,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
     AbstractDomElementNode[] childrenNodes = children.toArray(new AbstractDomElementNode[children.size()]);
 
-    final Comparator<AbstractDomElementNode> comparator = myDomElement.getRoot().getUserData(COMPARATOR_KEY);
+    final Comparator<AbstractDomElementNode> comparator = myDomElement.getRoot().getFile().getUserData(COMPARATOR_KEY);
     if (comparator != null) {
       Arrays.sort(childrenNodes, comparator);
     }
@@ -165,7 +165,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     if (type == null) {
       return false;
     }
-    final List<Class> classes = getDomElement().getRoot().getUserData(key);
+    final List<Class> classes = getDomElement().getRoot().getFile().getUserData(key);
     if (classes != null) {
       Class clazz = DomReflectionUtil.getRawType(type);
       return classes.contains(clazz);
