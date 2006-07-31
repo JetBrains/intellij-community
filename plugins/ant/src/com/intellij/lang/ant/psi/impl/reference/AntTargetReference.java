@@ -74,7 +74,7 @@ public class AntTargetReference extends AntGenericReference {
     AntTarget result = project.getTarget(name);
     if (result == null) {
       for (final AntTarget target : project.getImportTargets()) {
-        if( name.equals(target.getName())) {
+        if (name.equals(target.getName())) {
           return target;
         }
       }
@@ -90,7 +90,9 @@ public class AntTargetReference extends AntGenericReference {
         else {
           antFile = (AntFile)psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
         }
-        result = antFile.getAntProject().getTarget(name);
+        if (antFile.getAntProject() != null) {
+          result = antFile.getAntProject().getTarget(name);
+        }
       }
     }
     return result;
