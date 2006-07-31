@@ -20,7 +20,9 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private ArrayList<ProjectJdk> myJdks = new ArrayList<ProjectJdk>();
@@ -29,6 +31,8 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
   private JavaSdk myJavaSdk;
   private JarFileSystem myJarFileSystem;
   @NonNls private static final String ELEMENT_JDK = "jdk";
+
+  private final Map<String, ProjectJdkImpl> myCachedProjectJdks = new HashMap<String, ProjectJdkImpl>();
 
   public ProjectJdkTableImpl(JavaSdk javaSdk, JarFileSystem jarFileSystem) {
     myJavaSdk = javaSdk;
@@ -58,10 +62,13 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
   }
 
   public ProjectJdk findJdk(String name, String type) {
-    final ProjectJdk projectJdk = findJdk(name);
+    ProjectJdk projectJdk = findJdk(name);
     if (projectJdk != null){
       return projectJdk;
     }
+    final String uniqueName = type + "." + name;
+    projectJdk = myCachedProjectJdks.get(uniqueName);
+    if (projectJdk != null) return projectJdk;
     if (type != null) {
       final SdkType[] sdkTypes = ApplicationManager.getApplication().getComponents(SdkType.class);
       for (SdkType sdkType : sdkTypes) {
@@ -72,6 +79,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
             ProjectJdkImpl projectJdkImpl = new ProjectJdkImpl(name, sdkType);
             projectJdkImpl.setHomePath(jdkPath);
             sdkType.setupSdkPaths(projectJdkImpl);
+            myCachedProjectJdks.put(uniqueName, projectJdkImpl);
             return projectJdkImpl;
           }
           break;

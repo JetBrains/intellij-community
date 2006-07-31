@@ -85,7 +85,8 @@ public class Messages {
   }
 
   public static int showDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode()  || application.isHeadlessEnvironment()) {
       return ourTestImplementation.show(message);
     }
     else {
@@ -103,11 +104,12 @@ public class Messages {
    */
   public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
       return ourTestImplementation.show(message);
     }
     else {
-      if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
+      //what's it? if (application.isUnitTestMode()) throw new RuntimeException(message);
       MessageDialog dialog = new MessageDialog(message, title, options, defaultOptionIndex, icon);
       dialog.show();
       return dialog.getExitCode();
