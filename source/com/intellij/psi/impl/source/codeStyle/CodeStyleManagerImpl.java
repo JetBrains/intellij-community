@@ -1565,7 +1565,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   private @NonNls String changeIfNotIdentifier(String name) {
     PsiManager manager = PsiManager.getInstance(myProject);
 
-    if (!manager.getNameHelper().isIdentifier(name)) {
+    if (!manager.getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST)) {
       char c = name.charAt(0);
       if (StringUtil.isVowel(c)) {
         return "an" + Character.toUpperCase(c) + name.substring(1);
