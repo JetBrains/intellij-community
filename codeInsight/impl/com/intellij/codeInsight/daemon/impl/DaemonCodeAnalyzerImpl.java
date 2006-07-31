@@ -45,6 +45,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -63,8 +64,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
@@ -152,6 +152,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @NonNls private static final String URL_ATT = "url";
 
   private boolean cutOperationJustHappened;
+  private VirtualFileAdapter myVirtualFileListener;
 
   protected DaemonCodeAnalyzerImpl(Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings) {
     myProject = project;
@@ -256,6 +257,22 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     TodoConfiguration.getInstance().addPropertyChangeListener(myTodoListener);
     ActionManagerEx.getInstanceEx().addAnActionListener(myAnActionListener);
     ExternalResourceManagerEx.getInstanceEx().addExteralResourceListener(myExternalResourceListener);
+    myVirtualFileListener = new VirtualFileAdapter() {
+      public void propertyChanged(VirtualFilePropertyEvent event) {
+        if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+          restart();
+          PsiFile psiFile = PsiManager.getInstance(myProject).findFile(event.getFile());
+          if (psiFile != null && !isHighlightingAvailable(psiFile)) {
+            Document document = FileDocumentManager.getInstance().getCachedDocument(event.getFile());
+            if (document != null) {
+              // highlight markers no more
+              UpdateHighlightersUtil.setHighlightersToEditor(myProject, document, 0, document.getTextLength(), Collections.<HighlightInfo>emptyList(), UpdateHighlightersUtil.NORMAL_HIGHLIGHTERS_GROUP);
+            }
+          }
+        }
+      }
+    };
+    VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
 
     if (myProject.hasComponent(AntConfiguration.class)) {
       AntConfiguration.getInstance(myProject).addAntConfigurationListener(myAntConfigurationListener);
@@ -302,6 +319,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     TodoConfiguration.getInstance().removePropertyChangeListener(myTodoListener);
     ActionManagerEx.getInstanceEx().removeAnActionListener(myAnActionListener);
     ExternalResourceManagerEx.getInstanceEx().removeExternalResourceListener(myExternalResourceListener);
+    VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
+
 
     if (myProject.hasComponent(AntConfiguration.class)) {
       AntConfiguration.getInstance(myProject).removeAntConfigurationListener(myAntConfigurationListener);
