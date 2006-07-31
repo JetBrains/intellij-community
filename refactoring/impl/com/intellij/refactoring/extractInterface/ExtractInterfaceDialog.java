@@ -70,8 +70,8 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
                  && element.hasModifierProperty(PsiModifier.STATIC)
                  && element.hasModifierProperty(PsiModifier.PUBLIC);
         }
-        else if (element instanceof PsiClass && ((PsiClass)element).isInterface()) {
-          return true;
+        else if (element instanceof PsiClass) {
+          return ((PsiClass)element).isInterface() || element.hasModifierProperty(PsiModifier.STATIC);
         }
         return false;
       }
