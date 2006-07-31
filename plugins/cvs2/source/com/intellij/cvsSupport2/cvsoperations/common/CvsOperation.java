@@ -66,4 +66,8 @@ public abstract class CvsOperation {
   }
 
   public abstract String getLastProcessedCvsRoot();
+
+  public boolean runInReadThread() {
+    return true;
+  }
 }

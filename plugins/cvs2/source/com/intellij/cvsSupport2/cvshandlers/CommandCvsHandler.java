@@ -89,6 +89,10 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     return myCanBeCanceled;
   }
 
+  @Override protected boolean runInReadThread() {
+    return myCvsOperation.runInReadThread();
+  }
+
   public static CvsHandler createCheckoutFileHandler(FilePath[] files,
                                                      CvsConfiguration configuration) {
     return new CheckoutHandler(files, configuration);

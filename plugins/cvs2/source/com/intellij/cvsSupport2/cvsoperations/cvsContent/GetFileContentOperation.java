@@ -251,4 +251,8 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     super.binaryMessageSent(bytes);
     myReader.binaryMessageSent(bytes);
   }
+
+  @Override public boolean runInReadThread() {
+    return false;
+  }
 }
