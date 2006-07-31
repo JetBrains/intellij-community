@@ -109,7 +109,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
       HighlightInfo highlight = visibleHighlights[i];
       final PsiElement elementAt = myFile.findElementAt(highlight.startOffset);
-      if (elementAt != null && elementAt.isValid()) {
+      if (elementAt != null && !elementAt.isValid()) {
         LOG.assertTrue(false, "Invalid element: " + elementAt);
       }
       elements[i] = elementAt;
