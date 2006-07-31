@@ -30,8 +30,10 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.containers.HashMap;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -84,15 +86,12 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
 
   public String[] getSchemeNames() {
     ArrayList<MyColorScheme> schemes = new ArrayList<MyColorScheme>(mySchemes.values());
-    Collections.sort(schemes, new Comparator() {
-      public int compare(Object o1, Object o2) {
-        EditorColorsScheme s1 = (EditorColorsScheme)o1;
-        EditorColorsScheme s2 = (EditorColorsScheme)o2;
+    Collections.sort(schemes, new Comparator<MyColorScheme>() {
+      public int compare(MyColorScheme o1, MyColorScheme o2) {
+        if (isDefault(o1) && !isDefault(o2)) return -1;
+        if (!isDefault(o1) && isDefault(o2)) return 1;
 
-        if (isDefault(s1) && !isDefault(s2)) return -1;
-        if (!isDefault(s1) && isDefault(s2)) return 1;
-
-        return s1.getName().compareToIgnoreCase(s2.getName());
+        return o1.getName().compareToIgnoreCase(o2.getName());
       }
     });
 
@@ -154,6 +153,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       for (Project openProject : openProjects) {
         FileStatusManager.getInstance(openProject).fileStatusesChanged();
+        DaemonCodeAnalyzer.getInstance(openProject).restart();
       }
 
       myPanel.apply();
@@ -476,9 +476,8 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     }
 
     public boolean isModified() {
-      if (myGetSetBackground != null && myGetSetBackground.isModified()) return true;
-      if (myGetSetForeground != null && myGetSetForeground.isModified()) return true;
-      return false;
+      return myGetSetBackground != null && myGetSetBackground.isModified()
+             || myGetSetForeground != null && myGetSetForeground.isModified();
     }
 
     public void apply(EditorColorsScheme scheme) {
@@ -495,6 +494,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     return "preferences.colorsFonts";
   }
 
+  @NotNull
   public String getComponentName() {
     return "ColorAndFontOptions";
   }
