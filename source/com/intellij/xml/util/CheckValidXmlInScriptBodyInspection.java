@@ -126,7 +126,7 @@ public class CheckValidXmlInScriptBodyInspection extends LocalInspectionTool {
   }
 
   public String getDisplayName() {
-    return XmlBundle.message("html.inspections.check.empty.script.tag");
+    return XmlBundle.message("html.inspections.check.valid.script.tag");
   }
 
   @NonNls
