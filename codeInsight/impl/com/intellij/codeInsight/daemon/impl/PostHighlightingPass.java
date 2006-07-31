@@ -60,19 +60,6 @@ import java.text.MessageFormat;
 import java.util.*;
 
 public class PostHighlightingPass extends TextEditorHighlightingPass {
-  private static final String SYMBOL_IS_NOT_USED = JavaErrorMessages.message("symbol.is.never.used");
-  private static final String LOCAL_VARIABLE_IS_NOT_USED = JavaErrorMessages.message("local.variable.is.never.used");
-  private static final String LOCAL_VARIABLE_IS_NOT_USED_FOR_READING = JavaErrorMessages.message("local.variable.is.not.used.for.reading");
-  private static final String LOCAL_VARIABLE_IS_NOT_ASSIGNED = JavaErrorMessages.message("local.variable.is.not.assigned");
-  private static final String PRIVATE_FIELD_IS_NOT_USED_FOR_READING = JavaErrorMessages.message("private.field.is.not.used.for.reading");
-  private static final String PARAMETER_IS_NOT_USED = JavaErrorMessages.message("parameter.is.not.used");
-  private static final String PRIVATE_METHOD_IS_NOT_USED = JavaErrorMessages.message("private.method.is.not.used");
-  private static final String PRIVATE_CONSTRUCTOR_IS_NOT_USED = JavaErrorMessages.message("private.constructor.is.not.used");
-  private static final String PRIVATE_INNER_CLASS_IS_NOT_USED = JavaErrorMessages.message("private.inner.class.is.not.used");
-  private static final String PRIVATE_INNER_INTERFACE_IS_NOT_USED = JavaErrorMessages.message("private.inner.interface.is.not.used");
-  private static final String TYPE_PARAMETER_IS_NOT_USED = JavaErrorMessages.message("type.parameter.is.not.used");
-  private static final String LOCAL_CLASS_IS_NOT_USED = JavaErrorMessages.message("local.class.is.not.used");
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
   private final Project myProject;
   private final RefCountHolder myRefCountHolder;
@@ -90,10 +77,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private boolean myHasMissortedImports;
   private ImplicitUsageProvider[] myImplicitUsageProviders;
 
-  public PostHighlightingPass(Project project,
-                              PsiFile file,
+  public PostHighlightingPass(@NotNull Project project,
+                              @NotNull PsiFile file,
                               @Nullable Editor editor,
-                              Document document,
+                              @NotNull Document document,
                               int startOffset,
                               int endOffset,
                               boolean isCompiled) {
@@ -152,7 +139,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     for (PsiNamedElement unusedDcl : unusedDcls) {
       String dclType = UsageViewUtil.capitalize(UsageViewUtil.getType(unusedDcl));
       if (dclType == null || dclType.length() == 0) dclType = LangBundle.message("java.terms.symbol");
-      String message = MessageFormat.format(SYMBOL_IS_NOT_USED, dclType, unusedDcl.getName());
+      String message = MessageFormat.format(JavaErrorMessages.message("symbol.is.never.used"), dclType, unusedDcl.getName());
 
       HighlightInfo highlightInfo = createUnusedSymbolInfo(unusedDcl.getNavigationElement(), message);
       highlights.add(highlightInfo);
@@ -272,7 +259,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (identifier == null) return null;
 
     if (!myRefCountHolder.isReferenced(variable) && !isImplicitUsage(variable)) {
-      String message = MessageFormat.format(LOCAL_VARIABLE_IS_NOT_USED, identifier.getText());
+      String message = MessageFormat.format(JavaErrorMessages.message("local.variable.is.never.used"), identifier.getText());
       HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
       QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(variable), options, displayName);
       return highlightInfo;
@@ -280,7 +267,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     boolean referenced = myRefCountHolder.isReferencedForRead(variable);
     if (!referenced && !isImplicitRead(variable)) {
-      String message = MessageFormat.format(LOCAL_VARIABLE_IS_NOT_USED_FOR_READING, identifier.getText());
+      String message = MessageFormat.format(JavaErrorMessages.message("local.variable.is.not.used.for.reading"), identifier.getText());
       HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
       QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(variable), options, displayName);
       return highlightInfo;
@@ -289,7 +276,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (!variable.hasInitializer()) {
       referenced = myRefCountHolder.isReferencedForWrite(variable);
       if (!referenced && !isImplicitWrite(variable)) {
-        String message = MessageFormat.format(LOCAL_VARIABLE_IS_NOT_ASSIGNED, identifier.getText());
+        String message = MessageFormat.format(JavaErrorMessages.message("local.variable.is.not.assigned"), identifier.getText());
         final HighlightInfo unusedSymbolInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(UnusedSymbolLocalInspection.DISPLAY_NAME, options), options, displayName);
         return unusedSymbolInfo;
@@ -354,10 +341,12 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
       final boolean readReferenced = myRefCountHolder.isReferencedForRead(field);
       if (!readReferenced && !isImplicitRead(field)) {
-        String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_USED_FOR_READING, identifier.getText());
+        String message = MessageFormat.format(JavaErrorMessages.message("private.field.is.not.used.for.reading"), identifier.getText());
         HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field), options, displayName);
         QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, false, field), options, displayName);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(false, true, field), options, displayName);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, true, field), options, displayName);
         return highlightInfo;
       }
 
@@ -386,25 +375,31 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           && !HighlightMethodUtil.isSerializationRelatedMethod(method)
           && !isMainMethod(method)
       ) {
-        if (!myRefCountHolder.isReferenced(parameter) && !isImplicitUsage(parameter)) {
-          PsiIdentifier identifier = parameter.getNameIdentifier();
-          String message = MessageFormat.format(PARAMETER_IS_NOT_USED, identifier.getText());
-          HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
+        HighlightInfo highlightInfo = checkUnusedParameter(parameter);
+        if (highlightInfo != null) {
           QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedParameterFix(parameter), options, displayName);
           return highlightInfo;
         }
       }
     }
     else if (declarationScope instanceof PsiForeachStatement) {
-      if (!myRefCountHolder.isReferenced(parameter) && !isImplicitUsage(parameter)) {
-        PsiIdentifier identifier = parameter.getNameIdentifier();
-        String message = MessageFormat.format(PARAMETER_IS_NOT_USED, identifier.getText());
-        final HighlightInfo unusedSymbolInfo = createUnusedSymbolInfo(identifier, message);
-        QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(UnusedSymbolLocalInspection.DISPLAY_NAME, options), options, displayName);
-        return unusedSymbolInfo;
+      HighlightInfo highlightInfo = checkUnusedParameter(parameter);
+      if (highlightInfo != null) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(UnusedSymbolLocalInspection.DISPLAY_NAME, options), options, displayName);
+        return highlightInfo;
       }
     }
 
+    return null;
+  }
+
+  private HighlightInfo checkUnusedParameter(final PsiParameter parameter) {
+    if (!myRefCountHolder.isReferenced(parameter) && !isImplicitUsage(parameter)) {
+      PsiIdentifier identifier = parameter.getNameIdentifier();
+      assert identifier != null;
+      String message = MessageFormat.format(JavaErrorMessages.message("parameter.is.not.used"), identifier.getText());
+      return createUnusedSymbolInfo(identifier, message);
+    }
     return null;
   }
 
@@ -417,7 +412,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         ) {
           return null;
         }
-        String pattern = method.isConstructor() ? PRIVATE_CONSTRUCTOR_IS_NOT_USED : PRIVATE_METHOD_IS_NOT_USED;
+        String pattern = method.isConstructor() ? JavaErrorMessages.message("private.constructor.is.not.used") : JavaErrorMessages.message("private.method.is.not.used");
         String symbolName = HighlightMessageUtil.getSymbolName(method, PsiSubstitutor.EMPTY);
         String message = MessageFormat.format(pattern, symbolName);
         PsiIdentifier identifier = method.getNameIdentifier();
@@ -433,19 +428,18 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
       if (!myRefCountHolder.isReferenced(aClass) && !isImplicitUsage(aClass)) {
         String pattern = aClass.isInterface()
-                         ? PRIVATE_INNER_INTERFACE_IS_NOT_USED
-                         : PRIVATE_INNER_CLASS_IS_NOT_USED;
+                         ? JavaErrorMessages.message("private.inner.interface.is.not.used") : JavaErrorMessages.message("private.inner.class.is.not.used");
         return formatUnusedSymbolHighlightInfo(aClass, pattern, options, displayName);
       }
     }
     else if (aClass.getParent() instanceof PsiDeclarationStatement) { // local class
       if (!myRefCountHolder.isReferenced(aClass) && !isImplicitUsage(aClass)) {
-        return formatUnusedSymbolHighlightInfo(aClass, LOCAL_CLASS_IS_NOT_USED, options, displayName);
+        return formatUnusedSymbolHighlightInfo(aClass, JavaErrorMessages.message("local.class.is.not.used"), options, displayName);
       }
     }
     else if (aClass instanceof PsiTypeParameter) {
       if (!myRefCountHolder.isReferenced(aClass) && !isImplicitUsage(aClass)) {
-        return formatUnusedSymbolHighlightInfo(aClass, TYPE_PARAMETER_IS_NOT_USED, options, displayName);
+        return formatUnusedSymbolHighlightInfo(aClass, JavaErrorMessages.message("type.parameter.is.not.used"), options, displayName);
       }
     }
     return null;
