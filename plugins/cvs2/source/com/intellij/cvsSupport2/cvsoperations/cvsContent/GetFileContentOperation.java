@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
@@ -180,6 +181,14 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
 
   public synchronized byte[] getFileBytes() {
     if (myFileBytes == null) {
+      myFileBytes = loadFileBytes();
+    }
+    return myFileBytes;
+  }
+
+  @Nullable
+  public synchronized byte[] tryGetFileBytes() {
+    if (myFileBytes == null && myState == LOADING) {
       myFileBytes = loadFileBytes();
     }
     return myFileBytes;
