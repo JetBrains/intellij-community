@@ -29,7 +29,10 @@ public class WhileConditionFixer implements Fixer {
           if (block != null) {
             stopOffset = Math.min(stopOffset, block.getTextRange().getStartOffset());
           }
+          stopOffset = Math.min(stopOffset, whileStatement.getTextRange().getEndOffset());
+
           doc.replaceString(whileStatement.getTextRange().getStartOffset(), stopOffset, "while ()");
+          processor.registerUnresolvedError(whileStatement.getTextRange().getStartOffset() + "while (".length());
         } else {
           processor.registerUnresolvedError(lParenth.getTextRange().getEndOffset());
         }

@@ -91,6 +91,10 @@ public class SmartEnterProcessor {
 
     try {
       commit();
+      if (myFirstErrorOffset != Integer.MAX_VALUE) {
+        myEditor.getCaretModel().moveToOffset(myFirstErrorOffset);
+      }
+      
       myFirstErrorOffset = Integer.MAX_VALUE;
 
       PsiElement atCaret = getStatementAtCaret();
