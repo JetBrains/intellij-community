@@ -345,7 +345,9 @@ public class ChangeContextUtil {
             }
           }
         }
-        element.acceptChildren(this);
+        if (element != null) {
+          element.acceptChildren(this);
+        }
       }
     });
   }
