@@ -31,7 +31,7 @@ import java.beans.PropertyChangeSupport;
 /**
  * User: Sergey.Vasiliev
  */
-abstract public class PerspectiveFileEditor extends UserDataHolderBase implements DocumentsEditor, Committable, NavigatableFileEditor {
+abstract public class PerspectiveFileEditor extends UserDataHolderBase implements DocumentsEditor, Committable {
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private final Project myProject;
   private final VirtualFile myFile;
@@ -107,25 +107,8 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   abstract protected DomElement getSelectedDomElement();
   abstract protected void setSelectedDomElement(DomElement domElement);
 
-  public boolean canNavigateTo(@NotNull final Navigatable navigatable) {
-    if (navigatable instanceof OpenFileDescriptor) {
-      final VirtualFile file = ((OpenFileDescriptor)navigatable).getFile();
-      return file != null && isMyFile(file);
-    }
-    return true;
-  }
-
   protected boolean isMyFile(VirtualFile file) {
     return file.equals(myFile);
-  }
-
-  public void navigateTo(@NotNull final Navigatable navigatable) {
-    final JComponent focusedComponent = getPreferredFocusedComponent();
-    if (focusedComponent != null) {
-      if (!focusedComponent.requestFocusInWindow()) {
-        focusedComponent.requestFocus();
-      }
-    }
   }
 
   public final void addWatchedElement(final DomElement domElement) {
