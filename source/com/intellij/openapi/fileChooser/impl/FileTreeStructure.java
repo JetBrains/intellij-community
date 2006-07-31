@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FileTreeStructure extends AbstractTreeStructure {
   private static final Logger LOG = Logger.getInstance("#com.intellij.chooser.FileTreeStructure");
@@ -91,9 +92,8 @@ public class FileTreeStructure extends AbstractTreeStructure {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
-    HashSet childrenSet = new HashSet();
-    for (int i = 0; i < children.length; i++) {
-      VirtualFile child = children[i];
+    HashSet<FileElement> childrenSet = new HashSet<FileElement>();
+    for (VirtualFile child : children) {
       if (myChooserDescriptor.isFileVisible(child, myShownHiddens)) {
         childrenSet.add(new FileElement(child, child.getName()));
       }
@@ -102,6 +102,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
   }
 
 
+  @Nullable
   public Object getParentElement(Object element) {
     if (element instanceof FileElement) {
       VirtualFile file = ((FileElement) element).getFile();
@@ -138,7 +139,9 @@ public class FileTreeStructure extends AbstractTreeStructure {
     VirtualFile file = ((FileElement)element).getFile();
     Icon openIcon = file == null ? null : myChooserDescriptor.getOpenIcon(file);
     Icon closedIcon = file == null ? null : myChooserDescriptor.getClosedIcon(file);
-    FileNodeDescriptor nodeDescriptor = new FileNodeDescriptor(myProject, (FileElement)element, parentDescriptor, openIcon, closedIcon);
-    return nodeDescriptor;
+    String name = file == null ? null : myChooserDescriptor.getName(file);
+    String comment = file == null ? null : myChooserDescriptor.getComment(file);
+
+    return new FileNodeDescriptor(myProject, (FileElement)element, parentDescriptor, openIcon, closedIcon, name, comment);
   }
 }

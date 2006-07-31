@@ -20,11 +20,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.Nullable;
+
 public interface FileSystemTree extends Disposable {
   JTree getTree();
 
   void updateTree();
 
+  @Nullable
   VirtualFile getSelectedFile();
 
   boolean select(VirtualFile file);

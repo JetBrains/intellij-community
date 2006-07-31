@@ -19,10 +19,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.TreeToolTipHandler;
-import com.intellij.ui.UIBundle;
+import com.intellij.ui.*;
+import com.intellij.ui.treeStructure.SimpleNodeRenderer;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
@@ -39,6 +37,9 @@ import java.awt.event.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
+
+import org.jetbrains.annotations.Nullable;
 
 public class FileSystemTreeImpl implements FileSystemTree {
   private static final Logger LOG = Logger.getInstance("#com.intellij.chooser.FileSystemTreeImpl");
@@ -78,6 +79,23 @@ public class FileSystemTreeImpl implements FileSystemTree {
     );
     addTreeExpansionListener();
     registerTreeActions();
+
+    myTree.setCellRenderer(new SimpleNodeRenderer() {
+
+      public void customizeCellRenderer(JTree tree, Object value, boolean selected,
+                                        boolean expanded, boolean leaf, int row, boolean hasFocus) {
+        super.customizeCellRenderer(tree, value, selected, expanded, leaf, row,
+                                    hasFocus);
+        final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+        if (userObject instanceof FileNodeDescriptor) {
+          String comment = ((FileNodeDescriptor)userObject).getComment();
+          if (comment != null) {
+            append(comment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          }
+        }
+      }
+    });
+
   }
 
   protected AbstractTreeBuilder createTreeBuilder(final JTree tree, DefaultTreeModel treeModel, final AbstractTreeStructure treeStructure, final Comparator<NodeDescriptor> comparator, FileChooserDescriptor descriptor) {
@@ -189,6 +207,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     return true;
   }
 
+  @Nullable
   private DefaultMutableTreeNode getNodeForFile(VirtualFile file) {
     VirtualFile selectFile;
 
@@ -245,6 +264,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
   public JTree getTree() { return myTree; }
 
+  @Nullable
   public VirtualFile getSelectedFile() {
     final TreePath path = myTree.getSelectionPath();
     if (path == null) return null;
@@ -260,6 +280,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
   public VirtualFile[] getChoosenFiles() {
     return collectSelectedFiles(new Convertor<VirtualFile, VirtualFile>() {
+      @Nullable
       public VirtualFile convert(VirtualFile file) {
         if (file == null || !file.isValid()) return null;
         return myTreeStructure.getChooserDescriptor().getFileToSelect(file);
@@ -288,7 +309,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   }
 
   public boolean isUnderRoots(VirtualFile file) {
-    final java.util.List<VirtualFile> roots = myDescriptor.getRoots();
+    final List<VirtualFile> roots = myDescriptor.getRoots();
     if (roots.size() == 0) {
       return true;
     }

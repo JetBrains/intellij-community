@@ -29,6 +29,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 public class FileChooserDescriptor implements Cloneable{
   private final boolean myChooseFiles;
   private final boolean myChooseFolders;
@@ -163,6 +165,16 @@ public class FileChooserDescriptor implements Cloneable{
       return Icons.DIRECTORY_CLOSED_ICON;
     }
     return IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, null);
+  }
+
+  public String getName(VirtualFile virtualFile) {
+    return virtualFile.getPath();
+  }
+
+
+  @Nullable
+  public String getComment(VirtualFile virtualFile) {
+    return null;
   }
 
   /**

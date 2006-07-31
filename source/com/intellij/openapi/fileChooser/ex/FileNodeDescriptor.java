@@ -15,45 +15,61 @@ import org.jetbrains.annotations.NotNull;
 public class FileNodeDescriptor extends NodeDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.chooser.FileNodeDescriptor");
 
-  private FileElement myDescriptor;
+  private FileElement myFileElement;
   private Icon myOriginalOpenIcon;
   private Icon myOriginalClosedIcon;
+  private final String myComment;
 
-  public FileNodeDescriptor(Project project, FileElement element, NodeDescriptor parentDescriptor, Icon openIcon, Icon closedIcon) {
+  public FileNodeDescriptor(Project project,
+                            FileElement element,
+                            NodeDescriptor parentDescriptor,
+                            Icon openIcon,
+                            Icon closedIcon,
+                            String name,
+                            String comment) {
     super(project, parentDescriptor);
     myOriginalOpenIcon = openIcon;
     myOriginalClosedIcon = closedIcon;
+    myComment = comment;
     LOG.assertTrue(element != null);
-    myDescriptor = element;
+    myFileElement = element;
+    myName = name;
   }
 
   public boolean update() {
     boolean changed = false;
 
-    if (!myDescriptor.toString().equals(myName)) changed = true;
+    // special handling for roots with names (e.g. web roots)
+    if (getParentDescriptor() != null && getParentDescriptor().getParentDescriptor() != null || myName == null) {
+      final String newName = myFileElement.toString();
+      if (!newName.equals(myName)) changed = true;
+      myName = newName;
+    }
 
-    myName = myDescriptor.toString();
-
-    VirtualFile file = myDescriptor.getFile();
+    VirtualFile file = myFileElement.getFile();
 
     if (file == null) return true;
 
     myOpenIcon = myOriginalOpenIcon;
     myClosedIcon = myOriginalClosedIcon;
-    if (myDescriptor.isHidden()) {
+    if (myFileElement.isHidden()) {
       myOpenIcon = IconLoader.getTransparentIcon(myOpenIcon);
       myClosedIcon = IconLoader.getTransparentIcon(myClosedIcon);
     }
-    myColor = myDescriptor.isHidden() ? SimpleTextAttributes.DARK_TEXT.getFgColor() : null;
+    myColor = myFileElement.isHidden() ? SimpleTextAttributes.DARK_TEXT.getFgColor() : null;
     return changed;
   }
 
   @NotNull
   public final FileElement getElement() {
-    return myDescriptor;
+    return myFileElement;
   }
 
   protected final void setElement(FileElement descriptor) {
-    myDescriptor = descriptor;
+    myFileElement = descriptor;
+  }
+
+  public String getComment() {
+    return myComment;
   }
 }

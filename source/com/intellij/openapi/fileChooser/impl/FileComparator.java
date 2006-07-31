@@ -3,13 +3,13 @@
  */
 package com.intellij.openapi.fileChooser.impl;
 
-import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 
 import java.util.Comparator;
 
-public final class FileComparator implements Comparator {
+public final class FileComparator implements Comparator<NodeDescriptor> {
   private static final FileComparator INSTANCE = new FileComparator();
 
   private FileComparator() {
@@ -20,10 +20,7 @@ public final class FileComparator implements Comparator {
     return INSTANCE;
   }
 
-  public int compare(Object o1, Object o2) {
-    FileNodeDescriptor nodeDescriptor1 = (FileNodeDescriptor)o1;
-    FileNodeDescriptor nodeDescriptor2 = (FileNodeDescriptor)o2;
-
+  public int compare(NodeDescriptor nodeDescriptor1, NodeDescriptor nodeDescriptor2) {
     int weight1 = getWeight(nodeDescriptor1);
     int weight2 = getWeight(nodeDescriptor2);
 
@@ -31,11 +28,11 @@ public final class FileComparator implements Comparator {
       return weight1 - weight2;
     }
 
-    return o1.toString().compareToIgnoreCase(o2.toString());
+    return nodeDescriptor1.toString().compareToIgnoreCase(nodeDescriptor2.toString());
   }
 
-   private static int getWeight(FileNodeDescriptor descriptor) {
-     VirtualFile file = ((FileElement)descriptor.getElement()).getFile();
+   private static int getWeight(NodeDescriptor descriptor) {
+     VirtualFile file = ((FileNodeDescriptor)descriptor).getElement().getFile();
      return file == null || file.isDirectory() ? 0 : 1;
    }
 }
