@@ -348,8 +348,8 @@ public class FindInProjectUtil {
                                 ProjectRootManager.getInstance(project).getFileIndex() :
                                 ModuleRootManager.getInstance(module).getFileIndex();
 
-    final Pattern fileMaskRegExp = createFileMaskRegExp(findModel);
     if (psiDirectory == null || (findModel.isWithSubdirectories() && fileIndex.isInContent(psiDirectory.getVirtualFile()))) {
+      final Pattern fileMaskRegExp = createFileMaskRegExp(findModel);
       // optimization
       final Collection<PsiFile> filesForFastWordSearch = getFilesForFastWordSearch(findModel, project, psiDirectory, fileMaskRegExp, module);
       if (canOptimizeForFastWordSearch(findModel) && filesForFastWordSearch != null) return filesForFastWordSearch;
@@ -427,6 +427,11 @@ public class FindInProjectUtil {
       filterMaskedFiles(resultFiles, fileMaskRegExp);
       if (resultFiles.isEmpty()) break;
     }
+
+    // in case our word splitting is incorrect
+    PsiFile[] allWordsFiles = cacheManager.getFilesWithWord(findModel.getStringToFind(), UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
+    resultFiles.addAll(Arrays.asList(allWordsFiles));
+    
     return resultFiles;
   }
 
