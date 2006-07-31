@@ -135,28 +135,31 @@ public class LocalChangeList implements Cloneable, ChangeList {
   }
 
   synchronized boolean doneProcessingChanges() {
-    boolean changesDetected = !Comparing.equal(myChanges, myChangesBeforeUpdate);
-    replaceToOldChangesWherePossible();
-    myOutdatedChanges = null;
-    myReadChangesCache = null;
-    myIsInUpdate = false;
-    return changesDetected;
-  }
+    boolean changesDetected = (myChanges.size() != myChangesBeforeUpdate.size());
 
-  private void replaceToOldChangesWherePossible() {
     Change[] newChanges = myChanges.toArray(new Change[myChanges.size()]);
     for (int i = 0; i < newChanges.length; i++) {
       Change oldChange = findOldChange(newChanges[i]);
       if (oldChange != null) {
         newChanges[i] = oldChange;
       }
+      else {
+        changesDetected = true;
+      }
     }
+
     myChanges = new HashSet<Change>(Arrays.asList(newChanges));
+    myOutdatedChanges = null;
+    myReadChangesCache = null;
+    myIsInUpdate = false;
+    return changesDetected;
   }
 
+  @Nullable
   private Change findOldChange(final Change newChange) {
     Change oldChange = myChangesBeforeUpdate.getEqualChange(newChange);
-    if (oldChange != null && sameBeforeRevision(oldChange, newChange)) {
+    if (oldChange != null && sameBeforeRevision(oldChange, newChange) &&
+        newChange.getFileStatus().equals(oldChange.getFileStatus())) {
       return oldChange;
     }
     return null;
