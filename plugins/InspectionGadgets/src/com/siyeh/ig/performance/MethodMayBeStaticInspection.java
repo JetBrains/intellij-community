@@ -17,14 +17,14 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.javaee.ejb.EjbHelper;
+import com.intellij.javaee.ejb.role.EjbMethodRole;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
-import com.intellij.javaee.ejb.role.EjbRolesUtil;
-import com.intellij.javaee.ejb.role.EjbMethodRole;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -69,11 +69,12 @@ public class MethodMayBeStaticInspection extends MethodInspection{
 
     private static class MethodMayBeStaticFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message("make.static.quickfix");
         }
 
-        public void doFix(Project project, ProblemDescriptor descriptor)
+        public void doFix(@NotNull Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiJavaToken classNameToken = (PsiJavaToken)
                     descriptor.getPsiElement();
@@ -117,7 +118,8 @@ public class MethodMayBeStaticInspection extends MethodInspection{
             if(containingClass == null){
                 return;
             }
-            final EjbMethodRole ejbRole = EjbRolesUtil.getEjbRolesUtil().getEjbRole(method);
+            final EjbHelper helper = EjbHelper.getEjbHelper();
+            final EjbMethodRole ejbRole = helper.getEjbRole(method);
             if (ejbRole != null) {
                 return;
             }
