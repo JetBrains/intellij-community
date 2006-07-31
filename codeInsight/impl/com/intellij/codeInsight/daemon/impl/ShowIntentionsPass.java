@@ -84,8 +84,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     LogicalPosition startPosition = myEditor.xyToLogicalPosition(new Point(visibleRect.x, visibleRect.y));
     myStartOffset = myEditor.logicalPositionToOffset(startPosition);
 
-    LogicalPosition endPosition = myEditor.xyToLogicalPosition(
-      new Point(visibleRect.x + visibleRect.width, visibleRect.y + visibleRect.height));
+    LogicalPosition endPosition =
+      myEditor.xyToLogicalPosition(new Point(visibleRect.x + visibleRect.width, visibleRect.y + visibleRect.height));
     myEndOffset = myEditor.logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
 
     myFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
@@ -109,7 +109,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
       HighlightInfo highlight = visibleHighlights[i];
       final PsiElement elementAt = myFile.findElementAt(highlight.startOffset);
-      LOG.assertTrue(elementAt == null || elementAt.isValid(), "Invalid element: " + elementAt);
+      if (elementAt == null || elementAt.isValid()) {
+        LOG.assertTrue(true, "Invalid element: " + elementAt);
+      }
       elements[i] = elementAt;
     }
 
@@ -159,9 +161,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     ArrayList<HighlightInfo.IntentionActionDescriptor> fixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     for (IntentionAction action : myIntentionActions) {
       if (action instanceof IntentionActionComposite) {
-        if (action instanceof QuickFixAction ||
-            action instanceof PostIntentionsQuickFixAction && codeAnalyzer.showPostIntentions()) {
-          List<HighlightInfo.IntentionActionDescriptor> availableActions = ((IntentionActionComposite)action).getAvailableActions(myEditor, myFile);
+        if (action instanceof QuickFixAction || action instanceof PostIntentionsQuickFixAction && codeAnalyzer.showPostIntentions()) {
+          List<HighlightInfo.IntentionActionDescriptor> availableActions =
+            ((IntentionActionComposite)action).getAvailableActions(myEditor, myFile);
 
           int offset = myEditor.getCaretModel().getOffset();
           HighlightInfo info = codeAnalyzer.findHighlightByOffset(myEditor.getDocument(), offset, true);
@@ -206,8 +208,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         }
 
         if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
-          IntentionHintComponent hintComponent = IntentionHintComponent.showIntentionHint(myProject, injectedEditor, intentionsToShow,
-                                                                                          fixesToShow, false);
+          IntentionHintComponent hintComponent =
+            IntentionHintComponent.showIntentionHint(myProject, injectedEditor, intentionsToShow, fixesToShow, false);
           if (!myIsSecondPass) {
             codeAnalyzer.setLastIntentionHint(hintComponent);
           }
@@ -245,7 +247,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
     else if (info.type == HighlightInfoType.JAVADOC_WRONG_REF) {
       HighlightDisplayKey javadocKey = HighlightDisplayKey.find(JavaDocReferenceInspection.SHORT_NAME);
-      if (javadocKey == null){
+      if (javadocKey == null) {
         HighlightDisplayKey.register(JavaDocReferenceInspection.SHORT_NAME, JavaDocReferenceInspection.DISPLAY_NAME);
       }
       if (InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile).getErrorLevel(javadocKey) ==
@@ -323,7 +325,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     String hintText = QuickFixBundle.message(messageKey, classes[0].getQualifiedName());
 
-    hintText += " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+    hintText +=
+      " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
 
     int offset1 = ref.getTextOffset();
     int offset2 = ref.getTextRange().getEndOffset();
@@ -331,13 +334,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(manager.getProject());
 
-    if (classes.length == 1
-        && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
-        && !isCaretNearRef(editor,ref)
-        && !PsiUtil.isInJspFile(psiFile)
-        && codeAnalyzer.canChangeFileSilently(psiFile)
-        && !hasUnresolvedImportWhichCanImport(psiFile, classes[0].getName())
-      ) {
+    if (classes.length == 1 && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY && !isCaretNearRef(editor, ref) &&
+        !PsiUtil.isInJspFile(psiFile) && codeAnalyzer.canChangeFileSilently(psiFile) &&
+        !hasUnresolvedImportWhichCanImport(psiFile, classes[0].getName())) {
       action.execute();
       return false;
     }
@@ -364,7 +363,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       if (importStaticStatement.isOnDemand()) return true;
       String qualifiedName = importStaticStatement.getReferenceName();
       // rough heuristic, since there is no API to get class name refrence from static import
-      if (qualifiedName != null && StringUtil.split(qualifiedName,".").contains(name)) return true;
+      if (qualifiedName != null && StringUtil.split(qualifiedName, ".").contains(name)) return true;
     }
     return false;
   }
@@ -372,7 +371,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private static void reduceSuggestedClassesBasedOnDependencyRuleViolation(PsiFile file, List<PsiClass> availableClasses) {
     final Project project = file.getProject();
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(project);
-    for (int i = availableClasses.size()-1; i>=0;i--) {
+    for (int i = availableClasses.size() - 1; i >= 0; i--) {
       PsiClass psiClass = availableClasses.get(i);
       PsiFile targetFile = psiClass.getContainingFile();
       if (targetFile == null) continue;
@@ -383,6 +382,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       }
     }
   }
+
   private static boolean isCaretNearRef(Editor editor, PsiJavaCodeReferenceElement ref) {
     TextRange range = ref.getTextRange();
     int offset = editor.getCaretModel().getOffset();
