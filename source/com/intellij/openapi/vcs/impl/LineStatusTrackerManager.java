@@ -16,6 +16,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
@@ -55,6 +58,11 @@ public class LineStatusTrackerManager implements ProjectComponent {
   private final MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
   private EditorFactoryListener myEditorFactoryListener = new MyEditorFactoryListener();
   private final MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
+  private final EditorColorsListener myEditorColorsListener = new EditorColorsListener() {
+    public void globalSchemeChange(EditorColorsScheme scheme) {
+      resetTrackersForOpenFiles();
+    }
+  };
 
   public LineStatusTrackerManager(final Project project, final ProjectLevelVcsManagerImpl vcsManager) {
     myProject = project;
@@ -66,6 +74,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
     VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
+    EditorColorsManager.getInstance().addEditorColorsListener(myEditorColorsListener);
   }
 
   public void projectClosed() {
@@ -100,6 +109,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
     FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
     EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
     VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
+    EditorColorsManager.getInstance().removeEditorColorsListener(myEditorColorsListener);
 
     myLineStatusTrackers = null;
 }
@@ -283,16 +293,20 @@ public class LineStatusTrackerManager implements ProjectComponent {
 
   }
 
+  private void resetTrackersForOpenFiles() {
+    synchronized (TRACKERS_LOCK) {
+      final VirtualFile[] openFiles = FileEditorManager.getInstance(myProject).getOpenFiles();
+      for(VirtualFile openFile: openFiles) {
+        resetTracker(openFile);
+      }
+    }
+  }
+
   private class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() {
       if (myIsDisposed) return;
       LOG.debug("LineStatusTrackerManager: fileStatusesChanged");
-      synchronized (TRACKERS_LOCK) {
-        final VirtualFile[] openFiles = FileEditorManager.getInstance(myProject).getOpenFiles();
-        for(VirtualFile openFile: openFiles) {
-          resetTracker(openFile);
-        }
-      }
+      resetTrackersForOpenFiles();
     }
 
     public void fileStatusChanged(@NotNull VirtualFile virtualFile) {

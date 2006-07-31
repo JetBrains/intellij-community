@@ -29,13 +29,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction;
 import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction;
-import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.SideBorder2;
-import com.intellij.util.EventUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +46,7 @@ import java.util.List;
 /**
  * author: lesya
  */
-public class LineStatusTracker implements EditorColorsListener {
+public class LineStatusTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker");
   private final Document myDocument;
   private final Document myUpToDateDocument;
@@ -56,7 +54,6 @@ public class LineStatusTracker implements EditorColorsListener {
   private final Project myProject;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private int myHighlighterCount = 0;
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private EditorColorsListener myListener;
   private final MyDocumentListener myDocumentListener = new MyDocumentListener();
 
   private boolean myIsReleased = false;
@@ -85,8 +82,6 @@ public class LineStatusTracker implements EditorColorsListener {
       myUpToDateDocument.setReadOnly(true);
       reinstallRanges();
 
-      myListener = EventUtil.createWeakListener(EditorColorsListener.class, this);
-      EditorColorsManager.getInstance().addEditorColorsListener(myListener);
       myDocument.addDocumentListener(myDocumentListener);
     }
     finally {
@@ -237,12 +232,6 @@ public class LineStatusTracker implements EditorColorsListener {
     };
   }
 
-  public void globalSchemeChange(EditorColorsScheme scheme) {
-    EditorColorsManager.getInstance().removeEditorColorsListener(myListener);
-    LineStatusTrackerManager.getInstance(myProject).resetTracker(this);
-
-  }
-
   public synchronized void release() {
     try {
       if (!myIsItitialized) return;
@@ -250,7 +239,6 @@ public class LineStatusTracker implements EditorColorsListener {
 
       removeHighlighters(new ArrayList<Range>());
       myDocument.removeDocumentListener(myDocumentListener);
-      EditorColorsManager.getInstance().removeEditorColorsListener(myListener);
     }
     finally {
       myIsReleased = true;
