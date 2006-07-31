@@ -131,7 +131,7 @@ public class CheckValidXmlInScriptBodyInspection extends LocalInspectionTool {
 
   @NonNls
   public String getShortName() {
-    return "CheckEmptyScriptTag";
+    return "CheckValidXmlInScriptBody";
   }
 
   private static class InsertQuotedCharacterQuickFix implements LocalQuickFix {
