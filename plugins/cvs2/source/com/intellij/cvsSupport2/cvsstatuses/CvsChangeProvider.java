@@ -47,7 +47,13 @@ public class CvsChangeProvider implements ChangeProvider {
 
   public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress) {
     for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
-      processEntriesIn(path.getVirtualFile(), dirtyScope, builder, true);
+      final VirtualFile dir = path.getVirtualFile();
+      if (dir != null) {
+        processEntriesIn(dir, dirtyScope, builder, true);
+      }
+      else {
+        processFile(path, builder);
+      }
     }
 
     for (FilePath path : dirtyScope.getDirtyFiles()) {
@@ -153,7 +159,7 @@ public class CvsChangeProvider implements ChangeProvider {
     return Collections.emptyList();
   }
 
-  private void processEntriesIn(VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively) {
+  private void processEntriesIn(@NotNull VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively) {
     if (!scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir))) return;
     final DirectoryContent dirContent = CvsStatusProvider.getDirectoryContent(dir, myVcs.getProject());
 

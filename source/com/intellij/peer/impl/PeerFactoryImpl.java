@@ -9,7 +9,6 @@ import com.intellij.ide.structureView.StructureViewFactory;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.DeleteHandler;
-import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -28,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperPeerFactory;
+import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerFactoryImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
@@ -60,14 +60,13 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.TreeTable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.io.File;
-
-import org.jetbrains.annotations.NotNull;
 
 public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent {
   private ProcessProxyFactory myProxyFactory = null;
@@ -257,7 +256,7 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
         return new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace());
       }
 
-      public FilePath createFilePathOn(final VirtualFile virtualFile) {
+      public FilePath createFilePathOn(@NotNull final VirtualFile virtualFile) {
         return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
           public FilePath compute() {
             return new FilePathImpl(virtualFile);

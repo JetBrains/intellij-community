@@ -54,7 +54,7 @@ public class FilePathImpl implements FilePath {
     }
   }
 
-  public FilePathImpl(VirtualFile virtualFile) {
+  public FilePathImpl(@NotNull VirtualFile virtualFile) {
     this(virtualFile.getParent(), virtualFile.getName());
   }
 
