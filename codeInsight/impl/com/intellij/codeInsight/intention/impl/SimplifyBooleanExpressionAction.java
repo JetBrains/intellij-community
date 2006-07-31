@@ -11,12 +11,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class SimplifyBooleanExpressionAction implements IntentionAction{
+  @NotNull
   public String getText() {
     return getFamilyName();
   }
 
+  @NotNull
   public String getFamilyName() {
     return new SimplifyBooleanExpressionFix(null,null).getFamilyName();
   }

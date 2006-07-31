@@ -29,10 +29,12 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     mySubExpressionValue = subExpressionValue;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("simplify.boolean.expression.text", mySubExpression.getText(), mySubExpressionValue);
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("simplify.boolean.expression.family");
   }
@@ -103,15 +105,14 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
                           children[1],
                           children[children.length - 2],
                           orig);
-          final CodeStyleManager codeStyleManager =
-                  CodeStyleManager.getInstance(orig.getManager());
+          final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(orig.getManager());
           codeStyleManager.reformat(added);
       }
+      orig.delete();
     }
     else {
-      parent.addAfter(statement, orig);
+      orig.replace(statement);
     }
-    orig.delete();
   }
 
   public static void simplifyExpression(PsiExpression expression) throws IncorrectOperationException {
