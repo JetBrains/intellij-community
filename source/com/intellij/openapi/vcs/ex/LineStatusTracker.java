@@ -26,11 +26,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction;
 import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HintListener;
@@ -240,7 +239,7 @@ public class LineStatusTracker implements EditorColorsListener {
 
   public void globalSchemeChange(EditorColorsScheme scheme) {
     EditorColorsManager.getInstance().removeEditorColorsListener(myListener);
-    ((ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(getProject())).resetTracker(this);
+    LineStatusTrackerManager.getInstance(myProject).resetTracker(this);
 
   }
 

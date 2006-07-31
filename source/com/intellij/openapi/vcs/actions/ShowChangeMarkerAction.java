@@ -5,8 +5,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ex.Range;
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 
 /**
  * author: lesya
@@ -54,7 +54,7 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
         if (editor == null) return null;
         Project project = dataContext.getProject();
         if (project == null) return null;
-        return ProjectLevelVcsManagerEx.getInstanceEx(project).getLineStatusTracker(editor.getDocument());
+        return LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
       }
 
       public Editor getEditor(VcsContext dataContext) {

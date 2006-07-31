@@ -14,11 +14,6 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
     return (ProjectLevelVcsManagerEx)project.getComponent(ProjectLevelVcsManager.class);
   }
 
-  public abstract LineStatusTracker getLineStatusTracker(Document document);
-
-  public abstract LineStatusTracker setUpToDateContent(Document document, String lastUpToDateContent);
-  public abstract LineStatusTracker createTrackerForDocument(Document document);
-
   public abstract ContentManager getContentManager();
 
   @NotNull

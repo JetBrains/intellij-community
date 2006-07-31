@@ -41,15 +41,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
-import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.localVcs.LocalVcs;
-import com.intellij.openapi.localVcs.LvcsFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -68,10 +62,10 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler;
 import com.intellij.openapi.vcs.checkin.StandardBeforeCheckinHandler;
-import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.fileView.impl.VirtualAndPsiFileDataProvider;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -81,9 +75,8 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.util.Alarm;
-import com.intellij.util.Icons;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.Icons;
 import com.intellij.util.ui.EditorAdapter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -99,17 +92,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private AbstractVcs[] myCachedVCSs = null;
   private final Project myProject;
 
-  private com.intellij.util.containers.HashMap<Document, LineStatusTracker> myLineStatusTrackers =
-    new com.intellij.util.containers.HashMap<Document, LineStatusTracker>();
-
-  private com.intellij.util.containers.HashMap<Document, Alarm> myLineStatusUpdateAlarms =
-    new com.intellij.util.containers.HashMap<Document, Alarm>();
-
   private boolean myIsDisposed = false;
 
-  private EditorFactoryListener myEditorFactoryListener = new MyEditorFactoryListener();
-  private final MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
-  private final MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
   private ContentManager myContentManager;
   private EditorAdapter myEditorAdapter;
 
@@ -118,12 +102,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NonNls private static final String CONFIRMATIONS_SETTING = "ConfirmationsSetting";
   @NonNls private static final String VALUE_ATTTIBUTE = "value";
   @NonNls private static final String ID_ATTRIBUTE = "id";
-  @NonNls protected static final String IGNORE_CHANGEMARKERS_KEY = "idea.ignore.changemarkers";
   private final List<CheckinHandlerFactory> myRegisteredBeforeCheckinHandlers = new ArrayList<CheckinHandlerFactory>();
   private boolean myHaveEmptyContentRevisions = true;
   private EventDispatcher<VcsListener> myEventDispatcher = EventDispatcher.create(VcsListener.class);
-
-  private final Object TRACKERS_LOCK = new Object();
 
   public ProjectLevelVcsManagerImpl(Project project) {
     this(project, new AbstractVcs[0]);
@@ -221,7 +202,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public void projectOpened() {
     myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
-    myLineStatusTrackers = new com.intellij.util.containers.HashMap<Document, LineStatusTracker>();
 
     registerCheckinHandlerFactory(new CheckinHandlerFactory() {
       public
@@ -239,10 +219,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     });
 
     initialize();
-
-    EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
-    FileStatusManager.getInstance(getProject()).addFileStatusListener(myFileStatusListener);
-    VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
@@ -269,6 +245,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     dispose();
   }
 
+  @NotNull
   public String getComponentName() {
     return "ProjectLevelVcsManager";
   }
@@ -298,18 +275,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       unregisterVcs(allVcs);
     }
     try {
-      final Collection<LineStatusTracker> trackers = myLineStatusTrackers.values();
-      final LineStatusTracker[] lineStatusTrackers = trackers.toArray(new LineStatusTracker[trackers.size()]);
-      for (LineStatusTracker tracker : lineStatusTrackers) {
-        releaseTracker(tracker.getDocument());
-      }
-
-      myLineStatusTrackers = null;
       myContentManager = null;
-
-      EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
-      FileStatusManager.getInstance(getProject()).removeFileStatusListener(myFileStatusListener);
-      VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
 
       ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
       if (toolWindowManager != null && toolWindowManager.getToolWindow(ToolWindowId.VCS) != null) {
@@ -337,231 +303,12 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myProject;
   }
 
-  public void setLineStatusTracker(Document document, LineStatusTracker tracker) {
-    synchronized (TRACKERS_LOCK) {
-      myLineStatusTrackers.put(document, tracker);
-    }
-  }
-
-  public LineStatusTracker getLineStatusTracker(Document document) {
-    if (myLineStatusTrackers == null) return null;
-    return myLineStatusTrackers.get(document);
-  }
-
-
-  public LineStatusTracker setUpToDateContent(Document document, String lastUpToDateContent) {
-    LineStatusTracker result = myLineStatusTrackers.get(document);
-    if (result == null) {
-      result = LineStatusTracker.createOn(document, lastUpToDateContent, getProject());
-      myLineStatusTrackers.put(document, result);
-    }
-    return result;
-  }
-
-  public LineStatusTracker createTrackerForDocument(Document document) {
-    LOG.assertTrue(!myLineStatusTrackers.containsKey(document));
-    LineStatusTracker result = LineStatusTracker.createOn(document, getProject());
-    myLineStatusTrackers.put(document, result);
-    return result;
-  }
-
   public ContentManager getContentManager() {
     return myContentManager;
   }
 
-  private void resetTracker(final VirtualFile virtualFile) {
-    synchronized (TRACKERS_LOCK) {
-      if (System.getProperty(IGNORE_CHANGEMARKERS_KEY) != null) return;
-      final LvcsFile lvcsFile = LocalVcs.getInstance(getProject()).findFile(virtualFile.getPath());
-      if (lvcsFile == null) return;
-
-      final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
-      if (document == null) return;
-
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("resetting tracker for file " + virtualFile.getPath());
-      }
-      final LineStatusTracker tracker = myLineStatusTrackers.get(document);
-      if (tracker != null) {
-        resetTracker(tracker);
-      }
-      else {
-        if (Arrays.asList(FileEditorManager.getInstance(getProject()).getOpenFiles()).contains(virtualFile)) {
-          installTracker(virtualFile, document);
-        }
-      }
-    }
-  }
-
-  private boolean releaseTracker(Document document) {
-    synchronized (TRACKERS_LOCK) {
-      releaseUpdateAlarms(document);
-      if (myLineStatusTrackers == null) return false;
-      if (!myLineStatusTrackers.containsKey(document)) return false;
-      LineStatusTracker tracker = myLineStatusTrackers.remove(document);
-      tracker.release();
-      return true;
-    }
-  }
-
-  private void releaseUpdateAlarms(final Document document) {
-    if (myLineStatusUpdateAlarms.containsKey(document)) {
-      final Alarm alarm = myLineStatusUpdateAlarms.get(document);
-      if (alarm != null) {
-        alarm.cancelAllRequests();
-      }
-      myLineStatusUpdateAlarms.remove(document);
-    }
-  }
-
-  public void resetTracker(final LineStatusTracker tracker) {
-    synchronized (TRACKERS_LOCK) {
-      if (tracker != null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (myIsDisposed) return;
-            if (releaseTracker(tracker.getDocument())) {
-              installTracker(tracker.getVirtualFile(), tracker.getDocument());
-            }
-          }
-        });
-      }
-    }
-  }
-
-  private class MyFileStatusListener implements FileStatusListener {
-    public void fileStatusesChanged() {
-      if (myIsDisposed) return;
-      synchronized (TRACKERS_LOCK) {
-        List<LineStatusTracker> trackers = new ArrayList<LineStatusTracker>(myLineStatusTrackers.values());
-        for (LineStatusTracker tracker : trackers) {
-          resetTracker(tracker);
-        }
-      }
-    }
-
-    public void fileStatusChanged(VirtualFile virtualFile) {
-      resetTracker(virtualFile);
-    }
-  }
-
-  private class MyEditorFactoryListener extends EditorFactoryAdapter {
-    public void editorCreated(EditorFactoryEvent event) {
-      Editor editor = event.getEditor();
-      Document document = editor.getDocument();
-      VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-      installTracker(virtualFile, document);
-    }
-
-    public void editorReleased(EditorFactoryEvent event) {
-      final Editor editor = event.getEditor();
-      final Document doc = editor.getDocument();
-      final Editor[] editors = event.getFactory().getEditors(doc, getProject());
-      if (editors.length == 0) {
-        releaseTracker(doc);
-      }
-    }
-  }
-
-
-  private class MyVirtualFileListener extends VirtualFileAdapter {
-    public void beforeContentsChange(VirtualFileEvent event) {
-      if (event.isFromRefresh()) {
-        resetTracker(event.getFile());
-      }
-    }
-  }
-
-  private void installTracker(final VirtualFile virtualFile, final Document document) {
-    synchronized (TRACKERS_LOCK) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      if (virtualFile == null) return;
-
-      if (myLineStatusTrackers.containsKey(document)) return;
-
-      final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
-      if (status == FileStatus.NOT_CHANGED ||
-          status == FileStatus.ADDED ||
-          status == FileStatus.UNKNOWN) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("installTracker() for file " + virtualFile.getPath() + " failed: status=" + status);
-        }
-        return;
-      }
-
-      AbstractVcs activeVcs = getVcsFor(virtualFile);
-
-      if (activeVcs == null) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("installTracker() for file " + virtualFile.getPath() + " failed: no active VCS");
-        }
-        return;
-      }
-
-      if (!(virtualFile.getFileSystem() instanceof LocalFileSystem)) return;
-
-      final UpToDateRevisionProvider upToDateRevisionProvider = activeVcs.getUpToDateRevisionProvider();
-      if (upToDateRevisionProvider == null) return;
-      if (System.getProperty(IGNORE_CHANGEMARKERS_KEY) != null) return;
-
-      final Alarm alarm;
-
-      if (myLineStatusUpdateAlarms.containsKey(document)) {
-        alarm = myLineStatusUpdateAlarms.get(document);
-        alarm.cancelAllRequests();
-      }
-      else {
-        alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-        myLineStatusUpdateAlarms.put(document, alarm);
-      }
-
-      final LineStatusTracker tracker = createTrackerForDocument(document);
-
-      alarm.addRequest(new Runnable() {
-        public void run() {
-          try {
-            alarm.cancelAllRequests();
-            if (!virtualFile.isValid()) {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("installTracker() for file " + virtualFile.getPath() + " failed: virtual file not valid");
-              }
-              return;
-            }
-            final String lastUpToDateContent = getBaseVersionContent(virtualFile);
-            if (lastUpToDateContent == null) {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("installTracker() for file " + virtualFile.getPath() + " failed: no up to date content");
-              }
-              return;
-            }
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                if (!myProject.isDisposed()) {
-                  synchronized (TRACKERS_LOCK) {
-                    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                      public void run() {
-                        if (LOG.isDebugEnabled()) {
-                          LOG.debug("initializing tracker for file " + virtualFile.getPath());
-                        }
-                        tracker.initialize(lastUpToDateContent);
-                      }
-                    });
-                  }
-                }
-              }
-            });
-          }
-          finally {
-            myLineStatusUpdateAlarms.remove(document);
-          }
-        }
-      }, 10);
-    }
-
-  }
-
   @Nullable
-  private String getBaseVersionContent(final VirtualFile file) {
+  String getBaseVersionContent(final VirtualFile file) {
     final Change change = ChangeListManager.getInstance(myProject).getChange(file);
     if (change != null) {
       final ContentRevision beforeRevision = change.getBeforeRevision();

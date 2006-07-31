@@ -4,8 +4,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ex.Range;
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 
 import java.util.List;
 
@@ -24,9 +24,9 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
   }
 
   public int getLineNumber(int currentNumber) {
-    LineStatusTracker tracker = ProjectLevelVcsManagerEx.getInstanceEx(myProject).getLineStatusTracker(myDocument);
+    LineStatusTracker tracker = LineStatusTrackerManager.getInstance(myProject).getLineStatusTracker(myDocument);
     if (tracker == null) {
-      tracker = ProjectLevelVcsManagerEx.getInstanceEx(myProject).setUpToDateContent(myDocument, myUpToDateContent);
+      tracker = LineStatusTrackerManager.getInstance(myProject).setUpToDateContent(myDocument, myUpToDateContent);
     }
     return calcLineNumber(tracker, currentNumber);
   }

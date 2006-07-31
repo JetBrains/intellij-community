@@ -49,6 +49,11 @@
       <skipForDummyProject/>
     </component>
     <component>
+      <implementation-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManager</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
+    <component>
       <implementation-class>com.intellij.openapi.vcs.update.RestoreUpdateTree</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
