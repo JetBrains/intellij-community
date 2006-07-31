@@ -18,6 +18,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedList;
 
+import org.jetbrains.annotations.Nullable;
+
 abstract class OccurenceNavigatorActionBase extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
@@ -72,6 +74,7 @@ abstract class OccurenceNavigatorActionBase extends AnAction {
 
   protected abstract String getDescription(OccurenceNavigator navigator);
 
+  @Nullable
   protected OccurenceNavigator getNavigator(DataContext dataContext) {
     ContentManager contentManager = ContentManagerUtil.getContentManagerFromContext(dataContext, false);
     if (contentManager != null) {
@@ -81,18 +84,21 @@ abstract class OccurenceNavigatorActionBase extends AnAction {
       return findNavigator(component);
     }
 
-    OccurenceNavigator occurenceNavigator = (OccurenceNavigator)getOccurenceNavigatorFromContext(dataContext);
-    return occurenceNavigator;
+    return (OccurenceNavigator)getOccurenceNavigatorFromContext(dataContext);
   }
 
-  private OccurenceNavigator findNavigator(JComponent parent) {
+  @Nullable
+  private static OccurenceNavigator findNavigator(JComponent parent) {
     LinkedList<JComponent> queue = new LinkedList<JComponent>();
     queue.addLast(parent);
     while (!queue.isEmpty()) {
       JComponent component = queue.removeFirst();
       if (component instanceof OccurenceNavigator) return (OccurenceNavigator)component;
       if (component instanceof JTabbedPane) {
-        queue.addLast((JComponent)((JTabbedPane)component).getSelectedComponent());
+        final JComponent selectedComponent = (JComponent)((JTabbedPane)component).getSelectedComponent();
+        if (selectedComponent != null) {
+          queue.addLast(selectedComponent);
+        }
       }
       else {
         for (int i = 0; i < component.getComponentCount(); i++) {
@@ -105,7 +111,8 @@ abstract class OccurenceNavigatorActionBase extends AnAction {
     return null;
   }
 
-  private Component getOccurenceNavigatorFromContext(DataContext dataContext) {
+  @Nullable
+  private static Component getOccurenceNavigatorFromContext(DataContext dataContext) {
     Window window = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
 
     if (window != null) {

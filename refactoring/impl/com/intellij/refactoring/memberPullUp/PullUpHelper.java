@@ -137,6 +137,7 @@ public class PullUpHelper {
             else {
               referenceList = myTargetSuperClass.getExtendsList();
             }
+            assert referenceList != null;
             referenceList.add(ref);
           }
         }
@@ -296,8 +297,6 @@ public class PullUpHelper {
         psiElement.delete();
       }
     }
-
-    return;
   }
 
   private PsiExpression hasCommonInitializer(PsiExpression commonInitializer, PsiMethod subConstructor, PsiField field, ArrayList<PsiElement> statementsToRemove) {
@@ -493,8 +492,9 @@ public class PullUpHelper {
                 (PsiReferenceExpression) factory.createExpressionFromText
                 ("a." + ((PsiNamedElement) namedElement).getName(),
                         null);
-        newRef = (PsiReferenceExpression) CodeStyleManager.getInstance(myManager.getProject()).reformat(newRef);
-        newRef.getQualifierExpression().replace(factory.createReferenceExpression(aClass));
+        final PsiExpression qualifierExpression = newRef.getQualifierExpression();
+        assert qualifierExpression != null;
+        qualifierExpression.replace(factory.createReferenceExpression(aClass));
         ref.replace(newRef);
       }
     }
