@@ -46,7 +46,7 @@ import java.util.Set;
  * @author Eugene Zhuravlev
  *         Date: Dec 15, 2003
  */
-public class ModulesConfigurable implements NamedConfigurable<Project> {
+public class ModulesConfigurable extends NamedConfigurable<Project> {
 
   private final Project myProject;
 
@@ -76,7 +76,8 @@ public class ModulesConfigurable implements NamedConfigurable<Project> {
     init(model);
   }
 
-  public JComponent createComponent() {
+
+  public JComponent createOptionsPanel() {
     myProjectJdkConfigurable.createComponent(); //reload changed jdks
     return myPanel;
   }
@@ -201,7 +202,7 @@ public class ModulesConfigurable implements NamedConfigurable<Project> {
   }
 
   public String getDisplayName() {
-    return myProject.getName();
+    return ProjectBundle.message("project.root.modules.display.name");
   }
 
   public Icon getIcon() {

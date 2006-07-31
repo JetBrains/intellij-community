@@ -11,7 +11,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.*;
 import com.intellij.profile.Profile;
-import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.Icons;
@@ -38,6 +38,15 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.MasterDetailsComponent");
   protected static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
 
+  protected Runnable TREE_UPDATER = new Runnable() {
+    public void run() {
+      MyNode node = (MyNode)myTree.getSelectionPath().getLastPathComponent();
+      if (node != null) {
+        ((DefaultTreeModel)myTree.getModel()).reload(node);
+        fireItemsChangedExternally();
+      }
+    }
+  };
 
   protected MyNode myRoot = new MyRootNode();
   protected Tree myTree;
@@ -173,7 +182,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     myTree.requestFocus();
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if (myLastEditedConfigurable == null){
+        if (myLastEditedConfigurable == null) {
           TreeUtil.selectFirstNode(myTree);
           return;
         }
@@ -255,9 +264,11 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
           setIcon(icon);
           if (leaf) {
             setLeafIcon(icon);
-          } else if (expanded) {
+          }
+          else if (expanded) {
             setOpenIcon(icon);
-          } else {
+          }
+          else {
             setClosedIcon(icon);
           }
           final Font font = getFont();
@@ -277,19 +288,20 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     myTree.setCellEditor(new DefaultTreeCellEditor(myTree, defaultTreeCellRenderer, new MyNamedConfigurableEditor(new JTextField())));
 
     ArrayList<AnAction> actions = createActions();
-    if (actions != null){
+    if (actions != null) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (AnAction action : actions) {
         group.add(action);
       }
       actions = getAdditionalActions();
-      if (actions != null){
+      if (actions != null) {
         group.addSeparator();
         for (AnAction action : actions) {
           group.add(action);
         }
       }
-      PopupHandler.installFollowingSelectionTreePopup(myTree, group, ActionPlaces.UNKNOWN, ActionManager.getInstance()); //popup should follow the selection
+      PopupHandler.installFollowingSelectionTreePopup(myTree, group, ActionPlaces.UNKNOWN,
+                                                      ActionManager.getInstance()); //popup should follow the selection
     }
   }
 
@@ -320,7 +332,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     };
   }
 
-  protected void addNode(MyNode nodeToAdd, MyNode parent){
+  protected void addNode(MyNode nodeToAdd, MyNode parent) {
     parent.add(nodeToAdd);
     TreeUtil.sort(parent, new Comparator() {
       public int compare(final Object o1, final Object o2) {
@@ -342,9 +354,9 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
   }
 
   @Nullable
-  public Object getSelectedObject(){
+  public Object getSelectedObject() {
     final TreePath selectionPath = myTree.getSelectionPath();
-    if (selectionPath != null){
+    if (selectionPath != null) {
       MyNode node = (MyNode)selectionPath.getLastPathComponent();
       final NamedConfigurable configurable = node.getConfigurable();
       LOG.assertTrue(configurable != null, "already disposed");
@@ -358,7 +370,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     selectNodeInTree(nodeByName);
   }
 
-  public void selectNodeInTree(final Object object){
+  public void selectNodeInTree(final Object object) {
     selectNodeInTree(findNodeByObject(myRoot, object));
   }
 
@@ -380,18 +392,18 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
   }
 
   protected static MyNode findNodeByCondition(final TreeNode root, final Condition<NamedConfigurable> condition) {
-     final MyNode[] nodeToSelect = new MyNode[1];
-     TreeUtil.traverseDepth(root, new TreeUtil.Traverse() {
-       public boolean accept(Object node) {
-         if (condition.value(((MyNode)node).getConfigurable())) {
-           nodeToSelect[0] = (MyNode)node;
-           return false;
-         }
-         return true;
-       }
-     });
-     return nodeToSelect[0];
-   }
+    final MyNode[] nodeToSelect = new MyNode[1];
+    TreeUtil.traverseDepth(root, new TreeUtil.Traverse() {
+      public boolean accept(Object node) {
+        if (condition.value(((MyNode)node).getConfigurable())) {
+          nodeToSelect[0] = (MyNode)node;
+          return false;
+        }
+        return true;
+      }
+    });
+    return nodeToSelect[0];
+  }
 
   protected void updateSelection(NamedConfigurable configurable) {
     myLastEditedConfigurable = configurable.getDisplayName();
@@ -407,52 +419,36 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     myOptionsPanel.repaint();
   }
 
-  protected class MyRenameAction extends AnAction {
-
-    public MyRenameAction() {
-      super(RefactoringBundle.message("rename.title"));
-      registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME).getShortcutSet(), myTree);
-    }
-
-    public void update(AnActionEvent e) {
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(false);
-      final TreePath selectionPath = myTree.getSelectionPath();
-      if (selectionPath != null){
-        final MyNode node = (MyNode)selectionPath.getLastPathComponent();
-        presentation.setEnabled(node.isNameEditable());
+  public boolean canApply(Set<MyNode> rootNodes, String prefix, String title) {
+    String alreadyExist = null;
+    for (MyNode rootNode : rootNodes) {
+      alreadyExist = alreadyExist(rootNode);
+      if (alreadyExist != null){
+        break;
       }
     }
-
-    public void actionPerformed(AnActionEvent e) {
-      MyNode node = (MyNode)myTree.getSelectionPath().getLastPathComponent();
-      final NamedConfigurable namedConfigurable = node.getConfigurable();
-      final String type = getRenameTitleSuffix();
-      final String newName = Messages.showInputDialog(myTree,
-                                                      RefactoringBundle.message("copy.files.new.name.label"),
-                                                      RefactoringBundle.message("rename.title") + (type != null ? " " + type : ""),
-                                                      Messages.getQuestionIcon(),
-                                                      namedConfigurable.getDisplayName(),
-                                                      new InputValidator() {
-                                                        public boolean checkInput(String inputString) {
-                                                          return inputString != null && inputString.trim().length() > 0;
-                                                        }
-
-                                                        public boolean canClose(String inputString) {
-                                                          return checkInput(inputString);
-                                                        }
-                                                      });
-      if (newName != null){
-        namedConfigurable.setDisplayName(newName);
-        ((DefaultTreeModel)myTree.getModel()).reload(node);
-        fireItemsChangedExternally();
+    if (alreadyExist != null){
+      final Object o = getSelectedObject();
+      if (o instanceof NamedScope && !Comparing.strEqual(alreadyExist, ((NamedScope)o).getName())){
+        selectNodeInTree(alreadyExist);
       }
+      Messages.showErrorDialog(myWholePanel, CommonBundle.message("smth.already.exist.error.message", prefix, alreadyExist), title);
+      return false;
     }
+    return true;
+  }
 
-    @Nullable
-    protected String getRenameTitleSuffix(){
-      return null;
+  private static String alreadyExist(MyNode root) {
+    final Set<String> names = new HashSet<String>();
+    for (int i = 0; i < root.getChildCount(); i++){
+      final NamedConfigurable scopeConfigurable = ((MyNode)root.getChildAt(i)).getConfigurable();
+      final String name = scopeConfigurable.getDisplayName();
+      if (names.contains(name)) {
+        return name;
+      }
+      names.add(name);
     }
+    return null;
   }
 
   protected class MyDeleteAction extends AnAction {
@@ -523,25 +519,20 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath == null) return false;
       MyNode node = (MyNode)selectionPath.getLastPathComponent();
-      return node.isNameEditable();
+      return node.getConfigurable().isNameEditable();
     }
   }
 
 
   protected static class MyNode extends DefaultMutableTreeNode {
-    private boolean myEditName;
     private boolean myDisplayInBold;
 
-    public MyNode(final NamedConfigurable userObject, boolean showName) {
+    public MyNode(NamedConfigurable userObject) {
       super(userObject);
-      myEditName = showName;
-      myDisplayInBold = !myEditName;
     }
 
-
-    public MyNode(NamedConfigurable userObject, boolean editName, boolean displayInBold) {
+    public MyNode(NamedConfigurable userObject, boolean displayInBold) {
       super(userObject);
-      myEditName = editName;
       myDisplayInBold = displayInBold;
     }
 
@@ -564,11 +555,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
       return (NamedConfigurable)getUserObject();
     }
 
-    public boolean isNameEditable() {
-      return myEditName;
-    }
-
-    public boolean isDisplayInBold(){
+    public boolean isDisplayInBold() {
       return myDisplayInBold;
     }
   }
@@ -576,7 +563,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
   @SuppressWarnings({"ConstantConditions"})
   private static class MyRootNode extends MyNode {
     public MyRootNode() {
-      super(new NamedConfigurable() {
+      super(new NamedConfigurable(false, null) {
         public void setDisplayName(String name) {
         }
 
@@ -602,7 +589,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
           return null;
         }
 
-        public JComponent createComponent() {
+        public JComponent createOptionsPanel() {
           return null;
         }
 

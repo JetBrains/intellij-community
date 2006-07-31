@@ -21,7 +21,8 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.DefaultApplicationProfileManager;
@@ -30,6 +31,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -43,7 +45,6 @@ import java.util.Collection;
  */
 public class InspectionProfileManager extends DefaultApplicationProfileManager implements ExportableApplicationComponent {
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
-  @NonNls private static final String ROOT_ELEMENT_TAG = "inspections";
   @NonNls private static final String BASE_PROFILE_ATTR = "base_profile";
   private InspectionToolRegistrar myRegistrar;
 
@@ -75,13 +76,13 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
     }
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileManager");
 
-
+  @NotNull
   public File[] getExportFiles() {
     return new File[]{getProfileDirectory()};
   }
 
+  @NotNull
   public String getPresentableName() {
     return InspectionsBundle.message("inspection.profiles.presentable.name");
   }
@@ -156,9 +157,17 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
     return getRootElementAttribute(file, BASE_PROFILE_ATTR);
   }
 
+  @NotNull
   public String getComponentName() {
     return "InspectionProfileManager";
   }
 
 
+  public void updateProfile(Profile profile) {
+    super.updateProfile(profile);
+    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    for (Project project : projects) {
+      InspectionProjectProfileManager.getInstance(project).initProfileWrapper(profile);
+    }
+  }
 }

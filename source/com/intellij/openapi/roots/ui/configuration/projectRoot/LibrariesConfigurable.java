@@ -22,7 +22,7 @@ import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
-public class LibrariesConfigurable implements NamedConfigurable <String> {
+public class LibrariesConfigurable extends NamedConfigurable <String> {
   private static final Icon ICON = IconLoader.getIcon("/modules/libraries.png");
 
   private String myLibraryTable;
@@ -49,7 +49,8 @@ public class LibrariesConfigurable implements NamedConfigurable <String> {
     return false;
   }
 
-  public final JComponent createComponent() {
+
+  public JComponent createOptionsPanel() {
     final int choice = getChoice();
     myPanel.setText(choice == 1
                     ? ProjectBundle.message("libraries.node.text.ide")

@@ -19,11 +19,14 @@ import javax.swing.*;
  * User: anna
  * Date: 05-Jun-2006
  */
-public class JdkConfigurable implements NamedConfigurable<ProjectJdk> {
+public class JdkConfigurable extends NamedConfigurable<ProjectJdk> {
   private ProjectJdkImpl myProjectJdk;
   private SdkEditor mySdkEditor;
 
-  public JdkConfigurable(final ProjectJdkImpl projectJdk, ProjectJdksModel configurable) {
+  public JdkConfigurable(final ProjectJdkImpl projectJdk,
+                         final ProjectJdksModel configurable,
+                         final Runnable updateTree) {
+    super(true, updateTree);
     myProjectJdk = projectJdk;
     mySdkEditor = new SdkEditor(configurable);
     mySdkEditor.setSdk(myProjectJdk);
@@ -55,7 +58,8 @@ public class JdkConfigurable implements NamedConfigurable<ProjectJdk> {
     return null;
   }
 
-  public JComponent createComponent() {
+
+  public JComponent createOptionsPanel() {
     return mySdkEditor.createComponent();
   }
 

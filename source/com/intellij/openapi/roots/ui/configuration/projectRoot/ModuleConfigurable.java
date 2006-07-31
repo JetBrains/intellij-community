@@ -4,7 +4,6 @@
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
@@ -12,7 +11,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
@@ -24,31 +22,33 @@ import javax.swing.*;
  * User: anna
  * Date: 04-Jun-2006
  */
-public class ModuleConfigurable implements NamedConfigurable<Module> {
+public class ModuleConfigurable extends NamedConfigurable<Module> {
   private Module myModule;
   private ModulesConfigurator myConfigurator;
   private String myModuleName;
 
-  public ModuleConfigurable(ModulesConfigurator modulesConfigurator, Module module) {
+  public ModuleConfigurable(ModulesConfigurator modulesConfigurator,
+                            Module module,
+                            final Runnable updateTree) {
+    super(true, updateTree);
     myModule = module;
     myModuleName = myModule.getName();
     myConfigurator = modulesConfigurator;
   }
 
-  public void setDisplayName(final String name) {
+  public void setDisplayName(String name) {
+    name = name.trim();
     final ModifiableModuleModel modifiableModuleModel = myConfigurator.getModuleModel();
     if (Comparing.strEqual(name, myModuleName)) return; //nothing changed
     try {
       modifiableModuleModel.renameModule(myModule, name);
     }
     catch (ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
-      Messages.showErrorDialog(getModuleEditor().getPanel(), IdeBundle.message("error.module.already.exists", name),
-                               IdeBundle.message("title.rename.module"));
-      return;
+      //do nothing
     }
     myConfigurator.moduleRenamed(myModuleName, name);
     myModuleName = name;
-    myConfigurator.setModified(true);
+    myConfigurator.setModified(!Comparing.strEqual(myModuleName, myModule.getName()));
   }
 
   public Module getEditableObject() {
@@ -74,7 +74,8 @@ public class ModuleConfigurable implements NamedConfigurable<Module> {
     return moduleEditor != null ? moduleEditor.getHelpTopic() : null;
   }
 
-  public JComponent createComponent() {
+
+  public JComponent createOptionsPanel() {
     return getModuleEditor().getPanel();
   }
 

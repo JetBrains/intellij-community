@@ -21,13 +21,18 @@ import javax.swing.*;
  * User: anna
  * Date: 01-Jul-2006
  */
-public class ScopeConfigurable implements NamedConfigurable<NamedScope> {
+public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
   private Icon myIcon;
   private NamedScope myScope;
   private ScopeEditorPanel myPanel;
   private String myPackageSet;
-
-  public ScopeConfigurable(final NamedScope scope, final Project project, final NamedScopesHolder holder, final Icon icon) {
+  
+  public ScopeConfigurable(final NamedScope scope,
+                           final Project project,
+                           final NamedScopesHolder holder,
+                           final Icon icon,
+                           final Runnable updateTree) {
+    super(true, updateTree);
     myScope = scope;
     final PackageSet packageSet = scope.getValue();
     myPackageSet = packageSet != null ? packageSet.getText() : null;
@@ -36,6 +41,9 @@ public class ScopeConfigurable implements NamedConfigurable<NamedScope> {
   }
 
   public void setDisplayName(final String name) {
+    if (Comparing.strEqual(myScope.getName(), name)){
+      return;
+    }
     final PackageSet packageSet = myScope.getValue();
     myScope = new NamedScope(name, packageSet != null ? packageSet.createCopy() : null);
   }
@@ -62,7 +70,7 @@ public class ScopeConfigurable implements NamedConfigurable<NamedScope> {
     return null;
   }
 
-  public JComponent createComponent() {
+  public JComponent createOptionsPanel() {
     return myPanel.getPanel();
   }
 

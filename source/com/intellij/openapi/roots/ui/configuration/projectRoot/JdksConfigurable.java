@@ -18,7 +18,7 @@ import javax.swing.*;
  * User: anna
  * Date: 05-Jun-2006
  */
-public class JdksConfigurable implements NamedConfigurable<ProjectJdksModel> {
+public class JdksConfigurable extends NamedConfigurable<ProjectJdksModel> {
   private ProjectJdksModel myJdkTableConfigurable;
   public static final String JDKS = ProjectBundle.message("jdks.node.display.name");
   public static final Icon ICON = IconLoader.getIcon("/modules/jdks.png");
@@ -54,7 +54,8 @@ public class JdksConfigurable implements NamedConfigurable<ProjectJdksModel> {
     return null;
   }
 
-  public JComponent createComponent() {
+
+  public JComponent createOptionsPanel() {
     return new PanelWithText(ProjectBundle.message("project.roots.jdks.node.text"));
   }
 

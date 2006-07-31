@@ -213,7 +213,17 @@ public class ClasspathPanel extends JPanel {
     if (entry instanceof ModuleOrderEntry){
       toSelect = ((ModuleOrderEntry)entry).getModule();
     } else if (entry instanceof LibraryOrderEntry){
-      toSelect = ((LibraryOrderEntry)entry).getLibrary();
+      final Library library = ((LibraryOrderEntry)entry).getLibrary();
+      if (library != null){
+        if (library.getTable() != null){
+          toSelect = ((LibraryImpl)library).getSource();
+          if (toSelect == null){
+            toSelect = library;
+          }
+        } else {
+          toSelect = library;
+        }
+      }
     } else if (entry instanceof JdkOrderEntry){
       toSelect = ((JdkOrderEntry)entry).getJdk();
     }
@@ -608,11 +618,11 @@ public class ClasspathPanel extends JPanel {
     }
 
     public final boolean isExported() {
-      return isExportable()? ((ExportableOrderEntry)myEntry).isExported() : false;
+      return isExportable() && myEntry != null && ((ExportableOrderEntry)myEntry).isExported();
     }
 
     public final void setExported(boolean isExported) {
-      if (isExportable()) {
+      if (isExportable() && myEntry != null) {
         ((ExportableOrderEntry)myEntry).setExported(isExported);
       }
     }
@@ -798,7 +808,7 @@ public class ClasspathPanel extends JPanel {
     public boolean isCellEditable(int row, int column) {
       if (column == EXPORT_COLUMN) {
         final TableItem item = myItems.get(row);
-        return item.isExportable();
+        return item != null && item.isExportable();
       }
       return false;
     }

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ModuleGroupConfigurable implements NamedConfigurable<ModuleGroup> {
+public class ModuleGroupConfigurable extends NamedConfigurable<ModuleGroup> {
   private ModuleGroup myModuleGroup;
 
   public ModuleGroupConfigurable(final ModuleGroup moduleGroup) {
@@ -54,7 +54,8 @@ public class ModuleGroupConfigurable implements NamedConfigurable<ModuleGroup> {
     return null;
   }
 
-  public JComponent createComponent() {
+
+  public JComponent createOptionsPanel() {
     return new PanelWithText(ProjectBundle.message("project.roots.module.groups.text"));
   }
 

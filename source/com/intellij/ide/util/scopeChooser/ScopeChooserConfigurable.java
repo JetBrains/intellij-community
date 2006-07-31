@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
@@ -46,6 +47,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
@@ -97,12 +99,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     return result;
   }
 
-  protected ArrayList<AnAction> getAdditionalActions() {
-    final ArrayList<AnAction> result = new ArrayList<AnAction>();
-    result.add(new MyRenameAction());
-    return result;
-  }
-
   public void disposeUIResources() {
     super.disposeUIResources();
     myLocalScopesNode = null;
@@ -117,11 +113,15 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
 
   public void apply() throws ConfigurationException {
-    super.apply();
-    processScopes(myLocalScopesManager, myLocalScopesNode);
-    processScopes(mySharedScopesManager, mySharedScopesNode);
+    final Set<MyNode> roots = new HashSet<MyNode>();
+    roots.add(myLocalScopesNode);
+    roots.add(mySharedScopesNode);
+    if (canApply(roots, ProjectBundle.message("rename.message.prefix.scope"), ProjectBundle.message("rename.scope.title"))){
+      super.apply();
+      processScopes(myLocalScopesManager, myLocalScopesNode);
+      processScopes(mySharedScopesManager, mySharedScopesNode);
+    }
   }
-
 
   public boolean isModified() {
     if (super.isModified()) return true;
@@ -138,6 +138,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       final NamedScope namedScope = (NamedScope)node.getConfigurable().getEditableObject();
       final NamedScope scope = scopes[i];
       if (scope == null) return true;
+      if (!Comparing.strEqual(scope.getName(), namedScope.getName())) return true;
       final PackageSet set = scope.getValue();
       final PackageSet packageSet = namedScope.getValue();
       if (packageSet == null && set != null) return true;
@@ -160,11 +161,11 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   private void reloadTree() {
     myRoot.removeAllChildren();
 
-    myLocalScopesNode = new MyNode(new ScopesGroupConfigurable(myLocalScopesManager, LOCAL_SCOPES), false);
+    myLocalScopesNode = new MyNode(new ScopesGroupConfigurable(myLocalScopesManager, LOCAL_SCOPES), true);
     loadScopes(myLocalScopesManager, myLocalScopesNode, LOCAL_SCOPES);
     myRoot.add(myLocalScopesNode);
 
-    mySharedScopesNode = new MyNode(new ScopesGroupConfigurable(mySharedScopesManager, SHARED_SCOPES), false);
+    mySharedScopesNode = new MyNode(new ScopesGroupConfigurable(mySharedScopesManager, SHARED_SCOPES), true);
     loadScopes(mySharedScopesManager, mySharedScopesNode, SHARED_SCOPES);
 
     myRoot.add(mySharedScopesNode);
@@ -174,7 +175,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     final NamedScope[] scopes = holder.getScopes();
     for (NamedScope scope : scopes) {
       if (isPredefinedScope(scope)) continue;
-      localScopesNode.add(new MyNode(new ScopeConfigurable(scope, myProject, myLocalScopesManager, icon), true));
+      localScopesNode.add(new MyNode(new ScopeConfigurable(scope, myProject, myLocalScopesManager, icon, TREE_UPDATER)));
     }
   }
 
@@ -282,7 +283,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void addNewScope(final NamedScope scope, final NamedScopesHolder holder, final Icon icon, final MyNode root) {
-    final MyNode nodeToAdd = new MyNode(new ScopeConfigurable(scope, myProject, holder, icon), true);
+    final MyNode nodeToAdd = new MyNode(new ScopeConfigurable(scope, myProject, holder, icon, TREE_UPDATER));
     root.add(nodeToAdd);
     ((DefaultTreeModel)myTree.getModel()).reload(root);
     selectNodeInTree(nodeToAdd);

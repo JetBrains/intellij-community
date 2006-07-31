@@ -176,7 +176,11 @@ public class ProjectJdksModel implements NotifiableSdkModel {
           sdkAdditionalData.checkValid(this);
         }
         catch (ConfigurationException e) {
-          myProjectRootConfigurable.selectNodeInTree(currName);
+          final ProjectJdk projectJdk = myProjectRootConfigurable.getSelectedJdk();
+          if (projectJdk == null ||
+              !Comparing.strEqual(projectJdk.getName(), currName)){ //do not leave current item with current name
+            myProjectRootConfigurable.selectNodeInTree(currName);
+          }
           throw e;
         }
       }

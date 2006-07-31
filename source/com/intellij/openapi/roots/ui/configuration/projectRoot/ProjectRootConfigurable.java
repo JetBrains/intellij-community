@@ -130,20 +130,6 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   protected ArrayList<AnAction> getAdditionalActions() {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
-    result.add(new MyRenameAction() {
-      @Nullable
-      protected String getRenameTitleSuffix() {
-        final Object selectedObject = getSelectedObject();
-        if (selectedObject instanceof Module){
-          return ProjectBundle.message("add.new.module.text");
-        } else if (selectedObject instanceof Library){
-          return ProjectBundle.message("add.new.library.text");
-        } else if (selectedObject instanceof ProjectJdk){
-          return ProjectBundle.message("add.new.jdk.text");
-        }
-        return null;
-      }
-    });
     final AnAction findUsages = new AnAction(ProjectBundle.message("find.usages.action.text")) {
       public void update(AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
@@ -197,32 +183,32 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
                                      final LibraryTableModifiableModelProvider modelProvider) {
     provider = new LibrariesModifiableModel(table.getModifiableModel());
     LibrariesConfigurable librariesConfigurable = new LibrariesConfigurable(table.getTableLevel(), provider);
-    MyNode node = new MyNode(librariesConfigurable, false);
+    MyNode node = new MyNode(librariesConfigurable, true);
     final Library[] libraries = provider.getLibraries();
     for (Library library : libraries) {
-      addNode(new MyNode(new LibraryConfigurable(modelProvider, library, myProject), true), node);
+      addNode(new MyNode(new LibraryConfigurable(modelProvider, library, myProject, TREE_UPDATER)), node);
     }
     myRoot.add(node);
     return node;
   }
 
   private void createProjectJdks() {
-    myJdksNode = new MyNode(new JdksConfigurable(myJdksTreeModel), false);
+    myJdksNode = new MyNode(new JdksConfigurable(myJdksTreeModel), true);
     final TreeMap<ProjectJdk, ProjectJdk> sdks = myJdksTreeModel.getProjectJdks();
     for (ProjectJdk sdk : sdks.keySet()) {
-      final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myJdksTreeModel);
-      addNode(new MyNode(configurable, true), myJdksNode);
+      final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myJdksTreeModel, TREE_UPDATER);
+      addNode(new MyNode(configurable), myJdksNode);
     }
     myRoot.add(myJdksNode);
   }
 
   private void createProjectNodes() {
-    myProjectNode = new MyNode(myModulesConfigurable, false);
+    myProjectNode = new MyNode(myModulesConfigurable, true);
     final Map<ModuleGroup, MyNode> moduleGroup2NodeMap = new HashMap<ModuleGroup, MyNode>();
     final Module[] modules = myModuleManager.getModules();
     for (final Module module : modules) {
-      ModuleConfigurable configurable = new ModuleConfigurable(myModulesConfigurator, module);
-      final MyNode moduleNode = new MyNode(configurable, true);
+      ModuleConfigurable configurable = new ModuleConfigurable(myModulesConfigurator, module, TREE_UPDATER);
+      final MyNode moduleNode = new MyNode(configurable);
       createModuleLibraries(module, moduleNode);
       final String[] groupPath = myModulesConfigurator.getModuleModel().getModuleGroupPath(module);
       if (groupPath == null || groupPath.length == 0){
@@ -238,7 +224,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
                                 new Function<ModuleGroup, MyNode>() {
                                   public MyNode fun(final ModuleGroup moduleGroup) {
                                     final NamedConfigurable moduleGroupConfigurable = new ModuleGroupConfigurable(moduleGroup);
-                                    return new MyNode(moduleGroupConfigurable, false, true);
+                                    return new MyNode(moduleGroupConfigurable, true);
                                   }
                                 });
         addNode(moduleNode, moduleGroupNode);
@@ -249,10 +235,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myProjectLibrariesProvider = new LibrariesModifiableModel(table.getModifiableModel());
     final LibrariesConfigurable librariesConfigurable = new LibrariesConfigurable(table.getTableLevel(), myProjectLibrariesProvider);
 
-    myProjectLibrariesNode = new MyNode(librariesConfigurable, false);
+    myProjectLibrariesNode = new MyNode(librariesConfigurable, true);
     final Library[] libraries = myProjectLibrariesProvider.getLibraries();
     for (Library library1 : libraries) {
-      addNode(new MyNode(new LibraryConfigurable(getProjectLibrariesProvider(), library1, myProject), true), myProjectLibrariesNode);
+      addNode(new MyNode(new LibraryConfigurable(getProjectLibrariesProvider(), library1, myProject, TREE_UPDATER)), myProjectLibrariesNode);
     }
     myProjectNode.add(myProjectLibrariesNode);
 
@@ -285,7 +271,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
           }, new Function<ModuleGroup, MyNode>() {
             public MyNode fun(final ModuleGroup moduleGroup) {
               final NamedConfigurable moduleGroupConfigurable = new ModuleGroupConfigurable(moduleGroup);
-              return new MyNode(moduleGroupConfigurable, false, true);
+              return new MyNode(moduleGroupConfigurable, true);
             }
           });
         addNode(moduleNode, moduleGroupNode);
@@ -341,8 +327,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
           final Library library = orderEntry.getLibrary();
           if (library.getName() == null && orderEntry.getPresentableName() == null) continue;
           final LibraryConfigurable libraryConfigurable =
-            new LibraryConfigurable(libraryTableModelProvider, library, trancateModuleLibraryName(orderEntry), myProject);
-          addNode(new MyNode(libraryConfigurable, false, false), moduleNode);
+            new LibraryConfigurable(libraryTableModelProvider, library, trancateModuleLibraryName(orderEntry), myProject, TREE_UPDATER);
+          addNode(new MyNode(libraryConfigurable), moduleNode);
         }
       }
     }
@@ -407,6 +393,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
 
   public void apply() throws ConfigurationException {
+    final Set<MyNode> roots = new HashSet<MyNode>();
+    roots.add(myProjectNode);
+    if (!canApply(roots, ProjectBundle.message("rename.message.prefix.module"), ProjectBundle.message("rename.module.title"))) return;
     boolean modifiedJdks = false;
     for (int i = 0; i < myJdksNode.getChildCount(); i++) {
       final NamedConfigurable configurable = ((MyNode)myJdksNode.getChildAt(i)).getConfigurable();
@@ -550,7 +539,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   public void createNode(final NamedConfigurable<ProjectJdk> configurable, final MyNode parentNode) {
-    final MyNode node = new MyNode(configurable, true);
+    final MyNode node = new MyNode(configurable);
     addNode(node, parentNode);
     selectNodeInTree(node);
   }
@@ -560,27 +549,27 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     if (table != null){
       final String level = table.getTableLevel();
       if (level == LibraryTablesRegistrar.APPLICATION_LEVEL) {
-        final LibraryConfigurable configurable = new LibraryConfigurable(getGlobalLibrariesProvider(), library, myProject);
-        final MyNode node = new MyNode(configurable, true);
+        final LibraryConfigurable configurable = new LibraryConfigurable(getGlobalLibrariesProvider(), library, myProject, TREE_UPDATER);
+        final MyNode node = new MyNode(configurable);
         addNode(node, myGlobalLibrariesNode);
         return node;
       }
       else if (level == LibraryTablesRegistrar.PROJECT_LEVEL) {
-        final LibraryConfigurable configurable = new LibraryConfigurable(getProjectLibrariesProvider(), library, myProject);
-        final MyNode node = new MyNode(configurable, true);
+        final LibraryConfigurable configurable = new LibraryConfigurable(getProjectLibrariesProvider(), library, myProject, TREE_UPDATER);
+        final MyNode node = new MyNode(configurable);
         addNode(node, myProjectLibrariesNode);
         return node;
       }
       else {
-        final LibraryConfigurable configurable = new LibraryConfigurable(getApplicationServerLibrariesProvider(), library, myProject);
-        final MyNode node = new MyNode(configurable, true);
+        final LibraryConfigurable configurable = new LibraryConfigurable(getApplicationServerLibrariesProvider(), library, myProject, TREE_UPDATER);
+        final MyNode node = new MyNode(configurable);
         addNode(node, myApplicationServerLibrariesNode);
         return node;
       }
     } else { //module library
       Module module = (Module)getSelectedObject();
-      final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(myModulesConfigurator.getModuleEditor(module).getModifiableRootModelProxy()), library, presentableName, myProject);
-      final MyNode node = new MyNode(configurable, true);
+      final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(myModulesConfigurator.getModuleEditor(module).getModifiableRootModelProxy()), library, presentableName, myProject, TREE_UPDATER);
+      final MyNode node = new MyNode(configurable);
       addNode(node, (MyNode)myTree.getSelectionPath().getLastPathComponent());
       return node;
     }
@@ -690,8 +679,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   public DefaultMutableTreeNode createLibraryNode(final LibraryOrderEntry libraryOrderEntry, final ModifiableRootModel model) {
-    final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(model), libraryOrderEntry.getLibrary(), trancateModuleLibraryName(libraryOrderEntry), myProject);
-    final MyNode node = new MyNode(configurable, true);
+    final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(model), libraryOrderEntry.getLibrary(), trancateModuleLibraryName(libraryOrderEntry), myProject, TREE_UPDATER);
+    final MyNode node = new MyNode(configurable);
     addNode(node, findNodeByObject(myProjectNode, libraryOrderEntry.getOwnerModule()));
     return node;
   }
@@ -745,7 +734,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   public boolean addJdkNode(final ProjectJdk jdk) {
     if (!myDisposed) {
-      addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel), true), myJdksNode);
+      addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel, TREE_UPDATER)), myJdksNode);
       return true;
     }
     return false;
@@ -896,7 +885,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     };
   }
 
-  private class MyAddAction extends AnAction {
+  private class MyAddAction extends AnAction{
 
     public MyAddAction() {
       super(CommonBundle.message("button.add"), CommonBundle.message("button.add"), Icons.ADD_ICON);
@@ -931,7 +920,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
             public void run() {
               final Module module = myModulesConfigurator.addModule(myTree);
               if (module != null) {
-                final MyNode node = new MyNode(new ModuleConfigurable(myModulesConfigurator, module), true);
+                final MyNode node = new MyNode(new ModuleConfigurable(myModulesConfigurator, module, TREE_UPDATER));
                 addNode(node, myProjectNode);
                 selectNodeInTree(node);
               }
