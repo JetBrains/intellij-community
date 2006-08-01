@@ -8,6 +8,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiReferenceFactory;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
@@ -22,7 +23,7 @@ import java.lang.reflect.Type;
 /**
  * @author peter
  */
-public abstract class DomManager implements ProjectComponent {
+public abstract class DomManager implements ProjectComponent, ModificationTracker {
 
   public static DomManager getDomManager(Project project) {
     return project.getComponent(DomManager.class);

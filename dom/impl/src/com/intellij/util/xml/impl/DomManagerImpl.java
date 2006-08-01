@@ -75,6 +75,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   };
 
   private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
+  private long myModificationCount;
 
 
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
@@ -203,6 +204,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   protected final void fireEvent(DomEvent event) {
+    myModificationCount++;
     event.accept(MODIFICATION_TRACKER);
     myListeners.getMulticaster().eventOccured(event);
   }
@@ -548,6 +550,10 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
 
   public final VisitorDescription getVisitorDescription(Class<? extends DomElementVisitor> aClass) {
     return myVisitorDescriptions.get(aClass);
+  }
+
+  public long getModificationCount() {
+    return myModificationCount;
   }
 
   private class MyElementFilter implements ElementFilter {
