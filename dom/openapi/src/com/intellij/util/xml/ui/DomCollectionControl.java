@@ -37,7 +37,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
   private final EventDispatcher<CommitListener> myDispatcher = EventDispatcher.create(CommitListener.class);
   private DomTableView myCollectionPanel;
 
-  private final List<T> myData = new ArrayList<T>();
+  private final List<T> myCollectionElements = new ArrayList<T>();
   private final DomElement myParentDomElement;
   private final DomCollectionChildDescription myChildDescription;
   private ColumnInfo<T, ?>[] myColumnInfos;
@@ -147,14 +147,14 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
 
     final DomElement domElement = element.getParentOfType(aClass, false);
 
-    return domElement != null && myData.contains(domElement);
+    return domElement != null && myCollectionElements.contains(domElement);
   }
 
   public void navigate(DomElement element) {
     final Class<DomElement> aClass = (Class<DomElement>)DomReflectionUtil.getRawType(myChildDescription.getType());
     final DomElement domElement = element.getParentOfType(aClass, false);
 
-    int index = myData.indexOf(domElement);
+    int index = myCollectionElements.indexOf(domElement);
     if (index < 0) index = 0;
 
     myCollectionPanel.getTable().setRowSelectionInterval(index, index);
@@ -202,7 +202,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
   }
 
   protected final void doEdit() {
-    doEdit(myData.get(myCollectionPanel.getTable().getSelectedRow()));
+    doEdit(myCollectionElements.get(myCollectionPanel.getTable().getSelectedRow()));
   }
 
   protected void doEdit(final T t) {
@@ -231,14 +231,14 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
         if (selected == null || selected.length == 0) return;
         final List<T> selectedElements = new ArrayList<T>(selected.length);
         for (final int i : selected) {
-          selectedElements.add(myData.get(i));
+          selectedElements.add(myCollectionElements.get(i));
         }
 
         doRemove(selectedElements);
         reset();
         int selection = selected[0];
-        if (selection >= myData.size()) {
-          selection = myData.size() - 1;
+        if (selection >= myCollectionElements.size()) {
+          selection = myCollectionElements.size() - 1;
         }
         if (selection >= 0) {
           myCollectionPanel.getTable().setRowSelectionInterval(selection, selection);
@@ -293,28 +293,25 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
     return myChildDescription;
   }
 
-  public final List<? extends T> getCollectionElements() {
-    return (List<? extends T>)myChildDescription.getValues(myParentDomElement);
-  }
-
   public final DomElement getDomElement() {
     return myParentDomElement;
   }
 
   public final void reset() {
-    final List<T> newData = getData();
-    if (!myData.equals(newData)) {
-      myData.clear();
-      myData.addAll(newData);
+    final List<T> newData = getCollectionElements();
+    if (!myCollectionElements.equals(newData)) {
+      myCollectionElements.clear();
+      myCollectionElements.addAll(newData);
       if (myCollectionPanel != null) {
-        myCollectionPanel.setItems(myData);
+        myCollectionPanel.setItems(myCollectionElements);
       }
     }
     myCollectionPanel.setColumnInfos(createColumnInfos(myParentDomElement));
+    myCollectionPanel.reset();
     validate();
   }
 
-  public List<T> getData() {
+  public List<T> getCollectionElements() {
     return (List<T>)myChildDescription.getValues(myParentDomElement);
   }
 
@@ -388,7 +385,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
 
     protected final void afterAddition(final T newElement) {
       reset();
-      afterAddition(myCollectionPanel.getTable(), myData.size() - 1);
+      afterAddition(myCollectionPanel.getTable(), myCollectionElements.size() - 1);
     }
   }
 

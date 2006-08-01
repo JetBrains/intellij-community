@@ -45,7 +45,7 @@ import java.util.EventListener;
 public class DomTableView extends JPanel implements DataProvider{
   @NonNls private static final String TREE = "Tree";
   @NonNls private static final String EMPTY_PANE = "EmptyPane";
-  private final ListTableModel myTableModel = new MyListTableModel();
+  private final MyListTableModel myTableModel = new MyListTableModel();
   private final TableView myTable = new TableView() {
     public boolean editCellAt(final int row, final int column, final EventObject e) {
       final boolean b = super.editCellAt(row, column, e);
@@ -286,9 +286,31 @@ public class DomTableView extends JPanel implements DataProvider{
     myDispatcher.addListener(listener);
   }
 
+  public final void reset() {
+    myTableModel.cacheValues();
+  }
+
   private class MyListTableModel extends ListTableModel {
+    private Object[][] myTableData;
+
     public MyListTableModel() {
       super(ColumnInfo.EMPTY_ARRAY);
+    }
+
+    public Object getValueAt(final int rowIndex, final int columnIndex) {
+      return myTableData[rowIndex][columnIndex];
+    }
+
+    void cacheValues() {
+      final int rowCount = getRowCount();
+      final int columnCount = getColumnCount();
+      final Object[][] objects = new Object[rowCount][columnCount];
+      for (int i = 0; i < rowCount; i++) {
+        for (int j = 0; j < columnCount; j++) {
+          objects[i][j] = super.getValueAt(i, j);
+        }
+      }
+      myTableData = objects;
     }
 
     public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
