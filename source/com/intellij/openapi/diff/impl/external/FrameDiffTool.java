@@ -1,6 +1,7 @@
 package com.intellij.openapi.diff.impl.external;
 
 import com.intellij.openapi.diff.*;
+import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.FrameWrapper;
@@ -8,6 +9,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,34 +44,48 @@ class FrameDiffTool implements DiffTool {
     }
   }
 
-  private DiffPanelImpl createDiffPanelIfShouldShow(DiffRequest request, Window window) {
+  @Nullable
+  private static DiffPanelImpl createDiffPanelIfShouldShow(DiffRequest request, Window window) {
     DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManagerImpl.createDiffPanel(request, window);
-    if (checkNoDifferenceAndNotify(diffPanel, request)) {
+    if (checkNoDifferenceAndNotify(diffPanel, request, window)) {
       diffPanel.dispose();
       diffPanel = null;
     }
     return diffPanel;
   }
 
-  private void showDiffDialog(DialogBuilder builder, Collection hints) {
+  private static void showDiffDialog(DialogBuilder builder, Collection hints) {
     builder.showModal(!hints.contains(DiffTool.HINT_SHOW_NOT_MODAL_DIALOG));
   }
 
-  private boolean shouldOpenDialog(Collection hints) {
+  private static boolean shouldOpenDialog(Collection hints) {
     if (hints.contains(DiffTool.HINT_SHOW_MODAL_DIALOG)) return true;
     if (hints.contains(DiffTool.HINT_SHOW_NOT_MODAL_DIALOG)) return true;
     if (hints.contains(DiffTool.HINT_SHOW_FRAME)) return false;
     return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof JDialog;
   }
 
-  private boolean checkNoDifferenceAndNotify(DiffPanel diffPanel, DiffRequest data) {
+  private static boolean checkNoDifferenceAndNotify(DiffPanel diffPanel, DiffRequest data, final Window window) {
     if (!diffPanel.hasDifferences()) {
+      DiffManagerImpl manager = (DiffManagerImpl) DiffManager.getInstance();
+      if (!manager.getComparisonPolicy().equals(ComparisonPolicy.DEFAULT)) {
+        ComparisonPolicy oldPolicy = manager.getComparisonPolicy();
+        manager.setComparisonPolicy(ComparisonPolicy.DEFAULT);
+        DiffPanel maybeDiffPanel = DiffManagerImpl.createDiffPanel(data, window);
+        manager.setComparisonPolicy(oldPolicy);
+
+        boolean hasDiffs = maybeDiffPanel.hasDifferences();
+        maybeDiffPanel.dispose();
+
+        if (hasDiffs) return false;
+      }
+
       return !askForceOpenDiff(data);
     }
     return false;
   }
 
-  private boolean askForceOpenDiff(DiffRequest data) {
+  private static boolean askForceOpenDiff(DiffRequest data) {
     byte[] bytes1;
     byte[] bytes2;
     try {
@@ -94,8 +110,7 @@ class FrameDiffTool implements DiffTool {
   public boolean canShow(DiffRequest data) {
     DiffContent[] contents = data.getContents();
     if (contents.length != 2) return false;
-    for (int i = 0; i < contents.length; i++) {
-      DiffContent content = contents[i];
+    for (DiffContent content : contents) {
       if (content.isBinary()) return false;
       VirtualFile file = content.getFile();
       if (file != null && file.isDirectory()) return false;
