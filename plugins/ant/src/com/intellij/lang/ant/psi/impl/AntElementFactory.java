@@ -49,6 +49,12 @@ public class AntElementFactory {
     if (typeName.equals("javadoc2")) {
       typeName = "javadoc";
     }
+    /**
+     * Hardcode for <unwar> and <unjar> tasks (IDEADEV-6830).
+     */
+    if(typeName.equals("unwar") || typeName.equals("unjar")) {
+      typeName = "unzip"; 
+    }
 
     final AntTypeId id = new AntTypeId(typeName);
     final AntFile file = parent.getAntFile();

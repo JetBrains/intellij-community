@@ -316,6 +316,12 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       if (isTask && typeName.equals("javadoc2")) {
         typeName = "javadoc";
       }
+      /**
+       * Hardcode for <unwar> and <unjar> tasks (IDEADEV-6830).
+       */
+      if (isTask && (typeName.equals("unwar") || typeName.equals("unjar"))) {
+        typeName = "unzip";
+      }
       final Class typeClass = (Class)ht.get(typeName);
       final AntTypeId typeId = new AntTypeId(typeName);
       final AntTypeDefinition def = createTypeDefinition(typeId, typeClass, isTask);
