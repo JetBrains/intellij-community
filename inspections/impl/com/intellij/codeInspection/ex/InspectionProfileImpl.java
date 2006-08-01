@@ -60,7 +60,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   //diff map with base profile
   private LinkedHashMap<HighlightDisplayKey, ToolState> myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>();
 
-  private InspectionProfileImpl mySource;
+  protected InspectionProfileImpl mySource;
   private InspectionProfileImpl myBaseProfile = null;
   @NonNls private static final String VERSION_TAG = "version";
   @NonNls private static final String INSPECTION_TOOL_TAG = "inspection_tool";

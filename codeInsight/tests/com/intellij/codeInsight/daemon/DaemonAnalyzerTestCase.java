@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -49,6 +50,11 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
 
     final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE) {
+      public ModifiableModel getModifiableModel() {
+        mySource = this;
+        return this;
+      }
+
       public InspectionProfileEntry[] getInspectionTools() {
         final Collection<LocalInspectionToolWrapper> tools = myAvailableLocalTools.values();
         return tools.toArray(new LocalInspectionToolWrapper[tools.size()]);
