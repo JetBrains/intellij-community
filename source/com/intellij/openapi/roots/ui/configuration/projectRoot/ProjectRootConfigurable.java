@@ -6,6 +6,8 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
 import com.intellij.find.FindBundle;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ModuleGroupUtil;
 import com.intellij.javaee.serverInstances.ApplicationServersManager;
@@ -13,6 +15,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -66,7 +69,10 @@ import java.util.*;
  * Date: 02-Jun-2006
  */
 public class ProjectRootConfigurable extends MasterDetailsComponent implements ProjectComponent {
+  private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private static final Icon ICON = IconLoader.getIcon("/modules/modules.png");
+
+  public boolean myPlainMode;
 
   private MyNode myJdksNode;
 
@@ -207,7 +213,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       ModuleConfigurable configurable = new ModuleConfigurable(myModulesConfigurator, module, TREE_UPDATER);
       final MyNode moduleNode = new MyNode(configurable);
       createModuleLibraries(module, moduleNode);
-      final String[] groupPath = myModulesConfigurator.getModuleModel().getModuleGroupPath(module);
+      final String[] groupPath = myPlainMode ? null : myModulesConfigurator.getModuleModel().getModuleGroupPath(module);
       if (groupPath == null || groupPath.length == 0){
         addNode(moduleNode, myProjectNode);
       } else {
@@ -252,7 +258,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       nodes[i ++] = node;
     }
     for (final MyNode moduleNode : nodes) {
-      final String[] groupPath = group != null ? group.getGroupPath() : null;
+      final String[] groupPath = myPlainMode
+                                 ? null
+                                 : group != null ? group.getGroupPath() : null;
       if (groupPath == null || groupPath.length == 0){
         addNode(moduleNode, myProjectNode);
       } else {
@@ -517,6 +525,27 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         return false;
       }
     }));
+    result.add(new MyGroupAction());
+    final TreeExpander expander = new TreeExpander() {
+      public void expandAll() {
+        TreeUtil.expandAll(myTree);
+      }
+
+      public boolean canExpand() {
+        return true;
+      }
+
+      public void collapseAll() {
+        TreeUtil.collapseAll(myTree, 0);
+      }
+
+      public boolean canCollapse() {
+        return true;
+      }
+    };
+    final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    result.add(actionsManager.createExpandAllAction(expander));
+    result.add(actionsManager.createCollapseAllAction(expander));
     return result;
   }
 
@@ -922,6 +951,42 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         return 2;
       }
       return 0;
+    }
+  }
+
+  private class MyGroupAction extends ToggleAction {
+
+    public MyGroupAction() {
+      super(ProjectBundle.message("project.roots.plain.mode.action.text"),
+            ProjectBundle.message("project.roots.plain.mode.action.text"),
+            COMPACT_EMPTY_MIDDLE_PACKAGES_ICON);
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return myPlainMode;
+    }
+
+    public void setSelected(AnActionEvent e, boolean state) {
+      myPlainMode = state;
+      final ModifiableModuleModel model = myModulesConfigurator.getModuleModel();
+      final Module[] modules = model.getModules();
+      for (Module module : modules) {
+        final String[] groupPath = model.getModuleGroupPath(module);
+        updateProjectTree(new Module[]{module}, groupPath != null ? new ModuleGroup(groupPath) : null);
+      }
+      if (state) {
+        removeModuleGroups();
+      }
+    }
+
+    private void removeModuleGroups() {
+      for(int i = myProjectNode.getChildCount() - 1; i >=0; i--){
+        final MyNode node = (MyNode)myProjectNode.getChildAt(i);
+        if (node.getConfigurable().getEditableObject() instanceof ModuleGroup){
+          node.removeFromParent();
+        }
+      }
+      ((DefaultTreeModel)myTree.getModel()).reload(myProjectNode);
     }
   }
 }
