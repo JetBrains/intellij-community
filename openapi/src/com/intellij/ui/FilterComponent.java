@@ -16,7 +16,9 @@
 package com.intellij.ui;
 
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Alarm;
@@ -35,10 +37,10 @@ public abstract class FilterComponent extends JPanel {
   private final TextFieldWithStoredHistory myFilter;
   private final Alarm myUpdateAlarm = new Alarm();
   public FilterComponent(@NonNls String propertyName, int historySize) {
-    this(propertyName, historySize, true, true);
+    this(propertyName, historySize, true);
   }
 
-  public FilterComponent(@NonNls String propertyName, int historySize, boolean showButton, boolean showLabel) {
+  public FilterComponent(@NonNls String propertyName, int historySize, boolean showLabel) {
     super(new BorderLayout());
     if (showLabel) {
       add(new JLabel(InspectionsBundle.message("inspection.tools.action.filter")), BorderLayout.WEST);
@@ -77,9 +79,6 @@ public abstract class FilterComponent extends JPanel {
         filter();
       }
     });
-    if (showButton) {
-      add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.EAST);
-    }
   }
 
   public void setHistorySize(int historySize){

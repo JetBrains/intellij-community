@@ -272,7 +272,7 @@ public class KeymapPanel extends JPanel {
     panel.add(toolbar, new GridBagConstraints(0,0,1,1,1,0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(8,0,0,0), 0,0));
     group = new DefaultActionGroup();
     final JComponent searchToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
-    myFilterComponent = new FilterComponent("KEYMAP", 5, false, true){
+    myFilterComponent = new FilterComponent("KEYMAP", 5, true){
       public void filter() {
         if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
         final String filter = getFilter();
