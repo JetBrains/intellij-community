@@ -17,9 +17,8 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
 import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.core.DefaultClassMapper;
 import com.thoughtworks.xstream.core.util.CompositeClassLoader;
-import com.thoughtworks.xstream.io.xml.XppDriver;
+import com.thoughtworks.xstream.io.xml.JDomReader;
 import org.jdom.Element;
 import org.picocontainer.PicoContainer;
 import org.picocontainer.PicoInitializationException;
@@ -53,7 +52,8 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
         if (myPluginDescriptor.getPluginClassLoader() != null) {
           classLoader.add(myPluginDescriptor.getPluginClassLoader());
         }
-        XStream xStream = new XStream(new PropertyReflectionProvider(), new DefaultClassMapper(classLoader), new XppDriver());
+        XStream xStream = new XStream();
+        xStream.setClassLoader(classLoader);
         xStream.registerConverter(new ElementConverter());
         Object componentInstance = super.getComponentInstance(container);
         if (componentInstance instanceof ReaderConfigurator) {
@@ -61,7 +61,7 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
           readerConfigurator.configureReader(xStream);
         }
         xStream.alias(myExtensionElement.getName(), componentInstance.getClass());
-        myComponentInstance = xStream.unmarshal(new JDomExtensionsReader(myExtensionElement), componentInstance);
+        myComponentInstance = xStream.unmarshal(new JDomReader(myExtensionElement), componentInstance);
       }
       else {
         myComponentInstance = myExtensionElement;
