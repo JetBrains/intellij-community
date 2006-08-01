@@ -20,6 +20,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -82,6 +83,9 @@ public class ClassInheritanceDepthInspection
 
         private int getInheritanceDepth(PsiClass aClass, Set<PsiClass> visited){
             if(visited.contains(aClass)){
+                return 0;
+            }
+            if(LibraryUtil.classIsInLibrary(aClass)){
                 return 0;
             }
             visited.add(aClass);
