@@ -42,6 +42,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 
 public class JavaDocLocalInspection extends BaseLocalInspectionTool {
@@ -222,8 +224,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
       final JCheckBox checkBox = new JCheckBox(InspectionsBundle.message("inspection.javadoc.option.ignore.deprecated"),
                                                IGNORE_DEPRECATED);
-      checkBox.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent e) {
+      checkBox.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
           IGNORE_DEPRECATED = checkBox.isSelected();
         }
       });
@@ -231,8 +233,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       add(checkBox, gc);
       final JCheckBox periodCheckBox = new JCheckBox(InspectionsBundle.message("inspection.javadoc.option.ignore.period"),
                                                      IGNORE_JAVADOC_PERIOD);
-      checkBox.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent e) {
+      periodCheckBox.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
           IGNORE_JAVADOC_PERIOD = periodCheckBox.isSelected();
         }
       });
