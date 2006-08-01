@@ -480,7 +480,7 @@ public class ClasspathPanel extends JPanel {
         },
         new ChooseNamedLibraryAction(2, ProjectBundle.message("classpath.add.project.library.action"), projectRootConfigurable.getProjectLibrariesProvider()),
         new ChooseNamedLibraryAction(3, ProjectBundle.message("classpath.add.global.library.action"), projectRootConfigurable.getGlobalLibrariesProvider()),
-        new ChooseNamedLibraryAction(4, ProjectBundle.message("classpath.add.appserver.library.action"), projectRootConfigurable.getApplicationServerLibrariesProvider()),
+        new ChooseNamedLibraryAction(4, ProjectBundle.message("classpath.add.appserver.library.action"), projectRootConfigurable.getApplicationServerLibrariesProvider(), false),
         new ChooseAndAddAction<Module>(5, ProjectBundle.message("classpath.add.module.dependency.action"), IconUtilEx.getModuleTypeIcon(ModuleType.JAVA, 0)) {
           protected TableItem createTableItem(final Module item) {
             return new ModuleItem(myRootModel.addModuleOrderEntry(item));
@@ -989,10 +989,16 @@ public class ClasspathPanel extends JPanel {
 
   private class ChooseNamedLibraryAction extends ChooseAndAddAction<Library> {
     private LibraryTableModifiableModelProvider myLibraryTableModelProvider;
+    private boolean myLibraryTableEditable;
 
     public ChooseNamedLibraryAction(final int index, final String title, final LibraryTableModifiableModelProvider libraryTable) {
+      this(index, title, libraryTable, true);
+    }
+
+    public ChooseNamedLibraryAction(final int index, final String title, final LibraryTableModifiableModelProvider libraryTable, boolean isLibraryTableEditable) {
       super(index, title, Icons.LIBRARY_ICON);
       myLibraryTableModelProvider = libraryTable;
+      myLibraryTableEditable = isLibraryTableEditable;
     }
 
     protected TableItem createTableItem(final Library item) {
@@ -1008,7 +1014,6 @@ public class ClasspathPanel extends JPanel {
       return new LibItem(myRootModel.addLibraryEntry(item));
     }
 
-    @SuppressWarnings({"NonStaticInitializer"})
     protected ChooserDialog<Library> createChooserDialog() {
       return new MyChooserDialog();
     }
@@ -1031,6 +1036,9 @@ public class ClasspathPanel extends JPanel {
 
       MyChooserDialog(){
         myEditor = LibraryTableEditor.editLibraryTable(myLibraryTableModelProvider, myProject);
+        if (!myLibraryTableEditable) {
+          myEditor.hideAddRemoveRenameButtons();
+        }
         Disposer.register(this, myEditor);
       }
 

@@ -513,7 +513,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
           if (editableObject instanceof ProjectJdk ||
             editableObject instanceof Module) return true;
           if (editableObject instanceof Library){
-            return true;
+            final LibraryTable table = ((Library)editableObject).getTable();
+            return table == null || !ApplicationServersManager.APPLICATION_SERVER_MODULE_LIBRARIES.equals(table.getTableLevel());
           }
         }
         return false;
@@ -835,13 +836,6 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
       public void update(AnActionEvent e) {
         e.getPresentation().setEnabled(!myProject.isDefault());
-      }
-    });
-    group.add(new AnAction(ProjectBundle.message("add.new.application.server.library.text")) {
-      public void actionPerformed(AnActionEvent e) {
-        final LibraryTableEditor editor = LibraryTableEditor.editLibraryTable(getApplicationServerLibrariesProvider(), myProject);
-        editor.createAddLibraryAction(true, myWholePanel).actionPerformed(null);
-        Disposer.dispose(editor);
       }
     });
     group.add(new AnAction(ProjectBundle.message("add.new.module.library.text")) {

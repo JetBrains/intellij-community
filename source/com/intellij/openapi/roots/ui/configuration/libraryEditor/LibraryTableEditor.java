@@ -79,6 +79,7 @@ public class LibraryTableEditor implements Disposable {
   private LibraryTableTreeBuilder myTreeBuilder;
   private LibraryTable.ModifiableModel myTableModifiableModel;
   private static final Icon INVALID_ITEM_ICON = IconLoader.getIcon("/nodes/ppInvalid.png");
+  private boolean myLibraryTableEditable = true;
 
   private final Collection<Runnable> myListeners = new ArrayList<Runnable>();
 
@@ -174,6 +175,12 @@ public class LibraryTableEditor implements Disposable {
 
   public JComponent getComponent() {
     return myPanel;
+  }
+
+  public void hideAddRemoveRenameButtons() {
+    myAddLibraryButton.setVisible(false);
+    myRenameLibraryButton.setVisible(false);
+    myLibraryTableEditable = false;
   }
 
   public static boolean showEditDialog(final Component parent, LibraryTable libraryTable, final Collection<Library> selection) {
@@ -757,6 +764,7 @@ public class LibraryTableEditor implements Disposable {
       myRemoveButton.setEnabled(
         elementsClass != null &&
         !(elementsClass.isAssignableFrom(ClassesElement.class) || elementsClass.equals(SourcesElement.class) || elementsClass.isAssignableFrom(JavadocElement.class))
+        && (myLibraryTableEditable || !elementsClass.isAssignableFrom(LibraryElement.class))
       );
       myRenameLibraryButton.setEnabled(selectedElements.length == 1 && elementsClass != null && elementsClass.equals(LibraryElement.class));
       if (elementsClass != null && elementsClass.isAssignableFrom(ItemElement.class)) {
