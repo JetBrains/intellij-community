@@ -32,6 +32,6 @@ public final class ValidResponsesRequest extends AbstractRequest {
 		return "Valid-responses E M MT Updated Checked-in ok error "
 		        + "Clear-static-directory Valid-requests Merged Removed "
 		        + "Copy-file Mod-time Mode Kopt Template Set-static-directory "
-		        + "Module-expansion Clear-sticky Set-sticky New-entry Mbinary\n";
+		        + "Module-expansion Clear-sticky Set-sticky New-entry Mbinary EntriesExtra\n";
 	}
 }

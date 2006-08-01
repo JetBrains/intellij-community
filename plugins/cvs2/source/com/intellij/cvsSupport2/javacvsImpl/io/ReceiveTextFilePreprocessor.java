@@ -10,6 +10,8 @@ import org.netbeans.lib.cvsclient.file.IReaderFactory;
 import org.netbeans.lib.cvsclient.file.IReceiveTextFilePreprocessor;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -25,16 +27,32 @@ public class ReceiveTextFilePreprocessor implements IReceiveTextFilePreprocessor
     myReceivedFileProcessor = receivedFileProcessor;
   }
 
-  public void copyTextFileToLocation(File textFileSource, File targetFile, IReaderFactory readerFactory) throws IOException {
+  public void copyTextFileToLocation(File textFileSource, File targetFile, IReaderFactory readerFactory, Charset charSet) throws IOException {
+    Charset utf8Charset = Charset.forName("UTF-8");
     VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(targetFile);
     if (myReceivedFileProcessor.shouldProcess(virtualFile, targetFile)) {
       PrintStream target = new PrintStream(new BufferedOutputStream(new FileOutputStream(targetFile)));
       try {
         String lineSeparator = getLineSeparatorFor(targetFile);
-        Collection lines = new LineReader().readLines(new BufferedInputStream(new FileInputStream(textFileSource)));
-        for (Iterator each = lines.iterator(); each.hasNext();) {
-          target.write((byte[])each.next());
-          if (each.hasNext()) target.print(lineSeparator);
+        byte[] lineSeparatorBytes = null;
+        if (charSet != null) {
+          lineSeparatorBytes = charSet.encode(lineSeparator).array();
+        }
+        Collection<byte[]> lines = new LineReader().readLines(new BufferedInputStream(new FileInputStream(textFileSource)));
+        for (Iterator<byte[]> each = lines.iterator(); each.hasNext();) {
+          final byte[] bytes = each.next();
+          if (charSet == null) {
+            target.write(bytes);
+          }
+          else {
+            target.write(charSet.encode(utf8Charset.decode(ByteBuffer.wrap(bytes))).array());
+          }
+          if (each.hasNext()) {
+            if (charSet == null)
+              target.print(lineSeparator);
+            else
+              target.write(lineSeparatorBytes);
+          }
         }
       }
       finally {

@@ -14,9 +14,12 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.file;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
+import java.nio.charset.Charset;
 
 /**
  * Handles the reading and writing of files to and from the server. Different
@@ -26,7 +29,8 @@ import java.util.Date;
  */
 public interface ILocalFileWriter {
 
-	void writeTextFile(FileObject fileObject, int length, InputStream inputStream, boolean readOnly, IReaderFactory readerFactory, IFileReadOnlyHandler fileReadOnlyHandler, IFileSystem fileSystem) throws IOException;
+	void writeTextFile(FileObject fileObject, int length, InputStream inputStream, boolean readOnly, IReaderFactory readerFactory,
+                           IFileReadOnlyHandler fileReadOnlyHandler, IFileSystem fileSystem, @Nullable final Charset charSet) throws IOException;
 
 	void writeBinaryFile(FileObject fileObject, int length, InputStream inputStream, boolean readOnly, IFileReadOnlyHandler fileReadOnlyHandler, ICvsFileSystem cvsFileSystem) throws IOException;
 

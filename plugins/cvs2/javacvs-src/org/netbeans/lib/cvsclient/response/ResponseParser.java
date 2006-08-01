@@ -12,34 +12,37 @@ import java.io.InputStream;
 import java.util.Date;
 
 /**
- * @author  Thomas Singer
+ * @author Thomas Singer
  */
 public final class ResponseParser {
 
-	// Fields =================================================================
+  // Fields =================================================================
 
-	private final IResponseHandler responseProcessor;
-	private final StreamUtilities myStreamUtilities;
-        @NonNls public static final String PREFIX_TO_REMOVE = "-f ";
+  private final IResponseHandler responseProcessor;
+  private final StreamUtilities myStreamUtilities;
+  @NonNls public static final String PREFIX_TO_REMOVE = "-f ";
 
   // Setup ==================================================================
 
-	public ResponseParser(IResponseHandler responseProcessor, String charset) {
-		BugLog.getInstance().assertNotNull(responseProcessor);
-		BugLog.getInstance().assertNotNull(charset);
+  public ResponseParser(IResponseHandler responseProcessor, String charset) {
+    BugLog.getInstance().assertNotNull(responseProcessor);
+    BugLog.getInstance().assertNotNull(charset);
 
-		this.responseProcessor = responseProcessor;
-		myStreamUtilities = new StreamUtilities(charset);
-	}
+    this.responseProcessor = responseProcessor;
+    myStreamUtilities = new StreamUtilities(charset);
+  }
 
-	// Implemented ============================================================
+  // Implemented ============================================================
 
-	@SuppressWarnings({"HardCodedStringLiteral"})
-        public Boolean processResponse(String responseName, IConnectionStreams connectionStreams, IResponseServices responseServices, IClientEnvironment clientEnvironment) throws IOException {
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public Boolean processResponse(String responseName,
+                                 IConnectionStreams connectionStreams,
+                                 IResponseServices responseServices,
+                                 IClientEnvironment clientEnvironment) throws IOException {
     InputStream loggedInputStream = connectionStreams.getLoggedInputStream();
     if (responseName.equalsIgnoreCase("E")) {
       final byte[] line = StreamUtilities.readLineBytes(loggedInputStream);
-            responseProcessor.processErrorMessageResponse(prepareMessageAccordingToScr39148(line), responseServices);
+      responseProcessor.processErrorMessageResponse(prepareMessageAccordingToScr39148(line), responseServices);
       return null;
     }
     else if (responseName.equalsIgnoreCase("M")) {
@@ -48,17 +51,17 @@ public final class ResponseParser {
       return null;
     }
 
-                else if (responseName.equalsIgnoreCase("MBinary")) {
+    else if (responseName.equalsIgnoreCase("MBinary")) {
       final String fileLengthString = myStreamUtilities.readLine(loggedInputStream);
-                        try {
-                          int fileLength = Integer.parseInt(fileLengthString);
+      try {
+        int fileLength = Integer.parseInt(fileLengthString);
 
-                          responseProcessor.processBinaryMessageResponse(fileLength, readFromStream(connectionStreams, fileLength), responseServices);
-                        }
-                        catch (NumberFormatException e) {
-                          //ignore
-                        }
-                  return null;
+        responseProcessor.processBinaryMessageResponse(fileLength, readFromStream(connectionStreams, fileLength), responseServices);
+      }
+      catch (NumberFormatException e) {
+        //ignore
+      }
+      return null;
     }
 
     else if (responseName.equalsIgnoreCase("MT")) {
@@ -76,7 +79,8 @@ public final class ResponseParser {
       final int fileLength;
       try {
         fileLength = Integer.parseInt(fileLengthString);
-        responseProcessor.processUpdatedResponse(relativeLocalDirectory, repositoryFilePath, entryLine, mode, fileLength, clientEnvironment, responseServices, connectionStreams);
+        responseProcessor.processUpdatedResponse(relativeLocalDirectory, repositoryFilePath, entryLine, mode, fileLength, clientEnvironment,
+                                                 responseServices, connectionStreams);
       }
       catch (NumberFormatException ex) {
         // ignore
@@ -93,7 +97,8 @@ public final class ResponseParser {
       final int fileLength;
       try {
         fileLength = Integer.parseInt(fileLengthString);
-        responseProcessor.processMergedResponse(relativeLocalDirectory, repositoryFilePath, entryLine, mode, fileLength, clientEnvironment, responseServices, connectionStreams);
+        responseProcessor.processMergedResponse(relativeLocalDirectory, repositoryFilePath, entryLine, mode, fileLength, clientEnvironment,
+                                                responseServices, connectionStreams);
       }
       catch (NumberFormatException ex) {
         // ignore
@@ -104,7 +109,8 @@ public final class ResponseParser {
       final String relativeLocalDirectory = myStreamUtilities.readLine(loggedInputStream);
       final String repositoryFilePath = myStreamUtilities.readLine(loggedInputStream);
       final String entryLine = myStreamUtilities.readLine(loggedInputStream);
-      responseProcessor.processCheckedInResponse(relativeLocalDirectory, repositoryFilePath, entryLine, responseServices, clientEnvironment);
+      responseProcessor
+        .processCheckedInResponse(relativeLocalDirectory, repositoryFilePath, entryLine, responseServices, clientEnvironment);
       return null;
     }
     else if (responseName.equalsIgnoreCase("New-entry")) {
@@ -123,7 +129,8 @@ public final class ResponseParser {
     else if (responseName.equalsIgnoreCase("Clear-static-directory")) {
       final String relativeLocalDirectory = myStreamUtilities.readLine(loggedInputStream);
       final String repositoryDirectoryPath = myStreamUtilities.readLine(loggedInputStream);
-      responseProcessor.processClearStaticDirectoryResponse(relativeLocalDirectory, repositoryDirectoryPath, responseServices, clientEnvironment);
+      responseProcessor
+        .processClearStaticDirectoryResponse(relativeLocalDirectory, repositoryDirectoryPath, responseServices, clientEnvironment);
       return null;
     }
     else if (responseName.equalsIgnoreCase("Set-sticky")) {
@@ -141,7 +148,7 @@ public final class ResponseParser {
     }
     else if (responseName.equalsIgnoreCase("Notified")) {
       final String relativeLocalDirectory = myStreamUtilities.readLine(loggedInputStream);
-      final String repositoryFilePath =  myStreamUtilities.readLine(loggedInputStream);
+      final String repositoryFilePath = myStreamUtilities.readLine(loggedInputStream);
       responseProcessor.processNotifiedResponse(relativeLocalDirectory, repositoryFilePath, clientEnvironment);
       return null;
     }
@@ -178,7 +185,7 @@ public final class ResponseParser {
     else if (responseName.equalsIgnoreCase("Mode")) {
       final String mode = myStreamUtilities.readLine(loggedInputStream);
       responseProcessor.processModeResponse(mode, responseServices);
-            return null;
+      return null;
     }
     else if (responseName.equalsIgnoreCase("Template")) {
       final String relativeLocalDirectory = myStreamUtilities.readLine(loggedInputStream);
@@ -210,17 +217,22 @@ public final class ResponseParser {
       responseProcessor.processErrorResponse(message, responseServices);
       return Boolean.FALSE;
     }
-		if (responseName.equalsIgnoreCase("Valid-requests")) {
-			final String validRequests = myStreamUtilities.readLine(loggedInputStream);
-			responseProcessor.processValidRequestsResponse(validRequests, responseServices);
-			return null;
-		}
-		else {
-			throw new IOException("Unhandled response: " + responseName + ".");
-		}
-	}
+    else if (responseName.equals("EntriesExtra")) {
+      // ignore for now
+      StreamUtilities.readLineBytes(loggedInputStream);
+      return null;
+    }
+    else if (responseName.equalsIgnoreCase("Valid-requests")) {
+      final String validRequests = myStreamUtilities.readLine(loggedInputStream);
+      responseProcessor.processValidRequestsResponse(validRequests, responseServices);
+      return null;
+    }
+    else {
+      throw new IOException("Unhandled response: " + responseName + ".");
+    }
+  }
 
-  private byte[] readFromStream(final IConnectionStreams connectionStreams, final int fileLength) throws IOException {
+  private static byte[] readFromStream(final IConnectionStreams connectionStreams, final int fileLength) throws IOException {
     final byte[] buffer = new byte[128 * 1024];
     int read = 0;
     final ByteArrayOutputStream bufferStream = new ByteArrayOutputStream();
@@ -232,7 +244,7 @@ public final class ResponseParser {
     return bufferStream.toByteArray();
   }
 
-  private byte[] prepareMessageAccordingToScr39148(byte[] line) {
+  private static byte[] prepareMessageAccordingToScr39148(byte[] line) {
     if (line.length < 3) return line;
     if (startsWith(PREFIX_TO_REMOVE, line)) {
       final byte[] result = new byte[line.length - 3];
@@ -240,9 +252,9 @@ public final class ResponseParser {
       return result;
     }
     return line;
-    }
+  }
 
-  private boolean startsWith(final String s, final byte[] line) {
+  private static boolean startsWith(final String s, final byte[] line) {
     for (int i = 0; i < s.length(); i++) {
       if (line[i] == s.charAt(i)) continue;
       return false;

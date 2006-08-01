@@ -166,7 +166,8 @@ public final class AdminWriter
                         return;
                 }
 
-                clientEnvironment.getLocalFileWriter().writeTextFile(fileObject, fileLength, inputStream, false, readerFactory, clientEnvironment.getFileReadOnlyHandler(), adminFileSystem);
+                clientEnvironment.getLocalFileWriter().writeTextFile(fileObject, fileLength, inputStream, false, readerFactory, clientEnvironment.getFileReadOnlyHandler(), adminFileSystem,
+                                                                     null);
         }
 
         public void directoryAdded(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) throws IOException {

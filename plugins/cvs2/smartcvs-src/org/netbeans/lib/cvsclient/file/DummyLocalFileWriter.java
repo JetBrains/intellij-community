@@ -3,6 +3,7 @@ package org.netbeans.lib.cvsclient.file;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
+import java.nio.charset.Charset;
 
 /**
  * @author  Thomas Singer
@@ -12,7 +13,8 @@ public final class DummyLocalFileWriter
 
 	// Implemented ============================================================
 
-	public void writeTextFile(FileObject fileObject, int length, InputStream inputStream, boolean readOnly, IReaderFactory readerFactory, IFileReadOnlyHandler fileReadOnlyHandler, IFileSystem fileSystem) throws IOException {
+	public void writeTextFile(FileObject fileObject, int length, InputStream inputStream, boolean readOnly, IReaderFactory readerFactory,
+                                  IFileReadOnlyHandler fileReadOnlyHandler, IFileSystem fileSystem, final Charset charSet) throws IOException {
 	}
 
 	public void writeBinaryFile(FileObject fileObject, int length, InputStream inputStream, boolean readOnly, IFileReadOnlyHandler fileReadOnlyHandler, ICvsFileSystem cvsFileSystem) throws IOException {

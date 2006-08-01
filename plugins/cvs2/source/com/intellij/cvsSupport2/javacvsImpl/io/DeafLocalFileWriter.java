@@ -5,6 +5,7 @@ import org.netbeans.lib.cvsclient.file.*;
 import java.util.Date;
 import java.io.InputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 import com.intellij.cvsSupport2.CvsUtil;
 
@@ -44,7 +45,7 @@ public class DeafLocalFileWriter implements ILocalFileWriter{
                             boolean readOnly,
                             IReaderFactory readerFactory,
                             IFileReadOnlyHandler fileReadOnlyHandler,
-                            IFileSystem fileSystem) throws IOException {
+                            IFileSystem fileSystem, final Charset charSet) throws IOException {
     CvsUtil.skip(inputStream, length);
   }
 

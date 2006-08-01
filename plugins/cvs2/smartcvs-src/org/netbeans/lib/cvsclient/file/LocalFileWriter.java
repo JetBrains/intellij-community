@@ -1,13 +1,13 @@
 package org.netbeans.lib.cvsclient.file;
 
-import org.netbeans.lib.cvsclient.util.BugLog;
-import org.netbeans.lib.cvsclient.SmartCvsSrcBundle;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.SmartCvsSrcBundle;
+import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.Date;
-
-import com.intellij.openapi.util.io.FileUtil;
 
 /**
  * @author  Thomas Singer
@@ -37,7 +37,8 @@ public final class LocalFileWriter
 
         // Implemented ============================================================
 
-        public void writeTextFile(FileObject fileObject, int length, InputStream inputStream, boolean readOnly, IReaderFactory readerFactory, IFileReadOnlyHandler fileReadOnlyHandler, IFileSystem fileSystem) throws IOException {
+        public void writeTextFile(FileObject fileObject, int length, InputStream inputStream, boolean readOnly, IReaderFactory readerFactory,
+                                  IFileReadOnlyHandler fileReadOnlyHandler, IFileSystem fileSystem, final Charset charSet) throws IOException {
                 final File localFile = fileSystem.getFile(fileObject);
                 localFile.getParentFile().mkdirs();
                 if (localFile.exists()) {
@@ -56,7 +57,7 @@ public final class LocalFileWriter
                 try {
                         writeFile(tempFile, length, inputStream);
 
-                        receiveTextFilePreprocessor.copyTextFileToLocation(tempFile, localFile, readerFactory);
+                        receiveTextFilePreprocessor.copyTextFileToLocation(tempFile, localFile, readerFactory, charSet);
 
                         setModifiedDateAndMode(localFile, fileReadOnlyHandler);
                 }

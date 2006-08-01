@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
+import java.nio.charset.Charset;
 
 /**
  * author: lesya
@@ -115,7 +116,7 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
                             boolean readOnly,
                             IReaderFactory readerFactory,
                             IFileReadOnlyHandler fileReadOnlyHandler,
-                            IFileSystem fileSystem) throws IOException {
+                            IFileSystem fileSystem, final Charset charSet) throws IOException {
     if (hasToBeSkipped(fileObject, fileSystem)) {
       CvsUtil.skip(inputStream, length);
       return;
@@ -123,7 +124,7 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
     try {
       storeLineSeparatorInTheVirtualFile(fileSystem, fileObject);
       myLocalFileWriter.writeTextFile(fileObject, length, inputStream, readOnly, readerFactory, fileReadOnlyHandler,
-                                      fileSystem);
+                                      fileSystem, charSet);
     }
     catch (IOException ex) {
       processException(ex, inputStream, length, fileSystem, fileObject, myCvsRoot);

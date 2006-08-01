@@ -14,6 +14,7 @@ package org.netbeans.lib.cvsclient.file;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 /**
  * Preprocesses the text file after getting from server.
@@ -21,5 +22,5 @@ import java.io.IOException;
  */
 public interface IReceiveTextFilePreprocessor {
 
-	void copyTextFileToLocation(File textFileSource, File targetFile, IReaderFactory readerFactory) throws IOException;
+	void copyTextFileToLocation(File textFileSource, File targetFile, IReaderFactory readerFactory, final Charset charSet) throws IOException;
 }
