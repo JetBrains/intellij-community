@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
@@ -260,6 +261,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
               public void processChangeInList(final Change change, final ChangeList changeList) {
                 if (myDisposed) throw new DisposedException();
 
+                final String fileName = ChangesUtil.getFilePath(change).getName();
+                if (FileTypeManager.getInstance().isFileIgnored(fileName)) return;
+
                 ApplicationManager.getApplication().runReadAction(new Runnable() {
                   public void run() {
                     if (isUnder(change, scope)) {
@@ -289,6 +293,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
               public void processUnversionedFile(VirtualFile file) {
                 if (file == null || !updateUnversionedFiles) return;
                 if (myDisposed) throw new DisposedException();
+                if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
                 if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
                   unversionedHolder.addFile(file);
                   ChangesViewManager.getInstance(myProject).scheduleRefresh();
@@ -298,6 +303,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
               public void processLocallyDeletedFile(File file) {
                 if (!updateUnversionedFiles) return;
                 if (myDisposed) throw new DisposedException();
+                if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
                 if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
                   deletedHolder.addFile(file);
                   ChangesViewManager.getInstance(myProject).scheduleRefresh();
