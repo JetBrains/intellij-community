@@ -17,14 +17,11 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.pom.java.LanguageLevel;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -90,14 +87,20 @@ public class CastThatLosesPrecisionInspection extends ExpressionInspection {
             final PsiManager manager = expression.getManager();
             final PsiConstantEvaluationHelper evaluationHelper =
                     manager.getConstantEvaluationHelper();
-            final Object result =
+            Object result =
                     evaluationHelper.computeConstantExpression(operand);
+
+            if (result instanceof Character) {
+                result = new Integer(((Character)result).charValue());
+            }
+
             if (result instanceof Number) {
                 final Number number = (Number)result;
                 if (valueIsContainableType(number, castType)) {
                     return;
                 }
             }
+
             final PsiTypeElement castTypeElement = expression.getCastType();
             registerError(castTypeElement, operandType);
         }
