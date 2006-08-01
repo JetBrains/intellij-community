@@ -215,11 +215,13 @@ public class ModuleEditor {
       editor.apply();
     }
 
-    final Module module = myModifiableRootModel.getModule();
-    if (module.getModuleType().isJ2EE() && myModifiableRootModel != null) {
-      final JavaeeModuleProperties properties = JavaeeModuleProperties.getInstance(module);
-      if (properties != null && properties.getModifiableModel() != null) { //start edit was call
-        properties.commit(myModifiableRootModel);
+    if (myModifiableRootModel != null) {
+      final Module module = myModifiableRootModel.getModule();
+      if (module.getModuleType().isJ2EE()) {
+        final JavaeeModuleProperties properties = JavaeeModuleProperties.getInstance(module);
+        if (properties != null && properties.getModifiableModel() != null) { //start edit was call
+          properties.commit(myModifiableRootModel);
+        }
       }
     }
 
