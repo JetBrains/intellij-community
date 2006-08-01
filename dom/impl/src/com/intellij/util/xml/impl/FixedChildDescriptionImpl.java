@@ -4,8 +4,8 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.DomReflectionUtil;
@@ -13,7 +13,6 @@ import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -56,23 +55,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     final ArrayList<DomElement> result = new ArrayList<DomElement>();
     for (Method method : myGetterMethods) {
       if (method != null) {
-        try {
-          //assert method.getDeclaringClass().isInstance(element) : method.getDeclaringClass() + " " + element.getClass();
-          result.add((DomElement) method.invoke(element));
-        }
-        catch (IllegalArgumentException e) {
-          LOG.error(e);
-        }
-        catch (IllegalAccessException e) {
-          LOG.error(e);
-        }
-        catch (InvocationTargetException e) {
-          final Throwable throwable = e.getCause();
-          if (throwable instanceof ProcessCanceledException) {
-            throw (ProcessCanceledException)throwable;
-          }
-          LOG.error(e);
-        }
+        result.add((DomElement) DomReflectionUtil.invokeMethod(method, element, ArrayUtil.EMPTY_OBJECT_ARRAY));
       }
     }
     return result;

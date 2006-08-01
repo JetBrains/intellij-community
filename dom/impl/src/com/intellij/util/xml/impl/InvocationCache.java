@@ -3,15 +3,14 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.ui.DomUIFactory;
-import com.intellij.pom.Navigatable;
-import com.intellij.openapi.progress.ProcessCanceledException;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.TypeVariable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,11 +44,10 @@ public class InvocationCache {
           return null;
         }
       });
-      final TypeVariable<Class<GenericValue>> typeVariable = GenericValue.class.getTypeParameters()[0];
       ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericDomValue.class.getMethod("getConverter")), new Invocation() {
         public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
           try {
-            return handler.getScalarConverter(typeVariable, DomUIFactory.GET_VALUE_METHOD);
+            return handler.getScalarConverter(DomUIFactory.GET_VALUE_METHOD);
           }
           catch (Throwable e) {
             final Throwable cause = e.getCause();

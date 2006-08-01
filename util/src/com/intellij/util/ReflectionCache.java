@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Method;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.Type;
+import java.lang.reflect.ParameterizedType;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -70,6 +71,12 @@ public class ReflectionCache {
       return key.getGenericInterfaces();
     }
   };
+  private static final WeakFactoryMap<ParameterizedType, Type[]> ourActualTypeArguments = new WeakFactoryMap<ParameterizedType, Type[]>() {
+    @NotNull
+    protected Type[] create(final ParameterizedType key) {
+      return key.getActualTypeArguments();
+    }
+  };
 
   public static Class getSuperClass(Class aClass) {
     Class superClass = ourSuperClasses.get(aClass);
@@ -101,13 +108,19 @@ public class ReflectionCache {
     return ourIsInterfaces.get(aClass);
   }
 
-  public static TypeVariable[] getTypeParameters(Class aClass) {
+  public static <T> TypeVariable<Class<T>>[] getTypeParameters(Class<T> aClass) {
     return ourTypeParameters.get(aClass);
   }
 
   public static Type[] getGenericInterfaces(Class aClass) {
     synchronized (ourGenericInterfaces) {
       return ourGenericInterfaces.get(aClass);
+    }
+  }
+
+  public static Type[] getActualTypeArguments(ParameterizedType type) {
+    synchronized (ourActualTypeArguments) {
+      return ourActualTypeArguments.get(type);
     }
   }
 

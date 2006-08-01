@@ -19,6 +19,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ReflectionCache;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.CollectionElementAddedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
@@ -26,6 +28,8 @@ import com.intellij.util.xml.events.ElementUndefinedEvent;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,17 +73,32 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   private XmlFile myFile;
   private final DomElement myProxy;
-  private final Set<String> myInitializedChildren = new com.intellij.util.containers.HashSet<String>();
+  private final Set<String> myInitializedChildren = new THashSet<String>();
   private final Map<Pair<String, Integer>, IndexedElementInvocationHandler> myFixedChildren =
-    new HashMap<Pair<String, Integer>, IndexedElementInvocationHandler>();
-  private final Map<String, AttributeChildInvocationHandler> myAttributeChildren = new HashMap<String, AttributeChildInvocationHandler>();
+    new THashMap<Pair<String, Integer>, IndexedElementInvocationHandler>();
+  private final Map<String, AttributeChildInvocationHandler> myAttributeChildren = new THashMap<String, AttributeChildInvocationHandler>();
   final private GenericInfoImpl myGenericInfo;
-  private final Map<String, Class> myFixedChildrenClasses = new HashMap<String, Class>();
+  private final Map<String, Class> myFixedChildrenClasses = new THashMap<String, Class>();
   private boolean myInvalidated;
   private InvocationCache myInvocationCache;
   private final Factory<Converter> myGenericConverterFactory = new Factory<Converter>() {
     public Converter create() {
       return myGenericConverter;
+    }
+  };
+  private final FactoryMap<Method, Converter> myScalarConverters = new FactoryMap<Method, Converter>() {
+    protected Converter create(final Method method) {
+      final Type returnType = method.getGenericReturnType();
+      final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;
+      final Class parameter = DomReflectionUtil.substituteGenericType(type, myType);
+      assert parameter != null : type + " " + myType;
+      final Converter converter = getConverter(new Function<Class<? extends Annotation>, Annotation>() {
+        public Annotation fun(final Class<? extends Annotation> s) {
+          return DomReflectionUtil.findAnnotationDFS(method, s);
+        }
+      }, parameter, type instanceof TypeVariable ? myGenericConverterFactory : Factory.NULL_FACTORY);
+      assert converter != null : "No converter specified: String<->" + parameter.getName();
+      return converter;
     }
   };
 
@@ -106,14 +125,13 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myGenericConverter = converter;
     myInvocationCache =
       manager.getInvocationCache(new Pair<Type, Type>(concreteInterface, converter == null ? null : converter.getClass()));
-    final Class<?> rawType = DomReflectionUtil.getRawType(concreteInterface);
+    final Class<?> rawType = getRawType();
     Class<? extends DomElement> implementation = manager.getImplementation(rawType);
-    if (implementation == null && !rawType.isInterface()) {
+    final boolean isInterface = ReflectionCache.isInterface(rawType);
+    if (implementation == null && !isInterface) {
       implementation = (Class<? extends DomElement>)rawType;
     }
-    myProxy = rawType.isInterface()
-              ? AdvancedProxy.createProxy(this, implementation, rawType)
-              : AdvancedProxy.createProxy(this, implementation, ArrayUtil.EMPTY_CLASS_ARRAY);
+    myProxy = AdvancedProxy.createProxy(this, implementation, isInterface ? new Class[]{rawType} : ArrayUtil.EMPTY_CLASS_ARRAY);
     attach(tag);
   }
 
@@ -193,7 +211,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public final <T extends DomElement> T createMockCopy(final boolean physical) {
-    final T copy = myManager.createMockElement((Class<? extends T>)DomReflectionUtil.getRawType(myType), getModule(), physical);
+    final T copy = myManager.createMockElement((Class<? extends T>)getRawType(), getModule(), physical);
     copy.copyFrom(getProxy());
     return copy;
   }
@@ -369,16 +387,8 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   @NotNull
-  protected final Converter getScalarConverter(final Type type, final Method method) {
-    final Class parameter = DomReflectionUtil.substituteGenericType(type, myType);
-    assert parameter != null : type + " " + myType;
-    final Converter converter = getConverter(new Function<Class<? extends Annotation>, Annotation>() {
-      public Annotation fun(final Class<? extends Annotation> s) {
-        return DomReflectionUtil.findAnnotationDFS(method, s);
-      }
-    }, parameter, type instanceof TypeVariable ? myGenericConverterFactory : Factory.NULL_FACTORY);
-    assert converter != null : "No converter specified: String<->" + parameter.getName();
-    return converter;
+  protected final Converter getScalarConverter(final Method method) {
+    return myScalarConverters.get(method);
   }
 
   @Nullable
@@ -418,7 +428,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public final DomNameStrategy getNameStrategy() {
-    final Class<?> rawType = DomReflectionUtil.getRawType(myType);
+    final Class<?> rawType = getRawType();
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(rawType, isAttribute());
     if (strategy != null) {
       return strategy;
@@ -465,11 +475,11 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   protected final Invocation createInvocation(final Method method) throws IllegalAccessException, InstantiationException {
     if (DomImplUtil.isTagValueGetter(method)) {
-      return createGetValueInvocation(getScalarConverter(method.getGenericReturnType(), method), method);
+      return createGetValueInvocation(getScalarConverter(method), method);
     }
 
     if (DomImplUtil.isTagValueSetter(method)) {
-      return createSetValueInvocation(getScalarConverter(method.getGenericParameterTypes()[0], method), method);
+      return createSetValueInvocation(getScalarConverter(method), method);
     }
 
     return myGenericInfo.createInvocation(method);
@@ -524,7 +534,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   public final Object doInvoke(final JavaMethodSignature signature, final Object... args) throws Throwable {
     Invocation invocation = myInvocationCache.getInvocation(signature);
     if (invocation == null) {
-      invocation = createInvocation(signature.findMethod(DomReflectionUtil.getRawType(myType)));
+      invocation = createInvocation(signature.findMethod(getRawType()));
       myInvocationCache.putInvocation(signature, invocation);
     }
     return invocation.invoke(this, args);
@@ -557,7 +567,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
         if (ATTRIBUTES.equals(qname)) {
           for (Map.Entry<JavaMethodSignature, String> entry : myGenericInfo.getAttributeChildrenEntries()) {
-            getOrCreateAttributeChild(entry.getKey().findMethod(DomReflectionUtil.getRawType(myType)), entry.getValue());
+            getOrCreateAttributeChild(entry.getKey().findMethod(getRawType()), entry.getValue());
           }
         }
 
@@ -606,17 +616,27 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   private IndexedElementInvocationHandler createIndexedChild(final XmlTag subTag, final Pair<String, Integer> pair) {
-    final JavaMethodSignature signature = myGenericInfo.getFixedChildGetter(pair);
     final String qname = pair.getFirst();
-    final Class<?> rawType = DomReflectionUtil.getRawType(myType);
-    final Method method = signature.findMethod(rawType);
-    Type type = method.getGenericReturnType();
+    final Type type = getIndexedChildType(qname, pair);
+    return new IndexedElementInvocationHandler(type, subTag, this, qname, pair.getSecond());
+  }
+
+  private Type getIndexedChildType(final String qname, final Pair<String, Integer> pair) {
+    final Type type;
     if (myFixedChildrenClasses.containsKey(qname)) {
       type = getFixedChildrenClass(qname);
     }
-    final SubTag annotationDFS = signature.findAnnotation(SubTag.class, rawType);
-    final boolean indicator = annotationDFS != null && annotationDFS.indicator();
-    return new IndexedElementInvocationHandler(type, subTag, this, qname, pair.getSecond(), indicator);
+    else {
+      final JavaMethodSignature signature = myGenericInfo.getFixedChildGetter(pair);
+      final Method method = signature.findMethod(getRawType());
+      assert method != null;
+      type = method.getGenericReturnType();
+    }
+    return type;
+  }
+
+  protected final Class<?> getRawType() {
+    return DomReflectionUtil.getRawType(myType);
   }
 
   protected final Class getFixedChildrenClass(final String tagName) {
@@ -742,7 +762,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   public void setFixedChildClass(final String tagName, final Class<? extends DomElement> aClass) {
     synchronized (PsiLock.LOCK) {
-      assert!myInitializedChildren.contains(tagName);
+      assert !myInitializedChildren.contains(tagName);
       myFixedChildrenClasses.put(tagName, aClass);
     }
   }

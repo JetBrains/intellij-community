@@ -16,10 +16,12 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionCache;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -76,11 +78,11 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
       }
     }
 
-    PsiReference[] references = createReferences(domValue, (XmlElement)psiElement, soft);
+    PsiReference[] references = createReferences(domValue, (XmlElement)psiElement, soft, converter);
 
     // creating "declaration" reference
     DomElement parent = domElement.getParent();
-    if (domElement.equals(parent.getGenericInfo().getNameDomElement(parent)) && references.length == 0) {
+    if (references.length == 0) {
       final NameValue nameValue = domElement.getAnnotation(NameValue.class);
       if (nameValue != null && nameValue.referencable()) {
         references = ArrayUtil.append(references, PsiReferenceBase.createSelfReference(psiElement, parent.getXmlElement()), PsiReference.class);
@@ -89,22 +91,25 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     return references;
   }
 
-  @NotNull
-  protected final PsiReference[] createReferences(GenericDomValue domValue, XmlElement psiElement, boolean soft) {
+  private static <T extends Annotation> DomInvocationHandler getInvocationHandler(final GenericDomValue domValue) {
+    return DomManagerImpl.getDomInvocationHandler(domValue);
+  }
 
-    Converter converter = domValue.getConverter();
+  @NotNull
+  protected final PsiReference[] createReferences(GenericDomValue domValue, XmlElement psiElement, boolean soft, final Converter converter) {
     if (converter instanceof PsiReferenceConverter) {
       return ((PsiReferenceConverter)converter).createReferences(psiElement, false);
     }
 
-    final Class clazz = DomUtil.getGenericValueParameter(domValue.getDomElementType());
+    final DomInvocationHandler invocationHandler = getInvocationHandler(domValue);
+    final Class clazz = DomUtil.getGenericValueParameter(invocationHandler.getDomElementType());
     if (clazz == null) return PsiReference.EMPTY_ARRAY;
 
-    if (PsiType.class.isAssignableFrom(clazz)) {
+    if (ReflectionCache.isAssignable(PsiType.class, clazz)) {
       return new PsiReference[]{new PsiTypeReference((GenericDomValue<PsiType>)domValue)};
     }
-    if (PsiClass.class.isAssignableFrom(clazz)) {
-      ExtendClass extendClass = ((DomElement)domValue).getAnnotation(ExtendClass.class);
+    if (ReflectionCache.isAssignable(PsiClass.class, clazz)) {
+      ExtendClass extendClass = invocationHandler.getAnnotation(ExtendClass.class);
       JavaClassReferenceProvider provider;
       if (extendClass == null) {
         provider = new JavaClassReferenceProvider();
@@ -114,14 +119,14 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
       }
       return provider.getReferencesByElement(psiElement);
     }
-    if (Integer.class.isAssignableFrom(clazz)) {
+    if (ReflectionCache.isAssignable(Integer.class, clazz)) {
       return new PsiReference[]{new GenericDomValueReference<Integer>((GenericDomValue<Integer>)domValue, true) {
         public Object[] getVariants() {
           return new Object[]{"239", "42"};
         }
       }};
     }
-    if (String.class.isAssignableFrom(clazz)) {
+    if (ReflectionCache.isAssignable(String.class, clazz)) {
       return PsiReference.EMPTY_ARRAY;
     }
     PsiReferenceFactory provider = myProviders.get(clazz);

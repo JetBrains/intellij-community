@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.SubTag;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 
 import java.lang.annotation.Annotation;
@@ -19,20 +20,19 @@ import java.lang.reflect.Type;
 public class IndexedElementInvocationHandler extends DomInvocationHandler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.IndexedElementInvocationHandler");
   private final int myIndex;
-  private final boolean myIndicator;
 
   public IndexedElementInvocationHandler(final Type aClass,
                                          final XmlTag tag,
                                          final DomInvocationHandler parent,
                                          final String tagName,
-                                         final int index, final boolean indicator) {
+                                         final int index) {
     super(aClass, tag, parent, tagName, parent.getManager());
     myIndex = index;
-    myIndicator = indicator;
   }
 
   final boolean isIndicator() {
-    return myIndicator;
+    final SubTag annotation = getAnnotation(SubTag.class);
+    return annotation != null && annotation.indicator();
   }
 
   public final int getIndex() {

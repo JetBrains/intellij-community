@@ -23,9 +23,9 @@ public class JavaMethodSignature {
   private static final Map<Pair<String, Class[]>, JavaMethodSignature> ourSignatures2 = new HashMap<Pair<String, Class[]>, JavaMethodSignature>();
   private final String myMethodName;
   private final Class[] myMethodParameters;
-  private final Set<Class> myKnownClasses = new THashSet<Class>();
-  private final List<Method> myAllMethods = new SmartList<Method>();
-  private final Map<Class,Method> myMethods = new THashMap<Class, Method>();
+  private final Set<Class> myKnownClasses = Collections.synchronizedSet(new THashSet<Class>());
+  private final List<Method> myAllMethods = Collections.synchronizedList(new SmartList<Method>());
+  private final Map<Class,Method> myMethods = Collections.synchronizedMap(new THashMap<Class, Method>());
 
   private JavaMethodSignature(final String methodName, final Class[] methodParameters) {
     myMethodName = methodName;
@@ -41,42 +41,63 @@ public class JavaMethodSignature {
   }
 
   public final Object invoke(final Object instance, final Object... args) throws IllegalAccessException, InvocationTargetException {
-    return findMethod(instance.getClass()).invoke(instance, args);
+    final Class<? extends Object> aClass = instance.getClass();
+    final Method method = findMethod(aClass);
+    assert method != null : "No method " + this + " in " + aClass;
+    return method.invoke(instance, args);
   }
 
+  @Nullable
   public final Method findMethod(final Class aClass) {
-    Method method = myMethods.get(aClass);
-    if (method == null) {
-      try {
-        method = aClass.getMethod(myMethodName, myMethodParameters);
-      }
-      catch (NoSuchMethodException e) {
-        throw new AssertionError(e);
-      }
-      myMethods.put(aClass, method);
+    if (myMethods.containsKey(aClass)) {
+      return myMethods.get(aClass);
     }
+    Method method = getDeclaredMethod(aClass);
+    if (method == null && ReflectionCache.isInterface(aClass)) {
+      method = getDeclaredMethod(Object.class);
+    }
+    myMethods.put(aClass, method);
     return method;
+  }
+
+  private void addKnownMethod(Method method) {
+    final Class<?> aClass = method.getDeclaringClass();
+    if (!myKnownClasses.contains(aClass)) {
+      addMethodWithSupers(aClass, method);
+    }
   }
 
   private void addMethodsIfNeeded(final Class aClass) {
     if (!myKnownClasses.contains(aClass)) {
-      try {
-        myKnownClasses.add(aClass);
-        myAllMethods.add(aClass.getDeclaredMethod(myMethodName, myMethodParameters));
+      addMethodWithSupers(aClass, findMethod(aClass));
+    }
+  }
+
+  @Nullable
+  private Method getDeclaredMethod(final Class aClass) {
+    try {
+      return aClass.getMethod(myMethodName, myMethodParameters);
+    }
+    catch (NoSuchMethodException e) {
+      return null;
+    }
+  }
+
+  private void addMethodWithSupers(final Class aClass, final Method method) {
+    myKnownClasses.add(aClass);
+    if (method != null) {
+      myAllMethods.add(method);
+    }
+    final Class superClass = aClass.getSuperclass();
+    if (superClass != null) {
+      addMethodsIfNeeded(superClass);
+    } else {
+      if (aClass.isInterface()) {
+        addMethodsIfNeeded(Object.class);
       }
-      catch (NoSuchMethodException e) {
-      }
-      final Class superClass = aClass.getSuperclass();
-      if (superClass != null) {
-        addMethodsIfNeeded(superClass);
-      } else {
-        if (aClass.isInterface()) {
-          addMethodsIfNeeded(Object.class);
-        }
-      }
-      for (final Class anInterface : aClass.getInterfaces()) {
-        addMethodsIfNeeded(anInterface);
-      }
+    }
+    for (final Class anInterface : aClass.getInterfaces()) {
+      addMethodsIfNeeded(anInterface);
     }
   }
 
@@ -119,6 +140,7 @@ public class JavaMethodSignature {
       if (methodSignature == null) {
         ourSignatures.put(method, methodSignature = getSignature(method.getName(), method.getParameterTypes()));
       }
+      //methodSignature.addKnownMethod(method);
     }
     return methodSignature;
   }

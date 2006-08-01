@@ -20,6 +20,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,6 +109,8 @@ public class PsiTreeUtil {
     else if (aClass == PsiStatement.class) return child instanceof PsiStatement;
     else if (aClass == PsiCodeBlock.class) return child instanceof PsiCodeBlock;
     else if (aClass == PsiClassInitializer.class) return child instanceof PsiClassInitializer;
+    else if (aClass == XmlTag.class) return child instanceof XmlTag;
+    else if (aClass == XmlDocument.class) return child instanceof XmlDocument;
 
     return aClass.isInstance(child);
   }
@@ -160,7 +165,7 @@ public class PsiTreeUtil {
 
   @Nullable
   public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict) {
-    return getParentOfType(element, aClass, strict, !PsiDirectory.class.isAssignableFrom(aClass));
+    return getParentOfType(element, aClass, strict, !ReflectionCache.isAssignable(PsiDirectory.class, aClass));
   }
 
   @Nullable

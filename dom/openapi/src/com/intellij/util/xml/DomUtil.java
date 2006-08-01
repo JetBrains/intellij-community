@@ -21,7 +21,7 @@ import java.util.*;
  * @author peter
  */
 public class DomUtil {
-  private static final TypeVariable GENERIC_VALUE_TYPE_VARIABLE = ReflectionCache.getTypeParameters(GenericValue.class)[0];
+  public static final TypeVariable<Class<GenericValue>> GENERIC_VALUE_TYPE_VARIABLE = ReflectionCache.getTypeParameters(GenericValue.class)[0];
 
   private DomUtil() {
   }

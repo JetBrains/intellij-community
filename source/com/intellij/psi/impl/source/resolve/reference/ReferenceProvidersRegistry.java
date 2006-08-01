@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
 import com.intellij.psi.jsp.el.ELLiteralExpression;
 import com.intellij.psi.xml.*;
 import com.intellij.util.Function;
+import com.intellij.util.ReflectionCache;
 import com.intellij.xml.util.HtmlReferenceProvider;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -801,7 +802,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   private boolean isScopeFinal(Class scopeClass) {
 
     for (final Class aClass : myTempScopes) {
-      if (aClass.isAssignableFrom(scopeClass)) {
+      if (ReflectionCache.isAssignable(aClass, scopeClass)) {
         return false;
       }
     }

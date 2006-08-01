@@ -3,11 +3,11 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
@@ -30,6 +30,9 @@ public class DomReflectionUtil {
 
   public static Object invokeMethod(final Method method, final Object object, final Object... args) {
     try {
+      //if (object instanceof Factory) {
+      //  return ((net.sf.cglib.proxy.InvocationHandler)((Factory)object).getCallback(0)).invoke(object, method, args);
+      //}
       return method.invoke(object, args);
     }
     catch (IllegalArgumentException e) {
@@ -51,6 +54,12 @@ public class DomReflectionUtil {
       }
       throw new RuntimeException(e);
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable throwable) {
+      throw new RuntimeException(throwable);
+    }
   }
 
   public static Type resolveVariable(TypeVariable variable, final Class classType) {
@@ -71,16 +80,18 @@ public class DomReflectionUtil {
       if (resolved instanceof TypeVariable) {
         final TypeVariable typeVariable = (TypeVariable)resolved;
         index = ContainerUtil.findByEquals(ReflectionCache.getTypeParameters(anInterface), typeVariable);
-        LOG.assertTrue(index >= 0, "Cannot resolve type variable:\n" +
-                            "typeVariable = " + typeVariable + "\n" +
-                            "genericDeclaration = " + declarationToString(typeVariable.getGenericDeclaration()) + "\n" +
-                            "searching in " + declarationToString(anInterface));
+        if (index < 0) {
+          LOG.assertTrue(false, "Cannot resolve type variable:\n" +
+                              "typeVariable = " + typeVariable + "\n" +
+                              "genericDeclaration = " + declarationToString(typeVariable.getGenericDeclaration()) + "\n" +
+                              "searching in " + declarationToString(anInterface));
+        }
         final Type type = genericInterfaces[i];
         if (type instanceof Class) {
           return Object.class;
         }
         if (type instanceof ParameterizedType) {
-          return ((ParameterizedType)type).getActualTypeArguments()[index];
+          return getActualTypeArguments(((ParameterizedType)type))[index];
         }
         throw new AssertionError("Invalid type: " + type);
       }
@@ -105,7 +116,7 @@ public class DomReflectionUtil {
       if (type instanceof TypeVariable && classType instanceof ParameterizedType) {
         final int index = ContainerUtil.findByEquals(ReflectionCache.getTypeParameters(aClass), type);
         if (index >= 0) {
-          return getRawType(((ParameterizedType)classType).getActualTypeArguments()[index]);
+          return getRawType(getActualTypeArguments(((ParameterizedType)classType))[index]);
         }
       }
     } else {
@@ -150,7 +161,7 @@ public class DomReflectionUtil {
       if (rawType instanceof Class) {
         final Class<?> rawClass = (Class<?>)rawType;
         if (List.class.equals(rawClass) || Collection.class.equals(rawClass)) {
-          final Type[] arguments = parameterizedType.getActualTypeArguments();
+          final Type[] arguments = getActualTypeArguments(parameterizedType);
           if (arguments.length == 1) {
             final Type argument = arguments[0];
             if (argument instanceof WildcardType) {
@@ -172,6 +183,10 @@ public class DomReflectionUtil {
       }
     }
     return null;
+  }
+
+  private static Type[] getActualTypeArguments(final ParameterizedType parameterizedType) {
+    return ReflectionCache.getActualTypeArguments(parameterizedType);
   }
 
   public static boolean canHaveIsPropertyGetterPrefix(final Type type) {
