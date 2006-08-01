@@ -468,23 +468,41 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     }
 
     public void update(AnActionEvent e) {
-      final TreePath selectionPath = myTree.getSelectionPath();
-      e.getPresentation().setEnabled(selectionPath != null && myCondition.value(selectionPath.getLastPathComponent()));
+      final Presentation presentation = e.getPresentation();
+      presentation.setEnabled(false);
+      final TreePath[] selectionPath = myTree.getSelectionPaths();
+      if (selectionPath != null){
+        for (TreePath path : selectionPath) {
+          if (!myCondition.value(path.getLastPathComponent())) return;
+        }
+        presentation.setEnabled(true);
+      }
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final TreePath selectionPath = myTree.getSelectionPath();
-      final MyNode node = (MyNode)selectionPath.getLastPathComponent();
-      final Object editableObject = node.getConfigurable().getEditableObject();
-      final MyNode parentNode = (MyNode)node.getParent();
-      final int idx = parentNode.getIndex(node);
-      parentNode.remove(node);
-      ((DefaultTreeModel)myTree.getModel()).reload(parentNode);
-      TreeUtil
-        .selectInTree((DefaultMutableTreeNode)(idx < parentNode.getChildCount() ? parentNode.getChildAt(idx) : parentNode), true, myTree);
-      myTree.repaint();
-      myHasDeletedItems = wasObjectStored(editableObject);
-      fireItemsChangeListener(editableObject);
+      removePaths(myTree.getSelectionPaths());
+    }
+
+    protected void removePaths(final TreePath[] paths) {
+      MyNode parentNode = null;
+      int idx = -1;
+      for (TreePath path : paths) {
+        final MyNode node = (MyNode)path.getLastPathComponent();
+        final Object editableObject = node.getConfigurable().getEditableObject();
+        parentNode = (MyNode)node.getParent();
+        idx = parentNode.getIndex(node);
+        parentNode.remove(node);
+        myHasDeletedItems |= wasObjectStored(editableObject);
+        fireItemsChangeListener(editableObject);
+      }
+      ((DefaultTreeModel)myTree.getModel()).reload();
+      if (parentNode != null && idx != -1){
+        TreeUtil.selectInTree((DefaultMutableTreeNode)(idx < parentNode.getChildCount()
+                                                       ? parentNode.getChildAt(idx)
+                                                       : parentNode), true, myTree);
+      } else {
+        TreeUtil.selectFirstNode(myTree);
+      }
     }
   }
 

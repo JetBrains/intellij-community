@@ -765,7 +765,17 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final TreePath selectionPath = myTree.getSelectionPath();
+      final TreePath[] paths = myTree.getSelectionPaths();
+      final Set<TreePath> pathsToRemove = new HashSet<TreePath>();
+      for (TreePath path : paths) {
+        if (removeFromModel(path)){
+          pathsToRemove.add(path);
+        }
+      }
+      removePaths(pathsToRemove.toArray(new TreePath[pathsToRemove.size()]));
+    }
+
+    private boolean removeFromModel(final TreePath selectionPath) {
       final MyNode node = (MyNode)selectionPath.getLastPathComponent();
       final NamedConfigurable configurable = node.getConfigurable();
       final Object editableObject = configurable.getEditableObject();
@@ -775,7 +785,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       else if (editableObject instanceof Module) {
         if (!myModulesConfigurator.deleteModule((Module)editableObject)){
           //wait for confirmation
-          return;
+          return false;
         }
       }
       else if (editableObject instanceof Library) {
@@ -799,7 +809,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
           myModulesConfigurator.getModuleEditor(module).updateOrderEntriesInEditors(); //in order to update classpath panel
         }
       }
-      super.actionPerformed(e);
+      return true;
     }
   }
 
