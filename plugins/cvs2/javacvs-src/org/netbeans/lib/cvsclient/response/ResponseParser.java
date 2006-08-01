@@ -237,7 +237,7 @@ public final class ResponseParser {
     int read = 0;
     final ByteArrayOutputStream bufferStream = new ByteArrayOutputStream();
     while (read < fileLength) {
-      final int readBytes = connectionStreams.getInputStream().read(buffer, 0, fileLength);
+      final int readBytes = connectionStreams.getInputStream().read(buffer, 0, fileLength - read);
       bufferStream.write(buffer, 0, readBytes);
       read += readBytes;
     }
