@@ -12,6 +12,7 @@ import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.admin.Entries;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.CommandException;
@@ -167,7 +168,7 @@ public class CvsInfo {
     }
   }
 
-  public Collection getEntries() {
+  public Collection<Entry> getEntries() {
     return getCvsEntries().getEntries();
   }
 
@@ -175,7 +176,7 @@ public class CvsInfo {
     return CvsVfsUtil.getFileFor(myParent);
   }
 
-  private Entries createEntriesFor(File parent) {
+  private static Entries createEntriesFor(File parent) {
     Entries entries = CvsUtil.getEntriesIn(new File(parent.getPath()));
     if (entries == null) {
       return new Entries();
@@ -263,11 +264,11 @@ public class CvsInfo {
     }
 
     public IConnection createConnection(ReadWriteStatistics statistics) {
-      throw new RuntimeException(com.intellij.CvsBundle.message("exception.text.cannot.connect.with.invalid.root"));
+      throw new RuntimeException(CvsBundle.message("exception.text.cannot.connect.with.invalid.root"));
     }
 
     protected IConnection createOriginalConnection(ErrorRegistry errorRegistry, CvsRootConfiguration cvsRootConfiguration) {
-      throw new RuntimeException(com.intellij.CvsBundle.message("exception.text.cannot.connect.with.invalid.root"));
+      throw new RuntimeException(CvsBundle.message("exception.text.cannot.connect.with.invalid.root"));
     }
 
     public CommandException processException(CommandException t) {
@@ -275,8 +276,8 @@ public class CvsInfo {
     }
 
     public boolean login(ModalityContext executor) {
-      Messages.showMessageDialog(com.intellij.CvsBundle.message("message.error.invalid.cvs.root", myStringRepsentation),
-                                 com.intellij.CvsBundle.message("message.error.cannot.connect.to.cvs.title"),
+      Messages.showMessageDialog(CvsBundle.message("message.error.invalid.cvs.root", myStringRepsentation),
+                                 CvsBundle.message("message.error.cannot.connect.to.cvs.title"),
                                  Messages.getErrorIcon());
 
       return false;

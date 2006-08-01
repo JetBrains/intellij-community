@@ -25,97 +25,89 @@ import java.util.*;
  */
 public final class Entries {
 
-	// Fields =================================================================
+  // Fields =================================================================
 
-	private final Map fileNameToEntryMap = new HashMap();
+  private final Map<String, Entry> fileNameToEntryMap = new HashMap<String, Entry>();
   @NonNls private static final String DIRECTORY_PREFIX = "D";
 
-  // Setup ==================================================================
+  // Accessing ==============================================================
 
-	public Entries() {
-	}
+  public void addEntry(Entry entry) {
+    BugLog.getInstance().assertNotNull(entry);
+    BugLog.getInstance().assertNotNull(entry.getFileName());
 
-	// Accessing ==============================================================
+    fileNameToEntryMap.put(entry.getFileName(), entry);
+  }
 
-	public void addEntry(Entry entry) {
-		BugLog.getInstance().assertNotNull(entry);
-		BugLog.getInstance().assertNotNull(entry.getFileName());
+  public boolean removeEntry(String fileName) {
+    BugLog.getInstance().assertNotNull(fileName);
 
-		fileNameToEntryMap.put(entry.getFileName(), entry);
-	}
+    return fileNameToEntryMap.remove(fileName) != null;
+  }
 
-	public boolean removeEntry(String fileName) {
-		BugLog.getInstance().assertNotNull(fileName);
+  public Entry getEntry(String fileName) {
+    return fileNameToEntryMap.get(fileName);
+  }
 
-		return fileNameToEntryMap.remove(fileName) != null;
-	}
+  public Collection<Entry> getEntries() {
+    return Collections.unmodifiableCollection(fileNameToEntryMap.values());
+  }
 
-	public Entry getEntry(String fileName) {
-		return (Entry)fileNameToEntryMap.get(fileName);
-	}
+  public void getEntries(Collection<Entry> collection) {
+    collection.addAll(fileNameToEntryMap.values());
+  }
 
-	public Collection getEntries() {
-		return Collections.unmodifiableCollection(fileNameToEntryMap.values());
-	}
+  public int size() {
+    return fileNameToEntryMap.size();
+  }
 
-	public void getEntries(Collection collection) {
-		collection.addAll(fileNameToEntryMap.values());
-	}
+  // Actions ================================================================
 
-	public int size() {
-		return fileNameToEntryMap.size();
-	}
+  public void read(File entriesFile, final String charsetName) throws IOException {
+    try {
+      read(new InputStreamReader(new FileInputStream(entriesFile), charsetName));
+    }
+    catch (InvalidEntryFormatException ex) {
+      ex.setEntriesFile(entriesFile);
+      throw ex;
+    }
+  }
 
-	// Actions ================================================================
+  public void read(Reader reader) throws IOException {
+    final BufferedReader lineReader = new BufferedReader(reader);
+    try {
+      for (String line = lineReader.readLine(); line != null; line = lineReader.readLine()) {
+        if (line.trim().length() == 0) {
+          continue;
+        }
 
-	public void read(File entriesFile, final String charsetName) throws IOException {
-		try {
-			read(new InputStreamReader(new FileInputStream(entriesFile), charsetName));
-		}
-		catch (InvalidEntryFormatException ex) {
-			ex.setEntriesFile(entriesFile);
-			throw ex;
-		}
-	}
+        if (line.startsWith(DIRECTORY_PREFIX) && line.trim().length() == 1) {
+          continue;
+        }
 
-	public void read(Reader reader) throws IOException {
-		final BufferedReader lineReader = new BufferedReader(reader);
-		try {
-			for (String line = lineReader.readLine();
-			     line != null;
-			     line = lineReader.readLine()) {
-				if (line.trim().length() == 0) {
-					continue;
-				}
+        addEntry(Entry.createEntryForLine(line));
+      }
+    }
+    finally {
+      lineReader.close();
+    }
+  }
 
-				if (line.startsWith(DIRECTORY_PREFIX) && line.trim().length() == 1) {
-					continue;
-				}
-
-				addEntry(Entry.createEntryForLine(line));
-			}
-		}
-		finally {
-			lineReader.close();
-		}
-	}
-
-	public void write(File entriesFile, String lineSeparator, final String charsetName) throws IOException {
-		final File tempFile = new File(entriesFile.getAbsolutePath() + "~");
+  public void write(File entriesFile, String lineSeparator, final String charsetName) throws IOException {
+    final File tempFile = new File(entriesFile.getAbsolutePath() + "~");
     FileOutputStream fileOutputStream = new FileOutputStream(tempFile);
     final OutputStreamWriter writer = new OutputStreamWriter(fileOutputStream, charsetName);
-		write(writer, lineSeparator);
-		if (entriesFile.exists()) {
-			if (!entriesFile.delete()) {
-				throw new IOException(
-                                  JavaCvsSrcBundle.message("could.not.delete.file.error.message", entriesFile.getAbsolutePath()));
-			}
-		}
+    write(writer, lineSeparator);
+    if (entriesFile.exists()) {
+      if (!entriesFile.delete()) {
+        throw new IOException(JavaCvsSrcBundle.message("could.not.delete.file.error.message", entriesFile.getAbsolutePath()));
+      }
+    }
 
-		FileUtil.rename(tempFile, entriesFile);
-	}
+    FileUtil.rename(tempFile, entriesFile);
+  }
 
-	public void write(Writer writer, String lineSeparator) throws IOException {
+  public void write(Writer writer, String lineSeparator) throws IOException {
     writer = new BufferedWriter(writer);
     try {
       if (fileNameToEntryMap.size() == 0) {
@@ -126,8 +118,7 @@ public final class Entries {
         final Entry[] entryArray = new Entry[fileNameToEntryMap.size()];
         fileNameToEntryMap.values().toArray(entryArray);
         Arrays.sort(entryArray, new EntriesComparator());
-        for (int i = 0; i < entryArray.length; i++) {
-          final Entry entry = entryArray[i];
+        for (final Entry entry : entryArray) {
           writer.write(entry.toString());
           writer.write(lineSeparator);
         }
@@ -136,22 +127,20 @@ public final class Entries {
     finally {
       writer.close();
     }
-	}
+  }
 
-	// Inner classes ==========================================================
+  // Inner classes ==========================================================
 
-	private static final class EntriesComparator implements Comparator {
+  private static final class EntriesComparator implements Comparator<Entry> {
 
-		public int compare(Object obj1, Object obj2) {
-			final Entry entry1 = (Entry)obj1;
-			final Entry entry2 = (Entry)obj2;
-			if (entry1.isDirectory() != entry2.isDirectory()) {
-				if (entry1.isDirectory()) {
-					return -1;
-				}
-				return +1;
-			}
-			return entry1.getFileName().compareTo(entry2.getFileName());
-		}
-	}
+    public int compare(Entry entry1, Entry entry2) {
+      if (entry1.isDirectory() != entry2.isDirectory()) {
+        if (entry1.isDirectory()) {
+          return -1;
+        }
+        return +1;
+      }
+      return entry1.getFileName().compareTo(entry2.getFileName());
+    }
+  }
 }
