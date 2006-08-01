@@ -98,7 +98,14 @@ public class AntElementFactory {
       }
     }
     if (result == null) {
-      result = new AntStructuredElementImpl(parent, tag, typeDef);
+      // HACK for the <tstamp> properties
+      result = (!"format".equals(tag.getName()))
+               ? new AntStructuredElementImpl(parent, tag, typeDef)
+               : new AntStructuredElementImpl(parent, tag, typeDef, "property") {
+                 public String getName() {
+                   return super.getName();//getSourceElement().getName();
+                 }
+               };
     }
     result.setImportedTypeDefinition(importedType);
     return result;

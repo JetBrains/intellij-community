@@ -4,6 +4,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntElementImpl;
+import com.intellij.lang.ant.psi.impl.AntPropertyImpl;
 import com.intellij.lang.ant.quickfix.AntCreatePropertyAction;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -82,7 +83,11 @@ public class AntPropertyReference extends AntGenericReference {
   }
 
   public PsiElement resolve() {
-    return AntElementImpl.resolveProperty(getElement(), getCanonicalText());
+    final PsiElement element = AntElementImpl.resolveProperty(getElement(), getCanonicalText());
+    if(element instanceof AntPropertyImpl) {
+      return ((AntPropertyImpl)element).getFormatElement();
+    }
+    return element;
   }
 
   public String getUnresolvedMessagePattern() {

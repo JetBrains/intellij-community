@@ -4,6 +4,7 @@ import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.psi.AntCall;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProperty;
+import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiElement;
@@ -12,10 +13,8 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -111,21 +110,6 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     return (value != null) ? value.getValue() : super.getName();
   }
 
-  public PsiElement setName(@NotNull final String name) throws IncorrectOperationException {
-    final XmlTag se = getSourceElement();
-    if ("tstamp".equals(se.getName())) {
-      final XmlTag formatTag = se.findFirstSubTag("format");
-      if (formatTag != null) {
-        final XmlAttribute propAttr = formatTag.getAttribute("property", null);
-        if (propAttr != null) {
-          propAttr.setValue(name);
-          return this;
-        }
-      }
-    }
-    return super.setName(name);
-  }
-
   public AntElementRole getRole() {
     return AntElementRole.PROPERTY_ROLE;
   }
@@ -190,6 +174,24 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   public int getTextOffset() {
     final XmlAttributeValue value = getTstampPropertyAttributeValue();
     return (value != null) ? value.getTextOffset() : super.getTextOffset();
+  }
+
+  /**
+   * @return <format> element for the <tstamp> property
+   */
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public AntElement getFormatElement() {
+    if (getTstampPropertyAttributeValue() != null) {
+      for (final AntElement child : getChildren()) {
+        if (child instanceof AntStructuredElement) {
+          final AntStructuredElement se = (AntStructuredElement)child;
+          if (se.getSourceElement().getName().equals("format")) {
+            return child;
+          }
+        }
+      }
+    }
+    return this;
   }
 
   @Nullable
