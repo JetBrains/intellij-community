@@ -191,17 +191,24 @@ public class GenericsHighlightUtil {
     }
   }
 
-  public static HighlightInfo checkTypeParameterExtendsList(PsiReferenceList referenceList, JavaResolveResult resolveResult, PsiElement context) {
+  public static HighlightInfo checkElementInTypeParameterExtendsList(PsiReferenceList referenceList, JavaResolveResult resolveResult, PsiElement element) {
     PsiClass aClass = (PsiClass)referenceList.getParent();
     final PsiJavaCodeReferenceElement[] referenceElements = referenceList.getReferenceElements();
     HighlightInfo errorResult = null;
     PsiClass extendFrom = (PsiClass)resolveResult.getElement();
     if (extendFrom == null) return null;
-    if (!extendFrom.isInterface() && referenceElements.length != 0 && context != referenceElements[0]) {
+    if (!extendFrom.isInterface() && referenceElements.length != 0 && element != referenceElements[0]) {
       final String description = HighlightClassUtil.INTERFACE_EXPECTED;
-      errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, context, description);
+      errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, description);
       PsiClassType type = aClass.getManager().getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
       QuickFixAction.registerQuickFixAction(errorResult, new MoveBoundClassToFrontFix(aClass, type), null, null);
+    }
+    else if (referenceElements.length != 0 && element != referenceElements[0] && referenceElements[0].resolve() instanceof PsiTypeParameter) {
+      final String description = JavaErrorMessages.message("type.parameter.cannot.be.followed.by.other.bounds");
+      errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, description);
+      PsiClassType type = aClass.getManager().getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
+      IntentionAction fix = QUICK_FIX_FACTORY.createExtendsListFix(aClass, type, false);
+      QuickFixAction.registerQuickFixAction(errorResult, fix, null, null);
     }
     return errorResult;
   }
@@ -353,17 +360,13 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  private static PsiElement getSuperParent(PsiReferenceParameterList paramList) {
-    PsiElement parent = paramList.getParent();
-    LOG.assertTrue(parent instanceof PsiJavaCodeReferenceElement);
-    return parent.getParent();
-  }
-
   public static HighlightInfo checkWildcardUsage(PsiTypeElement typeElement) {
     PsiType type = typeElement.getType();
     if (type instanceof PsiWildcardType) {
       if (typeElement.getParent() instanceof PsiReferenceParameterList) {
-        PsiElement refParent = getSuperParent((PsiReferenceParameterList)typeElement.getParent());
+        PsiElement parent = typeElement.getParent().getParent();
+        LOG.assertTrue(parent instanceof PsiJavaCodeReferenceElement);
+        PsiElement refParent = parent.getParent();
         if (refParent instanceof PsiAnonymousClass) refParent = refParent.getParent();
         if (refParent instanceof PsiNewExpression) {
           PsiNewExpression newExpression = (PsiNewExpression)refParent;
@@ -534,7 +537,7 @@ public class GenericsHighlightUtil {
 
     castType = castType.getDeepComponentType();
     if (castType instanceof PsiClassType) {
-      final PsiClassType castClassType = ((PsiClassType)castType);
+      final PsiClassType castClassType = (PsiClassType)castType;
       operandType = operandType.getDeepComponentType();
 
       if (!(operandType instanceof PsiClassType)) return false;
@@ -664,7 +667,7 @@ public class GenericsHighlightUtil {
       String displayName = UncheckedWarningLocalInspection.DISPLAY_NAME;
       QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(parameter, itemType), null, displayName);
     } else {
-      highlightInfo = GenericsHighlightUtil.checkRawToGenericAssignment(parameterType, itemType, statement.getIterationParameter());
+      highlightInfo = checkRawToGenericAssignment(parameterType, itemType, statement.getIterationParameter());
     }
     return highlightInfo;
   }

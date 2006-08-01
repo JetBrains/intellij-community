@@ -1964,7 +1964,7 @@ public class HighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkReferenceList(PsiJavaCodeReferenceElement ref,
+  public static HighlightInfo checkElementInReferenceList(PsiJavaCodeReferenceElement ref,
                                                  PsiReferenceList referenceList,
                                                  JavaResolveResult resolveResult) {
     PsiClass resolved = (PsiClass)resolveResult.getElement();
@@ -1972,7 +1972,7 @@ public class HighlightUtil {
     HighlightInfo highlightInfo = null;
     if (refGrandParent instanceof PsiClass) {
       if (refGrandParent instanceof PsiTypeParameter) {
-        highlightInfo = GenericsHighlightUtil.checkTypeParameterExtendsList(referenceList, resolveResult, ref);
+        highlightInfo = GenericsHighlightUtil.checkElementInTypeParameterExtendsList(referenceList, resolveResult, ref);
       }
       else {
         highlightInfo = HighlightClassUtil.checkExtendsClassAndImplementsInterface(referenceList, resolveResult, ref);
