@@ -21,10 +21,6 @@ public class AntPresetDefImpl extends AntAllTasksContainerImpl implements AntPre
 
   public AntPresetDefImpl(final AntStructuredElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
-  }
-
-  public void init() {
-    super.init();
     invalidatePresetDefinition();
   }
 

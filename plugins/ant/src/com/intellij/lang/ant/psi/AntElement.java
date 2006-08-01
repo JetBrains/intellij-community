@@ -8,11 +8,6 @@ import org.jetbrains.annotations.Nullable;
 public interface AntElement extends PsiAntElement {
   AntElement[] EMPTY_ARRAY = new AntElement[0];
 
-  /**
-   * Initialization of an element. Do not call it in costructors else there can happen a stak overflow.
-   */
-  void init();
-
   @NotNull
   XmlElement getSourceElement();
 

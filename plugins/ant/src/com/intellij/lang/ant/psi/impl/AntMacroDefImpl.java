@@ -25,10 +25,6 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
 
   public AntMacroDefImpl(final AntStructuredElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
-  }
-
-  public void init() {
-    super.init();
     invalidateMacroDefinition();
   }
 

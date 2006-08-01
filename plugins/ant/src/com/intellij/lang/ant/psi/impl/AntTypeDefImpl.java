@@ -23,10 +23,6 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
 
   public AntTypeDefImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
-  }
-
-  public void init() {
-    super.init();
     getDefinition();
   }
 

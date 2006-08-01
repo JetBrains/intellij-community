@@ -58,9 +58,6 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return AntSupport.getLanguage();
   }
 
-  public void init() {
-  }
-
   @NotNull
   public XmlElement getSourceElement() {
     return (XmlElement)super.getSourceElement();

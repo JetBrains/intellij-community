@@ -39,14 +39,6 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     if (myPropHolder instanceof AntCall) {
       myPropHolder = myPropHolder.getAntProject();
     }
-  }
-
-  public AntPropertyImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
-    this(parent, sourceElement, definition, "name");
-  }
-
-  public void init() {
-    super.init();
     final String name = getName();
     if (name != null) {
       myPropHolder.setProperty(name, this);
@@ -76,6 +68,10 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
         }
       }
     }
+  }
+
+  public AntPropertyImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
+    this(parent, sourceElement, definition, "name");
   }
 
   public String toString() {

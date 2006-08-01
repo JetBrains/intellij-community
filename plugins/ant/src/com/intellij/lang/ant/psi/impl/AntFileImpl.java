@@ -68,9 +68,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     super(viewProvider, AntSupport.getLanguage());
   }
 
-  public void init() {
-  }
-
   @NotNull
   public FileType getFileType() {
     return getViewProvider().getVirtualFile().getFileType();

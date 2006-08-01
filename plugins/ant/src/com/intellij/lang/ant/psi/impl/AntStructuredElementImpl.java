@@ -307,9 +307,6 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
             }
           }
         }
-        for (final AntElement child : children) {
-          child.init();
-        }
         final int count = children.size();
         return (count > 0) ? children.toArray(new AntElement[count]) : AntElement.EMPTY_ARRAY;
       }
