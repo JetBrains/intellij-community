@@ -81,7 +81,10 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     // creating "declaration" reference
     DomElement parent = domElement.getParent();
     if (domElement.equals(parent.getGenericInfo().getNameDomElement(parent)) && references.length == 0) {
-      references = ArrayUtil.append(references, PsiReferenceBase.createSelfReference(psiElement, parent.getXmlElement()), PsiReference.class);
+      final NameValue nameValue = domElement.getAnnotation(NameValue.class);
+      if (nameValue != null && nameValue.referencable()) {
+        references = ArrayUtil.append(references, PsiReferenceBase.createSelfReference(psiElement, parent.getXmlElement()), PsiReference.class);
+      }
     }
     return references;
   }

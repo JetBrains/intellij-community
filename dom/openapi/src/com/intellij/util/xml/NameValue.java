@@ -25,4 +25,5 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface NameValue {
   boolean unique() default true;
+  boolean referencable() default true;
 }
