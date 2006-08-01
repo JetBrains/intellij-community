@@ -249,8 +249,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     final PsiTypeParameter[] typeParameters1 = method1.getTypeParameters();
     final PsiTypeParameter[] typeParameters2 = method2.getTypeParameters();
-    PsiSubstitutor substitutor1 = info1.getSubstitutor();
-    PsiSubstitutor substitutor2 = info2.getSubstitutor();
+    final PsiSubstitutor classSubstitutor1 = info1.getSubstitutor(); //substitutions for method type parameters will be ignored
+    final PsiSubstitutor classSubstitutor2 = info2.getSubstitutor();
+    PsiSubstitutor methodSubstitutor1 = PsiSubstitutor.EMPTY;
+    PsiSubstitutor methodSubstitutor2 = PsiSubstitutor.EMPTY;
 
     final int max = Math.max(params1.length, params2.length);
     PsiType[] types1 = new PsiType[max];
@@ -270,21 +272,20 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (typeParameters1.length == 0 || typeParameters2.length == 0) {
       if (typeParameters1.length > 0) {
         final PsiResolveHelper resolveHelper = myArgumentsList.getManager().getResolveHelper();
-        substitutor1 = resolveHelper.inferTypeArguments(typeParameters1, types1, types2, PsiUtil.getLanguageLevel(myArgumentsList));
-      }
-      if (typeParameters2.length > 0) {
+        methodSubstitutor1 = resolveHelper.inferTypeArguments(typeParameters1, types1, types2, PsiUtil.getLanguageLevel(myArgumentsList));
+      } else if (typeParameters2.length > 0) {
         final PsiResolveHelper resolveHelper = myArgumentsList.getManager().getResolveHelper();
-        substitutor2 = resolveHelper.inferTypeArguments(typeParameters2, types2, types1, PsiUtil.getLanguageLevel(myArgumentsList));
+        methodSubstitutor2 = resolveHelper.inferTypeArguments(typeParameters2, types2, types1, PsiUtil.getLanguageLevel(myArgumentsList));
       }
     }
     else {
-      substitutor1 = createRawSubstitutor(typeParameters1);
-      substitutor2 = createRawSubstitutor(typeParameters2);
+      methodSubstitutor1 = createRawSubstitutor(typeParameters1);
+      methodSubstitutor2 = createRawSubstitutor(typeParameters2);
     }
 
     for (int i = 0; i < types1.length; i++) {
-      PsiType type1 = substitutor1.substitute(types1[i]);
-      PsiType type2 = substitutor2.substitute(types2[i]);
+      PsiType type1 = classSubstitutor1.substitute(methodSubstitutor1.substitute(types1[i]));
+      PsiType type2 = classSubstitutor2.substitute(methodSubstitutor2.substitute(types2[i]));
       PsiType argType = i < args.length ? args[i].getType() : null;
 
       final Specifics specifics = checkSubtyping(type1, type2, argType);
