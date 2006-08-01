@@ -291,9 +291,7 @@ public final class ImportCommand extends Command {
 
 				final KeywordSubstitution keywordSubstMode = getKeywordSubstMode(file.getName());
 				final boolean writable = clientEnvironment.getLocalFileReader().isWritable(fileObject, clientEnvironment.getCvsFileSystem());
-				if (keywordSubstMode != getKeywordSubstitutionOption()) {
-					requests.addKoptRequest(keywordSubstMode);
-				}
+				requests.addKoptRequest(keywordSubstMode);
 				requests.addModifiedRequest(fileObject, keywordSubstMode == KeywordSubstitution.BINARY, writable);
 			}
 		}
