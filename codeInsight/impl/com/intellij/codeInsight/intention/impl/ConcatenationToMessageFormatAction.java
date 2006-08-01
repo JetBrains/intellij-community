@@ -12,6 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,10 +22,12 @@ import java.util.List;
  * @author ven
  */
 public class ConcatenationToMessageFormatAction implements IntentionAction {
+  @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.family");
   }
 
+  @NotNull
   public String getText() {
     return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.text");
   }
@@ -68,7 +71,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
   }
 
   private static String repeatSingleQuotes(String s) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     for (int i = 0; i < s.length(); i++) {
       final char c = s.charAt(i);
       if (c == '\'') {
@@ -81,50 +84,51 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     return buffer.toString();
   }
 
-  public static boolean calculateFormatAndArguments(PsiExpression expression, StringBuffer formatString,
-                                              List<PsiExpression> args, List<PsiExpression> argsToCombine,
-                                              boolean wasLiteral) throws IncorrectOperationException {
+  public static boolean calculateFormatAndArguments(PsiExpression expression,
+                                                    StringBuffer formatString,
+                                                    List<PsiExpression> args,
+                                                    List<PsiExpression> argsToCombine,
+                                                    boolean wasLiteral) throws IncorrectOperationException {
     if (expression == null) return wasLiteral;
     if (expression instanceof PsiBinaryExpression) {
       final PsiType type = expression.getType();
-      if (type != null && type.equalsToText("java.lang.String") &&
-          ((PsiBinaryExpression) expression).getOperationSign().getTokenType() == JavaTokenType.PLUS) {
-        wasLiteral = calculateFormatAndArguments(((PsiBinaryExpression) expression).getLOperand(), formatString, args, argsToCombine, wasLiteral);
-        wasLiteral = calculateFormatAndArguments(((PsiBinaryExpression) expression).getROperand(), formatString, args, argsToCombine, wasLiteral);
-      } else if (expression instanceof PsiLiteralExpression &&
-                 ((PsiLiteralExpression) expression).getValue() instanceof String) {
+      if (type != null
+          && type.equalsToText("java.lang.String")
+          && ((PsiBinaryExpression)expression).getOperationSign().getTokenType() == JavaTokenType.PLUS) {
+        wasLiteral = calculateFormatAndArguments(((PsiBinaryExpression)expression).getLOperand(), formatString, args, argsToCombine, wasLiteral);
+        wasLiteral = calculateFormatAndArguments(((PsiBinaryExpression)expression).getROperand(), formatString, args, argsToCombine, wasLiteral);
+      }
+      else if (expression instanceof PsiLiteralExpression && ((PsiLiteralExpression)expression).getValue() instanceof String) {
         appendArgument(args, argsToCombine, formatString);
         argsToCombine.clear();
-        formatString.append(((PsiLiteralExpression) expression).getValue());
+        formatString.append(((PsiLiteralExpression)expression).getValue());
         return true;
-      } else {
-        if (wasLiteral) {
-          appendArgument(args, Collections.singletonList(expression), formatString);
-        }
-        else {
-          argsToCombine.add(expression);
-        }
       }
-    } else if (expression instanceof PsiLiteralExpression &&
-               ((PsiLiteralExpression) expression).getValue() instanceof String) {
-      appendArgument(args, argsToCombine, formatString);
-      argsToCombine.clear();
-      formatString.append(((PsiLiteralExpression) expression).getValue());
-      return true;
-    } else {
-      if (wasLiteral) {
+      else if (wasLiteral) {
         appendArgument(args, Collections.singletonList(expression), formatString);
       }
       else {
         argsToCombine.add(expression);
       }
     }
+    else if (expression instanceof PsiLiteralExpression && ((PsiLiteralExpression)expression).getValue() instanceof String) {
+      appendArgument(args, argsToCombine, formatString);
+      argsToCombine.clear();
+      formatString.append(((PsiLiteralExpression)expression).getValue());
+      return true;
+    }
+    else if (wasLiteral) {
+      appendArgument(args, Collections.singletonList(expression), formatString);
+    }
+    else {
+      argsToCombine.add(expression);
+    }
 
     return wasLiteral;
   }
 
   private static void appendArgument(List<PsiExpression> args, List<PsiExpression> argsToCombine, StringBuffer formatString) throws IncorrectOperationException {
-    if (argsToCombine.size() == 0) return;
+    if (argsToCombine.isEmpty()) return;
     PsiExpression argument = argsToCombine.get(0);
     final PsiManager manager = argument.getManager();
     final PsiElementFactory factory = manager.getElementFactory();
@@ -143,6 +147,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
 
   private static PsiExpression getBoxedArgument(PsiExpression arg) throws IncorrectOperationException {
     arg = PsiUtil.deparenthesizeExpression(arg);
+    assert arg != null;
     final PsiManager manager = arg.getManager();
     final PsiElementFactory factory = manager.getElementFactory();
     if (PsiUtil.getLanguageLevel(arg).compareTo(LanguageLevel.JDK_1_5) < 0) {
@@ -169,8 +174,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_4) < 0) return false;
-    return getEnclosingLiteralConcatenation(file, editor) != null;
+    return PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_4) >= 0 && getEnclosingLiteralConcatenation(file, editor) != null;
   }
 
   public static PsiBinaryExpression getEnclosingLiteralConcatenation(PsiFile file, Editor editor) {
@@ -179,18 +183,23 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
   }
 
   public static PsiBinaryExpression getEnclosingLiteralConcatenation(final PsiElement psiElement) {
-    PsiBinaryExpression parent = PsiTreeUtil.getParentOfType(psiElement, PsiBinaryExpression.class, false, PsiMember.class);
-    if (parent == null) return null;
-    PsiBinaryExpression concatenation=null;
+    PsiBinaryExpression element = PsiTreeUtil.getParentOfType(psiElement, PsiBinaryExpression.class, false, PsiMember.class);
+    if (element == null) return null;
+    PsiBinaryExpression concatenation = null;
+    boolean stringLiteralOccured = false;
     while (true) {
-      if (!(parent.getLOperand() instanceof PsiLiteralExpression && ((PsiLiteralExpression)parent.getLOperand()).getValue() instanceof String)
-       && !(parent.getROperand() instanceof PsiLiteralExpression && ((PsiLiteralExpression)parent.getROperand()).getValue() instanceof String)) return concatenation;
-      if (parent.getOperationSign().getTokenType() != JavaTokenType.PLUS) return concatenation;
+      PsiExpression lOperand = element.getLOperand();
+      PsiExpression rOperand = element.getROperand();
+      if (element.getOperationSign().getTokenType() != JavaTokenType.PLUS) return concatenation;
+      stringLiteralOccured |= lOperand instanceof PsiLiteralExpression && ((PsiLiteralExpression)lOperand).getValue() instanceof String ||
+                              rOperand instanceof PsiLiteralExpression && ((PsiLiteralExpression)rOperand).getValue() instanceof String;
 
-      concatenation = parent;
-      PsiElement element= concatenation.getParent();
-      if (!(element instanceof PsiBinaryExpression)) return concatenation;
-      parent = (PsiBinaryExpression) element;
+      if (stringLiteralOccured) {
+        concatenation = element;
+      }
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiBinaryExpression)) return concatenation;
+      element = (PsiBinaryExpression) parent;
     }
   }
 

@@ -886,12 +886,10 @@ public final class PsiUtil {
   @Nullable  
   public static PsiExpression deparenthesizeExpression(PsiExpression rExpression) {
       if (rExpression instanceof PsiParenthesizedExpression) {
-        return deparenthesizeExpression(
-          ((PsiParenthesizedExpression)rExpression).getExpression());
+        return deparenthesizeExpression(((PsiParenthesizedExpression)rExpression).getExpression());
       }
       if (rExpression instanceof PsiTypeCastExpression) {
-        return deparenthesizeExpression(
-          ((PsiTypeCastExpression)rExpression).getOperand());
+        return deparenthesizeExpression(((PsiTypeCastExpression)rExpression).getOperand());
       }
       return rExpression;
     }

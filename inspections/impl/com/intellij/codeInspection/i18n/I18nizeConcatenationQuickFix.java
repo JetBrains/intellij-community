@@ -49,6 +49,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
     return createDialog(project, psiFile, literalExpression);
   }
 
+  @NotNull
   public String getName() {
     return CodeInsightBundle.message("quickfix.i18n.concatentation");
   }
@@ -64,7 +65,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   }
 
   private static String composeParametersText(final List<PsiExpression> args) {
-    final StringBuffer result = new StringBuffer();
+    final StringBuilder result = new StringBuilder();
     for (Iterator<PsiExpression> iterator = args.iterator(); iterator.hasNext();) {
       PsiExpression psiExpression = iterator.next();
       result.append(psiExpression.getText());

@@ -34,7 +34,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFix");
   private TextRange mySelectionRange;
 
-  public void applyFix(final Project project, final ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull final Project project, final ProblemDescriptor descriptor) {
     // do it later because the fix was called inside writeAction
     ApplicationManager.getApplication().invokeLater(new Runnable(){
       public void run() {
@@ -43,6 +43,12 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
     });
   }
 
+  @NotNull
+  public String getName() {
+    return CodeInsightBundle.message("inspection.i18n.quickfix");
+  }
+
+  @NotNull
   public String getFamilyName() {
     return getName();
   }
@@ -214,9 +220,5 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
         file.addProperty(property);
       }
     }
-  }
-
-  public String getName() {
-    return CodeInsightBundle.message("inspection.i18n.quickfix");
   }
 }

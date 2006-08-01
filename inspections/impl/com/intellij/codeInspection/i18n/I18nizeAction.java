@@ -43,11 +43,11 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
     TextRange range = getSelectedRange(getEditor(e), psiFile);
     PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
     if (element == null) return null;
-    if (literalExpression != null && range != null && literalExpression.getTextRange().contains(range)) {
-      return new I18nizeQuickFix();
-    }
-    else if (range != null && ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(element) != null) {
+    if (range != null && ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(element) != null) {
       return new I18nizeConcatenationQuickFix();
+    }
+    else if (literalExpression != null && range != null && literalExpression.getTextRange().contains(range)) {
+      return new I18nizeQuickFix();
     }
     else if (psiFile instanceof JspFile && range != null) {
       return this;
