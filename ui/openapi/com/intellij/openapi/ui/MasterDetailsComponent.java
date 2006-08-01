@@ -220,7 +220,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     myAutoScrollHandler.cancelAllRequests();
     myOptionsPanel.removeAll();
     myInitializedConfigurables.clear();
-    TreeUtil.traverseDepth((TreeNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
+    TreeUtil.traverseDepth(myRoot, new TreeUtil.Traverse() {
       public boolean accept(Object node) {
         if (node instanceof MyNode) {
           final MyNode treeNode = ((MyNode)node);

@@ -29,6 +29,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
+import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.ProjectProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -192,7 +193,12 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (mySelectedProfile == null) return;
     myDescriptors.clear();
     InspectionProfileEntry[] tools = mySelectedProfile.getInspectionTools();
-    InspectionProfile profile = (InspectionProfile)myProfileManager.getProfiles().get(mySelectedProfile.getName());
+    final Map<String, Profile> profiles = new HashMap<String, Profile>();
+    profiles.putAll(myProfileManager.getProfiles());
+    if (myIDEProfileManager != null) {
+      profiles.putAll(myIDEProfileManager.getProfiles());
+    }
+    InspectionProfile profile = (InspectionProfile)profiles.get(mySelectedProfile.getName());
     for (InspectionProfileEntry tool : tools) {
       myDescriptors.add(new Descriptor(tool, profile != null
                                              ? profile
@@ -906,6 +912,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     final InspectionProfile parentProfile = selectedProfile.getParentProfile();
     selectedProfile.commit(myProfileManager);
     setSelectedProfile(parentProfile.getModifiableModel());
+    setSelectedProfileModified(false);
     myModified = false;
   }
 

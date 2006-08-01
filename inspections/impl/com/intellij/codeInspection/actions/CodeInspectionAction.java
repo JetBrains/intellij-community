@@ -1,6 +1,5 @@
 package com.intellij.codeInspection.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
@@ -9,12 +8,13 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ui.InspectCodePanel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.ui.ErrorOptionsConfigurable;
 import com.intellij.ui.ComboboxWithBrowseButton;
 
 import javax.swing.*;
@@ -65,14 +65,14 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     reloadProfiles(profiles, profileManager, projectProfileManager, manager);
     panel.myBrowseProfilesCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        InspectCodePanel inspectCodeDialog = new InspectCodePanel(manager, null, ((Profile)profiles.getSelectedItem()).getName(), true, projectProfileManager){
-          protected void init() {
-            super.init();
-            setOKButtonText(CommonBundle.getOkButtonText());
-          }
-        };
-        inspectCodeDialog.show();
-        if (inspectCodeDialog.isOK()){
+        final ErrorOptionsConfigurable errorConfigurable = ErrorOptionsConfigurable.getInstance(project);
+        final boolean isOk =
+          ShowSettingsUtil.getInstance().editConfigurable(project, errorConfigurable, new Runnable() {
+            public void run() {
+              errorConfigurable.selectNodeInTree(((Profile)profiles.getSelectedItem()).getName());
+            }
+          });
+        if (isOk){
           reloadProfiles(profiles, profileManager, projectProfileManager, manager);
         } else {
           //if profile was disabled and cancel after apply was pressed

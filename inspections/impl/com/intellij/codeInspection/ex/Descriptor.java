@@ -24,7 +24,7 @@ public class Descriptor {
   private HighlightDisplayKey myKey;
   private JComponent myAdditionalConfigPanel;
   private Element myConfig;
-  private InspectionToolsPanel.LevelChooser myChooser;
+  private SingleInspectionProfilePanel.LevelChooser myChooser;
   private InspectionProfileEntry myTool;
   private HighlightDisplayLevel myLevel;
   private boolean myEnabled = false;
