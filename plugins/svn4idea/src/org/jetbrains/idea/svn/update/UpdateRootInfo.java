@@ -17,8 +17,10 @@ package org.jetbrains.idea.svn.update;
 
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNInputFileChannel;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import java.io.File;
@@ -32,8 +34,13 @@ public class UpdateRootInfo {
     myRevision = SVNRevision.HEAD;
     try {
       SVNWCClient wcClient = vcs.createWCClient();
-      final SVNURL url = wcClient.doInfo(file, SVNRevision.WORKING).getURL();
-      myUrl = url.toString();
+      SVNInfo info = wcClient.doInfo(file, SVNRevision.WORKING);
+      if (info != null) {
+        final SVNURL url = info.getURL();
+        myUrl = url.toString();
+      } else {
+        myUrl = "";
+      }
     }
     catch (SVNException e) {
       myUrl = "";

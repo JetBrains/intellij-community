@@ -86,9 +86,11 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
             rev = client.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_RECURSIVELY);
           }
 
-        } else {
+        } else if (url != null) {
           rev = client.doSwitch(root, url,
                                 rootInfo.getRevision(), configuration.UPDATE_RECURSIVELY);
+        } else {
+          rev = client.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_RECURSIVELY);
         }
       } else {
         rev = client.doUpdate(root, SVNRevision.HEAD, configuration.UPDATE_RECURSIVELY);

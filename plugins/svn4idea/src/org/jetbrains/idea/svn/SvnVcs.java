@@ -70,7 +70,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.util.SVNDebugLog;
-import org.tmatesoft.svn.util.SVNDebugLoggerAdapter;
+import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 
 import java.io.File;
 import java.io.InputStream;
@@ -104,7 +104,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   static {
     //noinspection UseOfArchaicSystemPropertyAccessors
-    SVNDebugLog.setLogger(new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), LOG));
+    SVNDebugLog.setDefaultLog(new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), LOG));
 
     DAVRepositoryFactory.setup();
     SVNRepositoryFactoryImpl.setup();
@@ -456,7 +456,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     }
   }
 
-  private static class JavaSVNDebugLogger extends SVNDebugLoggerAdapter {
+  private static class JavaSVNDebugLogger extends SVNDebugLogAdapter {
     private final boolean myLoggingEnabled;
     private final Logger myLog;
     @NonNls public static final String TRACE_LOG_PARAMETER_NAME = "javasvn.log.trace";
@@ -466,25 +466,25 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
       myLog = log;
     }
 
-    public void logInfo(String message) {
+    public void info(String message) {
       if (myLoggingEnabled) {
         myLog.info(message);
       }
     }
 
-    public void logError(String message) {
+    public void error(String message) {
       if (myLoggingEnabled) {
         myLog.info(message);
       }
     }
 
-    public void logInfo(Throwable th) {
+    public void info(Throwable th) {
       if (myLoggingEnabled) {
         myLog.info(th);
       }
     }
 
-    public void logError(Throwable th) {
+    public void error(Throwable th) {
       if (myLoggingEnabled) {
         myLog.info(th);
       }

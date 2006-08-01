@@ -125,33 +125,35 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       }
       String path = event.getFile().getAbsolutePath();
       String displayPath = event.getFile().getName();
+      String text2 = null;
+      String text = null;
       if (event.getAction() == SVNEventAction.UPDATE_ADD ||
           event.getAction() == SVNEventAction.ADD) {
-        myProgressIndicator.setText2(SvnBundle.message("progress.text2.added", displayPath));
+        text2 = SvnBundle.message("progress.text2.added", displayPath);
         myUpdatedFiles.getGroupById(FileGroup.CREATED_ID).add(path);
       }
       else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
-        myProgressIndicator.setText2(SvnBundle.message("progress.text2.deleted", displayPath));
+        text2 = SvnBundle.message("progress.text2.deleted", displayPath);
         myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).add(path);
       }
       else if (event.getAction() == SVNEventAction.UPDATE_UPDATE) {
         if (event.getContentsStatus() == SVNStatusType.CONFLICTED || event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
           myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).add(path);
-          myProgressIndicator.setText2(SvnBundle.message("progress.text2.conflicted", displayPath));
+          text2 = SvnBundle.message("progress.text2.conflicted", displayPath);
         }
         else if (event.getContentsStatus() == SVNStatusType.MERGED || event.getPropertiesStatus() == SVNStatusType.MERGED) {
-          myProgressIndicator.setText2(SvnBundle.message("progres.text2.merged", displayPath));
+          text2 = SvnBundle.message("progres.text2.merged", displayPath);
           myUpdatedFiles.getGroupById(FileGroup.MERGED_ID).add(path);
         }
         else if (event.getContentsStatus() == SVNStatusType.CHANGED || event.getPropertiesStatus() == SVNStatusType.CHANGED) {
-          myProgressIndicator.setText2(SvnBundle.message("progres.text2.updated", displayPath));
+          text2 = SvnBundle.message("progres.text2.updated", displayPath);
           myUpdatedFiles.getGroupById(FileGroup.UPDATED_ID).add(path);
         }
         else if (event.getContentsStatus() == SVNStatusType.UNCHANGED && event.getPropertiesStatus() == SVNStatusType.UNCHANGED) {
-          myProgressIndicator.setText2(SvnBundle.message("progres.text2.updated", displayPath));
+          text2 = SvnBundle.message("progres.text2.updated", displayPath);
         }
         else {
-          myProgressIndicator.setText2("");
+          text2 = "";
           myUpdatedFiles.getGroupById(FileGroup.UNKNOWN_ID).add(path);
         }
       }
@@ -163,15 +165,15 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
                                                      false, SvnStatusEnvironment.EXTERNAL_ID, true));
         }
         myUpdatedFiles.getGroupById(SvnStatusEnvironment.EXTERNAL_ID).add(path);
-        myProgressIndicator.setText(SvnBundle.message("progress.text.updating.external.location", event.getFile().getAbsolutePath()));
+        text = SvnBundle.message("progress.text.updating.external.location", event.getFile().getAbsolutePath());
       }
       else if (event.getAction() == SVNEventAction.RESTORE) {
-        myProgressIndicator.setText2(SvnBundle.message("progress.text2.restored.file", displayPath));
+        text2 = SvnBundle.message("progress.text2.restored.file", displayPath);
         myUpdatedFiles.getGroupById(FileGroup.RESTORED_ID).add(path);
       }
       else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED && event.getRevision() >= 0) {
         myExternalsCount--;
-        myProgressIndicator.setText2(SvnBundle.message("progres.text2.updated.to.revision", event.getRevision()));
+        text2 = SvnBundle.message("progres.text2.updated.to.revision", event.getRevision());
         if (myExternalsCount == 0) {
           myExternalsCount = 1;
           WindowManager.getInstance().getStatusBar(myVCS.getProject()).setInfo(
@@ -179,12 +181,21 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
         }
       }
       else if (event.getAction() == SVNEventAction.SKIP) {
-        myProgressIndicator.setText2(SvnBundle.message("progress.text2.skipped.file", displayPath));
+        text2 = SvnBundle.message("progress.text2.skipped.file", displayPath);
         if (myUpdatedFiles.getGroupById(SKIP_ID) == null) {
           myUpdatedFiles.registerGroup(new FileGroup(SvnBundle.message("update.group.name.skipped"),
                                                      SvnBundle.message("update.group.name.skipped"), false, SKIP_ID, true));
         }
         myUpdatedFiles.getGroupById(SKIP_ID).add(path);
+      }
+
+      if (myProgressIndicator != null) {
+        if (text != null) {
+          myProgressIndicator.setText(text);
+        }
+        if (text2 != null) {
+          myProgressIndicator.setText2(text2);
+        }
       }
     }
 
