@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -49,7 +50,9 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
   public PsiReference[] getReferencesByElement(final PsiElement element) {
     if (element instanceof PsiPlainTextFile) {
       final PsiPlainTextFile plainTextFile = (PsiPlainTextFile) element;
-      return getCachedData(plainTextFile).myReferences;
+      if (plainTextFile.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
+        return getCachedData(plainTextFile).myReferences;
+      }
     }
     return PsiReference.EMPTY_ARRAY;
   }
