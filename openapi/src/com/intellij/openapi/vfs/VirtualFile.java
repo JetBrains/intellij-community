@@ -312,7 +312,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @return <code>VirtualFile</code> representing the created file
    * @throws IOException if file failed to be created
    */
-  public VirtualFile createChildData(Object requestor, String name) throws IOException {
+  public VirtualFile createChildData(Object requestor, @NonNls String name) throws IOException {
     if (!isDirectory()) {
       throw new IOException(VfsBundle.message("file.create.wrong.parent.error"));
     }
@@ -489,7 +489,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
       }
       else{
         myUserMap.remove(key);
-        if (myUserMap.size() == 0){
+        if (myUserMap.isEmpty()){
           myUserMap = null;
         }
       }
