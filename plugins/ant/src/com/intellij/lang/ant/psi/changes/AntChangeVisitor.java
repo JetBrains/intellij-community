@@ -72,15 +72,15 @@ public class AntChangeVisitor implements XmlChangeVisitor {
       element = file;
     }
     element.clearCaches();
-    AntMacroDef macrodef = PsiTreeUtil.getParentOfType(element, AntMacroDef.class);
+    final AntMacroDef macrodef = PsiTreeUtil.getParentOfType(element, AntMacroDef.class);
     if (macrodef != null) {
       macrodef.clearCaches();
     }
-    AntPresetDef presetdef = PsiTreeUtil.getParentOfType(element, AntPresetDef.class);
+    final AntPresetDef presetdef = PsiTreeUtil.getParentOfType(element, AntPresetDef.class);
     if (presetdef != null) {
       presetdef.clearCaches();
     }
-    AntTypeDef typeDef = PsiTreeUtil.getParentOfType(element, AntTypeDef.class);
+    final AntTypeDef typeDef = PsiTreeUtil.getParentOfType(element, AntTypeDef.class);
     if (typeDef != null) {
       typeDef.clearCaches();
     }
