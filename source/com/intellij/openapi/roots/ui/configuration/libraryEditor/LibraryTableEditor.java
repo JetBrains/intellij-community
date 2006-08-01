@@ -428,16 +428,13 @@ public class LibraryTableEditor implements Disposable {
       if (files == null || files.length == 0) {
         return;
       }
-      final Library[] libraryToSelect = new Library[] {null};
-      final String[] libraryPresentableName = new String[]{null};
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           if (myEditingModuleLibraries) {
             for (VirtualFile file : files) {
               final Library library = myTableModifiableModel.createLibrary(null);
               getLibraryEditor(library).addRoot(file, OrderRootType.CLASSES);
-              libraryToSelect[0] = library;
-              libraryPresentableName[0] = file.getName();
+              commitLibrary(library, file.getName());
             }
           }
           else {
@@ -446,16 +443,19 @@ public class LibraryTableEditor implements Disposable {
             for (VirtualFile file : files) {
               libraryEditor.addRoot(file, OrderRootType.CLASSES);
             }
-            libraryToSelect[0] = library;
+            commitLibrary(library, null);
           }
         }
       });
       librariesChanged(true);
-      if (libraryToSelect[0] != null) {
-        selectLibrary(libraryToSelect[0], false);
+    }
+
+    private void commitLibrary(final Library libraryToSelect, final String libraryPresentableName) {
+      if (libraryToSelect != null) {
+        selectLibrary(libraryToSelect, false);
         if (myProject != null){
           final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(myProject);
-          final LibraryEditor libraryEditor = getLibraryEditor(libraryToSelect[0]);
+          final LibraryEditor libraryEditor = getLibraryEditor(libraryToSelect);
           if (libraryEditor.hasChanges()) {
             ApplicationManager.getApplication().runWriteAction(new Runnable(){
               public void run() {
@@ -463,7 +463,7 @@ public class LibraryTableEditor implements Disposable {
               }
             });
           }
-          final DefaultMutableTreeNode libraryNode = rootConfigurable.createLibraryNode(libraryToSelect[0], libraryPresentableName[0]);
+          final DefaultMutableTreeNode libraryNode = rootConfigurable.createLibraryNode(libraryToSelect, libraryPresentableName);
           if (myNeedToSelect){
             rootConfigurable.selectNodeInTree(libraryNode);
           }
