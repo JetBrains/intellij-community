@@ -8,9 +8,9 @@ import java.util.Collections;
 import java.util.Comparator;
 
 public class DirectoryContent {
-  private Collection mySubDirectories = new HashSet();
-  private Collection myFiles = new HashSet();
-  private Collection myModules = new HashSet();
+  private Collection<String> mySubDirectories = new HashSet<String>();
+  private Collection<String> myFiles = new HashSet<String>();
+  private Collection<String> myModules = new HashSet<String>();
 
   public void addSubDirectory(String subDirectoryName){
     mySubDirectories.add(subDirectoryName);
@@ -24,23 +24,23 @@ public class DirectoryContent {
     myModules.add(moduleName);
   }
 
-  public Collection getSubDirectories() {
+  public Collection<String> getSubDirectories() {
     return convertToSortedCollection(mySubDirectories);
   }
 
-  public Collection getFiles() {
+  public Collection<String> getFiles() {
     return convertToSortedCollection(myFiles);
   }
 
-  public Collection getSubModules() {
+  public Collection<String> getSubModules() {
     return convertToSortedCollection(myModules);
   }
 
-  private Collection convertToSortedCollection(Collection collection) {
-    ArrayList result = new ArrayList(collection);
-    Collections.sort(result, new Comparator() {
-      public int compare(Object o, Object o1) {
-        return ((String)o).compareToIgnoreCase((String)o1);
+  private static Collection<String> convertToSortedCollection(Collection<String> collection) {
+    ArrayList<String> result = new ArrayList<String>(collection);
+    Collections.sort(result, new Comparator<String>() {
+      public int compare(String o, String o1) {
+        return o.compareToIgnoreCase(o1);
       }
     });
     return result;
