@@ -85,12 +85,13 @@ public class ClassInheritanceDepthInspection
             if(visited.contains(aClass)){
                 return 0;
             }
-            if(LibraryUtil.classIsInLibrary(aClass)){
-                return 0;
-            }
             visited.add(aClass);
             final PsiClass superClass = aClass.getSuperClass();
             if(superClass == null){
+                return 0;
+            }
+            if(LibraryUtil.classIsInLibrary(aClass) &&
+                    LibraryUtil.classIsInLibrary(superClass)){
                 return 0;
             }
             return getInheritanceDepth(superClass, visited) + 1;
