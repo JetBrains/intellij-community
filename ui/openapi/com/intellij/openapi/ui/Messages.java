@@ -25,7 +25,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
-import com.sun.java.swing.SwingUtilities2;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -463,7 +462,7 @@ public class Messages {
         messageComponent.setForeground(label.getForeground());
         if (BasicHTML.isHTMLString(myMessage)) {
           final HTMLEditorKit editorKit = new HTMLEditorKit();
-          editorKit.getStyleSheet().addRule(SwingUtilities2.displayPropertiesToCSS(label.getFont(), label.getForeground()));
+          editorKit.getStyleSheet().addRule(UIUtil.displayPropertiesToCSS(label.getFont(), label.getForeground()));
           messageComponent.setEditorKit(editorKit);
           messageComponent.setContentType("text/html");
         }
