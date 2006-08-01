@@ -232,9 +232,13 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
           builder.append("\"/>");
         }
       }
+      final VirtualFile file = getContainingFile().getVirtualFile();
       String basedir = getBaseDir();
-      if (basedir == null) {
-        basedir = ".";
+      if (file != null && (basedir == null || ".".equals(basedir))) {
+        final VirtualFile dir = file.getParent();
+        if (dir != null) {
+          basedir = dir.getPath();
+        }
       }
       builder.append("<property name=\"basedir\" value=\"");
       builder.append(basedir);
@@ -248,7 +252,6 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       builder.append("<property name=\"ant.java.version\" value=\"");
       builder.append(SystemInfo.JAVA_VERSION);
       builder.append("\"/>");
-      final VirtualFile file = getContainingFile().getVirtualFile();
       if (file != null) {
         final String path = file.getPath();
         builder.append("<property name=\"ant.file\" value=\"");

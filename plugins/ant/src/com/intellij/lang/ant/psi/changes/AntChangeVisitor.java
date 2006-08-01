@@ -8,6 +8,7 @@ import com.intellij.lang.ant.psi.impl.AntOuterProjectElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.*;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
@@ -71,18 +72,20 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     if (element == null) {
       element = file;
     }
-    element.clearCaches();
-    final AntMacroDef macrodef = PsiTreeUtil.getParentOfType(element, AntMacroDef.class);
-    if (macrodef != null) {
-      macrodef.clearCaches();
-    }
-    final AntPresetDef presetdef = PsiTreeUtil.getParentOfType(element, AntPresetDef.class);
-    if (presetdef != null) {
-      presetdef.clearCaches();
-    }
-    final AntTypeDef typeDef = PsiTreeUtil.getParentOfType(element, AntTypeDef.class);
-    if (typeDef != null) {
-      typeDef.clearCaches();
+    synchronized (PsiLock.LOCK) {
+      element.clearCaches();
+      final AntMacroDef macrodef = PsiTreeUtil.getParentOfType(element, AntMacroDef.class);
+      if (macrodef != null) {
+        macrodef.clearCaches();
+      }
+      final AntPresetDef presetdef = PsiTreeUtil.getParentOfType(element, AntPresetDef.class);
+      if (presetdef != null) {
+        presetdef.clearCaches();
+      }
+      final AntTypeDef typeDef = PsiTreeUtil.getParentOfType(element, AntTypeDef.class);
+      if (typeDef != null) {
+        typeDef.clearCaches();
+      }
     }
     updateBuildFile(file);
   }

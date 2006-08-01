@@ -53,16 +53,19 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
 
   public void clearCaches() {
     super.clearCaches();
+    final AntFile file = getAntFile();
     if (myMacroDefinition != null) {
-      final AntFile file = getAntFile();
       for (AntTypeId id : myMacroDefinition.getNestedElements()) {
         final AntTypeDefinition nestedDef = file.getBaseTypeDefinition(myMacroDefinition.getNestedClassName(id));
         file.unregisterCustomType(nestedDef);
       }
-      getAntParent().unregisterCustomType(myMacroDefinition);
+      final AntStructuredElement parent = getAntParent();
+      if (parent != null) {
+        parent.unregisterCustomType(myMacroDefinition);
+      }
       myMacroDefinition = null;
-      file.clearCaches();
     }
+    file.clearCaches();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -114,7 +117,10 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
       myMacroDefinition.setIsTask(true);
       myMacroDefinition.setDefiningElement(this);
     }
-    getAntParent().registerCustomType(myMacroDefinition);
+    final AntStructuredElement parent = getAntParent();
+    if (parent != null) {
+      parent.registerCustomType(myMacroDefinition);
+    }
     // define itself as nested task for sequential
     final AntAllTasksContainerImpl sequential = PsiTreeUtil.getChildOfType(this, AntAllTasksContainerImpl.class);
     if (sequential != null) {

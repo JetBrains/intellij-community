@@ -45,10 +45,13 @@ public class AntPresetDefImpl extends AntAllTasksContainerImpl implements AntPre
   public void clearCaches() {
     super.clearCaches();
     if (myPresetDefinition != null) {
-      getAntParent().unregisterCustomType(myPresetDefinition);
+      final AntStructuredElement parent = getAntParent();
+      if (parent != null) {
+        parent.unregisterCustomType(myPresetDefinition);
+      }
       myPresetDefinition = null;
-      getAntFile().clearCaches();
     }
+    getAntFile().clearCaches();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -69,6 +72,9 @@ public class AntPresetDefImpl extends AntAllTasksContainerImpl implements AntPre
       myPresetDefinition = new AntTypeDefinitionImpl(typeId, thisClassName, false, new HashMap<String, AntAttributeType>(),
                                                      new HashMap<AntTypeId, String>(), this);
     }
-    getAntParent().registerCustomType(myPresetDefinition);
+    final AntStructuredElement parent = getAntParent();
+    if (parent != null) {
+      parent.registerCustomType(myPresetDefinition);
+    }
   }
 }
