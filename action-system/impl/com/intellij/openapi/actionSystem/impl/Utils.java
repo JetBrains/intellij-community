@@ -1,7 +1,6 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 
 import javax.swing.*;
@@ -16,8 +15,8 @@ public class Utils{
 
   private Utils() {}
 
-  public static void handleUpdateException(AnAction action,Presentation presentation,Exception exc){
-    String id=ActionManagerEx.getInstance().getId(action);
+  private static void handleUpdateException(AnAction action,Presentation presentation,Exception exc){
+    String id=ActionManager.getInstance().getId(action);
     if(id!=null){
       LOG.error("update failed for AnAction with ID="+id,exc);
     }else{
@@ -57,7 +56,7 @@ public class Utils{
     for(int i=0;i<children.length;i++){
       AnAction child = children[i];
       if (child == null) {
-        String groupId = ActionManagerEx.getInstanceEx().getId(group);
+        String groupId = ActionManager.getInstance().getId(group);
         LOG.assertTrue(false, "action is null: i=" + i + " group=" + group + " group id=" + groupId);
         continue;
       }
@@ -94,7 +93,7 @@ public class Utils{
     }
   }
 
-  public static boolean hasVisibleChildren(ActionGroup group, PresentationFactory factory, DataContext context, String place) {
+  private static boolean hasVisibleChildren(ActionGroup group, PresentationFactory factory, DataContext context, String place) {
     AnActionEvent event = new AnActionEvent(null, context, place, factory.getPresentation(group), ActionManager.getInstance(), 0);
     event.setInjectedContext(group.isInInjectedContext());
     AnAction[] children = group.getChildren(event);

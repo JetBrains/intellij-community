@@ -1496,37 +1496,37 @@
             text="Generate" use-shortcut-of="Generate"/>
 
      <!-- ***** yFiles actions *************************************** -->
-    <action id="Graph.ZoomIn" class="com.intellij.javaee.diagram.y.actions.ZoomInAction" text="Zoom In">
+    <action id="Graph.ZoomIn" class="com.intellij.openapi.graph.builder.actions.ZoomInAction" text="Zoom In">
       <keyboard-shortcut first-keystroke="ADD" keymap="$default"/>
       <keyboard-shortcut first-keystroke="EQUALS" keymap="$default"/>
     </action>
 
-    <action id="Graph.ZoomOut" class="com.intellij.javaee.diagram.y.actions.ZoomOutAction" text="Zoom Out">
+    <action id="Graph.ZoomOut" class="com.intellij.openapi.graph.builder.actions.ZoomOutAction" text="Zoom Out">
       <keyboard-shortcut first-keystroke="SUBTRACT" keymap="$default"/>
       <keyboard-shortcut first-keystroke="MINUS" keymap="$default"/>
     </action>
 
-    <action id="Graph.ActualZoom" class="com.intellij.javaee.diagram.y.actions.ActualZoomAction" text="Actual size"/>
+    <action id="Graph.ActualZoom" class="com.intellij.openapi.graph.builder.actions.ActualZoomAction" text="Actual size"/>
 
-    <action id="Graph.ShowHideGrid" class="com.intellij.javaee.diagram.y.actions.ShowHideGridAction" text="Show/Hide Grid"/>
+    <action id="Graph.ShowHideGrid" class="com.intellij.openapi.graph.builder.actions.ShowHideGridAction" text="Show/Hide Grid"/>
 
-    <action id="Graph.Print" class="com.intellij.javaee.diagram.y.actions.printing.PrintGraphAction" text="Print Graph"/>
-    <action id="Graph.Print.Preview" class="com.intellij.javaee.diagram.y.actions.printing.PrintPreviewAction" text="Print Preview"/>
+    <action id="Graph.Print" class="com.intellij.openapi.graph.builder.actions.printing.PrintGraphAction" text="Print Graph"/>
+    <action id="Graph.Print.Preview" class="com.intellij.openapi.graph.builder.actions.printing.PrintPreviewAction" text="Print Preview"/>
 
     <!-- ***** yFiles layouts ********************** -->
-    <action id="Graph.Layout.CircularLayouter" class="com.intellij.javaee.diagram.y.actions.layout.CircularLayouterAction"
+    <action id="Graph.Layout.CircularLayouter" class="com.intellij.openapi.graph.builder.actions.layout.CircularLayouterAction"
             text="Circular">
     </action>
-    <action id="Graph.Layout.HierarchicGroupLayouter" class="com.intellij.javaee.diagram.y.actions.layout.HierarchicGroupLayouterAction"
+    <action id="Graph.Layout.HierarchicGroupLayouter" class="com.intellij.openapi.graph.builder.actions.layout.HierarchicGroupLayouterAction"
             text="Hierarchic Group">
     </action>
-    <action id="Graph.Layout.OrganicLayouter" class="com.intellij.javaee.diagram.y.actions.layout.OrganicLayouterAction"
+    <action id="Graph.Layout.OrganicLayouter" class="com.intellij.openapi.graph.builder.actions.layout.OrganicLayouterAction"
             text="Organic">
     </action>
-    <action id="Graph.Layout.OrthogonalLayouter" class="com.intellij.javaee.diagram.y.actions.layout.OrthogonalLayouterAction"
+    <action id="Graph.Layout.OrthogonalLayouter" class="com.intellij.openapi.graph.builder.actions.layout.OrthogonalLayouterAction"
             text="Orthogonal">
     </action>
-    <action id="Graph.Layout.DirectedOrthogonalLayouter" class="com.intellij.javaee.diagram.y.actions.layout.DirectedOrthogonalLayouterAction"
+    <action id="Graph.Layout.DirectedOrthogonalLayouter" class="com.intellij.openapi.graph.builder.actions.layout.DirectedOrthogonalLayouterAction"
             text="Directed Orthogonal">
     </action>
 
