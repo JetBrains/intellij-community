@@ -24,8 +24,16 @@ class DirectoryContentListener {
     }
     else if (fileMessage(message)) {
       String fileName = fileNameFromMessage(message);
-      if (myModulePath != null) fileName = myModulePath + "/" + new File(fileName).getName();
-      myDirectoryContent.addFile(fileName);
+      int slashPos = fileName.indexOf('/');
+      if (slashPos > 0) {
+        String directoryName = fileName.substring(0, slashPos);
+        if (myModulePath != null) directoryName = myModulePath + "/" + directoryName;
+        myDirectoryContent.addSubDirectory(directoryName);
+      }
+      else {
+        if (myModulePath != null) fileName = myModulePath + "/" + new File(fileName).getName();
+        myDirectoryContent.addFile(fileName);
+      }
     }
     else if (moduleMessage_ver1(message)) {
       String moduleName = moduleNameFromMessage_ver1(message);
@@ -42,7 +50,7 @@ class DirectoryContentListener {
     return message.substring(prefix.length());
   }
 
-  private String moduleNameFromMessage_ver1(String message) {
+  private static String moduleNameFromMessage_ver1(String message) {
     return message.substring(MODULE_MESSAGE_PREFIX.length());
   }
 
@@ -62,7 +70,7 @@ class DirectoryContentListener {
   }
 
   public static String fileNameFromMessage(String message) {
-    return new File(message.substring(FILE_MESSAGE_PREFIX.length())).getName();
+    return message.substring(FILE_MESSAGE_PREFIX.length());
   }
 
   public void setModulePath(String modulePath) {
