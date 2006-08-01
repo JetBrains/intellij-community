@@ -9,6 +9,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.util.*;
 import com.intellij.profile.Profile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -96,7 +99,11 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     if (actions != null) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (AnAction action : actions) {
-        group.add(action);
+        if (action instanceof ActionGroupWithPreselection){
+          group.add(new MyActionGroupWrapper((ActionGroupWithPreselection)action));
+        } else {
+          group.add(action);
+        }
       }
       final JComponent component = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
       myNorthPanel.add(component, BorderLayout.NORTH);
@@ -616,4 +623,38 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     void itemsExternallyChanged();
   }
 
+  protected static interface ActionGroupWithPreselection {
+    ActionGroup getActionGroup();
+    int getDefaultIndex();
+  }
+
+  private class MyActionGroupWrapper extends AnAction {
+    private ActionGroupWithPreselection myActionGroup;
+
+    public MyActionGroupWrapper(final ActionGroupWithPreselection actionGroup) {
+      super(actionGroup.getActionGroup().getTemplatePresentation().getText(),
+            actionGroup.getActionGroup().getTemplatePresentation().getDescription(),
+            actionGroup.getActionGroup().getTemplatePresentation().getIcon());
+      myActionGroup = actionGroup;
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+      final ListPopupStep step = popupFactory.createActionsStep(myActionGroup.getActionGroup(),
+                                                                e.getDataContext(),
+                                                                false,
+                                                                false,
+                                                                myActionGroup.getActionGroup().getTemplatePresentation().getText(),
+                                                                myTree,
+                                                                true,
+                                                                myActionGroup.getDefaultIndex());
+      final ListPopup listPopup = popupFactory.createWizardStep(step);
+      listPopup.showUnderneathOf(myNorthPanel);
+      SwingUtilities.invokeLater(new Runnable(){
+        public void run() {
+          listPopup.handleSelect(false);
+        }
+      });
+    }
+  }
 }

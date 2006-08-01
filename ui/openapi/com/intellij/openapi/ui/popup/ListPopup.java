@@ -7,4 +7,5 @@ public interface ListPopup extends JBPopup {
 
   ListPopupStep getListStep();
 
+  void handleSelect(boolean handleFinalChoices);
 }

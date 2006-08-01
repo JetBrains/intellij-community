@@ -35,7 +35,6 @@ import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
@@ -45,7 +44,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Icons;
@@ -62,7 +60,6 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 /**
  * User: anna
@@ -806,27 +803,19 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
   }
 
-  private PopupStep createJdksStep(DataContext dataContext) {
-    DefaultActionGroup group = new DefaultActionGroup();
+  private DefaultActionGroup createAddJdkGroup() {
+    DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
     myJdksTreeModel.createAddActions(group, myTree, new Consumer<ProjectJdk>() {
       public void consume(final ProjectJdk projectJdk) {
         addJdkNode(projectJdk);
         selectNodeInTree(findNodeByObject(myJdksNode, projectJdk));
       }
     });
-    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    return popupFactory.createActionsStep(group, dataContext, false, false, ProjectBundle.message("add.new.jdk.title"), myTree, true);
+    return group;
   }
 
-  private PopupStep createLibrariesStep(AnActionEvent e) {
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new AnAction(ProjectBundle.message("add.new.global.library.text")) {
-      public void actionPerformed(AnActionEvent e) {
-        final LibraryTableEditor editor = LibraryTableEditor.editLibraryTable(getGlobalLibrariesProvider(), myProject);
-        editor.createAddLibraryAction(true, myWholePanel).actionPerformed(null);
-        Disposer.dispose(editor);
-      }
-    });
+  private DefaultActionGroup createAddLibrariesGroup() {
+    DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.library.text"), true);
     group.add(new AnAction(ProjectBundle.message("add.new.project.library.text")) {
       public void actionPerformed(AnActionEvent e) {
         final LibraryTableEditor editor = LibraryTableEditor.editLibraryTable(getProjectLibrariesProvider(), myProject);
@@ -836,6 +825,13 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
       public void update(AnActionEvent e) {
         e.getPresentation().setEnabled(!myProject.isDefault());
+      }
+    });
+    group.add(new AnAction(ProjectBundle.message("add.new.global.library.text")) {
+      public void actionPerformed(AnActionEvent e) {
+        final LibraryTableEditor editor = LibraryTableEditor.editLibraryTable(getGlobalLibrariesProvider(), myProject);
+        editor.createAddLibraryAction(true, myWholePanel).actionPerformed(null);
+        Disposer.dispose(editor);
       }
     });
     group.add(new AnAction(ProjectBundle.message("add.new.module.library.text")) {
@@ -851,18 +847,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         e.getPresentation().setEnabled(getSelectedObject() instanceof Module);
       }
     });
-    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    final int defaultOptionIndex;
-    final Object selectedObject = getSelectedObject();
-    if (selectedObject instanceof String){
-      final String libraryTable = (String)selectedObject;
-      defaultOptionIndex = Comparing.strEqual(libraryTable, LibraryTablesRegistrar.APPLICATION_LEVEL)
-                           ? 0
-                           : Comparing.strEqual(libraryTable, LibraryTablesRegistrar.PROJECT_LEVEL) ? 1 : 2;
-    } else {
-      defaultOptionIndex = 1;  //do not create too many module libraries ;)
-    }
-    return popupFactory.createActionsStep(group, e.getDataContext(), false, false, ProjectBundle.message("add.new.library.title"), myTree, true, defaultOptionIndex);
+    return group;
   }
 
   private LibraryTableModifiableModelProvider getModifiableModelProvider(final ModifiableRootModel model) {
@@ -879,72 +864,54 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     };
   }
 
-  private class MyAddAction extends AnAction{
-
+  private class MyAddAction extends ActionGroup implements ActionGroupWithPreselection{
+    private AnAction [] myChildren;
     public MyAddAction() {
-      super(CommonBundle.message("button.add"), CommonBundle.message("button.add"), Icons.ADD_ICON);
+      super(CommonBundle.message("button.add"), true);
+      final Presentation presentation = getTemplatePresentation();
+      presentation.setIcon(Icons.ADD_ICON);
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
     }
 
-    public void actionPerformed(final AnActionEvent e) {
-      JBPopupFactory jbPopupFactory = JBPopupFactory.getInstance();
-      List<String> actions = new ArrayList<String>();
-      final String libraryChoice = ProjectBundle.message("add.new.library.text");
-      actions.add(libraryChoice);
-      final String jdkChoice = ProjectBundle.message("add.new.jdk.text");
-      actions.add(jdkChoice);
-      final String moduleChoice = ProjectBundle.message("add.new.module.text");
-      if (!myProject.isDefault()) {
-        actions.add(moduleChoice);
-      }
-      List<Icon> icons = new ArrayList<Icon>();
-      final ListPopup listPopup = jbPopupFactory.createWizardStep(new BaseListPopupStep<String>(ProjectBundle.message("add.action.name"), actions, icons) {
-        public boolean hasSubstep(final String selectedValue) {
-          return selectedValue.compareTo(moduleChoice) != 0;
-        }
-
-        public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
-          if (selectedValue.compareTo(libraryChoice) == 0) {
-            return createLibrariesStep(e);
-          }
-          else if (selectedValue.compareTo(jdkChoice) == 0) {
-            return createJdksStep(e.getDataContext());
-          }
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              final Module module = myModulesConfigurator.addModule(myTree);
-              if (module != null) {
-                final MyNode node = new MyNode(new ModuleConfigurable(myModulesConfigurator, module, TREE_UPDATER));
-                addNode(node, myProjectNode);
-                selectNodeInTree(node);
-              }
+    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      if (myChildren == null) {
+        myChildren = new AnAction[3];
+        myChildren[0] = createAddLibrariesGroup();
+        myChildren[1] = createAddJdkGroup();
+        myChildren[2] = new AnAction(ProjectBundle.message("add.new.module.text")) {
+          public void actionPerformed(AnActionEvent e) {
+            final Module module = myModulesConfigurator.addModule(myTree);
+            if (module != null) {
+              final MyNode node = new MyNode(new ModuleConfigurable(myModulesConfigurator, module, TREE_UPDATER));
+              addNode(node, myProjectNode);
+              selectNodeInTree(node);
             }
-          });
-          return PopupStep.FINAL_CHOICE;
-        }
+          }
 
-        public int getDefaultOptionIndex() {
-          final Object selectedObject = getSelectedObject();
-          if (selectedObject instanceof Library || selectedObject instanceof String){
-            return 0;
-          } else if (selectedObject instanceof ProjectJdk || selectedObject instanceof ProjectJdksModel){
-            return 1;
-          } else if (selectedObject instanceof Module){
-            return 2;
+          public void update(AnActionEvent e) {
+            e.getPresentation().setEnabled(!myProject.isDefault());
           }
-          return 0;
-        }
-      });
-      listPopup.showUnderneathOf(myNorthPanel);
-      final int defaultOptionIndex = listPopup.getListStep().getDefaultOptionIndex();
-      if (defaultOptionIndex == 0 || defaultOptionIndex == 1) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            ((ListPopupImpl)listPopup).handleSelect(true);
-          }
-        });
+        };
       }
+      return myChildren;
     }
 
+    public ActionGroup getActionGroup() {
+      return this;
+    }
+
+    public int getDefaultIndex() {
+      final Object selectedObject = getSelectedObject();
+      if (selectedObject instanceof Library || selectedObject instanceof String) {
+        return 0;
+      }
+      else if (selectedObject instanceof ProjectJdk || selectedObject instanceof ProjectJdksModel) {
+        return 1;
+      }
+      else if (selectedObject instanceof Module) {
+        return 2;
+      }
+      return 0;
+    }
   }
 }
