@@ -4,17 +4,19 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ModifiableModel;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,15 +29,16 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
   private String myName;
   private int myType;
   private PsiElement myPsiElement;
-  private XmlEntitiesInspection myEntitiesInspection;
+  private String myInspectionName;
 
-  public AddHtmlTagOrAttributeToCustomsIntention(XmlEntitiesInspection entitiesInspection, PsiElement psiElement, String name, int type) {
-    myEntitiesInspection = entitiesInspection;
+  public AddHtmlTagOrAttributeToCustomsIntention(String shortName, PsiElement psiElement, String name, int type) {
+    myInspectionName = shortName;
     myPsiElement = psiElement;
     myName = name;
     myType = type;
   }
 
+  @NotNull
   public String getText() {
     if (myType == XmlEntitiesInspection.UNKNOWN_TAG) {
       return QuickFixBundle.message("add.custom.html.tag", myName);
@@ -49,9 +52,10 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
       return QuickFixBundle.message("add.optional.html.attribute", myName);
     }
 
-    return null;
+    return getFamilyName();
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fix.html.family");
   }
@@ -61,16 +65,14 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    myEntitiesInspection.setAdditionalEntries(
-      myType,
-      appendName(myEntitiesInspection.getAdditionalEntries(myType))
-    );
-
-    final InspectionProfile inspectionProfile =
-      InspectionProjectProfileManager.getInstance(project).getInspectionProfile(myPsiElement);
-    //correct save settings
-    ((InspectionProfileImpl)inspectionProfile).isProperSetting(HighlightDisplayKey.find(HtmlStyleLocalInspection.SHORT_NAME));
-    inspectionProfile.save();
+    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
+    final InspectionProfile inspectionProfile = profileManager.getInspectionProfile(myPsiElement);
+    final ModifiableModel model = inspectionProfile.getModifiableModel();
+    final LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)model.getInspectionTool(myInspectionName);
+    final XmlEntitiesInspection xmlEntitiesInspection = (XmlEntitiesInspection)wrapper.getTool();
+    xmlEntitiesInspection.setAdditionalEntries(myType, appendName(xmlEntitiesInspection.getAdditionalEntries(myType)));
+    model.isProperSetting(HighlightDisplayKey.find(myInspectionName));//update map with non-default settings
+    model.commit(profileManager);
   }
 
   public boolean startInWriteAction() {

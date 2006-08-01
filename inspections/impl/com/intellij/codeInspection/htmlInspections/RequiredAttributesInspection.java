@@ -86,7 +86,7 @@ public class RequiredAttributesInspection extends UnfairLocalInspectionTool impl
   }
 
   public IntentionAction getIntentionAction(PsiElement psiElement, String name, int type) {
-    return new AddHtmlTagOrAttributeToCustomsIntention(this, psiElement, name, type);
+    return new AddHtmlTagOrAttributeToCustomsIntention(getShortName(), psiElement, name, type);
   }
 
   public String getAdditionalEntries(int type) {
