@@ -52,7 +52,7 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
         if (myPluginDescriptor.getPluginClassLoader() != null) {
           classLoader.add(myPluginDescriptor.getPluginClassLoader());
         }
-        XStream xStream = new XStream();
+        XStream xStream = new XStream(new PropertyReflectionProvider());
         xStream.setClassLoader(classLoader);
         xStream.registerConverter(new ElementConverter());
         Object componentInstance = super.getComponentInstance(container);
