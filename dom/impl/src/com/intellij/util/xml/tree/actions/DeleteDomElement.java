@@ -34,6 +34,11 @@ public class DeleteDomElement extends BaseDomTreeAction {
 
     if (selectedNode instanceof BaseDomElementNode) {
 
+      if (selectedNode instanceof DomFileElementNode) {
+        e.getPresentation().setVisible(false);
+        return;
+      }
+      
       final DomElement domElement = ((BaseDomElementNode)selectedNode).getDomElement();
 
       final int ret = Messages.showOkCancelDialog(getPresentationText(selectedNode) + "?", ApplicationBundle.message("action.remove"),
