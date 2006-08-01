@@ -81,6 +81,15 @@ public abstract class AbstractTreeBuilder implements Disposable {
     Disposer.register(this, myUpdater);
   }
 
+  /**
+   * node descriptor getElement contract is as follows:
+   * 1.TreeStructure always returns & recieves "treestructure" element returned by getTreeStructureElement
+   * 2.Paths contain "model" element returned by getElement
+   */
+  protected Object getTreeStructureElement(NodeDescriptor nodeDescriptor) {
+    return nodeDescriptor.getElement();
+  }
+
   @Nullable
   protected ProgressIndicator createProgressIndicator() {
     return null;
@@ -221,9 +230,8 @@ public abstract class AbstractTreeBuilder implements Disposable {
     NodeDescriptor nodeDescriptor = myTreeStructure.createDescriptor(rootElement, null);
     myRootNode.setUserObject(nodeDescriptor);
     nodeDescriptor.update();
-    if (rootElement != null) {
-      //myElementToNodeMap.put(rootElement, myRootNode);
-      createMapping(rootElement, myRootNode);
+    if (nodeDescriptor.getElement() != null) {
+      createMapping(nodeDescriptor.getElement(), myRootNode);
     }
     addLoadingNode(myRootNode);
     boolean willUpdate = false;
@@ -280,8 +288,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
       return;
     }
 
-    Object element = descriptor.getElement();
-    if (myTreeStructure.isToBuildChildrenInBackground(element)) {
+    if (myTreeStructure.isToBuildChildrenInBackground(getTreeStructureElement(descriptor))) {
       updateInBackground(node, descriptor);
       return;
     }
@@ -309,10 +316,9 @@ public abstract class AbstractTreeBuilder implements Disposable {
   private void processUnbuilt(final DefaultMutableTreeNode node, final NodeDescriptor descriptor) {
     if (isAlwaysShowPlus(descriptor)) return; // check for isAlwaysShowPlus is important for e.g. changing Show Members state!
 
-    Object element = descriptor.getElement();
-    if (myTreeStructure.isToBuildChildrenInBackground(element)) return; //?
+    if (myTreeStructure.isToBuildChildrenInBackground(getTreeStructureElement(descriptor))) return; //?
 
-    Object[] children = myTreeStructure.getChildElements(descriptor.getElement());
+    Object[] children = myTreeStructure.getChildElements(getTreeStructureElement(descriptor));
     if (children.length == 0) {
       for (int i = 0; i < node.getChildCount(); i++) {
         if (node.getChildAt(i)instanceof LoadingNode) {
@@ -343,7 +349,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
   private Map<Object, Integer> collectElementToIndexMap(final NodeDescriptor descriptor) {
     Map<Object, Integer> elementToIndexMap = new LinkedHashMap<Object, Integer>();
-    Object[] children = myTreeStructure.getChildElements(descriptor.getElement());
+    Object[] children = myTreeStructure.getChildElements(getTreeStructureElement(descriptor));
     int index = 0;
     for (Object child : children) {
       if (child instanceof ProjectViewNode) {
@@ -387,8 +393,9 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
   private ArrayList<TreeNode> collectNodesToInsert(final NodeDescriptor descriptor, final Map<Object, Integer> elementToIndexMap) {
     ArrayList<TreeNode> nodesToInsert = new ArrayList<TreeNode>();
-    for (Object child : elementToIndexMap.keySet()) {
-      Integer index = elementToIndexMap.get(child);
+    for (Map.Entry<Object, Integer> entry : elementToIndexMap.entrySet()) {
+      Object child = entry.getKey();
+      Integer index = entry.getValue();
       final NodeDescriptor childDescr = myTreeStructure.createDescriptor(child, descriptor);
       //noinspection ConstantConditions
       if (childDescr == null) {
@@ -403,7 +410,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
       }
       final DefaultMutableTreeNode childNode = createChildNode(childDescr);
       nodesToInsert.add(childNode);
-      createMapping(child, childNode);
+      createMapping(childDescr.getElement(), childNode);
     }
     return nodesToInsert;
   }
@@ -429,7 +436,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
         Object element = descriptor.getElement();
         if (element == null) return;
 
-        myTreeStructure.getChildElements(element); // load children
+        myTreeStructure.getChildElements(getTreeStructureElement(descriptor)); // load children
       }
     };
     Runnable postRunnable = new Runnable() {
@@ -478,7 +485,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     }
     boolean changes = childDescr.update();
     Object newElement = childDescr.getElement();
-    Integer index = newElement != null ? elementToIndexMap.get(newElement) : null;
+    Integer index = newElement != null ? elementToIndexMap.get(getTreeStructureElement(childDescr)) : null;
     if (index != null) {
       if (childDescr.getIndex() != index.intValue()) {
         changes = true;
@@ -521,7 +528,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
       }
     }
     else {
-      elementToIndexMap.remove(newElement);
+      elementToIndexMap.remove(getTreeStructureElement(childDescr));
       updateNodeChildren(childNode);
     }
 
@@ -533,13 +540,12 @@ public abstract class AbstractTreeBuilder implements Disposable {
   private void addLoadingNode(DefaultMutableTreeNode node) {
     final NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
     if (!isAlwaysShowPlus(descriptor)) {
-      Object element = descriptor.getElement();
-      if (myTreeStructure.isToBuildChildrenInBackground(element)) {
+      if (myTreeStructure.isToBuildChildrenInBackground(getTreeStructureElement(descriptor))) {
         final boolean[] hasNoChildren = new boolean[1];
         Runnable runnable = new Runnable() {
           public void run() {
             descriptor.update();
-            Object element = descriptor.getElement();
+            Object element = getTreeStructureElement(descriptor);
             if (element == null) return;
 
             Object[] children = myTreeStructure.getChildElements(element);
@@ -565,7 +571,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
         addTaskToWorker(runnable, false, postRunnable);
       }
       else {
-        Object[] children = myTreeStructure.getChildElements(descriptor.getElement());
+        Object[] children = myTreeStructure.getChildElements(getTreeStructureElement(descriptor));
         if (children.length == 0) return;
       }
     }

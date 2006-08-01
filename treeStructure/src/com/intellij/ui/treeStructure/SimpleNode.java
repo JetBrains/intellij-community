@@ -7,12 +7,13 @@ package com.intellij.ui.treeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -65,6 +66,7 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
     return FileStatus.NOT_CHANGED;
   }
 
+  @Nullable
   protected Object updateElement() {
     return getElement();
   }
@@ -269,11 +271,5 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
   public final int hashCode() {
     return ComparableObjectCheck.hashCode(this, super.hashCode());
   }
-
-  public Object[] getSelectionEqualityObjects() {
-    return new Object[] {this};
-  }
-
-
 
 }
