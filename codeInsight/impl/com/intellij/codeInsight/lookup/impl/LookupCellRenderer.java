@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -364,7 +366,7 @@ class LookupCellRenderer implements ListCellRenderer {
             }
           }
           else {
-            name = LookupItemUtil.formatTypeName((PsiClass)element, substitutor);
+            name = formatTypeName((PsiClass)element, substitutor);
           }
         }
         else if (element instanceof PsiKeyword || element instanceof PsiExpression || element instanceof PsiTypeElement){
@@ -577,5 +579,33 @@ class LookupCellRenderer implements ListCellRenderer {
       }
     }
     return buffer.toString();
+  }
+
+  private static String formatTypeName(final PsiClass element, final PsiSubstitutor substitutor) {
+    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(element.getProject());
+    String name = element.getName();
+    if(substitutor != null){
+      final PsiTypeParameter[] params = element.getTypeParameters();
+      if(params.length > 0){
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("<");
+        boolean flag = true;
+        for(int i = 0; i < params.length; i++){
+          final PsiTypeParameter param = params[i];
+          final PsiType type = substitutor.substitute(param);
+          if(type == null){
+            flag = false;
+            break;
+          }
+          buffer.append(type.getPresentableText());
+          if(i < params.length - 1){ buffer.append(",");
+            if(styleSettings.SPACE_AFTER_COMMA) buffer.append(" ");
+          }
+        }
+        buffer.append(">");
+        if(flag) name += buffer;
+      }
+    }
+    return name;
   }
 }

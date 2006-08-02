@@ -11,6 +11,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.Set;
@@ -28,10 +30,12 @@ public class LookupItemUtil{
   private LookupItemUtil() {
   }
 
+  @Nullable
   public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, String prefix) {
     return addLookupItem(set, object, prefix, -1);
   }
 
+  @Nullable
   public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, String prefix, InsertHandler handler) {
     LookupItem item = addLookupItem(set, object, prefix, -1);
     if (item != null) {
@@ -40,7 +44,8 @@ public class LookupItemUtil{
     return item;
   }
 
-  public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, String prefix, int tailType) {
+  @Nullable
+  private static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, String prefix, int tailType) {
     if (object instanceof PsiType) {
       PsiType psiType = (PsiType)object;
       for (final LookupItem lookupItem : set) {
@@ -59,7 +64,7 @@ public class LookupItemUtil{
     if (CompletionUtil.startsWith(text, prefix)) {
       item.setLookupString(text);
       if (tailType >= 0) {
-        item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, new Integer(tailType));
+        item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, tailType);
       }
       return set.add(item) ? item : null;
     }
@@ -127,75 +132,45 @@ public class LookupItemUtil{
       s = ((PsiExpression)object).getText();
     }
     else if (object instanceof PsiType) {
-      final PsiType type = (PsiType) object;
-      if (type instanceof PsiPrimitiveType) {
-        s = ((PsiType)object).getPresentableText();
+      PsiType type = (PsiType)object;
+      final PsiType original = type;
+      int dim = 0;
+      while (type instanceof PsiArrayType) {
+        type = ((PsiArrayType)type).getComponentType();
+        dim++;
       }
-      else if (type instanceof PsiArrayType) {
-        PsiType contentType = type;
-        int dim = 0;
-        final StringBuffer tail = new StringBuffer();
-        while (contentType instanceof PsiArrayType) {
-          contentType = ((PsiArrayType)contentType).getComponentType();
-          tail.append("[]");
-          dim++;
-        }
-        if (contentType instanceof PsiClassType) {
-          PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)contentType).resolveGenerics();
-          final PsiClass psiClass = classResolveResult.getElement();
-          final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
-          final String text;
-          if (psiClass != null) {
-            text = formatTypeName(psiClass, substitutor);
-          }
-          else {
-            text = type.getPresentableText();
-          }
-          String typeString = text;
-          if (text.indexOf('<') > 0) {
-            typeString = text.substring(0, text.indexOf('<'));
-          }
-          s = text.substring(typeString.lastIndexOf('.') + 1);
-          item = psiClass != null ? new LookupItem(psiClass, s) : new LookupItem(text, s);
-          item.setAttribute(LookupItem.SUBSTITUTOR, substitutor);
-        }
-        else {
-          item = new LookupItem(contentType, "");
-          s = contentType.getPresentableText();
-        }
-        item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + tail.toString());
-        item.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
-        item.setAttribute(LookupItem.BRACKETS_COUNT_ATTR, new Integer(dim));
-      }
-      else if (type instanceof PsiClassType) {
+
+      if (type instanceof PsiClassType) {
         PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)type).resolveGenerics();
         final PsiClass psiClass = classResolveResult.getElement();
         final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
         final String text;
-        if (psiClass != null) {
-          text = formatTypeName(psiClass, substitutor);
+        StringBuffer buffer = new StringBuffer();
+        appendTypeString(type, buffer);
+        text = buffer.toString();
+        String typeString = text;
+        if (text.indexOf('<') > 0) {
+          typeString = text.substring(0, text.indexOf('<'));
         }
-        else {
-          text = type.getPresentableText();
-        }
-        if (text != null) {
-          String typeString = text;
-          if (text.indexOf('<') > 0) {
-            typeString = text.substring(0, text.indexOf('<'));
-          }
-          s = text.substring(typeString.lastIndexOf('.') + 1);
+        s = text.substring(typeString.lastIndexOf('.') + 1);
 
-          item = psiClass != null ? new LookupItem(psiClass, s) : new LookupItem(text, s);
-          item.setAttribute(LookupItem.SUBSTITUTOR, substitutor);
-        }
-        else {
-          s = type.getPresentableText();
-        }
+        item = psiClass != null ? new LookupItem(psiClass, s) : new LookupItem(text, s);
+        item.setAttribute(LookupItem.SUBSTITUTOR, substitutor);
       }
       else {
         s = type.getPresentableText();
       }
-      item.setAttribute(LookupItem.TYPE, type);
+
+      if (dim > 0) {
+        final StringBuffer tail = new StringBuffer();
+        for (int i = 0; i < dim; i++) {
+          tail.append("[]");
+        }
+        item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + tail.toString());
+        item.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
+        item.setAttribute(LookupItem.BRACKETS_COUNT_ATTR, dim);
+      }
+      item.setAttribute(LookupItem.TYPE, original);
     }
     else if (object instanceof PsiMetaDataBase) {
       s = ((PsiMetaDataBase)object).getName();
@@ -214,36 +189,69 @@ public class LookupItemUtil{
       LOG.assertTrue(false, "Null string for object: " + object + " of class " + (object != null ?object.getClass():null));
     }
     item.setLookupString(s);
-    item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, new Integer(tailType));
+    item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, tailType);
     return item;
   }
 
-  public static String formatTypeName(final PsiClass element, final PsiSubstitutor substitutor) {
-    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(element.getProject());
-    String name = element.getName();
-    if(substitutor != null){
-      final PsiTypeParameter[] params = element.getTypeParameters();
-      if(params.length > 0){
-        StringBuffer buffer = new StringBuffer();
+  private static void appendTypeString(@NotNull final PsiType type, @NonNls StringBuffer buffer) {
+    //mostly duplicate getPresentableText() logic:(
+    final PsiType componentType = type.getDeepComponentType();
+    if (componentType instanceof PsiPrimitiveType) {
+      buffer.append(componentType.getPresentableText());
+    } else if (componentType instanceof PsiWildcardType) {
+      buffer.append("?");
+      final PsiWildcardType wildcard = (PsiWildcardType)componentType;
+      final PsiType bound = wildcard.getBound();
+      if (bound != null) {
+        buffer.append(wildcard.isExtends() ? " extends " : " super ");
+        appendTypeString(bound, buffer);
+      }
+    } else if (componentType instanceof PsiCapturedWildcardType) {
+      appendTypeString(((PsiCapturedWildcardType)componentType).getWildcard(), buffer);
+    } else if (componentType instanceof PsiClassType) {
+      final PsiClassType classType = ((PsiClassType)componentType);
+      final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+      final PsiClass aClass = resolveResult.getElement();
+      if (aClass == null) {
+        buffer.append(classType.getPresentableText());
+      } else {
+        appendClass(aClass, buffer, resolveResult.getSubstitutor());
+      }
+    } else {
+      buffer.append(componentType.getPresentableText());
+    }
+
+    int dim = type.getArrayDimensions();
+    for (int i = 0; i < dim; i++) {
+      buffer.append("[]");
+    }
+  }
+
+  private static void appendClass(final PsiClass aClass, final StringBuffer buffer, PsiSubstitutor substitutor) {
+    final PsiClass containingClass = aClass.getContainingClass();
+    if (containingClass != null) {
+      appendClass(containingClass, buffer, substitutor);
+      buffer.append(".");
+    }
+    buffer.append(aClass.getName());
+    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(aClass.getProject());
+    if (!PsiUtil.isRawSubstitutor(aClass, substitutor)) {
+      final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
+      if (typeParameters.length > 0) {
         buffer.append("<");
-        boolean flag = true;
-        for(int i = 0; i < params.length; i++){
-          final PsiTypeParameter param = params[i];
-          final PsiType type = substitutor.substitute(param);
-          if(type == null){
-            flag = false;
-            break;
+        for (int i = 0; i < typeParameters.length; i++) {
+          PsiTypeParameter typeParameter = typeParameters[i];
+          if (i > 0) {
+            buffer.append(',');
+            if (styleSettings.SPACE_AFTER_COMMA) buffer.append(" ");
           }
-          buffer.append(type.getPresentableText());
-          if(i < params.length - 1){ buffer.append(",");
-            if(styleSettings.SPACE_AFTER_COMMA) buffer.append(" ");
-          }
+          final PsiType substitution = substitutor.substitute(typeParameter);
+          assert substitution != null;
+          appendTypeString(substitution, buffer);
         }
         buffer.append(">");
-        if(flag) name += buffer;
       }
     }
-    return name;
   }
 
   public static int doSelectMostPreferableItem(final LookupItemPreferencePolicy itemPreferencePolicy,
