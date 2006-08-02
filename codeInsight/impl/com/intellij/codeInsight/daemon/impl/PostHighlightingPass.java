@@ -53,6 +53,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +61,11 @@ import java.text.MessageFormat;
 import java.util.*;
 
 public class PostHighlightingPass extends TextEditorHighlightingPass {
+  public static final Set<String> INJECTION_ANNOS =
+    new THashSet<String>(Arrays.asList(
+      "javax.annotation.Resource", "javax.ejb.EJB", "javax.xml.ws.WebServiceRef",
+      "javax.persistence.PersistenceContext", "javax.persistence.PersistenceUnit"));
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
   private final Project myProject;
   private final RefCountHolder myRefCountHolder;
@@ -320,9 +326,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private HighlightInfo processField(PsiField field, final List<IntentionAction> options, final String displayName) {
     final PsiIdentifier identifier = field.getNameIdentifier();
-    final boolean injected = field.getModifierList().findAnnotation("javax.annotation.Resource") != null ||
-                             field.getModifierList().findAnnotation("javax.ejb.EJB") != null ||
-                             field.getModifierList().findAnnotation("javax.xml.ws.WebServiceRef") != null;
+
+    final boolean injected = isFieldInjected(field);
 
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
       if (!myRefCountHolder.isReferenced(field) && !isImplicitUsage(field)) {
@@ -363,6 +368,13 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     }
 
     return null;
+  }
+
+  private static boolean isFieldInjected(final PsiField field) {
+    for (PsiAnnotation psiAnnotation : field.getModifierList().getAnnotations()) {
+      if (INJECTION_ANNOS.contains(psiAnnotation.getQualifiedName())) return true;
+    }
+    return false;
   }
 
   private HighlightInfo processParameter(PsiParameter parameter, final List<IntentionAction> options, final String displayName) {
