@@ -686,7 +686,7 @@ public interface PsiElementFactory {
    * @return the created tag instance.
    * @throws IncorrectOperationException if the text does not specify a valid XML fragment.
    */
-  @NotNull XmlTag createXHTMLTagFromText(@NonNls String s) throws IncorrectOperationException;
+  @NotNull XmlTag createXHTMLTagFromText(@NotNull @NonNls String s) throws IncorrectOperationException;
 
   /**
    * Creates an PsiWhiteSpace with the specified text.
@@ -695,11 +695,11 @@ public interface PsiElementFactory {
    * @return the created whitespace instance.
    * @throws IncorrectOperationException if the text does not specify a valid whitespace.
    */
-  @NotNull PsiElement createWhiteSpaceFromText(@NonNls String s) throws IncorrectOperationException;
+  @NotNull PsiElement createWhiteSpaceFromText(@NotNull @NonNls String s) throws IncorrectOperationException;
 
-  @NotNull PsiFile createFileFromText(final String fileName, final FileType fileType, final CharSequence text);
+  @NotNull PsiFile createFileFromText(@NotNull String fileName, @NotNull FileType fileType, @NotNull CharSequence text);
 
-  @NotNull PsiFile createFileFromText(@NonNls String name, @NotNull FileType fileType, @NotNull CharSequence text,
+  @NotNull PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
                                       long modificationStamp, boolean physical);
 
 }

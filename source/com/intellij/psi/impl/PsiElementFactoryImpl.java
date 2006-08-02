@@ -283,7 +283,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
   @NotNull
-  public PsiFile createFileFromText(String name, FileType fileType, CharSequence text,
+  public PsiFile createFileFromText(@NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
                                     long modificationStamp, final boolean physical) {
     return createFileFromText(name, fileType, text, modificationStamp, physical, true);
   }
@@ -450,7 +450,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     CompositeElement annotationElement =
     getJavaParsingContext(holderElement).getDeclarationParsing().parseAnnotationFromText(myManager, annotationText, getLanguageLevel(context));
-    if (annotationElement == null || annotationElement.getElementType() != ElementType.ANNOTATION) {
+    if (annotationElement == null || annotationElement.getElementType() != JavaElementType.ANNOTATION) {
       throw new IncorrectOperationException("Incorrect annotation \"" + annotationText + "\".");
     }
     TreeUtil.addChildren(holderElement, annotationElement);
@@ -510,14 +510,14 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   public PsiCatchSection createCatchSection(PsiClassType exceptionType,
                                             String exceptionName,
                                             PsiElement context) throws IncorrectOperationException {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append("catch (");
     buffer.append(exceptionType.getCanonicalText());
     buffer.append(" ").append(exceptionName).append("){}");
     String catchSectionText = buffer.toString();
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     TreeElement catchSection = getJavaParsingContext(holderElement).getStatementParsing().parseCatchSectionText(catchSectionText.toCharArray());
-    LOG.assertTrue(catchSection != null && catchSection.getElementType() == ElementType.CATCH_SECTION);
+    LOG.assertTrue(catchSection != null && catchSection.getElementType() == JavaElementType.CATCH_SECTION);
     TreeUtil.addChildren(holderElement, catchSection);
     PsiCatchSection psiCatchSection = (PsiCatchSection)SourceTreeToPsiMap.treeElementToPsi(catchSection);
 
@@ -580,7 +580,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
   @NotNull
-  public PsiFile createFileFromText(final String name, final FileType fileType, final CharSequence text) {
+  public PsiFile createFileFromText(@NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text) {
     return createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), false);
   }
 
@@ -665,7 +665,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     if (type == PsiType.NULL) {
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append("X ");
     buffer.append(name);
     if (initializer != null) {
@@ -687,7 +687,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   @NotNull
   public PsiDocTag createParamTag(String parameterName, @NonNls String description) throws IncorrectOperationException {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append(" * @param ");
     buffer.append(parameterName);
     buffer.append(" ");
@@ -702,7 +702,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   @NotNull
   public PsiDocTag createDocTagFromText(String docTagText, PsiElement context) throws IncorrectOperationException {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     buffer.append("/**\n");
     buffer.append(docTagText);
     buffer.append("\n */");
@@ -712,7 +712,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   @NotNull
   public PsiDocComment createDocCommentFromText(String docCommentText, PsiElement context) throws IncorrectOperationException {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append(docCommentText);
     buffer.append("void m();");
     final PsiMethod method = createMethodFromText(buffer.toString(), null);
@@ -757,7 +757,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     TreeElement decl = getJavaParsingContext(holderElement).getDeclarationParsing().parseDeclarationText(myManager, myManager.getEffectiveLanguageLevel(), text.toCharArray(),
                                                                                                          DeclarationParsing.Context.CLASS_CONTEXT);
-    if (decl == null || decl.getElementType() != ElementType.FIELD) {
+    if (decl == null || decl.getElementType() != JavaElementType.FIELD) {
       throw new IncorrectOperationException("Incorrect field \"" + text + "\".");
     }
     TreeUtil.addChildren(holderElement, decl);
@@ -787,7 +787,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     TreeElement decl = getJavaParsingContext(holderElement, level).getDeclarationParsing().parseDeclarationText(myManager, level, text.toCharArray(),
                                                                                                                 DeclarationParsing.Context.CLASS_CONTEXT);
-    if (decl == null || decl.getElementType() != ElementType.METHOD) {
+    if (decl == null || decl.getElementType() != JavaElementType.METHOD) {
       throw new IncorrectOperationException("Incorrect method \"" + text + "\".");
     }
     TreeUtil.addChildren(holderElement, decl);
@@ -913,8 +913,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   @NotNull
   public PsiCodeFragment createCodeBlockCodeFragment(String text, PsiElement context, boolean isPhysical) {
-    final PsiCodeFragmentImpl result = new PsiCodeFragmentImpl(myManager.getProject(),
-                                                               ElementType.STATEMENTS,
+    final PsiCodeFragmentImpl result = new PsiCodeFragmentImpl(myManager.getProject(), JavaElementType.STATEMENTS,
                                                                isPhysical,
                                                                "fragment.java",
                                                                text);

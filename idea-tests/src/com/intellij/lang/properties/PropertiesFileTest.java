@@ -8,11 +8,7 @@ import com.intellij.lang.properties.psi.Property;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 27, 2005
- * Time: 10:44:17 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class PropertiesFileTest extends LightIdeaTestCase {
   private Property myPropertyToAdd;

@@ -4,6 +4,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
+import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,21 +12,21 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
  */
 public class PropertiesElementFactory {
-  public static
   @NotNull
-  Property createProperty(@NotNull Project project, @NonNls @NotNull String name, @NonNls @NotNull String value) {
+  public static Property createProperty(@NotNull Project project, @NonNls @NotNull String name, @NonNls @NotNull String value) {
     String text = escape(name) + "=" + value;
     final PropertiesFile dummyFile = createPropertiesFile(project, text);
     return dummyFile.getProperties().get(0);
   }
 
-  public static PropertiesFile createPropertiesFile(final Project project, String text) {
+  @NotNull
+  public static PropertiesFile createPropertiesFile(@NotNull Project project, @NonNls @NotNull String text) {
     @NonNls String filename = "dummy." + StdFileTypes.PROPERTIES.getDefaultExtension();
-    final PropertiesFile dummyFile = (PropertiesFile)PsiManager.getInstance(project).getElementFactory().createFileFromText(filename, text);
-    return dummyFile;
+    return (PropertiesFile)PsiManager.getInstance(project).getElementFactory().createFileFromText(filename, StdLanguages.PROPERTIES.getAssociatedFileType(), text);
   }
 
-  private static String escape(String name) {
+  @NotNull
+  private static String escape(@NotNull String name) {
     if (StringUtil.startsWithChar(name, '#')) {
       name = escapeChar(name, '#');
     }
@@ -39,9 +40,8 @@ public class PropertiesElementFactory {
     return name;
   }
 
-  private static
   @NotNull
-  String escapeChar(@NotNull String name, char c) {
+  private static String escapeChar(@NotNull String name, char c) {
     int offset = 0;
     while (true) {
       int i = name.indexOf(c, offset);
