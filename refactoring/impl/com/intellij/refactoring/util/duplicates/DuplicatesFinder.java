@@ -1,19 +1,18 @@
 package com.intellij.refactoring.util.duplicates;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.lang.ASTNode;
-import com.intellij.util.containers.IntArrayList;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.IntArrayList;
 
 import java.util.*;
 
@@ -232,16 +231,19 @@ public class DuplicatesFinder {
     } else if (pattern instanceof PsiNewExpression) {
       final PsiJavaCodeReferenceElement classReference1 = ((PsiNewExpression)pattern).getClassReference();
       final PsiJavaCodeReferenceElement classReference2 = ((PsiNewExpression)candidate).getClassReference();
-      if ((classReference1 == null) != (classReference2 == null)) return false;
-      if (classReference1 != null) {
-        final PsiElement resolved1 = classReference1.resolve();
-        final PsiElement resolved2 = classReference2.resolve();
-        if (!pattern.getManager().areElementsEquivalent(resolved1, resolved2)) return false;
-      }
+      if ((classReference1 == null) || classReference2 == null) return false;
+      final PsiElement resolved1 = classReference1.resolve();
+      final PsiElement resolved2 = classReference2.resolve();
+      if (!pattern.getManager().areElementsEquivalent(resolved1, resolved2)) return false;
     } else if (pattern instanceof PsiClassObjectAccessExpression) {
       final PsiTypeElement operand1 = ((PsiClassObjectAccessExpression)pattern).getOperand();
       final PsiTypeElement operand2 = ((PsiClassObjectAccessExpression)candidate).getOperand();
       return operand1.getType().equals(operand2.getType());
+    } else if (pattern instanceof PsiInstanceOfExpression) {
+      final PsiTypeElement operand1 = ((PsiInstanceOfExpression)pattern).getCheckType();
+      final PsiTypeElement operand2 = ((PsiInstanceOfExpression)candidate).getCheckType();
+      if (operand1 == null || operand2 == null) return false;
+      if (!operand1.getType().equals(operand2.getType())) return false;
     } else if (pattern instanceof PsiReturnStatement) {
       final PsiReturnStatement patternReturnStatement = (PsiReturnStatement)pattern;
       return matchReturnStatement(patternReturnStatement, candidate, candidates, match);
