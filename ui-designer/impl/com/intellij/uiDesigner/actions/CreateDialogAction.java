@@ -156,7 +156,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
       result.append("public static void main(String[] args){\n");
       result.append(className + " dialog = new " + className + "();\n");
       result.append("dialog.pack();\n");
-      result.append("dialog.show();\n");
+      result.append("dialog.setVisible(true);\n");
       result.append("System.exit(0);\n");
       result.append("}\n");
     }
