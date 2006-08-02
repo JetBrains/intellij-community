@@ -420,6 +420,8 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
         editorSettings.setLineNumbersShown(false);
         editorSettings.setFoldingOutlineShown(false);
         editorSettings.setAdditionalPageAtBottom(false);
+        editorSettings.setAdditionalColumnsCount(0);
+        editorSettings.setAdditionalLinesCount(0);
 
         final EditorColorsScheme scheme = editor.getColorsScheme();
         editor.setBackgroundColor(BACKGROUND_COLOR);
