@@ -361,7 +361,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     MarkupModelEx markupModel = (MarkupModelEx)myDocument.getMarkupModel(myProject, false);
     if (markupModel instanceof MarkupModelImpl) {
-      ((MarkupModelImpl)markupModel).removeMarkupModelListener(myMarkupModelListener);
+      markupModel.removeMarkupModelListener(myMarkupModelListener);
     }
 
     myMarkupModel.dispose();
@@ -377,7 +377,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void clearCaretThread() {
     synchronized (ourCaretThread) {
-      if (ourCaretThread.myEditor == EditorImpl.this) {
+      if (ourCaretThread.myEditor == this) {
         ourCaretThread.myEditor = null;
       }
     }
@@ -987,20 +987,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myPanel;
   }
 
-  public void addEditorMouseListener(EditorMouseListener listener) {
+  public void addEditorMouseListener(@NotNull EditorMouseListener listener) {
     myMouseListeners.add(listener);
   }
 
-  public void removeEditorMouseListener(EditorMouseListener listener) {
+  public void removeEditorMouseListener(@NotNull EditorMouseListener listener) {
     boolean success = myMouseListeners.remove(listener);
     LOG.assertTrue(success);
   }
 
-  public void addEditorMouseMotionListener(EditorMouseMotionListener listener) {
+  public void addEditorMouseMotionListener(@NotNull EditorMouseMotionListener listener) {
     myMouseMotionListeners.add(listener);
   }
 
-  public void removeEditorMouseMotionListener(EditorMouseMotionListener listener) {
+  public void removeEditorMouseMotionListener(@NotNull EditorMouseMotionListener listener) {
     boolean success = myMouseMotionListeners.remove(listener);
     LOG.assertTrue(success);
   }
@@ -2568,7 +2568,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private long mySleepTime = 500;
     private boolean myIsBlinkCaret = true;
     private EditorImpl myEditor = null;
-    private boolean isStopped = false;
     private MyRepaintRunnable myRepaintRunnable;
     @NonNls private static final String EDITOR_CARET_THREAD_NAME = "EditorCaretThread";
 
@@ -2577,7 +2576,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myRepaintRunnable = new MyRepaintRunnable();
     }
 
-    @SuppressWarnings({"InnerClassMayBeStatic"})
     private class MyRepaintRunnable implements Runnable {
       public void run() {
         if (myEditor != null) {
@@ -2594,10 +2592,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myIsBlinkCaret = value;
     }
 
-    private synchronized void stopThread() {
-      isStopped = true;
-    }
-
     @SuppressWarnings({"BusyWait"})
     public void run() {
       while (true) {
@@ -2606,12 +2600,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         catch (InterruptedException e) {
           // ok
-        }
-
-        synchronized (ourCaretThread) {
-          if (isStopped) {
-            break;
-          }
         }
 
         if (myEditor == null) {
@@ -2628,7 +2616,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             activeCursor.isVisible = !activeCursor.isVisible;
           }
           else {
-
             toRepaint = !activeCursor.isVisible;
             activeCursor.isVisible = true;
           }
