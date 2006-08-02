@@ -13,12 +13,11 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedList;
-
-import org.jetbrains.annotations.Nullable;
 
 abstract class OccurenceNavigatorActionBase extends AnAction {
   public void actionPerformed(AnActionEvent e) {
@@ -100,7 +99,7 @@ abstract class OccurenceNavigatorActionBase extends AnAction {
           queue.addLast(selectedComponent);
         }
       }
-      else {
+      else if (component != null){
         for (int i = 0; i < component.getComponentCount(); i++) {
           Component child = component.getComponent(i);
           if (!(child instanceof JComponent)) continue;
