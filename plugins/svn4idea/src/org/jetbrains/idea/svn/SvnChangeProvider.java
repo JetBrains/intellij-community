@@ -8,13 +8,12 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -148,12 +147,12 @@ public class SvnChangeProvider implements ChangeProvider {
     return exceptions;
   }
 
-  private void processFile(FilePath path, SVNStatusClient stClient, final ChangelistBuilder builder, boolean recursively) {
+  private static void processFile(FilePath path, SVNStatusClient stClient, final ChangelistBuilder builder, boolean recursively) {
     try {
       if (path.isDirectory()) {
         stClient.doStatus(path.getIOFile(), recursively, false, false, false, new ISVNStatusHandler() {
           public void handleStatus(SVNStatus status) throws SVNException {
-            processStatus(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(status.getFile()), status, builder);
+            processStatus(VcsUtil.getFilePath(status.getFile(), status.getKind().equals(SVNNodeKind.DIR)), status, builder);
           }
         });
       } else {
@@ -165,8 +164,8 @@ public class SvnChangeProvider implements ChangeProvider {
         // process children recursively!
         if (recursively && path.isDirectory()) {
           VirtualFile[] children = path.getVirtualFile().getChildren();
-          for(int i = 0; i < children.length; i++) {
-            FilePath filePath = VcsUtil.getFilePath(children[i].getPath());
+          for (VirtualFile aChildren : children) {
+            FilePath filePath = VcsUtil.getFilePath(aChildren.getPath(), aChildren.isDirectory());
             processFile(filePath, stClient, builder, recursively);
           }
         }
@@ -175,12 +174,12 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  private void processFile(FilePath filePath, SVNStatusClient stClient, ChangelistBuilder builder) throws SVNException {
+  private static void processFile(FilePath filePath, SVNStatusClient stClient, ChangelistBuilder builder) throws SVNException {
     SVNStatus status = stClient.doStatus(filePath.getIOFile(), false, false);
     processStatus(filePath, status, builder);
   }
 
-  private void processStatus(final FilePath filePath, final SVNStatus status, final ChangelistBuilder builder) {
+  private static void processStatus(final FilePath filePath, final SVNStatus status, final ChangelistBuilder builder) {
     SvnFileStatusProvider.loadEntriesFile(filePath);
     if (status != null) {
       FileStatus fStatus = SvnFileStatusProvider.convertStatus(status, filePath.getIOFile());
@@ -203,7 +202,7 @@ public class SvnChangeProvider implements ChangeProvider {
         builder.processChange(new Change(new SvnUpToDateRevision(filePath, status.getRevision()), null, fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_MISSING) {
-        builder.processLocallyDeletedFile(filePath.getIOFile());
+        builder.processLocallyDeletedFile(filePath);
       }
     }
   }
