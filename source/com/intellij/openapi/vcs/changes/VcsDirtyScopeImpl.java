@@ -52,15 +52,15 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     return myVcs;
   }
 
-  public Set<FilePath> getDirtyFiles() {
-    return myDirtyFiles;
+  public synchronized Set<FilePath> getDirtyFiles() {
+    return new THashSet<FilePath>(myDirtyFiles);
   }
 
-  public Set<FilePath> getRecursivelyDirtyDirectories() {
-    return myDirtyDirectoriesRecursively;
+  public synchronized Set<FilePath> getRecursivelyDirtyDirectories() {
+    return new THashSet<FilePath>(myDirtyDirectoriesRecursively);
   }
 
-  public void addDirtyDirRecursively(FilePath newcomer) {
+  public synchronized void addDirtyDirRecursively(FilePath newcomer) {
     myAffectedContentRoots.add(getRootFor(myIndex, newcomer));
 
     for (FilePath oldBoy : myDirtyDirectoriesRecursively) {
@@ -77,7 +77,7 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     myDirtyDirectoriesRecursively.add(newcomer);
   }
 
-  public void addDirtyFile(FilePath newcomer) {
+  public synchronized void addDirtyFile(FilePath newcomer) {
     myAffectedContentRoots.add(getRootFor(myIndex, newcomer));
 
     for (FilePath oldBoy : myDirtyDirectoriesRecursively) {
@@ -105,7 +105,7 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     myDirtyFiles.add(newcomer);
   }
 
-  public void iterate(final Processor<FilePath> iterator) {
+  public synchronized void iterate(final Processor<FilePath> iterator) {
     if (myProject.isDisposed()) return;
 
     ContentIterator iteratorAdapter = new ContentIterator() {
@@ -147,28 +147,30 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
   public boolean belongsTo(final FilePath path) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
-        if (myProject.isDisposed()) return Boolean.FALSE;
-        if (!myAffectedContentRoots.contains(getRootFor(myIndex, path))) return Boolean.FALSE;
+        synchronized (this) {
+          if (myProject.isDisposed()) return Boolean.FALSE;
+          if (!myAffectedContentRoots.contains(getRootFor(myIndex, path))) return Boolean.FALSE;
 
-        for (FilePath filePath : myDirtyDirectoriesRecursively) {
-          if (path.isUnder(filePath, false)) return Boolean.TRUE;
+          for (FilePath filePath : myDirtyDirectoriesRecursively) {
+            if (path.isUnder(filePath, false)) return Boolean.TRUE;
+          }
+
+          if (myDirtyFiles.size() > 0) {
+            FilePath parent;
+            VirtualFile vParent = path.getVirtualFileParent();
+            if (vParent != null && vParent.isValid()) {
+              parent = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(vParent);
+            }
+            else {
+              parent = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(path.getIOFile().getParentFile());
+            }
+            for (FilePath filePath : myDirtyFiles) {
+              if (filePath.equals(parent) || filePath.equals(path)) return Boolean.TRUE;
+            }
+          }
+
+          return Boolean.FALSE;
         }
-
-        if (myDirtyFiles.size() > 0) {
-          FilePath parent;
-          VirtualFile vParent = path.getVirtualFileParent();
-          if (vParent != null && vParent.isValid()) {
-            parent = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(vParent);
-          }
-          else {
-            parent = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(path.getIOFile().getParentFile());
-          }
-          for (FilePath filePath : myDirtyFiles) {
-            if (filePath.equals(parent) || filePath.equals(path)) return Boolean.TRUE;
-          }
-        }
-
-        return Boolean.FALSE;
       }
     }).booleanValue();
   }
