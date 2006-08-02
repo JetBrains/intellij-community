@@ -128,7 +128,7 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     myShowFlatten = showFlatten;
   }
 
-  public void updateModel(List<LocalChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<File> locallyDeletedFiles) {
+  public void updateModel(List<LocalChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<FilePath> locallyDeletedFiles) {
     storeState();
 
     TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());

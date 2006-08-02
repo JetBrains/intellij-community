@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.cvsstatuses;
 
 import com.intellij.CvsBundle;
+import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.AddFileOrDirectoryAction;
 import com.intellij.cvsSupport2.actions.RemoveLocallyFileOrDirectoryAction;
@@ -168,11 +169,11 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     for(Entry entry: dirContent.getDeletedDirectories()) {
-      builder.processLocallyDeletedFile(CvsVfsUtil.getFileFor(dir, entry.getFileName()));      
+      builder.processLocallyDeletedFile(VcsUtil.getFilePath(CvsVfsUtil.getFileFor(dir, entry.getFileName()), true));
     }
 
     for (Entry entry : dirContent.getDeletedFiles()) {
-      builder.processLocallyDeletedFile(CvsVfsUtil.getFileFor(dir, entry.getFileName()));
+      builder.processLocallyDeletedFile(VcsUtil.getFilePath(CvsVfsUtil.getFileFor(dir, entry.getFileName()), false));
     }
 
     /*
@@ -228,7 +229,7 @@ public class CvsChangeProvider implements ChangeProvider {
       builder.processChange(new Change(new CvsUpToDateRevision(filePath, number), null, status));
     }
     else if (status == FileStatus.DELETED_FROM_FS) {
-      builder.processLocallyDeletedFile(filePath.getIOFile());
+      builder.processLocallyDeletedFile(filePath);
     }
     else if (status == FileStatus.UNKNOWN) {
       builder.processUnversionedFile(filePath.getVirtualFile());

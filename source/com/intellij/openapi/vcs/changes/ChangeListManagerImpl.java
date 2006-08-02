@@ -300,11 +300,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                 }
               }
 
-              public void processLocallyDeletedFile(File file) {
+              public void processLocallyDeletedFile(FilePath file) {
                 if (!updateUnversionedFiles) return;
                 if (myDisposed) throw new DisposedException();
                 if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
-                if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                if (scope.belongsTo(file)) {
                   deletedHolder.addFile(file);
                   ChangesViewManager.getInstance(myProject).scheduleRefresh();
                 }
@@ -435,8 +435,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     return new ArrayList<VirtualFile>(myUnversionedFilesHolder.getFiles());
   }
 
-  List<File> getDeletedFiles() {
-    return new ArrayList<File>(myDeletedFilesHolder.getFiles());
+  List<FilePath> getDeletedFiles() {
+    return new ArrayList<FilePath>(myDeletedFilesHolder.getFiles());
   }
 
   public boolean isFileAffected(final VirtualFile file) {

@@ -95,7 +95,9 @@ class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
       if (path.isDirectory() || !node.isLeaf()) {
         append(ChangesListView.getRelativePath(ChangesListView.safeCastToFilePath(((ChangesBrowserNode)node.getParent()).getUserObject()), path),
                SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        appendCount(node);
+        if (!node.isLeaf()) {
+          appendCount(node);
+        }
         setIcon(expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON);
       }
       else {
@@ -130,7 +132,7 @@ class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
     if (dirCount == 0) {
       append(" " + VcsBundle.message("changes.nodetitle.changecount", count), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
     }
-    else if (count == 0 && dirCount > 1) {
+    else if (count == 0 && dirCount > 0) {
       append(" " + VcsBundle.message("changes.nodetitle.directory.changecount", dirCount), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
     }
     else {

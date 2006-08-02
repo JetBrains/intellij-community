@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,7 +14,6 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import java.io.File;
 import java.util.*;
 
 /**
@@ -51,7 +49,7 @@ public class TreeModelBuilder {
 
   public DefaultTreeModel buildModel(final List<? extends ChangeList> changeLists,
                                      final List<VirtualFile> unversionedFiles,
-                                     final List<File> locallyDeletedFiles) {
+                                     final List<FilePath> locallyDeletedFiles) {
 
     for (ChangeList list : changeLists) {
       ChangesBrowserNode listNode = new ChangesBrowserNode(list);
@@ -79,8 +77,8 @@ public class TreeModelBuilder {
       model.insertNodeInto(locallyDeletedNode, root, root.getChildCount());
       final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
       final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
-      for (File file : locallyDeletedFiles) {
-        final ChangesBrowserNode node = new ChangesBrowserNode(new FilePathImpl(file));
+      for (FilePath file : locallyDeletedFiles) {
+        final ChangesBrowserNode node = new ChangesBrowserNode(file);
         model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, locallyDeletedNode), 0);
       }
     }

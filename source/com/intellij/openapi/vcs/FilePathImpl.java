@@ -21,10 +21,12 @@ public class FilePathImpl implements FilePath {
   private VirtualFile myVirtualParent;
   private final String myName;
   @NotNull private final File myFile;
+  private boolean myIsDirectory;
 
-  public FilePathImpl(VirtualFile virtualParent, String name) {
+  public FilePathImpl(VirtualFile virtualParent, String name, final boolean isDirectory) {
     myVirtualParent = virtualParent;
     myName = name;
+    myIsDirectory = isDirectory;
     if (myVirtualParent == null) {
       myFile = new File(myName);
     }
@@ -35,10 +37,10 @@ public class FilePathImpl implements FilePath {
     refresh();
   }
 
-
-  public FilePathImpl(final File file) {
+  public FilePathImpl(final File file, final boolean isDirectory) {
     myFile = file;
     myName = file.getName();
+    myIsDirectory = isDirectory;
   }
 
   public int hashCode() {
@@ -55,7 +57,7 @@ public class FilePathImpl implements FilePath {
   }
 
   public FilePathImpl(@NotNull VirtualFile virtualFile) {
-    this(virtualFile.getParent(), virtualFile.getName());
+    this(virtualFile.getParent(), virtualFile.getName(), virtualFile.isDirectory());
   }
 
   public void refresh() {
@@ -79,7 +81,7 @@ public class FilePathImpl implements FilePath {
 
   public boolean isDirectory() {
     if (myVirtualFile == null) {
-      return false;
+      return myIsDirectory;
     }
     else {
       return myVirtualFile.isDirectory();
@@ -112,7 +114,7 @@ public class FilePathImpl implements FilePath {
     if (pos < 0 || pos == path.indexOf(File.separatorChar)) {
       return null;
     }
-    return new FilePathImpl(new File(path.substring(0, pos)));
+    return new FilePathImpl(new File(path.substring(0, pos)), false);
   }
 
   public VirtualFile getVirtualFile() {
@@ -163,6 +165,10 @@ public class FilePathImpl implements FilePath {
   }
 
   public static FilePathImpl create(File selectedFile) {
+    return create(selectedFile, false);
+  }
+
+  public static FilePathImpl create(File selectedFile, boolean isDirectory) {
     if (selectedFile == null) {
       return null;
     }
@@ -176,15 +182,15 @@ public class FilePathImpl implements FilePath {
 
     File parentFile = selectedFile.getParentFile();
     if (parentFile == null) {
-      return new FilePathImpl(selectedFile);
+      return new FilePathImpl(selectedFile, isDirectory);
     }
 
     VirtualFile virtualFileParent = lfs.findFileByIoFile(parentFile);
     if (virtualFileParent != null) {
-      return new FilePathImpl(virtualFileParent, selectedFile.getName());
+      return new FilePathImpl(virtualFileParent, selectedFile.getName(), isDirectory);
     }
     else {
-      return new FilePathImpl(selectedFile);
+      return new FilePathImpl(selectedFile, isDirectory);
     }
   }
 
@@ -198,7 +204,7 @@ public class FilePathImpl implements FilePath {
     else {
       VirtualFile virtualFileParent = localFileSystem.findFileByIoFile(ioFile.getParentFile());
       if (virtualFileParent != null) {
-        return new FilePathImpl(virtualFileParent, ioFile.getName());
+        return new FilePathImpl(virtualFileParent, ioFile.getName(), false);
       }
       else {
         return null;

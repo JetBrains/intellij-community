@@ -22,7 +22,7 @@ public class ChangesBrowserNode extends DefaultMutableTreeNode {
   public ChangesBrowserNode(Object userObject) {
     super(userObject);
     if ((userObject instanceof Change && !ChangesUtil.getFilePath((Change) userObject).isDirectory()) ||
-        userObject instanceof VirtualFile ||
+        (userObject instanceof VirtualFile && !((VirtualFile) userObject).isDirectory()) ||
         userObject instanceof FilePath && !((FilePath)userObject).isDirectory()) {
       count = 1;
     }
@@ -49,6 +49,12 @@ public class ChangesBrowserNode extends DefaultMutableTreeNode {
   public int getDirectoryCount() {
     if (myDirectoryCount == -1) {
       if (userObject instanceof Change && ChangesUtil.getFilePath((Change) userObject).isDirectory()) {
+        myDirectoryCount = 1;
+      }
+      else if (userObject instanceof FilePath && ((FilePath) userObject).isDirectory() && isLeaf()) {
+        myDirectoryCount = 1;
+      }
+      else if (userObject instanceof VirtualFile && ((VirtualFile) userObject).isDirectory() && isLeaf()) {
         myDirectoryCount = 1;
       }
       else {

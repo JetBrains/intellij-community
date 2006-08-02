@@ -280,9 +280,20 @@ public class VcsUtil
     return false;
   }
 
-  public static FilePath getFilePath( String path )
-  {
-    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn( new File( path ) );
+  public static FilePath getFilePath(String path) {
+    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(new File(path));
+  }
+
+  public static FilePath getFilePath(File file) {
+    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file);
+  }
+
+  public static FilePath getFilePath(String path, boolean isDirectory) {
+    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(new File(path), isDirectory);
+  }
+
+  public static FilePath getFilePath(File file, boolean isDirectory) {
+    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file, isDirectory);
   }
 
   /**
