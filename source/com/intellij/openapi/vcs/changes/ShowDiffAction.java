@@ -103,7 +103,8 @@ public class ShowDiffAction extends AnAction {
     final ContentRevision bRev = change.getBeforeRevision();
     final ContentRevision aRev = change.getAfterRevision();
 
-    if ((bRev != null && bRev.getFile().getFileType().isBinary()) || (aRev != null && aRev.getFile().getFileType().isBinary())) {
+    if ((bRev != null && (bRev.getFile().getFileType().isBinary() || bRev.getFile().isDirectory())) ||
+        (aRev != null && (aRev.getFile().getFileType().isBinary() || aRev.getFile().isDirectory()))) {
       return null;
     }
 
