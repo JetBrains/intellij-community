@@ -22,17 +22,21 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
+  @Nullable
   public Icon getIcon(int flags) {
     if (!(this instanceof PsiElement)) return null;
 
     final PsiElement element = (PsiElement)this;
 
     final Icon providersIcon = IconUtil.getProvidersIcon(element, flags);
-    if(providersIcon != null) return providersIcon;
+    if(providersIcon != null) {
+      return providersIcon instanceof RowIcon ? addVisibilityIcon(element, flags, (RowIcon)providersIcon) : providersIcon;
+    }
 
     RowIcon baseIcon;
     final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
@@ -103,6 +107,10 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     else {
       return null;
     }
+    return addVisibilityIcon(element, flags, baseIcon);
+  }
+
+  private static Icon addVisibilityIcon(final PsiElement element, final int flags, final RowIcon baseIcon) {
     if ((flags & ICON_FLAG_VISIBILITY) != 0) {
       PsiModifierList modifierList = element instanceof PsiModifierListOwner ? ((PsiModifierListOwner)element).getModifierList() : null;
       IconUtilEx.setVisibilityIcon(modifierList, baseIcon);
