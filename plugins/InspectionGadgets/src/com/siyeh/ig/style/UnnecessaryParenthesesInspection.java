@@ -98,37 +98,53 @@ public class UnnecessaryParenthesesInspection extends ExpressionInspection {
                 return;
             }
             if (parentPrecedence == childPrecedence) {
-                if (parent instanceof PsiBinaryExpression &&
-                        child instanceof PsiBinaryExpression) {
-                    final PsiBinaryExpression parentBinaryExpression =
-                            (PsiBinaryExpression)parent;
-                    final PsiJavaToken parentSign =
-                            parentBinaryExpression.getOperationSign();
-                    final IElementType parentOperator =
-                            parentSign.getTokenType();
-                    final PsiBinaryExpression childBinaryExpression =
-                            (PsiBinaryExpression)child;
-                    final PsiJavaToken childSign =
-                            childBinaryExpression.getOperationSign();
-                    final IElementType childOperator = childSign.getTokenType();
-                    if (!parentOperator.equals(childOperator)) {
-                        return;
-                    }
-                    final PsiType parentType = parentBinaryExpression.getType();
-                    if (parentType == null) {
-                        return;
-                    }
-                    final PsiType childType = childBinaryExpression.getType();
-                    if (parentType.equals(childType)) {
-                        registerError(expression);
-                        return;
-                    }
-                } else {
+                if (!areParenthesesNeeded(expression)) {
                     registerError(expression);
                     return;
                 }
             }
             super.visitParenthesizedExpression(expression);
         }
+
+        private static boolean areParenthesesNeeded(
+                PsiParenthesizedExpression expression) {
+            final PsiElement parent = expression.getParent();
+            final PsiElement child = expression.getExpression();
+            if (parent instanceof PsiBinaryExpression &&
+                    child instanceof PsiBinaryExpression) {
+                final PsiBinaryExpression parentBinaryExpression =
+                        (PsiBinaryExpression)parent;
+                final PsiJavaToken parentSign =
+                        parentBinaryExpression.getOperationSign();
+                final IElementType parentOperator =
+                        parentSign.getTokenType();
+                final PsiBinaryExpression childBinaryExpression =
+                        (PsiBinaryExpression)child;
+                final PsiJavaToken childSign =
+                        childBinaryExpression.getOperationSign();
+                final IElementType childOperator = childSign.getTokenType();
+                if (!parentOperator.equals(childOperator)) {
+                    return true;
+                }
+                final PsiType parentType =
+                        parentBinaryExpression.getType();
+                if (parentType == null) {
+                    return true;
+                }
+                final PsiType childType = childBinaryExpression.getType();
+                if (!parentType.equals(childType)) {
+                    return true;
+                }
+                if (parentBinaryExpression.getROperand() == expression) {
+                    if (!ParenthesesUtils.isCommutativeBinaryOperator(childOperator)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            return false;
+        }
     }
+
+    
 }

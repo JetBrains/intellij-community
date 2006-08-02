@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,6 +88,13 @@ public class ParenthesesUtils{
             parenthesized = parenthesizedExpression.getExpression();
         }
         return parenthesized;
+    }
+
+    public static boolean isCommutativeBinaryOperator(
+            @NotNull IElementType token) {
+        return !(token.equals(JavaTokenType.MINUS) ||
+                token.equals(JavaTokenType.DIV) ||
+                token.equals(JavaTokenType.PERC));
     }
 
     public static int getPrecedence(PsiExpression expression){
@@ -286,10 +294,14 @@ public class ParenthesesUtils{
                 final PsiType bodyType = body.getType();
                 if(parentType != null && parentType.equals(bodyType) &&
                         parentOperator.equals(bodyOperator)) {
-                    return removeParentheses(body);
-                } else{
-                    return '(' + removeParentheses(body) + ')';
+                    final PsiExpression rhs =
+                            parentBinaryExpression.getROperand();
+                    if (!PsiTreeUtil.isAncestor(rhs, body, true) ||
+                            isCommutativeBinaryOperator(bodyOperator)) {
+                        return removeParentheses(body);
+                    }
                 }
+                return '(' + removeParentheses(body) + ')';
             } else{
                 return removeParentheses(body);
             }
@@ -378,7 +390,7 @@ public class ParenthesesUtils{
                 arrayInitializerExpression.getInitializers();
         final String text = arrayInitializerExpression.getText();
         final int textLength = text.length();
-        final StringBuffer out = new StringBuffer(textLength);
+        final StringBuilder out = new StringBuilder(textLength);
         out.append('{');
         for(int i = 0; i < contents.length; i++){
             final PsiExpression arg = contents[i];
@@ -435,7 +447,7 @@ public class ParenthesesUtils{
             }
         }
         final int length = expressionText.length();
-        final StringBuffer out = new StringBuffer(length);
+        final StringBuilder out = new StringBuilder(length);
         out.append(PsiKeyword.NEW + ' ');
         final PsiJavaCodeReferenceElement classReference =
                 newExpression.getClassReference();
@@ -484,7 +496,7 @@ public class ParenthesesUtils{
         final PsiExpression[] args = argumentList.getExpressions();
         final String methodCallText = methodCallExpression.getText();
         final int length = methodCallText.length();
-        final StringBuffer out = new StringBuffer(length);
+        final StringBuilder out = new StringBuilder(length);
         final String strippedTarget = removeParentheses(target);
         out.append(strippedTarget);
         out.append('(');
