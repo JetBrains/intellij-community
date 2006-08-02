@@ -16,8 +16,9 @@
 package com.siyeh.ipp.base;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public interface PsiElementPredicate{
 
-    boolean satisfiedBy(PsiElement element);
+    boolean satisfiedBy(@NotNull PsiElement element);
 }

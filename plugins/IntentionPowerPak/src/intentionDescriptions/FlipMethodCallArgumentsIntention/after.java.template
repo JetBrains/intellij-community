@@ -1,0 +1,5 @@
+public class X {
+  Point f(int x, int y) {
+    return new Point(x, y);
+  }
+}
