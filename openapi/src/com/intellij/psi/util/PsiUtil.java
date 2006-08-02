@@ -975,7 +975,10 @@ public final class PsiUtil {
   }
 
   public static JspFile getJspFile(final PsiElement element) {
-    final FileViewProvider viewProvider = element.getContainingFile().getViewProvider();
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null) return null;
+
+    final FileViewProvider viewProvider = containingFile.getViewProvider();
     final PsiFile psiFile = viewProvider.getPsi(viewProvider.getBaseLanguage());
     return psiFile instanceof JspFile ? (JspFile)psiFile : null;
   }
