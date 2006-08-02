@@ -41,7 +41,8 @@ public class AccessStaticViaInstanceFix implements LocalQuickFix {
     return QuickFixBundle.message("access.static.via.class.reference.family");
   }
 
-  public void applyFix(Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    if (!myExpression.isValid() || !myMember.isValid()) return;
     if (!CodeInsightUtil.prepareFileForWrite(myExpression.getContainingFile())) return;
     PsiClass containingClass = myMember.getContainingClass();
     if (containingClass == null) return;
@@ -54,12 +55,16 @@ public class AccessStaticViaInstanceFix implements LocalQuickFix {
         qualifierExpression.delete();
         if (myExpression.resolve() != myMember) {
           PsiReferenceExpression expr = (PsiReferenceExpression) factory.createExpressionFromText("A.foo", myExpression);
-          expr.getQualifierExpression().replace(factory.createReferenceExpression(containingClass));
-          expr.getReferenceNameElement().replace(myExpression);
+          final PsiExpression qualifierReplacement = expr.getQualifierExpression();
+          LOG.assertTrue(qualifierReplacement != null);
+          qualifierReplacement.replace(factory.createReferenceExpression(containingClass));
+          final PsiElement referenceReplacement = expr.getReferenceNameElement();
+          LOG.assertTrue(referenceReplacement != null);
+          referenceReplacement.replace(myExpression);
           myExpression.replace(expr);
         }
       }
-      else {
+      else if (qualifierExpression != null) {
         qualifierExpression.replace(factory.createReferenceExpression(containingClass));
       }
 
