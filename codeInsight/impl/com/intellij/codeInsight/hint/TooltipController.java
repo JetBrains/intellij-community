@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hint;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 
@@ -52,6 +53,8 @@ public class TooltipController {
       myTooltipAlarm.addRequest(
         new Runnable() {
           public void run() {
+            Project project = editor.getProject();
+            if (project != null && !project.isOpen()) return;
             if (editor.getContentComponent().isShowing()) {
               showTooltip(editor, p, tooltipObject, alignToRight, group);
             }
