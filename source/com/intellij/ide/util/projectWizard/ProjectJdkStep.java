@@ -3,6 +3,7 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.SdkType;
@@ -37,7 +38,7 @@ public class ProjectJdkStep extends ModuleWizardStep {
 
   public ProjectJdkStep(final WizardContext context, final SdkType type) {
     myContext = context;
-    myJdkChooser = new JdkChooserPanel(context.getProject());
+    myJdkChooser = new JdkChooserPanel(getProject(context, type));
 
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
@@ -59,7 +60,7 @@ public class ProjectJdkStep extends ModuleWizardStep {
         if (type == null) { //new project
           myJdkChooser.editJdkTable();
         } else {
-          final Project project = context.getProject();
+          final Project project = getProject(context, type);
           final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(project);
           final ProjectJdksModel projectJdksModel = rootConfigurable.getProjectJdksModel();
           final boolean[] successfullyAdded = new boolean[1];
@@ -80,6 +81,14 @@ public class ProjectJdkStep extends ModuleWizardStep {
         }
       }
     });
+  }
+
+  private static Project getProject(final WizardContext context, final SdkType type) {
+    Project project = context.getProject();
+    if (type != null && project == null) { //'module' step inside project creation
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
+    return project;
   }
 
   public JComponent getPreferredFocusedComponent() {
