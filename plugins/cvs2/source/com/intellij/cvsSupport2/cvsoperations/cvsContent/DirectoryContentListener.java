@@ -27,7 +27,9 @@ class DirectoryContentListener {
       int slashPos = fileName.indexOf('/');
       if (slashPos > 0) {
         String directoryName = fileName.substring(0, slashPos);
-        if (myModulePath != null) directoryName = myModulePath + "/" + directoryName;
+        if (directoryName.equals(myModuleName)) {
+          directoryName = myModulePath;
+        }
         myDirectoryContent.addSubDirectory(directoryName);
       }
       else {
