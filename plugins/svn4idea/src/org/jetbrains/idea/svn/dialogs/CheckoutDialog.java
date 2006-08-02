@@ -15,37 +15,10 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.help.HelpManager;
-import com.intellij.util.ui.DialogUtil;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.annotations.NonNls;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import java.awt.*;
-import java.awt.event.*;
-import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
 
 public class CheckoutDialog extends RepositoryBrowserDialog {
 
@@ -57,6 +30,14 @@ public class CheckoutDialog extends RepositoryBrowserDialog {
     super.init();
     setTitle("Checkout from Subversion");
     setOKButtonText("Checkout");
+    getRepositoryBrowser().addChangeListener(new TreeSelectionListener() {
+      public void valueChanged(TreeSelectionEvent e) {
+        if (getOKAction() != null) {
+          getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
+        }
+      }
+    });
+    getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
   }
 
   protected void doOKAction() {

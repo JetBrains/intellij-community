@@ -1,8 +1,9 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
-import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
-import org.tmatesoft.svn.core.SVNURL;
+
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 
 public class ImportDialog extends RepositoryBrowserDialog {
 
@@ -14,6 +15,14 @@ public class ImportDialog extends RepositoryBrowserDialog {
     super.init();
     setTitle("Import into Subversion");
     setOKButtonText("Import");
+    getRepositoryBrowser().addChangeListener(new TreeSelectionListener() {
+      public void valueChanged(TreeSelectionEvent e) {
+        if (getOKAction() != null) {
+          getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
+        }
+      }
+    });
+    getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
   }
 
   protected void doOKAction() {

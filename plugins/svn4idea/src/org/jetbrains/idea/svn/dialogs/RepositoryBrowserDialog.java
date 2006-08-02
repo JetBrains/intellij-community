@@ -254,7 +254,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     return panel;
   }
 
-  private RepositoryBrowserComponent getRepositoryBrowser() {
+  protected RepositoryBrowserComponent getRepositoryBrowser() {
     if (myRepositoryBrowser == null) {
       myRepositoryBrowser = new RepositoryBrowserComponent(SvnVcs.getInstance(myProject));
     }
@@ -418,7 +418,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         final SVNURL sURL = sourceURL;
         final SVNURL tURL = targetURL;
 
-        Runnable command = null;
+        Runnable command;
         if (dialog.isUnifiedDiff()) {
           final File targetFile = dialog.getTargetFile();
           command = new Runnable() {
