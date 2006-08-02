@@ -17,4 +17,8 @@ public class JUnitTest extends TestCase {
         x.equals("y");
         3 == z;
     }
+
+    public void test2() {
+        assertTrue(this != this);
+    }
 }

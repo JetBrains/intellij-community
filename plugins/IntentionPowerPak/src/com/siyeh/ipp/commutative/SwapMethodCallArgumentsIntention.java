@@ -22,34 +22,52 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class FlipMethodCallArgumentsIntention extends MutablyNamedIntention {
+public class SwapMethodCallArgumentsIntention extends MutablyNamedIntention {
 
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
-        return new FlipMethodCallArgumentsPredicate();
+        return new SwapMethodCallArgumentsPredicate();
     }
 
     protected String getTextForElement(PsiElement element) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression) element;
-        final PsiExpressionList expressionList = methodCallExpression.getArgumentList();
+        final PsiExpressionList expressionList = (PsiExpressionList)element;
         final PsiExpression[] expressions = expressionList.getExpressions();
         final PsiExpression firstExpression = expressions[0];
         final PsiExpression secondExpression = expressions[1];
-        return IntentionPowerPackBundle.message("flip.method.call.arguments.intention.name",
+        return IntentionPowerPackBundle.message(
+                "swap.method.call.arguments.intention.name",
                 firstExpression.getText(), secondExpression.getText());
     }
 
-    protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression) element;
-        final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+    protected void processIntention(@NotNull PsiElement element)
+            throws IncorrectOperationException {
+        final PsiExpressionList argumentList = (PsiExpressionList)element;
         final PsiExpression[] arguments = argumentList.getExpressions();
         final PsiExpression firstArgument = arguments[0];
         final PsiExpression secondArgument = arguments[1];
         final String firstArgumentText = firstArgument.getText();
         final String secondArgumentText = secondArgument.getText();
-        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-        final String methodText = methodExpression.getText();
-        final String newExpression = methodText + '(' + secondArgumentText + ", " + firstArgumentText + ')';
-        replaceExpression(newExpression, methodCallExpression);
+        final PsiCallExpression callExpression =
+                (PsiCallExpression)argumentList.getParent();
+        final String callText;
+        if (callExpression instanceof PsiMethodCallExpression) {
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression)callExpression;
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            callText = methodExpression.getText();
+        } else if (callExpression instanceof PsiNewExpression) {
+            final PsiNewExpression newExpression =
+                    (PsiNewExpression)callExpression;
+            final PsiJavaCodeReferenceElement classReference =
+                    newExpression.getClassReference();
+            assert classReference != null;
+            callText = "new " + classReference.getText();
+        } else {
+            return;
+        }
+        final String newExpression = callText + '(' + secondArgumentText +
+                ", " + firstArgumentText + ')';
+        replaceExpression(newExpression, callExpression);
     }
 }

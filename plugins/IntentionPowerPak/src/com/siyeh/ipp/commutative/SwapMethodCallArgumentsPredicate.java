@@ -19,24 +19,26 @@ import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class FlipMethodCallArgumentsPredicate implements PsiElementPredicate {
+public class SwapMethodCallArgumentsPredicate implements PsiElementPredicate {
 
     public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!(element instanceof PsiMethodCallExpression)) {
+        if (!(element instanceof PsiExpressionList)) {
             return false;
         }
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression) element;
-        final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+        final PsiExpressionList argumentList = (PsiExpressionList)element;
         final PsiExpression[] arguments = argumentList.getExpressions();
         if (arguments.length != 2) {
             return false;
         }
-        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-        final PsiElement resolvee = methodExpression.resolve();
-        if (!(resolvee instanceof PsiMethod)) {
+        final PsiElement parent = argumentList.getParent();
+        if (!(parent instanceof PsiCallExpression)) {
             return false;
         }
-        final PsiMethod method = (PsiMethod) resolvee;
+        final PsiCallExpression methodCallExpression = (PsiCallExpression)parent;
+        final PsiMethod method = methodCallExpression.resolveMethod();
+        if (method == null) {
+            return false;
+        }
         final PsiParameterList parameterList = method.getParameterList();
         final PsiParameter[] parameters = parameterList.getParameters();
         if (parameters.length != 2) {

@@ -17,4 +17,22 @@ public class SimplifyTestCase{
     {
         return x;
     }
+
+	boolean foo() {
+		boolean result;
+		if (isFoo()) {
+			result = false;
+		} else {
+			result = isBar();
+		}
+		return result;
+	}
+
+	boolean isFoo() {
+		return true;
+	}
+
+	boolean isBar() {
+		return false;
+	}
 }
