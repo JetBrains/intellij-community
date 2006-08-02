@@ -57,7 +57,11 @@ public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, P
   }
 
   public Object[] getDependences() {
-    return new Object[]{getDeclaration()};
+    final PsiElement declaration = getDeclaration();
+    if (myElement != null && myElement.isValid()) {
+      return new Object[]{myElement.getRoot(), declaration};
+    }
+    return new Object[]{declaration};
   }
 
   public void setName(String name) throws IncorrectOperationException {
