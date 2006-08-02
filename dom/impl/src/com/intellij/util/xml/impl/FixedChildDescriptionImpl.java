@@ -3,17 +3,15 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
-import com.intellij.util.xml.DomReflectionUtil;
+import com.intellij.util.xml.JavaMethod;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,18 +21,17 @@ import java.util.List;
  * @author peter
  */
 public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implements DomFixedChildDescription {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.FixedChildDescriptionImpl");
-  private final Method[] myGetterMethods;
+  private final JavaMethod[] myGetterMethods;
   private final int myCount;
 
-  public FixedChildDescriptionImpl(final String tagName, final Type type, final int count, final Method[] getterMethods) {
+  public FixedChildDescriptionImpl(final String tagName, final Type type, final int count, final JavaMethod[] getterMethods) {
     super(tagName, type);
     assert getterMethods.length == count;
     myCount = count;
     myGetterMethods = getterMethods;
   }
 
-  public Method getGetterMethod(int index) {
+  public JavaMethod getGetterMethod(int index) {
     return myGetterMethods[index];
   }
 
@@ -44,7 +41,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
 
   @Nullable
   public <T extends Annotation> T getAnnotation(int index, Class<? extends T> annotationClass) {
-    return DomReflectionUtil.findAnnotationDFS(getGetterMethod(index), annotationClass);
+    return getGetterMethod(index).getAnnotation(annotationClass);
   }
 
   public int getCount() {
@@ -53,9 +50,9 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
 
   public List<? extends DomElement> getValues(final DomElement element) {
     final ArrayList<DomElement> result = new ArrayList<DomElement>();
-    for (Method method : myGetterMethods) {
+    for (JavaMethod method : myGetterMethods) {
       if (method != null) {
-        result.add((DomElement) DomReflectionUtil.invokeMethod(method, element, ArrayUtil.EMPTY_OBJECT_ARRAY));
+        result.add((DomElement) method.invoke(element, ArrayUtil.EMPTY_OBJECT_ARRAY));
       }
     }
     return result;

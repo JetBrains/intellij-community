@@ -4,8 +4,7 @@
 package com.intellij.util.xml.reflect;
 
 import com.intellij.util.xml.DomElement;
-
-import java.lang.reflect.Method;
+import com.intellij.util.xml.JavaMethod;
 
 /**
  * @author peter
@@ -14,19 +13,19 @@ public interface DomCollectionChildDescription extends DomChildrenDescription {
 
   DomCollectionChildDescription[] EMPTY_ARRAY = new DomCollectionChildDescription[0];
   
-  Method getGetterMethod();
-  Method getIndexedAdderMethod();
-  Method getAdderMethod();
+  JavaMethod getGetterMethod();
+  JavaMethod getIndexedAdderMethod();
+  JavaMethod getAdderMethod();
 
   DomElement addValue(DomElement parent);
   DomElement addValue(DomElement parent, int index);
   DomElement addValue(DomElement parent, Class aClass);
   DomElement addValue(DomElement parent, Class aClass, int index);
 
-  Method getClassAdderMethod();
+  JavaMethod getClassAdderMethod();
 
-  Method getIndexedClassAdderMethod();
+  JavaMethod getIndexedClassAdderMethod();
 
-  Method getInvertedIndexedClassAdderMethod();
+  JavaMethod getInvertedIndexedClassAdderMethod();
 
 }

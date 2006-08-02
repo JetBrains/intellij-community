@@ -79,7 +79,12 @@ public class JavaMethodSignature {
       return aClass.getMethod(myMethodName, myMethodParameters);
     }
     catch (NoSuchMethodException e) {
-      return null;
+      try {
+        return aClass.getDeclaredMethod(myMethodName, myMethodParameters);
+      }
+      catch (NoSuchMethodException e1) {
+        return null;
+      }
     }
   }
 

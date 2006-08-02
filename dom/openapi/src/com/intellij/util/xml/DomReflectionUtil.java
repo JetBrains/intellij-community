@@ -194,11 +194,11 @@ public class DomReflectionUtil {
            || Boolean.class.equals(DomUtil.getGenericValueParameter(type));
   }
 
-  public static Method[] getGetterMethods(final String[] path, final Class<? extends DomElement> startClass) {
-    final Method[] methods = new Method[path.length];
+  public static JavaMethod[] getGetterMethods(final String[] path, final Class<? extends DomElement> startClass) {
+    final JavaMethod[] methods = new JavaMethod[path.length];
     Class aClass = startClass;
     for (int i = 0; i < path.length; i++) {
-      final Method getter = findGetter(aClass, path[i]);
+      final JavaMethod getter = findGetter(aClass, path[i]);
       assert getter != null : "Couldn't find getter for property " + path[i] + " in class " + aClass;
       methods[i] = getter;
       aClass = getter.getReturnType();
@@ -210,16 +210,15 @@ public class DomReflectionUtil {
   }
 
   @Nullable
-  public static Method findGetter(Class aClass, String propertyName) {
+  public static JavaMethod findGetter(Class aClass, String propertyName) {
     final String capitalized = StringUtil.capitalize(propertyName);
     try {
-      return aClass.getMethod("get" + capitalized);
+      return JavaMethod.getMethod(aClass, aClass.getMethod("get" + capitalized));
     }
     catch (NoSuchMethodException e) {
-      final Method method;
       try {
-        method = aClass.getMethod("is" + capitalized);
-        return canHaveIsPropertyGetterPrefix(method.getGenericReturnType()) ? method : null;
+        final JavaMethod javaMethod = JavaMethod.getMethod(aClass, aClass.getMethod("is" + capitalized));
+        return canHaveIsPropertyGetterPrefix(javaMethod.getGenericReturnType()) ? javaMethod : null;
       }
       catch (NoSuchMethodException e1) {
         return null;

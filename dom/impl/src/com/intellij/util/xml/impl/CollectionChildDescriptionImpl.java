@@ -8,12 +8,11 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
-import com.intellij.util.xml.DomReflectionUtil;
+import com.intellij.util.xml.JavaMethod;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.List;
 
@@ -21,19 +20,19 @@ import java.util.List;
  * @author peter
  */
 public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl implements DomCollectionChildDescription {
-  private final Method myGetterMethod, myAdderMethod, myIndexedAdderMethod;
-  private final Method myClassAdderMethod;
-  private final Method myIndexedClassAdderMethod;
-  private final Method myInvertedIndexedClassAdderMethod;
+  private final JavaMethod myGetterMethod, myAdderMethod, myIndexedAdderMethod;
+  private final JavaMethod myClassAdderMethod;
+  private final JavaMethod myIndexedClassAdderMethod;
+  private final JavaMethod myInvertedIndexedClassAdderMethod;
 
   public CollectionChildDescriptionImpl(final String tagName,
                                         final Type type,
-                                        final Method adderMethod,
-                                        final Method classAdderMethod,
-                                        final Method getterMethod,
-                                        final Method indexedAdderMethod,
-                                        final Method indexedClassAdderMethod,
-                                        final Method invertedIndexedClassAdderMethod) {
+                                        final JavaMethod adderMethod,
+                                        final JavaMethod classAdderMethod,
+                                        final JavaMethod getterMethod,
+                                        final JavaMethod indexedAdderMethod,
+                                        final JavaMethod indexedClassAdderMethod,
+                                        final JavaMethod invertedIndexedClassAdderMethod) {
     super(tagName, type);
     myAdderMethod = adderMethod;
     myClassAdderMethod = classAdderMethod;
@@ -43,19 +42,19 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     myInvertedIndexedClassAdderMethod = invertedIndexedClassAdderMethod;
   }
 
-  public Method getClassAdderMethod() {
+  public JavaMethod getClassAdderMethod() {
     return myClassAdderMethod;
   }
 
-  public Method getIndexedClassAdderMethod() {
+  public JavaMethod getIndexedClassAdderMethod() {
     return myIndexedClassAdderMethod;
   }
 
-  public Method getInvertedIndexedClassAdderMethod() {
+  public JavaMethod getInvertedIndexedClassAdderMethod() {
     return myInvertedIndexedClassAdderMethod;
   }
 
-  public Method getAdderMethod() {
+  public JavaMethod getAdderMethod() {
     return myAdderMethod;
   }
 
@@ -84,16 +83,16 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return addChild(parent, aClass, Integer.MAX_VALUE);
   }
 
-  public Method getGetterMethod() {
+  public JavaMethod getGetterMethod() {
     return myGetterMethod;
   }
 
-  public Method getIndexedAdderMethod() {
+  public JavaMethod getIndexedAdderMethod() {
     return myIndexedAdderMethod;
   }
 
   public List<? extends DomElement> getValues(final DomElement element) {
-    return (List<? extends DomElement>)DomReflectionUtil.invokeMethod(myGetterMethod, element, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    return (List<? extends DomElement>)myGetterMethod.invoke(element, ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
   public String getCommonPresentableName(DomNameStrategy strategy) {
@@ -103,7 +102,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
 
   @Nullable
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    return DomReflectionUtil.findAnnotationDFS(getGetterMethod(), annotationClass);
+    return getGetterMethod().getAnnotation(annotationClass);
   }
 
   public boolean equals(final Object o) {

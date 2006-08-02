@@ -4,10 +4,10 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.xml.*;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.xml.*;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 
 /**
  * @author peter
@@ -15,7 +15,7 @@ import java.lang.reflect.Method;
 public class DomImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomImplUtil");
 
-  public static boolean isTagValueGetter(final Method method) {
+  public static boolean isTagValueGetter(final JavaMethod method) {
     if (!isGetter(method)) {
       return false;
     }
@@ -23,7 +23,7 @@ public class DomImplUtil {
       return true;
     }
     if ("getValue".equals(method.getName())) {
-      final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
+      final JavaMethodSignature signature = method.getSignature();
       final Class<?> declaringClass = method.getDeclaringClass();
       if (signature.findAnnotation(SubTag.class, declaringClass) != null) return false;
       if (signature.findAnnotation(SubTagList.class, declaringClass) != null) return false;
@@ -37,28 +37,25 @@ public class DomImplUtil {
     return false;
   }
 
-  static boolean hasTagValueAnnotation(final Method method) {
-    return DomReflectionUtil.findAnnotationDFS(method, TagValue.class) != null;
+  static boolean hasTagValueAnnotation(final JavaMethod method) {
+    return method.getAnnotation(TagValue.class) != null;
   }
 
-  public static boolean isGetter(final Method method) {
+  public static boolean isGetter(final JavaMethod method) {
     final String name = method.getName();
-    if (method.getParameterTypes().length != 0) {
+    if (method.getGenericParameterTypes().length != 0) {
       return false;
     }
-    final Class<?> returnType = method.getReturnType();
+    final Type returnType = method.getGenericReturnType();
     if (name.startsWith("get")) {
       return returnType != void.class;
     }
-    if (name.startsWith("is")) {
-      return DomReflectionUtil.canHaveIsPropertyGetterPrefix(method.getGenericReturnType());
-    }
-    return false;
+    return name.startsWith("is") && DomReflectionUtil.canHaveIsPropertyGetterPrefix(returnType);
   }
 
 
-  public static boolean isTagValueSetter(final Method method) {
-    boolean setter = method.getName().startsWith("set") && method.getParameterTypes().length == 1 && method.getReturnType() == void.class;
+  public static boolean isTagValueSetter(final JavaMethod method) {
+    boolean setter = method.getName().startsWith("set") && method.getGenericParameterTypes().length == 1 && method.getReturnType() == void.class;
     return setter && (hasTagValueAnnotation(method) || "setValue".equals(method.getName()));
   }
 

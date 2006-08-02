@@ -4,9 +4,9 @@
 package com.intellij.util.xml.reflect;
 
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.JavaMethod;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Method;
 import java.lang.annotation.Annotation;
 
 /**
@@ -14,7 +14,7 @@ import java.lang.annotation.Annotation;
  */
 public interface DomFixedChildDescription extends DomChildrenDescription {
   int getCount();
-  Method getGetterMethod(int index);
+  JavaMethod getGetterMethod(int index);
   void initConcreteClass(final DomElement parent, final Class<? extends DomElement> aClass);
 
   @Nullable

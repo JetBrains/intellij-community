@@ -24,6 +24,7 @@ public class InvocationCache {
   static {
     addCoreInvocations(DomElement.class);
     addCoreInvocations(Navigatable.class);
+    addCoreInvocations(AnnotatedElement.class);
     addCoreInvocations(Object.class);
     try {
       ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericAttributeValue.class.getMethod("getXmlAttribute")), new Invocation() {
@@ -44,10 +45,12 @@ public class InvocationCache {
           return null;
         }
       });
+      final JavaMethod javaMethod =
+              JavaMethod.getMethod(GenericValue.class, JavaMethodSignature.getSignature(DomUIFactory.GET_VALUE_METHOD));
       ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericDomValue.class.getMethod("getConverter")), new Invocation() {
         public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
           try {
-            return handler.getScalarConverter(DomUIFactory.GET_VALUE_METHOD);
+            return handler.getScalarConverter(javaMethod);
           }
           catch (Throwable e) {
             final Throwable cause = e.getCause();

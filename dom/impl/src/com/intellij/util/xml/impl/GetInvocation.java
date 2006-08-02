@@ -6,17 +6,13 @@ package com.intellij.util.xml.impl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.Converter;
 
-import java.lang.reflect.Method;
-
 /**
  * @author peter
  */
 public abstract class GetInvocation implements Invocation {
   private final Converter myConverter;
-  private final Method myMethod;
 
-  protected GetInvocation(final Converter converter, final Method method) {
-    myMethod = method;
+  protected GetInvocation(final Converter converter) {
     assert converter != null;
     myConverter = converter;
   }

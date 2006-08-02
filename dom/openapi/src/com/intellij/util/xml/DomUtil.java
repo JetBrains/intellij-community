@@ -85,9 +85,9 @@ public class DomUtil {
   }
 
   @Nullable
-  public static List<Method> getFixedPath(DomElement element) {
+  public static List<JavaMethod> getFixedPath(DomElement element) {
     assert element.isValid();
-    final LinkedList<Method> methods = new LinkedList<Method>();
+    final LinkedList<JavaMethod> methods = new LinkedList<JavaMethod>();
     while (true) {
       final DomElement parent = element.getParent();
       if (parent instanceof DomFileElement) {

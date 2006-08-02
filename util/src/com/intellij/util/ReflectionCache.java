@@ -99,6 +99,7 @@ public class ReflectionCache {
   }
 
   public static boolean isAssignable(Class ancestor, Class descendant) {
+    if (ancestor == descendant) return true;
     synchronized (ourAssignables) {
       return ourAssignables.get(ancestor).get(descendant);
     }

@@ -6,18 +6,14 @@ package com.intellij.util.xml.impl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.Converter;
 
-import java.lang.reflect.Method;
-
 /**
  * @author peter
  */
 public abstract class SetInvocation implements Invocation {
   private final Converter myConverter;
-  private final Method myMethod;
 
-  protected SetInvocation(final Converter converter, final Method method) {
+  protected SetInvocation(final Converter converter) {
     myConverter = converter;
-    myMethod = method;
   }
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {

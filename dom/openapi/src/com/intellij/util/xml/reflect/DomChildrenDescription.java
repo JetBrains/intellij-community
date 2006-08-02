@@ -4,18 +4,17 @@
 package com.intellij.util.xml.reflect;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.util.xml.AnnotatedElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
-import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.List;
 
 /**
  * @author peter
  */
-public interface DomChildrenDescription {
+public interface DomChildrenDescription extends AnnotatedElement {
   String getXmlElementName();
   List<? extends DomElement> getValues(DomElement parent);
   List<? extends DomElement> getStableValues(DomElement parent);
@@ -24,7 +23,4 @@ public interface DomChildrenDescription {
   String getCommonPresentableName(DomElement parent);
   DomNameStrategy getDomNameStrategy(DomElement parent);
   DomGenericInfo getChildGenericInfo(Project project);
-
-  @Nullable
-  <T extends Annotation> T getAnnotation(Class<T> annotationClass);
 }

@@ -15,7 +15,6 @@ import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.lang.annotation.Annotation;
 
@@ -101,12 +100,12 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
   protected final void removeFromCache() {
   }
 
-  protected final Invocation createSetValueInvocation(final Converter converter, final Method method) {
-    return new SetAttributeValueInvocation(converter, method);
+  protected final Invocation createSetValueInvocation(final Converter converter) {
+    return new SetAttributeValueInvocation(converter);
   }
 
-  protected final Invocation createGetValueInvocation(final Converter converter, final Method method) {
-    return new GetAttributeValueInvocation(converter, method);
+  protected final Invocation createGetValueInvocation(final Converter converter) {
+    return new GetAttributeValueInvocation(converter);
   }
 
   public final void undefineInternal() {

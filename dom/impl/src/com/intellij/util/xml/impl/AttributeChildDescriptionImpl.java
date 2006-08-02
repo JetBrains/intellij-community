@@ -5,10 +5,10 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 
@@ -16,13 +16,11 @@ import java.util.List;
  * @author peter
  */
 public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription {
-  private final JavaMethodSignature myGetterMethod;
-  private Class<?> myDeclaringClass;
+  private final JavaMethod myGetterMethod;
 
-  protected AttributeChildDescriptionImpl(final String attributeName, final Method getter) {
+  protected AttributeChildDescriptionImpl(final String attributeName, final JavaMethod getter) {
     super(attributeName, getter.getGenericReturnType());
-    myDeclaringClass = getter.getDeclaringClass();
-    myGetterMethod = JavaMethodSignature.getSignature(getter);
+    myGetterMethod = getter;
   }
 
   public DomNameStrategy getDomNameStrategy(DomElement parent) {
@@ -31,13 +29,13 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   }
 
 
-  public final JavaMethodSignature getGetterMethod() {
+  public final JavaMethod getGetterMethod() {
     return myGetterMethod;
   }
 
   @Nullable
   public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    return getGetterMethod().findAnnotation(annotationClass, myDeclaringClass);
+    return getGetterMethod().getAnnotation(annotationClass);
   }
 
   public List<? extends DomElement> getValues(DomElement parent) {
@@ -51,9 +49,9 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   public GenericAttributeValue getDomAttributeValue(DomElement parent) {
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(parent);
     if (handler != null) {
-      return (GenericAttributeValue)handler.getAttributeChild(myGetterMethod).getProxy();
+      return (GenericAttributeValue)handler.getAttributeChild(myGetterMethod.getSignature()).getProxy();
     }
-    return (GenericAttributeValue)DomReflectionUtil.invokeMethod(myGetterMethod, parent);
+    return (GenericAttributeValue)myGetterMethod.invoke(parent, ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
   public boolean equals(final Object o) {

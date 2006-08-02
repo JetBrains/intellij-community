@@ -17,7 +17,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.FactoryMap;
@@ -35,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -86,17 +84,13 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       return myGenericConverter;
     }
   };
-  private final FactoryMap<Method, Converter> myScalarConverters = new FactoryMap<Method, Converter>() {
-    protected Converter create(final Method method) {
+  private final FactoryMap<JavaMethod, Converter> myScalarConverters = new FactoryMap<JavaMethod, Converter>() {
+    protected Converter create(final JavaMethod method) {
       final Type returnType = method.getGenericReturnType();
       final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;
       final Class parameter = DomReflectionUtil.substituteGenericType(type, myType);
       assert parameter != null : type + " " + myType;
-      final Converter converter = getConverter(new Function<Class<? extends Annotation>, Annotation>() {
-        public Annotation fun(final Class<? extends Annotation> s) {
-          return DomReflectionUtil.findAnnotationDFS(method, s);
-        }
-      }, parameter, type instanceof TypeVariable ? myGenericConverterFactory : Factory.NULL_FACTORY);
+      final Converter converter = getConverter(method, parameter, type instanceof TypeVariable ? myGenericConverterFactory : Factory.NULL_FACTORY);
       assert converter != null : "No converter specified: String<->" + parameter.getName();
       return converter;
     }
@@ -113,12 +107,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myAbstractType = type;
 
     final Type concreteInterface = manager.getTypeChooserManager().getTypeChooser(type).chooseType(tag);
-    final Converter converter = getConverter(new Function<Class<? extends Annotation>, Annotation>() {
-      @Nullable
-      public Annotation fun(final Class<? extends Annotation> s) {
-        return getAnnotation(s);
-      }
-    }, DomUtil.getGenericValueParameter(concreteInterface), Factory.NULL_FACTORY);
+    final Converter converter = getConverter(this, DomUtil.getGenericValueParameter(concreteInterface), Factory.NULL_FACTORY);
 
     myGenericInfo = manager.getGenericInfo(concreteInterface);
     myType = concreteInterface;
@@ -387,20 +376,20 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   @NotNull
-  protected final Converter getScalarConverter(final Method method) {
+  protected final Converter getScalarConverter(final JavaMethod method) {
     return myScalarConverters.get(method);
   }
 
   @Nullable
-  private Converter getConverter(final Function<Class<? extends Annotation>, Annotation> annotationProvider,
+  private Converter getConverter(final AnnotatedElement annotationProvider,
                                  Class parameter,
                                  final Factory<Converter> continuation) {
-    final Resolve resolveAnnotation = (Resolve)annotationProvider.fun(Resolve.class);
+    final Resolve resolveAnnotation = (Resolve)annotationProvider.getAnnotation(Resolve.class);
     if (resolveAnnotation != null) {
       return DomResolveConverter.createConverter(resolveAnnotation.value());
     }
 
-    final Convert convertAnnotation = (Convert)annotationProvider.fun(Convert.class);
+    final Convert convertAnnotation = (Convert)annotationProvider.getAnnotation(Convert.class);
     final ConverterManager converterManager = myManager.getConverterManager();
     if (convertAnnotation != null) {
       return converterManager.getConverterInstance(convertAnnotation.value());
@@ -473,24 +462,24 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return _getParentOfType(requiredClass, strict ? getParent() : getProxy());
   }
 
-  protected final Invocation createInvocation(final Method method) throws IllegalAccessException, InstantiationException {
+  protected final Invocation createInvocation(final JavaMethod method) throws IllegalAccessException, InstantiationException {
     if (DomImplUtil.isTagValueGetter(method)) {
-      return createGetValueInvocation(getScalarConverter(method), method);
+      return createGetValueInvocation(getScalarConverter(method));
     }
 
     if (DomImplUtil.isTagValueSetter(method)) {
-      return createSetValueInvocation(getScalarConverter(method), method);
+      return createSetValueInvocation(getScalarConverter(method));
     }
 
     return myGenericInfo.createInvocation(method);
   }
 
-  protected Invocation createSetValueInvocation(final Converter converter, final Method method) {
-    return new SetValueInvocation(converter, method);
+  protected Invocation createSetValueInvocation(final Converter converter) {
+    return new SetValueInvocation(converter);
   }
 
-  protected Invocation createGetValueInvocation(final Converter converter, final Method method) {
-    return new GetValueInvocation(converter, method);
+  protected Invocation createGetValueInvocation(final Converter converter) {
+    return new GetValueInvocation(converter);
   }
 
   @NotNull
@@ -534,7 +523,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   public final Object doInvoke(final JavaMethodSignature signature, final Object... args) throws Throwable {
     Invocation invocation = myInvocationCache.getInvocation(signature);
     if (invocation == null) {
-      invocation = createInvocation(signature.findMethod(getRawType()));
+      invocation = createInvocation(JavaMethod.getMethod(getRawType(), signature));
       myInvocationCache.putInvocation(signature, invocation);
     }
     return invocation.invoke(this, args);
@@ -599,7 +588,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   private void getOrCreateAttributeChild(final Method method, final String attributeName) {
     final AttributeChildInvocationHandler handler =
-      new AttributeChildInvocationHandler(method.getGenericReturnType(), getXmlTag(), this, attributeName, myManager);
+      new AttributeChildInvocationHandler(JavaMethod.getMethod(getRawType(), method).getGenericReturnType(), getXmlTag(), this, attributeName, myManager);
     myAttributeChildren.put(handler.getXmlElementName(), handler);
   }
 
@@ -628,7 +617,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
     else {
       final JavaMethodSignature signature = myGenericInfo.getFixedChildGetter(pair);
-      final Method method = signature.findMethod(getRawType());
+      final JavaMethod method = JavaMethod.getMethod(getRawType(), signature);
       assert method != null;
       type = method.getGenericReturnType();
     }

@@ -17,14 +17,14 @@
 package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
 /**
  * @author peter
@@ -76,12 +76,12 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     final DomElement annotation = getScopeFromAnnotation(element);
     if (annotation != null) return annotation;
 
-    final List<Method> methods = DomUtil.getFixedPath(element.getParent());
+    final List<JavaMethod> methods = DomUtil.getFixedPath(element.getParent());
     if (methods == null) return super.getIdentityScope(element);
 
     Object o = getMergedRoot(element);
-    for (final Method method : methods) {
-      o = DomReflectionUtil.invokeMethod(method, o);
+    for (final JavaMethod method : methods) {
+      o = method.invoke(o, ArrayUtil.EMPTY_OBJECT_ARRAY);
     }
     return (DomElement)o;
   }
