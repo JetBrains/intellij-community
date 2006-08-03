@@ -835,21 +835,26 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
       // Optimization: do nothing if value doesn't change
       final Object oldValue=getSelectionValue(property);
-      if(Comparing.equal(oldValue,newValue)){
-        return true;
-      }
-      if (!myEditor.ensureEditable()) {
-        return false;
-      }
-      final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        public void run() {
-          result.set(setSelectionValue(property, newValue));
-
-          myEditor.refreshAndSave(false);
+      boolean retVal = true;
+      if(!Comparing.equal(oldValue,newValue)){
+        if (!myEditor.ensureEditable()) {
+          return false;
         }
-      }, UIDesignerBundle.message("command.set.property.value"), null);
-      return result.get().booleanValue();
+        final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
+        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+          public void run() {
+            result.set(setSelectionValue(property, newValue));
+
+            myEditor.refreshAndSave(false);
+          }
+        }, UIDesignerBundle.message("command.set.property.value"), null);
+
+        retVal = result.get().booleanValue();
+      }
+      if (property.needRefreshPropertyList()) {
+        synchWithTree(true);
+      }
+      return retVal;
     }
   }
 
