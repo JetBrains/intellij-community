@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.FormEditingUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -27,7 +28,7 @@ public class SurroundPopupAction extends AbstractGuiEditorAction {
                               JBPopupFactory.ActionSelectionAid.NUMBERING, true);
 
     RadComponent selComponent = selection.get(0);
-    groupPopup.showUnderneathOf(selComponent.getDelegee());
+    FormEditingUtil.showPopupUnderComponent(groupPopup, selComponent);
   }
 
   protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {

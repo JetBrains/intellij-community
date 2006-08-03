@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
@@ -41,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.awt.*;
 
 /**
  * @author yole
@@ -50,11 +52,13 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
 
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
     final DefaultActionGroup actionGroup = prepareActionGroup(selection);
-    final DataContext context = DataManager.getInstance().getDataContext(selection.get(0).getDelegee());
+    final JComponent selectedComponent = selection.get(0).getDelegee();
+    final DataContext context = DataManager.getInstance().getDataContext(selectedComponent);
     final JBPopupFactory factory = JBPopupFactory.getInstance();
     final ListPopup popup = factory.createActionGroupPopup(UIDesignerBundle.message("create.listener.title"), actionGroup, context,
                                                            JBPopupFactory.ActionSelectionAid.NUMBERING, true);
-    popup.showUnderneathOf(selection.get(0).getDelegee());
+
+    FormEditingUtil.showPopupUnderComponent(popup, selection.get(0));
   }
 
   private DefaultActionGroup prepareActionGroup(final List<RadComponent> selection) {

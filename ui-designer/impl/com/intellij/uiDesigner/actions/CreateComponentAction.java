@@ -40,7 +40,7 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
     final ListPopup listPopup = JBPopupFactory.getInstance().createWizardStep(step);
 
     if (selection.size() > 0) {
-      listPopup.showUnderneathOf(selection.get(0).getDelegee());
+      FormEditingUtil.showPopupUnderComponent(listPopup, selection.get(0));
     }
     else {
       listPopup.showInCenterOf(editor.getRootContainer().getDelegee());

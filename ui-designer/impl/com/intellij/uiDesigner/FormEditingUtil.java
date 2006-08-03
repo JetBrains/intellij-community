@@ -4,15 +4,17 @@ import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -27,10 +29,10 @@ import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
+import com.intellij.uiDesigner.radComponents.RadAbstractGridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.radComponents.RadAbstractGridLayoutManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -741,6 +743,13 @@ public final class FormEditingUtil {
         selection.set(i, c.getParent().getActionTargetComponent(c));
       }
     }
+  }
+
+  public static void showPopupUnderComponent(final JBPopup popup, final RadComponent selectedComponent) {
+    // popup.showUnderneathOf() doesn't work on invisible components
+    Rectangle rc = selectedComponent.getBounds();
+    Point pnt = new Point(rc.x, rc.y + rc.height);
+    popup.show(new RelativePoint(selectedComponent.getDelegee().getParent(), pnt));
   }
 
   public static interface StringDescriptorVisitor<T extends IComponent> {

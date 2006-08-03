@@ -5,15 +5,16 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.codeInspection.defUse.DefUseUtil;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
@@ -24,7 +25,6 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.Processor;
-import com.intellij.ide.DataManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -67,7 +67,7 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
       final JBPopupFactory factory = JBPopupFactory.getInstance();
       final ListPopup popup = factory.createActionGroupPopup(UIDesignerBundle.message("navigate.to.listener.title"), actionGroup, context,
                                                              JBPopupFactory.ActionSelectionAid.NUMBERING, true);
-      popup.showUnderneathOf(component.getDelegee());
+      FormEditingUtil.showPopupUnderComponent(popup, component);
     }
   }
 

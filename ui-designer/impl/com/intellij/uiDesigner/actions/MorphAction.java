@@ -76,7 +76,7 @@ public class MorphAction extends AbstractGuiEditorAction {
       step.hideComponentClass(selection.get(0).getComponentClassName());
     }
     final ListPopup listPopup = JBPopupFactory.getInstance().createWizardStep(step);
-    listPopup.showUnderneathOf(selection.get(0).getDelegee());
+    FormEditingUtil.showPopupUnderComponent(listPopup, selection.get(0));
   }
 
   private static boolean morphComponent(final GuiEditor editor, final RadComponent oldComponent, final ComponentItem targetItem) {
