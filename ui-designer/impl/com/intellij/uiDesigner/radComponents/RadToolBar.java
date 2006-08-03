@@ -73,5 +73,11 @@ public class RadToolBar extends RadContainer {
     public boolean isIndexed() {
       return true;
     }
+
+    @Override
+    public void addSnapshotComponent(final JComponent parent, final JComponent child,
+                                     final RadContainer container, final RadComponent component) {
+      container.addComponent(component);
+    }
   }
 }
