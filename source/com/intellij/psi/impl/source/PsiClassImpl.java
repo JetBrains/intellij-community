@@ -236,9 +236,9 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       else {
         qName = getRepositoryManager().getClassView().getQualifiedName(getRepositoryId());
       }
-      if (getRepositoryId() >= 0) {
+      //if (getRepositoryId() >= 0) {
         myCachedQName = qName;
-      }
+      //}
     }
     return qName;
   }
