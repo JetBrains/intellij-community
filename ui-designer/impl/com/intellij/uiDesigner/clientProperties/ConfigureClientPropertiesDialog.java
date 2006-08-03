@@ -149,7 +149,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   }
 
   private void updateSelectedProperties() {
-    mySelectedProperties = ClientPropertiesManager.getInstance(myProject).getConfiguredProperties(mySelectedClass);
+    mySelectedProperties = myManager.getConfiguredProperties(mySelectedClass);
     myTableModel.fireTableDataChanged();
   }
 
@@ -229,6 +229,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
     public void actionPerformed(AnActionEvent e) {
       if (mySelectedClass != null) {
         myManager.removeClientPropertyClass(mySelectedClass);
+        fillClassTree();
       }
     }
   }
@@ -267,7 +268,15 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
       if (row >= 0 && row < mySelectedProperties.length) {
         myManager.removeConfiguredProperty(mySelectedClass, mySelectedProperties [row].getName());
         updateSelectedProperties();
+        if (mySelectedProperties.length > 0) {
+          if (row >= mySelectedProperties.length) row--;
+          myPropertiesTable.getSelectionModel().setSelectionInterval(row, row);
+        }
       }
+    }
+
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myPropertiesTable.getSelectedRow() >= 0);
     }
   }
 }
