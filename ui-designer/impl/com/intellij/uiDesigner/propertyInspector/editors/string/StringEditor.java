@@ -81,6 +81,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
       if(value != null){ // plain value
         textField.setEditable(true);
         textField.setText(value);
+        textField.selectAll();
       }
       else{ // bundled value
         textField.setEditable(false);
