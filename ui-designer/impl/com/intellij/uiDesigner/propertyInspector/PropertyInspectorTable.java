@@ -851,7 +851,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
         retVal = result.get().booleanValue();
       }
-      if (property.needRefreshPropertyList()) {
+      if (property.needRefreshPropertyList() && retVal) {
         synchWithTree(true);
       }
       return retVal;
