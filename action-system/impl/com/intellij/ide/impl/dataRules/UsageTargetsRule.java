@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.usages.UsageTarget;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,6 +17,7 @@ import com.intellij.usages.UsageTarget;
  * To change this template use File | Settings | File Templates.
  */
 public class UsageTargetsRule implements GetDataRule {
+  @Nullable
   public Object getData(DataProvider dataProvider) {
     PsiElement psiElement = (PsiElement)dataProvider.getData(DataConstants.PSI_ELEMENT);
     if (psiElement instanceof NavigationItem) {
