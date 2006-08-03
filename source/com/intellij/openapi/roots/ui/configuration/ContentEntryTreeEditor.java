@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.actions.NewFolderAction;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.fileChooser.impl.FileTreeBuilder;
 import com.intellij.openapi.project.Project;
@@ -124,12 +125,12 @@ public class ContentEntryTreeEditor {
       final String url = contentEntryEditor.getContentEntry().getUrl();
       myDescriptor.setTitle(VirtualFileManager.extractPath(url).replace('/', File.separatorChar));
     }
-    myFileSystemTree = new FileSystemTreeImpl(myProject, myDescriptor, myTree) {
+    myFileSystemTree = new FileSystemTreeImpl(myProject, myDescriptor, myTree, getContentEntryCellRenderer()) {
       protected AbstractTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, AbstractTreeStructure treeStructure, Comparator<NodeDescriptor> comparator, FileChooserDescriptor descriptor) {
         return new MyFileTreeBuilder(tree, treeModel, treeStructure, comparator, descriptor);
       }
     };
-    final com.intellij.openapi.fileChooser.actions.NewFolderAction newFolderAction = new NewFolderAction(myFileSystemTree);
+    final com.intellij.openapi.fileChooser.actions.NewFolderAction newFolderAction = new MyNewFolderAction(myFileSystemTree);
     DefaultActionGroup mousePopupGroup = new DefaultActionGroup();
     mousePopupGroup.add(myEditingActionsGroup);
     mousePopupGroup.addSeparator();
@@ -147,7 +148,6 @@ public class ContentEntryTreeEditor {
   }
 
   public JComponent createComponent() {
-    myTree.setCellRenderer(getContentEntryCellRenderer());
     createEditingActions();
     return myTreePanel;
   }
@@ -201,8 +201,8 @@ public class ContentEntryTreeEditor {
     }
   }
 
-  private static class NewFolderAction extends com.intellij.openapi.fileChooser.actions.NewFolderAction implements CustomComponentAction {
-    public NewFolderAction(FileSystemTreeImpl fileSystemTree) {
+  private static class MyNewFolderAction extends NewFolderAction implements CustomComponentAction {
+    public MyNewFolderAction(FileSystemTreeImpl fileSystemTree) {
       super(fileSystemTree);
     }
 

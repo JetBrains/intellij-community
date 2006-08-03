@@ -29,10 +29,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.tree.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -52,12 +49,12 @@ public class FileSystemTreeImpl implements FileSystemTree {
   private final FileChooserDescriptor myDescriptor;
 
   public FileSystemTreeImpl(Project project, FileChooserDescriptor descriptor) {
-    this(project, descriptor, new Tree());
+    this(project, descriptor, new Tree(), null);
     myTree.setRootVisible(descriptor.isTreeRootVisible());
     myTree.setShowsRootHandles(true);
   }
 
-  public FileSystemTreeImpl(Project project, FileChooserDescriptor descriptor, Tree tree) {
+  public FileSystemTreeImpl(Project project, FileChooserDescriptor descriptor, Tree tree, TreeCellRenderer renderer) {
     myProject = project;
     myTreeStructure = new FileTreeStructure(project, descriptor);
     myDescriptor = descriptor;
@@ -80,21 +77,28 @@ public class FileSystemTreeImpl implements FileSystemTree {
     addTreeExpansionListener();
     registerTreeActions();
 
-    myTree.setCellRenderer(new SimpleNodeRenderer() {
+    if (renderer == null) {
+      renderer = new SimpleNodeRenderer() {
 
-      public void customizeCellRenderer(JTree tree, Object value, boolean selected,
-                                        boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        super.customizeCellRenderer(tree, value, selected, expanded, leaf, row,
-                                    hasFocus);
-        final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-        if (userObject instanceof FileNodeDescriptor) {
-          String comment = ((FileNodeDescriptor)userObject).getComment();
-          if (comment != null) {
-            append(comment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        public void customizeCellRenderer(JTree tree,
+                                          Object value,
+                                          boolean selected,
+                                          boolean expanded,
+                                          boolean leaf,
+                                          int row,
+                                          boolean hasFocus) {
+          super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
+          final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+          if (userObject instanceof FileNodeDescriptor) {
+            String comment = ((FileNodeDescriptor)userObject).getComment();
+            if (comment != null) {
+              append(comment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            }
           }
         }
-      }
-    });
+      };
+    }
+    myTree.setCellRenderer(renderer);
 
   }
 
