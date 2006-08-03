@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.actions.MoveAction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -83,6 +84,13 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
         for(AbstractTreeNode node: selected) {
           if (node.getValue() instanceof Form) {
             return new MyDeleteProvider(selected);
+          }
+        }
+      }
+      else if (dataId.equals(MoveAction.MOVE_PROVIDER)) {
+        for(AbstractTreeNode node: selected) {
+          if (node.getValue() instanceof Form) {
+            return new FormMoveProvider();
           }
         }
       }

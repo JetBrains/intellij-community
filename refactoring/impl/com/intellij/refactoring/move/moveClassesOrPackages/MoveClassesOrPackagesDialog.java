@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -168,7 +169,13 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       myWithBrowseButtonReference.prependItem(targetPackageName);
     }
 
-    if (psiElements.length == 1) {
+    String nameFromCallback = (myMoveCallback instanceof MoveClassesOrPackagesCallback)
+                              ? ((MoveClassesOrPackagesCallback) myMoveCallback).getElementsToMoveName()
+                              : null;
+    if (nameFromCallback != null) {
+      myNameLabel.setText(nameFromCallback);
+    }
+    else if (psiElements.length == 1) {
       PsiElement firstElement = psiElements[0];
       PsiElement parent = firstElement.getParent();
       LOG.assertTrue(parent != null);

@@ -18,6 +18,7 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classRefs.ClassInstanceScanner;
 import com.intellij.refactoring.util.classRefs.ClassReferenceScanner;
@@ -463,6 +464,9 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   protected void performPsiSpoilingRefactoring() {
     RefactoringUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
     if (myMoveCallback != null) {
+      if (myMoveCallback instanceof MoveClassesOrPackagesCallback) {
+        ((MoveClassesOrPackagesCallback) myMoveCallback).classesOrPackagesMoved(myMoveDestination);
+      }
       myMoveCallback.refactoringCompleted();
     }
   }
