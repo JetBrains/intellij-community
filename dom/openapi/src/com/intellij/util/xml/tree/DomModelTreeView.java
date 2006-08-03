@@ -115,7 +115,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     if (file == null) return;
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (isRightFile(file)) {
+        if (file.isValid() && isRightFile(file)) {
           myBuilder.queueUpdate();
         }
       }
