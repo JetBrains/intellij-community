@@ -7,7 +7,6 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
 import com.intellij.uiDesigner.designSurface.DropLocation;
@@ -16,12 +15,14 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 
 /**
  * @author yole
@@ -78,10 +79,68 @@ public class RadBorderLayoutManager extends RadLayoutManager {
 
 
   @Override public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {
-    if (container.getComponentCount() != 0) {
-      throw new IncorrectOperationException("Only empty containers can be changed to BorderLayout");
+    ArrayList<RadComponent> componentsInBorder = new ArrayList<RadComponent>();
+
+    boolean borderHorz = true;
+    if (container.getComponentCount() == 1) {
+      componentsInBorder.add(container.getComponent(0));
     }
+    else if (container.getLayoutManager().isIndexed()) {
+      for(RadComponent c: container.getComponents()) {
+        if (!(c instanceof RadHSpacer) && !(c instanceof RadVSpacer)) {
+          componentsInBorder.add(c);
+        }
+      }
+    }
+    else if (container.getLayoutManager().isGrid()) {
+      if (container.getGridRowCount() == 1) {
+        copyGridLine(container, componentsInBorder, true);
+      }
+      else if (container.getGridColumnCount() == 1) {
+        copyGridLine(container, componentsInBorder, false);
+        borderHorz = false;
+      }
+    }
+
+    if ((container.getComponentCount() > 0 && componentsInBorder.size() == 0) || componentsInBorder.size() > 3) {
+      throw new IncorrectOperationException("Component layout is too complex to convert to BorderLayout");
+    }
+
+    for(int i=container.getComponentCount()-1; i >= 0; i--) {
+      container.removeComponent(container.getComponent(i));
+    }
+
     super.changeContainerLayout(container);
+
+    if (componentsInBorder.size() == 1) {
+      componentsInBorder.get(0).setCustomLayoutConstraints(BorderLayout.CENTER);
+    }
+    else if (componentsInBorder.size() > 1) {
+      componentsInBorder.get(0).setCustomLayoutConstraints(borderHorz ? BorderLayout.WEST : BorderLayout.NORTH);
+      componentsInBorder.get(1).setCustomLayoutConstraints(BorderLayout.CENTER);
+      if (componentsInBorder.size() > 2) {
+        componentsInBorder.get(2).setCustomLayoutConstraints(borderHorz ? BorderLayout.EAST : BorderLayout.SOUTH);
+      }
+    }
+
+    for(RadComponent c: componentsInBorder) {
+      container.addComponent(c);
+    }
+  }
+
+  private static void copyGridLine(final RadContainer container, final ArrayList<RadComponent> componentsInBorder, boolean isRow) {
+    int cell = 0;
+    while(cell < container.getGridCellCount(!isRow)) {
+      RadComponent c = container.getComponentAtGrid(isRow, 0, cell);
+      if (c == null)
+        cell++;
+      else {
+        if (!(c instanceof RadHSpacer) && !(c instanceof RadVSpacer)) {
+          componentsInBorder.add(c);
+        }
+        cell += c.getConstraints().getSpan(!isRow);
+      }
+    }
   }
 
   @Override public Property[] getContainerProperties(final Project project) {

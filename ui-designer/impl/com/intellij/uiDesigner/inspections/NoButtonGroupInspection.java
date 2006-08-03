@@ -2,10 +2,8 @@ package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.propertyInspector.properties.IdentifierValidator;
 import com.intellij.uiDesigner.actions.GroupButtonsAction;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -78,6 +76,7 @@ public class NoButtonGroupInspection extends BaseFormInspection {
   private static boolean areCellsAdjacent(final IContainer parent, final GridConstraints c1, final GridConstraints c2) {
     if (parent instanceof RadContainer) {
       final RadContainer container = (RadContainer)parent;
+      if (!container.getLayoutManager().isGrid()) return false;
       if (c1.getRow() == c2.getRow()) {
         return FormEditingUtil.prevCol(container, c1.getColumn()) == c2.getColumn() ||
                FormEditingUtil.nextCol(container, c1.getColumn()) == c2.getColumn();
