@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.javaee.JavaeeModuleProperties;
+import com.intellij.javaee.module.ModuleContainer;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
@@ -219,8 +220,11 @@ public class ModuleEditor {
       final Module module = myModifiableRootModel.getModule();
       if (module.getModuleType().isJ2EE()) {
         final JavaeeModuleProperties properties = JavaeeModuleProperties.getInstance(module);
-        if (properties != null && properties.getModifiableModel() != null) { //start edit was call
-          properties.commit(myModifiableRootModel);
+        if (properties != null) {
+          final ModuleContainer modifiableModel = properties.getModifiableModel();
+          if (modifiableModel instanceof JavaeeModuleProperties && !((JavaeeModuleProperties)modifiableModel).isDisposed()) { //start edit was call
+            properties.commit(myModifiableRootModel);
+          }
         }
       }
     }
