@@ -16,6 +16,10 @@ public final class InsetsPropertyRenderer extends LabelPropertyRenderer<Insets> 
   }
 
   protected void customize(@NotNull final Insets value){
+    setText(formatText(value)); 
+  }
+
+  public String formatText(final Insets value) {
     myBuffer.setLength(0);
     myBuffer.append('[');
     myBuffer.append(value.top).append(", ");
@@ -24,6 +28,7 @@ public final class InsetsPropertyRenderer extends LabelPropertyRenderer<Insets> 
     myBuffer.append(value.right);
     myBuffer.append("]");
 
-    setText(myBuffer.substring(0, myBuffer.length())); // [jeka] important! do not use toString() on the StringBuffer that is reused
+    // [jeka] important! do not use toString() on the StringBuffer that is reused
+    return myBuffer.substring(0, myBuffer.length());
   }
 }

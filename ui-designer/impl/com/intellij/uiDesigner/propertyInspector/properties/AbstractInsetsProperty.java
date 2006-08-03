@@ -18,7 +18,7 @@ import java.awt.Insets;
 public abstract class AbstractInsetsProperty<T extends RadComponent> extends Property<T, Insets> {
   private final Property[] myChildren;
   private final InsetsPropertyRenderer myRenderer;
-  private final IntRegexEditor<Insets> myEditor;
+  private IntRegexEditor<Insets> myEditor;
 
   public AbstractInsetsProperty(@NonNls final String name) {
     this(null, name);
@@ -33,7 +33,6 @@ public abstract class AbstractInsetsProperty<T extends RadComponent> extends Pro
       new IntFieldProperty(this, "right", 0, new Insets(0, 0, 0, 0)),
     };
     myRenderer=new InsetsPropertyRenderer();
-    myEditor = new IntRegexEditor<Insets>(Insets.class, myRenderer, new int[] { 0, 0, 0, 0 });
   }
 
   @NotNull
@@ -47,6 +46,22 @@ public abstract class AbstractInsetsProperty<T extends RadComponent> extends Pro
   }
 
   public final PropertyEditor<Insets> getEditor() {
+    if (myEditor == null) {
+      myEditor = new IntRegexEditor<Insets>(Insets.class, myRenderer, new int[] { 0, 0, 0, 0 }) {
+        public Insets getValue() throws Exception {
+          // if a single number has been entered, interpret it as same value for all parts (IDEADEV-7330)
+          try {
+            int value = Integer.parseInt(myTf.getText());
+            final Insets insets = new Insets(value, value, value, value);
+            myTf.setText(myRenderer.formatText(insets));
+            return insets;
+          }
+          catch(NumberFormatException ex) {
+            return super.getValue();
+          }
+        }
+      };
+    }
     return myEditor;
   }
 }
