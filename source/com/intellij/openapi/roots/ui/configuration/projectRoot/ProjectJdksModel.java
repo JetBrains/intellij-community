@@ -52,6 +52,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
   private boolean myModified = false;
 
   private ProjectJdk myProjectJdk;
+  private boolean myInitialized = false;
 
   public static ProjectJdksModel getInstance(Project project){
     return ProjectRootConfigurable.getInstance(project).getProjectJdksModel();
@@ -98,6 +99,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     }
     myProjectJdk = (ProjectJdk)findSdk(ProjectRootManager.getInstance(myProjectRootConfigurable.getProject()).getProjectJdkName());
     myModified = false;
+    myInitialized = true;
   }
 
   public void disposeUIResources() {
@@ -259,5 +261,9 @@ public class ProjectJdksModel implements NotifiableSdkModel {
 
   public void setProjectJdk(final ProjectJdk projectJdk) {
     myProjectJdk = projectJdk;
+  }
+
+  public boolean isInitialized() {
+    return myInitialized;
   }
 }

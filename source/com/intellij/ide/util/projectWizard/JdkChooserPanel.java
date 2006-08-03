@@ -113,7 +113,7 @@ public class JdkChooserPanel extends JPanel {
     }
     else {
       final ProjectJdksModel projectJdksModel = ProjectRootConfigurable.getInstance(myProject).getProjectJdksModel();
-      if (!projectJdksModel.isModified()){ //should be initialized
+      if (!projectJdksModel.isInitialized()){ //should be initialized
         projectJdksModel.reset();
       }
       final Collection<ProjectJdk> collection = projectJdksModel.getProjectJdks().values();
