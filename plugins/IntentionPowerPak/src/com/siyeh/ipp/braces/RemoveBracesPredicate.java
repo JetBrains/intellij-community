@@ -19,10 +19,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
-public class RemoveBracesPredicate implements PsiElementPredicate
+class RemoveBracesPredicate implements PsiElementPredicate
 {
-	public boolean satisfiedBy(PsiElement element)
+	public boolean satisfiedBy(@NotNull PsiElement element)
 	{
         if (!(element instanceof PsiBlockStatement))
 		{

@@ -18,10 +18,11 @@ package com.siyeh.ipp.parenthesis;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
-public class AddClarifyingParenthesesPredicate implements PsiElementPredicate {
+class AddClarifyingParenthesesPredicate implements PsiElementPredicate {
 
-	public boolean satisfiedBy(PsiElement element) {
+	public boolean satisfiedBy(@NotNull PsiElement element) {
 		if (!(element instanceof PsiBinaryExpression)) {
 			return element instanceof PsiInstanceOfExpression &&
 			       element.getParent()instanceof PsiBinaryExpression;

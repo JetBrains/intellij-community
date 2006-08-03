@@ -21,11 +21,12 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import org.jetbrains.annotations.NotNull;
 
-public class SplitDeclarationAndInitializationPredicate
+class SplitDeclarationAndInitializationPredicate
         implements PsiElementPredicate{
 
-    public boolean satisfiedBy(PsiElement element){
+    public boolean satisfiedBy(@NotNull PsiElement element){
         if(!(element instanceof PsiField)){
             return false;
         }

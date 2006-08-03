@@ -17,10 +17,11 @@ package com.siyeh.ipp.braces;
 
 import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
-public class AddBracesPredicate implements PsiElementPredicate
+class AddBracesPredicate implements PsiElementPredicate
 {
-	public boolean satisfiedBy(PsiElement element)
+	public boolean satisfiedBy(@NotNull PsiElement element)
 	{
 		if (!(element instanceof PsiStatement))
 		{

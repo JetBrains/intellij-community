@@ -15,13 +15,13 @@
  */
 package com.siyeh.ipp.varargs;
 
-import com.siyeh.ipp.base.PsiElementPredicate;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.pom.java.LanguageLevel;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class MakeMethodVarargsPredicate implements PsiElementPredicate {
+class MakeMethodVarargsPredicate implements PsiElementPredicate {
 
     public boolean satisfiedBy(@NotNull PsiElement element) {
         final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(element);

@@ -17,10 +17,11 @@ package com.siyeh.ipp.imports;
 
 import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
-public class OnDemandImportPredicate implements PsiElementPredicate {
+class OnDemandImportPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element) {
+    public boolean satisfiedBy(@NotNull PsiElement element) {
         // doesn't work for import static yet.
         if (!(element instanceof PsiImportStatement)) {
             return false;

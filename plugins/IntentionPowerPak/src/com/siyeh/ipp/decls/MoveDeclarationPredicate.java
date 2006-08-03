@@ -22,9 +22,9 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MoveDeclarationPredicate implements PsiElementPredicate{
+class MoveDeclarationPredicate implements PsiElementPredicate{
 
-    public boolean satisfiedBy(PsiElement element){
+    public boolean satisfiedBy(@NotNull PsiElement element){
         if(!(element instanceof PsiLocalVariable)){
             return false;
         }

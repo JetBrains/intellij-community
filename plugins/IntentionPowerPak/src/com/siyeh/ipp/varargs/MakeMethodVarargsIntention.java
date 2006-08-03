@@ -15,12 +15,12 @@
  */
 package com.siyeh.ipp.varargs;
 
-import com.siyeh.ipp.base.Intention;
-import com.siyeh.ipp.base.PsiElementPredicate;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 public class MakeMethodVarargsIntention extends Intention {
@@ -34,35 +34,6 @@ public class MakeMethodVarargsIntention extends Intention {
             throws IncorrectOperationException {
         makeMethodVarargs(element);
         makeMethodCallsVarargs(element);
-    }
-
-    private static void makeMethodCallsVarargs(PsiElement element) 
-            throws IncorrectOperationException {
-        final PsiMethod method = (PsiMethod) element.getParent();
-        final Query<PsiReference> query =
-                ReferencesSearch.search(method, method.getUseScope(), false);
-        for (PsiReference reference : query) {
-            final PsiMethodCallExpression methodCallExpression =
-                    (PsiMethodCallExpression) reference.getElement();
-            final PsiExpressionList argumentList =
-                    methodCallExpression.getArgumentList();
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if (arguments.length == 0) {
-                continue;
-            }
-            final PsiExpression lastArgument = arguments[arguments.length - 1];
-            if (!(lastArgument instanceof PsiArrayInitializerExpression)) {
-                continue;
-            }
-            final PsiArrayInitializerExpression arrayInitializerExpression =
-                    (PsiArrayInitializerExpression) lastArgument;
-            final PsiExpression[] initializers =
-                    arrayInitializerExpression.getInitializers();
-            lastArgument.delete();
-            for (PsiExpression initializer : initializers) {
-                argumentList.add(initializer);
-            }
-        }
     }
 
     private static void makeMethodVarargs(PsiElement element)
@@ -79,5 +50,41 @@ public class MakeMethodVarargsIntention extends Intention {
                 factory.createParameterFromText(text + "... " +
                         lastParameter.getName(), element);
         lastParameter.replace(newParameter);
+    }
+
+    private static void makeMethodCallsVarargs(PsiElement element) 
+            throws IncorrectOperationException {
+        final PsiMethod method = (PsiMethod) element.getParent();
+        final Query<PsiReference> query =
+                ReferencesSearch.search(method, method.getUseScope(), false);
+        for (PsiReference reference : query) {
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) reference.getElement();
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression)referenceExpression.getParent();
+            final PsiExpressionList argumentList =
+                    methodCallExpression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length == 0) {
+                continue;
+            }
+            final PsiExpression lastArgument = arguments[arguments.length - 1];
+            if (!(lastArgument instanceof PsiNewExpression)) {
+                continue;
+            }
+            final PsiNewExpression newExpression =
+                    (PsiNewExpression)lastArgument;
+            final PsiArrayInitializerExpression arrayInitializerExpression =
+                    newExpression.getArrayInitializer();
+            if (arrayInitializerExpression == null) {
+                continue;
+            }
+            final PsiExpression[] initializers =
+                    arrayInitializerExpression.getInitializers();
+            for (PsiExpression initializer : initializers) {
+                argumentList.add(initializer);
+            }
+            lastArgument.delete();
+        }
     }
 }

@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class SwapMethodCallArgumentsPredicate implements PsiElementPredicate {
+class SwapMethodCallArgumentsPredicate implements PsiElementPredicate {
 
     public boolean satisfiedBy(@NotNull PsiElement element) {
         if (!(element instanceof PsiExpressionList)) {
