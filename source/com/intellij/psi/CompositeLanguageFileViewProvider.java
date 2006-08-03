@@ -184,11 +184,11 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     checkConsistensy(cachedRoot);
   }
 
-  public void updateOuterLanguageElements(final Set<Language> reparsedRoots) {
+  public void updateOuterLanguageElements(final Set<Language> languagesToSkip) {
     for (Map.Entry<Language, PsiFile> entry : myRoots.entrySet()) {
       final PsiFile psiFile = entry.getValue();
       final Language updatedLanguage = entry.getKey();
-      if (reparsedRoots.contains(updatedLanguage)) continue;
+      if (languagesToSkip.contains(updatedLanguage)) continue;
       SoftReference<Set<OuterLanguageElement>> outerSet = myOuterLanguageElements.get(psiFile);
       if (outerSet == null) // not parsed yet
       {
@@ -326,6 +326,10 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
   private void doHolderToXmlChanges(final PsiFile psiFile) {
     boolean removeRoot = false;
+    boolean keepTree = psiFile.getLanguage().equals(StdLanguages.HTML);
+    if (keepTree) {
+      removeRoot = myRootsInUpdate.add(psiFile);
+    }
 
     final Language language = getBaseLanguage();
     final List<Pair<OuterLanguageElement, Pair<StringBuffer, StringBuffer>>> javaFragments =
@@ -365,6 +369,9 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     finally {
       if (removeRoot) {
         myRootsInUpdate.remove(psiFile);
+        final HashSet set = new HashSet(getRelevantLanguages());
+        set.remove(psiFile.getLanguage());
+        updateOuterLanguageElements(set);
       }
     }
   }
