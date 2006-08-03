@@ -343,8 +343,6 @@
         <reference ref="EditorToggleShowWhitespaces"/>
         <reference ref="EditorToggleShowLineNumbers"/>
         <separator/>
-        <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction"/>
-        <separator/>
         <action id="ToggleFullScreenMode" class="com.intellij.ide.actions.ToggleFullScreenModeAction"/>
         <separator/>
         <group id="CodeEditorViewGroup" class="com.intellij.ide.actions.CodeEditorActionGroup">
@@ -480,6 +478,8 @@
       <group id="AnalyzeMenu" popup="true">
         <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
         <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
+        <separator/>
+        <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction"/>
         <separator/>
         <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction"/>
         <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction"/>
