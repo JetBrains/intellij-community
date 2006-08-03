@@ -17,7 +17,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
@@ -27,7 +26,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Icons;
-import com.intellij.util.io.FileTypeFilter;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -70,9 +68,8 @@ public class ViewOfflineResultsAction extends AnAction {
 
     fileChooser.setFileView(fileView);
     fileChooser.setAcceptAllFileFilterUsed(false);
-    fileChooser.setDialogTitle("Open File");
-
-    fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.XML));
+    fileChooser.setDialogTitle("Open offline inspection results folder");
+    fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
     if (fileChooser.showOpenDialog(WindowManager.getInstance().suggestParentWindow(project)) != JFileChooser.APPROVE_OPTION) return;
     File file = fileChooser.getSelectedFile();
