@@ -142,5 +142,7 @@ public interface ModifiableModuleModel {
 
   String[] getModuleGroupPath(Module module);
 
+  boolean hasModuleGroups();
+
   void setModuleGroupPath(Module module, String[] groupPath);
 }

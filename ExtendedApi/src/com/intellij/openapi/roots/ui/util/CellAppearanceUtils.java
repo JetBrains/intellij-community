@@ -90,7 +90,8 @@ public class CellAppearanceUtils {
       JdkOrderEntry jdkLibraryEntry = (JdkOrderEntry)orderEntry;
       ProjectJdk jdk = jdkLibraryEntry.getJdk();
       if (!orderEntry.isValid()) {
-        return SimpleTextCellAppearance.invalid(jdkLibraryEntry.getJdkName(), INVALID_ICON);
+        final String oldJdkName = jdkLibraryEntry.getJdkName();
+        return SimpleTextCellAppearance.invalid(oldJdkName != null ? oldJdkName : NO_JDK, INVALID_ICON);
       }
       return forJdk(jdk, false, selected);
     }

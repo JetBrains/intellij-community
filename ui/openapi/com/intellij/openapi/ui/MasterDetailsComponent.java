@@ -30,7 +30,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.Set;
 
 
 /**
@@ -253,7 +256,6 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     ((DefaultTreeModel)myTree.getModel()).setRoot(myRoot);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    myTree.setEditable(true);
     UIUtil.setLineStyleAngled(myTree);
     TreeUtil.installActions(myTree);
     final DefaultTreeCellRenderer defaultTreeCellRenderer = new DefaultTreeCellRenderer() {
@@ -292,8 +294,6 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     };
 
     myTree.setCellRenderer(defaultTreeCellRenderer);
-
-    myTree.setCellEditor(new DefaultTreeCellEditor(myTree, defaultTreeCellRenderer, new MyNamedConfigurableEditor(new JTextField())));
 
     ArrayList<AnAction> actions = createActions();
     if (actions != null) {
@@ -506,49 +506,6 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
       }
     }
   }
-
-  private class MyNamedConfigurableEditor extends DefaultCellEditor {
-    private JTextField myTextField;
-    private MyNode myNode;
-    private String myName;
-
-    public MyNamedConfigurableEditor(JTextField textField) {
-      super(textField);
-      myTextField = textField;
-      myTextField.setBorder(BorderFactory.createLineBorder(Color.black, 1));
-    }
-
-    public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
-      myNode = (MyNode)value;
-      myName = myNode.getDisplayName();
-      myTextField.setText(myName);
-      return myTextField;
-    }
-
-    public Object getCellEditorValue() {
-      return myNode.getConfigurable();
-    }
-
-    public void cancelCellEditing() {
-      super.cancelCellEditing();
-      myNode.setDisplayName(myName);
-    }
-
-
-    public boolean stopCellEditing() {
-      myNode.setDisplayName(myTextField.getText());
-      fireItemsChangedExternally();
-      return super.stopCellEditing();
-    }
-
-    public boolean isCellEditable(EventObject anEvent) {
-      final TreePath selectionPath = myTree.getSelectionPath();
-      if (selectionPath == null) return false;
-      MyNode node = (MyNode)selectionPath.getLastPathComponent();
-      return node.getConfigurable().isNameEditable();
-    }
-  }
-
 
   protected static class MyNode extends DefaultMutableTreeNode {
     private boolean myDisplayInBold;

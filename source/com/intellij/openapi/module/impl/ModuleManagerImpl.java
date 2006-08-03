@@ -814,6 +814,10 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       return myModuleGroupPath == null ? null : myModuleGroupPath.get(module);
     }
 
+    public boolean hasModuleGroups() {
+      return myModuleGroupPath != null && myModuleGroupPath.size() > 0;  
+    }
+
     public void setModuleGroupPath(Module module, String[] groupPath) {
       if (myModuleGroupPath == null) {
         myModuleGroupPath = new THashMap<Module, String[]>();

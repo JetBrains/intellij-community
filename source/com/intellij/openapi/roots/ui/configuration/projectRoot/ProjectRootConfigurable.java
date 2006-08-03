@@ -40,17 +40,19 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +65,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -71,6 +74,7 @@ import java.util.*;
 public class ProjectRootConfigurable extends MasterDetailsComponent implements ProjectComponent {
   private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private static final Icon ICON = IconLoader.getIcon("/modules/modules.png");
+  private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
 
   public boolean myPlainMode;
 
@@ -96,6 +100,11 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   private LibrariesModifiableModel myApplicationServerLibrariesProvider;
 
   private boolean myDisposed = true;
+
+  private Map<Library, Set<String>> myLibraryDependencyCache = new HashMap<Library, Set<String>>();
+  private Map<ProjectJdk, Set<String>> myJdkDependencyCache = new HashMap<ProjectJdk, Set<String>>();
+  private Map<Module, Boolean> myValidityCache = new HashMap<Module, Boolean>();
+  private Alarm myUpdateDependenciesAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   public ProjectRootConfigurable(Project project, ModuleManager manager) {
     myProject = project;
@@ -128,29 +137,78 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         return ((MyNode)treePath.getLastPathComponent()).getDisplayName();
       }
     }, true);
+    TreeToolTipHandler.install(myTree);
+    ToolTipManager.sharedInstance().registerComponent(myTree);
+    myTree.setCellRenderer(new ColoredTreeCellRenderer(){
+      public void customizeCellRenderer(JTree tree,
+                                        Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+        if (value instanceof MyNode) {
+          final MyNode node = ((MyNode)value);
+          final String displayName = node.getDisplayName();
+          final Icon icon = node.getConfigurable().getIcon();
+          setIcon(icon);
+          setToolTipText(null);
+          if (node.isDisplayInBold()){
+            append(displayName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          } else {
+            final Object object = node.getConfigurable().getEditableObject();
+            if (isUnused(object, node)){
+              append(displayName, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+              setToolTipText(ProjectBundle.message("project.root.unused.tooltip", displayName));
+            }
+            else if (isInvalid(object)){
+              append(displayName, new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED,
+                                                           selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground(), Color.red));
+              setToolTipText(ProjectBundle.message("project.root.misconfigured.tooltip", displayName));
+            }
+            else {
+              append(displayName, selected && hasFocus ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            }
+          }
+        }
+      }
+    });
   }
 
+  private boolean isInvalid(final Object object) {
+    if (object instanceof Module){
+      final Module module = (Module)object;
+      if (myValidityCache.containsKey(module)) return myValidityCache.get(module).booleanValue();
+      myUpdateDependenciesAlarm.addRequest(new Runnable(){
+        public void run() {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              final OrderEntry[] entries = myModulesConfigurator.getRootModel(module).getOrderEntries();
+              for (OrderEntry entry : entries) {
+                if (!entry.isValid()){
+                  myValidityCache.put(module, Boolean.TRUE);
+                  SwingUtilities.invokeLater(new Runnable(){
+                    public void run() {
+                      if (!myDisposed){
+                        myTree.repaint();
+                      }
+                    }
+                  });
+                  return;
+                }
+              }
+              myValidityCache.put(module, Boolean.FALSE);
+            }
+          });
+        }
+      }, 0);
+    }
+    return false;
+  }
+
+  private boolean isUnused(final Object object, MyNode node) {
+    if (object == null || object instanceof Module) return false;
+    final Set<String> dependencies = getCachedDependencies(object, node, false);
+    return dependencies != null && dependencies.size() == 0;
+  }
 
   protected ArrayList<AnAction> getAdditionalActions() {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
-    final AnAction findUsages = new AnAction(ProjectBundle.message("find.usages.action.text")) {
-      public void update(AnActionEvent e) {
-        final Presentation presentation = e.getPresentation();
-        final TreePath selectionPath = myTree.getSelectionPath();
-        if (selectionPath != null){
-          final MyNode node = (MyNode)selectionPath.getLastPathComponent();
-          presentation.setEnabled(!node.isDisplayInBold());
-        } else {
-          presentation.setEnabled(false);
-        }
-      }
-
-      public void actionPerformed(AnActionEvent e) {
-        showDependencies();
-      }
-    };
-    findUsages.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES).getShortcutSet(), myTree);
-    result.add(findUsages);
     result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_MOVE_MODULE_TO_GROUP));
     return result;
   }
@@ -428,8 +486,17 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     });
 
     //cleanup
-    disposeUIResources();
-    reset();
+    myUpdateDependenciesAlarm.cancelAllRequests();
+    myUpdateDependenciesAlarm.addRequest(new Runnable(){
+      public void run() {
+        SwingUtilities.invokeLater(new Runnable(){
+          public void run() {
+             dispose();
+             reset();
+          }
+        });
+      }
+    }, 0);
   }
 
   public boolean isModified() {
@@ -455,6 +522,19 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   public void disposeUIResources() {
+    myUpdateDependenciesAlarm.cancelAllRequests();
+    myUpdateDependenciesAlarm.addRequest(new Runnable(){
+      public void run() {
+        SwingUtilities.invokeLater(new Runnable(){
+          public void run() {
+            dispose();
+          }
+        });
+      }
+    }, 0);
+  }
+
+  private void dispose() {
     myDisposed = true;
     myJdksTreeModel.disposeUIResources();
     myModulesConfigurator.disposeUIResources();
@@ -462,7 +542,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myProjectLibrariesProvider = null;
     myGlobalLibrariesProvider = null;
     myApplicationServerLibrariesProvider = null;
-    super.disposeUIResources();
+    myJdkDependencyCache.clear();
+    myLibraryDependencyCache.clear();
+    myValidityCache.clear();
+    ProjectRootConfigurable.super.disposeUIResources();
   }
 
 
@@ -525,6 +608,26 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         return false;
       }
     }));
+    final AnAction findUsages = new AnAction(ProjectBundle.message("find.usages.action.text"),
+                                             ProjectBundle.message("find.usages.action.text"),
+                                             FIND_ICON) {
+      public void update(AnActionEvent e) {
+        final Presentation presentation = e.getPresentation();
+        final TreePath selectionPath = myTree.getSelectionPath();
+        if (selectionPath != null){
+          final MyNode node = (MyNode)selectionPath.getLastPathComponent();
+          presentation.setEnabled(!node.isDisplayInBold());
+        } else {
+          presentation.setEnabled(false);
+        }
+      }
+
+      public void actionPerformed(AnActionEvent e) {
+        showDependencies();
+      }
+    };
+    findUsages.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES).getShortcutSet(), myTree);
+    result.add(findUsages);
     result.add(new MyGroupAction());
     final TreeExpander expander = new TreeExpander() {
       public void expandAll() {
@@ -630,6 +733,54 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   @Nullable
   private Set<String> getDependencies() {
     final Object selectedObject = getSelectedObject();
+    final MyNode selectedNode = (MyNode)myTree.getSelectionPath().getLastPathComponent();
+    return getCachedDependencies(selectedObject, selectedNode, true);
+  }
+
+  private Set<String> getCachedDependencies(final Object selectedObject, final MyNode selectedNode, boolean force) {
+    if (selectedObject instanceof Library){
+      final Library library = (Library)selectedObject;
+      if (myLibraryDependencyCache.containsKey(library)){
+        return myLibraryDependencyCache.get(library);
+      }
+    } else if (selectedObject instanceof ProjectJdk){
+      final ProjectJdk projectJdk = (ProjectJdk)selectedObject;
+      if (myJdkDependencyCache.containsKey(projectJdk)){
+        return myJdkDependencyCache.get(projectJdk);
+      }
+    }
+    final Computable<Set<String>> dependencies = new Computable<Set<String>>(){
+      public Set<String> compute() {
+        final Set<String> dependencies = getDependencies(selectedObject, selectedNode);
+        if (selectedObject instanceof Library){
+          myLibraryDependencyCache.put((Library)selectedObject, dependencies);
+        } else if (selectedObject instanceof ProjectJdk){
+          final ProjectJdk projectJdk = (ProjectJdk)selectedObject;
+          myJdkDependencyCache.put(projectJdk, dependencies);
+        }
+        return dependencies;
+      }
+    };
+    if (force){
+      return dependencies.compute();
+    } else {
+      myUpdateDependenciesAlarm.addRequest(new Runnable(){
+        public void run() {
+          final Set<String> dep = dependencies.compute();
+          SwingUtilities.invokeLater(new Runnable(){
+            public void run() {
+              if (dep != null && dep.size() == 0 && !myDisposed){
+                myTree.repaint();
+              }
+            }
+          });
+        }
+      }, 0);
+      return null;
+    }
+  }
+
+  private Set<String> getDependencies(final Object selectedObject, final MyNode node) {
     if (selectedObject instanceof Module) {
       return getDependencies(new Condition<OrderEntry>() {
         public boolean value(final OrderEntry orderEntry) {
@@ -639,15 +790,16 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
     else if (selectedObject instanceof Library) {
       if (((Library)selectedObject).getTable() == null) { //module library navigation
-        final MyNode node = (MyNode)myTree.getSelectionPath().getLastPathComponent();
         final Set<String> set = new HashSet<String>();
         set.add(((MyNode)node.getParent()).getDisplayName());
         return set;
       }
       return getDependencies(new Condition<OrderEntry>() {
+        @SuppressWarnings({"SimplifiableIfStatement"})
         public boolean value(final OrderEntry orderEntry) {
           if (orderEntry instanceof LibraryOrderEntry){
             final LibraryImpl library = (LibraryImpl)((LibraryOrderEntry)orderEntry).getLibrary();
+            if (Comparing.equal(library, selectedObject)) return true;
             return library != null && Comparing.equal(library.getSource(), selectedObject);
           }
           return false;
@@ -765,6 +917,36 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       return true;
     }
     return false;
+  }
+
+  public void clearCaches(final Module module, final List<Library> chosen) {
+    for (Library library : chosen) {
+      myLibraryDependencyCache.remove(library);
+    }
+    myValidityCache.remove(module);
+    myValidityCache.remove(module);
+    myTree.repaint();
+  }
+
+  public void clearCaches(final Module module, final LibraryOrderEntry libEntry) {
+    final Library library = libEntry.getLibrary();
+    myLibraryDependencyCache.remove(library);
+    if (library != null){
+      myLibraryDependencyCache.remove(((LibraryImpl)library).getSource());
+    }
+    myValidityCache.remove(module);
+    myTree.repaint();
+  }
+
+  public void clearCaches(final Module module, final ProjectJdk oldJdk, final ProjectJdk selectedModuleJdk) {
+    myJdkDependencyCache.remove(oldJdk);
+    myJdkDependencyCache.remove(selectedModuleJdk);
+    myValidityCache.remove(module);
+    myTree.repaint();
+  }
+
+  public Module[] getModules() {
+    return myModulesConfigurator.getModuleModel().getModules();
   }
 
   private class MyDataProviderWrapper extends JPanel implements DataProvider {
@@ -957,9 +1139,22 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   private class MyGroupAction extends ToggleAction {
 
     public MyGroupAction() {
-      super(ProjectBundle.message("project.roots.plain.mode.action.text"),
-            ProjectBundle.message("project.roots.plain.mode.action.text"),
-            COMPACT_EMPTY_MIDDLE_PACKAGES_ICON);
+      super("", "", COMPACT_EMPTY_MIDDLE_PACKAGES_ICON);
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      final Presentation presentation = e.getPresentation();
+      String text = ProjectBundle.message("project.roots.plain.mode.action.text.disabled");
+      if (myPlainMode){
+        text = ProjectBundle.message("project.roots.plain.mode.action.text.enabled");
+      }
+      presentation.setText(text);
+      presentation.setDescription(text);
+
+      if (myModulesConfigurator != null) {
+        presentation.setVisible(myModulesConfigurator.getModuleModel().hasModuleGroups());
+      }
     }
 
     public boolean isSelected(AnActionEvent e) {

@@ -4,6 +4,7 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.util.Comparing;
 
 import javax.swing.*;
@@ -79,7 +81,13 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     myCbProjectJdk.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myFreeze) return;
+        final ProjectJdk oldJdk = myJdksModel.getProjectJdk();
         myJdksModel.setProjectJdk(myCbProjectJdk.getSelectedJdk());
+        final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(myProject);
+        Module[] modules = rootConfigurable.getModules();
+        for (Module module : modules) {
+          rootConfigurable.clearCaches(module, oldJdk, getSelectedProjectJdk());
+        }
       }
     });
     myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.project.radio")), new GridBagConstraints(0, 0, 2, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 4, 0), 0, 0));

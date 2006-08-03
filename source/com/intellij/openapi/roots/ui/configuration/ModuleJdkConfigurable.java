@@ -5,6 +5,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
@@ -12,6 +13,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
@@ -89,6 +91,7 @@ public class ModuleJdkConfigurable implements Disposable {
     myCbModuleJdk.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myFreeze) return;
+        final ProjectJdk oldJdk = myRootModel.getJdk();
         mySelectedModuleJdk = myCbModuleJdk.getSelectedJdk();
         final ProjectJdk selectedModuleJdk = getSelectedModuleJdk();
         if (selectedModuleJdk != null) {
@@ -97,6 +100,9 @@ public class ModuleJdkConfigurable implements Disposable {
         else {
           myRootModel.inheritJdk();
         }
+        final Module module = myRootModel.getModule();
+        final Project project = module.getProject();
+        ProjectRootConfigurable.getInstance(project).clearCaches(module, oldJdk, selectedModuleJdk);
         myModuleEditor.flushChangesToModel();
       }
     });

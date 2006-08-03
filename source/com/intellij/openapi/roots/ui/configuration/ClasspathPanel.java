@@ -192,6 +192,7 @@ public class ClasspathPanel extends JPanel {
       public void update(AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(false);
+        if (myEntryTable.getSelectedRowCount() != 1) return;
         final OrderEntry entry = myModel.getItemAt(myEntryTable.getSelectedRow()).getEntry();
         if (entry != null && entry.isValid()){
           if (!(entry instanceof ModuleSourceOrderEntry)){
@@ -333,6 +334,9 @@ public class ClasspathPanel extends JPanel {
               ProjectRootConfigurable.getInstance(myRootModel.getModule().getProject()).deleteLibraryNode(libEntry);
               continue;
             }
+            final Module module = myRootModel.getModule();
+            final Project project = module.getProject();
+            ProjectRootConfigurable.getInstance(project).clearCaches(module, libEntry);
           }
           myRootModel.removeOrderEntry(orderEntry);
         }
@@ -1045,6 +1049,9 @@ public class ClasspathPanel extends JPanel {
       public List<Library> getChosenElements() {
         final List<Library> chosen = new ArrayList<Library>(Arrays.asList(myEditor.getSelectedLibraries()));
         chosen.removeAll(getAlreadyAddedLibraries());
+        final Module module = myRootModel.getModule();
+        final Project project = module.getProject();
+        ProjectRootConfigurable.getInstance(project).clearCaches(module, chosen);
         return chosen;
       }
 
