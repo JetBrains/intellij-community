@@ -966,7 +966,9 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     if (o instanceof PsiClass){
       PsiClass aClass = (PsiClass)o;
       int length = aClass.getName().length();
-      return addImportForClass(file, startOffset, startOffset + length, aClass);
+      final int newOffset = addImportForClass(file, startOffset, startOffset + length, aClass);
+      shortenReference(file, newOffset);
+      return newOffset;
     }
     else if (o instanceof PsiType){
       PsiType type = ((PsiType)o).getDeepComponentType();
@@ -993,6 +995,14 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     }
 
     return startOffset;
+  }
+
+  //need to call to shorten references in type argument list
+  private static void shortenReference(final PsiFile file, final int offset) throws IncorrectOperationException {
+    final PsiReference ref = file.findReferenceAt(offset);
+    if (ref instanceof PsiJavaCodeReferenceElement) {
+      file.getManager().getCodeStyleManager().shortenClassReferences(((PsiJavaCodeReferenceElement)ref));
+    }
   }
 
   private static int addImportForClass(PsiFile file, int startOffset, int endOffset, PsiClass aClass) throws IncorrectOperationException {
