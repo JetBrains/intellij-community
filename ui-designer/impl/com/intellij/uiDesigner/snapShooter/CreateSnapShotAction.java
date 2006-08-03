@@ -7,6 +7,7 @@ package com.intellij.uiDesigner.snapShooter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionRegistry;
 import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
@@ -240,11 +241,24 @@ public class CreateSnapShotAction extends AnAction {
     client.dispose();
   }
 
+  @Nullable
   private static RunnerAndConfigurationSettingsImpl promptForSnapshotConfiguration(final Project project,
                                                                                    final List<RunnerAndConfigurationSettingsImpl> configurations) {
     final RunnerAndConfigurationSettingsImpl snapshotConfiguration;
     if (configurations.size() == 0) {
       Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.no.configuration.error"),
+                                 UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
+      return null;
+    }
+
+    for(int i=configurations.size()-1; i >= 0; i--) {
+      if (!new JreVersionDetector().isJre50Configured((ApplicationConfiguration) configurations.get(i).getConfiguration())) {
+        configurations.remove(i);
+      }
+    }
+
+    if (configurations.size() == 0) {
+      Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.no.compatible.configuration.error"),
                                  UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
       return null;
     }
