@@ -293,7 +293,9 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
 
           public void processTerminated(final ProcessEvent event) {
             final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(getProject());
-            if (myCurrentCoverageSuite != null && myCurrentCoverageSuite.equals(coverageDataManager.getCurrentSuite())) {
+            final CoverageSuite chosenSuite = coverageDataManager.getCurrentSuite();
+            if (myCurrentCoverageSuite != null &&
+                (chosenSuite == null || myCurrentCoverageSuite.equals(chosenSuite))) {
               coverageDataManager.chooseSuite(myCurrentCoverageSuite);
             }
           }
