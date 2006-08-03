@@ -13,10 +13,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocCommentOwner;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +47,8 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
 
   protected boolean isMarkReadOnly() {
     final Object parentValue = getParentValue();
-    return parentValue instanceof PsiDirectory || parentValue instanceof PackageElement || parentValue instanceof Module;
+    return parentValue instanceof PsiDirectory || parentValue instanceof PackageElement || parentValue instanceof Module
+           || getValue() instanceof PsiClass; // class in default package has project as its parent
   }
 
   public FileStatus getFileStatus() {
@@ -108,7 +106,7 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
            ((PsiDocCommentOwner)element).isDeprecated();
   }
 
-  public boolean contains(VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     if (getValue() == null || !getValue().isValid()) return false;
     PsiFile containingFile = getValue().getContainingFile();
     if (containingFile == null) {
