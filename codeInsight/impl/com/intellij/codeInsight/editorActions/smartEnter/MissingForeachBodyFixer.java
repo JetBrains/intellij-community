@@ -33,21 +33,17 @@ public class MissingForeachBodyFixer implements Fixer {
     doc.insertString(eltToInsertAfter.getTextRange().getEndOffset(), text);
   }
 
-  private PsiForeachStatement getForeachStatementParent(PsiElement psiElement) {
+  private static PsiForeachStatement getForeachStatementParent(PsiElement psiElement) {
     PsiForeachStatement statement = PsiTreeUtil.getParentOfType(psiElement, PsiForeachStatement.class);
     if (statement == null) return null;
 
     PsiExpression iterated = statement.getIteratedValue();
     PsiParameter parameter = statement.getIterationParameter();
 
-    return isAncestor(iterated, psiElement) || isAncestor(parameter, psiElement) ? statement : null;
+    return PsiTreeUtil.isAncestor(iterated, psiElement, false) || PsiTreeUtil.isAncestor(parameter, psiElement, false) ? statement : null;
   }
 
-  private boolean isAncestor(PsiElement ancestor, PsiElement psiElement) {
-    return ancestor != null && PsiTreeUtil.isAncestor(ancestor, psiElement, false);
-  }
-
-  private int startLine(Document doc, PsiElement psiElement) {
+  private static int startLine(Document doc, PsiElement psiElement) {
     return doc.getLineNumber(psiElement.getTextRange().getStartOffset());
   }
 }

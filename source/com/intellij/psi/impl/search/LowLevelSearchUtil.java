@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -75,7 +76,7 @@ public class LowLevelSearchUtil {
             if (run == scopeNode) break;
             run = run.getTreeParent();
           }
-          assert run == scopeNode;
+          assert run == scopeNode : "Malbuilt PSI: scopeNode="+scopeNode+"; leafNode="+leafNode+"; isAncestor="+ PsiTreeUtil.isAncestor(scope, leafNode.getPsi(), false);
         }
         else {
           PsiElement leafElement;
@@ -111,7 +112,7 @@ public class LowLevelSearchUtil {
             if (run == scope) break;
             run = run.getParent();
           }
-          assert run == scope;
+          assert run == scope: "Malbuilt PSI: scopeNode="+scope+"; leafNode="+leafElement+"; isAncestor="+ PsiTreeUtil.isAncestor(scope, leafElement, false);
         }
 
         startOffset = i + 1;
