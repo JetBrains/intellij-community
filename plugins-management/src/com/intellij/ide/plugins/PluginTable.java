@@ -50,7 +50,7 @@ public class PluginTable extends JTable {
   }
 
   private void initializeHeader(final PluginTableModel model) {
-    JTableHeader header = getTableHeader();
+    final JTableHeader header = getTableHeader();
     header.setDefaultRenderer(new PluginTableHeaderRenderer(model));
 
     header.addMouseListener(new MouseAdapter() {
@@ -72,7 +72,7 @@ public class PluginTable extends JTable {
 
         model.sortByColumn(column);
 
-        getTableHeader().updateUI();
+        header.repaint();
       }
     });
     header.setReorderingAllowed(false);
