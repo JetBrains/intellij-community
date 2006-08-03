@@ -1,10 +1,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.InspectionMain;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -20,10 +17,18 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ResourceUtil;
+import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author max
@@ -153,6 +158,7 @@ public class InspectionApplication {
           logMessageLn(2, text);
         }
       });
+      describeInspections(myOutPath + File.separatorChar + ".descriptions.xml");
     }
     catch (IOException e) {
       LOG.error(e);
@@ -181,6 +187,52 @@ public class InspectionApplication {
   private void logMessageLn(int minVerboseLevel, String message) {
     if (myVerboseLevel >= minVerboseLevel) {
       System.out.println(message);
+    }
+  }
+
+  private void describeInspections(String myOutputPath) throws IOException {
+    final InspectionProfileEntry[] profileEntries = InspectionProfileImpl.DEFAULT_PROFILE.getInspectionTools();
+    final Map<String, Set<InspectionProfileEntry>> map = new HashMap<String, Set<InspectionProfileEntry>>();
+    for (InspectionProfileEntry entry : profileEntries) {
+      final String groupName = entry.getGroupDisplayName();
+      Set<InspectionProfileEntry> groupInspections = map.get(groupName);
+      if (groupInspections == null) {
+        groupInspections = new HashSet<InspectionProfileEntry>();
+        map.put(groupName, groupInspections);
+      }
+      groupInspections.add(entry);
+    }
+
+    FileWriter fw = null;
+    try {
+      fw = new FileWriter(myOutputPath);
+      final PrettyPrintWriter xmlWriter = new PrettyPrintWriter(fw);
+      xmlWriter.startNode("inspections");
+      for (String groupName : map.keySet()) {
+        xmlWriter.startNode("group");
+        xmlWriter.addAttribute("group_name", groupName);
+        final Set<InspectionProfileEntry> entries = map.get(groupName);
+        for (InspectionProfileEntry entry : entries) {
+          xmlWriter.startNode("inspection");
+          xmlWriter.addAttribute("short_name", entry.getShortName());
+          xmlWriter.addAttribute("display_name", entry.getDisplayName());
+          final URL descriptionUrl = InspectionToolRegistrar.getDescriptionUrl(entry);
+          if (descriptionUrl!=null) {
+            final String description = ResourceUtil.loadText(descriptionUrl);
+            xmlWriter.setValue(description);
+          } else {
+            LOG.error(entry.getShortName() + " descriptionUrl==null");
+          }
+          xmlWriter.endNode();
+        }
+        xmlWriter.endNode();
+      }
+      xmlWriter.endNode();
+    }
+    finally {
+      if (fw != null) {
+        fw.close();
+      }
     }
   }
 }
