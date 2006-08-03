@@ -24,12 +24,13 @@ class DirectoryContentListener {
     }
     else if (fileMessage(message)) {
       String fileName = fileNameFromMessage(message);
+      if (fileName.startsWith(myModuleName + "/")) {
+        fileName = fileName.substring(myModuleName.length() + 1);
+      }
+
       int slashPos = fileName.indexOf('/');
       if (slashPos > 0) {
         String directoryName = fileName.substring(0, slashPos);
-        if (directoryName.equals(myModuleName)) {
-          directoryName = myModulePath;
-        }
         myDirectoryContent.addSubDirectory(directoryName);
       }
       else {
