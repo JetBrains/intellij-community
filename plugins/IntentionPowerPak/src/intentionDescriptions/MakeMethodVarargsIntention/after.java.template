@@ -1,0 +1,8 @@
+public class X {
+  void f(int i, String... strings) {
+  }
+
+  void g(String string) {
+    f(1, string);
+  }
+}
