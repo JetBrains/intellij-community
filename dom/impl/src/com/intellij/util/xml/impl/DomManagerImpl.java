@@ -10,7 +10,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -19,26 +19,18 @@ import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Function;
-import com.intellij.util.ReflectionCache;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.WeakFactoryMap;
+import com.intellij.util.containers.*;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,17 +39,17 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.HashSet;
 
 /**
  * @author peter
  */
-public class DomManagerImpl extends DomManager implements ProjectComponent {
+public final class DomManagerImpl extends DomManager implements ProjectComponent {
   static final Key<Module> MODULE = Key.create("NameStrategy");
   static final Key<Object> MOCK = Key.create("MockElement");
-  private static final Key<DomNameStrategy> NAME_STRATEGY_KEY = Key.create("NameStrategy");
   private static final Key<DomInvocationHandler> CACHED_HANDLER = Key.create("CachedInvocationHandler");
-  private static final Key<MyCachedValueProvider> CACHED_FILE_ELEMENT_PROVIDER = Key.create("CachedFileElementProvider");
-  private static final Key<CachedValue<DomFileElementImpl>> CACHED_FILE_ELEMENT_VALUE = Key.create("CachedFileElementValue");
+  private static final Key<FileDescriptionCachedValueProvider> CACHED_FILE_ELEMENT_PROVIDER = Key.create("CachedFileElementProvider");
+  private static final Key<CachedValue> CACHED_FILE_ELEMENT_VALUE = Key.create("CachedFileElementValue");
   private static final Key<DomFileDescription> MOCK_DESCIPRTION = Key.create("MockDescription");
 
   private final FactoryMap<Type, GenericInfoImpl> myMethodsMaps = new FactoryMap<Type, GenericInfoImpl>() {
@@ -85,34 +77,9 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       return new InvocationCache();
     }
   };
-  private final Map<Class<? extends DomElement>, Class<? extends DomElement>> myImplementationClasses =
-    new THashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
-  private final WeakFactoryMap<Class<? extends DomElement>, Class<? extends DomElement>> myCachedImplementationClasses =
-    new WeakFactoryMap<Class<? extends DomElement>, Class<? extends DomElement>>() {
-      protected Class<? extends DomElement> create(final Class<? extends DomElement> concreteInterface) {
-        final TreeSet<Class<? extends DomElement>> set = new TreeSet<Class<? extends DomElement>>(CLASS_COMPARATOR);
-        findImplementationClassDFS(concreteInterface, set);
-        if (!set.isEmpty()) {
-          return set.first();
-        }
-        final Implementation implementation = DomReflectionUtil.findAnnotationDFS(concreteInterface, Implementation.class);
-        return implementation == null ? null : implementation.value();
-      }
 
-      private void findImplementationClassDFS(final Class concreteInterface, SortedSet<Class<? extends DomElement>> results) {
-        Class<? extends DomElement> aClass = myImplementationClasses.get(concreteInterface);
-        if (aClass != null) {
-          results.add(aClass);
-        }
-        for (final Class aClass1 : ReflectionCache.getInterfaces(concreteInterface)) {
-          findImplementationClassDFS(aClass1, results);
-        }
-      }
-
-    };
-  private final List<Function<DomElement, Collection<PsiElement>>> myPsiElementProviders =
-    new ArrayList<Function<DomElement, Collection<PsiElement>>>();
-  private final Set<DomFileDescription> myFileDescriptions = new HashSet<DomFileDescription>();
+  private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache();
+  private final Map<DomFileDescription,Set<DomFileElementImpl>> myFileDescriptions = new THashMap<DomFileDescription,Set<DomFileElementImpl>>();
   private final FactoryMap<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =
     new FactoryMap<Class<? extends DomElementVisitor>, VisitorDescription>() {
       @NotNull
@@ -125,17 +92,9 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   private final DomElementAnnotationsManagerImpl myAnnotationsManager;
   private boolean myChanging;
 
-  private final GenericValueReferenceProvider myGenericValueReferenceProvider = new GenericValueReferenceProvider();
+  final GenericValueReferenceProvider myGenericValueReferenceProvider = new GenericValueReferenceProvider();
   private final ReferenceProvidersRegistry myReferenceProvidersRegistry;
   private final PsiElementFactory myElementFactory;
-  private static final Comparator<Class<? extends DomElement>> CLASS_COMPARATOR = new Comparator<Class<? extends DomElement>>() {
-    public int compare(final Class<? extends DomElement> o1, final Class<? extends DomElement> o2) {
-      if (o1.isAssignableFrom(o2)) return 1;
-      if (o2.isAssignableFrom(o1)) return -1;
-      if (o1.equals(o2)) return 0;
-      throw new AssertionError("Incompatible implementation classes: " + o1 + " & " + o2);
-    }
-  };
   private static final DomChangeAdapter MODIFICATION_TRACKER = new DomChangeAdapter() {
     protected void elementChanged(DomElement element) {
       if (element.isValid()) {
@@ -151,7 +110,8 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
                         final PsiManager psiManager,
                         final XmlAspect xmlAspect,
                         final WolfTheProblemSolver solver,
-                        final DomElementAnnotationsManagerImpl annotationsManager) {
+                        final DomElementAnnotationsManagerImpl annotationsManager,
+                        final VirtualFileManager virtualFileManager) {
     myProject = project;
     myAnnotationsManager = annotationsManager;
     pomModel.addModelListener(new PomModelListener() {
@@ -203,9 +163,11 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return new ModelMergerImpl();
   }
 
-  protected final void fireEvent(DomEvent event) {
+  protected final void fireEvent(DomEvent event, final boolean modified) {
     myModificationCount++;
-    event.accept(MODIFICATION_TRACKER);
+    if (modified) {
+      event.accept(MODIFICATION_TRACKER);
+    }
     myListeners.getMulticaster().eventOccured(event);
   }
 
@@ -243,10 +205,6 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return myProject;
   }
 
-  public static void setNameStrategy(final XmlFile file, final DomNameStrategy strategy) {
-    file.putUserData(NAME_STRATEGY_KEY, strategy);
-  }
-
   @NotNull
   public final <T extends DomElement> DomFileElementImpl<T> getOrCreateFileElement(final XmlFile file, final DomFileDescription<T> description) {
     synchronized (PsiLock.LOCK) {
@@ -259,51 +217,40 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
     DomFileDescription description = file.getUserData(MOCK_DESCIPRTION);
     if (description == null) {
-      file.putUserData(MOCK_DESCIPRTION, description = new DomFileDescription<T>(aClass, rootTagName) {
-        public boolean isMyFile(final XmlFile xmlFile) {
-          return file == xmlFile;
-        }
-
-        protected void initializeFileDescription() {
-        }
-      });
+      description = new MockDomFileDescription<T>(aClass, rootTagName, file);
       registerFileDescription(description);
+      file.putUserData(MOCK_DESCIPRTION, description);
     }
-    return getFileElement(file);
+    final DomFileElementImpl<T> fileElement = getFileElement(file);
+    assert fileElement != null;
+    return fileElement;
   }
 
-  private <T extends DomElement> DomFileElementImpl<T> createFileElement(final XmlFile file,
+  final <T extends DomElement> DomFileElementImpl<T> createFileElement(final XmlFile file,
                                                                          final DomFileDescription<T> description) {
     return new DomFileElementImpl<T>(file, description.getRootElementClass(), description.getRootTagName(), this);
   }
 
-  protected DomFileElementImpl getOrCreateCachedValue(XmlFile xmlFile) {
-    CachedValue<DomFileElementImpl> value = xmlFile.getUserData(CACHED_FILE_ELEMENT_VALUE);
-    if (value == null) {
-      value = createCachedValue(xmlFile);
-    }
-    return value.getValue();
-  }
-
-  private CachedValue<DomFileElementImpl> createCachedValue(final XmlFile xmlFile) {
-    final CachedValue<DomFileElementImpl> value =
-      xmlFile.getManager().getCachedValuesManager().createCachedValue(getOrCreateCachedValueProvider(xmlFile), false);
-    xmlFile.putUserData(CACHED_FILE_ELEMENT_VALUE, value);
-    return value;
-  }
-
-  protected MyCachedValueProvider getOrCreateCachedValueProvider(XmlFile xmlFile) {
-    MyCachedValueProvider provider = xmlFile.getUserData(CACHED_FILE_ELEMENT_PROVIDER);
+  final <T extends DomElement> FileDescriptionCachedValueProvider<T> getOrCreateCachedValueProvider(XmlFile xmlFile) {
+    FileDescriptionCachedValueProvider provider = getCachedValueProvider(xmlFile);
     if (provider == null) {
-      xmlFile.putUserData(CACHED_FILE_ELEMENT_PROVIDER, provider = new MyCachedValueProvider(xmlFile));
+      xmlFile.putUserData(CACHED_FILE_ELEMENT_PROVIDER, provider = new FileDescriptionCachedValueProvider(this, xmlFile));
     }
     return provider;
+  }
+
+  static FileDescriptionCachedValueProvider getCachedValueProvider(final XmlFile xmlFile) {
+    return xmlFile.getUserData(CACHED_FILE_ELEMENT_PROVIDER);
   }
 
   protected static void setCachedElement(final XmlTag tag, final DomInvocationHandler element) {
     if (tag != null) {
       tag.putUserData(CACHED_HANDLER, element);
     }
+  }
+
+  public Map<DomFileDescription, Set<DomFileElementImpl>> getFileDescriptions() {
+    return myFileDescriptions;
   }
 
   @Nullable
@@ -317,7 +264,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return getClass().getName();
   }
 
-  public final void runChange(Runnable change) {
+  final void runChange(Runnable change) {
     final boolean b = setChanging(true);
     try {
       change.run();
@@ -327,17 +274,13 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     }
   }
 
-  public final boolean setChanging(final boolean changing) {
+  final boolean setChanging(final boolean changing) {
     boolean oldChanging = myChanging;
     if (changing) {
       assert !oldChanging;
     }
     myChanging = changing;
     return oldChanging;
-  }
-
-  public final boolean isChanging() {
-    return myChanging;
   }
 
   public final void initComponent() {
@@ -353,21 +296,32 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   public <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
-    assert domElementClass.isAssignableFrom(implementationClass);
-    myImplementationClasses.put(domElementClass, implementationClass);
-    myCachedImplementationClasses.clear();
+    myCachedImplementationClasses.registerImplementation(domElementClass, implementationClass);
   }
 
   @Nullable
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file) {
     if (file == null) return null;
 
-    CachedValue<DomFileElementImpl> value = file.getUserData(CACHED_FILE_ELEMENT_VALUE);
+    CachedValue<DomFileElementImpl<T>> value = file.getUserData(CACHED_FILE_ELEMENT_VALUE);
     if (value == null) {
-      value = file.getManager().getCachedValuesManager().createCachedValue(getOrCreateCachedValueProvider(file), false);
+      final FileDescriptionCachedValueProvider<T> provider = getOrCreateCachedValueProvider(file);
+      value = file.getManager().getCachedValuesManager().createCachedValue(provider, false);
       file.putUserData(CACHED_FILE_ELEMENT_VALUE, value);
     }
-    return value.getValue();
+    return getCachedValueAndFireEvent(file, value);
+  }
+
+  @Nullable
+  public final <T extends DomElement> DomFileElementImpl<T> getCachedValueAndFireEvent(XmlFile file, CachedValue<DomFileElementImpl<T>> value) {
+    final DomFileElementImpl<T> element = value.getValue();
+    final FileDescriptionCachedValueProvider provider = getCachedValueProvider(file);
+    final DomFileDescription description = provider.getFileDescription();
+    if (element != null && description != null) {
+      myFileDescriptions.get(description).add(element);
+    }
+    provider.fireEvents();
+    return element;
   }
 
   @Nullable
@@ -419,7 +373,7 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       if (psiFile instanceof XmlFile) {
         final XmlFile xmlFile = (XmlFile)psiFile;
         if (getFileElement(xmlFile) != null) {
-          return getOrCreateCachedValueProvider(xmlFile).getFileDescription();
+          return getCachedValueProvider(xmlFile).getFileDescription();
         }
       }
     }
@@ -456,10 +410,10 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     final Set<Class> intf = new HashSet<Class>();
     intf.addAll(Arrays.asList(initial.getClass().getInterfaces()));
     intf.add(StableElement.class);
-    final Class<? extends T> superClass = (Class<? extends T>)initial.getClass().getSuperclass();
-    final T proxy = AdvancedProxy.createProxy(superClass, intf.toArray(new Class[intf.size()]),
+    final Class superClass = initial.getClass().getSuperclass();
+    final T proxy = (T)AdvancedProxy.createProxy(superClass, intf.toArray(new Class[intf.size()]),
                                               handler, Collections.<JavaMethodSignature>emptySet());
-    final Set classes = new HashSet();
+    final Set<Class> classes = new HashSet<Class>();
     classes.addAll(Arrays.asList(initial.getClass().getInterfaces()));
     ContainerUtil.addIfNotNull(superClass, classes);
     handler.setClasses(classes);
@@ -476,55 +430,54 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
   }
 
   public final void registerFileDescription(final DomFileDescription description) {
-    for (final Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : ((DomFileDescription<?>)description).getImplementations().entrySet()) {
+    final Map<Class<? extends DomElement>, Class<? extends DomElement>> implementations =
+      ((DomFileDescription<?>)description).getImplementations();
+    for (final Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : implementations.entrySet()) {
       registerImplementation((Class)entry.getKey(), entry.getValue());
     }
     myTypeChooserManager.copyFrom(description.getTypeChooserManager());
+
     final DomElementsAnnotator annotator = description.createAnnotator();
-    final Class<? extends DomElement> rootClass = description.getRootElementClass();
     if (annotator != null) {
-      myAnnotationsManager.registerDomElementsAnnotator(annotator, rootClass);
+      myAnnotationsManager.registerDomElementsAnnotator(annotator, description.getRootElementClass());
     }
 
-    myFileDescriptions.add(description);
+    myFileDescriptions.put(description, new THashSet<DomFileElementImpl>());
 
-    final DomLazyReferenceProvider tagReferenceProvider = new DomLazyReferenceProvider(description) {
+    registerReferenceProviders(description);
+  }
+
+  private void registerReferenceProviders(final DomFileDescription description) {
+    final FileDescriptionElementFilter fileDescriptionFilter = new FileDescriptionElementFilter(this, description);
+    regiserLazyReferenceProvider(XmlTag.class, new DomLazyReferenceProvider(DomManagerImpl.this, description, myGenericValueReferenceProvider) {
       protected void registerTrueReferenceProvider(final String[] names) {
-        myReferenceProvidersRegistry.registerXmlTagReferenceProvider(names, new MyElementFilter(description), true,
-                                                                     myGenericValueReferenceProvider);
+        myReferenceProvidersRegistry.registerXmlTagReferenceProvider(names, fileDescriptionFilter, true, myGenericValueReferenceProvider);
       }
 
       protected Set<String> getReferenceElementNames(final GenericInfoImpl info) {
         return info.getReferenceTagNames();
       }
-    };
-    myReferenceProvidersRegistry.registerReferenceProvider(new MyElementFilter(description) {
-      protected boolean isInitialized() {
-        return tagReferenceProvider.myInitialized;
-      }
-    }, XmlTag.class, tagReferenceProvider);
+    });
 
-
-    final DomLazyReferenceProvider attributeReferenceProvider = new DomLazyReferenceProvider(description) {
+    regiserLazyReferenceProvider(XmlAttributeValue.class, new DomLazyReferenceProvider(DomManagerImpl.this, description, myGenericValueReferenceProvider) {
       protected void registerTrueReferenceProvider(final String[] names) {
-        myReferenceProvidersRegistry.registerXmlAttributeValueReferenceProvider(names, new MyElementFilter(description), true,
-                                                                                myGenericValueReferenceProvider);
+        myReferenceProvidersRegistry.registerXmlAttributeValueReferenceProvider(names, fileDescriptionFilter, true, myGenericValueReferenceProvider);
       }
 
       protected Set<String> getReferenceElementNames(final GenericInfoImpl info) {
         return info.getReferenceAttributeNames();
       }
-    };
-    myReferenceProvidersRegistry.registerReferenceProvider(new MyElementFilter(description) {
-      protected boolean isInitialized() {
-        return attributeReferenceProvider.myInitialized;
-      }
-    }, XmlAttributeValue.class, attributeReferenceProvider);
-
-
+    });
   }
 
-
+  private void regiserLazyReferenceProvider(final Class aClass, final DomLazyReferenceProvider tagReferenceProvider) {
+    final FileDescriptionElementFilter filter = new FileDescriptionElementFilter(this, tagReferenceProvider.getDescription()) {
+      protected boolean isInitialized() {
+        return tagReferenceProvider.isInitialized();
+      }
+    };
+    myReferenceProvidersRegistry.registerReferenceProvider(filter, aClass, tagReferenceProvider);
+  }
 
   @Nullable
   private DomFileDescription findFileDescription(DomElement element) {
@@ -532,7 +485,6 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
       return getOrCreateCachedValueProvider(element.getRoot().getFile()).getFileDescription();
     }
   }
-
 
   public final DomElement getResolvingScope(GenericDomValue element) {
     final DomFileDescription description = findFileDescription(element);
@@ -556,120 +508,4 @@ public class DomManagerImpl extends DomManager implements ProjectComponent {
     return myModificationCount;
   }
 
-  private class MyElementFilter implements ElementFilter {
-    private final DomFileDescription myDescription;
-
-    public MyElementFilter(final DomFileDescription description) {
-      myDescription = description;
-    }
-
-    protected boolean isInitialized() {
-      return false;
-    }
-
-    public boolean isAcceptable(Object element, PsiElement context) {
-      return !isInitialized() && element instanceof XmlElement && getDomFileDescription((XmlElement)element) == myDescription;
-    }
-
-    public boolean isClassAcceptable(Class hintClass) {
-      return !isInitialized();
-    }
-  }
-
-  private class MyCachedValueProvider implements CachedValueProvider<DomFileElementImpl> {
-    private final XmlFile myXmlFile;
-    private Result<DomFileElementImpl> myOldResult;
-    private final Condition<DomFileDescription> myCondition = new Condition<DomFileDescription>() {
-      public boolean value(final DomFileDescription description) {
-        return description.isMyFile(myXmlFile);
-      }
-    };
-
-    private DomFileDescription myFileDescription;
-
-    public MyCachedValueProvider(final XmlFile xmlFile) {
-      myXmlFile = xmlFile;
-    }
-
-    public final DomFileDescription getFileDescription() {
-      return myFileDescription;
-    }
-
-    public Result<DomFileElementImpl> compute() {
-      synchronized (PsiLock.LOCK) {
-        if (myProject.isDisposed()) return new Result<DomFileElementImpl>(null);
-
-        if (myOldResult != null && myFileDescription != null && myFileDescription.isMyFile(myXmlFile)) {
-          return myOldResult;
-        }
-
-        final XmlFile originalFile = (XmlFile)myXmlFile.getOriginalFile();
-        if (originalFile != null) {
-          return saveResult(getOrCreateCachedValueProvider(originalFile).getFileDescription());
-        }
-
-        return saveResult(ContainerUtil.find(myFileDescriptions, myCondition));
-      }
-    }
-
-    private Result<DomFileElementImpl> saveResult(final DomFileDescription description) {
-      myFileDescription = description;
-      if (description == null) {
-        final Set<Object> deps = new HashSet<Object>();
-        deps.add(myXmlFile);
-        for (final DomFileDescription fileDescription : myFileDescriptions) {
-          deps.addAll(Arrays.asList(fileDescription.getDependencyItems(myXmlFile)));
-        }
-        return new Result<DomFileElementImpl>(null, deps.toArray());
-      }
-
-      DomFileElementImpl fileElement = new DomFileElementImpl(myXmlFile, description.getRootElementClass(), description.getRootTagName(), DomManagerImpl.this);
-      return myOldResult = new Result<DomFileElementImpl>(fileElement, description.getDependencyItems(myXmlFile));
-    }
-  }
-
-  private abstract class DomLazyReferenceProvider implements PsiReferenceProvider {
-    private boolean myInitialized;
-    private final DomFileDescription myDescription;
-
-    public DomLazyReferenceProvider(final DomFileDescription description) {
-      myDescription = description;
-    }
-
-    private boolean initialize(PsiElement element) {
-      if (myInitialized || getDomFileDescription(element) != myDescription) {
-        return false;
-      }
-      myInitialized = true;
-      final GenericInfoImpl info = getGenericInfo(myDescription.getRootElementClass());
-      final Set<String> tagNames = new HashSet<String>(getReferenceElementNames(info));
-      if (!tagNames.isEmpty()) {
-        registerTrueReferenceProvider(tagNames.toArray(new String[tagNames.size()]));
-      }
-      return true;
-    }
-
-    @NotNull
-    public PsiReference[] getReferencesByElement(PsiElement element) {
-      return initialize(element) ? myGenericValueReferenceProvider.getReferencesByElement(element) : PsiReference.EMPTY_ARRAY;
-    }
-
-    @NotNull
-    public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
-      return initialize(element) ? myGenericValueReferenceProvider.getReferencesByElement(element, type) : PsiReference.EMPTY_ARRAY;
-    }
-
-    @NotNull
-    public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
-      return initialize(position) ? myGenericValueReferenceProvider.getReferencesByString(str, position, type, offsetInPosition) : PsiReference.EMPTY_ARRAY;
-    }
-
-    public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
-    }
-
-    protected abstract void registerTrueReferenceProvider(String[] names);
-
-    protected abstract Set<String> getReferenceElementNames(GenericInfoImpl info);
-
-  }
 }

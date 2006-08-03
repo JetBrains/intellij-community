@@ -109,7 +109,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   }
 
 
-  public void registerDomElementsAnnotator(DomElementsAnnotator annotator, Class aClass) {
+  public final void registerDomElementsAnnotator(DomElementsAnnotator annotator, Class aClass) {
     getOrCreateAnnotators(aClass).add(annotator);
   }
 

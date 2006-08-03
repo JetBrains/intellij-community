@@ -60,7 +60,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     final boolean b = manager.setChanging(true);
     try {
       xmlAttribute = ensureTagExists().setAttribute(getXmlElementName(), "");
-      manager.fireEvent(new ElementDefinedEvent(getProxy()));
+      manager.fireEvent(new ElementDefinedEvent(getProxy()), true);
       return xmlAttribute;
     }
     catch (IncorrectOperationException e) {

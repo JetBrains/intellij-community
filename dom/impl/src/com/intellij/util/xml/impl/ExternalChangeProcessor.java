@@ -91,7 +91,7 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
       if (rootTag != null) {
         rootHandler.attach(rootTag);
       }
-      element.getManager().fireEvent(new ElementChangedEvent(element.getRootElement()));
+      element.getManager().fireEvent(new ElementChangedEvent(element.getRootElement()), true);
     }
   }
 
