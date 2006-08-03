@@ -137,6 +137,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       this,
       (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP),
       ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP, ActionManager.getInstance());
+
+    TableToolTipHandler.install(this);
   }
 
   public void setEditor(final GuiEditor editor) {
