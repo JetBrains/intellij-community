@@ -12,6 +12,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -20,7 +21,9 @@ public class UIDesignerImplicitUsageProvider implements ApplicationComponent, Im
   public boolean isImplicitUsage(PsiElement element) {
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
-      if (AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME.equals(method.getName()) &&
+      if ((AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME.equals(method.getName()) ||
+           AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME.equals(method.getName()) ||
+           AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) &&
           method.getParameterList().getParameters().length == 0) {
         return true;
       }
@@ -36,7 +39,7 @@ public class UIDesignerImplicitUsageProvider implements ApplicationComponent, Im
     return element instanceof PsiField && FormReferenceProvider.getFormFile((PsiField)element) != null;
   }
 
-  @NonNls
+  @NotNull @NonNls
   public String getComponentName() {
     return "UIDesignerImplicitUsageProvider";
   }

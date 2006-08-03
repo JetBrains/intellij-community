@@ -34,6 +34,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -369,6 +370,9 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     checkForReachables();
     final RefFilter filter = myPhase == 1 ? new StrictUnreferencedFilter(this) : new RefUnreachableFilter(this);
     final boolean[] requestAdded = new boolean[]{false};
+
+    final ImplicitUsageProvider[] implicitUsageProviders = ApplicationManager.getApplication().getComponents(ImplicitUsageProvider.class);
+
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
@@ -402,6 +406,12 @@ public class DeadCodeInspection extends FilteringInspectionTool {
                 if (isSerializablePatternMethod(psiMethod)) {
                   getEntryPointsManager().addEntryPoint(refMethod, false);
                   return;
+                }
+                for(ImplicitUsageProvider provider: implicitUsageProviders) {
+                  if (provider.isImplicitUsage(psiMethod)) {
+                    getEntryPointsManager().addEntryPoint(refMethod, false);
+                    return;
+                  }
                 }
 
                 if (!refMethod.isExternalOverride() && refMethod.getAccessModifier() != PsiModifier.PRIVATE) {
