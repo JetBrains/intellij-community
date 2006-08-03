@@ -73,7 +73,7 @@ public final class PreviewFormAction extends AnAction{
   public void actionPerformed(final AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
     if (editor != null) {
-      showPreviewFrame(editor.getModule(), editor.getFile(), e.getDataContext());
+      showPreviewFrame(editor.getModule(), editor.getFile(), e.getDataContext(), editor.getStringDescriptorLocale());
     }
   }
 
@@ -93,7 +93,7 @@ public final class PreviewFormAction extends AnAction{
   }
 
   private static void showPreviewFrame(@NotNull final Module module, @NotNull final VirtualFile formFile,
-                                       final DataContext dataContext) {
+                                       final DataContext dataContext, final Locale stringDescriptorLocale) {
     final String tempPath;
     try {
       final File tempDirectory = FileUtil.createTempDirectory("FormPreview", "");
@@ -217,13 +217,13 @@ public final class PreviewFormAction extends AnAction{
       CompilerManager.getInstance(module.getProject()).make(scope, new CompileStatusNotification() {
         public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
           if (!aborted && errors == 0) {
-            runPreviewProcess(tempPath, sources, module, formFile, dataContext);
+            runPreviewProcess(tempPath, sources, module, formFile, dataContext, stringDescriptorLocale);
           }
         }
       });
     }
     else {
-      runPreviewProcess(tempPath, sources, module, formFile, dataContext);
+      runPreviewProcess(tempPath, sources, module, formFile, dataContext, stringDescriptorLocale);
     }
   }
 
@@ -246,7 +246,7 @@ public final class PreviewFormAction extends AnAction{
   }
 
   private static void runPreviewProcess(final String tempPath, final PathsList sources, final Module module, final VirtualFile formFile,
-                                        final DataContext dataContext) {
+                                        final DataContext dataContext, final Locale stringDescriptorLocale) {
     // 3. Now we are ready to launch Java process
     final JavaParameters parameters = new JavaParameters();
     parameters.getClassPath().add(tempPath);
@@ -268,6 +268,9 @@ public final class PreviewFormAction extends AnAction{
     }
     parameters.setMainClass("FormPreviewFrame");
     parameters.setWorkingDirectory(tempPath);
+    if (stringDescriptorLocale.getDisplayName().length() > 0) {
+      parameters.getVMParametersList().add("-Duser.language=" + stringDescriptorLocale.getLanguage());
+    }
 
     try {
       JavaProgramRunner defaultRunner = ExecutionRegistry.getInstance().getDefaultRunner();
