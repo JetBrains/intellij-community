@@ -22,10 +22,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author cdr
@@ -63,7 +60,7 @@ public class PropertyReference extends GenericReference implements PsiPolyVarian
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     final String key = getKeyText();
 
-    Collection<Property> properties;
+    List<Property> properties;
     if (myBundleName == null) {
       properties = PropertiesUtil.findPropertiesByKey(getElement().getProject(), key);
     }
@@ -74,6 +71,14 @@ public class PropertyReference extends GenericReference implements PsiPolyVarian
         properties.addAll(propertiesFile.findPropertiesByKey(key));
       }
     }
+    // put default properties file first
+    Collections.sort(properties, new Comparator<Property>() {
+      public int compare(final Property o1, final Property o2) {
+        String name1 = o1.getContainingFile().getName();
+        String name2 = o2.getContainingFile().getName();
+        return Comparing.compare(name1, name2);
+      }
+    });
     final ResolveResult[] result = new ResolveResult[properties.size()];
     int i = 0;
     for (Property property : properties) {

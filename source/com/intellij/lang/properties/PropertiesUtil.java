@@ -24,7 +24,7 @@ public class PropertiesUtil {
   }
 
   @NotNull
-  public static Collection<Property> findPropertiesByKey(Project project, final String key) {
+  public static List<Property> findPropertiesByKey(Project project, final String key) {
     return PropertiesReferenceManager.getInstance(project).findPropertiesByKey(key);
   }
 

@@ -160,9 +160,9 @@ public class PropertiesReferenceManager implements ProjectComponent {
   }
 
   @NotNull
-  public Collection<Property> findPropertiesByKey(final String key) {
+  public List<Property> findPropertiesByKey(final String key) {
     updateChangedFiles();
-    Collection<Property> result;
+    List<Property> result;
     synchronized (LOCK) {
       Collection<VirtualFile> virtualFiles = myPropertiesMap.get(key);
       if (virtualFiles == null || virtualFiles.isEmpty()) return Collections.emptyList();
