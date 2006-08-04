@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.progress.ProgressManager;
@@ -23,9 +24,14 @@ import java.util.Set;
  */
 public class RollbackChangesDialog extends DialogWrapper {
   private Project myProject;
+  private final boolean myRefreshSynchronously;
   private ChangesBrowser myBrowser;
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes) {
+    rollbackChanges(project, changes, false);
+  }
+
+  public static void rollbackChanges(final Project project, final Collection<Change> changes, boolean refreshSynchronously) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
 
     if (changes.isEmpty()) {
@@ -44,17 +50,20 @@ public class RollbackChangesDialog extends DialogWrapper {
       }
     }
 
-    rollback(project, new ArrayList<LocalChangeList>(lists), validChanges);
+    rollback(project, new ArrayList<LocalChangeList>(lists), validChanges, refreshSynchronously);
   }
 
-  public static void rollback(final Project project, final List<LocalChangeList> changeLists, final List<Change> changes) {
-    new RollbackChangesDialog(project, changeLists, changes).show();
+  public static void rollback(final Project project, final List<LocalChangeList> changeLists, final List<Change> changes,
+                              final boolean refreshSynchronously) {
+    new RollbackChangesDialog(project, changeLists, changes, refreshSynchronously).show();
   }
 
-  public RollbackChangesDialog(final Project project, List<LocalChangeList> changeLists, final List<Change> changes) {
+  public RollbackChangesDialog(final Project project, List<LocalChangeList> changeLists, final List<Change> changes,
+                               final boolean refreshSynchronously) {
     super(project, true);
 
     myProject = project;
+    myRefreshSynchronously = refreshSynchronously;
     myBrowser = new ChangesBrowser(project, changeLists, changes, null, true, true);
 
     setOKButtonText(VcsBundle.message("changes.action.rollback.text"));
@@ -74,7 +83,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     return myBrowser;
   }
 
-  private static List<FilePath> getFilePathes(Collection<Change> changes) {
+  private static List<FilePath> getFilePaths(Collection<Change> changes) {
     List<FilePath> paths = new ArrayList<FilePath>();
     for (Change change : changes) {
       paths.add(ChangesUtil.getFilePath(change));
@@ -84,15 +93,15 @@ public class RollbackChangesDialog extends DialogWrapper {
 
   private void doRollback() {
     final List<VcsException> vcsExceptions = new ArrayList<VcsException>();
+final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
 
     Runnable rollbackAction = new Runnable() {
       public void run() {
-        final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
         ChangesUtil.processChangesByVcs(myProject, myBrowser.getCurrentIncludedChanges(), new ChangesUtil.PerVcsProcessor<Change>() {
           public void process(AbstractVcs vcs, List<Change> changes) {
             final ChangeProvider environment = vcs.getChangeProvider();
             if (environment != null) {
-              pathsToRefresh.addAll(getFilePathes(changes));
+              pathsToRefresh.addAll(getFilePaths(changes));
 
               final List<VcsException> exceptions = environment.rollbackChanges(changes);
               if (exceptions.size() > 0) {
@@ -102,21 +111,34 @@ public class RollbackChangesDialog extends DialogWrapper {
           }
         });
 
-        final LvcsAction lvcsAction = LocalVcs.getInstance(myProject).startAction(VcsBundle.message("changes.action.rollback.text"), "", true);
-        VirtualFileManager.getInstance().refresh(true, new Runnable() {
-          public void run() {
-            lvcsAction.finish();
-            FileStatusManager.getInstance(myProject).fileStatusesChanged();
-            for (FilePath path : pathsToRefresh) {
-              VcsDirtyScopeManager.getInstance(myProject).fileDirty(path);
-            }
-          }
-        });
+        if (!myRefreshSynchronously) {
+          doRefresh(pathsToRefresh, true);
+        }
         AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, VcsBundle.message("changes.action.rollback.text"));
       }
     };
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(rollbackAction, VcsBundle.message("changes.action.rollback.text"), true, myProject);
+    if (myRefreshSynchronously) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          doRefresh(pathsToRefresh, false);
+        }
+      });
+    }
+  }
+
+  private void doRefresh(final List<FilePath> pathsToRefresh, final boolean asynchronous) {
+    final LvcsAction lvcsAction = LocalVcs.getInstance(myProject).startAction(VcsBundle.message("changes.action.rollback.text"), "", true);
+    VirtualFileManager.getInstance().refresh(asynchronous, new Runnable() {
+      public void run() {
+        lvcsAction.finish();
+        FileStatusManager.getInstance(myProject).fileStatusesChanged();
+        for (FilePath path : pathsToRefresh) {
+          VcsDirtyScopeManager.getInstance(myProject).fileDirty(path);
+        }
+      }
+    });
   }
 
   public JComponent getPreferredFocusedComponent() {

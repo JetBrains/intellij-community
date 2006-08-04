@@ -373,7 +373,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
 
     public void actionPerformed(AnActionEvent e) {
       Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      RollbackChangesDialog.rollbackChanges(myProject, Arrays.asList(changes));
+      RollbackChangesDialog.rollbackChanges(myProject, Arrays.asList(changes), true);
       ChangeListManager.getInstance(myProject).ensureUpToDate(false);
       rebuildList();
     }
