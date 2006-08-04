@@ -21,7 +21,8 @@ import java.awt.*;
  * Represents the stack of active modal dialogs.
  */
 public abstract class ModalityState {
-  public static final ModalityState NON_MMODAL = ApplicationManager.getApplication().getNoneModalityState();
+  @Deprecated public static final ModalityState NON_MMODAL = ApplicationManager.getApplication().getNoneModalityState();
+  public static final ModalityState NON_MODAL = ApplicationManager.getApplication().getNoneModalityState();
 
   public static ModalityState current() {
     return ApplicationManager.getApplication().getCurrentModalityState();
