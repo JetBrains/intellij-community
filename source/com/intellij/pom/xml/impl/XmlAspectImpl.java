@@ -166,10 +166,13 @@ public class XmlAspectImpl implements XmlAspect {
                 xmlChangeSet.add(new XmlTagChildChangedImpl(tag, (XmlTagChild)element));
                 break;
               case ChangeInfo.REPLACE:
-                final XmlTagChild replaced = (XmlTagChild)((ReplaceChangeInfo)changeByChild).getReplaced().getPsi();
-                replaced.putUserData(CharTable.CHAR_TABLE_KEY, table);
-                xmlChangeSet.add(new XmlTagChildRemovedImpl(tag, replaced));
-                xmlChangeSet.add(new XmlTagChildAddImpl(tag, (XmlTagChild)element));
+                final PsiElement psi = ((ReplaceChangeInfo)changeByChild).getReplaced().getPsi();
+                if (psi instanceof XmlTagChild) {
+                  final XmlTagChild replaced = (XmlTagChild)psi;
+                  replaced.putUserData(CharTable.CHAR_TABLE_KEY, table);
+                  xmlChangeSet.add(new XmlTagChildRemovedImpl(tag, replaced));
+                  xmlChangeSet.add(new XmlTagChildAddImpl(tag, (XmlTagChild)element));
+                }
                 break;
             }
           }
