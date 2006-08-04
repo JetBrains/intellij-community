@@ -492,6 +492,7 @@ public class HighlightUtil {
     if (lType instanceof PsiClassType && expression != null) {
       QuickFixAction.registerQuickFixAction(highlightInfo, new WrapExpressionFix((PsiClassType)lType, expression));
     }
+    ChangeNewOperatorTypeFix.register(highlightInfo, expression, lType);
     return highlightInfo;
   }
 

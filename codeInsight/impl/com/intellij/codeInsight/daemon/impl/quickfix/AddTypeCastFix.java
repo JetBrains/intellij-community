@@ -44,20 +44,14 @@ public class AddTypeCastFix implements IntentionAction {
     return myType.isValid() && myExpression.isValid() && myExpression.getManager().isInProject(myExpression);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     addTypeCast(project, myExpression, myType);
   }
 
-  private static void addTypeCast(Project project, PsiExpression originalExpression, PsiType type) {
-    try {
-      PsiTypeCastExpression typeCast = createCastExpression(originalExpression, project, type);
-
-      originalExpression.replace(typeCast);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+  private static void addTypeCast(Project project, PsiExpression originalExpression, PsiType type) throws IncorrectOperationException {
+    PsiTypeCastExpression typeCast = createCastExpression(originalExpression, project, type);
+    originalExpression.replace(typeCast);
   }
 
   static PsiTypeCastExpression createCastExpression(PsiExpression originalExpression, Project project, PsiType type) throws IncorrectOperationException {
