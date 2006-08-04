@@ -18,8 +18,9 @@ package com.intellij.psi.jsp;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.ImplicitVariable;
 import com.intellij.psi.PsiElement;
+import com.intellij.navigation.NavigationItem;
 
-public interface JspImplicitVariable extends ImplicitVariable, Navigatable {
+public interface JspImplicitVariable extends ImplicitVariable, NavigationItem {
   JspImplicitVariable[] EMPTY_ARRAY = new JspImplicitVariable[0];
   int INSIDE = 1;
   int AFTER = 2;

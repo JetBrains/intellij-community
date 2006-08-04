@@ -9,11 +9,14 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
+import com.intellij.psi.filters.types.TypeFilter;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
+import com.intellij.psi.filters.position.FileTypeFilter;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.jsp.el.impl.ELLiteralManipulator;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
@@ -491,6 +494,18 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       new ParentElementFilter( new NamespaceFilter(XmlUtil.JSF_HTML_URI), 2),
       true,
       jsfProvider
+    );
+
+    registerReferenceProvider(
+      new AndFilter(
+        new OrFilter(
+          new FileTypeFilter(StdFileTypes.JSP),
+          new FileTypeFilter(StdFileTypes.JSPX)
+        ),
+        new ClassFilter(XmlAttributeValue.class)
+      ),
+      XmlAttributeValue.class,
+      new JspImplicitVariableReferenceProvider()
     );
 
     final DtdReferencesProvider dtdReferencesProvider = new DtdReferencesProvider();

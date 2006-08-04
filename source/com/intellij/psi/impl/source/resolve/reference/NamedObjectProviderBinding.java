@@ -70,11 +70,7 @@ abstract class NamedObjectProviderBinding implements ProviderBinding {
       }
     }
 
-    if (list.size() == initialListSize) {
-      // no specific provider found; trying to find "common" providers...
-      addMatchingProviders(position, myProvidersWithoutNames,list);
-    }
-
+    addMatchingProviders(position, myProvidersWithoutNames, list);
   }
 
   abstract protected String getName(final PsiElement position);
