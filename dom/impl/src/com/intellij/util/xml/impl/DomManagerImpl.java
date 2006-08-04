@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.xml.*;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -126,8 +127,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
         final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(xmlAspect);
         if (changeSet != null) {
           if (!myChanging) {
-            new ExternalChangeProcessor(DomManagerImpl.this, changeSet).processChanges();
-          }
+          new ExternalChangeProcessor(DomManagerImpl.this, changeSet).processChanges();
+        }
           final XmlFile xmlFile = changeSet.getChangedFile();
           if (xmlFile == null) return;
           final FileDescriptionCachedValueProvider provider = getCachedValueProvider(xmlFile);
@@ -155,7 +156,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       public boolean isAspectChangeInteresting(PomModelAspect aspect) {
         return xmlAspect.equals(aspect);
       }
-    }, project);
+    });
     myReferenceProvidersRegistry = registry;
 
     myElementFactory = psiManager.getElementFactory();
@@ -418,9 +419,9 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   private DomFileDescription getDomFileDescription(final XmlFile xmlFile) {
-    if (getFileElement(xmlFile) != null) {
-      return getCachedValueProvider(xmlFile).getFileDescription();
-    }
+        if (getFileElement(xmlFile) != null) {
+          return getCachedValueProvider(xmlFile).getFileDescription();
+        }
     return null;
   }
 

@@ -213,6 +213,8 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     disposeComponents();
     VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
     Extensions.disposeArea(this);
+    myPomModel = null;
+    myPomModule = null;
     super.dispose();
   }
 

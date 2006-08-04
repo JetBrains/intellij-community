@@ -15,6 +15,7 @@
  */
 package com.intellij.pom;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.Disposable;
