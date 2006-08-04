@@ -112,7 +112,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     if (myFSRootsToPaths != null) return;
 
     synchronized (LOCK) {
-      myFSRootsToPaths = new BidirectionalMap<VirtualFile, String>();
+      final BidirectionalMap<VirtualFile, String> map = new BidirectionalMap<VirtualFile, String>();
 
       final File[] files = File.listRoots();
       for (File file : files) {
@@ -120,9 +120,10 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         if (path != null) {
           path = path.replace(File.separatorChar, '/');
           final VirtualFileImpl root = new VirtualFileImpl(path);
-          myFSRootsToPaths.put(root, path);
+          map.put(root, path);
         }
       }
+      myFSRootsToPaths = map;
     }
   }
 
