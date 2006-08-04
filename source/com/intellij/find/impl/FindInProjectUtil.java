@@ -431,7 +431,8 @@ public class FindInProjectUtil {
     // in case our word splitting is incorrect
     PsiFile[] allWordsFiles = cacheManager.getFilesWithWord(findModel.getStringToFind(), UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
     resultFiles.addAll(Arrays.asList(allWordsFiles));
-    
+    filterMaskedFiles(resultFiles, fileMaskRegExp);
+
     return resultFiles;
   }
 
