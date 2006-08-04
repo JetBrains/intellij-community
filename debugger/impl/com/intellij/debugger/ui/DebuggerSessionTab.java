@@ -446,6 +446,8 @@ public class DebuggerSessionTab implements LogConsoleManager {
     for (DebuggerTreeNodeImpl watch : watches) {
       getWatchPanel().getWatchTree().addWatch((WatchItemDescriptor)watch.getDescriptor());
     }
+
+    reuseSession.initAdditionalTabs();
   }
 
   protected void toFront() {
