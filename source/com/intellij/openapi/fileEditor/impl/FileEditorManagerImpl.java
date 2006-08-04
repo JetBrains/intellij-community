@@ -1326,6 +1326,14 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
       updateFile(file);
     }
 
+    public void problemsDisappeared(VirtualFile file) {
+      updateFile(file);
+    }
+
+    public void problemsChanged(VirtualFile file) {
+      updateFile(file);
+    }
+
     private void updateFile(final VirtualFile file) {
       myQueue.queue(new Update("ProblemUpdate") {
         public void run() {
@@ -1335,10 +1343,6 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
           }
         }
       });
-    }
-
-    public void problemsDisappeared(VirtualFile file) {
-      updateFile(file);
     }
 
   }
