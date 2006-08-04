@@ -103,50 +103,40 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   }
 
   public void select(Object element, VirtualFile file, boolean requestFocus) {
-    if (isAlreadySelected(element)) {
-      return;
+    DefaultMutableTreeNode selected = alreadySelectedNode(element);
+    if (selected == null) {
+      AbstractTreeNode node = select((AbstractTreeNode)getTreeStructure().getRootElement(), file, element, new Condition<AbstractTreeNode>() {
+        public boolean value(final AbstractTreeNode object) {
+          return true;
+        }
+      });
+      selected = getNodeForElement(node);
     }
-    AbstractTreeNode node = select((AbstractTreeNode)getTreeStructure().getRootElement(), file, element, new Condition<AbstractTreeNode>() {
-      public boolean value(final AbstractTreeNode object) {
-        return true;
-      }
-    });
-    TreeUtil.selectInTree(getNodeForElement(node), requestFocus, getTree());
+    TreeUtil.selectInTree(selected, requestFocus, getTree());
   }
 
   public void selectInWidth(final Object element, final boolean requestFocus, final Condition<AbstractTreeNode> nonStopCondition) {
-    if (isAlreadySelected(element)) {
-      return;
+    DefaultMutableTreeNode selected = alreadySelectedNode(element);
+    if (selected == null) {
+      AbstractTreeNode node = select((AbstractTreeNode)getTreeStructure().getRootElement(), null, element, nonStopCondition);
+      selected = getNodeForElement(node);
     }
-    AbstractTreeNode node = select((AbstractTreeNode)getTreeStructure().getRootElement(), null, element, nonStopCondition);
-    TreeUtil.selectInTree(getNodeForElement(node), requestFocus, getTree());
+    TreeUtil.selectInTree(selected, requestFocus, getTree());
   }
 
-  private boolean isAlreadySelected(final Object element) {
+  // returns selected node for element or null if element node is not selected
+  private DefaultMutableTreeNode alreadySelectedNode(final Object element) {
     final TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths == null || selectionPaths.length == 0) {
-      return false;
+      return null;
     }
-
     for (TreePath selectionPath : selectionPaths) {
-      if (elementIsEqualTo(selectionPath.getLastPathComponent(), element)){
-        return true;
+      Object selected = selectionPath.getLastPathComponent();
+      if (elementIsEqualTo(selected, element)){
+        return (DefaultMutableTreeNode)selected;
       }
     }
-
-    return false;
-
-  }
-
-  private boolean treePathContainsElement(final TreePath selectionPath, final Object element) {
-    final Object[] pathNodes = selectionPath.getPath();
-    for (Object node : pathNodes) {
-      if (elementIsEqualTo(node, element)) {
-        return true;
-      }
-    }
-
-    return false;
+    return null;
   }
 
   private static boolean elementIsEqualTo(final Object node, final Object element) {
@@ -155,12 +145,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       if (userObject instanceof ProjectViewNode) {
         final ProjectViewNode projectViewNode = (ProjectViewNode)userObject;
         return projectViewNode.canRepresent(element);
-      } else {
-        return false;
       }
-    } else {
-      return false;
     }
+    return false;
   }
 
   private AbstractTreeNode select(AbstractTreeNode current, VirtualFile file, Object element, Condition<AbstractTreeNode> nonStopCondition) {
