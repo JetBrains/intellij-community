@@ -129,6 +129,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
             new ExternalChangeProcessor(DomManagerImpl.this, changeSet).processChanges();
           }
           final XmlFile xmlFile = changeSet.getChangedFile();
+          if (xmlFile == null) return;
           final FileDescriptionCachedValueProvider provider = getCachedValueProvider(xmlFile);
           if (provider != null) {
             final DomFileDescription description = provider.getFileDescription();
