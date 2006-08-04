@@ -16,7 +16,9 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use File | Settings | File Templates.
  */
 public interface JspElementDescriptor extends XmlElementDescriptor {
+  @Nullable
   TagExtraInfo getExtraInfo(@Nullable Module module);
   boolean isRequiredAttributeImplicitlyPresent(XmlTag tag,String attributeName);
+  @Nullable
   XmlTag findVariableWithName(String name);
 }
