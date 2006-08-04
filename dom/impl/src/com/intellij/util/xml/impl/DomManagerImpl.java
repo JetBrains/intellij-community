@@ -24,7 +24,6 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.xml.*;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -450,7 +449,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   public final <T extends DomElement> T createStableValue(final Factory<T> provider) {
     final T initial = provider.create();
-    assert initial != null;
+    assert initial != null;                    
     final StableInvocationHandler handler = new StableInvocationHandler<T>(initial, provider);
     final Set<Class> intf = new HashSet<Class>();
     intf.addAll(Arrays.asList(initial.getClass().getInterfaces()));
