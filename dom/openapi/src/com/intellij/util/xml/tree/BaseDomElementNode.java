@@ -15,6 +15,7 @@ import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.ui.TooltipUtils;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
@@ -71,14 +72,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     for (DomFixedChildDescription description : element.getGenericInfo().getFixedChildrenDescriptions()) {
       String childName = description.getXmlElementName();
       if (xmlDescriptors != null) {
-        boolean found = false;
-        for (XmlElementDescriptor xmlDescriptor : xmlDescriptors) {
-          if (xmlDescriptor.getDefaultName().equals(childName)) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) continue;
+        if (findDescriptor(xmlDescriptors, childName) == -1) continue;
       }
       final List<? extends DomElement> values = description.getStableValues(element);
       if (shouldBeShown(description.getType())) {
@@ -109,12 +103,43 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
     AbstractDomElementNode[] childrenNodes = children.toArray(new AbstractDomElementNode[children.size()]);
 
-    final Comparator<AbstractDomElementNode> comparator = myDomElement.getRoot().getFile().getUserData(COMPARATOR_KEY);
+    Comparator<AbstractDomElementNode> comparator = myDomElement.getRoot().getFile().getUserData(COMPARATOR_KEY);
+    if (comparator == null) {
+      comparator = getDefaultComparator(element);
+    }
     if (comparator != null) {
       Arrays.sort(childrenNodes, comparator);
     }
 
     return childrenNodes;
+  }
+
+  @Nullable
+  protected Comparator<AbstractDomElementNode> getDefaultComparator(DomElement element) {
+    final XmlTag tag = element.getXmlTag();
+    if (tag != null) {
+      final XmlElementDescriptor descriptor = tag.getDescriptor();
+      if (descriptor != null) {
+        final XmlElementDescriptor[] childDescriptors = descriptor.getElementsDescriptors(tag);
+        if (childDescriptors != null && childDescriptors.length > 1) {
+          return new Comparator<AbstractDomElementNode>() {
+            public int compare(final AbstractDomElementNode o1, final AbstractDomElementNode o2) {
+              return findDescriptor(childDescriptors, o1.getTagName()) - findDescriptor(childDescriptors, o2.getTagName());
+            }
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  protected static int findDescriptor(XmlElementDescriptor[] descriptors, String name) {
+    for (int i = 0; i < descriptors.length; i++) {
+      if (descriptors[i].getDefaultName().equals(name)) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   @NotNull
