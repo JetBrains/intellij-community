@@ -171,7 +171,7 @@ public class VfsUtil {
    * @return a copy of the file
    * @throws IOException if file failed to be copied
    */
-  public static VirtualFile copyFile(Object requestor, VirtualFile file, VirtualFile toDir, String newName)
+  public static VirtualFile copyFile(Object requestor, VirtualFile file, VirtualFile toDir, @NonNls String newName)
     throws IOException {
     final VirtualFile newChild = toDir.createChildData(requestor, newName);
     // [jeka] TODO: to be duscussed if the copy should have the same timestamp as the original

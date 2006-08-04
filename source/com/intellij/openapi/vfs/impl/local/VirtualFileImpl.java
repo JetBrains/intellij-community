@@ -5,7 +5,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -575,7 +574,7 @@ public class VirtualFileImpl extends VirtualFile {
           ourFileSystem.getManager().addEventToFireByRefresh(
             new Runnable() {
               public void run() {
-                if (timeStamp == myTimeStamp || !isValid()) return;
+                if (!forceRefresh && (timeStamp == myTimeStamp || !isValid())) return;
 
                 ourFileSystem.fireBeforeContentsChange(null, VirtualFileImpl.this);
                 long oldModificationStamp = getModificationStamp();

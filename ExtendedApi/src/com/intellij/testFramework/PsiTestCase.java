@@ -21,6 +21,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,7 +56,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
     return myPsiManager.getElementFactory().createFileFromText(fileName, text);
   }
 
-  protected PsiFile createFile(String fileName, String text) throws Exception {
+  protected PsiFile createFile(@NonNls String fileName, String text) throws Exception {
     return createFile(myModule, fileName, text);
   }
   protected PsiFile createFile(Module module, String fileName, String text) throws Exception {

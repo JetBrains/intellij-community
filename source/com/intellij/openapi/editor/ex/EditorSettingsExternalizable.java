@@ -308,7 +308,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     return myOptions.DEFAULT_PROPERTIES_FILES_CHARSET_NAME;
   }
 
-  public void setDefaultPropertiesCharsetName(final String defaultPropertiesCharsetName) {
+  public void setDefaultPropertiesCharsetName(@NonNls final String defaultPropertiesCharsetName) {
     myOptions.DEFAULT_PROPERTIES_FILES_CHARSET_NAME = defaultPropertiesCharsetName;
   }
 

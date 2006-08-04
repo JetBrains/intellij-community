@@ -10,11 +10,12 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 public interface Property extends PsiNamedElement {
   @Nullable String getKey();
   @Nullable String getValue();
   @Nullable String getKeyValueSeparator();
 
-  void setValue(@NotNull String value) throws IncorrectOperationException;
+  void setValue(@NonNls @NotNull String value) throws IncorrectOperationException;
 }

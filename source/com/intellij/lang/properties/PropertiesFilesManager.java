@@ -5,10 +5,13 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.LightVirtualFile;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -110,6 +113,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
     VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
   }
 
+  @NotNull
   public String getComponentName() {
     return "Properties files manager";
   }

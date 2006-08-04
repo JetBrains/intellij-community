@@ -213,7 +213,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
     return myCharsetName;
   }
 
-  public void setCharsetName(String charsetName) {
+  public void setCharsetName(@NonNls String charsetName) {
     myCharsetName = charsetName;
   }
 
