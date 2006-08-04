@@ -1,6 +1,5 @@
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -13,6 +12,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * @author cdr
  */
-public class PropertyReference extends GenericReference implements PsiPolyVariantReference, EmptyResolveMessageProvider, QuickFixProvider {
+public class PropertyReference extends GenericReference implements PsiPolyVariantReference, QuickFixProvider {
   private final String myKey;
   private final PsiElement myElement;
   @Nullable private final String myBundleName;
@@ -64,17 +64,15 @@ public class PropertyReference extends GenericReference implements PsiPolyVarian
     final String key = getKeyText();
 
     Collection<Property> properties;
-    if (myBundleName != null) {
-      final PropertiesFile propertiesFile = I18nUtil.propertiesFileByBundleName(myElement, myBundleName);
-      if (propertiesFile != null) {
-        properties = propertiesFile.findPropertiesByKey(key);
-      }
-      else {
-        properties = new ArrayList<Property>();
-      }
+    if (myBundleName == null) {
+      properties = PropertiesUtil.findPropertiesByKey(getElement().getProject(), key);
     }
     else {
-      properties = PropertiesUtil.findPropertiesByKey(getElement().getProject(), key);
+      final List<PropertiesFile> propertiesFiles = I18nUtil.propertiesFilesByBundleName(myElement, myBundleName);
+      properties = new ArrayList<Property>();
+      for (PropertiesFile propertiesFile : propertiesFiles) {
+        properties.addAll(propertiesFile.findPropertiesByKey(key));
+      }
     }
     final ResolveResult[] result = new ResolveResult[properties.size()];
     int i = 0;
@@ -98,12 +96,11 @@ public class PropertyReference extends GenericReference implements PsiPolyVarian
     if (myElement instanceof PsiLiteralExpression) {
       PsiExpression newExpression = factory.createExpressionFromText("\"" + newElementName + "\"", myElement);
       return myElement.replace(newExpression);
-    } else {
-      return ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement).handleContentChange(
-        myElement,
-        getRangeInElement(),
-        newElementName
-      );
+    }
+    else {
+      ElementManipulator<PsiElement> manipulator = ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement);
+      assert manipulator != null;
+      return manipulator.handleContentChange(myElement, getRangeInElement(), newElementName);
     }
   }
 
