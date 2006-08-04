@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -68,7 +69,7 @@ class FrameDiffTool implements DiffTool {
   private static boolean checkNoDifferenceAndNotify(DiffPanel diffPanel, DiffRequest data, final Window window) {
     if (!diffPanel.hasDifferences()) {
       DiffManagerImpl manager = (DiffManagerImpl) DiffManager.getInstance();
-      if (!manager.getComparisonPolicy().equals(ComparisonPolicy.DEFAULT)) {
+      if (!Comparing.equal(manager.getComparisonPolicy(), ComparisonPolicy.DEFAULT)) {
         ComparisonPolicy oldPolicy = manager.getComparisonPolicy();
         manager.setComparisonPolicy(ComparisonPolicy.DEFAULT);
         DiffPanel maybeDiffPanel = DiffManagerImpl.createDiffPanel(data, window);
