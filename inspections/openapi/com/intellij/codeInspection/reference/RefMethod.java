@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,7 +138,7 @@ public interface RefMethod extends RefElement{
    * @return the list of exceptions declared but not thrown, or null if there are no
    * such exceptions.
    */
-  @Nullable PsiClassType[] getUnThrownExceptions();
+  @Nullable PsiClass[] getUnThrownExceptions();
 
   /**
    * Returns the list of reference graph nodes for the method parameters.

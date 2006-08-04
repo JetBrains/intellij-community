@@ -17,12 +17,11 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class PatchedWeakReference extends WeakReference{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.PatchedWeakReference");
@@ -31,23 +30,20 @@ public class PatchedWeakReference extends WeakReference{
   private static ReferenceQueue ourQueue = new ReferenceQueue();
   private static Timer ourTimer = null;
 
+
+  static {
+    ourTimer = new Timer();
+    ourTimer.schedule(new TimerTask() {
+      public void run() {
+        processQueue();
+      }
+    }, 500, 500);
+  }
+
   public PatchedWeakReference(Object referent) {
     super(referent, ourQueue);
     synchronized(ourRefsList){
       ourRefsList.add(this);
-    }
-
-    if (ourTimer == null){
-      ourTimer = new Timer(
-        500,
-        new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            processQueue();
-          }
-        }
-      );
-      ourTimer.setRepeats(true);
-      ourTimer.start();
     }
   }
 

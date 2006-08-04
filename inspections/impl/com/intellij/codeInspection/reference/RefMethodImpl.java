@@ -9,12 +9,13 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.javaee.ejb.role.*;
 import com.intellij.javaee.ejb.EjbHelper;
+import com.intellij.javaee.ejb.role.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -46,7 +47,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
 
   private ArrayList<RefMethod> mySuperMethods;
   private ArrayList<RefMethod> myDerivedMethods;
-  private ArrayList<PsiClassType> myUnThrownExceptions;
+  private ArrayList<PsiClass> myUnThrownExceptions;
 
   private RefParameter[] myParameters;
   private String myReturnValueTemplate;
@@ -372,11 +373,11 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
       PsiClassType[] throwsList = method.getThrowsList().getReferencedTypes();
       if (throwsList.length > 0) {
         EjbClassRole role = EjbRolesUtil.getEjbRolesUtil().getEjbRole(method.getContainingClass());
-        myUnThrownExceptions = new ArrayList<PsiClassType>(throwsList.length);
+        myUnThrownExceptions = new ArrayList<PsiClass>(throwsList.length);
         for (final PsiClassType type : throwsList) {
           String qualifiedName = type.getCanonicalText();
           if (role != null && isEjbException(qualifiedName)) continue;
-          myUnThrownExceptions.add(type);
+          myUnThrownExceptions.add(type.resolve());
         }
       }
     }
@@ -669,10 +670,10 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
         return;
       }
 
-      PsiClassType[] arrayed = myUnThrownExceptions.toArray(new PsiClassType[myUnThrownExceptions.size()]);
+      PsiClass[] arrayed = myUnThrownExceptions.toArray(new PsiClass[myUnThrownExceptions.size()]);
       for (int i = arrayed.length - 1; i >= 0; i--) {
-        PsiClassType classType = arrayed[i];
-        if (classType.isAssignableFrom(exceptionType)) {
+        PsiClass classType = arrayed[i];
+        if (InheritanceUtil.isInheritorOrSelf(classType, exceptionType.resolve(), true)) {
           myUnThrownExceptions.remove(i);
         }
       }
@@ -682,9 +683,9 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
   }
 
   @Nullable
-  public PsiClassType[] getUnThrownExceptions() {
+  public PsiClass[] getUnThrownExceptions() {
     if (myUnThrownExceptions == null) return null;
-    return myUnThrownExceptions.toArray(new PsiClassType[myUnThrownExceptions.size()]);
+    return myUnThrownExceptions.toArray(new PsiClass[myUnThrownExceptions.size()]);
   }
 
 

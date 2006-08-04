@@ -14,6 +14,7 @@ import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -29,7 +30,7 @@ import java.util.List;
 public class RedundantThrows extends DescriptorProviderInspection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.unneededThrows.RedundantThrows");
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.throws.display.name");
-  private QuickFix myQuickFix;
+  private MyQuickFix myQuickFix;
   @NonNls public static final String SHORT_NAME = "RedundantThrows";
 
   public void runInspection(AnalysisScope scope, final InspectionManager manager) {
@@ -55,7 +56,7 @@ public class RedundantThrows extends DescriptorProviderInspection {
   private ProblemDescriptorImpl[] checkMethod(RefMethod refMethod, InspectionManager manager) {
     if (refMethod.hasSuperMethods()) return null;
 
-    PsiClassType[] unThrown = refMethod.getUnThrownExceptions();
+    PsiClass[] unThrown = refMethod.getUnThrownExceptions();
     if (unThrown == null) return null;
 
     PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
@@ -68,8 +69,9 @@ public class RedundantThrows extends DescriptorProviderInspection {
       PsiJavaCodeReferenceElement throwsRef = throwsRefs[i];
       if (ExceptionUtil.isUncheckedException(throwsType)) continue;
 
-      for (PsiClassType s : unThrown) {
-        if (s.equals(throwsType)) {
+      for (PsiClass s : unThrown) {
+        final PsiClass throwsResolvedType = throwsType.resolve();
+        if (Comparing.equal(s, throwsResolvedType)) {
           if (problems == null) problems = new ArrayList<ProblemDescriptor>(1);
 
           if (refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) {
@@ -135,22 +137,20 @@ public class RedundantThrows extends DescriptorProviderInspection {
     return SHORT_NAME;
   }
 
-  public RedundantThrows() {
-  }
-
   private LocalQuickFix getFix() {
     if (myQuickFix == null) {
-      myQuickFix = new QuickFix();
+      myQuickFix = new MyQuickFix();
     }
     return myQuickFix;
   }
 
-  private class QuickFix implements LocalQuickFix {
+  private class MyQuickFix implements LocalQuickFix {
+    @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.redundant.throws.remove.quickfix");
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
       RefElement refElement = (RefElement)getElement(descriptor);
       if (refElement.isValid() && refElement instanceof RefMethod) {
         RefMethod refMethod = (RefMethod)refElement;
@@ -158,6 +158,7 @@ public class RedundantThrows extends DescriptorProviderInspection {
       }
     }
 
+    @NotNull
     public String getFamilyName() {
       return getName();
     }
