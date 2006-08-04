@@ -7,7 +7,7 @@ import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
-import com.intellij.execution.filters.TextConsoleBuidlerFactory;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.junit.coverage.ApplicationCoverageConfigurable;
 import com.intellij.execution.process.OSProcessHandler;
@@ -77,7 +77,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
                                   RunnerSettings runnerSettings,
                                   ConfigurationPerRunnerSettings configurationSettings) {
     final JavaCommandLineState state = new MyJavaCommandLineState(runnerSettings, configurationSettings);
-    state.setConsoleBuilder(TextConsoleBuidlerFactory.getInstance().createBuilder(getProject()));
+    state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
     state.setModulesToCompile(getModules());
     return state;
   }

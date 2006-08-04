@@ -16,6 +16,10 @@
       <interface-class>com.intellij.execution.filters.TextConsoleBuidlerFactory</interface-class>
       <implementation-class>com.intellij.execution.filters.TextConsoleBuidlerFactoryImpl</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.execution.filters.TextConsoleBuilderFactory</interface-class>
+      <implementation-class>com.intellij.execution.filters.TextConsoleBuilderFactoryImpl</implementation-class>
+    </component>
 
     <!--execution-->
     <component>
