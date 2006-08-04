@@ -155,7 +155,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       public boolean isAspectChangeInteresting(PomModelAspect aspect) {
         return xmlAspect.equals(aspect);
       }
-    });
+    }, project);
     myReferenceProvidersRegistry = registry;
 
     myElementFactory = psiManager.getElementFactory();

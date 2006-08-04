@@ -32,6 +32,7 @@
 package com.intellij.pom.core.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -39,6 +40,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.PomProject;
@@ -123,6 +125,15 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       myListeners.add(listener);
       myListenersArray = null;
     }
+  }
+
+  public void addModelListener(final PomModelListener listener, Disposable parentDisposable) {
+    addModelListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        removeModelListener(listener);
+      }
+    });
   }
 
   public void removeModelListener(PomModelListener listener) {

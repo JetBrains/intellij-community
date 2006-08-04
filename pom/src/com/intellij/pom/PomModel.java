@@ -17,6 +17,7 @@ package com.intellij.pom;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.Disposable;
 import com.intellij.pom.event.PomModelListener;
 import com.intellij.util.IncorrectOperationException;
 
@@ -32,6 +33,7 @@ public interface PomModel extends UserDataHolder, ProjectComponent {
   PomProject getRoot();
 
   void addModelListener(PomModelListener listener);
+  void addModelListener(PomModelListener listener, Disposable parentDisposable);
   void removeModelListener(PomModelListener listener);
 
   void runTransaction(PomTransaction transaction) throws IncorrectOperationException;
