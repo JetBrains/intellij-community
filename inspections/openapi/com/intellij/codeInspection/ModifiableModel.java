@@ -60,4 +60,8 @@ public interface ModifiableModel extends Profile {
   void setEditable(String toolDisplayName);
 
   void save();
+
+  boolean isProfileLocked();
+
+  void lockProfile(boolean isLocked);
 }

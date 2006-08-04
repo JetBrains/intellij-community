@@ -59,6 +59,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   //diff map with base profile
   private LinkedHashMap<HighlightDisplayKey, ToolState> myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>();
+  private boolean myLockedProfile = false;
 
   protected InspectionProfileImpl mySource;
   private InspectionProfileImpl myBaseProfile = null;
@@ -74,6 +75,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private boolean myOverrideSeverities = true;
 
   private InspectionToolRegistrar myRegistrar;
+  @NonNls private static final String IS_LOCKED = "is_locked";
 
 //private String myBaseProfileName;
 
@@ -97,7 +99,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myVisibleTreeState = new VisibleTreeState(inspectionProfile.myVisibleTreeState);
 
     myBaseProfile = inspectionProfile.myBaseProfile;
-    myLocal = inspectionProfile.isLocal();
+    myLocal = inspectionProfile.myLocal;
+    myLockedProfile = inspectionProfile.myLockedProfile;
     myFile = inspectionProfile.myFile;
     mySource = inspectionProfile;
     copyFrom(inspectionProfile);
@@ -130,7 +133,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myBaseProfile = (InspectionProfileImpl)profile;
   }
 
+  @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isChanged() {
+    if (mySource != null && mySource.myLockedProfile != myLockedProfile) return true;
     return myModified;
   }
 
@@ -170,7 +175,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     final boolean toolsSettings = toolSettingsAreEqual(key, this, myBaseProfile);
     if (myDisplayLevelMap.keySet().contains(key)) {
       if (toolsSettings && myDisplayLevelMap.get(key).equals(myBaseProfile.getToolState(key))) {
-        myDisplayLevelMap.remove(key);
+        if (!myLockedProfile) {
+          myDisplayLevelMap.remove(key);
+        }
         return false;
       }
       return true;
@@ -214,6 +221,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     if (state == null) {
       if (myBaseProfile != null) {
         state = myBaseProfile.getToolState(key);
+        if (myLockedProfile && state != null){
+          state.myEnabled = false;
+        }
       }
     }
     //default level for converted profiles
@@ -240,6 +250,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       catch (JDOMException e) {
         LOG.error(e);
       }
+    }
+
+    final String locked = element.getAttributeValue(IS_LOCKED);
+    if (locked != null) {
+      myLockedProfile = Boolean.parseBoolean(locked);
     }
 
     if (myOverrideSeverities) {
@@ -285,6 +300,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     element.setAttribute(VERSION_TAG, VALID_VERSION);
+    element.setAttribute(IS_LOCKED, String.valueOf(myLockedProfile));
 
     Element highlightSettings = new Element(USED_LEVELS);
     SeverityRegistrar.getInstance().writeExternal(highlightSettings);
@@ -389,6 +405,22 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public boolean isDefault() {
     return myDisplayLevelMap.isEmpty();
+  }
+
+  public boolean isProfileLocked() {
+    return myLockedProfile;
+  }
+
+  public void lockProfile(boolean isLocked){
+    for (InspectionTool tool : myTools.values()) {
+      final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+      if (isLocked){
+        myDisplayLevelMap.put(key, getToolState(key));
+      } else if (!isProperSetting(key)){
+        myDisplayLevelMap.remove(key);
+      }
+    }
+    myLockedProfile = isLocked;
   }
 
   public InspectionProfileEntry[] getInspectionTools() {
@@ -499,7 +531,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     if (myBaseProfile != null &&
         state.equals(myBaseProfile.getToolState(key))) {
       if (toolSettingsAreEqual(key, this, myBaseProfile)){ //settings may differ
-        myDisplayLevelMap.remove(key);
+        if (!myLockedProfile) {
+          myDisplayLevelMap.remove(key);
+        }
       } else {
         myDisplayLevelMap.put(key, state);
       }
@@ -538,6 +572,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private void commit(InspectionProfileImpl inspectionProfile) {
     myName = inspectionProfile.myName;
     myLocal = inspectionProfile.myLocal;
+    myLockedProfile = inspectionProfile.myLockedProfile;
     myDisplayLevelMap = inspectionProfile.myDisplayLevelMap;
     myVisibleTreeState = inspectionProfile.myVisibleTreeState;
     myBaseProfile = inspectionProfile.myBaseProfile;
