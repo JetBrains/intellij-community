@@ -130,7 +130,15 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       if (event.getAction() == SVNEventAction.UPDATE_ADD ||
           event.getAction() == SVNEventAction.ADD) {
         text2 = SvnBundle.message("progress.text2.added", displayPath);
-        myUpdatedFiles.getGroupById(FileGroup.CREATED_ID).add(path);
+        if (myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).getFiles().contains(path)) {
+          myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).getFiles().remove(path);
+          if (myUpdatedFiles.getGroupById(SvnStatusEnvironment.REPLACED_ID) == null) {
+            myUpdatedFiles.registerGroup(SvnStatusEnvironment.createFileGroup(SvnBundle.message("status.group.name.replaced"), SvnStatusEnvironment.REPLACED_ID));
+          }
+          myUpdatedFiles.getGroupById(SvnStatusEnvironment.REPLACED_ID).add(path);
+        } else {
+          myUpdatedFiles.getGroupById(FileGroup.CREATED_ID).add(path);
+        }
       }
       else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
         text2 = SvnBundle.message("progress.text2.deleted", displayPath);
