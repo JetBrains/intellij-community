@@ -15,25 +15,25 @@
  */
 package org.jetbrains.idea.svn.update;
 
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNDiffClient;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNDiffClient;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.io.File;
 
 public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironment {
   public SvnIntegrateEnvironment(final SvnVcs vcs) {
@@ -110,8 +110,10 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
         return String.valueOf(number);
       }
       else {
+
         try {
-          return String.valueOf(SVNRepositoryFactory.create(svnURL2).getLatestRevision());
+          SVNRepository repos = myVcs.createRepository(svnURL2.toString());
+          return String.valueOf(repos.getLatestRevision());
         }
         catch (SVNException e) {
           return null;
