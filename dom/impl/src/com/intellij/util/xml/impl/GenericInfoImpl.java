@@ -51,7 +51,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   private boolean myInitialized;
   private static final Set ADDER_PARAMETER_TYPES = new THashSet<Class>(Arrays.asList(Class.class, int.class));
 
-  public GenericInfoImpl(final Class<? extends DomElement> aClass, final DomManagerImpl domManager) {
+  public GenericInfoImpl(final Class aClass, final DomManagerImpl domManager) {
     myClass = aClass;
     myDomManager = domManager;
   }

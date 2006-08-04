@@ -22,13 +22,13 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.InstanceMap;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author peter
@@ -93,8 +93,21 @@ public abstract class DomFileDescription<T> {
     return false;
   }
 
-  public Object[] getDependencyItems(XmlFile file) {
-    return new Object[]{file};
+  public Set<? extends Object> getDependencyItems(XmlFile file) {
+    return Collections.emptySet();
+  }
+
+  public Set<Class<? extends DomElement>> getDomModelDependencyItems() {
+    return Collections.emptySet();
+  }
+
+  @NotNull
+  public Set<XmlFile> getDomModelDependentFiles(DomFileElement changedRoot) {
+    return Collections.emptySet();
+  }
+
+  protected static Set<Class<? extends DomElement>> convertToSet(Class<? extends DomElement> classes) {
+    return new THashSet<Class<? extends DomElement>>(Arrays.asList(classes));
   }
 
   @NotNull
