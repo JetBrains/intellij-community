@@ -5,7 +5,6 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
@@ -23,8 +22,10 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,41 +33,95 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Iterator;
 
 /**
  * @author Alexey
  */
 public class EditorDelegate implements EditorEx {
-  private static final Logger LOG = Logger.getInstance("com.intellij.openapi.editor.impl.injected.EditorDelegatete");
   private final DocumentRange myDocument;
   private final EditorImpl myDelegate;
   private final PsiFile myInjectedFile;
-  private List<EditorMouseMotionListener> myMouseMotionListenerWrappers = new CopyOnWriteArrayList<EditorMouseMotionListener>();
-  private List<EditorMouseListener> myMouseListenerWrappers = new CopyOnWriteArrayList<EditorMouseListener>();
+  private final CaretModelDelegate myCaretModelDelegate;
+  private final SelectionModelDelegate mySelectionModelDelegate;
+  private final MarkupModelDelegate myMarkupModelDelegate;
+  private static final WeakList<EditorDelegate> allEditors = new WeakList<EditorDelegate>();
+  private boolean myDisposed;
 
-  public EditorDelegate(DocumentRange document, final EditorImpl delegate, PsiFile injectedFile) {
+  public static Editor create(final DocumentRange documentRange, final EditorImpl editor, final PsiFile injectedFile) {
+    for (EditorDelegate editorDelegate : allEditors) {
+      if (editorDelegate.getDocument() == documentRange && editorDelegate.getDelegate() == editor && editorDelegate.getInjectedFile() == injectedFile) {
+        return editorDelegate;
+      }
+    }
+    return new EditorDelegate(documentRange, editor, injectedFile);
+  }
+
+  private EditorDelegate(DocumentRange document, final EditorImpl delegate, PsiFile injectedFile) {
     myDocument = document;
     myDelegate = delegate;
     myInjectedFile = injectedFile;
+    myCaretModelDelegate = new CaretModelDelegate(myDelegate.getCaretModel(), this);
+    mySelectionModelDelegate = new SelectionModelDelegate(myDelegate, myDocument,this);
+    myMarkupModelDelegate = new MarkupModelDelegate((EditorMarkupModelImpl)myDelegate.getMarkupModel(), myDocument);
+    disposeInvalidEditors();
+    allEditors.add(this);
+  }
+
+  private void disposeInvalidEditors() {
+    Iterator<EditorDelegate> iterator = allEditors.iterator();
+    while (iterator.hasNext()) {
+      EditorDelegate editorDelegate = iterator.next();
+      if (!editorDelegate.isValid() || textRangeIntersectsWith(editorDelegate)) {
+        editorDelegate.disposeModel();
+        iterator.remove();
+      }
+    }
+  }
+
+  private boolean textRangeIntersectsWith(final EditorDelegate editorDelegate) {
+    TextRange myTextRange = new TextRange(myDocument.getTextRange().getStartOffset(), myDocument.getTextRange().getEndOffset());
+    TextRange hisTextRange = new TextRange(editorDelegate.getDocument().getTextRange().getStartOffset(), editorDelegate.getDocument().getTextRange().getEndOffset());
+    return myTextRange.intersects(hisTextRange);
+  }
+
+  private boolean isValid() {
+    return !isDisposed() && myInjectedFile.isValid() && myDocument.getTextRange().isValid();
   }
 
   public PsiFile getInjectedFile() {
     return myInjectedFile;
   }
   public LogicalPosition parentToInjected(LogicalPosition pos) {
+    assert isValid();
     int offsetInInjected = myDocument.hostToInjected(myDelegate.logicalPositionToOffset(pos));
     return offsetToLogicalPosition(offsetInInjected);
   }
 
   public VisualPosition parentToInjected(VisualPosition pos) {
+    assert isValid();
     LogicalPosition logical = parentToInjected(myDelegate.visualToLogicalPosition(pos));
     return logicalToVisualPosition(logical);
   }
   public LogicalPosition injectedToParent(LogicalPosition pos) {
+    assert isValid();
     int offsetInParent = myDocument.injectedToHost(logicalPositionToOffset(pos));
     return myDelegate.offsetToLogicalPosition(offsetInParent);
+  }
+
+  public void disposeModel() {
+    assert !myDisposed;
+    myCaretModelDelegate.disposeModel();
+
+    for (EditorMouseListener wrapper : myEditorMouseListeners.wrappers()) {
+      myDelegate.removeEditorMouseListener(wrapper);
+    }
+    myEditorMouseListeners.clear();
+    for (EditorMouseMotionListener wrapper : myEditorMouseMotionListeners.wrappers()) {
+      myDelegate.removeEditorMouseMotionListener(wrapper);
+    }
+    myEditorMouseMotionListeners.clear();
+    myDisposed = true;
   }
 
   public boolean isViewer() {
@@ -87,12 +142,12 @@ public class EditorDelegate implements EditorEx {
 
   @NotNull
   public SelectionModel getSelectionModel() {
-    return new SelectionModelDelegate(myDelegate, myDocument,this);
+    return mySelectionModelDelegate;
   }
 
   @NotNull
   public MarkupModel getMarkupModel() {
-    return new MarkupModelDelegate((EditorMarkupModelImpl)myDelegate.getMarkupModel(), myDocument);
+    return myMarkupModelDelegate;
   }
 
   @NotNull
@@ -102,7 +157,7 @@ public class EditorDelegate implements EditorEx {
 
   @NotNull
   public CaretModel getCaretModel() {
-    return new CaretDelegate(myDelegate.getCaretModel(), this);
+    return myCaretModelDelegate;
   }
 
   @NotNull
@@ -176,6 +231,7 @@ public class EditorDelegate implements EditorEx {
 
   @NotNull
   public LogicalPosition offsetToLogicalPosition(final int offset) {
+    assert isValid();
     int lineNumber = myDocument.getLineNumber(offset);
     int lineStartOffset = myDocument.getLineStartOffset(lineNumber);
     int column = calcColumnNumber(offset-lineStartOffset, lineNumber);
@@ -184,21 +240,25 @@ public class EditorDelegate implements EditorEx {
 
   @NotNull
   public LogicalPosition xyToLogicalPosition(@NotNull final Point p) {
+    assert isValid();
     LogicalPosition hostPos = myDelegate.xyToLogicalPosition(p);
     return parentToInjected(hostPos);
   }
 
   @NotNull
   public Point logicalPositionToXY(@NotNull final LogicalPosition pos) {
+    assert isValid();
     return myDelegate.logicalPositionToXY(injectedToParent(pos));
   }
 
   @NotNull
   public Point visualPositionToXY(@NotNull final VisualPosition pos) {
+    assert isValid();
     return logicalPositionToXY(visualToLogicalPosition(pos));
   }
 
   public void repaint(final int startOffset, final int endOffset) {
+    assert isValid();
     myDelegate.repaint(myDocument.injectedToHost(startOffset), myDocument.injectedToHost(endOffset));
   }
 
@@ -212,7 +272,9 @@ public class EditorDelegate implements EditorEx {
     return myDelegate.getComponent();
   }
 
+  private final ListenerWrapperMap<EditorMouseListener> myEditorMouseListeners = new ListenerWrapperMap<EditorMouseListener>();
   public void addEditorMouseListener(@NotNull final EditorMouseListener listener) {
+    assert isValid();
     EditorMouseListener wrapper = new EditorMouseListener() {
       public void mousePressed(EditorMouseEvent e) {
         listener.mousePressed(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
@@ -233,32 +295,22 @@ public class EditorDelegate implements EditorEx {
       public void mouseExited(EditorMouseEvent e) {
         listener.mouseExited(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
       }
-
-      public int hashCode() {
-        return listener.hashCode();
-      }
-
-      public boolean equals(Object obj) {
-        return obj == listener || obj == this;
-      }
     };
-    myMouseListenerWrappers.add(wrapper);
+    myEditorMouseListeners.registerWrapper(listener, wrapper);
+
     myDelegate.addEditorMouseListener(wrapper);
   }
 
   public void removeEditorMouseListener(@NotNull final EditorMouseListener listener) {
-    for (int i = 0; i < myMouseListenerWrappers.size(); i++) {
-      EditorMouseListener wrapper = myMouseListenerWrappers.get(i);
-      if (wrapper.equals(listener)) {
-        myMouseListenerWrappers.remove(i);
-        myDelegate.removeEditorMouseListener(wrapper);
-        return;
-      }
-    }
-    LOG.error("Listener not found");
+    assert isValid();
+    EditorMouseListener wrapper = myEditorMouseListeners.removeWrapper(listener);
+    assert wrapper != null;
+    myDelegate.removeEditorMouseListener(wrapper);
   }
 
+  private final ListenerWrapperMap<EditorMouseMotionListener> myEditorMouseMotionListeners = new ListenerWrapperMap<EditorMouseMotionListener>();
   public void addEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
+    assert isValid();
     EditorMouseMotionListener wrapper = new EditorMouseMotionListener() {
       public void mouseMoved(EditorMouseEvent e) {
         listener.mouseMoved(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
@@ -267,33 +319,20 @@ public class EditorDelegate implements EditorEx {
       public void mouseDragged(EditorMouseEvent e) {
         listener.mouseDragged(new EditorMouseEvent(EditorDelegate.this, e.getMouseEvent(), e.getArea()));
       }
-
-      public int hashCode() {
-        return listener.hashCode();
-      }
-
-      public boolean equals(Object obj) {
-        return obj == listener || obj == this;
-      }
     };
-    myMouseMotionListenerWrappers.add(wrapper);
+    myEditorMouseMotionListeners.registerWrapper(listener, wrapper);
     myDelegate.addEditorMouseMotionListener(wrapper);
   }
 
   public void removeEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
-    for (int i = 0; i < myMouseMotionListenerWrappers.size(); i++) {
-      EditorMouseMotionListener wrapper = myMouseMotionListenerWrappers.get(i);
-      if (wrapper.equals(listener)) {
-        myMouseMotionListenerWrappers.remove(i);
-        myDelegate.removeEditorMouseMotionListener(wrapper);
-        return;
-      }
-    }
-    LOG.error("Listener not found");
+    assert isValid();
+    EditorMouseMotionListener wrapper = myEditorMouseMotionListeners.removeWrapper(listener);
+    assert wrapper != null;
+    myDelegate.removeEditorMouseMotionListener(wrapper);
   }
 
   public boolean isDisposed() {
-    return myDelegate.isDisposed();
+    return !myDisposed && myDelegate.isDisposed();
   }
 
   public void setBackgroundColor(final Color color) {
@@ -352,11 +391,13 @@ public class EditorDelegate implements EditorEx {
   // assuming there is no folding in injected documents
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull final LogicalPosition pos) {
+    assert isValid();
     return new VisualPosition(pos.line, pos.column);
   }
 
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition pos) {
+    assert isValid();
     return new LogicalPosition(pos.line, pos.column);
   }
 

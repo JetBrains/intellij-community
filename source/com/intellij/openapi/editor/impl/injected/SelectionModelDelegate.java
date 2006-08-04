@@ -114,4 +114,5 @@ public class SelectionModelDelegate implements SelectionModel {
   public RangeMarker getBlockSelectionGuard() {
     return myHostModel.getBlockSelectionGuard();
   }
+
 }

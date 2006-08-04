@@ -2,17 +2,18 @@ package com.intellij.openapi.editor.impl.injected;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 
 /**
  * @author Alexey
  */
-public class CaretDelegate implements CaretModel {
+public class CaretModelDelegate implements CaretModel {
   private final CaretModel myDelegate;
   private final EditorEx myHostEditor;
   private final EditorDelegate myEditorDelegate;
 
-  public CaretDelegate(CaretModel delegate, EditorDelegate editorDelegate) {
+  public CaretModelDelegate(CaretModel delegate, EditorDelegate editorDelegate) {
     myDelegate = delegate;
     myHostEditor = (EditorEx)editorDelegate.getDelegate();
     myEditorDelegate = editorDelegate;
@@ -54,11 +55,29 @@ public class CaretDelegate implements CaretModel {
     return myEditorDelegate.getDocument().hostToInjected(myDelegate.getOffset());
   }
 
+  private final ListenerWrapperMap<CaretListener> myCaretListeners = new ListenerWrapperMap<CaretListener>();
   public void addCaretListener(final CaretListener listener) {
-    myDelegate.addCaretListener(listener);
+    CaretListener wrapper = new CaretListener() {
+      public void caretPositionChanged(CaretEvent e) {
+        CaretEvent event = new CaretEvent(myEditorDelegate, myEditorDelegate.parentToInjected(e.getOldPosition()),
+                                          myEditorDelegate.parentToInjected(e.getNewPosition()));
+        listener.caretPositionChanged(event);
+      }
+    };
+    myCaretListeners.registerWrapper(listener, wrapper);
+    myDelegate.addCaretListener(wrapper);
   }
 
   public void removeCaretListener(final CaretListener listener) {
-    myDelegate.removeCaretListener(listener);
+    CaretListener wrapper = myCaretListeners.removeWrapper(listener);
+    assert wrapper != null;
+    myDelegate.removeCaretListener(wrapper);
+  }
+
+  public void disposeModel() {
+    for (CaretListener wrapper : myCaretListeners.wrappers()) {
+      myDelegate.removeCaretListener(wrapper);
+    }
+    myCaretListeners.clear();
   }
 }

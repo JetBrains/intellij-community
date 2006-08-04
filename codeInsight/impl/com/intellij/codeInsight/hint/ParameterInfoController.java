@@ -28,6 +28,7 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ParameterInfoController {
   private Project myProject;
@@ -93,7 +94,7 @@ public class ParameterInfoController {
 
     final Object[] objects = myComponent.getObjects();
     int selectedParameterIndex = myComponent.getCurrentParameterIndex();
-    java.util.List<Object> params = new ArrayList<Object>(objects.length);
+    List<Object> params = new ArrayList<Object>(objects.length);
 
     for(Object o:objects) {
       final Object[] availableParams = myHandler.getParametersForDocumentation(o, context);
@@ -105,7 +106,7 @@ public class ParameterInfoController {
       }
     }
 
-    return params.size() > 0 ? params.toArray(new Object[params.size()]): ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return params.isEmpty() ? ArrayUtil.EMPTY_OBJECT_ARRAY : params.toArray(new Object[params.size()]);
   }
 
   private static ArrayList<ParameterInfoController> getAllControllers(Editor editor) {
@@ -157,8 +158,8 @@ public class ParameterInfoController {
           return;
         }
 
-        int oldOffset = myEditor.logicalPositionToOffset(e.getOldPosition());
-        int newOffset = myEditor.logicalPositionToOffset(e.getNewPosition());
+        int oldOffset = e.getEditor().logicalPositionToOffset(e.getOldPosition());
+        int newOffset = e.getEditor().logicalPositionToOffset(e.getNewPosition());
         if (newOffset <= myLbraceMarker.getStartOffset()){
           myAlarm.cancelAllRequests();
           addAlarmRequest();
@@ -166,7 +167,7 @@ public class ParameterInfoController {
         }
         int offset1 = Math.min(oldOffset, newOffset);
         int offset2 = Math.max(oldOffset, newOffset);
-        CharSequence chars = myEditor.getDocument().getCharsSequence();
+        CharSequence chars = e.getEditor().getDocument().getCharsSequence();
         int offset = CharArrayUtil.shiftForwardUntil(chars, offset1, myParameterCloseChars);
         if (offset < offset2){
           myAlarm.cancelAllRequests();

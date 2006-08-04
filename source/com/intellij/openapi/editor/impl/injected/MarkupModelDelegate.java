@@ -81,4 +81,5 @@ class MarkupModelDelegate extends UserDataHolderBase implements MarkupModelEx {
   public void removeMarkupModelListener(MarkupModelListener listener) {
     myHostModel.removeMarkupModelListener(listener);
   }
+
 }

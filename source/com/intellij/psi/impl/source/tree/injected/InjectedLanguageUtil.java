@@ -243,7 +243,7 @@ public class InjectedLanguageUtil {
         PsiFile injectedFile = pair.getFirst().getContainingFile();
         Document document = PsiDocumentManager.getInstance(editor.getProject()).getDocument(injectedFile);
 
-        return new EditorDelegate((DocumentRange)document, (EditorImpl)editor, injectedFile);
+        return EditorDelegate.create((DocumentRange)document, (EditorImpl)editor, injectedFile);
       }
     }
     return editor;
