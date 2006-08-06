@@ -127,7 +127,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     if (myClass == null) {
       if (id >= 0) {
         long[] classIds = getRepositoryManager().getFileView().getClasses(id);
-        LOG.assertTrue(classIds.length == 1);
+        LOG.assertTrue(classIds.length == 1, "Wrong number of compiled classes in repository: " + classIds.length);
         myClass = (ClsClassImpl)getRepositoryElementsManager().findOrCreatePsiElementById(classIds[0]);
       }
       else {
