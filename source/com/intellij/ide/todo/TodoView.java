@@ -19,8 +19,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedPaneContentUI;
@@ -180,44 +178,10 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
 
 
   private final class MyPropertyChangeListener implements PropertyChangeListener{
-    /**
-     * If patterns have been changed the filtes can be touched also. But we have to update
-     * filters after caches are rebuilded. Therefore if <code>myRebuildInProgress</code>
-     * is <code>true</code> then it is deferred update of filters.
-     */
-    private boolean myRebuildInProgress;
-
     public void propertyChange(PropertyChangeEvent e){
-      if (TodoConfiguration.PROP_TODO_PATTERNS.equals(e.getPropertyName())) {
-        myRebuildInProgress = true;
-        // this invokeLater guaranties that this code will be invoked after
-        // PSI gets the same event.
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            // [vova] It's very important to pass null as project. Each TODO view shows own progress
-            // window. It causes frame switching.
-            ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-              public void run() {
-                ApplicationManager.getApplication().runReadAction(new Runnable() {
-                  public void run() {
-                    PsiSearchHelper searchHelper = PsiManager.getInstance(myProject).getSearchHelper();
-                    searchHelper.findFilesWithTodoItems();
-                  }
-                });
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  public void run() {
-                    updateFilters();
-                    myRebuildInProgress = false;
-                  }
-                }, ModalityState.NON_MMODAL);
-              }
-            }, IdeBundle.message("progress.looking.for.todos"), false, myProject);
-          }}, ModalityState.NON_MMODAL);
-      }
-      else if (TodoConfiguration.PROP_TODO_FILTERS.equals(e.getPropertyName())) {
-        if (!myRebuildInProgress) {
-          updateFilters();
-        }
+      if (TodoConfiguration.PROP_TODO_PATTERNS.equals(e.getPropertyName()) ||
+          TodoConfiguration.PROP_TODO_FILTERS.equals(e.getPropertyName())) {
+        updateFilters();
       }
     }
 
@@ -255,7 +219,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
                   myAllTodos.updateTree();
                   myCurrentFileTodos.updateTree();
                 }
-              }, ModalityState.NON_MMODAL);
+              }, ModalityState.NON_MODAL);
             }
           }, IdeBundle.message("progress.looking.for.todos"), false, myProject);
         }
