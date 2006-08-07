@@ -249,7 +249,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       }
 
       protected void doOKAction() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         final Object[] exceptions = myPanel.getListItems();
         for (Object exception : exceptions) {
           buf.append(",").append(exception);
@@ -347,7 +347,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
         return IntroduceConstantHandler.REFACTORING_NAME;
       }
 
-      public void applyFix(final Project project, ProblemDescriptor descriptor) {
+      public void applyFix(@NotNull final Project project, ProblemDescriptor descriptor) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             List<PsiExpression> exprList = new ArrayList<PsiExpression>();
@@ -747,11 +747,10 @@ public class I18nInspection extends BaseLocalInspectionTool {
     final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
     if (method == null) return false;
     final PsiType returnType = method.getReturnType();
-    if (TO_STRING.equals(method.getName()) && method.getParameterList().getParameters().length == 0 &&
-        returnType != null && "java.lang.String".equals(returnType.getCanonicalText())) {
-      return true;
-    }
-    return false;
+    return TO_STRING.equals(method.getName())
+           && method.getParameterList().getParameters().length == 0
+           && returnType != null
+           && "java.lang.String".equals(returnType.getCanonicalText());
   }
 
   private static boolean isArgOfJUnitAssertion(PsiExpression expression) {
