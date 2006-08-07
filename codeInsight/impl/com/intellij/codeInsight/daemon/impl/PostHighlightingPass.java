@@ -243,7 +243,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       info = processLocalVariable((PsiLocalVariable)parent, options, displayName);
     }
     else if (parent instanceof PsiField && unusedSymbolInspection.FIELD) {
-      info = processField((PsiField)parent, options, displayName);
+      final PsiField psiField = (PsiField)parent;
+      final boolean injected = isFieldInjected(psiField, unusedSymbolInspection.INJECTION_ANNOS);
+      info = processField(psiField, options, displayName, injected);
     }
     else if (parent instanceof PsiParameter && unusedSymbolInspection.PARAMETER) {
       info = processParameter((PsiParameter)parent, options, displayName);
@@ -324,10 +326,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL, element, message, attributes);
   }
 
-  private HighlightInfo processField(PsiField field, final List<IntentionAction> options, final String displayName) {
+  private HighlightInfo processField(PsiField field, final List<IntentionAction> options, final String displayName, final boolean injected) {
     final PsiIdentifier identifier = field.getNameIdentifier();
-
-    final boolean injected = isFieldInjected(field);
 
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
       if (!myRefCountHolder.isReferenced(field) && !isImplicitUsage(field)) {
@@ -370,9 +370,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return null;
   }
 
-  private static boolean isFieldInjected(final PsiField field) {
+  private static boolean isFieldInjected(final PsiField field, final List<String> externalInjectionAnnos) {
     for (PsiAnnotation psiAnnotation : field.getModifierList().getAnnotations()) {
       if (INJECTION_ANNOS.contains(psiAnnotation.getQualifiedName())) return true;
+      if (externalInjectionAnnos.contains(psiAnnotation.getQualifiedName())) return true;
     }
     return false;
   }
