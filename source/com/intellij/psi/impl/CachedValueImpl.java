@@ -22,6 +22,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
 import gnu.trove.TLongArrayList;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.util.ArrayList;
@@ -52,6 +53,7 @@ public class CachedValueImpl<T> implements CachedValue<T> {
     myComputed = false;
   }
 
+  @Nullable
   public T getValue() {
     T value = getUpToDateOrNull();
     if (value != null) {
@@ -67,6 +69,7 @@ public class CachedValueImpl<T> implements CachedValue<T> {
     return value;
   }
 
+  @Nullable
   private T getUpToDateOrNull() {
     T value = myValue == null ? null : myValue.get();
     if (myComputed) {
