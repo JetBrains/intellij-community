@@ -1028,7 +1028,9 @@ public class ClasspathPanel extends JPanel {
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof LibraryOrderEntry && orderEntry.isValid()) {
           final LibraryImpl library = (LibraryImpl)((LibraryOrderEntry)orderEntry).getLibrary();
-          result.add(library.getSource());
+          if (library != null) {
+            result.add(library.getSource());
+          }
         }
       }
       return result;
