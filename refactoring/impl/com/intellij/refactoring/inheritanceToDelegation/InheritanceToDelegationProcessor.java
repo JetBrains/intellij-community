@@ -244,7 +244,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
               reportedUpcasts.put(upcastedTo, reportedContainers);
             }
             final PsiElement container = ConflictsUtil.getContainer(element);
-            if (!reportedContainers.contains(container)) {
+            if (container != null && !reportedContainers.contains(container)) {
               String message = RefactoringBundle.message("0.upcasts.an.instance.of.1.to.2",
                                                          ConflictsUtil.getDescription(container, true), classDescription,
                                                          ConflictsUtil.getDescription(upcastedTo, false));
