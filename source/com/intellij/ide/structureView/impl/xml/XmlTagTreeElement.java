@@ -71,7 +71,7 @@ public class XmlTagTreeElement extends PsiTreeElementBase<XmlTag>{
       }
       else if (tag instanceof JspExpression) {
         element = new JspViewExpressionNode((JspExpression)tag);
-      } else if (FacesManager.getFacesManager().isFacesComponentTag(tag)) {
+      } else if (FacesManager.getFacesManager(tag.getProject()).isFacesComponentTag(tag)) {
         element = new JsfComponentNode(tag);
       }
       else {
