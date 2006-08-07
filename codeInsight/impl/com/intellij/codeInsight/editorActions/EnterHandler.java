@@ -73,6 +73,8 @@ public class EnterHandler extends EditorWriteActionHandler {
           executeWriteActionInner(editor, dataContext, project);
         }
       });
+    } else {
+      executeWriteActionInner(editor, dataContext, project);
     }
   }
 
