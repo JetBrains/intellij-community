@@ -1,23 +1,27 @@
 package com.intellij.util.lang;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
 class FileLoader extends Loader {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.lang.FileLoader");
   private Set<String> myPackages = null;
   private File myRootDir;
   private String myRootDirAbsolutePath;
+  private final boolean myUseCache;
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  FileLoader(URL url) throws IOException {
+  FileLoader(URL url, boolean useCache) throws IOException {
     super(url);
+    myUseCache = useCache;
     if (!"file".equals(url.getProtocol())) {
       throw new IllegalArgumentException("url");
     }
@@ -40,19 +44,20 @@ class FileLoader extends Loader {
     myPackages.add(relativePath);
 
     final File[] files = dir.listFiles();
-    for (int i = 0; i < files.length; i++) {
-      buildPackageCache(files[i]);
+    for (File file : files) {
+      buildPackageCache(file);
     }
   }
 
+  @Nullable
   Resource getResource(final String name, boolean flag) {
-    if (myPackages == null) {
-      initPackageCache();
-    }
+    initPackageCache();
 
     try {
-      String packageName = getPackageName(name);
-      if (!myPackages.contains(packageName)) return null;
+      if (myUseCache) {
+        String packageName = getPackageName(name);
+        if (!myPackages.contains(packageName)) return null;
+      }
 
       final URL url = new URL(getBaseURL(), name);
       if (!url.getFile().startsWith(getBaseURL().getFile())) return null;
@@ -73,6 +78,7 @@ class FileLoader extends Loader {
   }
 
   private void initPackageCache() {
+    if (myPackages != null || !myUseCache) return;
     myPackages = new HashSet<String>();
     buildPackageCache(myRootDir);
   }

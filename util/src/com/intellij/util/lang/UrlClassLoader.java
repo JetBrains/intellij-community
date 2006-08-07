@@ -1,6 +1,7 @@
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
 import java.io.IOException;
@@ -19,13 +20,13 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   public UrlClassLoader(List<URL> urls, ClassLoader parent) {
-    this(urls, parent, false);
+    this(urls, parent, false, false);
   }
 
-  public UrlClassLoader(List<URL> urls, ClassLoader parent, boolean canLockJars) {
+  public UrlClassLoader(List<URL> urls, ClassLoader parent, boolean canLockJars, boolean canUseCache) {
     super(parent);
 
-    myClassPath = new ClassPath(urls.toArray(new URL[urls.size()]), canLockJars);
+    myClassPath = new ClassPath(urls.toArray(new URL[urls.size()]), canLockJars, canUseCache);
     myURLs = new ArrayList<URL>(urls);
   }
 
@@ -71,6 +72,7 @@ public class UrlClassLoader extends ClassLoader {
     return defineClass(name, b, 0, b.length);
   }
 
+  @Nullable
   public URL findResource(final String name) {
     String n = name;
 

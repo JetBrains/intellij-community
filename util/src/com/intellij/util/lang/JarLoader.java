@@ -16,15 +16,17 @@ import java.util.zip.ZipFile;
 class JarLoader extends Loader {
   private URL myURL;
   private final boolean myCanLockJar;
+  private final boolean myUseCache;
   private ZipFile myZipFile;
   private Set<String> myPackages = null;
   @NonNls private static final String JAR_PROTOCOL = "jar";
   @NonNls private static final String FILE_PROTOCOL = "file";
 
-  JarLoader(URL url, boolean canLockJar) throws IOException {
+  JarLoader(URL url, boolean canLockJar, boolean useCache) throws IOException {
     super(new URL(JAR_PROTOCOL, "", -1, url + "!/"));
     myURL = url;
     myCanLockJar = canLockJar;
+    myUseCache = useCache;
   }
 
   @Nullable
@@ -54,10 +56,12 @@ class JarLoader extends Loader {
   }
 
   private void initPackageCache() throws IOException {
+    if (myPackages != null || !myUseCache) return;
     myPackages = new HashSet<String>();
     myPackages.add("");
 
     final ZipFile zipFile = getZipFile();
+    if (zipFile == null) return;
     final Enumeration<? extends ZipEntry> entries = zipFile.entries();
     while (entries.hasMoreElements()) {
       ZipEntry zipEntry = entries.nextElement();
@@ -79,12 +83,12 @@ class JarLoader extends Loader {
   @Nullable
   Resource getResource(String name, boolean flag) {
     try {
-      if (myPackages == null) {
-        initPackageCache();
-      }
+      initPackageCache();
 
-      String packageName = getPackageName(name);
-      if (!myPackages.contains(packageName)) return null;
+      if (myUseCache) {
+        String packageName = getPackageName(name);
+        if (!myPackages.contains(packageName)) return null;
+      }
 
       final ZipFile file = getZipFile();
       if (file == null) return null;

@@ -3,6 +3,7 @@ package com.intellij.util.lang;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
 import java.io.IOException;
@@ -18,9 +19,11 @@ class ClassPath {
   private HashMap<URL,Loader> myLoadersMap = new HashMap<URL, Loader>();
   @NonNls private static final String FILE_PROTOCOL = "file";
   private boolean myCanLockJars;
+  private final boolean myCanUseCache;
 
-  public ClassPath(URL[] urls, boolean canLockJars) {
+  public ClassPath(URL[] urls, boolean canLockJars, boolean canUseCache) {
     myCanLockJars = canLockJars;
+    myCanUseCache = canUseCache;
     push(urls);
   }
 
@@ -28,6 +31,7 @@ class ClassPath {
     push(new URL[]{url});
   }
 
+  @Nullable
   public Resource getResource(String s, boolean flag) {
     Loader loader;
 
@@ -45,6 +49,7 @@ class ClassPath {
     return new MyEnumeration(name, check);
   }
 
+  @Nullable
   private synchronized Loader getLoader(int i) {
     while (myLoaders.size() < i + 1) {
       URL url;
@@ -71,14 +76,15 @@ class ClassPath {
     return myLoaders.get(i);
   }
 
+  @Nullable
   private Loader getLoader(final URL url) throws IOException {
     String s = url.getFile();
 
     if (s != null && StringUtil.endsWithChar(s, '/')) {
-      if (FILE_PROTOCOL.equals(url.getProtocol())) return new FileLoader(url);
+      if (FILE_PROTOCOL.equals(url.getProtocol())) return new FileLoader(url, myCanUseCache);
     }
     else {
-      return new JarLoader(url, myCanLockJars);
+      return new JarLoader(url, myCanLockJars, myCanUseCache);
     }
 
     //add custom loaders here
