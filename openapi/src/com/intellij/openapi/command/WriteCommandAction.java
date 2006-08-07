@@ -5,8 +5,8 @@
 package com.intellij.openapi.command;
 
 import com.intellij.openapi.application.BaseActionRunnable;
-import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,8 +15,8 @@ import com.intellij.util.SmartList;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private final String myName;
@@ -54,7 +54,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<T>(this);
 
-    if (myPsiFiles.length > 0) {
+    if (myPsiFiles != null && myPsiFiles.length > 0) {
       List<VirtualFile> list = new SmartList<VirtualFile>();
       for (final PsiFile psiFile : myPsiFiles) {
         final VirtualFile virtualFile = psiFile.getVirtualFile();
