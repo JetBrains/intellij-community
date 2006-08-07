@@ -837,7 +837,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       public PomModelEvent runInner() throws IncorrectOperationException{
         final PsiFile containingFile = getContainingFile();
         final FileElement holder = new DummyHolder(containingFile.getManager(), null, ((PsiFileImpl)containingFile).getTreeElement().getCharTable()).getTreeElement();
-        final XmlTextImpl rightText = (XmlTextImpl)Factory.createCompositeElement(XmlElementType.XML_TEXT);
+        final XmlTextImpl rightText = (XmlTextImpl)Factory.createCompositeElement(XmlElementType.XML_TEXT);     
+        CodeEditUtil.setNodeGenerated(rightText, true);
+        
         TreeUtil.addChildren(holder, rightText);
 
         addChild(rightText, childText.getTreeNext());

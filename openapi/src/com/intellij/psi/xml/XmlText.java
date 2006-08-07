@@ -16,6 +16,7 @@
 package com.intellij.psi.xml;
 
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 public interface XmlText extends XmlTagChild {
   String getText();
@@ -31,5 +32,8 @@ public interface XmlText extends XmlTagChild {
   void removeText(int displayStart, int displayEnd) throws IncorrectOperationException;
 
   int physicalToDisplay(int offset);
-  int displayToPhysical(int offset);                                             
+  int displayToPhysical(int offset);
+
+  @Nullable
+  XmlText split(int displayIndex);
 }
