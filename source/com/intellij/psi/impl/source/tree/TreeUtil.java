@@ -12,6 +12,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.jetbrains.annotations.Nullable;
+
 public class TreeUtil {
 
   public static ASTNode findChild(ASTNode parent, IElementType type) {
@@ -116,6 +118,7 @@ public class TreeUtil {
     return false;
   }
 
+  @Nullable
   public static LeafElement findFirstLeaf(ASTNode element) {
     if (element instanceof LeafElement){
       return (LeafElement)element;
@@ -129,6 +132,7 @@ public class TreeUtil {
     }
   }
 
+  @Nullable
   public static LeafElement findLastLeaf(ASTNode element) {
     if (element instanceof LeafElement){
       return (LeafElement)element;

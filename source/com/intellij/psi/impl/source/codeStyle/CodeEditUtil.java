@@ -29,6 +29,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -169,21 +170,25 @@ public class CodeEditUtil {
     else makePlaceHolderBetweenTokens(prevToken, TreeUtil.nextLeaf(newChild), isFormattingRequiered(prevToken, newChild), false);
   }
 
+  @Nullable
   private static ASTNode findFirstLeaf(ASTNode first, ASTNode last) {
     do{
       final LeafElement leaf = TreeUtil.findFirstLeaf(first);
       if(leaf != null) return leaf;
       first = first.getTreeNext();
+      if (first == null) return null;
     }
     while(first != last);
     return null;
   }
 
+  @Nullable
   private static ASTNode findLastLeaf(ASTNode first, ASTNode last) {
     do{
       final LeafElement leaf = TreeUtil.findLastLeaf(last);
       if(leaf != null) return leaf;
       last = last.getTreePrev();
+      if (last == null) return null;
     }
     while(first != last);
     return null;
