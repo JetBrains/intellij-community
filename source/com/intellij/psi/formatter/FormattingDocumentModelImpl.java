@@ -29,7 +29,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
         LOG.assertTrue(false, "Document is uncommited");
       }
       if (!document.getText().equals(file.getText())) {
-        LOG.assertTrue(false, "Document and psi file texts should be equal");
+        LOG.assertTrue(false, "Document and psi file texts should be equal : \nDocument text:\n" + document.getText() + "\nFile text:\n" + file.getText());
       }
       return new FormattingDocumentModelImpl(document, file);
     }

@@ -41,7 +41,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.PomProject;
@@ -273,14 +272,19 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     // there could be pseudo phisical trees (JSPX/JSP/etc.) which must not translate
     // any changes to document and not to fire any PSI events
     LOG.assertTrue(changeScope != null);
+    final PsiFile psiFile;
     final ASTNode node = changeScope.getNode();
-    if (node == null) return changeScope.getContainingFile();
-    final FileElement fileElement = TreeUtil.getFileElement((TreeElement)node);
-    // assert fileElement != null : "Can't find file element for node: " + node;
-    // Hack. the containing tree can be invalidated if updating supplementary trees like HTML in JSP.
-    if (fileElement == null) return null;
+    if (node == null) {
+      psiFile = changeScope.getContainingFile();
+    }
+    else {
+      final FileElement fileElement = TreeUtil.getFileElement((TreeElement)node);
+      // assert fileElement != null : "Can't find file element for node: " + node;
+      // Hack. the containing tree can be invalidated if updating supplementary trees like HTML in JSP.
+      if (fileElement == null) return null;
 
-    final PsiFile psiFile = (PsiFile)fileElement.getPsi();
+      psiFile = (PsiFile)fileElement.getPsi();
+    }
     return psiFile.getLanguage() == psiFile.getViewProvider().getBaseLanguage() ? psiFile : null;
   }
 
