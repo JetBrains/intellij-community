@@ -32,9 +32,9 @@
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleGetInfoString</key>
-    <string>IntelliJ IDEA 6.0 Beta, build @@@@. Copyright JetBrains s.r.o., (c) 2000-2006</string>
+    <string>IntelliJ IDEA Demetra, build @@@@. Copyright JetBrains s.r.o., (c) 2000-2006</string>
     <key>CFBundleShortVersionString</key>
-    <string>IntelliJ IDEA 6.0 Beta</string>
+    <string>Demetra</string>
     <key>CFBundleVersion</key>
     <string>@@@@</string>
     <key>Java</key>
