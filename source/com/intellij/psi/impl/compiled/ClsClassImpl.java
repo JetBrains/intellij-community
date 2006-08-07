@@ -66,8 +66,9 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     myParent = null;
   }
 
-  void invalidate() {
+  public void invalidate() {
     myParent = null;
+    setRepositoryId(-1);
   }
 
   boolean isContentsLoaded() {
