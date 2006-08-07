@@ -86,6 +86,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     });
   }
 
+  @NotNull
   public String getComponentName() {
     return "CodeStyleManager";
   }
@@ -104,12 +105,12 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   @NotNull
-  public PsiElement reformat(PsiElement element) throws IncorrectOperationException {
+  public PsiElement reformat(@NotNull PsiElement element) throws IncorrectOperationException {
     return reformat(element, false);
   }
 
   @NotNull
-  public PsiElement reformat(PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException {
+  public PsiElement reformat(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
     if( !SourceTreeToPsiMap.hasTreeElement( element ) )
     {
@@ -151,14 +152,14 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
-  public PsiElement reformatRange(PsiElement element,
+  public PsiElement reformatRange(@NotNull PsiElement element,
                                   int startOffset,
                                   int endOffset,
                                   boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException {
     return reformatRangeImpl(element, startOffset, endOffset, canChangeWhiteSpacesOnly);
   }
 
-  public PsiElement reformatRange(PsiElement element, int startOffset, int endOffset)
+  public PsiElement reformatRange(@NotNull PsiElement element, int startOffset, int endOffset)
     throws IncorrectOperationException {
     return reformatRangeImpl(element, startOffset, endOffset, false);
 
@@ -232,11 +233,11 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
-  public PsiElement shortenClassReferences(PsiElement element) throws IncorrectOperationException {
+  public PsiElement shortenClassReferences(@NotNull PsiElement element) throws IncorrectOperationException {
     return shortenClassReferences(element, 0);
   }
 
-  public PsiElement shortenClassReferences(PsiElement element, int flags) throws IncorrectOperationException {
+  public PsiElement shortenClassReferences(@NotNull PsiElement element, int flags) throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
     if( !SourceTreeToPsiMap.hasTreeElement( element ) )
     {
@@ -250,7 +251,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
                                                    uncompleteCode));
   }
 
-  public void shortenClassReferences(PsiElement element, int startOffset, int endOffset)
+  public void shortenClassReferences(@NotNull PsiElement element, int startOffset, int endOffset)
     throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
     if( !SourceTreeToPsiMap.hasTreeElement( element ) )
@@ -261,13 +262,13 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
                                                       endOffset);
   }
 
-  public PsiElement qualifyClassReferences(PsiElement element) {
+  public PsiElement qualifyClassReferences(@NotNull PsiElement element) {
     return SourceTreeToPsiMap.treeElementToPsi(
       new ReferenceAdjuster(getSettings(), true, true).process((TreeElement)SourceTreeToPsiMap.psiElementToTree(element), false,
                                                                false));
   }
 
-  public void optimizeImports(PsiFile file) throws IncorrectOperationException {
+  public void optimizeImports(@NotNull PsiFile file) throws IncorrectOperationException {
     CheckUtil.checkWritable(file);
     if (file instanceof PsiJavaFile) {
       PsiImportList newList = prepareOptimizeImportsResult((PsiJavaFile)file);
@@ -280,15 +281,15 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
-  public PsiImportList prepareOptimizeImportsResult(PsiJavaFile file) {
+  public PsiImportList prepareOptimizeImportsResult(@NotNull PsiJavaFile file) {
     return new ImportHelper(getSettings()).prepareOptimizeImportsResult(this, file);
   }
 
-  public boolean addImport(PsiJavaFile file, PsiClass refClass) {
+  public boolean addImport(@NotNull PsiJavaFile file, @NotNull PsiClass refClass) {
     return new ImportHelper(getSettings()).addImport(file, refClass);
   }
 
-  public void removeRedundantImports(PsiJavaFile file) throws IncorrectOperationException {
+  public void removeRedundantImports(@NotNull PsiJavaFile file) throws IncorrectOperationException {
     final PsiImportList importList = file.getImportList();
     if (importList == null) return;
     final PsiImportStatementBase[] imports = importList.getAllImportStatements();
@@ -333,7 +334,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
-  public void reformatNewlyAddedElement(final ASTNode parent, final ASTNode addedElement) throws IncorrectOperationException {
+  public void reformatNewlyAddedElement(@NotNull final ASTNode parent, @NotNull final ASTNode addedElement) throws IncorrectOperationException {
 
     LOG.assertTrue(addedElement.getTreeParent() == parent, "addedElement must be added to parent");
 
@@ -351,11 +352,11 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     adjustLineIndent(psiElement.getContainingFile(), addedElement.getTextRange());
   }
 
-  public int findEntryIndex(PsiImportStatementBase statement) {
+  public int findEntryIndex(@NotNull PsiImportStatementBase statement) {
     return new ImportHelper(getSettings()).findEntryIndex(statement);
   }
 
-  public int adjustLineIndent(final PsiFile file, final int offset) throws IncorrectOperationException {
+  public int adjustLineIndent(@NotNull final PsiFile file, final int offset) throws IncorrectOperationException {
     final Computable<Pair<Integer, IncorrectOperationException>> computable = new Computable<Pair<Integer, IncorrectOperationException>>() {
       public Pair<Integer, IncorrectOperationException> compute() {
         try {
@@ -426,7 +427,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     return bottomost;
   }
 
-  public int adjustLineIndent(final Document document, final int offset) {
+  public int adjustLineIndent(final @NotNull Document document, final int offset) {
     return PostprocessReformattingAspect.getInstance(getProject()).disablePostprocessFormattingInside(new Computable<Integer>() {
       public Integer compute() {
         return adjustLineIndentInner(document, offset);
@@ -485,7 +486,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
-  public void adjustLineIndent(PsiFile file, TextRange rangeToAdjust) throws IncorrectOperationException {
+  public void adjustLineIndent(@NotNull PsiFile file, TextRange rangeToAdjust) throws IncorrectOperationException {
     final Language fileLanguage = file.getLanguage();
     final FormattingModelBuilder builder = fileLanguage.getFormattingModelBuilder();
     if (builder != null) {
@@ -504,7 +505,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   @Nullable
-  public String getLineIndent(PsiFile file, int offset) {
+  public String getLineIndent(@NotNull PsiFile file, int offset) {
     final PsiElement element = findElementInTreeWithFormatterEnabled(file, offset);
     if( element == null )
     {
@@ -534,7 +535,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   @Nullable
-  public String getLineIndent(Editor editor) {
+  public String getLineIndent(@NotNull Editor editor) {
     Document doc = editor.getDocument();
     int offset = editor.getCaretModel().getOffset();
     if( offset >= doc.getTextLength() )
@@ -601,7 +602,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     return result;
   }
 
-  public boolean isLineToBeIndented(PsiFile file, int offset) {
+  public boolean isLineToBeIndented(@NotNull PsiFile file, int offset) {
     if (!SourceTreeToPsiMap.hasTreeElement(file)) {
       return false;
     }
@@ -641,7 +642,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   @Nullable
-  public PsiElement insertNewLineIndentMarker(PsiFile file, int offset) throws IncorrectOperationException {
+  public PsiElement insertNewLineIndentMarker(@NotNull PsiFile file, int offset) throws IncorrectOperationException {
     CheckUtil.checkWritable(file);
     final CharTable charTable = ((FileElement)SourceTreeToPsiMap.psiElementToTree(file)).getCharTable();
     PsiElement elementAt = findElementInTreeWithFormatterEnabled(file, offset);
@@ -704,7 +705,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     return new IndentImpl(getSettings(), 0, 0, null);
   }
 
-  public VariableKind getVariableKind(PsiVariable variable) {
+  public VariableKind getVariableKind(@NotNull PsiVariable variable) {
     if (variable instanceof PsiField) {
       if (variable.hasModifierProperty(PsiModifier.STATIC)) {
         if (variable.hasModifierProperty(PsiModifier.FINAL)) {
@@ -741,7 +742,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
-  public SuggestedNameInfo suggestVariableName(final VariableKind kind,
+  public SuggestedNameInfo suggestVariableName(final @NotNull VariableKind kind,
                                                @Nullable final String propertyName,
                                                @Nullable final PsiExpression expr,
                                                @Nullable PsiType type) {
@@ -1138,7 +1139,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   private static String constantValueToConstantName(final String[] names) {
-    final StringBuffer result = new StringBuffer();
+    final StringBuilder result = new StringBuilder();
     for (int i = 0; i < names.length; i++) {
       if (i > 0) result.append("_");
       result.append(names[i]);
@@ -1229,7 +1230,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   public String variableNameToPropertyName(String name, VariableKind variableKind) {
     if (variableKind == VariableKind.STATIC_FINAL_FIELD) {
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       for (int i = 0; i < name.length(); i++) {
         char c = name.charAt(i);
         if (c != '_') {
@@ -1283,7 +1284,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   public String propertyNameToVariableName(String propertyName, VariableKind variableKind) {
     if (variableKind == VariableKind.STATIC_FINAL_FIELD) {
       String[] words = NameUtil.nameToWords(propertyName);
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       for (int i = 0; i < words.length; i++) {
         String word = words[i];
         if (i > 0) {
@@ -1319,7 +1320,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         continue;
       }
 
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       buffer.append(prefix);
 
       if (variableKind == VariableKind.STATIC_FINAL_FIELD) {
@@ -1423,7 +1424,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
-  public SuggestedNameInfo suggestUniqueVariableName(final SuggestedNameInfo baseNameInfo, PsiElement place, boolean lookForward) {
+  @NotNull
+  public SuggestedNameInfo suggestUniqueVariableName(@NotNull final SuggestedNameInfo baseNameInfo, PsiElement place, boolean lookForward) {
     final String[] names = baseNameInfo.names;
     Set<String> uniqueNames = new HashSet<String>(names.length);
     for (String name : names) {
@@ -1470,33 +1472,28 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     Arrays.sort(names, comparator);
   }
 
+  @NotNull
   public String getPrefixByVariableKind(VariableKind variableKind) {
     String prefix = "";
-    if (variableKind == VariableKind.FIELD) {
-      prefix = getSettings().FIELD_NAME_PREFIX;
-    }
-    else {
-      if (variableKind == VariableKind.STATIC_FIELD) {
+    switch (variableKind) {
+      case FIELD:
+        prefix = getSettings().FIELD_NAME_PREFIX;
+        break;
+      case STATIC_FIELD:
         prefix = getSettings().STATIC_FIELD_NAME_PREFIX;
-      }
-      else {
-        if (variableKind == VariableKind.PARAMETER) {
-          prefix = getSettings().PARAMETER_NAME_PREFIX;
-        }
-        else {
-          if (variableKind == VariableKind.LOCAL_VARIABLE) {
-            prefix = getSettings().LOCAL_VARIABLE_NAME_PREFIX;
-          }
-          else {
-            if (variableKind == VariableKind.STATIC_FINAL_FIELD) {
-              prefix = "";
-            }
-            else {
-              LOG.assertTrue(false);
-            }
-          }
-        }
-      }
+        break;
+      case PARAMETER:
+        prefix = getSettings().PARAMETER_NAME_PREFIX;
+        break;
+      case LOCAL_VARIABLE:
+        prefix = getSettings().LOCAL_VARIABLE_NAME_PREFIX;
+        break;
+      case STATIC_FINAL_FIELD:
+        prefix = "";
+        break;
+      default:
+        LOG.assertTrue(false);
+        break;
     }
     if (prefix == null) {
       prefix = "";
@@ -1504,33 +1501,28 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     return prefix;
   }
 
+  @NotNull
   public String getSuffixByVariableKind(VariableKind variableKind) {
     String suffix = "";
-    if (variableKind == VariableKind.FIELD) {
-      suffix = getSettings().FIELD_NAME_SUFFIX;
-    }
-    else {
-      if (variableKind == VariableKind.STATIC_FIELD) {
+    switch (variableKind) {
+      case FIELD:
+        suffix = getSettings().FIELD_NAME_SUFFIX;
+        break;
+      case STATIC_FIELD:
         suffix = getSettings().STATIC_FIELD_NAME_SUFFIX;
-      }
-      else {
-        if (variableKind == VariableKind.PARAMETER) {
-          suffix = getSettings().PARAMETER_NAME_SUFFIX;
-        }
-        else {
-          if (variableKind == VariableKind.LOCAL_VARIABLE) {
-            suffix = getSettings().LOCAL_VARIABLE_NAME_SUFFIX;
-          }
-          else {
-            if (variableKind == VariableKind.STATIC_FINAL_FIELD) {
-              suffix = "";
-            }
-            else {
-              LOG.assertTrue(false);
-            }
-          }
-        }
-      }
+        break;
+      case PARAMETER:
+        suffix = getSettings().PARAMETER_NAME_SUFFIX;
+        break;
+      case LOCAL_VARIABLE:
+        suffix = getSettings().LOCAL_VARIABLE_NAME_SUFFIX;
+        break;
+      case STATIC_FINAL_FIELD:
+        suffix = "";
+        break;
+      default:
+        LOG.assertTrue(false);
+        break;
     }
     if (suffix == null) {
       suffix = "";

@@ -198,7 +198,7 @@ public abstract class CodeStyleManager {
    * Reformats the line at the specified offset in the specified file, modifying only the line indent
    * and leaving all other whitespace intact.
    *
-   * @param file   the file to reformat.
+   * @param document   the document to reformat.
    * @param offset the offset the line at which should be reformatted.
    * @throws IncorrectOperationException if the file is read-only.
    */
@@ -315,7 +315,7 @@ public abstract class CodeStyleManager {
    * @param lookForward if true, the existing variables are searched in both directions; if false - only backward
    * @return the generated unique name,
    */
-  public abstract SuggestedNameInfo suggestUniqueVariableName(SuggestedNameInfo baseNameInfo, PsiElement place, boolean lookForward);
+  @NotNull public abstract SuggestedNameInfo suggestUniqueVariableName(@NotNull SuggestedNameInfo baseNameInfo, PsiElement place, boolean lookForward);
 
   /**
    * Replaces all references to Java classes in the contents of the specified element,
@@ -326,7 +326,7 @@ public abstract class CodeStyleManager {
    * @return the element in the PSI tree after the qualify operation corresponding to the
    *         original element.
    */
-  public abstract PsiElement qualifyClassReferences(PsiElement element);
+  public abstract PsiElement qualifyClassReferences(@NotNull PsiElement element);
 
   /**
    * Removes unused import statements from the specified Java file.
@@ -335,7 +335,7 @@ public abstract class CodeStyleManager {
    * @throws IncorrectOperationException if the operation fails for some reason (for example,
    *                                     the file is read-only).
    */
-  public abstract void removeRedundantImports(PsiJavaFile file) throws IncorrectOperationException;
+  public abstract void removeRedundantImports(@NotNull PsiJavaFile file) throws IncorrectOperationException;
 
   /**
    * Reformats line indents inside new element and reformats white spaces around it
@@ -344,5 +344,5 @@ public abstract class CodeStyleManager {
    * @throws IncorrectOperationException if the operation fails for some reason (for example,
    *                                     the file is read-only).
    */
-  public abstract void reformatNewlyAddedElement(final ASTNode block, final ASTNode addedElement) throws IncorrectOperationException;
+  public abstract void reformatNewlyAddedElement(@NotNull final ASTNode block, @NotNull final ASTNode addedElement) throws IncorrectOperationException;
 }
