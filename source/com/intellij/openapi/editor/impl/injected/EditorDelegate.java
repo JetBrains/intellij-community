@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,7 +47,7 @@ public class EditorDelegate implements EditorEx {
   private static final WeakList<EditorDelegate> allEditors = new WeakList<EditorDelegate>();
   private boolean myDisposed;
 
-  public static Editor create(final DocumentRange documentRange, final EditorImpl editor, final PsiFile injectedFile) {
+  public static Editor create(@NotNull final DocumentRange documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
     for (EditorDelegate editorDelegate : allEditors) {
       if (editorDelegate.getDocument() == documentRange && editorDelegate.getDelegate() == editor && editorDelegate.getInjectedFile() == injectedFile) {
         return editorDelegate;
@@ -57,7 +56,7 @@ public class EditorDelegate implements EditorEx {
     return new EditorDelegate(documentRange, editor, injectedFile);
   }
 
-  private EditorDelegate(DocumentRange document, final EditorImpl delegate, PsiFile injectedFile) {
+  private EditorDelegate(@NotNull DocumentRange document, @NotNull final EditorImpl delegate, @NotNull PsiFile injectedFile) {
     myDocument = document;
     myDelegate = delegate;
     myInjectedFile = injectedFile;
@@ -245,10 +244,22 @@ public class EditorDelegate implements EditorEx {
     return parentToInjected(hostPos);
   }
 
+  private LogicalPosition fitInsideEditor(LogicalPosition pos) {
+    int lineCount = myDocument.getLineCount();
+    if (pos.line >= lineCount) {
+      pos = new LogicalPosition(lineCount-1, pos.column);
+    }
+    int lineLength = myDocument.getLineEndOffset(pos.line) - myDocument.getLineStartOffset(pos.line);
+    if (pos.column >= lineLength) {
+      pos = new LogicalPosition(pos.line, lineLength-1);
+    }
+    return pos;
+  }
+
   @NotNull
   public Point logicalPositionToXY(@NotNull final LogicalPosition pos) {
     assert isValid();
-    return myDelegate.logicalPositionToXY(injectedToParent(pos));
+    return myDelegate.logicalPositionToXY(injectedToParent(fitInsideEditor(pos)));
   }
 
   @NotNull
@@ -501,8 +512,11 @@ public class EditorDelegate implements EditorEx {
 
     final EditorDelegate that = (EditorDelegate)o;
 
-    if (myDelegate != null ? !myDelegate.equals(that.myDelegate) : that.myDelegate != null) return false;
-    return Comparing.equal(myDocument.getTextRange(), that.myDocument.getTextRange());
+    RangeMarker range = myDocument.getTextRange();
+    RangeMarker thatRange = that.myDocument.getTextRange();
+    return myDelegate.equals(that.myDelegate)
+           && range.getStartOffset() == thatRange.getStartOffset()
+           && range.getEndOffset() == thatRange.getEndOffset();
   }
 
   public int hashCode() {
