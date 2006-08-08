@@ -22,6 +22,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -185,5 +186,18 @@ public class LogFileOptions implements JDOMExternalizable {
     element.setAttribute(SKIPPED, String.valueOf(isSkipContent()));
     element.setAttribute(SHOW_ALL, String.valueOf(isShowAll()));
     element.setAttribute(ALIAS, getName());
+  }
+
+  public static boolean areEqual(@Nullable LogFileOptions options1, @Nullable LogFileOptions options2) {
+    if (options1 == null || options2 == null) {
+      return options1 == options2;
+    }
+
+    return options1.myName.equals(options2.myName) &&
+           options1.myPathPattern.equals(options2.myPathPattern) &&
+           options1.myLast == options2.myLast &&
+           options1.myEnabled == options2.myEnabled &&
+           options1.mySkipContent == options2.mySkipContent;
+
   }
 }

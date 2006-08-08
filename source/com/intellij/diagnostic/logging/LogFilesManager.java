@@ -51,7 +51,7 @@ public class LogFilesManager {
   }
 
   public void registerFileMatcher(final RunConfigurationBase runConfiguration){
-    final ArrayList<LogFileOptions> logFiles = runConfiguration.getLogFiles();
+    final ArrayList<LogFileOptions> logFiles = runConfiguration.getAllLogFiles();
     for (LogFileOptions logFile : logFiles) {
       if (logFile.isEnabled()) {
         myLogFileManagerMap.put(logFile, logFile.getPaths());

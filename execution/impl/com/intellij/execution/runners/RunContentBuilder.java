@@ -118,7 +118,7 @@ public class RunContentBuilder implements LogConsoleManager {
 
   private void initAdditionalTabs(final ExecutionConsole console) {
     RunConfigurationBase base = (RunConfigurationBase)myRunProfile;
-    final ArrayList<LogFileOptions> logFiles = base.getLogFiles();
+    final ArrayList<LogFileOptions> logFiles = base.getAllLogFiles();
     for (LogFileOptions logFile : logFiles) {
       if (logFile.isEnabled()) {
         final Set<String> paths = logFile.getPaths();

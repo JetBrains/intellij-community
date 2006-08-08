@@ -23,11 +23,9 @@ import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author dyoma
@@ -38,8 +36,10 @@ public abstract class RunConfigurationBase implements RunConfiguration {
   private String myName = "";
 
   private ArrayList<LogFileOptions> myLogFiles = new ArrayList<LogFileOptions>();
+  private ArrayList<PredefinedLogFile> myPredefinedLogFiles = new ArrayList<PredefinedLogFile>();
   @NonNls private static final String LOG_FILE = "log_file";
   private THashMap<Object, AdditionalTabComponent> myAdditionalTabs = null;
+  @NonNls private static final String PREDEFINED_LOG_FILE_ELEMENT = "predefined_log_file";
 
   protected RunConfigurationBase(final Project project, final ConfigurationFactory factory, final String name) {
     myProject = project;
@@ -79,11 +79,39 @@ public abstract class RunConfigurationBase implements RunConfiguration {
     try {
       final RunConfigurationBase runConfiguration = (RunConfigurationBase)super.clone();
       runConfiguration.myLogFiles = new ArrayList<LogFileOptions>(myLogFiles);
+      runConfiguration.myPredefinedLogFiles = new ArrayList<PredefinedLogFile>(myPredefinedLogFiles);
       return runConfiguration;
     }
     catch (CloneNotSupportedException e) {
       return null;
     }
+  }
+
+  public @Nullable LogFileOptions getOptionsForPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
+    return null;
+  }
+
+  public void removeAllPredefinedLogFiles() {
+    myPredefinedLogFiles.clear();
+  }
+
+  public void addPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
+    myPredefinedLogFiles.add(predefinedLogFile);
+  }
+
+  public ArrayList<PredefinedLogFile> getPredefinedLogFiles() {
+    return myPredefinedLogFiles;
+  }
+
+  public ArrayList<LogFileOptions> getAllLogFiles() {
+    final ArrayList<LogFileOptions> list = new ArrayList<LogFileOptions>(myLogFiles);
+    for (PredefinedLogFile predefinedLogFile : myPredefinedLogFiles) {
+      final LogFileOptions options = getOptionsForPredefinedLogFile(predefinedLogFile);
+      if (options != null) {
+        list.add(options);
+      }
+    }
+    return list;
   }
 
   public ArrayList<LogFileOptions> getLogFiles() {
@@ -149,6 +177,13 @@ public abstract class RunConfigurationBase implements RunConfiguration {
       logFileOptions.readExternal(iterator.next());
       myLogFiles.add(logFileOptions);
     }
+    myPredefinedLogFiles.clear();
+    final List<Element> list = element.getChildren(PREDEFINED_LOG_FILE_ELEMENT);
+    for (Element fileElement : list) {
+      final PredefinedLogFile logFile = new PredefinedLogFile();
+      logFile.readExternal(fileElement);
+      myPredefinedLogFiles.add(logFile);
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -156,6 +191,11 @@ public abstract class RunConfigurationBase implements RunConfiguration {
       Element logFile = new Element(LOG_FILE);
       options.writeExternal(logFile);
       element.addContent(logFile);
+    }
+    for (PredefinedLogFile predefinedLogFile : myPredefinedLogFiles) {
+      Element fileElement = new Element(PREDEFINED_LOG_FILE_ELEMENT);
+      predefinedLogFile.writeExternal(fileElement);
+      element.addContent(fileElement);
     }
   }
 

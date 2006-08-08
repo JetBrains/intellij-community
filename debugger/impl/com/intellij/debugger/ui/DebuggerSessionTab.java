@@ -273,7 +273,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
   private void initAdditionalTabs() {
     clearLogContents();
     RunConfigurationBase base = (RunConfigurationBase)myConfiguration;
-    final ArrayList<LogFileOptions> logFiles = base.getLogFiles();
+    final ArrayList<LogFileOptions> logFiles = base.getAllLogFiles();
     for (LogFileOptions logFile : logFiles) {
       if (logFile.isEnabled()) {
         final Set<String> paths = logFile.getPaths();
