@@ -246,6 +246,10 @@ public class FileReferenceSet {
     return result == null ? Collections.<PsiElement>emptyList() : Collections.singleton(result);
   }
 
+  public String getPathString() {
+    return myPathString;
+  }
+
   public boolean isAbsolutePathReference() {
     return myPathString.startsWith(SEPARATOR_STRING);
   }

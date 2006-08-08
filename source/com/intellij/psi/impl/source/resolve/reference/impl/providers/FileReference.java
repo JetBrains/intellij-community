@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider;
+import com.intellij.codeInsight.daemon.quickFix.WebRootQuickFixProvider;
 import com.intellij.javaee.web.WebUtil;
 import com.intellij.javaee.web.WebModuleProperties;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,13 +20,13 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.file.PsiDirectoryImpl;
-import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,16 +35,16 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class FileReference extends GenericReference implements PsiPolyVariantReference, QuickFixProvider {
+public class FileReference extends GenericReference implements PsiPolyVariantReference, QuickFixProvider<FileReference> {
   public static final FileReference[] EMPTY = new FileReference[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference");
 
   private final int myIndex;
   private TextRange myRange;
   private final String myText;
-  private final FileReferenceSet myFileReferenceSet;
+  @NotNull private final FileReferenceSet myFileReferenceSet;
 
-  public FileReference(final FileReferenceSet fileReferenceSet, TextRange range, int index, String text){
+  public FileReference(final @NotNull FileReferenceSet fileReferenceSet, TextRange range, int index, String text){
     super(fileReferenceSet.getProvider());
     myFileReferenceSet = fileReferenceSet;
     myIndex = index;
@@ -67,6 +68,7 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
   }
 
 
+  @Nullable
   public PsiElement getContext() {
     final PsiReference contextRef = getContextReference();
     return contextRef != null ? contextRef.resolve() : null;
@@ -83,7 +85,7 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     return innerResolve();
   }
 
-  private final ResolveResult[] innerResolve() {
+  private ResolveResult[] innerResolve() {
     final Collection<PsiElement> contexts = getContexts();
     Collection<ResolveResult> result = new ArrayList<ResolveResult>(contexts.size());
 
@@ -104,6 +106,7 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
             public boolean execute(final String name, boolean isDirectory) throws Exception {
               if (equalsTo(name)) {
                 final WebDirectoryElement element = dirContext.createElement(name, isDirectory);
+                assert element != null;
                 processingChildrenResult[0] = element.isDirectory() ? element:element.getOriginalFile();
                 return false;
               }
@@ -181,6 +184,7 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
 
   }
 
+  @Nullable
   public FileReference getContextReference(){
     return myIndex > 0 ? myFileReferenceSet.getReference(myIndex - 1) : null;
   }
@@ -203,7 +207,7 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
   }
 
-  private final boolean equalsTo(final String name) {
+  private boolean equalsTo(final String name) {
     return myFileReferenceSet.isCaseSensitive() ? myText.equals(name) :
            myText.compareToIgnoreCase(name) == 0;
   }
@@ -296,10 +300,16 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     return manipulator.handleContentChange(getElement(), range, newName);
   }
 
-  public void registerQuickfix(HighlightInfo info, PsiReference reference) {
+  public void registerQuickfix(HighlightInfo info, FileReference reference) {
     FileReferenceQuickFixProvider.registerQuickFix(info, reference);
+    WebRootQuickFixProvider.registerQuickFix(info, reference);
   }
 
+  public int getIndex() {
+    return myIndex;
+  }
+
+  @NotNull
   public FileReferenceSet getFileReferenceSet() {
     return myFileReferenceSet;
   }

@@ -29,7 +29,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -38,13 +37,12 @@ import java.util.Collection;
 public class FileReferenceQuickFixProvider {
   private FileReferenceQuickFixProvider() {}
 
-  public static void registerQuickFix(final HighlightInfo info, final PsiReference reference) {
-    final FileReference fileReference = (FileReference)reference;
-    final FileReferenceSet fileReferenceSet = fileReference.getFileReferenceSet();
-    int index = Arrays.asList(fileReferenceSet.getAllReferences()).indexOf(fileReference);
+  public static void registerQuickFix(final HighlightInfo info, final FileReference reference) {
+    final FileReferenceSet fileReferenceSet = reference.getFileReferenceSet();
+    int index = reference.getIndex();
 
     if (index < 0) return;
-    final String newFileName = fileReference.getCanonicalText();
+    final String newFileName = reference.getCanonicalText();
     if (newFileName.length() == 0 || newFileName.indexOf('\\') != -1 || SystemInfo.isWindows && newFileName.indexOf(':') != -1) return;
     final PsiDirectory directory;
 
@@ -64,7 +62,7 @@ public class FileReferenceQuickFixProvider {
       else {
         return;
       }
-    } else {
+    } else { // index == 0
       final Collection<PsiElement> defaultContexts = fileReferenceSet.getDefaultContexts(reference.getElement());
       final PsiElement psiElement = defaultContexts.isEmpty() ? null : defaultContexts.iterator().next();
 
@@ -90,7 +88,7 @@ public class FileReferenceQuickFixProvider {
       boolean original = fileReferenceSet.isCaseSensitive();
       try {
         fileReferenceSet.setCaseSensitive(false);
-        final PsiElement psiElement = fileReference.resolve();
+        final PsiElement psiElement = reference.resolve();
 
         if (psiElement instanceof PsiNamedElement) {
           final String existingElementName = ((PsiNamedElement)psiElement).getName();
@@ -98,7 +96,7 @@ public class FileReferenceQuickFixProvider {
           differentCase = true;
           QuickFixAction.registerQuickFixAction(
             info,
-            new RenameFileReferenceIntentionAction(existingElementName, fileReference)
+            new RenameFileReferenceIntentionAction(existingElementName, reference)
           );
 
           QuickFixAction.registerQuickFixAction(
@@ -114,7 +112,7 @@ public class FileReferenceQuickFixProvider {
     if (differentCase && SystemInfo.isWindows) return;
 
     final boolean isdirectory;
-    final ReferenceType type = fileReference.getType();
+    final ReferenceType type = reference.getType();
 
     if (type.isAssignableTo(ReferenceType.DIRECTORY)) {
       // directory
@@ -152,10 +150,12 @@ public class FileReferenceQuickFixProvider {
       myFileReference = fileReference;
     }
 
+    @NotNull
     public String getText() {
       return QuickFixBundle.message("rename.file.reference.text", myExistingElementName);
     }
 
+    @NotNull
     public String getFamilyName() {
       return QuickFixBundle.message("rename.file.reference.family");
     }
@@ -199,10 +199,12 @@ public class FileReferenceQuickFixProvider {
       this(isdirectory,newFileName,directory,null,isdirectory ? "create.directory.text":"create.file.text" );
     }
 
+    @NotNull
     public String getText() {
       return QuickFixBundle.message(myKey, myNewFileName);
     }
 
+    @NotNull
     public String getFamilyName() {
       return QuickFixBundle.message("create.file.family");
     }

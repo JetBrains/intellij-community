@@ -6,10 +6,10 @@ import com.intellij.psi.PsiReference;
 /**
  * @author dyoma
  */
-public interface QuickFixProvider {
+public interface QuickFixProvider<T extends PsiReference> {
   QuickFixProvider NULL = new QuickFixProvider() {
     public void registerQuickfix(HighlightInfo info, PsiReference reference) {}
   };
 
-  void registerQuickfix(HighlightInfo info, PsiReference reference);
+  void registerQuickfix(HighlightInfo info, T reference);
 }

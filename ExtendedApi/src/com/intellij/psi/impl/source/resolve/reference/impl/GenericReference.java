@@ -119,7 +119,9 @@ public abstract class GenericReference implements PsiReference, EmptyResolveMess
     return CodeInsightBundle.message("error.cannot.resolve.default.message");
   }
 
+  @Nullable
   public abstract PsiElement getContext();
+  @Nullable
   public abstract PsiReference getContextReference();
   public abstract ReferenceType getType();
   public abstract ReferenceType getSoftenType();
