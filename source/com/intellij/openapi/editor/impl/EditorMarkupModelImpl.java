@@ -442,6 +442,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return myErrorStripeRenderer;
   }
 
+  public void dispose() {
+    myErrorStripeRenderer = null;
+    super.dispose();
+  }
+
   public void repaint() {
     markDirtied();
     EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
