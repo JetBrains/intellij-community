@@ -73,7 +73,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     initTree();
   }
 
-  protected ArrayList<AnAction> createActions() {
+  protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
     result.add(new MyAddAction());
     result.add(new MyDeleteAction(new Condition<Object>() {

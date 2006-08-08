@@ -99,7 +99,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     };
     myAutoScrollHandler.install(myTree);
 
-    final ArrayList<AnAction> actions = createActions();
+    final ArrayList<AnAction> actions = createActions(false);
     if (actions != null) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (AnAction action : actions) {
@@ -247,7 +247,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
   }
 
   @Nullable
-  protected ArrayList<AnAction> createActions() {
+  protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     return null;
   }
 
@@ -295,7 +295,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
 
     myTree.setCellRenderer(defaultTreeCellRenderer);
 
-    ArrayList<AnAction> actions = createActions();
+    ArrayList<AnAction> actions = createActions(true);
     if (actions != null) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (AnAction action : actions) {

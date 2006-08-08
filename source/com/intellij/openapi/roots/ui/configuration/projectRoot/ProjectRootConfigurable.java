@@ -616,9 +616,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
 
-  protected ArrayList<AnAction> createActions() {
+  protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
-    result.add(new MyAddAction());
+    result.add(new MyAddAction(fromPopup));
     result.add(new MyRemoveAction(new Condition<Object>() {
       public boolean value(final Object object) {
         if (object instanceof MyNode) {
@@ -1113,8 +1113,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   private class MyAddAction extends ActionGroup implements ActionGroupWithPreselection{
     private AnAction [] myChildren;
-    public MyAddAction() {
+    private boolean myFromPopup;
+    public MyAddAction(final boolean fromPopup) {
       super(CommonBundle.message("button.add"), true);
+      myFromPopup = fromPopup;
       final Presentation presentation = getTemplatePresentation();
       presentation.setIcon(Icons.ADD_ICON);
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
@@ -1140,6 +1142,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
           }
         };
       }
+      if (myFromPopup){
+        final int index = getDefaultIndex();
+        if (index == 0 || index == 1) { //omit level if any
+          return ((DefaultActionGroup)myChildren[index]).getChildren(e);
+        }
+      }
       return myChildren;
     }
 
@@ -1155,10 +1163,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       else if (selectedObject instanceof ProjectJdk || selectedObject instanceof ProjectJdksModel) {
         return 1;
       }
-      else if (selectedObject instanceof Module) {
+      else if (selectedObject instanceof Module || selectedObject instanceof ModuleGroup) {
         return 2;
       }
-      return 0;
+      return selectedObject instanceof Project ? -1 : 0;
     }
   }
 
