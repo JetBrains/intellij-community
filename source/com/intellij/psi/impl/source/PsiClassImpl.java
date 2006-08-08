@@ -27,6 +27,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -648,12 +649,17 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
             final PsiMethod valueOfMethod = getManager().getElementFactory().createMethodFromText("public static " + name + " valueOf(String name) throws IllegalArgumentException {}", this);
             myValueOfMethod = new LightMethod(getManager(), valueOfMethod, this);
           }
-          final NameHint hint = processor.getHint(NameHint.class);
-          if (hint == null || VALUES_METHOD.equals(hint.getName())) {
-            if (!processor.execute(myValuesMethod, PsiSubstitutor.EMPTY)) return false;
+          final NameHint nameHint = processor.getHint(NameHint.class);
+          final ElementClassHint classHint = processor.getHint(ElementClassHint.class);
+          if (nameHint == null || VALUES_METHOD.equals(nameHint.getName())) {
+            if (classHint == null || classHint.shouldProcess(PsiMethod.class)) {
+              if (!processor.execute(myValuesMethod, PsiSubstitutor.EMPTY)) return false;
+            }
           }
-          if (hint == null || VALUE_OF_METHOD.equals(hint.getName())) {
-            if (!processor.execute(myValueOfMethod, PsiSubstitutor.EMPTY)) return false;
+          if (nameHint == null || VALUE_OF_METHOD.equals(nameHint.getName())) {
+            if (classHint == null || classHint.shouldProcess(PsiMethod.class)) {
+              if (!processor.execute(myValueOfMethod, PsiSubstitutor.EMPTY)) return false;
+            }
           }
         }
         catch (IncorrectOperationException e) {
