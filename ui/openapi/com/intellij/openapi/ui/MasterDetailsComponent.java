@@ -308,8 +308,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
           group.add(action);
         }
       }
-      PopupHandler.installFollowingSelectionTreePopup(myTree, group, ActionPlaces.UNKNOWN,
-                                                      ActionManager.getInstance()); //popup should follow the selection
+      PopupHandler.installPopupHandler(myTree, group, ActionPlaces.UNKNOWN, ActionManager.getInstance()); //popup should follow the selection
     }
   }
 
