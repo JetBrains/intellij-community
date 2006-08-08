@@ -38,6 +38,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   private final boolean myIsForDecompiling;
   private final FileViewProvider myViewProvider;
   private LanguageLevel myLanguageLevel = null;
+  private boolean myContentsUnloaded;
 
   private ClsFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider, boolean forDecompiling) {
     super(manager, -2);
@@ -65,6 +66,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
       myPackageStatement = null;
     }
     myMirror = null;
+    myContentsUnloaded = true;
   }
 
   public long getRepositoryId() {
@@ -125,13 +127,14 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   public PsiClass[] getClasses() {
     long id = getRepositoryId();
     if (myClass == null) {
-      if (id >= 0) {
+      if (id >= 0 && !myContentsUnloaded) {
         long[] classIds = getRepositoryManager().getFileView().getClasses(id);
         LOG.assertTrue(classIds.length == 1, "Wrong number of compiled classes in repository: " + classIds.length);
         myClass = (ClsClassImpl)getRepositoryElementsManager().findOrCreatePsiElementById(classIds[0]);
       }
       else {
         myClass = new ClsClassImpl(myManager, this, new ClassFileData(getVirtualFile()));
+        myContentsUnloaded = false;
       }
     }
     return new PsiClass[]{myClass};
