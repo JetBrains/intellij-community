@@ -30,7 +30,7 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
     private boolean onTheFly = false;
     private List<ProblemDescriptor> errors = null;
     private boolean classVisited = false;
-    private ProblemsHolder holder;
+    private ProblemsHolder holder = null;
 
     public void setInspection(BaseInspection inspection){
         this.inspection = inspection;
@@ -45,13 +45,21 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
         final PsiElement nameToken = methodExpression.getReferenceNameElement();
-        registerError(nameToken != null ? nameToken : expression, infos);
+        if (nameToken == null) {
+            registerError(expression, infos);
+        } else {
+            registerError(nameToken, infos);
+        }
     }
 
     protected void registerStatementError(PsiStatement statement,
                                           Object... infos){
         final PsiElement statementToken = statement.getFirstChild();
-        registerError(statementToken != null ? statementToken : statement, infos);
+        if (statementToken == null) {
+            registerError(statement, infos);
+        } else {
+            registerError(statementToken, infos);
+        }
     }
 
     protected void registerClassError(PsiClass aClass, Object... infos){
@@ -68,23 +76,39 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         } else {
             nameIdentifier = aClass.getNameIdentifier();
         }
-        registerError(nameIdentifier != null ? nameIdentifier : aClass.getContainingFile(), infos);
+        if (nameIdentifier == null) {
+            registerError(aClass.getContainingFile(), infos);
+        } else {
+            registerError(nameIdentifier, infos);
+        }
     }
 
     protected void registerMethodError(PsiMethod method, Object... infos){
         final PsiElement nameIdentifier = method.getNameIdentifier();
-        registerError(nameIdentifier != null ? nameIdentifier : method.getContainingFile(), infos);
+        if (nameIdentifier == null) {
+            registerError(method.getContainingFile(), infos);
+        } else {
+            registerError(nameIdentifier, infos);
+        }
     }
 
     protected void registerVariableError(PsiVariable variable, Object... infos){
         final PsiElement nameIdentifier = variable.getNameIdentifier();
-        registerError(nameIdentifier != null ? nameIdentifier : variable.getContainingFile(), infos);
+        if (nameIdentifier == null) {
+            registerError(variable, infos);
+        } else {
+            registerError(nameIdentifier, infos);
+        }
     }
 
-    protected void registerTypeParameterError(PsiTypeParameter param,
+    protected void registerTypeParameterError(PsiTypeParameter typeParameter,
                                               Object... infos){
-        final PsiElement nameIdentifier = param.getNameIdentifier();
-        registerError(nameIdentifier, infos);
+        final PsiElement nameIdentifier = typeParameter.getNameIdentifier();
+        if (nameIdentifier == null) {
+            registerError(typeParameter, infos);
+        } else {
+            registerError(nameIdentifier, infos);
+        }
     }
 
     protected void registerFieldError(PsiField field, Object... infos){
@@ -92,8 +116,8 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         registerError(nameIdentifier, infos);
     }
 
-    protected void registerModifierError(String modifier,
-                                         PsiModifierListOwner parameter,
+    protected void registerModifierError(@NotNull String modifier,
+                                         @NotNull PsiModifierListOwner parameter,
                                          Object... infos){
         final PsiModifierList modifiers = parameter.getModifierList();
         if(modifiers == null){

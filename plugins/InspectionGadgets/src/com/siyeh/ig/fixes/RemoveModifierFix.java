@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class RemoveModifierFix extends InspectionGadgetsFix {
     private final String modifierText;
@@ -30,8 +31,10 @@ public class RemoveModifierFix extends InspectionGadgetsFix {
         modifierText = modifier.getText();
     }
 
+    @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message("remove.modifier.quickfix", modifierText);
+      return InspectionGadgetsBundle.message("remove.modifier.quickfix",
+              modifierText);
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)
