@@ -20,6 +20,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *  @author dsl
@@ -102,6 +105,29 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
   public void setRootModel(ModifiableRootModel rootModel) {
     LOG.assertTrue(myLibraryTable == null);
     myRootModel = rootModel;
+  }
+
+  public boolean allPathsValid(OrderRootType type) {
+    final VirtualFile[] files = getFiles(type);
+    final Set<String> validUrls;
+    if (files.length > 0) {
+      validUrls = new HashSet<String>();
+      for (VirtualFile file : files) {
+        validUrls.add(file.getUrl());
+      }
+    }
+    else {
+      validUrls = Collections.emptySet();
+    }
+
+    final String[] urls = getUrls(type);
+    for (String url : urls) {
+      if (!validUrls.contains(url)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   public RootProvider getRootProvider() {

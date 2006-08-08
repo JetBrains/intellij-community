@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.roots.ui.configuration.ModulesConfigurable">
   <grid id="27dc6" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="10">
-    <margin top="4" left="4" bottom="4" right="4"/>
+    <margin top="14" left="4" bottom="4" right="4"/>
     <constraints>
-      <xy x="20" y="20" width="350" height="270"/>
+      <xy x="20" y="20" width="907" height="340"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -41,7 +41,7 @@
       </grid>
       <component id="faaba" class="javax.swing.JLabel">
         <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/ProjectBundle" key="project.compiler.output"/>

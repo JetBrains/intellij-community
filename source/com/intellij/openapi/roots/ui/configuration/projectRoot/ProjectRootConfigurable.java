@@ -24,6 +24,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
@@ -152,14 +153,16 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
             append(displayName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           } else {
             final Object object = node.getConfigurable().getEditableObject();
-            if (isUnused(object, node)){
-              append(displayName, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-              setToolTipText(ProjectBundle.message("project.root.unused.tooltip", displayName));
-            }
-            else if (isInvalid(object)){
-              append(displayName, new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED,
-                                                           selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground(), Color.red));
-              setToolTipText(ProjectBundle.message("project.root.misconfigured.tooltip", displayName));
+            final boolean unused = isUnused(object, node);
+            final boolean invalid = isInvalid(object);
+            if (unused || invalid){
+              Color fg = unused
+                         ? UIUtil.getTextInactiveTextColor()
+                         : selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground();
+              append(displayName, new SimpleTextAttributes(invalid ? SimpleTextAttributes.STYLE_WAVED : SimpleTextAttributes.STYLE_PLAIN,
+                                                           fg,
+                                                           Color.red));
+              setToolTipText(ProjectBundle.message("project.root.tooltip", displayName, invalid ? (unused ? 3 : 1) : 2));
             }
             else {
               append(displayName, selected && hasFocus ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -197,6 +200,11 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
           });
         }
       }, 0);
+    } else if (object instanceof LibraryEx) {
+      final LibraryEx library = (LibraryEx)object;
+      return !(library.allPathsValid(OrderRootType.CLASSES) &&
+               library.allPathsValid(OrderRootType.JAVADOC) &&
+               library.allPathsValid(OrderRootType.SOURCES));
     }
     return false;
   }
