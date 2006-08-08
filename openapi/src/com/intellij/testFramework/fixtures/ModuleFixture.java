@@ -22,6 +22,6 @@ import com.intellij.openapi.module.Module;
 /**
  * @author mike
  */
-public interface ModuleFixture {
+public interface ModuleFixture extends IdeaTestFixture {
   Module getModule() throws Exception;
 }

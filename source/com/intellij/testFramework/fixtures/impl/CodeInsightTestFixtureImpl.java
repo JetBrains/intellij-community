@@ -8,10 +8,10 @@ import com.intellij.codeInsight.completion.CodeCompletionHandler;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -24,6 +24,8 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,11 +45,13 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -87,30 +91,76 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
   public void testHighlighting(final boolean checkWarnings,
                                final boolean checkInfos,
                                final boolean checkWeakWarnings,
-                               final String... filePaths) {
+                               final String... filePaths) throws Throwable {
 
-    new WriteCommandAction(myProjectFixture.getProject()) {
+    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
-      protected void run(final Result result) throws Throwable {
+      protected void run() throws Throwable {
         configureByFiles(filePaths);
         collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings);
       }
-    }.execute();
+    }.execute().throwException();
   }
 
-  public void testHighlighting(final String... filePaths) {
+  public void testHighlighting(final String... filePaths) throws Throwable {
     testHighlighting(true, true, true, filePaths);
   }
 
-  public void testCompletion(final String[] filesBefore, final String fileAfter) {
-    new WriteCommandAction(myProjectFixture.getProject()) {
+  @NotNull
+  public Collection<IntentionAction> getAvailableIntentions(final String... filePaths) throws Throwable {
+    final List<IntentionAction> availableActions = new ArrayList<IntentionAction>();
+    final Project project = myProjectFixture.getProject();
+    new WriteCommandAction.Simple(project) {
 
+      protected void run() throws Throwable {
+        configureByFiles(filePaths);
+
+        final Collection<HighlightInfo> infos = doHighlighting();
+        for (HighlightInfo info :infos) {
+          final int startOffset = info.fixStartOffset;
+          final int endOffset = info.fixEndOffset;
+          if (info.quickFixActionRanges != null) {
+            for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
+              IntentionAction action = pair.first.getAction();
+              TextRange range = pair.second;
+              if (action.isAvailable(project, myEditor, myFile)) {
+                availableActions.add(action);
+                if (pair.first.getOptions() != null) {
+                  for (IntentionAction intentionAction : pair.first.getOptions()) {
+                    if (intentionAction.isAvailable(project, myEditor, myFile)) {
+                      availableActions.add(intentionAction);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+      }
+    }.execute().throwException();
+
+    return availableActions;
+  }
+
+  public void launchAction(final IntentionAction action) throws Throwable {
+    new WriteCommandAction(myProjectFixture.getProject()) {
       protected void run(final Result result) throws Throwable {
+        action.invoke(getProject(), getEditor(), getFile());
+      }
+    }.execute().throwException();
+
+  }
+
+  public void testCompletion(final String[] filesBefore, final String fileAfter) throws Throwable {
+    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
+
+      protected void run() throws Throwable {
         configureByFiles(filesBefore);
         new CodeCompletionHandler().invoke(getProject(), myEditor, myFile);
         checkResultByFile(fileAfter, false);
       }
-    }.execute();
+    }.execute().throwException();
   }
 
   public void setUp() throws Exception {
@@ -188,6 +238,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     return infos;
   }
 
+  @NotNull
   protected Collection<HighlightInfo> doHighlighting() {
     final Project project = myProjectFixture.getProject();
 
@@ -232,8 +283,16 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     return myTestDataPath;
   }
 
-  protected Project getProject() {
+  public Project getProject() {
     return myProjectFixture.getProject();
+  }
+
+  public Editor getEditor() {
+    return myEditor;
+  }
+
+  public PsiFile getFile() {
+    return myFile;
   }
 
   protected void checkResultByFile(@NonNls String filePath, boolean stripTrailingSpaces) {

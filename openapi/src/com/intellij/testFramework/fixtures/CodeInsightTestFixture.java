@@ -18,6 +18,14 @@
 package com.intellij.testFramework.fixtures;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiFile;
 
 /**
  * @author Dmitry Avdeev
@@ -36,6 +44,12 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   @NonNls String END_LINE_HIGHLIGHT_MARKER = "EOLError";
   @NonNls String END_LINE_WARNING_MARKER = "EOLWarning";
 
+  Project getProject();
+
+  Editor getEditor();
+  
+  PsiFile getFile();
+
   void setTestDataPath(String dataPath);
 
   String getTempDirPath();
@@ -45,19 +59,24 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * Checks for {@link #ERROR_MARKER} markers by default
    *
    * @param filePaths the first file is tested only; the others are just copied along the first
-   * @param checkWarnings Enables {@link #WARNING_MARKER} support
-   * @param checkInfos Enables {@link #INFO_MARKER} support
-   * @param checkWeakWarnings Enables {@link #INFORMATION_MARKER} support
+   * @param checkWarnings enables {@link #WARNING_MARKER} support
+   * @param checkInfos enables {@link #INFO_MARKER} support
+   * @param checkWeakWarnings enables {@link #INFORMATION_MARKER} support
    */
-  void testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, String... filePaths);
+  void testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, String... filePaths) throws Throwable;
 
   /**
    * Runs highliting test for the given files.
-   * The same as testHighlighting(boolean, boolean, boolean, String...) with all options set
+   * The same as {@link #testHighlighting(boolean, boolean, boolean, String...)} with all options set
    *
    * @param filePaths the first file is tested only; the others are just copied along the first
    */
-  void testHighlighting(String... filePaths);
+  void testHighlighting(String... filePaths) throws Throwable;
 
-  void testCompletion(String[] filesBefore, String fileAfter);
+  @NotNull
+  Collection<IntentionAction> getAvailableIntentions(String... filePaths) throws Throwable;
+
+  void launchAction(IntentionAction action) throws Throwable;
+
+  void testCompletion(String[] filesBefore, String fileAfter) throws Throwable;
 }

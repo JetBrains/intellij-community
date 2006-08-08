@@ -26,7 +26,7 @@ public class AntMultiFileCompletionTest extends TestCase {
     return PathManager.getHomePath() + "/plugins/ant/tests/data/psi/completion/";
   }
 
-  public void testPropertyCompletion() throws Exception {
+  public void testPropertyCompletion() throws Throwable {
     if (true) return;
     final String testName = "PropertyCompletion";
     doTestFor(
@@ -35,7 +35,7 @@ public class AntMultiFileCompletionTest extends TestCase {
     );
   }
 
-  public void testPropertyCompletion2() throws Exception {
+  public void testPropertyCompletion2() throws Throwable {
     if (true) return;
     final String testName = "PropertyCompletion2";
     doTestFor(
@@ -44,7 +44,7 @@ public class AntMultiFileCompletionTest extends TestCase {
     );
   }
 
-  private void doTestFor(final String[] fileNames, final String ext) throws Exception {
+  private void doTestFor(final String[] fileNames, final String ext) throws Throwable {
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
     final CodeInsightTestFixture codeInsightFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());

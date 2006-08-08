@@ -24,4 +24,12 @@ class ModuleFixtureImpl implements ModuleFixture {
     myModule = myBuilder.buildModule();
     return myModule;
   }
+
+  public void setUp() throws Exception {
+    getModule();
+  }
+
+  public void tearDown() throws Exception {
+    myModule = null;
+  }
 }
