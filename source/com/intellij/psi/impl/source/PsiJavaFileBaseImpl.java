@@ -454,6 +454,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   private LanguageLevel getLanguageLevelInner() {
+    if (myOriginalFile != null) return ((PsiJavaFile)myOriginalFile).getLanguageLevel();
     final VirtualFile virtualFile = getVirtualFile();
     if (virtualFile == null) {
       final PsiFile originalFile = getOriginalFile();

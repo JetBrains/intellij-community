@@ -6,14 +6,13 @@ import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.scope.processor.PsiResolverProcessor;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class ClassResolverProcessor extends BaseScopeProcessor implements NameHint, ElementClassHint, PsiResolverProcessor {
+public class ClassResolverProcessor extends BaseScopeProcessor implements NameHint, ElementClassHint {
   private final String myClassName;
   private PsiElement myPlace;
   private PsiClass myAccessClass = null;
@@ -175,7 +174,4 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     myResult = result;
   }
 
-  public String getProcessorType() {
-    return "class resolver";
-  }
 }

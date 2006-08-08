@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.infos.CandidateInfo;
@@ -8,16 +9,14 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaVariableConflictResolver;
 import com.intellij.psi.scope.processor.ConflictFilterProcessor;
-import com.intellij.psi.scope.processor.PsiResolverProcessor;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.pom.java.LanguageLevel;
 
 import java.util.ArrayList;
 
 /**
  * @author ik, dsl
  */
-public class VariableResolverProcessor extends ConflictFilterProcessor implements NameHint, ElementClassHint, PsiResolverProcessor {
+public class VariableResolverProcessor extends ConflictFilterProcessor implements NameHint, ElementClassHint {
   private static final ClassFilter ourFilter = new ClassFilter(PsiVariable.class);
 
   private final PsiElement myFromElement;
@@ -73,10 +72,6 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   public void add(PsiElement element, PsiSubstitutor substitutor) {
     final boolean staticProblem = myStaticScopeFlag && !(((PsiVariable)element).hasModifierProperty(PsiModifier.STATIC));
     super.add(new CandidateInfo(element, substitutor, myFromElement, myAccessClass, staticProblem, myCurrentFileContext));
-  }
-
-  public String getProcessorType(){
-    return "variables resolver";
   }
 
   public boolean shouldProcess(Class elementClass) {

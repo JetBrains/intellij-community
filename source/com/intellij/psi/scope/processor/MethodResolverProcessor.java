@@ -8,7 +8,7 @@ import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 
 import java.util.ArrayList;
 
-public class MethodResolverProcessor extends MethodCandidatesProcessor implements NameHint, ElementClassHint, PsiResolverProcessor {
+public class MethodResolverProcessor extends MethodCandidatesProcessor implements NameHint, ElementClassHint {
   private boolean myStopAcceptingCandidates = false;
 
   public MethodResolverProcessor(PsiMethodCallExpression place){
@@ -22,10 +22,6 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor implement
     setIsConstructor(true);
     setAccessClass(classConstr);
     setArgumentList(argumentList);
-  }
-
-  public String getProcessorType(){
-    return "method resolver";
   }
 
   public boolean shouldProcess(Class elementClass) {

@@ -1,9 +1,8 @@
 package com.intellij.psi.scope.processor;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
@@ -65,11 +64,6 @@ public class ConflictFilterProcessor extends FilterScopeProcessor
       myResolver.handleProcessorEvent(event, associated);
     }
   }
-
-  public void forceResult(JavaResolveResult[] result){
-    myCachedResult = result;
-  }
-
 
   public JavaResolveResult[] getResult(){
     if(myCachedResult == null){
