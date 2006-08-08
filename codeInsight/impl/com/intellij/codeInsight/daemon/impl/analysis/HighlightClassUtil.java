@@ -22,8 +22,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiMatcherImpl;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -451,7 +455,7 @@ public class HighlightClassUtil {
         exceptions.add(referencedType);
       }
     }
-    if (exceptions.size() != 0) {
+    if (!exceptions.isEmpty()) {
       return HighlightUtil.getUnhandledExceptionsDescriptor(exceptions.toArray(new PsiClassType[exceptions.size()]));
     }
     return null;
@@ -774,7 +778,8 @@ public class HighlightClassUtil {
       placeToSearchEnclosingFrom = expression;
     }
 
-    if (hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom, true)) return null;
+    if (outerClass instanceof JspClass
+        || hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom, true)) return null;
     return reportIllegalEnclosingUsage(placeToSearchEnclosingFrom, aClass, outerClass, expression);
   }
 
