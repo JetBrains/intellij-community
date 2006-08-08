@@ -15,11 +15,14 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 
 public class LayeredIcon implements Icon {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LayeredIcon");
   private final Icon[] myIcons;
   private final int[] myHShifts;
   private final int[] myVShifts;
@@ -61,6 +64,7 @@ public class LayeredIcon implements Icon {
   }
 
   public void setIcon(Icon icon, int layer, int hShift, int vShift) {
+    LOG.assertTrue(icon != this);
     myIcons[layer] = icon;
     myHShifts[layer] = hShift;
     myVShifts[layer] = vShift;
@@ -102,20 +106,5 @@ public class LayeredIcon implements Icon {
     myHeight = maxY - minY;
     myXShift = -minX;
     myYShift = -minY;
-  }
-
-
-  public Icon[] getIcons() {
-    return myIcons;
-  }
-
-  public LayeredIcon replaceFirstIcon(Icon icon) {
-    LayeredIcon result = new LayeredIcon(myIcons.length);
-    System.arraycopy(myIcons, 0, result.myIcons, 0, myIcons.length);
-    System.arraycopy(myHShifts, 0, result.myHShifts, 0, myHShifts.length);
-    System.arraycopy(myVShifts, 0, result.myVShifts, 0, myVShifts.length);
-    result.myIcons[0] = icon;
-    result.recalculateSize();
-    return result;
   }
 }
