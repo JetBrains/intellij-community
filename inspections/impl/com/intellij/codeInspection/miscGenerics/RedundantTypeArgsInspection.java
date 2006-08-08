@@ -1,16 +1,15 @@
 package com.intellij.codeInspection.miscGenerics;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.daemon.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -90,6 +89,16 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
               if (!typeArguments[i].equals(inferedType)) return;
             }
 
+            final PsiCallExpression copy = (PsiCallExpression)expression.copy(); //see IDEADEV-8174
+            try {
+              copy.getTypeArgumentList().delete();
+              if (copy.resolveMethod() != element) return;
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+              return;
+            }
+
             final ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(expression.getTypeArgumentList(),
                                                                                            InspectionsBundle.message("inspection.redundant.type.problem.descriptor"),
                                                                                            myQuickFixAction,
@@ -111,7 +120,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       return InspectionsBundle.message("inspection.redundant.type.remove.quickfix");
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
       final PsiReferenceParameterList typeArgumentList = (PsiReferenceParameterList)descriptor.getPsiElement();
       try {
         typeArgumentList.delete();
