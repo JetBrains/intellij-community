@@ -21,15 +21,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
 public abstract class Location<E extends PsiElement> {
   @NonNls public static final String LOCATION = "Location";
 
-  public abstract E getPsiElement();
-  public abstract Project getProject();
-  public abstract <T extends PsiElement> Iterator<Location<T>> getAncestors(Class<T> ancestorClass, boolean strict);
+  @NotNull public abstract E getPsiElement();
+  @NotNull public abstract Project getProject();
+  @NotNull public abstract <T extends PsiElement> Iterator<Location<T>> getAncestors(Class<T> ancestorClass, boolean strict);
 
   public OpenFileDescriptor getOpenFileDescriptor() {
     final E psiElement = getPsiElement();

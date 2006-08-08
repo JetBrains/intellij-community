@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
@@ -15,13 +16,10 @@ import java.util.Iterator;
 public class MethodLocation extends Location<PsiMethod> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.info.MethodLocation");
   private final Project myProject;
-  private final PsiMethod myMethod;
+  @NotNull private final PsiMethod myMethod;
   private final Location<PsiClass> myClassLocation;
 
-  public MethodLocation(final Project project, final PsiMethod method, final Location<PsiClass> classLocation) {
-    LOG.assertTrue(method != null);
-    LOG.assertTrue(classLocation != null);
-    LOG.assertTrue(project != null);
+  public MethodLocation(@NotNull final Project project, @NotNull final PsiMethod method, @NotNull final Location<PsiClass> classLocation) {
     myProject = project;
     myMethod = method;
     myClassLocation = classLocation;
@@ -32,10 +30,12 @@ public class MethodLocation extends Location<PsiMethod> {
     return new MethodLocation(classLocation.getProject(), psiElement, classLocation);
   }
 
+  @NotNull
   public PsiMethod getPsiElement() {
     return myMethod;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
@@ -44,11 +44,10 @@ public class MethodLocation extends Location<PsiMethod> {
     return myClassLocation.getPsiElement();
   }
 
-  public <T extends PsiElement> Iterator<Location<T>> getAncestors(final Class<T> ancestorClass,
-                                                                                 final boolean strict) {
+  @NotNull
+  public <T extends PsiElement> Iterator<Location<T>> getAncestors(final Class<T> ancestorClass, final boolean strict) {
     final Iterator<Location<T>> fromClass = myClassLocation.getAncestors(ancestorClass, false);
     if (strict) return fromClass;
-    final Location<T> thisLocation = (Location<T>)(Location)this;
     return new Iterator<Location<T>>() {
       private boolean myFirstStep = ancestorClass.isInstance(myMethod);
       public boolean hasNext() {
@@ -56,7 +55,7 @@ public class MethodLocation extends Location<PsiMethod> {
       }
 
       public Location<T> next() {
-        final Location<T> location = myFirstStep ? thisLocation : fromClass.next();
+        final Location<T> location = myFirstStep ? (Location<T>)MethodLocation.this : fromClass.next();
         myFirstStep = false;
         return location;
       }

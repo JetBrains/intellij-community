@@ -21,6 +21,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -30,21 +31,22 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
   private final E myPsiElement;
   private final Project myProject;
 
-  public PsiLocation(final Project project, final E psiElement) {
-    LOG.assertTrue(psiElement != null);
-    LOG.assertTrue(project != null);
+  public PsiLocation(@NotNull final Project project, @NotNull final E psiElement) {
     myPsiElement = psiElement;
     myProject = project;
   }
 
+  @NotNull
   public E getPsiElement() {
     return myPsiElement;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @NotNull
   public <T extends PsiElement> Iterator<Location<T>> getAncestors(final Class<T> ancestorClass, final boolean strict) {
     final T first;
     if (!strict && ancestorClass.isInstance(myPsiElement)) first = (T)myPsiElement;
