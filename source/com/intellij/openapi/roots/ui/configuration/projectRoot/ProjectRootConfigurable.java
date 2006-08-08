@@ -105,6 +105,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   private Map<Library, Set<String>> myLibraryDependencyCache = new HashMap<Library, Set<String>>();
   private Map<ProjectJdk, Set<String>> myJdkDependencyCache = new HashMap<ProjectJdk, Set<String>>();
   private Map<Module, Boolean> myValidityCache = new HashMap<Module, Boolean>();
+  private Map<Library, Boolean> myLibraryPathValidityCache = new HashMap<Library, Boolean>(); //can be invalidated on startup only
   private Alarm myUpdateDependenciesAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   public ProjectRootConfigurable(Project project, ModuleManager manager) {
@@ -202,9 +203,25 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       }, 0);
     } else if (object instanceof LibraryEx) {
       final LibraryEx library = (LibraryEx)object;
-      return !(library.allPathsValid(OrderRootType.CLASSES) &&
-               library.allPathsValid(OrderRootType.JAVADOC) &&
-               library.allPathsValid(OrderRootType.SOURCES));
+      if (myLibraryPathValidityCache.containsKey(library)) return myLibraryPathValidityCache.get(library).booleanValue();
+      myUpdateDependenciesAlarm.addRequest(new Runnable(){
+        public void run() {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              boolean valid = library.allPathsValid(OrderRootType.CLASSES) && library.allPathsValid(OrderRootType.JAVADOC) && library.allPathsValid(OrderRootType.SOURCES);
+              myLibraryPathValidityCache.put(library, valid ? Boolean.FALSE : Boolean.TRUE);
+              if (valid) return;
+              SwingUtilities.invokeLater(new Runnable(){
+                public void run() {
+                  if (!myDisposed){
+                    myTree.repaint();
+                  }
+                }
+              });
+            }
+          });
+        }
+      }, 0);
     }
     return false;
   }
@@ -553,6 +570,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myJdkDependencyCache.clear();
     myLibraryDependencyCache.clear();
     myValidityCache.clear();
+    myLibraryPathValidityCache.clear();
     ProjectRootConfigurable.super.disposeUIResources();
   }
 
