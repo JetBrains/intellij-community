@@ -306,7 +306,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the first child element which was actually added (either <code>first</code> or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
-  PsiElement addRangeBefore(PsiElement first, PsiElement last, PsiElement anchor) throws IncorrectOperationException;
+  PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor) throws IncorrectOperationException;
 
   /**
    * Adds a range of elements as children to this PSI element, after the specified anchor element.
