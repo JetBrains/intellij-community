@@ -15,6 +15,8 @@
  */
 package com.intellij.util.text;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,29 +25,25 @@ import java.util.List;
 
 public class LineReader {
   private int myPos = -1;
-  private byte[] myBuffer = new byte[2];
-  private InputStream myInputStream;
+  private int[] myBuffer = new int[2];
+  private final InputStream myInputStream;
   private boolean myAtEnd = false;
 
-  public LineReader() {
-
+  public LineReader(InputStream in) {
+    myInputStream = in;
   }
 
-  public List<byte[]> readLines(InputStream in) throws IOException {
-    myInputStream = in;
+  public List<byte[]> readLines() throws IOException {
+
     ArrayList<byte[]> result = new ArrayList<byte[]>();
-    try {
-      byte[] line;
-      while ((line = readLineInternal()) != null) result.add(line);
-    } finally {
-      myInputStream.close();
-    }
+    byte[] line;
+    while ((line = readLineInternal()) != null) result.add(line);
     return result;
   }
 
   private int read() throws IOException {
     if (myPos >= 0) {
-      byte result = myBuffer[myPos];
+      int result = myBuffer[myPos];
       myPos--;
       return result;
     }
@@ -56,6 +54,7 @@ public class LineReader {
     private String myCurrentEOL = "";
     private ByteArrayOutputStream myResult = null;
 
+    @Nullable
     public byte[] execute() throws IOException {
 
       if (myAtEnd) return null;
@@ -79,8 +78,8 @@ public class LineReader {
             }
           }
           if (ch == '\r') {
-            if (myCurrentEOL.equals("") || myCurrentEOL.equals("\r")) {
-              myCurrentEOL += new String(new byte[]{(byte) ch});
+            if (myCurrentEOL.length() == 0 || myCurrentEOL.equals("\r")) {
+              myCurrentEOL += "\r";
             } else if (myCurrentEOL.equals("\r\r")) {
               unread('\r');
               unread('\r');
@@ -109,7 +108,7 @@ public class LineReader {
       try {
         myResult.flush();
       } catch (IOException e) {
-
+        //ignore
       }
 
       return myResult.toByteArray();
@@ -125,6 +124,7 @@ public class LineReader {
     }
   }
 
+  @Nullable
   private byte[] readLineInternal() throws IOException {
     return new ReadLine().execute();
   }
@@ -133,7 +133,7 @@ public class LineReader {
     myPos++;
     if (myPos >= myBuffer.length)
       throw new IOException("Push back buffer is full");
-    myBuffer[myPos] = (byte) b;
+    myBuffer[myPos] = b;
 
   }
 }

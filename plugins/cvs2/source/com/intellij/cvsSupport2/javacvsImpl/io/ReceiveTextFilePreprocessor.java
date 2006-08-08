@@ -38,21 +38,27 @@ public class ReceiveTextFilePreprocessor implements IReceiveTextFilePreprocessor
         if (charSet != null) {
           lineSeparatorBytes = charSet.encode(lineSeparator).array();
         }
-        Collection<byte[]> lines = new LineReader().readLines(new BufferedInputStream(new FileInputStream(textFileSource)));
-        for (Iterator<byte[]> each = lines.iterator(); each.hasNext();) {
-          final byte[] bytes = each.next();
-          if (charSet == null) {
-            target.write(bytes);
+        final BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(textFileSource));
+        try {
+          Collection<byte[]> lines = new LineReader(inputStream).readLines();
+          for (Iterator<byte[]> each = lines.iterator(); each.hasNext();) {
+            final byte[] bytes = each.next();
+            if (charSet == null) {
+              target.write(bytes);
+            }
+            else {
+              target.write(charSet.encode(utf8Charset.decode(ByteBuffer.wrap(bytes))).array());
+            }
+            if (each.hasNext()) {
+              if (charSet == null)
+                target.print(lineSeparator);
+              else
+                target.write(lineSeparatorBytes);
+            }
           }
-          else {
-            target.write(charSet.encode(utf8Charset.decode(ByteBuffer.wrap(bytes))).array());
-          }
-          if (each.hasNext()) {
-            if (charSet == null)
-              target.print(lineSeparator);
-            else
-              target.write(lineSeparatorBytes);
-          }
+        }
+        finally {
+          inputStream.close();
         }
       }
       finally {
