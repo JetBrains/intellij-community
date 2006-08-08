@@ -106,10 +106,14 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   }
 
   public void reset() {
-    final ProjectJdk projectJdk = ProjectRootManager.getInstance(myProject).getProjectJdk();
-    if (projectJdk != null) {
-      final String sdkName = projectJdk.getName();
-      myCbProjectJdk.setSelectedJdk((ProjectJdk)myJdksModel.findSdk(sdkName));
+    final String sdkName = ProjectRootManager.getInstance(myProject).getProjectJdkName();
+    if (sdkName != null) {
+      final ProjectJdk jdk = (ProjectJdk)myJdksModel.findSdk(sdkName);
+      if (jdk != null) {
+        myCbProjectJdk.setSelectedJdk(jdk);
+      } else {
+        myCbProjectJdk.setInvalidJdk(sdkName);
+      }
     } else {
       myCbProjectJdk.setSelectedJdk(null);
     }

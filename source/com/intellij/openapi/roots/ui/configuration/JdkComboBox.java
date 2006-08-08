@@ -60,14 +60,15 @@ class JdkComboBox extends JComboBox{
   }
 
   public JButton createSetupButton(final Project project, final ProjectJdksModel jdksModel, final JdkComboBoxItem firstItem) {
-    return createSetupButton(project, jdksModel, firstItem, null);
+    return createSetupButton(project, jdksModel, firstItem, null, false);
   }
 
 
   public JButton createSetupButton(final Project project,
                                    final ProjectJdksModel jdksModel,
                                    final JdkComboBoxItem firstItem,
-                                   final Condition<ProjectJdk> additionalSetup) {
+                                   final Condition<ProjectJdk> additionalSetup,
+                                   final boolean moduleJdkSetup) {
     final FixedSizeButton setUpButton = new FixedSizeButton(this);
     setUpButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -86,7 +87,7 @@ class JdkComboBox extends JComboBox{
           }
         });
         JBPopupFactory.getInstance()
-          .createActionGroupPopup(ProjectBundle.message("project.roots.set.up.jdk.title"), group,
+          .createActionGroupPopup(ProjectBundle.message("project.roots.set.up.jdk.title", moduleJdkSetup ? 1 : 2), group,
                                   DataManager.getInstance().getDataContext(), JBPopupFactory.ActionSelectionAid.MNEMONICS, false)
           .showUnderneathOf(setUpButton);
       }

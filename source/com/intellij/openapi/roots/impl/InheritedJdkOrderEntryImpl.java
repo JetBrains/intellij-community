@@ -89,11 +89,18 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   }
 
   public String getJdkName() {
+    final String projectJdkName = myProjectRootManager.getProjectJdkName();
     if (!getRootModel().isWritable() || ApplicationManager.getApplication().isUnitTestMode()){
-      return myProjectRootManager.getProjectJdkName();
+      return projectJdkName;
     }
     final ProjectJdk projectJdk = getJdk();
-    return projectJdk != null ? projectJdk.getName() : null;
+    if (projectJdk != null) {
+      return projectJdk.getName();
+    }
+    else {
+      final Project project = getRootModel().getModule().getProject();
+      return ProjectJdksModel.getInstance(project).findSdk(projectJdkName) == null ? projectJdkName : null;
+    }
   }
 
   private RootProvider getRootProvider() {

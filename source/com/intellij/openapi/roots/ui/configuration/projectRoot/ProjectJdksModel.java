@@ -211,7 +211,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
   public void createAddActions(DefaultActionGroup group, final JComponent parent, final Consumer<ProjectJdk> updateTree) {
     final SdkType[] types = ApplicationManager.getApplication().getComponents(SdkType.class);
     for (final SdkType type : types) {
-      final AnAction addAction = new AnAction(ProjectBundle.message("sdk.list.add.action", type.getPresentableName()),
+      final AnAction addAction = new AnAction(type.getPresentableName(),
                                               null,
                                               type.getIconForAddAction()) {
           public void actionPerformed(AnActionEvent e) {

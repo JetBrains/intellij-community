@@ -1098,4 +1098,13 @@ class RootModelImpl implements ModifiableRootModel {
       myJavadocPointerContainer.add(url);
     }
   }
+
+  public String getJdkName() {
+    for (OrderEntry orderEntry : myOrder) {
+      if (orderEntry instanceof JdkOrderEntry) {
+        return ((JdkOrderEntry)orderEntry).getJdkName();
+      }
+    }
+    return null;
+  }
 }

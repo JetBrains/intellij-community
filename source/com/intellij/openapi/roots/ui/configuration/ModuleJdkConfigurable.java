@@ -129,7 +129,7 @@ public class ModuleJdkConfigurable implements Disposable {
           }
           return false;
         }
-      });
+      }, true);
     myJdkPanel.add(setUpButton, new GridBagConstraints(2, 0, 1, 1, 1.0, 1.0,
                                                        GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                        new Insets(0, 4, 7, 0), 0, 0));
@@ -137,10 +137,14 @@ public class ModuleJdkConfigurable implements Disposable {
 
   public void reset() {
     myFreeze = true;
-    final ProjectJdk projectJdk = myRootModel.getJdk();
-    if (projectJdk != null && !myRootModel.isJdkInherited()) {
-      mySelectedModuleJdk = (ProjectJdk)myJdksModel.findSdk(projectJdk.getName());
-      myCbModuleJdk.setSelectedJdk(mySelectedModuleJdk);
+    final String jdkName = myRootModel.getJdkName();
+    if (jdkName != null && !myRootModel.isJdkInherited()) {
+      mySelectedModuleJdk = (ProjectJdk)myJdksModel.findSdk(jdkName);
+      if (mySelectedModuleJdk != null) {
+        myCbModuleJdk.setSelectedJdk(mySelectedModuleJdk);
+      } else {
+        myCbModuleJdk.setInvalidJdk(jdkName);
+      }
     }
     else {
       myCbModuleJdk.setSelectedJdk(null);

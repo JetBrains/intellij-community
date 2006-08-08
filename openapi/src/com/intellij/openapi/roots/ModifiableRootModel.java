@@ -168,4 +168,6 @@ public interface ModifiableRootModel extends ModuleRootModel {
   boolean isWritable();
 
   void setJavadocUrls(String[] urls);
+
+  String getJdkName();
 }
