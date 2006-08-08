@@ -128,7 +128,7 @@ public class MagicNumberInspection extends ExpressionInspection {
                     expression);
             if (object instanceof Integer) {
                 final int i = ((Integer)object).intValue();
-                return i >0 && i <= 10;
+                return i >= 0 && i <= 10;
             } else if (object instanceof Long) {
                 final long l = ((Long)object).longValue();
                 return l >= 0L && l <= 2L;
