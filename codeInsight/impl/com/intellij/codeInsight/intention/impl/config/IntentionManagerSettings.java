@@ -145,7 +145,7 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
     if (description != null) {
       @NonNls String descriptionText = ResourceUtil.loadText(description).toLowerCase();
       descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
-      final Set<String> words = mySearchableOptionsRegistrar.getProcessedWords(descriptionText);
+      final Set<String> words = mySearchableOptionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);
       words.addAll(mySearchableOptionsRegistrar.getProcessedWords(metaData.myFamily));
       for (String word : words) {
         ArrayList<String> descriptors = myWords2DescriptorsMap.get(word);

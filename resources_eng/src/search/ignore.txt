@@ -104,7 +104,6 @@ except
 f
 far
 few
-field
 fifty
 finding
 five
@@ -163,6 +162,8 @@ inc.
 including
 indeed
 instead
+inspectiongadgets
+intentionpowerpack
 into
 is
 isn't
@@ -199,7 +200,6 @@ maybe
 meantime
 meanwhile
 meeting
-method
 might
 million
 miss
@@ -260,6 +260,7 @@ place
 please
 pm
 possible
+power
 provide
 q
 questions
@@ -269,6 +270,7 @@ really
 reason
 recently
 remove
+report
 rest
 rid
 rotten
@@ -416,6 +418,7 @@ whole
 whom
 whomever
 whose
+which
 will
 wish
 with

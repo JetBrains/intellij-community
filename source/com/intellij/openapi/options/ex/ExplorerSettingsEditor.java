@@ -365,7 +365,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
         final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
         final @NonNls String searchPattern = mySearchField.getText();
         if (searchPattern != null && searchPattern.length() > 0) {
-          myOptionContainers = optionsRegistrar.getConfigurables(myGroups, searchPattern, CodeStyleSettingsManager.getInstance(myProject).USE_PER_PROJECT_SETTINGS);
+          myOptionContainers = optionsRegistrar.getConfigurables(myGroups, e.getType(), myOptionContainers, searchPattern, CodeStyleSettingsManager.getInstance(myProject).USE_PER_PROJECT_SETTINGS);
         } else {
           myOptionContainers = null;
         }
@@ -618,6 +618,6 @@ public class ExplorerSettingsEditor extends DialogWrapper {
       public void run() {
         ((ShowSettingsUtilImpl)ShowSettingsUtil.getInstance()).showControlPanelOptions(myProject, myGroups, preselectedConfigurable);
       }
-    }, ModalityState.NON_MMODAL);
+    }, ModalityState.NON_MODAL);
   }
 }

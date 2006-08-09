@@ -131,14 +131,11 @@ public class IntentionSettingsPanel {
   }
 
   public Runnable showOption(final SearchableConfigurable configurable, final String option) {
-    final Runnable runnable = SearchUtil.lightOptions(configurable, myPanel, option, myGlassPanel);
-    final String path = SearchableOptionsRegistrar.getInstance().getInnerPath(configurable, option);
-    if (path == null) return runnable;
     return new Runnable() {
       public void run() {
         myIntentionSettingsTree.reset(myIntentionSettingsTree.filterModel(option, true));
         myIntentionSettingsTree.setFilter(option);
-        runnable.run();
+        SearchUtil.lightOptions(configurable, myPanel, option, myGlassPanel).run();
       }
     };
   }

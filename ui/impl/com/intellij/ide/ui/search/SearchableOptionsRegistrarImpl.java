@@ -26,19 +26,20 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.DocumentEvent;
 import java.util.*;
 
 /**
  * User: anna
  * Date: 07-Feb-2006
  */
-public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  implements ApplicationComponent {
+public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar implements ApplicationComponent {
 
   private Map<String, Set<OptionDescription>> myStorage = new THashMap<String, Set<OptionDescription>>(1500, 0.9f);
   private Map<String, String> myId2Name = new THashMap<String, String>(20, 0.9f);
 
   private Set<String> myStopWords = new HashSet<String>();
-  private Map<Pair<String,String>, Set<String>> myHighlightOption2Synonym = new THashMap<Pair<String, String>, Set<String>>();
+  private Map<Pair<String, String>, Set<String>> myHighlightOption2Synonym = new THashMap<Pair<String, String>, Set<String>>();
 
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private StringInterner myIdentifierTable = new StringInterner();
@@ -106,7 +107,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
               }
               final Pair<String, String> key = Pair.create(option, id);
               Set<String> foundSynonyms = myHighlightOption2Synonym.get(key);
-              if (foundSynonyms == null){
+              if (foundSynonyms == null) {
                 foundSynonyms = new THashSet<String>();
                 myHighlightOption2Synonym.put(key, foundSynonyms);
               }
@@ -125,119 +126,166 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
 
   private void putOptionWithHelpId(String option, final String id, final String groupName, String hit, final String path) {
     if (myStopWords.contains(option)) return;
-    option = PorterStemmerUtil.stem(option);
-    if (option == null) return;
-    if (myStopWords.contains(option)) return;
-    if (!myId2Name.containsKey(id) && groupName != null){
+    String stopWord = PorterStemmerUtil.stem(option);
+    if (stopWord == null) return;
+    if (myStopWords.contains(stopWord)) return;
+    if (!myId2Name.containsKey(id) && groupName != null) {
       myId2Name.put(myIdentifierTable.intern(id), myIdentifierTable.intern(groupName));
     }
 
     Set<OptionDescription> configs = myStorage.get(option);
-    if (configs == null){
+    if (configs == null) {
       configs = new THashSet<OptionDescription>(3, 0.9f);
       myStorage.put(option, configs);
     }
 
-    configs.add(new OptionDescription(null,
-                                      myIdentifierTable.intern(id),
-                                      hit != null ? myIdentifierTable.intern(hit) : null,
+    configs.add(new OptionDescription(null, myIdentifierTable.intern(id), hit != null ? myIdentifierTable.intern(hit) : null,
                                       path != null ? myIdentifierTable.intern(path) : null));
   }
 
   @NotNull
-  public Set<Configurable> getConfigurables(ConfigurableGroup[] configurables, String option, boolean showProjectCodeStyle) {
-    Set<String> options = getProcessedWords(option);
-    Set<Configurable> result = new HashSet<Configurable>();
+  public Set<Configurable> getConfigurables(ConfigurableGroup[] groups,
+                                            final DocumentEvent.EventType type,
+                                            Set<Configurable> configurables,
+                                            String option,
+                                            boolean showProjectCodeStyle) {
+
+    Set<String> options = getProcessedWordsWithoutStemming(option);
+    if (configurables == null) {
+      configurables = new HashSet<Configurable>();
+      for (ConfigurableGroup group : groups) {
+        configurables.addAll(Arrays.asList(group.getConfigurables()));
+      }
+    }
+    final Set<Configurable> currentConfigurables = new HashSet<Configurable>(configurables);
     Set<String> helpIds = null;
     for (String opt : options) {
-      final Set<OptionDescription> optionIds = myStorage.get(opt);
-      if (optionIds == null) return result;
+      final Set<OptionDescription> optionIds = getAcceptableDescriptions(opt);
+      if (optionIds == null) {
+        configurables.clear();
+        return configurables;
+      }
       final Set<String> ids = new HashSet<String>();
       for (OptionDescription id : optionIds) {
         ids.add(id.getConfigurableId());
       }
-      if (helpIds == null){
+      if (helpIds == null) {
         helpIds = ids;
       }
       helpIds.retainAll(ids);
     }
     if (helpIds != null) {
-      for (ConfigurableGroup configurableGroup : configurables) {
-        final Configurable[] groupConfigurables = configurableGroup.getConfigurables();
-        for (Configurable configurable : groupConfigurables) {
-          if (configurable instanceof ProjectCodeStyleConfigurable && !showProjectCodeStyle) continue;
-          if (configurable instanceof CodeStyleSchemesConfigurable && showProjectCodeStyle) continue;
-          if (configurable instanceof SearchableConfigurable && helpIds.contains(((SearchableConfigurable)configurable).getId())){
-            result.add(configurable);
-          }
+      for (Iterator<Configurable> it = configurables.iterator(); it.hasNext();) {
+        Configurable configurable = it.next();
+        if ((configurable instanceof ProjectCodeStyleConfigurable && !showProjectCodeStyle) ||
+            (configurable instanceof CodeStyleSchemesConfigurable && showProjectCodeStyle)) {
+          it.remove();
+          continue;
         }
+        if (!(configurable instanceof SearchableConfigurable && helpIds.contains(((SearchableConfigurable)configurable).getId()))) {
+          it.remove();
+        }
+      }
+    }
+    if (type == DocumentEvent.EventType.REMOVE && currentConfigurables.equals(configurables)) {
+      return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, showProjectCodeStyle);
+    }
+    return configurables;
+  }
+
+  private Set<OptionDescription> getAcceptableDescriptions(final String prefix) {
+    if (prefix == null) return null;
+    final String stemmedPrefix = PorterStemmerUtil.stem(prefix);
+    if (stemmedPrefix == null) return null;
+    Set<OptionDescription> result = null;
+    for (String option : myStorage.keySet()) {
+      if (option.startsWith(prefix) || option.startsWith(stemmedPrefix)) {
+        if (result == null) {
+          result = new THashSet<OptionDescription>();
+        }
+        result.addAll(myStorage.get(option));
       }
     }
     return result;
   }
 
-
   public String getInnerPath(SearchableConfigurable configurable, @NonNls String option) {
-    Set<String> path = null;
-    final Set<String> words = getProcessedWords(option);
+    Set<OptionDescription> path = null;
+    final Set<String> words = getProcessedWordsWithoutStemming(option);
     for (String word : words) {
-      Set<OptionDescription> configs = myStorage.get(word);
+      Set<OptionDescription> configs = getAcceptableDescriptions(word);
       if (configs == null) return null;
-      final Set<String> paths = new HashSet<String>();
+      final Set<OptionDescription> paths = new HashSet<OptionDescription>();
       for (OptionDescription config : configs) {
-        if (Comparing.strEqual(config.getConfigurableId(), configurable.getId())){
-          paths.add(config.getPath());
+        if (Comparing.strEqual(config.getConfigurableId(), configurable.getId())) {
+          paths.add(config);
         }
       }
-      if (path == null){
+      if (path == null) {
         path = paths;
       }
       path.retainAll(paths);
     }
-    return path == null || path.isEmpty() ? null : path.iterator().next();
+    if (path == null || path.isEmpty()) {
+      return null;
+    }
+    else {
+      OptionDescription result = null;
+      for (OptionDescription description : path) {
+        final String hit = description.getHit();
+        if (hit != null) {
+          boolean theBest = true;
+          for (String word : words) {
+            if (hit.indexOf(word) == -1) {
+              theBest = false;
+            }
+          }
+          if (theBest) return description.getPath();
+        }
+        result = description;
+      }
+      return result != null ? result.getPath() : null;
+    }
   }
 
-  public boolean isStopWord(String word){
+  public boolean isStopWord(String word) {
     return myStopWords.contains(word);
   }
 
-  public Set<String> getSynonym(final String option, final SearchableConfigurable configurable) {
+  public Set<String> getSynonym(final String option, @NotNull final SearchableConfigurable configurable) {
     return myHighlightOption2Synonym.get(Pair.create(option, configurable.getId()));
   }
 
-  public Map<String, Set<String>> findPossibleExtension(String prefix, final Project project) {
+  public Map<String, Set<String>> findPossibleExtension(@NotNull String prefix, final Project project) {
     final boolean perProject = CodeStyleSettingsManager.getInstance(project).USE_PER_PROJECT_SETTINGS;
     final Map<String, Set<String>> result = new THashMap<String, Set<String>>();
     int count = 0;
-    final Set<String> prefixes = getProcessedWords(prefix);
+    final Set<String> prefixes = getProcessedWordsWithoutStemming(prefix);
     for (String opt : prefixes) {
-      for (String option : myStorage.keySet()) {
-        if (option.startsWith(opt)){
-          Set<OptionDescription> configs = myStorage.get(option);
-          if (configs == null) continue;
-          for (OptionDescription description: configs) {
-            String groupName = myId2Name.get(description.getConfigurableId());
-            if (perProject) {
-              if (Comparing.strEqual(groupName, ApplicationBundle.message("title.global.code.style"))){
-                groupName = ApplicationBundle.message("title.project.code.style");
-              }
-            } else {
-              if (Comparing.strEqual(groupName, ApplicationBundle.message("title.project.code.style"))){
-                groupName = ApplicationBundle.message("title.global.code.style");
-              }
-            }
-            Set<String> foundHits = result.get(groupName);
-            if (foundHits == null){
-              foundHits = new THashSet<String>();
-              result.put(groupName, foundHits);
-            }
-            foundHits.add(description.getHit());
-            count++;
+      Set<OptionDescription> configs = getAcceptableDescriptions(opt);
+      if (configs == null) continue;
+      for (OptionDescription description : configs) {
+        String groupName = myId2Name.get(description.getConfigurableId());
+        if (perProject) {
+          if (Comparing.strEqual(groupName, ApplicationBundle.message("title.global.code.style"))) {
+            groupName = ApplicationBundle.message("title.project.code.style");
           }
         }
+        else {
+          if (Comparing.strEqual(groupName, ApplicationBundle.message("title.project.code.style"))) {
+            groupName = ApplicationBundle.message("title.global.code.style");
+          }
+        }
+        Set<String> foundHits = result.get(groupName);
+        if (foundHits == null) {
+          foundHits = new THashSet<String>();
+          result.put(groupName, foundHits);
+        }
+        foundHits.add(description.getHit());
+        count++;
       }
     }
-    if (count > LOAD_FACTOR){
+    if (count > LOAD_FACTOR) {
       result.clear();
     }
     return result;
@@ -259,7 +307,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
   public void disposeComponent() {
   }
 
-  public Set<String> getProcessedWordsWithoutStemming(@NotNull String text){
+  public Set<String> getProcessedWordsWithoutStemming(@NotNull String text) {
     Set<String> result = new HashSet<String>();
     @NonNls final String toLowerCase = text.toLowerCase();
     final String[] options = toLowerCase.split("[\\W&&[^_-]]");
@@ -267,13 +315,15 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
       for (String opt : options) {
         if (opt == null) continue;
         if (isStopWord(opt)) continue;
+        final String processed = PorterStemmerUtil.stem(opt);
+        if (isStopWord(processed)) continue;
         result.add(opt);
       }
     }
     return result;
   }
 
-  public Set<String> getProcessedWords(@NotNull String text){
+  public Set<String> getProcessedWords(@NotNull String text) {
     Set<String> result = new HashSet<String>();
     @NonNls final String toLowerCase = text.toLowerCase();
     final String[] options = toLowerCase.split("[\\W&&[^_-]]");
@@ -288,13 +338,14 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar  
     return result;
   }
 
-  public Set<String> replaceSynonyms(Set<String> options, SearchableConfigurable configurable){
+  public Set<String> replaceSynonyms(Set<String> options, SearchableConfigurable configurable) {
     final Set<String> result = new HashSet<String>(options);
     for (String option : options) {
       final Set<String> synonyms = getSynonym(option, configurable);
       if (synonyms != null) {
         result.addAll(synonyms);
-      } else {
+      }
+      else {
         result.add(option);
       }
     }

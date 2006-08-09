@@ -23,6 +23,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.DocumentEvent;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,7 +37,11 @@ public abstract class SearchableOptionsRegistrar{
   }
 
   @NotNull
-  public abstract Set<Configurable> getConfigurables(ConfigurableGroup[] configurables, String option, final boolean showProjectCodeStyle);
+  public abstract Set<Configurable> getConfigurables(final ConfigurableGroup[] groups,
+                                                     final DocumentEvent.EventType type,
+                                                     final Set<Configurable> configurables,
+                                                     final String option,
+                                                     final boolean showProjectCodeStyle);
 
   public abstract String getInnerPath(SearchableConfigurable configurable, String option);
 
