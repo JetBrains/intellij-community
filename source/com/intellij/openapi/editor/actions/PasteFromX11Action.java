@@ -1,22 +1,21 @@
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.util.SystemInfo;
 
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.MouseEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 
 /**
  * Author: msk
@@ -30,7 +29,7 @@ public class PasteFromX11Action extends EditorAction {
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    if (editor == null || !SystemInfo.isUnix) {
+    if (editor == null || !SystemInfo.isUnix || SystemInfo.isMac) {
       presentation.setEnabled(false);
     }
     else {
