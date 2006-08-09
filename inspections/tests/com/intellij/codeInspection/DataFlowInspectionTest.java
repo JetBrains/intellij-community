@@ -11,6 +11,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.testFramework.InspectionTestCase;
+import org.jetbrains.annotations.NonNls;
 
 public class DataFlowInspectionTest extends InspectionTestCase {
   private void doTest() throws Exception {
@@ -116,4 +117,9 @@ public class DataFlowInspectionTest extends InspectionTestCase {
   public void testIDEADEV2605() throws Exception { doTest15(); }
   public void testConstantsDifferentTypes() throws Exception { doTest15(); }
   public void testBoxingNaN() throws Exception { doTest15(); }
+  public void testJspTemplateStatement() throws Exception {
+    @NonNls final String testDir = getTestDataPath() + "/"+ "dataFlow/" + getTestName(false);
+    runTool(testDir, "java 1.4", new LocalInspectionToolWrapper(new DataFlowInspection()));
+    // should not crash
+  }
 }

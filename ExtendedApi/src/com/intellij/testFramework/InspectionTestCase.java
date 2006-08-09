@@ -68,6 +68,19 @@ public abstract class InspectionTestCase extends PsiTestCase {
 
   public void doTest(@NonNls String folderName, InspectionTool tool, @NonNls final String jdkName, boolean checkRange) throws Exception {
     final String testDir = getTestDataPath() + "/"+folderName;
+    runTool(testDir, jdkName, tool);
+
+    final Element root = new Element("problems");
+    final Document doc = new Document(root);
+    tool.exportResults(root);
+
+    File file = new File(testDir + "/expected.xml");
+    Document expectedDocument = JDOMUtil.loadDocument(file);
+
+    compareWithExpected(expectedDocument, doc, checkRange);
+  }
+
+  protected void runTool(@NonNls final String testDir, @NonNls final String jdkName, final InspectionTool tool) {
     final VirtualFile[] sourceDir = new VirtualFile[1];
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -109,9 +122,6 @@ public abstract class InspectionTestCase extends PsiTestCase {
       }
     });
 
-    final Element root = new Element("problems");
-    final Document doc = new Document(root);
-
     PsiManager psiManager = PsiManager.getInstance(myProject);
     AnalysisScope scope = new AnalysisScope(psiManager.findDirectory(sourceDir[0]));
     InspectionManagerEx inspectionManager = (InspectionManagerEx) InspectionManager.getInstance(myProject);
@@ -130,13 +140,6 @@ public abstract class InspectionTestCase extends PsiTestCase {
     do {
       globalContext.processSearchRequests();
     } while (tool.queryExternalUsagesRequests(inspectionManager));
-
-    tool.exportResults(root);
-
-    File file = new File(testDir + "/expected.xml");
-    Document expectedDocument = JDOMUtil.loadDocument(file);
-
-    compareWithExpected(expectedDocument, doc, checkRange);
   }
 
   @NonNls
@@ -146,14 +149,14 @@ public abstract class InspectionTestCase extends PsiTestCase {
 
   private static void compareWithExpected(Document expectedDoc, Document doc, boolean checkRange) throws Exception {
     ArrayList<Object> expectedProblems = new ArrayList<Object>(expectedDoc.getRootElement().getChildren("problem"));
-    ArrayList reportedProblems = new ArrayList(doc.getRootElement().getChildren("problem"));
+    ArrayList<Object> reportedProblems = new ArrayList<Object>(doc.getRootElement().getChildren("problem"));
 
     Element[] expectedArrayed = expectedProblems.toArray(new Element[expectedProblems.size()]);
     boolean failed = false;
 
 expected:
     for (Element expectedProblem : expectedArrayed) {
-      Element[] reportedArrayed = (Element[])reportedProblems.toArray(new Element[reportedProblems.size()]);
+      Element[] reportedArrayed = reportedProblems.toArray(new Element[reportedProblems.size()]);
       for (Element reportedProblem : reportedArrayed) {
         if (compareProblemWithExpected(reportedProblem, expectedProblem, checkRange)) {
           expectedProblems.remove(expectedProblem);

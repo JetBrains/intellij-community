@@ -23,7 +23,6 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer");
   private static final int NOT_FOUND = -10;
   private ControlFlow myPass1Flow;
-  private ControlFlow myPass2Flow;
   private ControlFlow myCurrentFlow;
   private int myPassNumber;
   private HashSet<DfaVariableValue> myFields;
@@ -56,16 +55,16 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     }
 
     myPassNumber = 2;
-    myPass2Flow = new ControlFlow(myFactory);
-    myCurrentFlow = myPass2Flow;
+    final ControlFlow pass2Flow = new ControlFlow(myFactory);
+    myCurrentFlow = pass2Flow;
 
     codeFragment.accept(this);
 
-    myPass2Flow.setFields(myFields.toArray(new DfaVariableValue[myFields.size()]));
+    pass2Flow.setFields(myFields.toArray(new DfaVariableValue[myFields.size()]));
 
-    LOG.assertTrue(myPass1Flow.getInstructionCount() == myPass2Flow.getInstructionCount());
+    LOG.assertTrue(myPass1Flow.getInstructionCount() == pass2Flow.getInstructionCount());
 
-    return myPass2Flow;
+    return pass2Flow;
   }
 
   private boolean myRecursionStopper = false;
@@ -439,6 +438,12 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       elseStatement.accept(this);
     }
 
+    finishElement(statement);
+  }
+
+  // in case of JspTemplateStatement
+  public void visitStatement(PsiStatement statement) {
+    startElement(statement);
     finishElement(statement);
   }
 
@@ -1034,7 +1039,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
       addInstruction(new MethodCallInstruction(expression, myFactory));
 
-      if (myCatchStack.size() > 0) {
+      if (!myCatchStack.isEmpty()) {
         addMethodThrows(expression.resolveMethod());
       }
     }
@@ -1182,7 +1187,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
     addInstruction(new MethodCallInstruction(expression, myFactory));
 
-    if (myCatchStack.size() > 0) {
+    if (!myCatchStack.isEmpty()) {
       addMethodThrows(ctr);
     }
 
