@@ -236,6 +236,12 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
     return getFileType().getIcon();
   }
 
+  /**
+   * @return the {@link FileType} of this file.
+   * When IDEA has no idea what the file type is (i.e. file type is not registered via {@link FileTypeManager}),
+   * it returns {@link com.intellij.openapi.fileTypes.StdFileTypes#UNKNOWN}
+   */
+  @NotNull
   public FileType getFileType() {
     return FileTypeManager.getInstance().getFileTypeByFile(this);
   }

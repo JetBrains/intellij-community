@@ -464,8 +464,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
           final File file = new File(fileName);
           final VirtualFile result = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
             public VirtualFile compute() {
-              String url =
-                VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, file.getAbsolutePath().replace(File.separatorChar, '/'));
+              String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, file.getAbsolutePath().replace(File.separatorChar, '/'));
               return VirtualFileManager.getInstance().findFileByUrl(url);
             }
           });

@@ -176,13 +176,13 @@ public final class LoadTextUtil {
   }
 
   public static CharSequence loadText(VirtualFile file) {
-    if (file.isDirectory()) return null;
+    assert !file.isDirectory() : file.getPresentableUrl() + "is directory";
     final FileType fileType = file.getFileType();
 
     if (fileType.equals(StdFileTypes.CLASS)){
       return new CharArrayCharSequence(decompile(file));
     }
-    if (fileType.isBinary()) return null;
+    assert !fileType.isBinary() : file.getPresentableUrl() + "is binary";
 
     try {
       final byte[] bytes = file.contentsToByteArray();

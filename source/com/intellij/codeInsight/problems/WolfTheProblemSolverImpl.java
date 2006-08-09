@@ -405,11 +405,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   public Problem convertToProblem(final VirtualFile virtualFile, final int line, final int column, final String[] message) {
-    if (virtualFile == null) return null;
+    if (virtualFile == null || virtualFile.isDirectory() || virtualFile.getFileType().isBinary()) return null;
     HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>() {
       public HighlightInfo compute() {
         TextRange textRange = getTextRange(virtualFile, line, column);
-        if (textRange == null) return null;
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, StringUtil.join(message, "\n"));
       }
     });
@@ -442,6 +441,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
+  @NotNull
   private static TextRange getTextRange(final VirtualFile virtualFile, final int line, final int column) {
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     int offset = document.getLineStartOffset(line - 1) + column - 1;
