@@ -26,7 +26,7 @@ public class StatusBarUpdater {
       public void caretPositionChanged(CaretEvent e) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            if (!myProject.isOpen()) return;
+            if (myProject.isDisposed()) return;
             updateStatus();
           }
         });
@@ -39,9 +39,10 @@ public class StatusBarUpdater {
         public void selectionChanged(FileEditorManagerEvent e) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              if (myProject.isOpen()) {
-                updateStatus();
+              if (myProject.isDisposed()) {
+                return;
               }
+              updateStatus();
             }
           });
         }
