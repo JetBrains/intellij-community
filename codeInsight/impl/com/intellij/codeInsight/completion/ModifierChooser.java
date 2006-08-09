@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.FilterUtil;
@@ -114,8 +115,11 @@ scopes:
 
     final PsiElement prev = FilterUtil.searchNonSpaceNonCommentBack(element);
 
-    if(prev != null && prev.getParent() instanceof PsiModifierList){
-      return (PsiModifierList)prev.getParent();
+    if(prev != null) {
+      final PsiModifierList modifierList = PsiTreeUtil.getParentOfType(prev, PsiModifierList.class);
+      if(modifierList != null){
+        return modifierList;
+      }
     }
 
     PsiElement parent = element.getParent();

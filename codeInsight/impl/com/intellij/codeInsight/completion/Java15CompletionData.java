@@ -3,7 +3,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.getters.AnnotationMethodsGetter;
 import com.intellij.psi.filters.position.*;
 
 /**
@@ -37,7 +36,7 @@ public class Java15CompletionData extends JavaCompletionData {
 
     {
       final ElementFilter position = new OrFilter(END_OF_BLOCK,
-          new LeftNeighbour(new TextFilter(MODIFIERS_LIST)),
+          new LeftNeighbour(new SuperParentFilter(new ClassFilter(PsiModifierList.class))),
           new StartElementFilter());
 
       final CompletionVariant variant = new CompletionVariant(PsiJavaFile.class, position);
@@ -70,7 +69,7 @@ public class Java15CompletionData extends JavaCompletionData {
   protected void initVariantsInClassScope() {
     super.initVariantsInClassScope();
     {
-      //Completion of "this" & "super" inside wildcards
+      //Completion of "extends" & "super" inside wildcards
       final CompletionVariant variant = new CompletionVariant(new AndFilter(new LeftNeighbour(new LeftNeighbour(new TextFilter("<"))), new LeftNeighbour(new TextFilter("?"))));
       variant.includeScopeClass(PsiVariable.class, true);
       variant.addCompletion(PsiKeyword.SUPER, TailType.SPACE);

@@ -18,12 +18,6 @@ import org.jetbrains.annotations.NonNls;
 
 public class JavaCompletionData extends CompletionData{
 
-  protected static final @NonNls String[] MODIFIERS_LIST = {
-    "public", "protected", "private",
-    "static", "final", "native",
-    "abstract", "synchronized", "volatile", "transient"
-  };
-
   private static final @NonNls String[] ourBlockFinalizers = {"{", "}", ";", ":", "else"};
 
   public JavaCompletionData(){
@@ -97,7 +91,10 @@ public class JavaCompletionData extends CompletionData{
     {
       final ElementFilter position = new OrFilter(
           END_OF_BLOCK,
-          new LeftNeighbour(new OrFilter(new TextFilter(MODIFIERS_LIST))), new StartElementFilter());
+          new LeftNeighbour(
+            new SuperParentFilter(new ClassFilter(PsiModifierList.class))
+          ),
+          new StartElementFilter());
 
       final CompletionVariant variant = new CompletionVariant(PsiJavaFile.class, position);
       variant.includeScopeClass(PsiClass.class);
@@ -236,7 +233,7 @@ public class JavaCompletionData extends CompletionData{
         new OrFilter(
           END_OF_BLOCK,
           new LeftNeighbour(new OrFilter(
-            new TextFilter(MODIFIERS_LIST),
+            new SuperParentFilter(new ClassFilter(PsiModifierList.class)),
             new TokenTypeFilter(JavaTokenType.GT)))
         )));
 
