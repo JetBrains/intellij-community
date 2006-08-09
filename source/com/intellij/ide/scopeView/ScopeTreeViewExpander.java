@@ -2,6 +2,7 @@ package com.intellij.ide.scopeView;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.PsiClassChildrenSource;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,17 +50,19 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
           final PsiElement file = fileNode.getPsiElement();
           if (file instanceof PsiJavaFile) {
             final VirtualFile virtualFile = ((PsiJavaFile)file).getVirtualFile();
-            if (virtualFile == null ||
-                (virtualFile.getFileType() != StdFileTypes.JAVA && virtualFile.getFileType() != StdFileTypes.CLASS)) return;
+            if (virtualFile == null || (virtualFile.getFileType() != StdFileTypes.JAVA && virtualFile.getFileType() != StdFileTypes.CLASS)) {
+              return;
+            }
             final PsiClass[] psiClasses = ((PsiJavaFile)file).getClasses();
             if (classNodes == null) {
               classNodes = new HashSet<ClassNode>();
             }
+            commitDocument((PsiFile)file);
             for (final PsiClass psiClass : psiClasses) {
               if (psiClass != null && psiClass.isValid()) {
                 final ClassNode classNode = new ClassNode(psiClass);
                 classNodes.add(classNode);
-                if (projectView.isShowMembers(ScopeViewPane.ID)){
+                if (projectView.isShowMembers(ScopeViewPane.ID)) {
                   final List<PsiElement> result = new ArrayList<PsiElement>();
                   PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(psiClass, result);
                   for (PsiElement psiElement : result) {
@@ -88,7 +91,7 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
           }
         }
       }
-      if (classNodes != null){
+      if (classNodes != null) {
         for (ClassNode classNode : classNodes) {
           node.add(classNode);
         }
@@ -102,15 +105,15 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
     final TreePath path = myTree.getPathForRow(myTree.getRowForPath(event.getPath()));
     if (path == null) return;
     final DefaultMutableTreeNode node = (PackageDependenciesNode)path.getLastPathComponent();
-    if (node instanceof DirectoryNode){
+    if (node instanceof DirectoryNode) {
       Set<FileNode> fileNodes = null;
       for (int i = node.getChildCount() - 1; i >= 0; i--) {
         final TreeNode childNode = node.getChildAt(i);
         if (childNode instanceof ClassNode) {
           final ClassNode classNode = (ClassNode)childNode;
           final PsiElement psiElement = classNode.getPsiElement();
-          if (psiElement != null && psiElement.isValid()){
-            if (fileNodes == null){
+          if (psiElement != null && psiElement.isValid()) {
+            if (fileNodes == null) {
               fileNodes = new HashSet<FileNode>();
             }
             fileNodes.add(new FileNode(psiElement.getContainingFile(), true));
@@ -118,7 +121,7 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
           node.remove(classNode);
         }
       }
-      if (fileNodes != null){
+      if (fileNodes != null) {
         for (FileNode fileNode : fileNodes) {
           node.add(fileNode);
         }
@@ -126,5 +129,11 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
       TreeUtil.sort(node, new DependencyNodeComparator());
       ((DefaultTreeModel)myTree.getModel()).reload(node);
     }
+  }
+
+  private void commitDocument(final PsiFile file) {
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+    final Document document = documentManager.getDocument(file);
+    documentManager.commitDocument(document);
   }
 }
