@@ -19,18 +19,19 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 public class StaticInheritanceInspection extends ClassInspection {
 
@@ -50,6 +51,7 @@ public class StaticInheritanceInspection extends ClassInspection {
 
     private static class StaticInheritanceFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "static.inheritance.replace.quickfix");
@@ -65,17 +67,16 @@ public class StaticInheritanceInspection extends ClassInspection {
 
             final PsiClass implementingClass =
                     PsiTreeUtil.getParentOfType(referenceElement,
-                                                PsiClass.class);
+                            PsiClass.class);
             final PsiManager manager = referenceElement.getManager();
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
             assert implementingClass != null;
             final SearchScope searchScope = implementingClass.getUseScope();
-            Map<PsiReferenceExpression, PsiField> refsToRebind = new HashMap<PsiReferenceExpression, PsiField>();
+            final Map<PsiReferenceExpression, PsiField> refsToRebind =
+                    new HashMap<PsiReferenceExpression, PsiField>();
             for (final PsiField field : allFields) {
-                final PsiReference[] references =
-                        searchHelper.findReferences(field, searchScope, false);
-
-                for (PsiReference reference1 : references) {
+                final Query<PsiReference> search =
+                        ReferencesSearch.search(field, searchScope, false);
+                for (PsiReference reference1 : search) {
                     if (!(reference1 instanceof PsiReferenceExpression)) {
                         continue;
                     }
@@ -84,17 +85,26 @@ public class StaticInheritanceInspection extends ClassInspection {
                     if(isQuickFixOnReadOnlyFile(reference)){
                         continue;
                     }
-                  refsToRebind.put(reference, field);
+                    refsToRebind.put(reference, field);
                 }
             }
             deleteElement(referenceElement);
-          for (PsiReferenceExpression reference : refsToRebind.keySet()) {
-            PsiField field = refsToRebind.get(reference);
-            PsiReferenceExpression qualified =
-              (PsiReferenceExpression)field.getManager().getElementFactory().createExpressionFromText("xxx." + reference.getText(), reference);
-            PsiReferenceExpression newReference = (PsiReferenceExpression)reference.replace(qualified);
-            ((PsiReferenceExpression)newReference.getQualifierExpression()).bindToElement(field.getContainingClass());
-          }
+            for (PsiReferenceExpression reference : refsToRebind.keySet()) {
+                final PsiField field = refsToRebind.get(reference);
+                final PsiElementFactory elementFactory =
+                        manager.getElementFactory();
+                final PsiReferenceExpression qualified = (PsiReferenceExpression)
+                        elementFactory.createExpressionFromText("xxx." +
+                                reference.getText(), reference);
+                final PsiReferenceExpression newReference =
+                        (PsiReferenceExpression)reference.replace(qualified);
+                final PsiReferenceExpression referenceExpression =
+                        (PsiReferenceExpression)
+                                newReference.getQualifierExpression();
+                if (referenceExpression != null) {
+                    referenceExpression.bindToElement(field.getContainingClass());
+                }
+            }
         }
     }
 
