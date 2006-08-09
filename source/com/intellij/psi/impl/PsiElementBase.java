@@ -55,7 +55,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
   }
 
   public PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
+    throw new IncorrectOperationException("Operation not supported in: " + getClass());
   }
 
   public PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor)
@@ -65,11 +65,11 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
 
   public PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor)
     throws IncorrectOperationException {
-    throw new IncorrectOperationException();
+    throw new IncorrectOperationException("Operation not supported in: " + getClass());
   }
 
   public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
+    throw new IncorrectOperationException("Operation not supported in: " + getClass());
   }
 
   public boolean textContains(char c) {
