@@ -3,13 +3,14 @@ package com.intellij.lang.properties.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -109,5 +110,9 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
 
   public void delete() throws IncorrectOperationException {
     getParent().getNode().removeChild(getNode());
+  }
+
+  public PropertiesFile getContainingFile() {
+    return (PropertiesFile)super.getContainingFile();
   }
 }

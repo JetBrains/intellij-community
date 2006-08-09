@@ -6,11 +6,12 @@
  */
 package com.intellij.lang.properties.psi;
 
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 public interface Property extends PsiNamedElement {
   @Nullable String getKey();
@@ -18,4 +19,6 @@ public interface Property extends PsiNamedElement {
   @Nullable String getKeyValueSeparator();
 
   void setValue(@NonNls @NotNull String value) throws IncorrectOperationException;
+
+  PropertiesFile getContainingFile() throws PsiInvalidElementAccessException;
 }

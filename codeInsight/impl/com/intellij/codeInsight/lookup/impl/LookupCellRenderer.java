@@ -1,7 +1,10 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
+import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
+import com.intellij.codeInsight.lookup.PresentableLookupValue;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.ide.IconUtilEx;
@@ -9,6 +12,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -19,6 +23,10 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.StrikeoutLabel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.PropertiesHighlighter;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -128,57 +136,22 @@ class LookupCellRenderer implements ListCellRenderer {
     boolean hasFocus) {
 
     LookupItem item = (LookupItem)value;
-    JLabel label0 = getLabel0(item);
-    JLabel label1 = getLabel1(item);
-    JLabel label2 = getLabel2(item);
-    JLabel label3 = getLabel3(item);
     Color background = isSelected ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR;
     Color foreground = isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
-
-    Color sampleBackground = background;
-
-    if (item.getObject() instanceof LookupValueWithUIHint &&
-        label3.getText().length() == 0
-       ) {
-      Color proposedBackground = ((LookupValueWithUIHint)item.getObject()).getColorHint();
-
-      if (proposedBackground == null) {
-        proposedBackground = BACKGROUND_COLOR;
-      }
-
-      sampleBackground = proposedBackground;
-      label3.setText("  ");
-    }
-
-    if (item.getAttribute(LookupImpl.EMPTY_ITEM_ATTRIBUTE) != null){
-      foreground = EMPTY_ITEM_FOREGROUND_COLOR;
-    }
-    label0.setBackground(background);
-    label1.setBackground(background);
-    label2.setBackground(background);
-    label3.setBackground(sampleBackground);
-    label0.setForeground(isSelected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR);
-    label1.setForeground(foreground);
-    label2.setForeground(foreground);
-    label3.setForeground(foreground);
-
-    boolean isSmall = item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null;
-    if (isSmall){
-      label2.setForeground(isSelected ? SELECTED_GRAYED_FOREGROUND_COLOR : GRAYED_FOREGROUND_COLOR);
-    }
+    getLabel0(item, background, isSelected);
+    getLabel1(item, background, foreground);
+    getLabel2(item, background, foreground, isSelected);
+    getLabel3(item, background, foreground);
 
     return myPanel;
   }
 
-  private boolean isBold(Object o) {
+  private static boolean isBold(Object o) {
     return o instanceof PsiKeyword ||
-           //o instanceof PsiExpression ||  //[ven] why?
-           (o instanceof LookupValueWithUIHint &&
-            ((LookupValueWithUIHint)o).isBold()
-           );
+           o instanceof LookupValueWithUIHint && ((LookupValueWithUIHint)o).isBold();
   }
 
-  private JLabel getLabel0(LookupItem item){
+  private JLabel getLabel0(LookupItem item, final Color background, final boolean selected){
     Object o = item.getObject();
     String prefix = myLookup.getPrefix().toLowerCase();
     String name = getName(item);
@@ -201,10 +174,12 @@ class LookupCellRenderer implements ListCellRenderer {
     label.setIcon(icon);
     label.setFont(bold ? BOLD_FONT : NORMAL_FONT);
     label.setStrikeout(strikeout);
+    label.setBackground(background);
+    label.setForeground(selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR);
     return label;
   }
 
-  private JLabel getLabel1(LookupItem item){
+  private JLabel getLabel1(LookupItem item, final Color background, final Color foreground){
     Object o = item.getObject();
     String prefix = myLookup.getPrefix().toLowerCase();
     String name = getName(item);
@@ -227,44 +202,13 @@ class LookupCellRenderer implements ListCellRenderer {
     label.setIcon(icon);
     label.setFont(bold ? BOLD_FONT : NORMAL_FONT);
     label.setStrikeout(overstrike);
+    label.setBackground(background);
+    label.setForeground(foreground);
     return label;
   }
 
-  private JLabel getLabel2(final LookupItem item){
-    String text = null;
-
-    if (showSignature(item)){
-      Object o = item.getObject();
-      if (o instanceof PsiElement) {
-        final PsiElement element = (PsiElement)o;
-        if (element.isValid() && element instanceof PsiMethod){
-          PsiMethod method = (PsiMethod)element;
-          final PsiSubstitutor substitutor = (PsiSubstitutor) item.getAttribute(LookupItem.SUBSTITUTOR);
-          text = PsiFormatUtil.formatMethod(method,
-                                            substitutor != null ? substitutor : PsiSubstitutor.EMPTY,
-                                            PsiFormatUtil.SHOW_PARAMETERS,
-                                            PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
-        }
-      }
-    }
-
-    String tailText = (String)item.getAttribute(LookupItem.TAIL_TEXT_ATTR);
-    if (tailText != null){
-      if (text == null){
-        text = tailText;
-      }
-      else{
-        text += tailText;
-      }
-    }
-    if(item.getAttribute(LookupItem.INDICATE_ANONYMOUS) != null){
-      if(item.getObject() instanceof PsiClass){
-        final PsiClass psiClass = (PsiClass) item.getObject();
-        if(psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)){
-          text += "{...}";
-        }
-      }
-    }
+  private JLabel getLabel2(final LookupItem item, Color background, Color foreground, final boolean selected){
+    String text = getText2(item, false);
 
     StrikeoutLabel label = myLabel2;
     if (text != null){
@@ -283,21 +227,110 @@ class LookupCellRenderer implements ListCellRenderer {
       label.setText("");
     }
     boolean isSmall = item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null;
-    label.setFont(isSmall ? SMALL_FONT : NORMAL_FONT);
+    Font font = isSmall ? SMALL_FONT : NORMAL_FONT;
     boolean overstrike = isToStrikeout(item);
     label.setStrikeout(overstrike);
+
+    if (item.getObject() instanceof Property) {
+      TextAttributes value = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_VALUE);
+      //background = value.getBackgroundColor();
+      foreground = selected ? SELECTED_FOREGROUND_COLOR : value.getForegroundColor();
+      font = BOLD_FONT;
+    }
+    label.setBackground(background);
+    label.setForeground(foreground);
+    label.setFont(font);
+    if (isSmall){
+      label.setForeground(selected ? SELECTED_GRAYED_FOREGROUND_COLOR : GRAYED_FOREGROUND_COLOR);
+    }
     return label;
+  }
+
+  private String getText2(final LookupItem item, final boolean trim) {
+    String text = null;
+
+    Object o = item.getObject();
+    if (showSignature(item)){
+      if (o instanceof PsiElement) {
+        final PsiElement element = (PsiElement)o;
+        if (element.isValid() && element instanceof PsiMethod){
+          PsiMethod method = (PsiMethod)element;
+          final PsiSubstitutor substitutor = (PsiSubstitutor) item.getAttribute(LookupItem.SUBSTITUTOR);
+          text = PsiFormatUtil.formatMethod(method,
+                                            substitutor != null ? substitutor : PsiSubstitutor.EMPTY,
+                                            PsiFormatUtil.SHOW_PARAMETERS,
+                                            PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
+        }
+      }
+    }
+    if (o instanceof Property) {
+      Property property = (Property)o;
+      PropertiesFile propertiesFile = property.getContainingFile();
+      PropertiesFile defaultPropertiesFile = propertiesFile.getResourceBundle().getDefaultPropertiesFile(propertiesFile.getProject());
+      Property defaultProperty = defaultPropertiesFile.findPropertyByKey(property.getKey());
+      String value = defaultProperty.getValue();
+      if (trim && value != null && value.length() > 10) value = value.substring(0, 10) + "...";
+      text = "="+ value;
+    }
+
+    String tailText = (String)item.getAttribute(LookupItem.TAIL_TEXT_ATTR);
+    if (tailText != null){
+      if (text == null){
+        text = tailText;
+      }
+      else{
+        text += tailText;
+      }
+    }
+    if(item.getAttribute(LookupItem.INDICATE_ANONYMOUS) != null){
+      if(o instanceof PsiClass){
+        final PsiClass psiClass = (PsiClass) o;
+        if(psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)){
+          text += "{...}";
+        }
+      }
+    }
+    return text;
   }
 
   private boolean showSignature(LookupItem item) {
     return SHOW_SIGNATURES || item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null;
   }
 
-  private JLabel getLabel3(LookupItem item){
-    myLabel3.setHorizontalTextPosition(JLabel.RIGHT);
+  private JLabel getLabel3(LookupItem item, final Color background, Color foreground){
+    myLabel3.setHorizontalTextPosition(SwingConstants.RIGHT);
+
+    String text = getText3(item);
+
+    JLabel label = myLabel3;
+    label.setText(text != null ? text + " " : "");
+    label.setFont(NORMAL_FONT);
+    Color sampleBackground = background;
 
     Object o = item.getObject();
+    if (o instanceof LookupValueWithUIHint && label.getText().length() == 0) {
+      Color proposedBackground = ((LookupValueWithUIHint)o).getColorHint();
+
+      if (proposedBackground == null) {
+        proposedBackground = BACKGROUND_COLOR;
+      }
+
+      sampleBackground = proposedBackground;
+      label.setText("  ");
+    }
+
+    if (item.getAttribute(LookupImpl.EMPTY_ITEM_ATTRIBUTE) != null){
+      foreground = EMPTY_ITEM_FOREGROUND_COLOR;
+    }
+    label.setBackground(sampleBackground);
+    label.setForeground(foreground);
+    return label;
+  }
+
+  private String getText3(final LookupItem item) {
+    Object o = item.getObject();
     String text = null;
+    myLabel3.setIcon(null);
     if (o instanceof PsiElement){
       if (showSignature(item)) {
         PsiType typeAttr = (PsiType)item.getAttribute(LookupItem.TYPE_ATTR);
@@ -309,13 +342,14 @@ class LookupCellRenderer implements ListCellRenderer {
           if (element.isValid()) {
             if (element instanceof PsiMethod){
               PsiMethod method = (PsiMethod)element;
-              if (!method.isConstructor()){
+              PsiType returnType = method.getReturnType();
+              if (returnType != null){
                 final PsiSubstitutor substitutor = (PsiSubstitutor) item.getAttribute(LookupItem.SUBSTITUTOR);
                 if (substitutor != null) {
-                  text = substitutor.substitute(method.getReturnType()).getPresentableText();
+                  text = substitutor.substitute(returnType).getPresentableText();
                 }
                 else {
-                  text = method.getReturnType().getPresentableText();
+                  text = returnType.getPresentableText();
                 }
               }
             }
@@ -330,20 +364,22 @@ class LookupCellRenderer implements ListCellRenderer {
                 text = type.getPresentableText();
               }
             }
+            else if (o instanceof Property) {
+              Property property = (Property)o;
+              text = property.getContainingFile().getResourceBundle().getBaseName();
+              myLabel3.setIcon(ResourceBundle.ICON);
+            }
           }
         }
       }
     }
     else if (o instanceof Template){
       text = getTemplateDescriptionString((Template)o);
-    } else if (o instanceof LookupValueWithUIHint) {
+    }
+    else if (o instanceof LookupValueWithUIHint) {
       text = ((LookupValueWithUIHint)o).getTypeHint();
     }
-
-    JLabel label = myLabel3;
-    label.setText(text != null ? text + " " : "");
-    label.setFont(NORMAL_FONT);
-    return label;
+    return text;
   }
 
   private static String getName(final LookupItem item){
@@ -372,6 +408,10 @@ class LookupCellRenderer implements ListCellRenderer {
         else if (element instanceof PsiKeyword || element instanceof PsiExpression || element instanceof PsiTypeElement){
           name = element.getText();
         }
+        else if (o instanceof Property) {
+          Property property = (Property)o;
+          name = property.getKey();
+        }
       }
     }
     else if (o instanceof PsiType){
@@ -388,7 +428,8 @@ class LookupCellRenderer implements ListCellRenderer {
     }
     else if (o instanceof PresentableLookupValue ) {
       name = ((PresentableLookupValue)o).getPresentation();
-    } else {
+    }
+    else {
       name = String.valueOf(o);
     }
     if (name == null){
@@ -443,92 +484,24 @@ class LookupCellRenderer implements ListCellRenderer {
    * @return width in pixels
    */
   private int getTextWidth(LookupItem item){
-    PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
-    Object o = item.getObject();
     String text = getName(item);
 
-    substitutor = substitutor != null ? substitutor : PsiSubstitutor.EMPTY;
-
-    if (o instanceof PsiElement) {
-      PsiElement element = (PsiElement)o;
-      if (element instanceof PsiMethod){
-        PsiMethod method = (PsiMethod)element;
-        if (showSignature(item)){
-          String parms = PsiFormatUtil.formatMethod(
-            method,
-            substitutor,
-            PsiFormatUtil.SHOW_PARAMETERS,
-            PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
-          text += parms;
-        }
-      }
-    }
-
     final @NonNls String TYPE_GAP = "XXX";
-    if (o instanceof PsiElement) {
-      if (showSignature(item)){
-        PsiType typeAttr = (PsiType)item.getAttribute(LookupItem.TYPE_ATTR);
-        if (typeAttr != null){
-          text += typeAttr.getPresentableText() + TYPE_GAP;
-        }
-        else{
-          PsiElement element = (PsiElement)o;
-          if (element instanceof PsiMethod){
-            PsiMethod method = (PsiMethod)element;
-            if (!method.isConstructor()){
-              text += substitutor.substitute(method.getReturnType()).getPresentableText() + TYPE_GAP;
-            }
-          }
-          else if (element instanceof PsiVariable){
-            PsiVariable variable = (PsiVariable)element;
-            text += substitutor.substitute(variable.getType()).getPresentableText() + TYPE_GAP;
-          }
-          else if (element instanceof PsiExpression){
-            PsiExpression expression = (PsiExpression)element;
-            PsiType type = expression.getType();
-            if (type != null){
-              text += type.getPresentableText() + TYPE_GAP;
-            }
-          }
-        }
-      }
-    }
-    else if (o instanceof Template){
-      text += getTemplateDescriptionString((Template)o) + TYPE_GAP;
-    } else if (o instanceof LookupValueWithUIHint &&
-               ((LookupValueWithUIHint)o).getTypeHint() != null) {
-      text += ((LookupValueWithUIHint)o).getTypeHint() + TYPE_GAP;
-    }
-
-    if(item.getAttribute(LookupItem.FORCE_QUALIFY) != null){
-      if (o instanceof PsiMember && ((PsiMember)o).getContainingClass() != null) {
-        text = ((PsiMember)o).getContainingClass().getName() + "." + text;
-      }
-    }
-
+    text += getText3(item) + TYPE_GAP;
 
     int width = myPanel.getFontMetrics(NORMAL_FONT).stringWidth(text) + 2;
 
-    String tailText = (String)item.getAttribute(LookupItem.TAIL_TEXT_ATTR);
-    if(item.getAttribute(LookupItem.INDICATE_ANONYMOUS) != null){
-      if(item.getObject() instanceof PsiClass){
-        final PsiClass psiClass = (PsiClass) item.getObject();
-        if(psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)){
-          tailText += "{...}";
-        }
-      }
-    }
-
-    if (tailText != null){
+    String text2 = getText2(item, true);
+    if (text2 != null){
       boolean isSmall = item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null;
       FontMetrics fontMetrics = myPanel.getFontMetrics(isSmall ? SMALL_FONT : NORMAL_FONT);
-      width += fontMetrics.stringWidth(tailText);
+      width += fontMetrics.stringWidth(text2);
     }
 
     return width;
   }
 
-  private boolean isToStrikeout(LookupItem item) {
+  private static boolean isToStrikeout(LookupItem item) {
     final PsiMethod[] allMethods = (PsiMethod[])item.getAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE);
     if (allMethods != null){
       for (PsiMethod method : allMethods) {
@@ -554,8 +527,7 @@ class LookupCellRenderer implements ListCellRenderer {
   }
 
   private static boolean isDeprecated(PsiElement element) {
-    if (!(element instanceof PsiDocCommentOwner)) return false;
-    return ((PsiDocCommentOwner)element).isDeprecated();
+    return element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated();
   }
 
   private static String getKeyString(Template template) {
@@ -566,7 +538,7 @@ class LookupCellRenderer implements ListCellRenderer {
     int max = MAX_LENGTH - TemplateSettings.getInstance().getMaxKeyLength();
     max = Math.min(max, myMaxTemplateDescriptionLength + 1);
 
-    StringBuffer buffer = new StringBuffer(max);
+    StringBuilder buffer = new StringBuilder(max);
     buffer.append(' ');
     buffer.append(template.getDescription());
     if (buffer.length() > max){

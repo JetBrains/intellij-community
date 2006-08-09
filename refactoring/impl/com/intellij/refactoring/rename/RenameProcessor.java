@@ -6,7 +6,6 @@ import com.intellij.javaee.ejb.role.EjbRolesUtil;
 import com.intellij.javaee.model.common.ejb.EjbPsiMethodUtil;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -149,7 +148,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   private void preparePropertyRenaming(final Property property, final String newName) {
-    ResourceBundle resourceBundle = ((PropertiesFile)property.getContainingFile()).getResourceBundle();
+    ResourceBundle resourceBundle = property.getContainingFile().getResourceBundle();
     List<Property> properties = PropertiesUtil.findAllProperties(myProject, resourceBundle, property.getKey());
     myAllRenames.clear();
     for (Property otherProperty : properties) {

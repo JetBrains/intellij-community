@@ -3,23 +3,24 @@
  */
 package com.intellij.lang.properties;
 
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.util.SmartList;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class ResourceBundleImpl implements ResourceBundle {
   private final @NotNull VirtualFile myBaseDirectory;
@@ -38,13 +39,18 @@ public class ResourceBundleImpl implements ResourceBundle {
     }
 
     @NotNull
+    public PropertiesFile getDefaultPropertiesFile(final Project project) {
+      throw new IllegalStateException();
+    }
+
+    @NotNull
     public String getBaseName() {
       return "";
     }
 
     @NotNull
     public VirtualFile getBaseDirectory() {
-      return null;
+      throw new IllegalStateException();
     }
   };
 
@@ -68,6 +74,18 @@ public class ResourceBundleImpl implements ResourceBundle {
       }
     }
     return result;
+  }
+
+  @NotNull
+  public PropertiesFile getDefaultPropertiesFile(final Project project) {
+    List<PropertiesFile> files = getPropertiesFiles(project);
+    // put default properties file first
+    Collections.sort(files, new Comparator<PropertiesFile>() {
+      public int compare(final PropertiesFile o1, final PropertiesFile o2) {
+        return Comparing.compare(o1.getName(), o2.getName());
+      }
+    });
+    return files.get(0);
   }
 
   @NotNull
@@ -100,9 +118,9 @@ public class ResourceBundleImpl implements ResourceBundle {
     String defaultPropertiesUrl = url.substring(RESOURCE_BUNDLE_PREFIX.length());
     VirtualFile defaultProperties = VirtualFileManager.getInstance().findFileByUrl(defaultPropertiesUrl);
     if (defaultProperties != null && FileTypeManager.getInstance().getFileTypeByFile(defaultProperties) == StdFileTypes.PROPERTIES) {
-      ResourceBundleImpl resourceBundle = new ResourceBundleImpl(defaultProperties.getParent(),
-                                                                 PropertiesUtil.getBaseName(defaultProperties));
-      return resourceBundle;
+      VirtualFile baseDirectory = defaultProperties.getParent();
+      assert baseDirectory != null;
+      return new ResourceBundleImpl(baseDirectory, PropertiesUtil.getBaseName(defaultProperties));
 
     }
     return null;

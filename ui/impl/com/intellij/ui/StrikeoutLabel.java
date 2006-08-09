@@ -23,12 +23,12 @@ public class StrikeoutLabel extends JLabel{
       Dimension prefSize = getPreferredSize();
       int width = Math.min(size.width, prefSize.width);
       int iconWidth = 0;
-      Icon icon = StrikeoutLabel.this.getIcon();
+      Icon icon = getIcon();
       if (icon != null){
         iconWidth = icon.getIconWidth();
         iconWidth += getIconTextGap();
       }
-      g.setColor(this.getForeground());
+      g.setColor(getForeground());
       UIUtil.drawLine(g, iconWidth, size.height / 2, width, size.height / 2);
     }
   }

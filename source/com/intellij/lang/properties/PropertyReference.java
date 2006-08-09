@@ -118,19 +118,18 @@ public class PropertyReference extends GenericReference implements PsiPolyVarian
   }
 
   public Object[] getVariants() {
-    Collection<VirtualFile> allPropertiesFiles = PropertiesFilesManager.getInstance().getAllPropertiesFiles();
     Set<Object> variants = new THashSet<Object>();
-    if (myBundleName != null) {
-      PropertiesFile propFile = I18nUtil.propertiesFileByBundleName(myElement, myBundleName);
-      addVariantsFromFile(propFile, variants);
-    }
-    else {
+    if (myBundleName == null) {
       PsiManager psiManager = myElement.getManager();
-      for (VirtualFile file : allPropertiesFiles) {
+      for (VirtualFile file : PropertiesFilesManager.getInstance().getAllPropertiesFiles()) {
         if (!file.isValid()) continue;
         PropertiesFile propertiesFile = (PropertiesFile)psiManager.findFile(file);
         addVariantsFromFile(propertiesFile, variants);
       }
+    }
+    else {
+      PropertiesFile propFile = I18nUtil.propertiesFileByBundleName(myElement, myBundleName);
+      addVariantsFromFile(propFile, variants);
     }
     return variants.toArray(new Object[variants.size()]);
   }

@@ -18,6 +18,7 @@ public interface ResourceBundle {
   Icon ICON = PropertiesFileType.FILE_ICON;
 
   @NotNull List<PropertiesFile> getPropertiesFiles(final Project project);
+  @NotNull PropertiesFile getDefaultPropertiesFile(final Project project);
 
   @NotNull String getBaseName();
 
