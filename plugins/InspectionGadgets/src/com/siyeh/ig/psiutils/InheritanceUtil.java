@@ -16,15 +16,11 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Query;
 
 public class InheritanceUtil{
@@ -59,13 +55,22 @@ public class InheritanceUtil{
                 class2.isInheritor(class1, true)){
             return true;
         }
-        final MutualSubclassProcessor processor =
-                new MutualSubclassProcessor(class1, class2);
-        return processor.hasMutualSubclass();
+        final SearchScope scope =
+                GlobalSearchScope.projectScope(class1.getProject());
+        final Query<PsiClass> search =
+                ClassInheritorsSearch.search(class1, scope, true, true);
+        for (PsiClass inheritor : search) {
+            if (inheritor.equals(class2) ||
+                    inheritor.isInheritor(class2, true)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static boolean hasImplementation(PsiClass aClass) {
-        final SearchScope scope = GlobalSearchScope.projectScope(aClass.getProject());
+        final SearchScope scope =
+                GlobalSearchScope.projectScope(aClass.getProject());
         final Query<PsiClass> search =
                 ClassInheritorsSearch.search(aClass, scope, true, true);
         for (PsiClass inheritor : search) {
@@ -75,41 +80,5 @@ public class InheritanceUtil{
             }
         }
         return false;
-    }
-
-    private static class MutualSubclassProcessor
-            implements PsiElementProcessor<PsiClass>, Runnable {
-
-        private final PsiClass class1;
-        private final PsiClass class2;
-        private boolean mutualSubClass = false;
-
-        MutualSubclassProcessor(PsiClass class1, PsiClass class2) {
-            this.class1 = class1;
-            this.class2 = class2;
-        }
-
-        public boolean execute(PsiClass inheritor) {
-            if (inheritor.equals(class2) ||
-                    inheritor.isInheritor(class2, true)) {
-                mutualSubClass = true;
-                return false;
-            }
-            return true;
-        }
-
-        public boolean hasMutualSubclass() {
-            final ProgressManager progressManager =
-                    ProgressManager.getInstance();
-            progressManager.runProcess(this, null);
-            return mutualSubClass;
-        }
-
-        public void run() {
-            final PsiManager psiManager = class1.getManager();
-            final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
-            final SearchScope searchScope = class1.getUseScope();
-            searchHelper.processInheritors(this, class1, searchScope, true);
-        }
     }
 }
