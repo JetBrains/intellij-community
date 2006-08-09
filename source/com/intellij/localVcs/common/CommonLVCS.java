@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -43,7 +42,7 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 
-public class CommonLVCS extends LocalVcs implements ProjectComponent, FileContentProvider, ModuleRootListener, SettingsSavingComponent {
+public class CommonLVCS extends LocalVcs implements ProjectComponent, FileContentProvider, ModuleRootListener {
   private OldLvcsImplemetation myImplementation;
   private LocalVcsUserActivitiesRegistry myUserActivitiesRegistry = new LocalVcsUserActivitiesRegistry();
   private LvcsFileTracker myTracker;

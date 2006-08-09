@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.localVcs;
 
+import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mike
  */
-public abstract class LocalVcs {
+public abstract class LocalVcs implements SettingsSavingComponent {
   public static LocalVcs getInstance(Project project) {
     return project.getComponent(LocalVcs.class);
   }
