@@ -33,6 +33,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
   private final Project myProject;
   private final PropertiesFilesManager myPropertiesFilesManager;
   private final FileTypeManager myFileTypeManager;
+  private final PsiManager myPsiManager;
   private final Map<String, Collection<VirtualFile>> myPropertiesMap = new THashMap<String, Collection<VirtualFile>>();
   private final List<VirtualFile> myChangedFiles = new ArrayList<VirtualFile>();
   private final FileTypeListener myFileTypeChangedListener;
@@ -42,10 +43,11 @@ public class PropertiesReferenceManager implements ProjectComponent {
     return project.getComponent(PropertiesReferenceManager.class);
   }
 
-  public PropertiesReferenceManager(Project project, PropertiesFilesManager propertiesFilesManager, FileTypeManager fileTypeManager) {
+  public PropertiesReferenceManager(Project project, PropertiesFilesManager propertiesFilesManager, FileTypeManager fileTypeManager, PsiManager psiManager) {
     myProject = project;
     myPropertiesFilesManager = propertiesFilesManager;
     myFileTypeManager = fileTypeManager;
+    myPsiManager = psiManager;
     myFileTypeChangedListener = new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {
 
@@ -143,7 +145,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
         virtualFile = myChangedFiles.remove(myChangedFiles.size() - 1);
       }
       if (!virtualFile.isValid()) continue;
-      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
+      PsiFile psiFile = myPsiManager.findFile(virtualFile);
       if (!(psiFile instanceof PropertiesFile)) continue;
       Set<String> keys = ((PropertiesFile)psiFile).getNamesMap().keySet();
       synchronized (LOCK) {
@@ -167,14 +169,13 @@ public class PropertiesReferenceManager implements ProjectComponent {
       Collection<VirtualFile> virtualFiles = myPropertiesMap.get(key);
       if (virtualFiles == null || virtualFiles.isEmpty()) return Collections.emptyList();
       result = new ArrayList<Property>(virtualFiles.size());
-      PsiManager psiManager = PsiManager.getInstance(myProject);
       for (Iterator<VirtualFile> iterator = virtualFiles.iterator(); iterator.hasNext();) {
         VirtualFile virtualFile = iterator.next();
         if (!virtualFile.isValid()) {
           iterator.remove();
           continue;
         }
-        PsiFile psiFile = psiManager.findFile(virtualFile);
+        PsiFile psiFile = myPsiManager.findFile(virtualFile);
         if (!(psiFile instanceof PropertiesFile)) {
           iterator.remove();
           continue;
@@ -239,14 +240,12 @@ public class PropertiesReferenceManager implements ProjectComponent {
     final Set<Module> dependentModules = new THashSet<Module>();
     ModuleUtil.getDependencies(module, dependentModules);
 
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-
     for(VirtualFile file: PropertiesFilesManager.getInstance().getAllPropertiesFiles()) {
       if (!dependentModules.contains(VfsUtil.getModuleForFile(myProject, file))) {
         continue;
       }
 
-      PsiFile psiFile = psiManager.findFile(file);
+      PsiFile psiFile = myPsiManager.findFile(file);
       if (!(psiFile instanceof PropertiesFile)) continue;
 
       PsiDirectory directory = (PsiDirectory)psiFile.getParent();

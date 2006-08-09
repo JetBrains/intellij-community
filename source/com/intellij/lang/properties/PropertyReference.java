@@ -123,7 +123,9 @@ public class PropertyReference extends GenericReference implements PsiPolyVarian
       PsiManager psiManager = myElement.getManager();
       for (VirtualFile file : PropertiesFilesManager.getInstance().getAllPropertiesFiles()) {
         if (!file.isValid()) continue;
-        PropertiesFile propertiesFile = (PropertiesFile)psiManager.findFile(file);
+        PsiFile psiFile = psiManager.findFile(file);
+        if (!(psiFile instanceof PropertiesFile)) continue;
+        PropertiesFile propertiesFile = (PropertiesFile)psiFile;
         addVariantsFromFile(propertiesFile, variants);
       }
     }

@@ -229,7 +229,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     if (myResourceBundleType != null) {
       addAvailableMethodsOfType(result, myResourceBundleType);
     }
-    if (result.size() == 0) {
+    if (result.isEmpty()) {
       result.add(getResourceBundleText());
     }
 
@@ -284,7 +284,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
 
   protected String suggestPropertyKey(String value) {
     // suggest property key not existing in this file
-    final StringBuffer result = new StringBuffer();
+    final StringBuilder result = new StringBuilder();
     boolean insertDotBeforeNextWord = false;
     for (int i = 0; i < value.length(); i++) {
       final char c = value.charAt(i);
@@ -386,7 +386,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
       String path = FileUtil.toSystemDependentName(VfsUtil.urlToPath(lastUrl));
       myPropertiesFile.setSelectedItem(path);
     }
-    if (myPropertiesFile.getSelectedIndex() == -1 && paths.size() != 0) {
+    if (myPropertiesFile.getSelectedIndex() == -1 && !paths.isEmpty()) {
       myPropertiesFile.setText(paths.get(0));
     }
   }
