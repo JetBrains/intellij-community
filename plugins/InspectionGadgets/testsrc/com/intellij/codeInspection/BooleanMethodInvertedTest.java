@@ -52,6 +52,10 @@ public class BooleanMethodInvertedTest extends IGInspectionTestCase {
     doTest();
   }
 
+  public void testOverrideLibrary() throws Exception{
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }
