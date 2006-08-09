@@ -390,7 +390,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
         names.add(myBaseClass.getName());
       }
       for (PsiClass aClass : classes) {
-        if ((myClassFilter == null || myClassFilter.isAccepted(myBaseClass)) && aClass.getName() != null) {
+        if ((myClassFilter == null || myClassFilter.isAccepted(aClass)) && aClass.getName() != null) {
           names.add(aClass.getName());
         }
       }
