@@ -19,16 +19,14 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -56,6 +54,7 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
 
     private static class InnerClassMayBeStaticFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message("make.static.quickfix");
         }
@@ -73,15 +72,17 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
             for (final PsiReference reference : references) {
                 final PsiElement element = reference.getElement();
                 final PsiElement parent = element.getParent();
-                if (parent instanceof PsiNewExpression) {
-                    final PsiNewExpression newExpression =
-                            (PsiNewExpression)parent;
-                    final PsiExpression qualifier =
-                            newExpression.getQualifier();
-                    if (qualifier != null) {
-                        qualifier.delete();
-                    }
+                if (!(parent instanceof PsiNewExpression)) {
+                    continue;
                 }
+                final PsiNewExpression newExpression =
+                        (PsiNewExpression)parent;
+                final PsiExpression qualifier =
+                        newExpression.getQualifier();
+                if (qualifier == null) {
+                    continue;
+                }
+                qualifier.delete();
             }
             final PsiModifierList modifiers = innerClass.getModifierList();
             modifiers.setModifierProperty(PsiModifier.STATIC, true);
@@ -104,14 +105,16 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
             }
             final PsiClass[] innerClasses = aClass.getInnerClasses();
             for (final PsiClass innerClass : innerClasses) {
-                if (!innerClass.hasModifierProperty(PsiModifier.STATIC)) {
-                    final InnerClassReferenceVisitor visitor =
-                            new InnerClassReferenceVisitor(innerClass);
-                    innerClass.accept(visitor);
-                    if (visitor.canInnerClassBeStatic()) {
-                        registerClassError(innerClass);
-                    }
+                if (innerClass.hasModifierProperty(PsiModifier.STATIC)) {
+                    continue;
                 }
+                final InnerClassReferenceVisitor visitor =
+                        new InnerClassReferenceVisitor(innerClass);
+                innerClass.accept(visitor);
+                if (!visitor.canInnerClassBeStatic()) {
+                    continue;
+                }
+                registerClassError(innerClass);
             }
         }
     }

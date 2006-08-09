@@ -22,7 +22,10 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.util.Query;
 
 public class InheritanceUtil{
 
@@ -35,7 +38,9 @@ public class InheritanceUtil{
         if (class1 instanceof PsiTypeParameter) {
             final PsiClass[] superClasses = class1.getSupers();
             for (PsiClass superClass : superClasses) {
-                if (!existsMutualSubclass(superClass, class2)) return false;
+                if (!existsMutualSubclass(superClass, class2)) {
+                    return false;
+                }
             }
             return true;
         } else if (class2 instanceof PsiTypeParameter) {
@@ -60,9 +65,16 @@ public class InheritanceUtil{
     }
 
     public static boolean hasImplementation(PsiClass aClass) {
-        final ConcreteClassProcessor concreteClassProcessor =
-                new ConcreteClassProcessor(aClass);
-        return concreteClassProcessor.hasImplementation();
+        final SearchScope scope = GlobalSearchScope.projectScope(aClass.getProject());
+        final Query<PsiClass> search =
+                ClassInheritorsSearch.search(aClass, scope, true, true);
+        for (PsiClass inheritor : search) {
+            if (!(inheritor.isInterface() || inheritor.isAnnotationType() ||
+                    inheritor.hasModifierProperty(PsiModifier.ABSTRACT))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static class MutualSubclassProcessor
@@ -98,40 +110,6 @@ public class InheritanceUtil{
             final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
             final SearchScope searchScope = class1.getUseScope();
             searchHelper.processInheritors(this, class1, searchScope, true);
-        }
-    }
-
-    private static class ConcreteClassProcessor
-            implements PsiElementProcessor<PsiClass>, Runnable {
-
-        private final PsiClass aClass;
-        private boolean implementation = false;
-
-        ConcreteClassProcessor(PsiClass aClass) {
-            this.aClass = aClass;
-        }
-
-        public boolean execute(PsiClass inheritor) {
-            if (!(inheritor.isInterface() || inheritor.isAnnotationType() ||
-                    inheritor.hasModifierProperty(PsiModifier.ABSTRACT))) {
-                implementation = true;
-                return false;
-            }
-            return true;
-        }
-
-        public boolean hasImplementation() {
-            final ProgressManager progressManager =
-                    ProgressManager.getInstance();
-            progressManager.runProcess(this, null);
-            return implementation;
-        }
-
-        public void run() {
-            final PsiManager manager = aClass.getManager();
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
-            final SearchScope searchScope = aClass.getUseScope();
-            searchHelper.processInheritors(this, aClass, searchScope, true);
         }
     }
 }
