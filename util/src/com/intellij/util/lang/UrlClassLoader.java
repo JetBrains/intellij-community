@@ -16,7 +16,7 @@ public class UrlClassLoader extends ClassLoader {
 
 
   public UrlClassLoader(ClassLoader parent) {
-    this(Arrays.asList(((URLClassLoader)parent).getURLs()), null);
+    this(Arrays.asList(((URLClassLoader)parent).getURLs()), null, true, true);
   }
 
   public UrlClassLoader(List<URL> urls, ClassLoader parent) {

@@ -3,8 +3,8 @@
  */
 package com.intellij.psi;
 
-import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.GuiFormFileType;
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
@@ -46,7 +46,8 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
   private final PsiManager myManager;
   private VirtualFile myFile;
-  private final boolean myPhysical;
+  private final boolean myEventSystemEnabled;
+  private boolean myPhysical;
   private PsiFile myPsiFile = null;
   private Content myContent;
   private WeakReference<Document> myDocument;
@@ -59,9 +60,10 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   public SingleRootFileViewProvider(PsiManager manager, final VirtualFile virtualFile, final boolean physical) {
     myManager = manager;
     myFile = virtualFile;
-    myPhysical = physical;
+    myEventSystemEnabled = physical;
     myBaseLanguage = calcBaseLanguage(virtualFile);
     setContent(new VirtualFileContent());
+    calcPhysical();
   }
 
   public Language getBaseLanguage() {
@@ -141,12 +143,16 @@ public class SingleRootFileViewProvider implements FileViewProvider {
   }
 
   public boolean isEventSystemEnabled() {
-    return myPhysical;
+    return myEventSystemEnabled;
   }
 
   public boolean isPhysical() {
-    return !(getVirtualFile()instanceof LightVirtualFile) && !(getVirtualFile().getFileSystem()instanceof DummyFileSystem) &&
-           isEventSystemEnabled();
+    return myPhysical;
+  }
+
+  private void calcPhysical() {
+    myPhysical = !(getVirtualFile() instanceof LightVirtualFile) && !(getVirtualFile().getFileSystem() instanceof DummyFileSystem) &&
+                 isEventSystemEnabled();
   }
 
   public long getModificationStamp() {
@@ -294,6 +300,7 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     myDocument.clear();
     myPsiFile = null;
     myBaseLanguage = calcBaseLanguage(file);
+    calcPhysical();
   }
 
   private Document getCachedDocument() {
