@@ -890,7 +890,9 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   @NotNull
   public XmlTag createTagFromText(String text) throws IncorrectOperationException {
-    return ((XmlFile)createFileFromText("dummy.xml", text)).getDocument().getRootTag();
+    final XmlTag tag = ((XmlFile)createFileFromText("dummy.xml", text)).getDocument().getRootTag();
+    if (tag == null) throw new IncorrectOperationException("Incorrect tag text");
+    return tag;
   }
 
   @NotNull
