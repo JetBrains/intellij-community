@@ -394,7 +394,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         public void run() {
           Messages.showErrorDialog(InspectionsBundle.message("inspection.error.loading.message", myFile != null ? 0 : 1,  myFile != null ? myFile.getName() : ""), InspectionsBundle.message("inspection.errors.occured.dialog.title"));
         }
-      }, ModalityState.NON_MMODAL);
+      }, ModalityState.NON_MODAL);
     }
     myOverrideSeverities = true;
   }
@@ -530,10 +530,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private void setState(HighlightDisplayKey key, ToolState state) {
     if (myBaseProfile != null &&
         state.equals(myBaseProfile.getToolState(key))) {
-      if (toolSettingsAreEqual(key, this, myBaseProfile)){ //settings may differ
-        if (!myLockedProfile) {
-          myDisplayLevelMap.remove(key);
-        }
+      if (toolSettingsAreEqual(key, this, myBaseProfile) && !myLockedProfile){ //settings may differ
+        myDisplayLevelMap.remove(key);
       } else {
         myDisplayLevelMap.put(key, state);
       }
