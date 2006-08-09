@@ -59,6 +59,20 @@ class ObjectEqualityPredicate implements PsiElementPredicate{
 			    TypeConversionUtil.isPrimitiveAndNotNull(rhsType)) {
 		    return false;
 	    }
-	    return !ErrorUtil.containsError(element);
+        if (rhsType instanceof PsiClassType) {
+            final PsiClassType rhsClassType = (PsiClassType)rhsType;
+            final PsiClass rhsClass = rhsClassType.resolve();
+            if (rhsClass != null && rhsClass.isEnum()) {
+                return false;
+            }
+        }
+        if (lhsType instanceof PsiClassType) {
+            final PsiClassType lhsClassType = (PsiClassType)lhsType;
+            final PsiClass lhsClass = lhsClassType.resolve();
+            if (lhsClass != null && lhsClass.isEnum()) {
+                return false;
+            }
+        }
+        return !ErrorUtil.containsError(element);
     }
 }

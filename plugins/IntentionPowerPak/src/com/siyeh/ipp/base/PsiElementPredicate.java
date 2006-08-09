@@ -20,5 +20,5 @@ import org.jetbrains.annotations.NotNull;
 
 public interface PsiElementPredicate{
 
-    boolean satisfiedBy(@NotNull PsiElement element);
+    boolean satisfiedBy(PsiElement element);
 }
