@@ -1,4 +1,4 @@
-package com.siyeh.ig.initialization;
+package com.siyeh.igtest.initialization;
 
 public class Overrider extends OverriddenMethodCallInConstructor {
 

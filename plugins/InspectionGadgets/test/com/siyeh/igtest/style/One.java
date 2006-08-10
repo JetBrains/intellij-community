@@ -2,6 +2,7 @@ package com.siyeh.igtest.style;
 
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class One extends ExpressionInspection {
 
@@ -10,6 +11,11 @@ public class One extends ExpressionInspection {
     }
 
     public String getGroupDisplayName() {
+        return null;
+    }
+
+    @NotNull
+    protected String buildErrorString(Object... infos) {
         return null;
     }
 
