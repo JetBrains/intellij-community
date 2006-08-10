@@ -285,20 +285,21 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
     protected OSProcessHandler startProcess() throws ExecutionException {
       final OSProcessHandler handler = super.startProcess();
       final Runnable notifyRunnable = mySnapShooterNotifyRunnable;
-      if (notifyRunnable != null) {
-        handler.addProcessListener(new ProcessAdapter() {
-          public void startNotified(final ProcessEvent event) {
+      handler.addProcessListener(new ProcessAdapter() {
+        public void startNotified(final ProcessEvent event) {
+          if (notifyRunnable != null) {
             notifyRunnable.run();
           }
+        }
 
-          public void processTerminated(final ProcessEvent event) {
-            final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(getProject());
-            if (myCurrentCoverageSuite != null) {
-              coverageDataManager.coverageGathered(myCurrentCoverageSuite);
-            }
+        public void processTerminated(final ProcessEvent event) {
+          final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(getProject());
+          if (myCurrentCoverageSuite != null) {
+            coverageDataManager.coverageGathered(myCurrentCoverageSuite);
           }
-        });
-      }
+        }
+      });
+
       mySnapShooterNotifyRunnable = null;
       return handler;
     }
