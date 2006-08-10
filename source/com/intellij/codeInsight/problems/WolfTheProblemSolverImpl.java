@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -215,8 +216,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     if (!myProject.isOpen()) return;
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    String oldInfo = null;
     try {
-      if (statusBar != null) {
+      if (statusBar instanceof StatusBarEx) {
+        oldInfo = ((StatusBarEx)statusBar).getInfo();
         statusBar.setInfo("Checking '" + file.getPresentableUrl() + "'");
       }
 
@@ -240,8 +243,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       reportProblems(file, Collections.<Problem>singleton(problem));
     }
     finally {
-      if (statusBar != null) {
-        statusBar.setInfo("");
+      if (statusBar instanceof StatusBarEx) {
+        statusBar.setInfo(oldInfo);
       }
     }
   }
