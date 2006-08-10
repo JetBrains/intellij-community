@@ -1,6 +1,9 @@
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -11,15 +14,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -48,6 +49,10 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
 
     public void setItem(Object item) {
       super.setItem(createDocument((TextWithImports)item));
+      final Editor editor = getEditor();
+      if (editor != null) {
+        DaemonCodeAnalyzer.getInstance(getProject()).updateVisibleHighlighters(editor);
+      }
     }
 
   }

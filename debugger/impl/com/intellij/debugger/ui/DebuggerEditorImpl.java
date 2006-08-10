@@ -1,16 +1,16 @@
 package com.intellij.debugger.ui;
 
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.Disposable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -105,7 +105,14 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     if(item == null) {
       item = createText("");
     }
-    PsiCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(item, getContext(), getProject());
+    PsiCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(item, null, getProject());
+    if (myContext != null) {
+      final PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(myContext, PsiClass.class);
+      if (contextClass != null) {
+        final PsiClassType contextType = codeFragment.getManager().getElementFactory().createType(contextClass);
+        codeFragment.setThisType(contextType);
+      }
+    }
 
     if(myCurrentDocument != null) {
       for (DocumentListener documentListener : myDocumentListeners) {

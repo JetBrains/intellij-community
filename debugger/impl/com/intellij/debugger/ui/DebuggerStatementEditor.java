@@ -1,21 +1,22 @@
 package com.intellij.debugger.ui;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorTextField;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedList;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -97,6 +98,10 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
 
   public void setText(TextWithImports text) {
     myEditor.setDocument(createDocument(text));
+    final Editor editor = myEditor.getEditor();
+    if (editor != null) {
+      DaemonCodeAnalyzer.getInstance(getProject()).updateVisibleHighlighters(editor);
+    }
   }
 
   public TextWithImports createText(String text, String importsString) {
