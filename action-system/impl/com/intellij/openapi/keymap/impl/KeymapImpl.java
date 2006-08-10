@@ -656,6 +656,10 @@ public class KeymapImpl implements Keymap {
       buf.append(ALT);
       buf.append(' ');
     }
+    if((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) {
+      buf.append(ALT_GRAPH);
+      buf.append(' ');
+    }
 
     buf.append(ourNamesForKeycodes.get(new Integer(keyStroke.getKeyCode())));
 
