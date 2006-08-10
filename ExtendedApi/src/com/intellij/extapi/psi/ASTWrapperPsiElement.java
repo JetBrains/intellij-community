@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -27,13 +28,17 @@ public class ASTWrapperPsiElement extends PsiElementBase {
 
   public PsiManager getManager() {
     final PsiElement parent = getParent();
-    return parent != null ? parent.getManager() : null;
+    if (parent == null) throw new PsiInvalidElementAccessException(this);
+    return parent.getManager();
   }
 
   @NotNull
   public PsiElement[] getChildren() {
+    final PsiElement psiChild = getFirstChild();
+    if (psiChild == null) return EMPTY_ARRAY;
+
     List<PsiElement> result = new ArrayList<PsiElement>();
-    ASTNode child = getNode().getFirstChildNode();
+    ASTNode child = psiChild.getNode();
     while (child != null) {
       if (child instanceof CompositeElement) {
         result.add(child.getPsi());
@@ -44,7 +49,10 @@ public class ASTWrapperPsiElement extends PsiElementBase {
   }
 
   public void acceptChildren(PsiElementVisitor visitor) {
-    ASTNode child = getNode().getFirstChildNode();
+    final PsiElement psiChild = getFirstChild();
+    if (psiChild == null) return;
+
+    ASTNode child = psiChild.getNode();
     while (child != null) {
       child.getPsi().accept(visitor);
       child = child.getTreeNext();
