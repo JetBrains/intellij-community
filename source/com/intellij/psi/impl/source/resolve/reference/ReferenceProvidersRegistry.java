@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.types.TypeFilter;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
@@ -90,7 +89,8 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
 
     myReferenceTypeToProviderMap.put(CLASS_REFERENCE_PROVIDER, new JavaClassReferenceProvider());
     myReferenceTypeToProviderMap.put(PATH_REFERENCES_PROVIDER, new JspxIncludePathReferenceProvider());
-    myReferenceTypeToProviderMap.put(DYNAMIC_PATH_REFERENCES_PROVIDER, new JspxDynamicPathReferenceProvider());
+//    myReferenceTypeToProviderMap.put(DYNAMIC_PATH_REFERENCES_PROVIDER, new JspxDynamicPathReferenceProvider());
+    myReferenceTypeToProviderMap.put(DYNAMIC_PATH_REFERENCES_PROVIDER, new WebPathReferenceProvider(false, true, true));
     myReferenceTypeToProviderMap.put(PROPERTIES_FILE_KEY_PROVIDER, new PropertiesReferenceProvider());
 
     registerXmlAttributeValueReferenceProvider(
@@ -241,13 +241,15 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
         )
       ), getProviderByType(PATH_REFERENCES_PROVIDER)
     );
-
+/*
     final CustomizableReferenceProvider dynamicPathReferenceProvider = (CustomizableReferenceProvider)getProviderByType(DYNAMIC_PATH_REFERENCES_PROVIDER);
     final CustomizingReferenceProvider dynamicPathReferenceProviderNoEmptyFileReferencesAtEnd = new CustomizingReferenceProvider(dynamicPathReferenceProvider);
     dynamicPathReferenceProviderNoEmptyFileReferencesAtEnd.addCustomization(
       JspxDynamicPathReferenceProvider.ALLOW_REFERENCING_DIR_WITH_END_SLASH,
       true
     );
+*/
+    WebPathReferenceProvider dynamicPathReferenceProviderNoEmptyFileReferencesAtEnd = new WebPathReferenceProvider(false, false, true);
 
     registerXmlAttributeValueReferenceProvider(
       new String[]{"value"},
@@ -375,6 +377,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     webXmlPathReferenceProvider.addCustomization(
       FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION,
       new Function<PsiFile, PsiElement>() {
+        @Nullable
         public PsiElement fun(final PsiFile file) {
           return FileReferenceSet.getAbsoluteTopLevelDirLocation(
             WebUtil.getWebModuleProperties(file),
@@ -629,12 +632,9 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
         new ParentElementFilter(
           new AndFilter(
             new ClassFilter(XmlTag.class),
-            new NamespaceFilter(
-              new String[] {
-                XmlUtil.JSP_URI,
+            new NamespaceFilter(XmlUtil.JSP_URI,
                 XmlUtil.STRUTS_BEAN_URI,
                 XmlUtil.STRUTS_LOGIC_URI
-              }
             )
           ), 2
         )
@@ -828,6 +828,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
 
   public void projectClosed() {}
 
+  @NotNull
   public String getComponentName() {
     return "Reference providers registry";
   }

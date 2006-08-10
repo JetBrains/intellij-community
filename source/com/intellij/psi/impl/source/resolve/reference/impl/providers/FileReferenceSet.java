@@ -48,7 +48,7 @@ public class FileReferenceSet {
   private @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
 
   @Nullable
-  public static FileReferenceSet createSet(PsiElement element, final boolean soft) {
+  public static FileReferenceSet createSet(PsiElement element, final boolean soft, boolean endingSlashNotAllowed) {
 
     String text;
     int offset;
@@ -70,7 +70,7 @@ public class FileReferenceSet {
     if (text != null) {
       text = WebUtil.trimURL(text);
     }
-    return new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, null, true) {
+    return new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, null, true, endingSlashNotAllowed) {
       protected boolean isSoft() {
         return soft;
       }
