@@ -3,6 +3,7 @@ package com.intellij.lang.ant.psi.impl;
 import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElementFactory;
@@ -13,6 +14,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.apache.tools.ant.taskdefs.Property;
 import org.jetbrains.annotations.NonNls;
@@ -265,7 +267,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       }
       builder.append("</project>");
       final PsiElementFactory elementFactory = getManager().getElementFactory();
-      final XmlFile xmlFile = (XmlFile)elementFactory.createFileFromText("dummy.xml", builder.toString());
+      final XmlFile xmlFile = (XmlFile)elementFactory.createFileFromText("dummy.xml", StdFileTypes.XML, builder, LocalTimeCounter.currentTime(), false, false);
       final XmlDocument document = xmlFile.getDocument();
       if (document == null) return;
       final XmlTag rootTag = document.getRootTag();

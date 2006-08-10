@@ -702,4 +702,6 @@ public interface PsiElementFactory {
   @NotNull PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
                                       long modificationStamp, boolean physical);
 
+  @NotNull PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
+                                      long modificationStamp, final boolean physical, boolean markAsCopy);
 }
