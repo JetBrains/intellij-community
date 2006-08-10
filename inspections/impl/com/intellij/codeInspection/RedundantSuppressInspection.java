@@ -5,8 +5,6 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefClass;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -57,9 +55,8 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
   }
 
   @Nullable
-  public static CommonProblemDescriptor[] checkElement(RefEntity refEntity, InspectionManager manager, final Project project) {
-    if (!(refEntity instanceof RefElement)) return null;
-    final PsiElement psiElement = ((RefElement)refEntity).getElement();
+  private static CommonProblemDescriptor[] checkElement(RefClass refEntity, InspectionManager manager, final Project project) {
+    final PsiElement psiElement = refEntity.getElement();
     final Map<PsiElement, Collection<String>> suppressedScopes = new THashMap<PsiElement, Collection<String>>();
     psiElement.accept(new PsiRecursiveElementVisitor() {
       public void visitModifierList(PsiModifierList list) {
@@ -102,24 +99,26 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
       }
     });
 
-    if (suppressedScopes.values().size() == 0) return null;
+    if (suppressedScopes.values().isEmpty()) return null;
     // have to visit all file from scratch since inspections can be written in any perversive way including checkFile() overriding
-    final ModifiableModel model =
-      InspectionProjectProfileManager.getInstance(manager.getProject()).getInspectionProfile(psiElement).getModifiableModel();
+    final ModifiableModel model = InspectionProjectProfileManager.getInstance(manager.getProject()).getInspectionProfile(psiElement).getModifiableModel();
     InspectionProfileWrapper profile = new InspectionProfileWrapper((InspectionProfile)model);
     profile.init(manager.getProject());
     Collection<InspectionTool> suppressedTools = new THashSet<InspectionTool>();
 
+    InspectionTool[] tools = profile.getInspectionTools();
     for (Collection<String> ids : suppressedScopes.values()) {
       for (String id : ids) {
-        InspectionTool tool = profile.getInspectionTool(id.trim());
-        if (tool != null) {
-          suppressedTools.add(tool);
+        String shortName = id.trim();
+        for (InspectionTool tool : tools) {
+          if (tool.getShortName().equals(shortName)) {
+            suppressedTools.add(tool);
+          }
         }
       }
     }
 
-    GlobalInspectionContextImpl globalContext = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).createNewGlobalContext(false);
+    GlobalInspectionContextImpl globalContext = ((InspectionManagerEx)InspectionManager.getInstance(project)).createNewGlobalContext(false);
     final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
     for (InspectionTool tool : suppressedTools) {
       String toolId = tool.getShortName();
