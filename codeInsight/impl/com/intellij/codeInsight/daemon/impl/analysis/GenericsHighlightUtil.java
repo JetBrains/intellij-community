@@ -1004,6 +1004,30 @@ public class GenericsHighlightUtil {
     }
     return errorResult;
   }
+  public static HighlightInfo checkGenericCannotExtendException(PsiReferenceList list) {
+    PsiElement parent = list.getParent();
+    if (!(parent instanceof PsiClass)) return null;
+    PsiClass aClass = (PsiClass)parent;
+
+    if (!aClass.hasTypeParameters() || aClass.getExtendsList() != list) return null;
+    PsiJavaCodeReferenceElement[] referenceElements = list.getReferenceElements();
+    PsiClass throwableClass = null;
+    for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+      PsiElement resolved = referenceElement.resolve();
+      if (!(resolved instanceof PsiClass)) continue;
+      if (throwableClass == null) {
+        throwableClass = aClass.getManager().findClass("java.lang.Throwable", aClass.getResolveScope());
+      }
+      if (InheritanceUtil.isInheritorOrSelf((PsiClass)resolved, throwableClass, true)) {
+        String message = JavaErrorMessages.message("generic.extend.exception");
+        HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceElement, message);
+        PsiClassType classType = aClass.getManager().getElementFactory().createType((PsiClass)resolved);
+        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createExtendsListFix(aClass, classType, false));
+        return highlightInfo;
+      }
+    }
+    return null;
+  }
 
   public static HighlightInfo checkUncheckedOverriding (PsiMethod overrider, final List<MethodSignatureBackedByPsiMethod> superMethodSignatures) {
     if (PsiUtil.getLanguageLevel(overrider).compareTo(LanguageLevel.JDK_1_5) < 0) return null;

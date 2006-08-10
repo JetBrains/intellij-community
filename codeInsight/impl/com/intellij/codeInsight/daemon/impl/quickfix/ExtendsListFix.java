@@ -27,6 +27,7 @@ public class ExtendsListFix implements IntentionAction {
     myToAdd = toAdd;
   }
 
+  @NotNull
   public String getText() {
     @NonNls final String messageKey;
     if (myClass.isInterface() == myClassToExtendFrom.isInterface()) {
@@ -39,6 +40,7 @@ public class ExtendsListFix implements IntentionAction {
     return QuickFixBundle.message(messageKey, myClass.getName(), myClassToExtendFrom.getQualifiedName());
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("change.extends.list.family");
   }
@@ -54,7 +56,7 @@ public class ExtendsListFix implements IntentionAction {
         && (myClassToExtendFrom.isInterface()
             || (!myClass.isInterface()
                 && myClass.getExtendsList() != null
-                && myClass.getExtendsList().getReferencedTypes().length == 0))
+                && myClass.getExtendsList().getReferencedTypes().length == 0 == myToAdd))
         ;
 
   }

@@ -871,6 +871,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       myHolder.add(AnnotationsHighlightUtil.checkAnnotationDeclaration(parent, list));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkImplementsAllowed(list));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkClassExtendsOnlyOneClass(list));
+      if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkGenericCannotExtendException(list));
     }
   }
 
