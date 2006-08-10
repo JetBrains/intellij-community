@@ -486,6 +486,22 @@ class JavaDocInfoGenerator {
   }
 
   private void generateMethodParameterJavaDoc(@NonNls StringBuffer buffer, PsiParameter parameter) {
+    generatePrologue(buffer);
+
+    buffer.append("<PRE>");
+    String modifiers = PsiFormatUtil.formatModifiers(parameter, PsiFormatUtil.JAVADOC_MODIFIERS_ONLY);
+    if (modifiers.length() > 0) {
+      buffer.append(modifiers);
+      buffer.append(" ");
+    }
+    generateType(buffer, parameter.getType(), parameter);
+    buffer.append(" ");
+    buffer.append("<b>");
+    buffer.append(parameter.getName());
+    appendInitializer(buffer, parameter);
+    buffer.append("</b>");
+    buffer.append("</PRE>");
+
     final PsiMethod method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
 
     if (method != null) {
@@ -500,6 +516,8 @@ class JavaDocInfoGenerator {
         }
       }
     }
+
+    generateEpilogue(buffer);
   }
 
   private void generateMethodJavaDoc(@NonNls StringBuffer buffer, PsiMethod method) {
