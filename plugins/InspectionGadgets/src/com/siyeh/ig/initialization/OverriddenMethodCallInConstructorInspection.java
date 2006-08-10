@@ -56,10 +56,7 @@ public class OverriddenMethodCallInConstructorInspection
             super.visitMethodCallExpression(call);
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(call, PsiMethod.class);
-            if(method == null){
-                return;
-            }
-            if(!method.isConstructor()){
+            if (method == null || !method.isConstructor()) {
                 return;
             }
             final PsiReferenceExpression methodExpression =
@@ -72,25 +69,20 @@ public class OverriddenMethodCallInConstructorInspection
                     return;
                 }
             }
-            final PsiClass containingClass = method.getContainingClass();
-            if(containingClass == null){
-                return;
-            }
-            if(containingClass.hasModifierProperty(PsiModifier.FINAL)){
+            final PsiClass constructorClass = method.getContainingClass();
+            if (constructorClass == null ||
+                    constructorClass.hasModifierProperty(PsiModifier.FINAL)) {
                 return;
             }
             final PsiMethod calledMethod =
                     (PsiMethod) methodExpression.resolve();
-            if(calledMethod == null){
-                return;
-            }
-            if(!PsiUtil.canBeOverriden(calledMethod)){
+            if (calledMethod == null || !PsiUtil.canBeOverriden(calledMethod)) {
                 return;
             }
             final PsiClass calledMethodClass =
                     calledMethod.getContainingClass();
             if(!InheritanceUtil.isCorrectDescendant(calledMethodClass,
-                    containingClass, true)){
+                    constructorClass, true)){
                 return;
             }
             if(!MethodUtils.isOverridden(calledMethod)){

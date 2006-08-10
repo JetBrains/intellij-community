@@ -168,7 +168,7 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         visitExpression(expression);
     }
 
-    public void visitWhiteSpace(PsiWhiteSpace space){
+    public final void visitWhiteSpace(PsiWhiteSpace space){
         // none of our inspections need to do anything with white space,
         // so this is a performance optimization
     }
