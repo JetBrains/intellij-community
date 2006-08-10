@@ -103,14 +103,15 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
                                  String localizedMessage,
                                  HighlightInfoType type,
                                  IntentionAction quickFixAction) {
-    addElementsForTagWithManyQuickFixes(tag, localizedMessage, type, quickFixAction);
+    addElementsForTagWithManyQuickFixes(tag, localizedMessage, type, null, quickFixAction);
   }
 
   private void addElementsForTagWithManyQuickFixes(XmlTag tag,
                                                    String localizedMessage,
                                                    HighlightInfoType type,
+                                                   HighlightDisplayKey key,
                                                    IntentionAction... quickFixActions) {
-    bindMessageToTag(tag, type,  0, tag.getName().length(), localizedMessage, quickFixActions);
+    bindMessageToTag(tag, type,  0, tag.getName().length(), localizedMessage, key, quickFixActions);
   }
 
   public void visitXmlToken(XmlToken token) {
@@ -224,8 +225,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               infoType,
               0,
               messageLength,
-              localizedMessage,
-              new CreateNSDeclarationIntentionAction(context, namespacePrefix,taglibDeclaration)
+              localizedMessage, null, new CreateNSDeclarationIntentionAction(context, namespacePrefix,taglibDeclaration)
             );
           } else {
             bindMessageToAstNode(
@@ -233,8 +233,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               infoType,
               0,
               messageLength,
-              localizedMessage,
-              new CreateNSDeclarationIntentionAction(element, namespacePrefix,false)
+              localizedMessage, null, new CreateNSDeclarationIntentionAction(element, namespacePrefix,false)
             );
           }
         }
@@ -243,22 +242,20 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   private void bindMessageToTag(final XmlTag tag, final HighlightInfoType warning, final int offset,
-                                final int messageLength, final String localizedMessage,
-                                IntentionAction... quickFixActions) {
+                                final int messageLength, final String localizedMessage, final HighlightDisplayKey key, IntentionAction... quickFixActions) {
     ASTNode tagElement = SourceTreeToPsiMap.psiElementToTree(tag);
     ASTNode childByRole = XmlChildRole.START_TAG_NAME_FINDER.findChild(tagElement);
 
-    bindMessageToAstNode(childByRole, warning, offset, messageLength, localizedMessage,quickFixActions);
+    bindMessageToAstNode(childByRole, warning, offset, messageLength, localizedMessage, key, quickFixActions);
     childByRole = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tagElement);
-    bindMessageToAstNode(childByRole, warning, offset, messageLength, localizedMessage,quickFixActions);
+    bindMessageToAstNode(childByRole, warning, offset, messageLength, localizedMessage, key, quickFixActions);
   }
 
   private void bindMessageToAstNode(final ASTNode childByRole,
                                     final HighlightInfoType warning,
                                     final int offset,
                                     final int length,
-                                    final String localizedMessage,
-                                    IntentionAction... quickFixActions) {
+                                    final String localizedMessage, final HighlightDisplayKey key, IntentionAction... quickFixActions) {
     if(childByRole != null) {
       final TextRange textRange = childByRole.getTextRange();
       final int startOffset = textRange.getStartOffset() + offset;
@@ -271,7 +268,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
       for (final IntentionAction quickFixAction : quickFixActions) {
         if (quickFixAction == null) continue;
-        QuickFixAction.registerQuickFixAction(highlightInfo, textRange, quickFixAction, null, null);
+        List<IntentionAction> options = null;
+        if (key != null) {
+          options = new ArrayList<IntentionAction>();
+          options.add(new EditInspectionToolsSettingsAction(key));
+        }
+        QuickFixAction.registerQuickFixAction(highlightInfo, textRange, quickFixAction, options, HighlightDisplayKey.getDisplayNameByKey(key));
       }
       addToResults(highlightInfo);
     }
@@ -536,8 +538,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         tag,
         localizedMessage,
         SeverityRegistrar.getHighlightInfoTypeBySeverity(profile.getErrorLevel(key).getSeverity()),
+        key,
         intentionAction,
-        new EditInspectionToolsSettingsAction(key),
         basicIntention);
     } else if (!htmlTag) {
       addElementsForTag(
@@ -691,6 +693,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
                                                final String localizedMessage) {
     final HighlightInfoType tagProblemInfoType;
     IntentionAction[] quickFixes;
+    HighlightDisplayKey key = null;
 
     final RemoveAttributeIntentionAction removeAttributeIntention = new RemoveAttributeIntentionAction(localName,attribute);
 
@@ -700,11 +703,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         (LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME);
       HtmlStyleLocalInspection inspection = (HtmlStyleLocalInspection)toolWrapper.getTool();
       if (isAdditionallyDeclared(inspection.getAdditionalEntries(XmlEntitiesInspection.UNKNOWN_ATTRIBUTE), localName)) return null;
-      final HighlightDisplayKey key = HighlightDisplayKey.find(HtmlStyleLocalInspection.SHORT_NAME);
+      key = HighlightDisplayKey.find(HtmlStyleLocalInspection.SHORT_NAME);
       if (!inspectionProfile.isToolEnabled(key)) return null;
 
       quickFixes = new IntentionAction[]{inspection.getIntentionAction(tag, localName, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),
-        removeAttributeIntention, new EditInspectionToolsSettingsAction(key)};
+                                         removeAttributeIntention};
+
 
       tagProblemInfoType = SeverityRegistrar.getHighlightInfoTypeBySeverity(inspectionProfile.getErrorLevel(key).getSeverity());
     }
@@ -721,7 +725,13 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     addToResults(highlightInfo);
 
     for (IntentionAction quickFix : quickFixes) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, quickFix);
+      if (key != null) {
+        List<IntentionAction> options = new ArrayList<IntentionAction>();
+        options.add(new EditInspectionToolsSettingsAction(key));
+        QuickFixAction.registerQuickFixAction(highlightInfo, quickFix, options, HighlightDisplayKey.getDisplayNameByKey(key));
+      } else {
+        QuickFixAction.registerQuickFixAction(highlightInfo, quickFix);
+      }
     }
 
     return highlightInfo;
