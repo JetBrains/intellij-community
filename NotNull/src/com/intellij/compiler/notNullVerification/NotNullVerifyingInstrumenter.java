@@ -48,6 +48,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
 
       private ArrayList myNotNullParams = new ArrayList();
       private boolean myIsNotNull = false;
+      public Label myThrowLabel;
 
       public AnnotationVisitor visitParameterAnnotation(
         final int parameter,
@@ -84,26 +85,39 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
           }
           mv.visitVarInsn(Opcodes.ALOAD, var);
 
-          generateConditionalThrow("Argument " + param + " for @NotNull parameter of " + myClassName + "." + name + " must not be null",
-                                   "java/lang/IllegalArgumentException");
+          Label end = new Label();
+          mv.visitJumpInsn(Opcodes.IFNONNULL, end);
+
+          generateThrow("java/lang/IllegalArgumentException",
+                        "Argument " + param + " for @NotNull parameter of " + myClassName + "." + name + " must not be null", end);
+
+        }
+
+        if (myIsNotNull) {
+          Label codeStart = new Label();
+          mv.visitJumpInsn(Opcodes.GOTO, codeStart);
+
+          myThrowLabel = new Label();
+          mv.visitLabel(myThrowLabel);
+          //generate throw for method null return
+          generateThrow("java/lang/IllegalStateException", "@NotNull method " + myClassName + "." + name + " must not return null",
+                        codeStart);
         }
       }
 
       public void visitInsn(int opcode) {
         if (opcode == Opcodes.ARETURN && myIsNotNull) {
           mv.visitInsn(Opcodes.DUP);
-          generateConditionalThrow("@NotNull method " + myClassName + "." + name + " must not return null",
-                                   "java/lang/IllegalStateException");
+          /*generateConditionalThrow("@NotNull method " + myClassName + "." + name + " must not return null",
+                                   "java/lang/IllegalStateException");*/
+          mv.visitJumpInsn(Opcodes.IFNULL, myThrowLabel);
         }
 
         mv.visitInsn(opcode);
       }
 
-      private void generateConditionalThrow(final String descr, final String exceptionClass) {
+      private void generateThrow(final String exceptionClass, final String descr, final Label end) {
         String exceptionParamClass = "(Ljava/lang/String;)V";
-        Label end = new Label();
-        mv.visitJumpInsn(Opcodes.IFNONNULL, end);
-
         mv.visitTypeInsn(Opcodes.NEW, exceptionClass);
         mv.visitInsn(Opcodes.DUP);
         mv.visitLdcInsn(descr);
