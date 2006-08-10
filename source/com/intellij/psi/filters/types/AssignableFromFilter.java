@@ -74,10 +74,10 @@ public class AssignableFromFilter implements ElementFilter{
       }
     }
     final PsiType typeByElement = FilterUtil.getTypeByElement((PsiElement)element, context);
-    if(substitutor != null) return type.isAssignableFrom(substitutor.substitute(typeByElement));
     if (typeByElement == null) {
       return false;
     }
+    if(substitutor != null) return type.isAssignableFrom(substitutor.substitute(typeByElement));
     return type.isAssignableFrom(typeByElement);
   }
 
