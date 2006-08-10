@@ -46,23 +46,21 @@ public class InternedPath {
   }
 
   public static String join(String[] value, char separator) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      if (value.length > 1) {
+    if (value.length > 1) {
+      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+      try {
         builder.append(value[0]);
         for (int idx = 1; idx < value.length; idx++) {
           builder.append(separator).append(value[idx]);
         }
       }
-      else {
-        for (String s : value) {
-          builder.append(s);
-        }
+      finally {
+        StringBuilderSpinAllocator.dispose(builder);
       }
-      return builder.toString();
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
+    else if (value.length == 1){
+      return value[0];
     }
+    return "";
   }
 }
