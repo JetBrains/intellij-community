@@ -250,9 +250,8 @@ public class RedundantCastUtil {
           final PsiExpression arg = deparenthesizeExpression(args[i]);
           if (arg instanceof PsiTypeCastExpression) {
             PsiTypeCastExpression cast = ((PsiTypeCastExpression) arg);
-            if (i == args.length - 1 && args.length == parameters.length && parameters[i].isVarArgs() &&
-                PsiType.NULL.equals(cast.getOperand().getType())) {
-              //do not mark cast from null to resolve ambiguity for calling varargs method with incomplete argument list
+            if (i == args.length - 1 && args.length == parameters.length && parameters[i].isVarArgs()) {
+              //do not mark cast to resolve ambiguity for calling varargs method with inexact argument
               continue;
             }
             PsiCallExpression newCall = (PsiCallExpression) expression.copy();
