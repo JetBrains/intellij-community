@@ -309,9 +309,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     PsiElement container = PsiTreeUtil.getParentOfType(myElements[0], PsiClass.class, PsiMethod.class);
-    if (container instanceof PsiMethod) {
-      myTypeParameterList = ((PsiMethod)container).getTypeParameterList();
-    }
+    myTypeParameterList = RefactoringUtil.createTypeParameterListWithUsedTypeParameters(container);
+
     myThrownExceptions = ExceptionUtil.getThrownCheckedExceptions(myElements);
     myStatic = shouldBeStatic();
 

@@ -91,7 +91,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
         anchor = javaDocHelper.addParameterAfter(fieldParameter.name, anchor);
       }
     }
-    addTypeParameters(addedTypes);
+    setupTypeParameterList(addedTypes);
     // Add static modifier
     final PsiModifierList modifierList = myMember.getModifierList();
     modifierList.setModifierProperty(PsiModifier.STATIC, true);

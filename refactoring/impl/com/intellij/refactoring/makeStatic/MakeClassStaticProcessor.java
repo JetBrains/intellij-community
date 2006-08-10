@@ -16,7 +16,6 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.text.MessageFormat;
 
 import org.jetbrains.annotations.NonNls;
 
@@ -98,7 +97,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     }
 
 
-    addTypeParameters(addedTypes);
+    setupTypeParameterList(addedTypes);
 
     // Add static modifier
     final PsiModifierList modifierList = myMember.getModifierList();

@@ -51,12 +51,14 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.*;
+import java.util.HashSet;
 
 public class RefactoringUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.RefactoringUtil");
@@ -1491,5 +1493,45 @@ public class RefactoringUtil {
       if (PsiTreeUtil.isAncestor(scope, resolved, false)) return true;
     }
     return false;
+  }
+
+  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters (PsiElement element) {
+    final Set<PsiTypeParameter> used = new com.intellij.util.containers.HashSet<PsiTypeParameter>();
+    element.accept(new PsiRecursiveElementVisitor() {
+
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        super.visitReferenceElement(reference);
+        if (!reference.isQualified()) {
+          final PsiElement resolved = reference.resolve();
+          if (resolved instanceof PsiTypeParameter) {
+            used.add((PsiTypeParameter)resolved);
+          }
+        }
+      }
+    });
+
+    PsiTypeParameter[] typeParameters = used.toArray(new PsiTypeParameter[used.size()]);
+
+    Arrays.sort(typeParameters, new Comparator<PsiTypeParameter>() {
+      public int compare(final PsiTypeParameter tp1, final PsiTypeParameter tp2) {
+        return tp1.getTextRange().getStartOffset() - tp2.getTextRange().getStartOffset();
+      }
+    });
+
+    final PsiElementFactory elementFactory = element.getManager().getElementFactory();
+    try {
+      final PsiClass aClass = elementFactory.createClassFromText("class A {}", null);
+      PsiTypeParameterList list = aClass.getTypeParameterList();
+      assert list != null;
+      for (final PsiTypeParameter typeParameter : typeParameters) {
+        list.add(typeParameter);
+      }
+      return list;
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      assert false;
+      return null;
+    }
   }
 }
