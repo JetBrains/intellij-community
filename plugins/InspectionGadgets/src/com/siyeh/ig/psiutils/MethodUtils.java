@@ -75,6 +75,18 @@ public class MethodUtils{
         return result != null;
     }
 
+    public static boolean isOverriddenInHierarchy(PsiMethod method,
+                                                  PsiClass baseClass) {
+        final Query<PsiMethod> search = OverridingMethodsSearch.search(method);
+        for (PsiMethod overridingMethod : search) {
+            final PsiClass aClass = overridingMethod.getContainingClass();
+            if (InheritanceUtil.isCorrectDescendant(aClass, baseClass, true)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean isEmpty(PsiMethod method){
         final PsiCodeBlock body = method.getBody();
         if (body == null){

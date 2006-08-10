@@ -81,11 +81,12 @@ public class OverriddenMethodCallInConstructorInspection
             }
             final PsiClass calledMethodClass =
                     calledMethod.getContainingClass();
-            if(!InheritanceUtil.isCorrectDescendant(calledMethodClass,
-                    constructorClass, true)){
+            if(!InheritanceUtil.isCorrectDescendant(constructorClass,
+                    calledMethodClass, true)) {
                 return;
             }
-            if(!MethodUtils.isOverridden(calledMethod)){
+            if(!MethodUtils.isOverriddenInHierarchy(calledMethod,
+                    constructorClass)){
                 return;
             }
             registerMethodCallError(call);
