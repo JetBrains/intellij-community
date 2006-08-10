@@ -1,38 +1,43 @@
 package com.intellij.lang.ant.psi.introspection;
 
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
 
 public class AntTypeId {
-
-  private final Pair<String, String> myId;
+  private String myName;
+  private String myNamespace;
 
   public AntTypeId(@NonNls final String name, @NonNls final String namespace) {
-    myId = new Pair<String, String>(name, namespace);
+    myName = name;
+    myNamespace = namespace;
   }
 
   public AntTypeId(@NonNls final String name) {
     this(name, null);
   }
 
-  public int hashCode() {
-    return myId.hashCode();
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final AntTypeId antTypeId = (AntTypeId)o;
+
+    if (!myName.equals(antTypeId.myName)) return false;
+    if (myNamespace != null ? !myNamespace.equals(antTypeId.myNamespace) : antTypeId.myNamespace != null) return false;
+
+    return true;
   }
 
-  public boolean equals(Object obj) {
-    if (!(obj instanceof AntTypeId)) return false;
-    AntTypeId right = (AntTypeId)obj;
-    return myId.getFirst().equals(right.myId.getFirst()) &&
-           (myId.getSecond() == null || right.myId.getSecond() == null || myId.getSecond().equals(right.myId.getSecond()));
+  public int hashCode() {
+    return 31 * myName.hashCode() + (myNamespace != null ? myNamespace.hashCode() : 0);
   }
 
   @NonNls
   public String getName() {
-    return myId.first;
+    return myName;
   }
 
   @NonNls
   public String getNamespace() {
-    return myId.second;
+    return myNamespace;
   }
 }
