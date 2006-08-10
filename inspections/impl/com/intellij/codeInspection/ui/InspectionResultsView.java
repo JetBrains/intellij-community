@@ -32,6 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.profile.Profile;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.PopupHandler;
@@ -738,14 +740,26 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
     public void actionPerformed(AnActionEvent e) {
       final InspectionTool tool = myTree.getSelectedTool();
+      final InspectionProfile inspectionProfile = myInspectionProfile;
+      LOG.assertTrue(inspectionProfile != null);
       if (tool != null) {
         final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName()); //do not search for dead code entry point tool
         if (key != null){
-          new EditInspectionToolsSettingsAction(key).editToolSettings(myProject, (InspectionProfileImpl) myInspectionProfile, false);
+          if (new EditInspectionToolsSettingsAction(key).editToolSettings(myProject, (InspectionProfileImpl)inspectionProfile, false)){
+            updateCurrentProfile(inspectionProfile);
+          }
           return;
         }
       }
-      EditInspectionToolsSettingsAction.editToolSettings(myProject, (InspectionProfileImpl) myInspectionProfile, false, null, InspectionProjectProfileManager.getInstance(myProject));
+      if (EditInspectionToolsSettingsAction.editToolSettings(myProject, (InspectionProfileImpl)inspectionProfile, false, null, InspectionProjectProfileManager.getInstance(myProject))) {
+        updateCurrentProfile(inspectionProfile);
+      }
+    }
+
+    private void updateCurrentProfile(@NotNull final InspectionProfile inspectionProfile) {
+      final Map<String, Profile> projectProfiles = InspectionProjectProfileManager.getInstance(myProject).getProfiles();
+      final String name = inspectionProfile.getName();
+      myInspectionProfile = (InspectionProfile)(projectProfiles.containsKey(name) ? projectProfiles.get(name) : InspectionProfileManager.getInstance().getProfile(name));
     }
 
     public void update(AnActionEvent e) {
