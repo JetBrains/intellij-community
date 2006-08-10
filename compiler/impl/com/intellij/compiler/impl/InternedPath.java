@@ -53,6 +53,7 @@ public class InternedPath {
         for (int idx = 1; idx < value.length; idx++) {
           builder.append(separator).append(value[idx]);
         }
+        return builder.toString();
       }
       finally {
         StringBuilderSpinAllocator.dispose(builder);
