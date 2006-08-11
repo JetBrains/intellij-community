@@ -71,11 +71,13 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
     myOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.output.title"), new CommitPathRunnable() {
       public void saveUrl(String url) {
+        if (myModel.isCompilerOutputPathInherited()) return;  //do not override settings if any
         myModel.setCompilerOutputPath(url);
       }
     });
     myTestsOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.test.output.title"), new CommitPathRunnable() {
       public void saveUrl(String url) {
+        if (myModel.isCompilerOutputPathInherited()) return; //do not override settings if any
         myModel.setCompilerOutputPathForTests(url);
       }
     });
@@ -114,6 +116,21 @@ public class BuildElementsEditor extends ModuleElementsEditor {
                                                                    GridBagConstraints.NONE, new Insets(6, 12, 0, 0), 0, 0));
 
     // fill with data
+    updateOutputPathPresentation();
+
+    //compiler settings
+    final boolean outputPathInherited = myModel.isCompilerOutputPathInherited();
+    myInheritCompilerOutput.setSelected(outputPathInherited);
+    myPerModuleCompilerOutput.setSelected(!outputPathInherited);
+    enableCompilerSettings(!outputPathInherited);
+
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+    panel.add(outputPathsPanel, BorderLayout.NORTH);
+    return panel;
+  }
+
+  private void updateOutputPathPresentation() {
     final VirtualFile compilerOutputPath = myModel.getCompilerOutputPath();
     if (compilerOutputPath != null) {
       myOutputPathPanel.setText(compilerOutputPath.getPath().replace('/', File.separatorChar));
@@ -135,17 +152,6 @@ public class BuildElementsEditor extends ModuleElementsEditor {
         myTestsOutputPathPanel.setText(VirtualFileManager.extractPath(testsOutputUrl).replace('/', File.separatorChar));
       }
     }
-
-    //compiler settings
-    final boolean outputPathInherited = myModel.isCompilerOutputPathInherited();
-    myInheritCompilerOutput.setSelected(outputPathInherited);
-    myPerModuleCompilerOutput.setSelected(!outputPathInherited);
-    enableCompilerSettings(!outputPathInherited);
-
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-    panel.add(outputPathsPanel, BorderLayout.NORTH);
-    return panel;
   }
 
   private void enableCompilerSettings(final boolean enabled) {
@@ -155,6 +161,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     UIUtil.setEnabled(myTestOutputLabel, enabled, true);
     myCbExcludeOutput.setEnabled(enabled);
     myModel.inheritCompilerOutputPath(!enabled);
+    updateOutputPathPresentation();
   }
 
   private FieldPanel createOutputPathPanel(final String title, final CommitPathRunnable commitPathRunnable) {
