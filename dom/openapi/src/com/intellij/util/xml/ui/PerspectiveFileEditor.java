@@ -104,6 +104,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     }
   }
 
+  @Nullable
   abstract protected DomElement getSelectedDomElement();
   abstract protected void setSelectedDomElement(DomElement domElement);
 
