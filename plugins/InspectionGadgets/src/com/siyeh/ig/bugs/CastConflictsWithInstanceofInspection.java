@@ -217,7 +217,6 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
                 return false;
             }
             final PsiType type = typeElement.getType();
-            //TODO: should this take inheritance into account
             return castType.isAssignableFrom(type);
         }
     }
