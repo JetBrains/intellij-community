@@ -94,6 +94,14 @@ public class TemplateState implements Disposable {
     };
 
     myCommandListener = new CommandAdapter() {
+      public void commandStarted(CommandEvent event) {
+        if (myEditor != null) {
+          final int offset = myEditor.getCaretModel().getOffset();
+          toProcessChangedUpdate = offset < mySegments.getSegmentStart(myCurrentSegmentNumber) ||
+                                   offset > mySegments.getSegmentEnd(myCurrentSegmentNumber);
+        }
+      }
+
       public void beforeCommandFinished(CommandEvent event) {
         //This is a hack to deal with closing lookup, TODO: remove redundant  string on update
         if (!UP_ACTION.equals(event.getCommandName()) && !DOWN_ACTION.equals(event.getCommandName())) {
@@ -284,14 +292,12 @@ public class TemplateState implements Disposable {
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         public void run() {
-          toProcessChangedUpdate = false;
           if (!template.isInline()) myDocument.insertString(myTemplateRange.getStartOffset(), template.getTemplateText());
           for (int i = 0; i < template.getSegmentsCount(); i++) {
             int segmentOffset = myTemplateRange.getStartOffset() + template.getSegmentOffset(i);
             mySegments.addSegment(segmentOffset, segmentOffset);
           }
 
-          toProcessChangedUpdate = true;
           calcResults(false);
           calcResults(false);  //Fixed SCR #[vk500] : all variables should be recalced twice on start.
           doReformat();
@@ -452,9 +458,7 @@ public class TemplateState implements Disposable {
                   }
 
                   if (!isFinished()) {
-                    toProcessChangedUpdate = false;
                     calcResults(true);
-                    toProcessChangedUpdate = true;
                   }
                 }
 
@@ -503,10 +507,8 @@ public class TemplateState implements Disposable {
               if (param.getName().equals(aClass.getName())) return;
             }
             try {
-              toProcessChangedUpdate = false;
               paramList.add(aClass.copy());
               CodeInsightUtil.forcePsiPostprocessAndRestoreElement(paramList);
-              toProcessChangedUpdate = true;
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
@@ -552,9 +554,7 @@ public class TemplateState implements Disposable {
                 String newValue = getVariableValue(variableName).getText();
                 int start = mySegments.getSegmentStart(i);
                 int end = mySegments.getSegmentEnd(i);
-                toProcessChangedUpdate = false;
                 replaceString(newValue, start, end, i);
-                toProcessChangedUpdate = true;
               }
             }
           }
@@ -600,7 +600,6 @@ public class TemplateState implements Disposable {
       newValue = StringUtil.escapeStringCharacters(newValue);
     }
 
-    toProcessChangedUpdate = false;
     replaceString(newValue, start, end, segmentNumber);
 
     if (result instanceof PsiTypeResult) {
@@ -624,10 +623,7 @@ public class TemplateState implements Disposable {
       if (result instanceof PsiTypeResult) {
         updateTypeBindings(((PsiTypeResult)result).getType(), psiFile, context);
       }
-      else if (result instanceof PsiClass) updateTypeBindings(result, psiFile, context);
     }
-
-    toProcessChangedUpdate = true;
   }
 
   private void replaceString(String newValue, int start, int end, int segmentNumber) {
@@ -783,15 +779,13 @@ public class TemplateState implements Disposable {
       return true;
     }
     LookupItem[] items = expression.calculateLookupItems(context);
-    if (items == null) return false;
-    return items.length > 1;
+    return items != null && items.length > 1;
   }
 
   private IntArrayList initEmptyVariables() {
     int endSegmentNumber = myTemplate.getEndSegmentNumber();
     int selStart = myTemplate.getSelectionStartSegmentNumber();
     int selEnd = myTemplate.getSelectionEndSegmentNumber();
-    toProcessChangedUpdate = false;
     IntArrayList indices = new IntArrayList();
     for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
       int length = mySegments.getSegmentEnd(i) - mySegments.getSegmentStart(i);
@@ -814,12 +808,10 @@ public class TemplateState implements Disposable {
         }
       }
     }
-    toProcessChangedUpdate = true;
     return indices;
   }
 
   private void restoreEmptyVariables(IntArrayList indices) {
-    toProcessChangedUpdate = false;
     for (int i = 0; i < indices.size(); i++) {
       int index = indices.get(i);
 
@@ -836,7 +828,6 @@ public class TemplateState implements Disposable {
         }
       }
     }
-    toProcessChangedUpdate = true;
   }
 
   private void initTabStopHighlighters() {
@@ -900,11 +891,9 @@ public class TemplateState implements Disposable {
       CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
       if (myTemplate.isToShortenLongNames()) {
         try {
-          toProcessChangedUpdate = false;
           PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
           codeStyleManager.shortenClassReferences(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
           PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
-          toProcessChangedUpdate = true;
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -912,10 +901,9 @@ public class TemplateState implements Disposable {
       }
       if (myTemplate.isToReformat()) {
         try {
-          toProcessChangedUpdate = false;
           int endSegmentNumber = myTemplate.getEndSegmentNumber();
           PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-          PsiElement marker = null;
+          PsiElement marker;
           RangeMarker rangeMarker = null;
           if (endSegmentNumber >= 0) {
             int endVarOffset = mySegments.getSegmentStart(endSegmentNumber);
@@ -930,7 +918,6 @@ public class TemplateState implements Disposable {
             mySegments.replaceSegmentAt(endSegmentNumber, rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
             myDocument.deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
           }
-          toProcessChangedUpdate = true;
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
