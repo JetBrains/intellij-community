@@ -159,8 +159,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   public boolean isAvailableOnDataContext(DataContext dataContext) {
-    PsiElement element = null;
-    element = getElement(dataContext);
+    PsiElement element = getElement(dataContext);
 
     if (element == null) return false;
     if (element instanceof JspClass || element instanceof JspHolderMethod) return false;
