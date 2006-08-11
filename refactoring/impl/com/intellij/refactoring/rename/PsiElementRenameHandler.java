@@ -26,6 +26,7 @@ import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * created at Nov 13, 2001
@@ -35,7 +36,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.PsiElementRenameHandler");
 
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    PsiElement element = getElement(dataContext);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
     invoke(element, project, nameSuggestionContext, editor);
@@ -158,14 +159,29 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   public boolean isAvailableOnDataContext(DataContext dataContext) {
+    PsiElement element = null;
+    element = getElement(dataContext);
+
+    if (element == null) return false;
+    if (element instanceof JspClass || element instanceof JspHolderMethod) return false;
+    return !(element instanceof PsiJavaFile) || PsiUtil.isInJspFile(element);
+  }
+
+  @Nullable
+  private static PsiElement getElement(final DataContext dataContext) {
     PsiElement[] elementArray = BaseRefactoringAction.getPsiElementArray(dataContext);
-    if (elementArray == null || elementArray.length != 1 || elementArray[0] == null) {
-      return false;
+    if (elementArray == null) {
+      final VirtualFile vFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
+      final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      if (vFile != null && project != null) {
+        return PsiManager.getInstance(project).findFile(vFile);
+      }
     }
 
-    final PsiElement element = elementArray[0];
-    if (element instanceof JspClass || element instanceof JspHolderMethod) return false;
-    return !(element instanceof PsiJavaFile) || PsiUtil.isInJspFile(element) && element instanceof PsiFile;
+    if (elementArray == null || elementArray.length != 1) {
+      return null;
+    }
+    return elementArray[0];
   }
 
   public boolean isRenaming(DataContext dataContext) {
