@@ -15,6 +15,9 @@
  */
 package com.intellij.ide.fileTemplates;
 
+/**
+ * Should be implemented by an ApplicationComponent
+ */
 public interface FileTemplateGroupDescriptorFactory {
   FileTemplateGroupDescriptor getFileTemplatesDescriptor();
 }
