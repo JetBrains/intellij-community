@@ -21,9 +21,11 @@ package com.intellij.openapi.fileEditor;
  */
 public abstract class WeighedFileEditorProvider implements FileEditorProvider{
 
+  double DEFAULT_WEIGHT = 1;
+
   /**
    * @return double value used for editor ascending ordering 
    */
-  public abstract double getWeight();
+  public double getWeight() { return DEFAULT_WEIGHT; }
   
 }
