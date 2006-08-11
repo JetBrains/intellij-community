@@ -1,6 +1,7 @@
 package com.intellij.psi;
 
 import com.intellij.lang.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -215,30 +216,35 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
           languageElements = outerSet.get();
         }
 
-        Iterator<OuterLanguageElement> iterator = languageElements.iterator();
+        Iterator<OuterLanguageElement> i = languageElements.iterator();
 
-        while (iterator.hasNext()) {
-          final OuterLanguageElement outerElement = iterator.next();
+        while (i.hasNext()) {
+          final OuterLanguageElement outerElement = i.next();
           final FileElement file = TreeUtil.getFileElement(outerElement);
 
           if (file == null || file.getPsi() != psiFile) {
-            iterator.remove();
+            i.remove();
           }
         }
 
         XmlText prevText = null;
         int outerCount = 0;
-        iterator = languageElements.iterator();
+        i = languageElements.iterator();
 
-        while (iterator.hasNext()) {
-          final OuterLanguageElement outerElement = iterator.next();
+        while (i.hasNext()) {
+          final OuterLanguageElement outerElement = i.next();
           final XmlText nextText = outerElement.getFollowingText();
 
-          final TextRange textRange = new TextRange(
-            prevText != null ? prevText.getTextRange().getEndOffset() : outerCount != 0 ? outerElement.getTextRange().getStartOffset() : 0,
-            nextText != null
-            ? nextText.getTextRange().getStartOffset()
-            : iterator.hasNext() ? outerElement.getTextRange().getEndOffset() : getContents().length());
+          if (nextText != null) assert nextText.isValid() : "Invalid nextText: " + outerElement + " - " + nextText;
+          final int start =
+            prevText != null ? prevText.getTextRange().getEndOffset() : outerCount != 0 ? outerElement.getTextRange().getStartOffset() : 0;
+
+          final int end = nextText != null
+                          ? nextText.getTextRange().getStartOffset()
+                          : i.hasNext() ? outerElement.getTextRange().getEndOffset() : getContents().length();
+
+          assert start <= end;
+          final TextRange textRange = new TextRange(start, end);
 
           if (!textRange.equals(outerElement.getTextRange())) {
             outerElement.setRange(textRange);
@@ -246,11 +252,13 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
           prevText = nextText;
           ++outerCount;
         }
+
       }
       finally {
         myRootsInUpdate.remove(psiFile);
-        checkConsistensy(psiFile);
       }
+
+      checkConsistensy(psiFile);
     }
   }
 
@@ -295,8 +303,17 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   }
 
   protected void checkConsistensy(final PsiFile oldFile) {
-    LOG.assertTrue(oldFile.getNode().getTextLength() == getContents().length());
-    LOG.assertTrue(oldFile.getNode().getText().equals(getContents().toString()));
+    if (oldFile.getNode().getTextLength() != getContents().length() ||
+       !oldFile.getNode().getText().equals(getContents().toString())) {
+      String message = "Check consistency failed for: " + oldFile;
+      message += "\n     oldFile.getNode().getTextLength() = " + oldFile.getNode().getTextLength();
+      message += "\n     getContents().length() = " + getContents().length();
+      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+        message += "\n     oldFileText:\n" + oldFile.getNode().getText();
+        message += "\n     contentsText:\n" + getContents().toString();
+      }
+      LOG.assertTrue(false, message);
+    }
   }
 
   public LanguageExtension[] getLanguageExtensions() {
