@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
@@ -288,7 +287,7 @@ public class FileManagerImpl implements FileManager {
         return getResolveScope(context);
       }
 
-      final PsiFile contextFile = ResolveUtil.getContextFile(containingFile);
+      final PsiFile contextFile = containingFile != null ? ResolveUtil.getContextFile(containingFile) : ResolveUtil.getContextFile(element);
       if (contextFile == null || contextFile instanceof XmlFile) {
         return GlobalSearchScope.allScope(project);
       }
