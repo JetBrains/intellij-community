@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.tree.IElementType;
 
 /**
  * Represents a simple assignment (<code>a=b</code>) or a compound assignment (<code>a+=1</code>) expression.
@@ -47,4 +48,12 @@ public interface PsiAssignmentExpression extends PsiExpression {
    */
   @NotNull
   PsiJavaToken getOperationSign();
+
+  /**
+   * Returns the type of the token representing the operation performed.
+   *
+   * @return the token type.
+   */
+  @NotNull
+  IElementType getOperationTokenType();
 }

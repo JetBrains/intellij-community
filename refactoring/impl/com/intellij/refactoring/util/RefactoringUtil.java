@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -51,7 +52,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -674,9 +674,9 @@ public class RefactoringUtil {
              || operandSign.getTokenType() == JavaTokenType.MINUSMINUS;
     }
     else if (element instanceof PsiPostfixExpression) {
-      PsiJavaToken operandSign = ((PsiPostfixExpression)element).getOperationSign();
-      return operandSign.getTokenType() == JavaTokenType.PLUSPLUS
-             || operandSign.getTokenType() == JavaTokenType.MINUSMINUS;
+      IElementType operandTokenType = ((PsiPostfixExpression)element).getOperationTokenType();
+      return operandTokenType == JavaTokenType.PLUSPLUS
+             || operandTokenType == JavaTokenType.MINUSMINUS;
     }
     else {
       return false;

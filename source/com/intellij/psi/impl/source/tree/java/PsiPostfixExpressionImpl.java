@@ -2,10 +2,9 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,6 +23,11 @@ public class PsiPostfixExpressionImpl extends CompositePsiElement implements Psi
   @NotNull
   public PsiJavaToken getOperationSign() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.OPERATION_SIGN);
+  }
+
+  @NotNull
+  public IElementType getOperationTokenType() {
+    return getOperationSign().getTokenType();
   }
 
   public PsiType getType() {

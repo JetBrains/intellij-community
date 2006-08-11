@@ -32,6 +32,11 @@ public class PsiBinaryExpressionImpl extends CompositePsiElement implements PsiB
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.OPERATION_SIGN);
   }
 
+  @NotNull
+  public IElementType getOperationTokenType() {
+    return getOperationSign().getTokenType();
+  }
+
   public PsiType getType() {
     PsiExpression lOperand = getLOperand();
     PsiExpression rOperand = getROperand();

@@ -32,6 +32,11 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
     return mySign;
   }
 
+  @NotNull
+  public IElementType getOperationTokenType() {
+    return getOperationSign().getTokenType();
+  }
+
   public PsiType getType() {
     return myOperand.getType();
   }

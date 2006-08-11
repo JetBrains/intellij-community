@@ -29,6 +29,11 @@ public class PsiAssignmentExpressionImpl extends CompositePsiElement implements 
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.OPERATION_SIGN);
   }
 
+  @NotNull
+  public IElementType getOperationTokenType() {
+    return getOperationSign().getTokenType();
+  }
+
   public PsiType getType() {
     return getLExpression().getType();
   }

@@ -25,6 +25,11 @@ public class PsiPrefixExpressionImpl extends CompositePsiElement implements PsiP
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.OPERATION_SIGN);
   }
 
+  @NotNull
+  public IElementType getOperationTokenType() {
+    return getOperationSign().getTokenType();
+  }
+
   public PsiType getType() {
     PsiExpression operand = getOperand();
     if (operand == null) return null;

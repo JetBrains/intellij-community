@@ -302,13 +302,11 @@ public final class PsiUtil {
     if (isOnAssignmentLeftHand(expr)) return true;
     PsiElement parent = expr.getParent();
     if (parent instanceof PsiPrefixExpression) {
-      PsiJavaToken sign = ((PsiPrefixExpression) parent).getOperationSign();
-      IElementType tokenType = sign.getTokenType();
+      IElementType tokenType = ((PsiPrefixExpression) parent).getOperationTokenType();
       return tokenType == JavaTokenType.PLUSPLUS || tokenType == JavaTokenType.MINUSMINUS;
     }
     else if (parent instanceof PsiPostfixExpression) {
-      PsiJavaToken sign = ((PsiPostfixExpression) parent).getOperationSign();
-      IElementType tokenType = sign.getTokenType();
+      IElementType tokenType = ((PsiPostfixExpression) parent).getOperationTokenType();
       return tokenType == JavaTokenType.PLUSPLUS || tokenType == JavaTokenType.MINUSMINUS;
     }
     else {
