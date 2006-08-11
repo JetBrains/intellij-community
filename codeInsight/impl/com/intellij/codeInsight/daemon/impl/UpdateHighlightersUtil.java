@@ -238,7 +238,7 @@ public class UpdateHighlightersUtil {
                                                                                      info.startOffset,
                                                                                      HighlighterLayer.ADDITIONAL_SYNTAX,
                                                                                      info.attributes,
-                                                                                     HighlighterTargetArea.LINES_IN_RANGE);
+                                                                                     HighlighterTargetArea.EXACT_RANGE);
       marker.setGutterIconRenderer(info.createGutterRenderer());
       marker.setLineSeparatorColor(info.separatorColor);
       marker.setLineSeparatorPlacement(info.separatorPlacement);
