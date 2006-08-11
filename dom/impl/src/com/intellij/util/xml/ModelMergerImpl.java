@@ -228,7 +228,10 @@ public class ModelMergerImpl implements ModelMerger {
       if (ReflectionCache.isAssignable(MERGED_OBJECT_CLASS, method.getDeclaringClass())) {
         return JavaMethod.getMethod(MERGED_OBJECT_CLASS, method);
       }
-      return JavaMethod.getMethod(myClass, method);
+      if (method.getDeclaringClass().isAssignableFrom(myClass)) {
+        return JavaMethod.getMethod(myClass, method);
+      }
+      return JavaMethod.getMethod(method.getDeclaringClass(), method);
     }
   }
 

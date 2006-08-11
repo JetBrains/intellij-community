@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -186,8 +187,10 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     while (child != null) {
       if (child instanceof XmlTag) {
         final XmlTag xmlTag = (XmlTag)child;
-        copyTags(xmlTag, (XmlTag)toTag.add(createEmptyTag(xmlTag.getName())));
-        hasChildren = true;
+        if (!StringUtil.isEmpty(xmlTag.getName())) {
+          copyTags(xmlTag, (XmlTag)toTag.add(createEmptyTag(xmlTag.getName())));
+          hasChildren = true;          
+        }
       }
       else if (child instanceof XmlAttribute) {
         toTag.add(child);
