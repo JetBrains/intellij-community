@@ -105,7 +105,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     if(item == null) {
       item = createText("");
     }
-    PsiCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(item, null, getProject());
+    PsiCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(item, myContext, getProject());
     if (myContext != null) {
       final PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(myContext, PsiClass.class);
       if (contextClass != null) {
