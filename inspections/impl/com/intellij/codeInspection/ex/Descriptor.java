@@ -54,13 +54,6 @@ public class Descriptor {
     myGroup = tool.getGroupDisplayName() != null && tool.getGroupDisplayName().length() == 0 ? GroupNames.GENERAL_GROUP_NAME : tool.getGroupDisplayName();
     myDescriptorFileName = ((InspectionTool)tool).getDescriptionFileName();
     myKey = HighlightDisplayKey.find(tool.getShortName());
-    if (myKey == null) {
-      if (tool instanceof LocalInspectionToolWrapper) {
-        myKey = HighlightDisplayKey.register(tool.getShortName(), tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID());
-      } else {
-        myKey = HighlightDisplayKey.register(tool.getShortName());
-      }
-    }
     myLevel = inspectionProfile.getErrorLevel(myKey);
     myEnabled = inspectionProfile.isToolEnabled(myKey);
     myTool = tool;

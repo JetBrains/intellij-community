@@ -45,7 +45,7 @@ import java.util.Collection;
  */
 public class InspectionProfileManager extends DefaultApplicationProfileManager implements ExportableApplicationComponent {
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
-  @NonNls private static final String BASE_PROFILE_ATTR = "base_profile";
+
   private InspectionToolRegistrar myRegistrar;
 
   public static InspectionProfileManager getInstance() {
@@ -63,7 +63,9 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
           },
           "inspection");
     myRegistrar = registrar;
-    initProfiles();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      initProfiles();
+    }
   }
 
   public void initComponent() {
@@ -153,9 +155,11 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
     return null;
   }
 
-  private static String getBaseProfileName(File file) throws JDOMException, IOException {
+ /*
+   @NonNls private static final String BASE_PROFILE_ATTR = "base_profile";
+   private static String getBaseProfileName(File file) throws JDOMException, IOException {
     return getRootElementAttribute(file, BASE_PROFILE_ATTR);
-  }
+  }*/
 
   @NotNull
   public String getComponentName() {

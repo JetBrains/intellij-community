@@ -50,11 +50,13 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.xml.util.CheckEmptyScriptTagInspection;
 import com.intellij.xml.util.CheckImageSizeInspection;
 import com.intellij.xml.util.CheckValidXmlInScriptBodyInspection;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class StandardInspectionToolsProvider implements InspectionToolProvider, ApplicationComponent {
+  @NotNull
   public String getComponentName() {
     return "StandardInspectionToolsProvider";
   }
@@ -107,7 +109,6 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       CheckEmptyScriptTagInspection.class,
       CheckValidXmlInScriptBodyInspection.class,
       WrongPackageStatementInspection.class,
-      DependencyInspection.class,
       SillyAssignmentInspection.class,
       RedundantThrowsDeclaration.class,
       AccessStaticViaInstance.class,

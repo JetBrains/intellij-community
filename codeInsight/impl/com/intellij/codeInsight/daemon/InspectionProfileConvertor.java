@@ -149,9 +149,8 @@ public class InspectionProfileConvertor {
       HighlightDisplayLevel level = myDisplayLevelMap.get(shortName);
 
       HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-      if (key == null) {
-        key = HighlightDisplayKey.register(shortName);
-      }
+
+      if (key == null) continue;
 
       //set up tools for default profile
       if (level != HighlightDisplayLevel.DO_NOT_SHOW) {

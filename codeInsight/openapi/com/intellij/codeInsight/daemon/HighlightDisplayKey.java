@@ -1,11 +1,15 @@
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
 public class HighlightDisplayKey {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.HighlightDisplayKey");
+
   private static final HashMap<String,HighlightDisplayKey> ourMap = new HashMap<String, HighlightDisplayKey>();
   private static final Map<HighlightDisplayKey, String> ourKeyToDisplayNameMap = new HashMap<HighlightDisplayKey, String>();
 
@@ -16,18 +20,27 @@ public class HighlightDisplayKey {
     return ourMap.get(name);
   }
 
+  @Nullable
   public static HighlightDisplayKey register(@NonNls String name) {
-    if (find(name) != null) throw new IllegalArgumentException("Key already registered");
+    if (find(name) != null) {
+      LOG.info("Key with name \'" + name + "\' already registered");
+      return null;
+    }
     return new HighlightDisplayKey(name);
   }
 
+  @Nullable
   public static HighlightDisplayKey register(@NonNls String name, String displayName, @NonNls String id){
-    if (find(name) != null) throw new IllegalArgumentException("Key already registered");
+    if (find(name) != null) {
+      LOG.info("Key with name \'" + name + "\' already registered");
+      return null;
+    }
     HighlightDisplayKey highlightDisplayKey = new HighlightDisplayKey(name, id);
     ourKeyToDisplayNameMap.put(highlightDisplayKey, displayName);
     return highlightDisplayKey;
   }
 
+  @Nullable
   public static HighlightDisplayKey register(@NonNls String name, String displayName) {
     return register(name, displayName, name);
   }

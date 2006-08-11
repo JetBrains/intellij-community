@@ -40,15 +40,15 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     final InspectionProfileEntry[] inspectionTools = DEFAULT_PROFILE.getInspectionTools();
     for (InspectionProfileEntry tool : inspectionTools) {
       final String shortName = tool.getShortName();
-      HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-      if (key == null){
-        if (tool instanceof LocalInspectionToolWrapper) {
-          key = HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID());
-        } else {
-          key = HighlightDisplayKey.register(shortName);
-        }
+      HighlightDisplayKey key;
+      if (tool instanceof LocalInspectionToolWrapper) {
+        key = HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID());
+      } else {
+        key = HighlightDisplayKey.register(shortName);
       }
-      DEFAULT_PROFILE.myDisplayLevelMap.put(key, new ToolState(tool.getDefaultLevel(), tool.isEnabledByDefault()));
+      if (key != null) { //in case when short name isn't unique
+        DEFAULT_PROFILE.myDisplayLevelMap.put(key, new ToolState(tool.getDefaultLevel(), tool.isEnabledByDefault()));
+      }
     }
   }
 
@@ -281,13 +281,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
 
       HighlightDisplayKey key = HighlightDisplayKey.find(toolClassName);
-      if (key == null) {
-        if (tool instanceof LocalInspectionToolWrapper) {
-          key = HighlightDisplayKey.register(toolClassName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID());
-        } else {
-          key = HighlightDisplayKey.register(toolClassName);
-        }
-      }
+      if (key == null) continue; //tool was somehow dropped
 
       final String enabled = toolElement.getAttributeValue(ENABLED_TAG);
       myDisplayLevelMap.put(key, new ToolState(level, enabled != null && Boolean.parseBoolean(enabled)));
