@@ -997,8 +997,11 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     return startOffset;
   }
 
-  //need to call to shorten references in type argument list
+  //need to shorten references in type argument list
   private static void shortenReference(final PsiFile file, final int offset) throws IncorrectOperationException {
+    final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
+    final Document document = manager.getDocument(file);
+    manager.commitDocument(document);
     final PsiReference ref = file.findReferenceAt(offset);
     if (ref instanceof PsiJavaCodeReferenceElement) {
       file.getManager().getCodeStyleManager().shortenClassReferences(((PsiJavaCodeReferenceElement)ref));
