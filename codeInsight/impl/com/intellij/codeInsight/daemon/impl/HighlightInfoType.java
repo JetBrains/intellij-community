@@ -46,8 +46,6 @@ public interface HighlightInfoType {
   HighlightInfoType JAVADOC_WRONG_REF = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.find(JavaDocReferenceInspection.SHORT_NAME) == null ?
                                                                            HighlightDisplayKey.register(JavaDocReferenceInspection.SHORT_NAME, JavaDocReferenceInspection.DISPLAY_NAME) : HighlightDisplayKey.find(JavaDocReferenceInspection.SHORT_NAME), CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
 
-
-  /** @fabrique */
   HighlightInfoType LOCAL_VARIABLE = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES);
   HighlightInfoType INSTANCE_FIELD = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES);
   HighlightInfoType STATIC_FIELD = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.STATIC_FIELD_ATTRIBUTES);

@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Collections;
 
 public abstract class NamedScopesHolder implements JDOMExternalizable {
   private List<NamedScope> myScopes = new ArrayList<NamedScope>();
@@ -59,9 +60,7 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
   @NotNull public NamedScope[] getScopes() {
     final List<NamedScope> scopes = new ArrayList<NamedScope>();
     List<NamedScope> list = getPredefinedScopes();
-    if (list != null){
-      scopes.addAll(list);
-    }
+    scopes.addAll(list);
     scopes.addAll(myScopes);
     return scopes.toArray(new NamedScope[scopes.size()]);
   }
@@ -124,16 +123,14 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
       if (name.equals(scope.getName())) return scope;
     }
     final List<NamedScope> predefinedScopes = getPredefinedScopes();
-    if (predefinedScopes != null){
-      for (NamedScope scope : predefinedScopes) {
-        if (name.equals(scope.getName())) return scope;
-      }
+    for (NamedScope scope : predefinedScopes) {
+      if (name.equals(scope.getName())) return scope;
     }
     return null;
   }
 
-  @Nullable
+  @NotNull
   public List<NamedScope> getPredefinedScopes(){
-    return null;
+    return Collections.emptyList();
   }
 }

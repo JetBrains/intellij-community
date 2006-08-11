@@ -8,7 +8,10 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -22,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.awt.*;
 
 public class ExpectedHighlightingData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.ExpectedHighlightingData");
@@ -91,7 +95,7 @@ public class ExpectedHighlightingData {
 
     // er...
     // any code then <marker> (with optional descr="...") then any code then </marker> then any code
-    String pat = ".*?(<(" + typesRegex + ")(?: descr=\\\"((?:[^\\\"\\\\]|\\\\\\\")*)\\\")?(?: type=\\\"([0-9A-Z_]+)\\\")?(/)?>)(.*)";
+    @NonNls String pat = ".*?(<(" + typesRegex + ")(?: descr=\\\"((?:[^\\\"\\\\]|\\\\\\\")*)\\\")?(?: type=\\\"([0-9A-Z_]+)\\\")?(?: foreground=\\\"([0-9xa-f]+)\\\")?(?: background=\\\"([0-9xa-f]+)\\\")?(?: effectcolor=\\\"([0-9xa-f]+)\\\")?(?: effecttype=\\\"([A-Z]+)\\\")?(?: fonttype=\\\"([0-9]+)\\\")?(/)?>)(.*)";
                  //"(.+?)</" + marker + ">).*";
     Pattern p = Pattern.compile(pat, Pattern.DOTALL);
     for (; ;) {
@@ -112,8 +116,13 @@ public class ExpectedHighlightingData {
       }
 
       String typeString = m.group(4);
-      String closeTagMarker = m.group(5);
-      String rest = m.group(6);
+      String foregroundColor = m.group(5);
+      String backgroundColor = m.group(6);
+      String effectColor = m.group(7);
+      String effectType = m.group(8);
+      String fontType = m.group(9);
+      String closeTagMarker = m.group(10);
+      String rest = m.group(11);
 
       String content;
       int endOffset;
@@ -122,28 +131,34 @@ public class ExpectedHighlightingData {
         final Matcher matcher2 = pat2.matcher(rest);
         LOG.assertTrue(matcher2.matches());
         content = matcher2.group(1);
-        endOffset = m.start(6) + matcher2.start(2);
+        endOffset = m.start(11) + matcher2.start(2);
       }
       else {
         // <XXX/>
         content = "";
-        endOffset = m.start(6);
+        endOffset = m.start(11);
       }
 
       document.replaceString(startOffset, endOffset, content);
+      TextAttributes forcedAttributes = null;
+      if (foregroundColor != null) {
+        forcedAttributes = new TextAttributes(Color.decode(foregroundColor), Color.decode(backgroundColor),
+                                                              Color.decode(effectColor), EffectType.valueOf(effectType),
+                                                              Integer.parseInt(fontType));
+      }
 
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(expectedHighlightingSet.defaultErrorType, startOffset, startOffset + content.length(), descr);
+      TextRange textRange = new TextRange(startOffset, startOffset + content.length());
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(expectedHighlightingSet.defaultErrorType, textRange, descr, forcedAttributes);
 
       HighlightInfoType type = null;
 
       if (typeString != null) {
-        Field[] fields = HighlightInfoType.class.getFields();
-        for (Field field : fields) {
-          try {
-            if (field.getName().equals(typeString)) type = (HighlightInfoType)field.get(null);
-          }
-          catch (Exception e) {
-          }
+        try {
+          Field field = HighlightInfoType.class.getField(typeString);
+          type = (HighlightInfoType)field.get(null);
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
 
         if (type == null) LOG.assertTrue(false,"Wrong highlight type: " + typeString);
@@ -168,7 +183,7 @@ public class ExpectedHighlightingData {
 
   public void checkResult(Collection<HighlightInfo> infos, String text) {
     for (HighlightInfo info : infos) {
-      if (!expectedInfosContainsInfo(this, info)) {
+      if (!expectedInfosContainsInfo(info)) {
         final int startOffset = info.startOffset;
         final int endOffset = info.endOffset;
         String s = text.substring(startOffset, endOffset);
@@ -226,10 +241,11 @@ public class ExpectedHighlightingData {
     return false;
   }
 
-  private static boolean expectedInfosContainsInfo(ExpectedHighlightingData expectedHighlightsSet, HighlightInfo info) {
-    final Collection<ExpectedHighlightingSet> expectedHighlights = expectedHighlightsSet.highlightingTypes.values();
+  private boolean expectedInfosContainsInfo(HighlightInfo info) {
+    final Collection<ExpectedHighlightingSet> expectedHighlights = highlightingTypes.values();
     for (ExpectedHighlightingSet highlightingSet : expectedHighlights) {
-      if (highlightingSet.severity == info.getSeverity() && !highlightingSet.enabled) return true;
+      if (highlightingSet.severity != info.getSeverity()) continue;
+      if (!highlightingSet.enabled) return true;
       final Set<HighlightInfo> infos = highlightingSet.infos;
       for (HighlightInfo expectedInfo : infos) {
         if (infoEquals(expectedInfo, info)) {
@@ -248,9 +264,8 @@ public class ExpectedHighlightingData {
       info.endOffset == expectedInfo.endOffset &&
       info.isAfterEndOfLine == expectedInfo.isAfterEndOfLine &&
       (expectedInfo.type == null || expectedInfo.type.equals(info.type)) &&
-
-      (Comparing.strEqual("*",expectedInfo.description) ? true :
-                                                        expectedInfo.description == null || info.description == null ? info.description == expectedInfo.description :
-                                                          Comparing.strEqual(info.description,expectedInfo.description));
+      (Comparing.strEqual("*", expectedInfo.description) || Comparing.strEqual(info.description, expectedInfo.description))
+      && (expectedInfo.forcedTextAttributes == null || expectedInfo.getTextAttributes().equals(info.getTextAttributes()))
+      ;
   }
 }

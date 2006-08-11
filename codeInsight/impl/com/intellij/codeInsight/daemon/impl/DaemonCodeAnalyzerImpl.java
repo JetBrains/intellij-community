@@ -56,10 +56,7 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -74,6 +71,7 @@ import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
@@ -297,7 +295,36 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       frame.addWindowFocusListener(myIdeFrameFocusListener);
     }
 
+    final NamedScopesHolder[] holders = myProject.getComponents(NamedScopesHolder.class);
+    NamedScopesHolder.ScopeListener scopeListener = new NamedScopesHolder.ScopeListener() {
+      public void scopesChanged() {
+        reloadScopes();
+      }
+    };
+    for (NamedScopesHolder holder : holders) {
+      holder.addScopeListener(scopeListener);
+    }
+    reloadScopes();
+
     myInitialized = true;
+  }
+
+  private List<Pair<NamedScope, NamedScopesHolder>> myScopes = Collections.emptyList();
+  private void reloadScopes() {
+    List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<Pair<NamedScope, NamedScopesHolder>>();
+    final NamedScopesHolder[] holders = myProject.getComponents(NamedScopesHolder.class);
+    for (NamedScopesHolder holder : holders) {
+      NamedScope[] scopes = holder.getScopes();
+      for (NamedScope scope : scopes) {
+        scopeList.add(Pair.create(scope, holder));
+      }
+    }
+    myScopes = scopeList;
+  }
+
+  @NotNull
+  public List<Pair<NamedScope, NamedScopesHolder>> getScopeBasedHighlightingCachedScopes() {
+    return myScopes;
   }
 
   public void projectClosed() {

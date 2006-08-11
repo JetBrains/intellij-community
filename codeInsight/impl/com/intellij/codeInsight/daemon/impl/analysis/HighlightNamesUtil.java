@@ -4,18 +4,22 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class HighlightNamesUtil {
   private HighlightNamesUtil() {}
@@ -150,16 +154,16 @@ public class HighlightNamesUtil {
   }
 
   private static TextAttributes getScopeAttributes(PsiElement element) {
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    NamedScopeManager namedScopeManager = NamedScopeManager.getInstance(element.getProject());
-    NamedScope[] scopes = namedScopeManager.getScopes();
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
-    for (NamedScope namedScope : scopes) {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    List<Pair<NamedScope,NamedScopesHolder>> scopes = DaemonCodeAnalyzer.getInstance(element.getProject()).getScopeBasedHighlightingCachedScopes();
+    for (Pair<NamedScope, NamedScopesHolder> scope : scopes) {
+      NamedScope namedScope = scope.getFirst();
+      NamedScopesHolder scopesHolder = scope.getSecond();
       PackageSet packageSet = namedScope.getValue();
-      String name = namedScope.getName();
-      if (packageSet != null && packageSet.contains(file, namedScopeManager)) {
-        TextAttributesKey scopeKey = ColorAndFontOptions.getScopeTextAttributeKey(name);
+      if (packageSet != null && packageSet.contains(file, scopesHolder)) {
+        TextAttributesKey scopeKey = ColorAndFontOptions.getScopeTextAttributeKey(namedScope.getName());
         TextAttributes attributes = scheme.getAttributes(scopeKey);
         if (attributes != null) return attributes;
       }

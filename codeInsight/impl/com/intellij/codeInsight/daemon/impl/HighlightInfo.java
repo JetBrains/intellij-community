@@ -34,7 +34,7 @@ public class HighlightInfo {
   private Boolean myNeedsUpdateOnTyping = null;
   private static final Key<HighlightInfoFilter[]> FILTERS = new Key<HighlightInfoFilter[]>("HighlightInfoFilter[]");
   public JComponent fileLevelComponent;
-  private final TextAttributes forcedTextAttributes;
+  public final TextAttributes forcedTextAttributes;
 
   public HighlightSeverity getSeverity() {
     return severity;

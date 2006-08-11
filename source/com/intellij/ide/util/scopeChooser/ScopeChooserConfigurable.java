@@ -180,9 +180,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     final NamedScopesHolder[] holders = project.getComponents(NamedScopesHolder.class);
     for (NamedScopesHolder holder : holders) {
       final List<NamedScope> predefinedScopes = holder.getPredefinedScopes();
-      if (predefinedScopes != null) {
-        result.addAll(predefinedScopes);
-      }
+      result.addAll(predefinedScopes);
     }
     return result;
   }

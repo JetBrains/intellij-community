@@ -1,5 +1,6 @@
 package com.intellij.application.options.colors;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diff.impl.settings.DiffColorsForm;
@@ -30,15 +31,14 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.containers.HashMap;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 public class ColorAndFontOptions extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
   private ColorAndFontPanel myPanel;
@@ -241,15 +241,20 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     }
   }
   private static void initScopesDescriptors(ArrayList<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
-    Collection<NamedScope> namedScopes = new THashSet<NamedScope>();
+    List<NamedScope> namedScopes = new ArrayList<NamedScope>();
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       final NamedScopesHolder[] holders = project.getComponents(NamedScopesHolder.class);
       for (NamedScopesHolder holder : holders) {
-        NamedScope[] scopes = holder.getEditableScopes();
+        NamedScope[] scopes = holder.getScopes();
         namedScopes.addAll(Arrays.asList(scopes));
       }
     }
+    Collections.sort(namedScopes, new Comparator<NamedScope>() {
+      public int compare(final NamedScope o1, final NamedScope o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
     for (NamedScope namedScope : namedScopes) {
       String name = namedScope.getName();
       TextAttributesKey textAttributesKey = getScopeTextAttributeKey(name);

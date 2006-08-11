@@ -53,7 +53,7 @@ public class PatternPackageSet implements PackageSet {
   public PatternPackageSet(String aspectPattern,
                            String scope,
                            String modulePattern,
-                           String filePattern) {
+                           @NonNls String filePattern) {
     myAspectJSyntaxPattern = aspectPattern;
     myPathPattern = filePattern;
     myScope = scope;

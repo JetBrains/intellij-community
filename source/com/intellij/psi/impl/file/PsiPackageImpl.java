@@ -54,10 +54,9 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   public boolean equals(Object o) {
-    if (o instanceof PsiPackageImpl) {
-      return myManager == ((PsiPackageImpl)o).myManager && myQualifiedName.equals(((PsiPackageImpl)o).myQualifiedName);
-    }
-    return false;
+    return o instanceof PsiPackageImpl
+           && myManager == ((PsiPackageImpl)o).myManager
+           && myQualifiedName.equals(((PsiPackageImpl)o).myQualifiedName);
   }
 
   public int hashCode() {
@@ -88,7 +87,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
             public boolean process(final VirtualFile dir) {
               if (!scope.contains(dir)) return true;
               PsiDirectory psiDir = myManager.findDirectory(dir);
-              assert (psiDir != null);
+              assert psiDir != null;
               return consumer.process(psiDir);
             }
           });
@@ -116,7 +115,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     }
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
     PsiDirectory[] dirs = getDirectories();
     for (PsiDirectory dir : dirs) {
@@ -275,11 +274,11 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return ArrayUtil.EMPTY_CHAR_ARRAY; // TODO throw new InsupportedOperationException()
   }
 
-  public boolean textMatches(CharSequence text) {
+  public boolean textMatches(@NotNull CharSequence text) {
     return false;
   }
 
-  public boolean textMatches(PsiElement element) {
+  public boolean textMatches(@NotNull PsiElement element) {
     return false;
   }
 
@@ -288,19 +287,19 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return null;
   }
 
-  public PsiElement add(PsiElement element) throws IncorrectOperationException {
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
-  public PsiElement addBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
-  public PsiElement addAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
-  public void checkAdd(PsiElement element) throws IncorrectOperationException {
+  public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
@@ -319,7 +318,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     }
   }
 
-  public PsiElement replace(PsiElement newElement) throws IncorrectOperationException {
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
@@ -335,7 +334,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return true;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitPackage(this);
   }
 
@@ -466,9 +465,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     final boolean isLibraryRoot = PackageUtil.isLibraryRoot(firstDir, getProject());
 
     final Module module = ProjectRootManager.getInstance(getProject()).getFileIndex().getModuleForFile(firstDir);
-    final PackageElement packageElement = new PackageElement(module,
-                                                             this,
-                                                             isLibraryRoot);
+    final PackageElement packageElement = new PackageElement(module, this, isLibraryRoot);
     projectView.getProjectViewPaneById(PackageViewPane.ID).select(packageElement, firstDir, requestFocus);
     ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.PROJECT_VIEW).activate(null);
   }

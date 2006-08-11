@@ -116,7 +116,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     });
   }
 
-  @Nullable
+  @NotNull
   public List<NamedScope> getPredefinedScopes() {
     if (myPredifinedScopes == null){
       myPredifinedScopes = new ArrayList<NamedScope>();
@@ -128,7 +128,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   public boolean hasRules() {
-    return myRules.size() > 0;
+    return !myRules.isEmpty();
   }
 
   @Nullable
