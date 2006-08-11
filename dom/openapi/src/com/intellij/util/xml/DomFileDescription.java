@@ -93,10 +93,12 @@ public abstract class DomFileDescription<T> {
     return false;
   }
 
+  @NotNull
   public Set<? extends Object> getDependencyItems(XmlFile file) {
     return Collections.emptySet();
   }
 
+  @NotNull
   public Set<Class<? extends DomElement>> getDomModelDependencyItems() {
     return Collections.emptySet();
   }
