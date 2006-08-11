@@ -143,6 +143,13 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
               if (myIconOpen == null) myIconOpen = psiPresentableMetaData.getIcon();
               if (myIconClosed == null) myIconClosed = psiPresentableMetaData.getIcon();
             }
+          } else if (element instanceof PsiFile) {
+            final PsiFile psiFile = (PsiFile)element;
+            final VirtualFile virtualFile = psiFile.getVirtualFile();
+            if (virtualFile != null) {
+              myIconOpen = virtualFile.getIcon();
+              myIconClosed = virtualFile.getIcon();
+            }
           }
         }
       }
