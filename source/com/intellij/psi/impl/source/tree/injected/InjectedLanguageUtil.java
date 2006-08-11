@@ -114,7 +114,7 @@ public class InjectedLanguageUtil {
     if (!(parsedNode instanceof FileElement)) return null;
     String sourceRawText = prefix + text.substring(rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset()) + suffix;
     if (textEscaper != null) {
-      patchLeafs(parsedNode, textEscaper, sourceRawText, prefix.length());
+      patchLeafs(parsedNode, textEscaper, sourceRawText, prefix.length(), suffix.length());
     }
     String parsedText = parsedNode.getText();
     LOG.assertTrue(parsedText.equals(sourceRawText));
@@ -185,8 +185,8 @@ public class InjectedLanguageUtil {
   private static <T extends PsiLanguageInjectionHost> void patchLeafs(final ASTNode parsedNode,
                                                                       final LiteralTextEscaper<T> literalTextEscaper,
                                                                       final String physicalText,
-                                                                      final int prefixLength) {
-
+                                                                      final int prefixLength, final int suffixLength) {
+   final TextRange contentsRange = new TextRange(prefixLength, parsedNode.getTextLength() - suffixLength);
     final Map<LeafElement, String> newTexts = new THashMap<LeafElement, String>();
     ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementVisitor(){
       int currentSourceOffset;
@@ -196,14 +196,15 @@ public class InjectedLanguageUtil {
 
       public void visitLeaf(LeafElement leaf) {
         TextRange range = leaf.getTextRange();
+        if (!contentsRange.contains(range)) return;
         int offsetInSource = currentSourceOffset + prefixLength;
-        int endOffsetInSource = literalTextEscaper.getOffsetInSource(range.getEndOffset()) + prefixLength;
+        int endOffsetInSource = literalTextEscaper.getOffsetInSource(range.getEndOffset()-prefixLength) + prefixLength;
         String sourceSubText = physicalText.substring(offsetInSource, endOffsetInSource);
         String leafText = leaf.getText();
         if (!Comparing.strEqual(leafText, sourceSubText)) {
           newTexts.put(leaf, sourceSubText);
         }
-        currentSourceOffset = endOffsetInSource;
+        currentSourceOffset += endOffsetInSource-offsetInSource;
       }
     });
     for (LeafElement leaf : newTexts.keySet()) {
