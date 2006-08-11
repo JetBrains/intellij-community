@@ -275,7 +275,7 @@ public class FileManagerImpl implements FileManager {
       vFile = ((PsiDirectory)element).getVirtualFile();
     }
     else {
-      final PsiFile containingFile = PsiTreeUtil.getContextOfType(element, PsiFile.class, false);
+      final PsiFile containingFile = element.getContainingFile();
       if (containingFile instanceof PsiCodeFragment) {
         final GlobalSearchScope forcedScope = ((PsiCodeFragment)containingFile).getForcedResolveScope();
         if (forcedScope != null) {
@@ -288,7 +288,7 @@ public class FileManagerImpl implements FileManager {
         return getResolveScope(context);
       }
 
-      final PsiFile contextFile = ResolveUtil.getContextFile(element);
+      final PsiFile contextFile = ResolveUtil.getContextFile(containingFile);
       if (contextFile == null || contextFile instanceof XmlFile) {
         return GlobalSearchScope.allScope(project);
       }
