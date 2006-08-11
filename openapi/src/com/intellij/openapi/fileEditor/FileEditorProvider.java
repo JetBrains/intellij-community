@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Should be implemented by an {@link com.intellij.openapi.components.ApplicationComponent}
+ *
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
