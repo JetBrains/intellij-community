@@ -66,9 +66,6 @@ public class TemplateState implements Disposable {
   private CodeStyleManager myCodeStyleManager;
   private Document myDocument;
 
-  private static final String UP_ACTION = ActionsBundle.actionText("EditorUp");
-  private static final String DOWN_ACTION = ActionsBundle.actionText("EditorDown");
-
   public TemplateState(Project project, final Editor editor) {
     myProject = project;
     myEditor = editor;
@@ -103,10 +100,7 @@ public class TemplateState implements Disposable {
       }
 
       public void beforeCommandFinished(CommandEvent event) {
-        //This is a hack to deal with closing lookup, TODO: remove redundant  string on update
-        if (!UP_ACTION.equals(event.getCommandName()) && !DOWN_ACTION.equals(event.getCommandName())) {
-          afterChangedUpdate();
-        }
+        afterChangedUpdate();
       }
     };
 
