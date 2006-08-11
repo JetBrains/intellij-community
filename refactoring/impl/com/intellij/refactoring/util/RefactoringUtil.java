@@ -1495,7 +1495,7 @@ public class RefactoringUtil {
     return false;
   }
 
-  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters (PsiElement element) {
+  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters (final PsiElement element) {
     final Set<PsiTypeParameter> used = new com.intellij.util.containers.HashSet<PsiTypeParameter>();
     element.accept(new PsiRecursiveElementVisitor() {
 
@@ -1504,7 +1504,10 @@ public class RefactoringUtil {
         if (!reference.isQualified()) {
           final PsiElement resolved = reference.resolve();
           if (resolved instanceof PsiTypeParameter) {
-            used.add((PsiTypeParameter)resolved);
+            final PsiTypeParameter typeParameter = (PsiTypeParameter)resolved;
+            if (PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, false)) {
+              used.add(typeParameter);
+            }
           }
         }
       }
