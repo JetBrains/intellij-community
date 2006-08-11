@@ -43,6 +43,7 @@ public interface  FileEditor extends UserDataHolder {
    * @return component which represents editor in the UI.
    * The method should never return <code>null</code>.
    */
+  @NotNull
   JComponent getComponent();
 
   /**
