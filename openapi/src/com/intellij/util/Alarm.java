@@ -36,8 +36,10 @@ public class Alarm implements Disposable {
 
   private static MyThread ourThreadNormal = new MyThread(false);
   private static MyThread ourThreadUseSwing = new MyThread(true);
+  private boolean myDisposed;
 
   public void dispose() {
+    myDisposed = true;
     cancelAllRequests();
   }
 
@@ -100,7 +102,9 @@ public class Alarm implements Disposable {
             myOriginalToThreadRequestMap.remove(request);
           }
           try {
-            request.run();
+            if (!myDisposed) {
+              request.run();
+            }
           }
           catch (Throwable e) {
             LOG.error(e);
