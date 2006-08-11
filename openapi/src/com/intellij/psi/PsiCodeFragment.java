@@ -16,6 +16,8 @@
 package com.intellij.psi;
 
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.GlobalSearchScope;
 
 /**
  * Represents a fragment of Java code which exists outside of a project structure (for example,
@@ -99,6 +101,12 @@ public interface PsiCodeFragment extends PsiImportHolder {
    * @return the exception handler instance.
    */
   ExceptionHandler getExceptionHandler();
+
+  /**
+   * Force search scope for this fragment
+   * @param scope Scope to use when resolving references in this context
+   */
+  void setResolveScope(GlobalSearchScope scope);
 
   /**
    * Interface used to determine the visibility of declarations from the code fragment.

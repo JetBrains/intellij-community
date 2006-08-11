@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 
 import javax.swing.*;
@@ -106,6 +107,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
       item = createText("");
     }
     PsiCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(item, myContext, getProject());
+    codeFragment.setResolveScope(GlobalSearchScope.allScope(myProject));
     if (myContext != null) {
       final PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(myContext, PsiClass.class);
       if (contextClass != null) {

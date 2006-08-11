@@ -20,6 +20,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
@@ -37,6 +38,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
   private LinkedHashMap<String, String> myPseudoImports = new LinkedHashMap<String, String>();
   private VisibilityChecker myVisibilityChecker;
   private ExceptionHandler myExceptionHandler;
+  private GlobalSearchScope myResolveScope;
 
   public PsiCodeFragmentImpl(Project project,
                              IElementType contentElementType,
@@ -264,6 +266,15 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
 
   public ExceptionHandler getExceptionHandler() {
     return myExceptionHandler;
+  }
+
+  public void setResolveScope(GlobalSearchScope scope) {
+    myResolveScope = scope;
+  }
+
+  public GlobalSearchScope getResolveScope() {
+    if (myResolveScope != null) return myResolveScope;
+    return super.getResolveScope();
   }
 
   public void setExceptionHandler(final ExceptionHandler exceptionHandler) {
