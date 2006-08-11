@@ -268,8 +268,12 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
     return myExceptionHandler;
   }
 
-  public void setResolveScope(GlobalSearchScope scope) {
+  public void forceResolveScope(GlobalSearchScope scope) {
     myResolveScope = scope;
+  }
+
+  public GlobalSearchScope getForcedResolveScope() {
+    return myResolveScope;
   }
 
   public GlobalSearchScope getResolveScope() {

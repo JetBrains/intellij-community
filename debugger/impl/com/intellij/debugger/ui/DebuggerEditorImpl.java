@@ -107,7 +107,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
       item = createText("");
     }
     PsiCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(item, myContext, getProject());
-    codeFragment.setResolveScope(GlobalSearchScope.allScope(myProject));
+    codeFragment.forceResolveScope(GlobalSearchScope.allScope(myProject));
     if (myContext != null) {
       final PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(myContext, PsiClass.class);
       if (contextClass != null) {

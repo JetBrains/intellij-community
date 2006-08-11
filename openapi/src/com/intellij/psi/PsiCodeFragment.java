@@ -106,7 +106,9 @@ public interface PsiCodeFragment extends PsiImportHolder {
    * Force search scope for this fragment
    * @param scope Scope to use when resolving references in this context
    */
-  void setResolveScope(GlobalSearchScope scope);
+  void forceResolveScope(GlobalSearchScope scope);
+
+  GlobalSearchScope getForcedResolveScope();
 
   /**
    * Interface used to determine the visibility of declarations from the code fragment.
