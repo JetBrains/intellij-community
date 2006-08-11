@@ -126,6 +126,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Cached
   }
 
   private Object[] getAllDependencyItems() {
+    return myLostDependency;
+/*
     final Set<Object> deps = new HashSet<Object>();
     deps.add(myXmlFile);
     deps.add(this);
@@ -133,7 +135,17 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Cached
       deps.addAll(fileDescription.getDependencyItems(myXmlFile));
     }
     return deps.toArray();
+*/    
   }
+
+  private final Object[] myLostDependency = new Object[] {
+    new ModificationTracker() {
+      private long myCounter;
+      public long getModificationCount() {
+        return myCounter++;
+      }
+    }
+  };
 
   @Nullable
   final DomFileElementImpl getOldValue() {
