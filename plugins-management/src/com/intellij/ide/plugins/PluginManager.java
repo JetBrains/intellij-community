@@ -314,6 +314,7 @@ public class PluginManager {
     }
     catch (Exception e) {
       errorMessage = IdeBundle.message("error.plugins.were.not.loaded", e.getMessage());
+      getLogger().info(e);
       pluginDescriptors = IdeaPluginDescriptorImpl.EMPTY_ARRAY;
     }
     if (errorMessage != null) {
