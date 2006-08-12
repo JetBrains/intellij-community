@@ -6,12 +6,12 @@
  */
 package com.intellij.execution.util;
 
-import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.impl.JdkVersionUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 
 public class JreVersionDetector {
@@ -30,7 +30,7 @@ public class JreVersionDetector {
     if (altPathEnabled) {
       if (jrePath.equals(myLastAlternativeJrePath)) return myLastIsJre50;
       myLastAlternativeJrePath = jrePath;
-      final String versionString = JavaSdk.getInstance().createJdk("", jrePath).getVersionString();
+      final String versionString = JdkVersionUtil.getJdkVersion(jrePath);
       myLastIsJre50 = versionString != null && isJre50(versionString);
       return myLastIsJre50;
     } else {

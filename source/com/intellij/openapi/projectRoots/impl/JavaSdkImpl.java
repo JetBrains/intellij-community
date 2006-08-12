@@ -20,7 +20,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -209,7 +210,7 @@ public class JavaSdkImpl extends JavaSdk {
     if(myCachedVersionStrings.containsKey(sdkHome)) {
       return myCachedVersionStrings.get(sdkHome);
     } else {
-      versionString = getVersionStringImpl(sdkHome);
+      versionString = JdkVersionUtil.getJdkVersion(sdkHome);
     }
     if (versionString != null && versionString.length() == 0) {
       versionString = null;
@@ -234,42 +235,6 @@ public class JavaSdkImpl extends JavaSdk {
   public void initComponent() { }
 
   public void disposeComponent() {
-  }
-
-  private static String getVersionStringImpl(String homePath){
-    if (homePath == null || !new File(homePath).exists()) {
-      return null;
-    }
-    final String[] versionString = new String[1];
-    try {
-      //noinspection HardCodedStringLiteral
-      Process process = Runtime.getRuntime().exec(new String[] {homePath + File.separator + "bin" + File.separator + "java",  "-version"});
-      VersionParsingThread parsingThread = new VersionParsingThread(process.getErrorStream(), versionString);
-      parsingThread.start();
-      ReadStreamThread readThread = new ReadStreamThread(process.getInputStream());
-      readThread.start();
-      try {
-        try {
-          process.waitFor();
-        }
-        catch (InterruptedException e) {
-          e.printStackTrace();
-          process.destroy();
-        }
-      }
-      finally {
-        try {
-          parsingThread.join();
-        }
-        catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-      }
-    }
-    catch (IOException ex) {
-      ex.printStackTrace();
-    }
-    return versionString[0];
   }
 
   public ProjectJdk createJdk(final String jdkName, final String home, final boolean isJre) {
@@ -345,7 +310,8 @@ public class JavaSdkImpl extends JavaSdk {
       jarDirs = new File[]{libFile, classesFile, libExtFile};
     }
     else{
-      File jreLibFile = isJre ? new File(file, "lib") : new File(new File(file, "jre"), "lib");
+      @NonNls final String jre = "jre";
+      File jreLibFile = isJre ? new File(file, "lib") : new File(new File(file, jre), "lib");
       @NonNls File jreLibExtFile = new File(jreLibFile, "ext");
       jarDirs = new File[]{jreLibFile, jreLibExtFile};
     }
@@ -435,80 +401,4 @@ public class JavaSdkImpl extends JavaSdk {
     return LocalFileSystem.getInstance().findFileByPath(path);
   }
 
-  private static class ReadStreamThread extends Thread {
-    private InputStream myStream;
-
-    protected ReadStreamThread(InputStream stream) {
-      myStream = stream;
-    }
-
-    public void run() {
-      try {
-        while (true) {
-          int b = myStream.read();
-          if (b == -1) break;
-        }
-      }
-      catch (IOException e) {
-      }
-    }
-  }
-
-  private static class VersionParsingThread extends Thread {
-    private Reader myReader;
-    private boolean mySkipLF = false;
-    private String[] myVersionString;
-    @NonNls private static final String VERSION = "version";
-
-    protected VersionParsingThread(InputStream input, String[] versionString) {
-      myReader = new InputStreamReader(input);
-      myVersionString = versionString;
-    }
-
-    public void run() {
-      try {
-        while (true) {
-          String line = readLine();
-          if (line == null) return;
-          if (line.contains(VERSION)) {
-            myVersionString[0] = line;
-          }
-        }
-      }
-      catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
-
-    private String readLine() throws IOException {
-      boolean first = true;
-      StringBuilder buffer = new StringBuilder();
-      while (true) {
-        int c = myReader.read();
-        if (c == -1) break;
-        first = false;
-        if (c == '\n') {
-          if (mySkipLF) {
-            mySkipLF = false;
-            continue;
-          }
-          break;
-        }
-        else if (c == '\r') {
-          mySkipLF = true;
-          break;
-        }
-        else {
-          mySkipLF = false;
-          buffer.append((char)c);
-        }
-      }
-      if (first) return null;
-      String s = buffer.toString();
-      //if (Diagnostic.TRACE_ENABLED){
-      //  Diagnostic.trace(s);
-      //}
-      return s;
-    }
-  }
 }
