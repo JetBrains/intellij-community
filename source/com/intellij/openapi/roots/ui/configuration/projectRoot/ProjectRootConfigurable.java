@@ -1197,6 +1197,11 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
     public void setSelected(AnActionEvent e, boolean state) {
       myPlainMode = state;
+      DefaultMutableTreeNode selection = null;
+      final TreePath selectionPath = myTree.getSelectionPath();
+      if (selectionPath != null){
+        selection = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+      }
       final ModifiableModuleModel model = myModulesConfigurator.getModuleModel();
       final Module[] modules = model.getModules();
       for (Module module : modules) {
@@ -1205,6 +1210,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       }
       if (state) {
         removeModuleGroups();
+      }
+      if (selection != null){
+        TreeUtil.selectInTree(selection, true, myTree);
       }
     }
 
