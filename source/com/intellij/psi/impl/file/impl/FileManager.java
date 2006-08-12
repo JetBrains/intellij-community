@@ -28,7 +28,7 @@ public interface FileManager {
 
   PsiFile getCachedPsiFile(@NotNull VirtualFile vFile);
 
-  GlobalSearchScope getResolveScope(@NotNull PsiElement element);
+  @NotNull GlobalSearchScope getResolveScope(@NotNull PsiElement element);
   @NotNull GlobalSearchScope getUseScope(@NotNull PsiElement element);
   Collection<String> getNonTrivialPackagePrefixes();
 

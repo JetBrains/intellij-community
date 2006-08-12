@@ -253,13 +253,14 @@ public final class PsiUtil {
         return false;
       }
 
+      @NotNull
       public GlobalSearchScope getResolveScope() {
-        return null;
+        return GlobalSearchScope.EMPTY_SCOPE;
       }
 
       @NotNull
       public SearchScope getUseScope() {
-        return null;
+        return GlobalSearchScope.EMPTY_SCOPE;
       }
 
       public ASTNode getNode() {

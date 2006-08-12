@@ -479,4 +479,24 @@ public abstract class GlobalSearchScope extends SearchScope {
       return myScope.isSearchInModuleContent(aModule);
     }
   }
+
+  private static class EmptyScope extends GlobalSearchScope {
+    public boolean contains(VirtualFile file) {
+      return false;
+    }
+
+    public int compare(VirtualFile file1, VirtualFile file2) {
+      return 0;
+    }
+
+    public boolean isSearchInModuleContent(Module aModule) {
+      return false;
+    }
+
+    public boolean isSearchInLibraries() {
+      return false;
+    }
+  }
+
+  public static GlobalSearchScope EMPTY_SCOPE = new EmptyScope();
 }

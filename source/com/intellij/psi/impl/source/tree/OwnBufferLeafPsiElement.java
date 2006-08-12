@@ -178,6 +178,7 @@ public class OwnBufferLeafPsiElement extends OwnBufferLeafElementImpl implements
     return file.isPhysical();
   }
 
+  @NotNull
   public GlobalSearchScope getResolveScope() {
     return ((PsiManagerImpl)getManager()).getFileManager().getResolveScope(this);
   }
@@ -187,6 +188,7 @@ public class OwnBufferLeafPsiElement extends OwnBufferLeafElementImpl implements
     return getManager().getSearchHelper().getUseScope(this);
   }
 
+  @NotNull
   public Project getProject() {
     final PsiManager manager = getManager();
     if (manager == null) throw new PsiInvalidElementAccessException(this);

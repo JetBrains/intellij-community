@@ -264,6 +264,7 @@ public class FileManagerImpl implements FileManager {
     }
   }
 
+  @NotNull
   public GlobalSearchScope getResolveScope(@NotNull PsiElement element) {
     final ProgressManager progressManager = ProgressManager.getInstance();
     progressManager.checkCanceled();

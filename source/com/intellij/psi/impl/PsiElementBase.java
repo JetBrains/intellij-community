@@ -34,7 +34,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
     return SharedPsiElementImplUtil.getPrevSibling(this);
   }
 
-  public void acceptChildren(PsiElementVisitor visitor) {
+  public void acceptChildren(@NotNull PsiElementVisitor visitor) {
     PsiElement[] children = getChildren();
     for (PsiElement child : children) {
       child.accept(visitor);
@@ -95,6 +95,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
     return this;
   }
 
+  @NotNull
   public final GlobalSearchScope getResolveScope() {
     return ((PsiManagerImpl)getManager()).getFileManager().getResolveScope(this);
   }

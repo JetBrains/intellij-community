@@ -180,6 +180,7 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
     return file.isPhysical();
   }
 
+  @NotNull
   public GlobalSearchScope getResolveScope() {
     return ((PsiManagerImpl)getManager()).getFileManager().getResolveScope(this);
   }

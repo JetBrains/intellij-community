@@ -154,6 +154,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
     return parent != null && parent.isPhysical();
   }
 
+  @NotNull
   public GlobalSearchScope getResolveScope() {
     return ((PsiManagerImpl)getManager()).getFileManager().getResolveScope(this);
   }

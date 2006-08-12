@@ -230,6 +230,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return file != null && file.isPhysical();
   }
 
+  @NotNull
   public GlobalSearchScope getResolveScope() {
     return ((PsiManagerImpl)getManager()).getFileManager().getResolveScope(this);
   }

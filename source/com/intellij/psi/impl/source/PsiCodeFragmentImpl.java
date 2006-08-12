@@ -276,6 +276,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
     return myResolveScope;
   }
 
+  @NotNull
   public GlobalSearchScope getResolveScope() {
     if (myResolveScope != null) return myResolveScope;
     return super.getResolveScope();

@@ -403,7 +403,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the user data object, or null if no such object is found in the current element.
    * @see #putCopyableUserData(com.intellij.openapi.util.Key, Object)
    */
-  <T> T getCopyableUserData(Key<T> key);
+  @Nullable <T> T getCopyableUserData(Key<T> key);
 
   /**
    * Attaches a copyable user data object to this element. Copyable user data objects are copied
@@ -440,7 +440,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the resolve context element.
    */
-  PsiElement getContext();
+  @Nullable PsiElement getContext();
 
   /**
    * Checks if an actual source or class file corresponds to the element. Non-physical elements include,
@@ -457,7 +457,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the resolve scope instance.
    */
-  GlobalSearchScope getResolveScope();
+  @NotNull GlobalSearchScope getResolveScope();
 
   /**
    * Returns the scope in which references to this element are searched. The implementation of this
