@@ -3,6 +3,7 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,12 +11,12 @@ import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.UniqueFileNamesProvider;
-import com.intellij.CommonBundle;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -203,7 +204,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
     File[] files = colorsDir.listFiles(new FileFilter() {
       public boolean accept(File file) {
-        return !file.isDirectory() && file.getName().toLowerCase().endsWith(XML_EXT);
+        return !file.isDirectory() && StringUtil.endsWithIgnoreCase(file.getName(), XML_EXT);
       }
     });
     if (files == null) {

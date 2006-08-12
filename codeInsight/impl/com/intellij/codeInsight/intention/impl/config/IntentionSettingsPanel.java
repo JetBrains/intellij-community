@@ -4,6 +4,7 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.GlassPanel;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.NonNls;
 
@@ -106,19 +107,18 @@ public class IntentionSettingsPanel {
   }
 
   private static boolean isIntentionAccepted(IntentionActionMetaData metaData, @NonNls String filter, boolean force) {
-    filter = filter.toLowerCase();
-    if (metaData.myFamily.toLowerCase().contains(filter)) {
+    if (StringUtil.containsIgnoreCase(metaData.myFamily, filter)) {
       return true;
     }
     for (String category : metaData.myCategory) {
-      if (category != null && category.toLowerCase().contains(filter)) {
+      if (category != null && StringUtil.containsIgnoreCase(category, filter)) {
         return true;
       }
     }
 
     boolean highlight = false;
 
-    final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
+    final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter.toLowerCase());
     for (String filtString : filters) {
       final ArrayList<String> descriptors = IntentionManagerSettings.getInstance().getIntentionNames(filtString);
       if (descriptors != null && descriptors.contains(metaData.myFamily)){

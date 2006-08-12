@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
@@ -345,7 +346,7 @@ public class PluginManager {
         final String protocol = url.getProtocol();
         if ("file".equals(protocol)) {
           final File file = new File(URLDecoder.decode(url.getFile()));
-          final String canonicalPath = file.getCanonicalPath();
+          //final String canonicalPath = file.getCanonicalPath();
           //if (!canonicalPath.startsWith(homePath) || canonicalPath.endsWith(".jar")) continue;
           //if (!canonicalPath.startsWith(homePath)) continue;
           final IdeaPluginDescriptorImpl pluginDescriptor = loadDescriptor(file);
@@ -466,8 +467,7 @@ public class PluginManager {
          return null;
        }
        for (final File f : files) {
-         final String lowercasedName = f.getName().toLowerCase();
-         if (lowercasedName.endsWith(".jar") || lowercasedName.endsWith(".zip") && f.isFile()) {
+         if (isJarOrZip(f)) {
            IdeaPluginDescriptorImpl descriptor1 = loadDescriptorFromJar(f);
            if (descriptor1 != null) {
              if (descriptor != null) {
@@ -492,7 +492,7 @@ public class PluginManager {
        }
      }
     }
-    else if (file.getName().endsWith(".jar")) {
+    else if (StringUtil.endsWithIgnoreCase(file.getName(), ".jar")) {
       descriptor = loadDescriptorFromJar(file);
     }
 
@@ -788,8 +788,8 @@ public class PluginManager {
     if (file.isDirectory()) {
       return false;
     }
-    final String name = file.getName().toLowerCase();
-    return name.endsWith(".jar") || name.endsWith(".zip");
+    final String name = file.getName();
+    return StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip");
   }
 
   private static void addAdditionalClassPath(List<URL> classPath) {

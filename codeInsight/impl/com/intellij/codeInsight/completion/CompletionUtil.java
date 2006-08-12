@@ -13,6 +13,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -211,7 +212,7 @@ public class CompletionUtil {
 
     String prefix = context.getPrefix();
     if (forceCaseInsensitive) {
-      return name.toLowerCase().startsWith(prefix.toLowerCase());
+      return StringUtil.startsWithIgnoreCase(name, prefix);
     }
 
     return context.prefixMatches(name);

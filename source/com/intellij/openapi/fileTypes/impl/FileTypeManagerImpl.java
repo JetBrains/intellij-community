@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.jsp.el.ELLanguage;
@@ -583,7 +584,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
     File[] files = fileTypesDir.listFiles(new FileFilter() {
       public boolean accept(File file) {
-        return !file.isDirectory() && file.getName().toLowerCase().endsWith(XML_EXTENSION);
+        return !file.isDirectory() && StringUtil.endsWithIgnoreCase(file.getName(), XML_EXTENSION);
       }
     });
     if (files == null) {

@@ -1,9 +1,10 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,12 +32,11 @@ class BackspaceHandler extends EditorActionHandler {
         lookup.setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
       }
       else{
-        String prefix = lookup.getPrefix().toLowerCase();
+        final String prefix = lookup.getPrefix();
         ListModel model = lookup.getList().getModel();
         for(int i = 0; i < model.getSize(); i++){
           LookupItem item = (LookupItem)model.getElementAt(i);
-          String s = item.getLookupString();
-          if (s.toLowerCase().startsWith(prefix)){
+          if (StringUtil.startsWithIgnoreCase(item.getLookupString(), prefix)){
             lookup.getList().setSelectedIndex(i);
             lookup.getList().ensureIndexIsVisible(i);
             break;

@@ -1,21 +1,23 @@
 package com.intellij.execution.applet;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.CheckableRunConfigurationEditor;
 import com.intellij.execution.junit2.configuration.ClassBrowser;
 import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
 import com.intellij.execution.ui.AlternativeJREPanel;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.exclude.ComparablesComparator;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -25,8 +27,6 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 public class AppletConfigurable extends SettingsEditor<AppletConfiguration> implements CheckableRunConfigurationEditor<AppletConfiguration>{
   private JPanel myWholePanel;
@@ -205,7 +205,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   public void resetEditorFrom(final AppletConfiguration configuration) {
     getClassNameComponent().setText(configuration.MAIN_CLASS_NAME);
     String presentableHtmlName = configuration.HTML_FILE_NAME;
-    if (presentableHtmlName != null && !presentableHtmlName.toLowerCase().startsWith(HTTP_PREFIX)) {
+    if (presentableHtmlName != null && !StringUtil.startsWithIgnoreCase(presentableHtmlName, HTTP_PREFIX)) {
       presentableHtmlName = presentableHtmlName.replace('/', File.separatorChar);
     }
     getHtmlPathComponent().setText(presentableHtmlName);

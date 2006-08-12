@@ -10,6 +10,7 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -252,8 +253,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
 
     try {
       for (File file : files) {
-        String name = file.getName();
-        if (!name.toLowerCase().endsWith(XML_EXTENSION)) continue;
+        if (!StringUtil.endsWithIgnoreCase(file.getName(), XML_EXTENSION)) continue;
         readTemplateFile(file);
       }
 

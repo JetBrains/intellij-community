@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -148,7 +149,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
       EditorModificationUtil.deleteSelectedText(editor);
 
-      if (!uniqueText.toLowerCase().startsWith(prefix.toLowerCase())) {
+      if (!StringUtil.startsWithIgnoreCase(uniqueText, prefix)) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
       }
 
@@ -205,7 +206,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     for (final LookupItem item : items) {
       final String lookupString = item.getLookupString();
-      if (!lookupString.toLowerCase().startsWith(prefix.toLowerCase())) {
+      if (!StringUtil.startsWithIgnoreCase(lookupString, prefix)) {
         // since camel humps
         return prefix;
         //throw new RuntimeException("Hmm... Some lookup items have other than $prefix prefix.");

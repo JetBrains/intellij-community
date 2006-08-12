@@ -4,6 +4,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 
 import javax.swing.*;
@@ -101,7 +102,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       }
 
       if (chosenElements.size() > 0){
-        final String enteredText = myTextField.getText().toLowerCase();
+        final String enteredText = myTextField.getText();
         if (enteredText.indexOf('*') >= 0) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.wildcards");
         }
@@ -109,8 +110,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
           for (Object element : chosenElements) {
             final String name = myModel.getElementName(element);
             if (name != null) {
-              final String choosenElementText = name.toLowerCase();
-              if (!choosenElementText.startsWith(enteredText)) {
+              if (!StringUtil.startsWithIgnoreCase(name, enteredText)) {
                 FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.camelprefix");
                 break;
               }

@@ -23,7 +23,10 @@ import org.jetbrains.annotations.NonNls;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.Properties;
+import java.util.PropertyResourceBundle;
+import java.util.Set;
 
 public class PathManager {
   @NonNls private static final String PROPERTIES_FILE = "idea.properties.file";
@@ -266,9 +269,9 @@ public class PathManager {
 
     if (FILE.equals(protocol)) {
       String path = resourceURL.getFile();
-      String testPath = path.replace('\\', '/').toLowerCase();
-      String testResourcePath = resourcePath.replace('\\', '/').toLowerCase();
-      if (testPath.endsWith(testResourcePath)) {
+      final String testPath = path.replace('\\', '/');
+      final String testResourcePath = resourcePath.replace('\\', '/');
+      if (StringUtil.endsWithIgnoreCase(testPath, testResourcePath)) {
         resultPath = path.substring(0, path.length() - resourcePath.length());
       }
     }

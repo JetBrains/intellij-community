@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -96,7 +97,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   private static boolean canWrapTagEnd(final XmlTag tag) {
     final String name = tag.getName();
-    return tag.getSubTags().length > 0 || (name.toLowerCase().startsWith(JSP_TAG_PREFIX));
+    return tag.getSubTags().length > 0 || StringUtil.startsWithIgnoreCase(name, JSP_TAG_PREFIX);
   }
 
   protected XmlTag getTag() {

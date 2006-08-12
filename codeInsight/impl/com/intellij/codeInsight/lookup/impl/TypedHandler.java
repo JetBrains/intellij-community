@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ListScrollingUtil;
 
 import javax.swing.*;
@@ -53,12 +54,12 @@ class TypedHandler implements TypedActionHandler {
         lookup.setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
       }
       else{
-        String prefix = lookup.getPrefix().toLowerCase();
+        final String prefix = lookup.getPrefix();
         ListModel model = lookup.getList().getModel();
         for(int i = 0; i < model.getSize(); i++){
           LookupItem item = (LookupItem)model.getElementAt(i);
           String s = item.getLookupString();
-          if (s.toLowerCase().startsWith(prefix)){
+          if (StringUtil.startsWithIgnoreCase(s, prefix)){
             ListScrollingUtil.selectItem(lookup.getList(), i);
             break;
           }

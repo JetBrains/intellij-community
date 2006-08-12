@@ -136,6 +136,22 @@ public class StringUtil {
     return -1;
   }
 
+  public static boolean containsIgnoreCase(String where, String what) {
+    return indexOfIgnoreCase(where, what, 0) >= 0;
+  }
+
+  public static boolean endsWithIgnoreCase(String str, String suffix) {
+    final int stringLength = str.length();
+    final int suffixLength = suffix.length();
+    return stringLength >= suffixLength && str.regionMatches(true, stringLength - suffixLength, suffix, 0, suffixLength);
+  }
+
+  public static boolean startsWithIgnoreCase(String str, String prefix) {
+    final int stringLength = str.length();
+    final int prefixLength = prefix.length();
+    return stringLength >= prefixLength && str.regionMatches(true, 0, prefix, 0, prefixLength);
+  }
+
   public static boolean charsEqualIgnoreCase(char a, char b) {
     return a == b || Character.toUpperCase(a) == Character.toUpperCase(b);
   }

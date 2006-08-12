@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -55,7 +56,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
         if (element instanceof TreePath) {
           final Object userObject = ((DefaultMutableTreeNode)((TreePath)element).getLastPathComponent()).getUserObject();
           if (userObject instanceof Module) {
-            return ((Module)userObject).getName().toLowerCase().startsWith(pattern.toLowerCase());
+            return StringUtil.startsWithIgnoreCase(((Module)userObject).getName(), pattern);
           }
         }
         return false;

@@ -3,9 +3,7 @@ package com.intellij.execution.applet;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuidlerFactory;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.junit.RefactoringListeners;
-import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -20,6 +18,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -330,7 +329,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration implements Sin
     }
 
     public String getUrl() {
-      if (!myHtmlFile.toLowerCase().startsWith(FILE_PREFIX) && !isHttp()) {
+      if (!StringUtil.startsWithIgnoreCase(myHtmlFile, FILE_PREFIX) && !isHttp()) {
         try {
           return new File(myHtmlFile).toURL().toString();
         }
@@ -341,8 +340,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration implements Sin
     }
 
     public boolean isHttp() {
-      final String lowerCaseUrl = myHtmlFile.toLowerCase();
-      return lowerCaseUrl.startsWith(HTTP_PREFIX) || lowerCaseUrl.startsWith(HTTPS_PREFIX);
+      return StringUtil.startsWithIgnoreCase(myHtmlFile, HTTP_PREFIX) || StringUtil.startsWithIgnoreCase(myHtmlFile, HTTPS_PREFIX);
     }
 
     public void deleteFile() {

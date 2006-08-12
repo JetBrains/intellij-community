@@ -128,11 +128,8 @@ public class JavaUtil {
           int index1 = packageName.lastIndexOf('.', index - 1);
           String token = packageName.substring(index1 + 1, index);
           String dirName = root.getName();
-          if (!SystemInfo.isFileSystemCaseSensitive){
-            token = token.toLowerCase();
-            dirName = dirName.toLowerCase();
-          }
-          if (!dirName.equals(token)){
+          final boolean equalsToToken = SystemInfo.isFileSystemCaseSensitive ? dirName.equals(token) : dirName.equalsIgnoreCase(token);
+          if (!equalsToToken){
             return Pair.create(root, packageName.substring(0, index));
           }
           String parent = root.getParent();

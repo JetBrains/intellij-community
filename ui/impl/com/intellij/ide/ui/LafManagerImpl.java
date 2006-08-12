@@ -438,7 +438,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     public int compare(Object obj1,Object obj2){
       String name1=((UIManager.LookAndFeelInfo)obj1).getName();
       String name2=((UIManager.LookAndFeelInfo)obj2).getName();
-      return name1.toLowerCase().compareTo(name2.toLowerCase());
+      return name1.compareToIgnoreCase(name2);
     }
   }
 

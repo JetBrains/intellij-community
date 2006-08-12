@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
@@ -203,10 +204,10 @@ public class LookupImpl extends LightweightHint implements Lookup {
     Object oldSelected = myList.getSelectedValue();
     DefaultListModel model = new DefaultListModel();
     ArrayList<LookupItem> array = new ArrayList<LookupItem>();
-    String prefix = myPrefix.toLowerCase();
+    final String prefix = myPrefix;
     for (LookupItem item : myItems) {
       String text = item.getLookupString();
-      if (text.toLowerCase().startsWith(prefix) || matcher.matches(text, pattern)) {
+      if (StringUtil.startsWithIgnoreCase(text, prefix) || matcher.matches(text, pattern)) {
         model.addElement(item);
         array.add(item);
       }

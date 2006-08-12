@@ -9,11 +9,16 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.lang.properties.PropertiesHighlighter;
+import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -23,10 +28,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.StrikeoutLabel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.PropertiesHighlighter;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -153,11 +154,11 @@ class LookupCellRenderer implements ListCellRenderer {
 
   private JLabel getLabel0(LookupItem item, final Color background, final boolean selected){
     Object o = item.getObject();
-    String prefix = myLookup.getPrefix().toLowerCase();
+    final String prefix = myLookup.getPrefix();
     String name = getName(item);
     String text;
     Icon icon;
-    if (prefix.length() > 0 && name.toLowerCase().startsWith(prefix)){
+    if (prefix.length() > 0 && StringUtil.startsWithIgnoreCase(name, prefix)){
       text = name.substring(0, prefix.length());
       icon = getIcon(item);
     }
@@ -181,11 +182,11 @@ class LookupCellRenderer implements ListCellRenderer {
 
   private JLabel getLabel1(LookupItem item, final Color background, final Color foreground){
     Object o = item.getObject();
-    String prefix = myLookup.getPrefix().toLowerCase();
+    final String prefix = myLookup.getPrefix();
     String name = getName(item);
     String text;
     Icon icon;
-    if (prefix.length() > 0 && name.toLowerCase().startsWith(prefix)){
+    if (prefix.length() > 0 && StringUtil.startsWithIgnoreCase(name, prefix)){
       text = name.substring(prefix.length());
       icon = null;
     }

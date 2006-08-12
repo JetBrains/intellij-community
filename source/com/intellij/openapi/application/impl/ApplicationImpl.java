@@ -273,7 +273,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private static void backupFiles(String path) throws IOException {
     String[] list = new File(path).list();
     for (String name : list) {
-      if (name.toLowerCase().endsWith(XML_EXTENSION)) {
+      if (StringUtil.endsWithIgnoreCase(name, XML_EXTENSION)) {
         File file = new File(path + File.separatorChar + name);
         File newFile = new File(path + File.separatorChar + name + "~");
         FileUtil.rename(file, newFile);

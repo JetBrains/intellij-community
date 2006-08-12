@@ -8,6 +8,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
@@ -137,7 +138,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
 
     File[] files = getSchemeFiles();
     for (File file : files) {
-      if (file.getName().toLowerCase().endsWith(XML_EXTENSION)) {
+      if (StringUtil.endsWithIgnoreCase(file.getName(), XML_EXTENSION)) {
         try {
           addScheme(CodeStyleSchemeImpl.readScheme(file));
         }

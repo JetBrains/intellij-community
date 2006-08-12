@@ -125,7 +125,7 @@ public class HtmlCompletionData extends XmlCompletionData {
     if (tag!=null) {
       String tagName = tag.getName();
       if (tagName == null) return false;
-      if (myCaseInsensitive) tagName = tagName.toLowerCase();
+      if (myCaseInsensitive) return tagName.equalsIgnoreCase(SCRIPT_TAG);
 
       return tagName.equals(SCRIPT_TAG);
     }
@@ -137,7 +137,7 @@ public class HtmlCompletionData extends XmlCompletionData {
     if (tag!=null) {
       String tagName = tag.getName();
       if (tagName == null) return false;
-      if (myCaseInsensitive) tagName = tagName.toLowerCase();
+      if (myCaseInsensitive) return tagName.equalsIgnoreCase(STYLE_TAG);
 
       return tagName.equals(STYLE_TAG);
     }
@@ -169,7 +169,7 @@ public class HtmlCompletionData extends XmlCompletionData {
     if (parentOfType != null) {
       String name = parentOfType.getName();
       if (name != null) {
-        if (myCaseInsensitive) name = name.toLowerCase();
+        if (myCaseInsensitive) return STYLE_TAG.equalsIgnoreCase(name);
         return STYLE_TAG.equals(name); //name.endsWith("style");
       }
     }

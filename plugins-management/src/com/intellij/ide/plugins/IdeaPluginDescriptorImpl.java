@@ -8,6 +8,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -265,8 +266,8 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
       if (files != null && files.length > 0) {
         for (final File f : files) {
           if (f.isFile()) {
-            final String name = f.getName().toLowerCase();
-            if (name.endsWith(".jar") || name.endsWith(".zip")) {
+            final String name = f.getName();
+            if (StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip")) {
               result.add(f);
             }
           }

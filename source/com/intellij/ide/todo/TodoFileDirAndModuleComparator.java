@@ -66,8 +66,8 @@ public final class TodoFileDirAndModuleComparator implements Comparator{
   }
 
   private static int compareVirtualFiles(VirtualFile virtualFile1, VirtualFile virtualFile2) {
-    String path1=virtualFile1.getPath().toLowerCase();
-    String path2=virtualFile2.getPath().toLowerCase();
-    return path1.compareTo(path2);
+    String path1=virtualFile1.getPath();
+    String path2=virtualFile2.getPath();
+    return path1.compareToIgnoreCase(path2);
   }
 }

@@ -1,16 +1,16 @@
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.fileChooser.FileElement;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 public class RootFileElement extends FileElement {
   private final VirtualFile[] myFiles;
@@ -48,7 +48,7 @@ public class RootFileElement extends FileElement {
     LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     HashSet rootChildren = new HashSet();
     for (int i = 0; i < roots.length; i++) {
-      if (roots[i].getPath().toLowerCase().startsWith(A_PREFIX)) continue;
+      if (StringUtil.startsWithIgnoreCase(roots[i].getPath(), A_PREFIX)) continue;
       String path = roots[i].getAbsolutePath();
       path = path.replace(File.separatorChar, '/');
       VirtualFile file = localFileSystem.findFileByPath(path);

@@ -7,9 +7,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.UniqueFileNamesProvider;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -145,7 +146,7 @@ public class MigrationMapSet implements ExportableApplicationComponent {
     File[] ret = dir.listFiles(new FileFilter() {
       @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File file){
-        return !file.isDirectory() && file.getName().toLowerCase().endsWith(".xml");
+        return !file.isDirectory() && StringUtil.endsWithIgnoreCase(file.getName(), ".xml");
       }
     });
     if (ret == null){
