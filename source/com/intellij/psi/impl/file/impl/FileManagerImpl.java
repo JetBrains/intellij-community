@@ -287,7 +287,7 @@ public class FileManagerImpl implements FileManager {
         return getResolveScope(context);
       }
 
-      final PsiFile contextFile = containingFile != null ? ResolveUtil.getContextFile(containingFile) : ResolveUtil.getContextFile(element);
+      final PsiFile contextFile = containingFile != null ? ResolveUtil.getContextFile(containingFile) : null;
       if (contextFile == null || contextFile instanceof XmlFile) {
         return GlobalSearchScope.allScope(project);
       }
