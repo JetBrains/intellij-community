@@ -554,7 +554,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   private static TextRange getSignificantRange(final PsiFile file, final int offset) {
     final ASTNode elementAtOffset = SourceTreeToPsiMap.psiElementToTree(findElementInTreeWithFormatterEnabled(file, offset));
     if (elementAtOffset == null) {
-      return new TextRange(offset, offset);
+      int significantRangeStart = CharArrayUtil.shiftBackward(file.getText(), offset - 1, "\r\t ");
+      return new TextRange(significantRangeStart, offset);
     }
 
     if (file instanceof PsiJavaFile) {

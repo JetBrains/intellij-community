@@ -8,6 +8,7 @@ import gnu.trove.TIntObjectHashMap;
 import org.jdom.Element;
 import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -230,6 +231,7 @@ class FormatProcessor {
     return new TextRange(textRange.getStartOffset() + shift, textRange.getEndOffset() + shift);
   }
 
+  @Nullable
   private AbstractBlockWrapper getBlockInfo(final Block rootBlock) {
     if (rootBlock == null) return null;
     return myInfos.get(rootBlock);
@@ -431,6 +433,7 @@ class FormatProcessor {
     }
   }
 
+  @Nullable
   private AbstractBlockWrapper getPreviousIndentedBlock() {
     AbstractBlockWrapper current = myCurrentBlock.getParent();
     while (current != null) {
@@ -482,6 +485,7 @@ class FormatProcessor {
     return result;
   }
 
+  @Nullable
   private WrapImpl getWrapToBeUsed(final WrapImpl[] wraps) {
     if (wraps.length == 0) return null;
     if (myWrapCandidate == myCurrentBlock) return wraps[0];
@@ -508,16 +512,21 @@ class FormatProcessor {
   private int getOffsetBefore(final Block block) {
     int result = 0;
     LeafBlockWrapper info = (LeafBlockWrapper)getBlockInfo(block);
-    while (true) {
-      final WhiteSpace whiteSpace = info.getWhiteSpace();
-      result += whiteSpace.getTotalSpaces();
-      if (whiteSpace.containsLineFeeds()) {
-        return result;
+    if (info != null) {
+      while (true) {
+        final WhiteSpace whiteSpace = info.getWhiteSpace();
+        result += whiteSpace.getTotalSpaces();
+        if (whiteSpace.containsLineFeeds()) {
+          return result;
+        }
+        info = info.getPreviousBlock();
+        if (info == null) return result;
+        result += info.getSymbolsAtTheLastLine();
+        if (info.containsLineFeeds()) return result;
       }
-      info = info.getPreviousBlock();
-      if (info == null) return result;
-      result += info.getSymbolsAtTheLastLine();
-      if (info.containsLineFeeds()) return result;
+    }
+    else {
+      return -1;
     }
   }
 
@@ -536,6 +545,7 @@ class FormatProcessor {
     }
   }
 
+  @Nullable
   private IndentData getAlignOffset() {
     AbstractBlockWrapper current = myCurrentBlock;
     while (true) {
@@ -585,6 +595,7 @@ class FormatProcessor {
     return false;
   }
 
+  @Nullable
   public LeafBlockWrapper getBlockAfter(final int startOffset) {
     int current = startOffset;
     LeafBlockWrapper result = null;
@@ -703,6 +714,7 @@ class FormatProcessor {
 
   private int getNewChildPosition(final AbstractBlockWrapper parent, final int offset) {
     final List<Block> subBlocks = parent.getBlock().getSubBlocks();
+    //noinspection ConstantConditions
     if (subBlocks != null) {
       for (int i = 0; i < subBlocks.size(); i++) {
         Block block = subBlocks.get(i);
@@ -715,6 +727,7 @@ class FormatProcessor {
     }
   }
 
+  @Nullable
   private static AbstractBlockWrapper getParentFor(final int offset, AbstractBlockWrapper block) {
     AbstractBlockWrapper current = block;
     while (current != null) {
@@ -727,6 +740,7 @@ class FormatProcessor {
     return null;
   }
 
+  @Nullable
   private AbstractBlockWrapper getParentFor(final int offset, LeafBlockWrapper block) {
     Block previous = getPreviousIncompletedBlock(block, offset);
     if (previous != null) {
@@ -737,6 +751,7 @@ class FormatProcessor {
     }
   }
 
+  @Nullable
   private Block getPreviousIncompletedBlock(final LeafBlockWrapper block, final int offset) {
     if (block == null) {
       if (myLastTokenBlock.getBlock().isIncomplete()) {
@@ -751,6 +766,18 @@ class FormatProcessor {
     while (current.getParent() != null && current.getParent().getStartOffset() > offset) {
       current = current.getParent();
     }
+
+
+
+    if (current.getParent() == null) return null;
+
+    if (current.getTextRange().getEndOffset() <= offset) {
+      while (!current.getBlock().isIncomplete() && current.getParent() != null && current.getParent().getTextRange().getEndOffset() <= offset) {
+        current = current.getParent();
+      }
+      if (current.getBlock().isIncomplete()) return current.getBlock();
+    }
+
     if (current.getParent() == null) return null;
 
     final List<Block> subBlocks = current.getParent().getBlock().getSubBlocks();
@@ -771,6 +798,7 @@ class FormatProcessor {
     return currentResult;
   }
 
+  @Nullable
   private static Block getLastChildOf(final Block currentResult) {
     final List<Block> subBlocks = currentResult.getSubBlocks();
     if (subBlocks.isEmpty()) return null;
