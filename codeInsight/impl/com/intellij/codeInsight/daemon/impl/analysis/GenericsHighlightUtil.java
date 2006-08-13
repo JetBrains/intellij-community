@@ -493,7 +493,7 @@ public class GenericsHighlightUtil {
     while (it.hasNext()) {
       PsiTypeParameter parameter = it.next();
       PsiType lTypeArg = lSubstitutor.substitute(parameter);
-      PsiType rTypeArg = rSubstitutor.substitute(parameter);
+      PsiType rTypeArg = rSubstitutor.substituteWithBoundsPromotion(parameter);
       if (lTypeArg == null) continue;
       if (rTypeArg == null) {
         if (!(lTypeArg instanceof PsiWildcardType) ||

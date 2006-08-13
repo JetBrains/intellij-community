@@ -24,6 +24,10 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiS
     return type;
   }
 
+  public PsiType substituteWithBoundsPromotion(PsiTypeParameter typeParameter) {
+    return typeParameter.getManager().getElementFactory().createType(typeParameter);
+  }
+
   public PsiType substituteAndCapture(PsiType type) {
     return type;
   }

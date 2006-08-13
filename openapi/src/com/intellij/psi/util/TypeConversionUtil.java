@@ -722,7 +722,7 @@ public class TypeConversionUtil {
       PsiTypeParameter parameter = iterator.next();
       final PsiType typeLeft = leftResult.getSubstitutor().substitute(parameter);
       if (typeLeft == null) continue;
-      final PsiType typeRight = substitutor.substitute(parameter);
+      final PsiType typeRight = substitutor.substituteWithBoundsPromotion(parameter);
       if (typeRight == null) {
         // compatibility feature: allow to assign raw types to generic ones
         return allowUncheckedConversion;

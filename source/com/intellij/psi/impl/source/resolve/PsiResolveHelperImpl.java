@@ -467,19 +467,20 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     }
 
     if (param instanceof PsiClassType && arg instanceof PsiClassType) {
-      PsiClass paramClass = ((PsiClassType)param).resolve();
+      PsiClassType.ClassResolveResult paramResult = ((PsiClassType)param).resolveGenerics();
+      PsiClass paramClass = paramResult.getElement();
       if (paramClass == null) return null;
 
-      PsiClass argClass = ((PsiClassType)arg).resolve();
+      PsiClassType.ClassResolveResult argResult = ((PsiClassType)arg).resolveGenerics();
+      PsiClass argClass = argResult.getElement();
       if (argClass != paramClass) return null;
 
-      PsiType[] paramTypes = ((PsiClassType)param).getParameters();
-      PsiType[] argTypes = ((PsiClassType)arg).getParameters();
-      if (paramTypes.length != argTypes.length) return null;
       Pair<PsiType,ConstraintType> wildcardCaptured = null;
-      for (int i = 0; i < argTypes.length; i++) {
-        final PsiType argType = argTypes[i];
-        final PsiType paramType = paramTypes[i];
+      final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(paramClass);
+      while(iterator.hasNext()) {
+        final PsiTypeParameter typeParameter = iterator.next();
+        PsiType paramType = paramResult.getSubstitutor().substitute(typeParameter);
+        PsiType argType = argResult.getSubstitutor().substituteWithBoundsPromotion(typeParameter);
         Pair<PsiType,ConstraintType> res = getSubstitutionForTypeParameterInner(paramType, argType, patternType, ConstraintType.EQUALS);
         if (res != null) {
           PsiType type = res.getFirst();

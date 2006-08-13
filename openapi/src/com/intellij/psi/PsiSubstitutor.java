@@ -37,6 +37,7 @@ public interface PsiSubstitutor {
 
   /**
    * Returns a mapping that this substitutor contains for a given type parameter.
+   * Does not perform bounds promotion
    *
    * @param typeParameter the parameter to return the mapping for.
    * @return the mapping for the type parameter, or <code>null</code> for a raw type.
@@ -74,6 +75,10 @@ public interface PsiSubstitutor {
   PsiType substituteAndFullCapture(PsiType type);
 
   PsiType substituteWithoutBoundsPromotion(PsiType type);
+
+  //Should be used with great care, be sure to prevent infinite recursion that could arise
+  // from the use of recursively bounded type parameters
+  PsiType substituteWithBoundsPromotion(PsiTypeParameter typeParameter);
 
   /**
    * Creates a substitutor instance which provides the specified parameter to type mapping in addition

@@ -45,6 +45,10 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     return correctExternalSubstitution(substituted, type);
   }
 
+  public PsiType substituteWithBoundsPromotion(PsiTypeParameter typeParameter) {
+    return addBounds(substitute(typeParameter), typeParameter);
+  }
+
   public PsiType substituteAndCapture(PsiType type) {
     if (type == null) return null;
     PsiType substituted = type.accept(myInternalCapturingSubstitutionVisitor);
@@ -190,32 +194,35 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
 
     protected PsiType substituteTypeParameter(final PsiTypeParameter typeParameter) {
       PsiType substituted = super.substituteTypeParameter(typeParameter);
-      if (substituted instanceof PsiWildcardType && !((PsiWildcardType)substituted).isSuper()) {
-        PsiType originalBound = ((PsiWildcardType)substituted).getBound();
-        PsiManager manager = typeParameter.getManager();
-        final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
-        for (PsiType boundType : boundTypes) {
-          PsiType substitutedBoundType = boundType.accept(myInternalSimpleSubstitutionVisitor);
-          PsiWildcardType wildcardType = (PsiWildcardType)substituted;
-          if (substitutedBoundType != null && !(substitutedBoundType instanceof PsiWildcardType) && !substitutedBoundType.equalsToText("java.lang.Object")) {
-            if (originalBound == null || !substitutedBoundType.isAssignableFrom(originalBound)) {
-              if (wildcardType.isExtends()) {
-                final PsiType glb = GenericsUtil.getGreatestLowerBound(wildcardType.getBound(), substitutedBoundType);
-                if (glb != null) {
-                 substituted = PsiWildcardType.createExtends(manager, glb);
-                }
+      return addBounds(substituted, typeParameter);
+    }
+  }
+
+  private PsiType addBounds(PsiType substituted, final PsiTypeParameter typeParameter) {
+    if (substituted instanceof PsiWildcardType && !((PsiWildcardType)substituted).isSuper()) {
+      PsiType originalBound = ((PsiWildcardType)substituted).getBound();
+      PsiManager manager = typeParameter.getManager();
+      final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
+      for (PsiType boundType : boundTypes) {
+        PsiType substitutedBoundType = boundType.accept(myInternalSimpleSubstitutionVisitor);
+        PsiWildcardType wildcardType = (PsiWildcardType)substituted;
+        if (substitutedBoundType != null && !(substitutedBoundType instanceof PsiWildcardType) && !substitutedBoundType.equalsToText("java.lang.Object")) {
+          if (originalBound == null || !substitutedBoundType.isAssignableFrom(originalBound)) {
+            if (wildcardType.isExtends()) {
+              final PsiType glb = GenericsUtil.getGreatestLowerBound(wildcardType.getBound(), substitutedBoundType);
+              if (glb != null) {
+               substituted = PsiWildcardType.createExtends(manager, glb);
               }
-              else {
-                //unbounded
-                substituted = PsiWildcardType.createExtends(manager, substitutedBoundType);
-              }
+            }
+            else {
+              //unbounded
+              substituted = PsiWildcardType.createExtends(manager, substitutedBoundType);
             }
           }
         }
       }
-
-      return substituted;
     }
+    return substituted;
   }
 
   private PsiType correctExternalSubstitution(PsiType substituted, final PsiType original) {
