@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.roots.ui.util.SimpleTextCellAppearance;
+import com.intellij.openapi.ui.PanelWithText;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -105,6 +106,9 @@ public class JavadocEditor extends ModuleElementsEditor {
 
     mainPanel.add(ScrollPaneFactory.createScrollPane(myTable), BorderLayout.CENTER);
     mainPanel.add(panel, BorderLayout.EAST);
+    final PanelWithText panelWithText = new PanelWithText(ProjectBundle.message("project.roots.javadoc.tab.description"));
+    panelWithText.setBorder(null);
+    mainPanel.add(panelWithText, BorderLayout.NORTH);
 
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {

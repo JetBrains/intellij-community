@@ -31,9 +31,11 @@ public abstract class DefaultModuleConfigurationEditorFactory implements Applica
 
   public abstract ModuleConfigurationEditor createClasspathEditor(ModuleConfigurationState state);
 
-  public abstract ModuleConfigurationEditor createJavadocEditor(ModuleConfigurationState state);
+  @Deprecated public abstract ModuleConfigurationEditor createJavadocEditor(ModuleConfigurationState state);
 
   public abstract ModuleConfigurationEditor createOutputEditor(ModuleConfigurationState state);
+
+  @Deprecated public abstract ModuleConfigurationEditor createCompilerOutputEditor(ModuleConfigurationState state);  
 
   public static DefaultModuleConfigurationEditorFactory getInstance() {
     return ApplicationManager.getApplication().getComponent(DefaultModuleConfigurationEditorFactory.class);

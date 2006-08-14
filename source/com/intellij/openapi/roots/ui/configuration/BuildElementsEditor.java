@@ -125,7 +125,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     enableCompilerSettings(!outputPathInherited);
 
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+    panel.setBorder(BorderFactory.createTitledBorder(ProjectBundle.message("project.roots.output.compiler.title")));
     panel.add(outputPathsPanel, BorderLayout.NORTH);
     return panel;
   }

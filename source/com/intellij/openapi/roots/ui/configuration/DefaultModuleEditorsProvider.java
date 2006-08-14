@@ -30,9 +30,8 @@ public class DefaultModuleEditorsProvider implements ModuleComponent, ModuleConf
     Project project = state.getProject();
     List<ModuleConfigurationEditor> editors = new ArrayList<ModuleConfigurationEditor>();
     editors.add(new ContentEntriesEditor(project, moduleName, rootModel, provider));
-    editors.add(new BuildElementsEditor(project, rootModel));
+    editors.add(new OutputEditor(project, rootModel));
     editors.add(new ClasspathEditor(project, rootModel, provider));
-    editors.add(new JavadocEditor(project, rootModel));
     return editors.toArray(new ModuleConfigurationEditor[editors.size()]);
   }
 }

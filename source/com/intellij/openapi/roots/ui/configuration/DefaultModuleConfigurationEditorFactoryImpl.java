@@ -42,6 +42,11 @@ public class DefaultModuleConfigurationEditorFactoryImpl extends DefaultModuleCo
   }
 
   public ModuleConfigurationEditor createOutputEditor(ModuleConfigurationState state) {
+    return new OutputEditor(state.getProject(), state.getRootModel());
+  }
+
+  @Deprecated
+  public ModuleConfigurationEditor createCompilerOutputEditor(ModuleConfigurationState state) {
     return new BuildElementsEditor(state.getProject(), state.getRootModel());
   }
 
