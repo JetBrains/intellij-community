@@ -288,7 +288,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @return <code>VirtualFile</code> representing the created directory
    * @throws java.io.IOException if directory failed to be created
    */
-  public VirtualFile createChildDirectory(Object requestor, String name) throws IOException {
+  public VirtualFile createChildDirectory(Object requestor, @NonNls String name) throws IOException {
     if (!isDirectory()) {
       throw new IOException(VfsBundle.message("directory.create.wrong.parent.error"));
     }
