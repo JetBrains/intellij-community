@@ -336,7 +336,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         final PsiMethod[] declarations = ((EjbImplMethodRole)role).findAllDeclarations();
         for (PsiMethod declaration : declarations) {
           if (containingClass.isInheritor(declaration.getContainingClass(), true)) {
-            return new LineMarkerInfo(LineMarkerInfo.OVERRIDING_METHOD, method, offset, IMPLEMENTING_METHOD_ICON);            
+            return new LineMarkerInfo(LineMarkerInfo.MarkerType.OVERRIDING_METHOD, method, offset, IMPLEMENTING_METHOD_ICON);
           }
         }
       }
@@ -351,7 +351,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
           overrides = true;
         }
 
-        return new LineMarkerInfo(LineMarkerInfo.OVERRIDING_METHOD, method, offset,
+        return new LineMarkerInfo(LineMarkerInfo.MarkerType.OVERRIDING_METHOD, method, offset,
                                   overrides ? OVERRIDING_METHOD_ICON : IMPLEMENTING_METHOD_ICON);
       }
     }
@@ -377,7 +377,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         }
 
         if (drawSeparator) {
-          LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.METHOD_SEPARATOR, element, element.getTextRange().getStartOffset(), null);
+          LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.MarkerType.METHOD_SEPARATOR, element, element.getTextRange().getStartOffset(), null);
           EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
           info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
           info.separatorPlacement = SeparatorPlacement.TOP;

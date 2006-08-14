@@ -267,12 +267,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
         classesToSearch.add(aClass);
 
         final PsiManager psiManager = PsiManager.getInstance(myProject);
-        final GlobalSearchScope searchScope = GlobalSearchScope.allScope(myProject);
 
-        final PsiClass[] descendants = psiManager.getSearchHelper().findInheritors(aClass,
-                                                                                   searchScope,
-                                                                                   true);
-
+        final PsiClass[] descendants = psiManager.getSearchHelper().findInheritors(aClass, aClass.getUseScope(), true);
         classesToSearch.addAll(Arrays.asList(descendants));
 
         myCachedScope = new LocalSearchScope(classesToSearch.toArray(new PsiElement[classesToSearch.size()]),

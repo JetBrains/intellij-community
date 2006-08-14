@@ -130,7 +130,7 @@ public class ImplementAbstractMethodHandler {
     PsiManager manager = psiClass.getManager();
     PsiSearchHelper helper = manager.getSearchHelper();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-    PsiClass[] inheritors = helper.findInheritors(psiClass, projectScope, true);
+    PsiClass[] inheritors = helper.findInheritors(psiClass, psiClass.getUseScope(), true);
     for (PsiClass inheritor : inheritors) {
       if (!inheritor.isInterface()) {
         PsiMethod method = inheritor.findMethodBySignature(myMethod, true);

@@ -1,27 +1,27 @@
 package com.intellij.refactoring.typeCook.deductive.resolver;
 
-import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
-import com.intellij.psi.PsiTypeVariable;
-import com.intellij.refactoring.typeCook.deductive.PsiExtendedTypeVisitor;
-import com.intellij.refactoring.typeCook.deductive.builder.Constraint;
-import com.intellij.refactoring.typeCook.deductive.builder.Subtype;
-import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
-import com.intellij.refactoring.typeCook.Util;
-import com.intellij.psi.Bottom;
-import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.typeCook.Util;
+import com.intellij.refactoring.typeCook.deductive.PsiExtendedTypeVisitor;
+import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
+import com.intellij.refactoring.typeCook.deductive.builder.Constraint;
+import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
+import com.intellij.refactoring.typeCook.deductive.builder.Subtype;
 import com.intellij.util.IncorrectOperationException;
-
-import java.util.*;
-
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectProcedure;
+
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.Set;
 
 /**
  * @author db
@@ -53,7 +53,7 @@ public class BindingFactory {
         }
         else {
           final PsiSearchHelper helper = aClass.getManager().getSearchHelper();
-          final PsiClass[] bInheritors = helper.findInheritors(bClass, GlobalSearchScope.allScope(myProject), false);
+          final PsiClass[] bInheritors = helper.findInheritors(bClass, bClass.getUseScope(), false);
           for (PsiClass bInheritor : bInheritors) {
             getGreatestLowerClasses(bInheritor, aClass, descendants);
           }

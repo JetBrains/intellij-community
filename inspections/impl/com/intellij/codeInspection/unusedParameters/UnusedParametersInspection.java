@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
@@ -59,8 +58,8 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
                   if (refEntity instanceof RefElement && filter.accepts((RefElement)refEntity)) {
                     RefMethod refMethod = (RefMethod) refEntity;
                     PsiMethod psiMethod = (PsiMethod) refMethod.getElement();
-                    if (!refMethod.isStatic() && !refMethod.isConstructor() && refMethod.getAccessModifier() != PsiModifier.PRIVATE) {
-                      PsiMethod[] derived = helper.findOverridingMethods(psiMethod, GlobalSearchScope.projectScope(getContext().getProject()), true);
+                    if (!refMethod.isStatic() && !refMethod.isConstructor() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
+                      PsiMethod[] derived = helper.findOverridingMethods(psiMethod, psiMethod.getUseScope(), true);
                       final ArrayList<RefParameter> unusedParameters = UnusedParametersFilter.getUnusedParameters(refMethod);
                       for (final RefParameter refParameter : unusedParameters) {
                         int idx = refParameter.getIndex();

@@ -7,7 +7,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
@@ -18,10 +17,9 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
-
-import org.jetbrains.annotations.NotNull;
 
 public class PushDownProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPushDown.PushDownProcessor");
@@ -51,7 +49,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     PsiManager manager = PsiManager.getInstance(myProject);
     final PsiSearchHelper searchHelper = manager.getSearchHelper();
-    final PsiClass[] inheritors = searchHelper.findInheritors(myClass, GlobalSearchScope.projectScope(myProject), false);
+    final PsiClass[] inheritors = searchHelper.findInheritors(myClass, myClass.getUseScope(), false);
     UsageInfo[] usages = new UsageInfo[inheritors.length];
     for (int i = 0; i < inheritors.length; i++) {
       usages[i] = new UsageInfo(inheritors[i]);

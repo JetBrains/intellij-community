@@ -5,7 +5,6 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -71,7 +70,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
 
     // also add overriding methods as children
     final PsiSearchHelper searchHelper = method.getManager().getSearchHelper();
-    final PsiMethod[] overridingMethods = searchHelper.findOverridingMethods(method, GlobalSearchScope.projectScope(myProject), true);
+    final PsiMethod[] overridingMethods = searchHelper.findOverridingMethods(method, method.getUseScope(), true);
     for (final PsiMethod overridingMethod : overridingMethods) {
       final CallHierarchyNodeDescriptor node = new CallHierarchyNodeDescriptor(myProject, descriptor, overridingMethod, false, false);
       if (!result.contains(node)) result.add(node);

@@ -100,7 +100,7 @@ public abstract class ModuleManager {
    * @param name the name of the module to find.
    * @return the module instance, or null if no module with such name exists.
    */
-  @Nullable public abstract Module findModuleByName(@NotNull String name);
+  @Nullable public abstract Module findModuleByName(@NonNls @NotNull String name);
 
   /**
    * Returns the list of modules sorted by dependency (the modules which do not depend

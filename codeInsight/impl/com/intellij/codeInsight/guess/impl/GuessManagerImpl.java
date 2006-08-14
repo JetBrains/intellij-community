@@ -7,8 +7,10 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -119,7 +121,7 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
     PsiManager manager = PsiManager.getInstance(myProject);
     PsiSearchHelper helper = manager.getSearchHelper();
     PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5);
-    helper.processInheritors(processor, refClass, GlobalSearchScope.allScope(myProject), true);
+    helper.processInheritors(processor, refClass, refClass.getUseScope(), true);
     if (processor.isOverflow()) return;
 
     for (PsiClass derivedClass : processor.getCollection()) {

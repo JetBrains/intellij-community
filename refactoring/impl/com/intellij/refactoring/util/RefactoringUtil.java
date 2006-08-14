@@ -1078,7 +1078,7 @@ public class RefactoringUtil {
                                                     final ImplicitConstructorUsageVisitor implicitConstructorUsageVistor) {
     PsiManager manager = aClass.getManager();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-    final PsiClass[] inheritors = manager.getSearchHelper().findInheritors(aClass, projectScope, false);
+    final PsiClass[] inheritors = manager.getSearchHelper().findInheritors(aClass, aClass.getUseScope(), false);
 
     for (PsiClass inheritor : inheritors) {
       visitImplicitSuperConstructorUsages(inheritor, implicitConstructorUsageVistor, aClass);

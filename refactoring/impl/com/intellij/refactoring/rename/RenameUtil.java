@@ -56,7 +56,7 @@ public class RenameUtil {
         result.add(new MoveRenameUsageInfo(ref.getElement(), ref, element));
       }
 
-      PsiElement[] overridings = helper.findOverridingMethods(method, projectScope, true);
+      PsiElement[] overridings = helper.findOverridingMethods(method, method.getUseScope(), true);
       for (PsiElement overriding : overridings) {
         result.add(new MoveRenameUsageInfo(overriding, null, element));
       }
@@ -207,7 +207,7 @@ public class RenameUtil {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) return;
       if (method.hasModifierProperty(PsiModifier.PRIVATE)) return;
-      PsiClass[] inheritors = helper.findInheritors(containingClass, projectScope, true);
+      PsiClass[] inheritors = helper.findInheritors(containingClass, containingClass.getUseScope(), true);
 
       MethodSignature oldSignature = method.getSignature(PsiSubstitutor.EMPTY);
       MethodSignature newSignature = MethodSignatureUtil.createMethodSignature(newName, oldSignature.getParameterTypes(),
@@ -231,7 +231,7 @@ public class RenameUtil {
       if (field.getContainingClass() == null) return;
       if (field.hasModifierProperty(PsiModifier.PRIVATE)) return;
       final PsiClass containingClass = field.getContainingClass();
-      PsiClass[] inheritors = helper.findInheritors(containingClass, projectScope, true);
+      PsiClass[] inheritors = helper.findInheritors(containingClass, containingClass.getUseScope(), true);
       for (PsiClass inheritor : inheritors) {
         PsiField conflictingField = inheritor.findFieldByName(newName, false);
         if (conflictingField != null) {
@@ -242,7 +242,8 @@ public class RenameUtil {
     else if (element instanceof PsiClass) {
       final PsiClass aClass = (PsiClass)element;
       if (aClass.getParent() instanceof PsiClass) {
-        PsiClass[] inheritors = helper.findInheritors((PsiClass)aClass.getParent(), projectScope, true);
+        PsiClass parent = (PsiClass)aClass.getParent();
+        PsiClass[] inheritors = helper.findInheritors(parent, parent.getUseScope(), true);
         for (PsiClass inheritor : inheritors) {
           PsiClass[] inners = inheritor.getInnerClasses();
           for (PsiClass inner : inners) {

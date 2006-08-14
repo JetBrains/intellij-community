@@ -138,7 +138,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     PsiSearchHelper helper = manager.getSearchHelper();
 
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
-    PsiMethod[] overridingMethods = helper.findOverridingMethods(method, projectScope, true);
+    PsiMethod[] overridingMethods = helper.findOverridingMethods(method, method.getUseScope(), true);
 
     for (PsiMethod overridingMethod : overridingMethods) {
       result.add(new OverriderUsageInfo(overridingMethod, method, isOriginal, isToModifyArgs, isToThrowExceptions));

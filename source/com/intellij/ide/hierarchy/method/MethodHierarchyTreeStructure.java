@@ -6,7 +6,6 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -156,7 +155,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
       return PsiClass.EMPTY_ARRAY;
     }
 
-    return PsiManager.getInstance(myProject).getSearchHelper().findInheritors(psiClass, GlobalSearchScope.allScope(myProject), false);
+    return PsiManager.getInstance(myProject).getSearchHelper().findInheritors(psiClass, psiClass.getUseScope(), false);
   }
 
   private boolean shouldHideClass(final PsiClass psiClass) {

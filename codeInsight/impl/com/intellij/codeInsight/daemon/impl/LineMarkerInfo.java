@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import org.jetbrains.annotations.NonNls;
@@ -30,12 +29,14 @@ import java.util.Set;
 public class LineMarkerInfo {
   public static final LineMarkerInfo[] EMPTY_ARRAY = new LineMarkerInfo[0];
 
-  public static final int OVERRIDING_METHOD = 1;
-  public static final int OVERRIDEN_METHOD = 2;
-  public static final int METHOD_SEPARATOR = 5;
-  public static final int SUBCLASSED_CLASS = 6;
+  public enum MarkerType {
+    OVERRIDING_METHOD,
+    OVERRIDEN_METHOD,
+    METHOD_SEPARATOR,
+    SUBCLASSED_CLASS,
+  }
 
-  public final int type;
+  public final MarkerType type;
   private Icon myIcon;
   public final WeakReference<PsiElement> elementRef;
   public final int startOffset;
@@ -44,7 +45,7 @@ public class LineMarkerInfo {
   public SeparatorPlacement separatorPlacement;
   public RangeHighlighter highlighter;
 
-  public LineMarkerInfo(int type, PsiElement element, int startOffset, Icon icon) {
+  public LineMarkerInfo(MarkerType type, PsiElement element, int startOffset, Icon icon) {
     this.type = type;
     myIcon = icon;
     elementRef = new WeakReference<PsiElement>(element);
@@ -72,7 +73,7 @@ public class LineMarkerInfo {
       }
 
       public GutterIconRenderer.Alignment getAlignment() {
-        boolean isImplements = type == OVERRIDING_METHOD;
+        boolean isImplements = type == MarkerType.OVERRIDING_METHOD;
         return isImplements ? GutterIconRenderer.Alignment.LEFT : GutterIconRenderer.Alignment.RIGHT;
       }
     };
@@ -93,7 +94,7 @@ public class LineMarkerInfo {
   }
 
   private String getMethodTooltip(PsiMethod method) {
-    if (type == OVERRIDING_METHOD){
+    if (type == MarkerType.OVERRIDING_METHOD){
       PsiMethod[] superMethods = method.findSuperMethods(false);
       if (superMethods.length == 0) return null;
 
@@ -111,11 +112,11 @@ public class LineMarkerInfo {
       }
       return composeText(superMethods, "", DaemonBundle.message(key));
     }
-    else if (type == OVERRIDEN_METHOD){
+    else if (type == MarkerType.OVERRIDEN_METHOD){
       PsiManager manager = method.getManager();
       PsiSearchHelper helper = manager.getSearchHelper();
       PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
-      helper.processOverridingMethods(processor, method, GlobalSearchScope.allScope(manager.getProject()), true);
+      helper.processOverridingMethods(processor, method, method.getUseScope(), true);
 
       boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
@@ -130,7 +131,7 @@ public class LineMarkerInfo {
       Arrays.sort(overridings, comparator);
 
       String start = isAbstract ? DaemonBundle.message("method.is.implemented.header") : DaemonBundle.message("method.is.overriden.header");
-      @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
+      @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;{1}";
       return composeText(overridings, start, pattern);
     }
     else{
@@ -141,10 +142,9 @@ public class LineMarkerInfo {
   private String getClassTooltip(PsiClass aClass) {
     PsiManager manager = aClass.getManager();
     PsiSearchHelper helper = manager.getSearchHelper();
-    if (type == SUBCLASSED_CLASS) {
+    if (type == MarkerType.SUBCLASSED_CLASS) {
       PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5);
-      GlobalSearchScope scope = GlobalSearchScope.allScope(manager.getProject());
-      helper.processInheritors(processor, aClass, scope, true);
+      helper.processInheritors(processor, aClass, aClass.getUseScope(), true);
 
       if (processor.isOverflow()) {
         return aClass.isInterface()
@@ -170,12 +170,12 @@ public class LineMarkerInfo {
 
   private class NavigateAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
-      MouseEvent mousEvent = (MouseEvent) e.getInputEvent();
-      LineMarkerNavigator.browse(mousEvent, LineMarkerInfo.this);
+      MouseEvent mouseEvent = (MouseEvent) e.getInputEvent();
+      LineMarkerNavigator.browse(mouseEvent, LineMarkerInfo.this);
     }
   }
 
-  private static String composeText(PsiElement[] elements, String start, String formatPattern) {
+  private static String composeText(PsiElement[] elements, String start, final String pattern) {
     @NonNls StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(start);
@@ -184,15 +184,15 @@ public class LineMarkerInfo {
       String descr = "";
       if (element instanceof PsiClass) {
         String className = ClassPresentationUtil.getNameForClass((PsiClass)element, true);
-        descr = MessageFormat.format(formatPattern, className);
+        descr = MessageFormat.format(pattern, className);
       }
       else if (element instanceof PsiMethod) {
         String methodName = ((PsiMethod)element).getName();
         String className = ClassPresentationUtil.getNameForClass(((PsiMethod)element).getContainingClass(), true);
-        descr = MessageFormat.format(formatPattern, methodName, className);
+        descr = MessageFormat.format(pattern, methodName, className);
       }
       else if (element instanceof PsiFile) {
-        descr = MessageFormat.format(formatPattern, ((PsiFile)element).getName());
+        descr = MessageFormat.format(pattern, ((PsiFile)element).getName());
       }
       names.add(descr);
     }

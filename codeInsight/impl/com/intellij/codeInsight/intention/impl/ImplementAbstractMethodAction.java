@@ -12,7 +12,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -57,7 +56,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
 
       }
       MyElementProcessor processor = new MyElementProcessor();
-      helper.processInheritors(processor, containingClass, GlobalSearchScope.projectScope(project), false);
+      helper.processInheritors(processor, containingClass, containingClass.getUseScope(), false);
       return processor.isFound();
     }
 

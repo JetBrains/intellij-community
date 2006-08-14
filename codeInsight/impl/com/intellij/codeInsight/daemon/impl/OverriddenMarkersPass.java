@@ -87,7 +87,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
       ProgressManager.getInstance().checkCanceled();
       if (element instanceof PsiIdentifier) {
         if (element.getParent() instanceof PsiMethod) {
-          final PsiMethod method = ((PsiMethod)element.getParent());
+          final PsiMethod method = (PsiMethod)element.getParent();
           if (element.equals(method.getNameIdentifier()) && PsiUtil.canBeOverriden(method)) {
             methods.add(method);
           }
@@ -112,7 +112,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
         final PsiClass inheritor = ClassInheritorsSearch.search(aClass, false).findFirst();
         if (inheritor != null) {
           int offset = element.getTextRange().getStartOffset();
-          LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.SUBCLASSED_CLASS, aClass, offset, aClass.isInterface() ? IMPLEMENTED_INTERFACE_MARKER_RENDERER : SUBCLASSED_CLASS_MARKER_RENDERER);
+          LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.MarkerType.SUBCLASSED_CLASS, aClass, offset, aClass.isInterface() ? IMPLEMENTED_INTERFACE_MARKER_RENDERER : SUBCLASSED_CLASS_MARKER_RENDERER);
 
           result.add(info);
         }
@@ -145,7 +145,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
       boolean overrides = !method.hasModifierProperty(PsiModifier.ABSTRACT);
 
       int offset = method.getNameIdentifier().getTextRange().getStartOffset();
-      LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.OVERRIDEN_METHOD, method, offset,
+      LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.MarkerType.OVERRIDEN_METHOD, method, offset,
                                                overrides ? OVERRIDEN_METHOD_MARKER_RENDERER : IMPLEMENTED_METHOD_MARKER_RENDERER);
 
       result.add(info);

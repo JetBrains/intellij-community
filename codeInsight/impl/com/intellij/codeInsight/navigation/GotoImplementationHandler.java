@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.DefinitionsSearch;
@@ -123,11 +122,10 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
   }
 
 
-  private static PsiElement[] getClassImplementations(final PsiClass psiClass) {
+  public static PsiClass[] getClassImplementations(final PsiClass psiClass) {
     final ArrayList<PsiClass> list = new ArrayList<PsiClass>();
 
     PsiSearchHelper helper = psiClass.getManager().getSearchHelper();
-    GlobalSearchScope searchScope = GlobalSearchScope.allScope(psiClass.getProject());
     helper.processInheritors(new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass element) {
         if (!element.isInterface()) {
@@ -135,13 +133,13 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
         }
         return true;
       }
-    }, psiClass, searchScope, true);
+    }, psiClass, psiClass.getUseScope(), true);
 
     if (!psiClass.isInterface()) {
       list.add(psiClass);
     }
 
-    return list.toArray(new PsiElement[list.size()]);
+    return list.toArray(new PsiClass[list.size()]);
   }
 
   private static class MethodImplementationsSearch implements QueryExecutor<PsiElement, PsiElement> {
@@ -165,7 +163,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static PsiElement[] getMethodImplementations(final PsiMethod method) {
+  public static PsiMethod[] getMethodImplementations(final PsiMethod method) {
     ArrayList<PsiMethod> result = new ArrayList<PsiMethod>();
 
     getOverridingMethods(method, result);
@@ -173,7 +171,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
       result.add(0, method);
     }
 
-    return result.toArray(new PsiElement[result.size()]);
+    return result.toArray(new PsiMethod[result.size()]);
   }
 
   private static void show(Editor editor, final PsiElement sourceElement, final PsiElement[] elements) {

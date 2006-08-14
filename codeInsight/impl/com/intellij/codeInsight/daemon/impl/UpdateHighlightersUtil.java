@@ -253,18 +253,18 @@ public class UpdateHighlightersUtil {
     }
   }
 
-  private static boolean isLineMarkerInGroup(int type, int group) {
+  private static boolean isLineMarkerInGroup(LineMarkerInfo.MarkerType type, int group) {
     switch (type) {
-      case LineMarkerInfo.OVERRIDEN_METHOD:
-      case LineMarkerInfo.SUBCLASSED_CLASS:
+      case OVERRIDEN_METHOD:
+      case SUBCLASSED_CLASS:
         return group == OVERRIDEN_MARKERS_GROUP;
 
-      case LineMarkerInfo.OVERRIDING_METHOD:
+      case OVERRIDING_METHOD:
         /*
         return true; // in both groups
 
         */
-      case LineMarkerInfo.METHOD_SEPARATOR:
+      case METHOD_SEPARATOR:
         return group == NORMAL_MARKERS_GROUP;
 
       default:

@@ -512,7 +512,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       return;
     }
     final PsiMethod[] overridingMethods =
-            removeDeletedMethods(searchHelper.findOverridingMethods(psiMethod, projectScope, true));
+            removeDeletedMethods(searchHelper.findOverridingMethods(psiMethod, psiMethod.getUseScope(), true));
 
     boolean anyRefs = false;
     for (PsiReference reference : references) {

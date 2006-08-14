@@ -1,10 +1,11 @@
 package com.intellij.refactoring.inheritanceToDelegation;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -29,12 +30,10 @@ import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import com.intellij.codeInsight.generation.GenerateMembersUtil;
-
-import java.util.*;
-
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
 
 /**
  * @author dsl
@@ -134,8 +133,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> usages = new ArrayList<UsageInfo>();
     PsiSearchHelper searchHelper = myManager.getSearchHelper();
-    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
-    final PsiClass[] inheritors = searchHelper.findInheritors(myClass, projectScope, true);
+    final PsiClass[] inheritors = searchHelper.findInheritors(myClass, myClass.getUseScope(), true);
     myClassInheritors = new HashSet<PsiClass>();
     myClassInheritors.add(myClass);
     addAll(myClassInheritors, inheritors);

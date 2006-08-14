@@ -10,7 +10,6 @@ package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.containers.HashSet;
@@ -217,7 +216,7 @@ public class RefactoringHierarchyUtil {
 
     },
                                    anInterface,
-                                   GlobalSearchScope.projectScope(manager.getProject()),
+                                   anInterface.getUseScope(),
                                    false);
   }
 

@@ -13,9 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -32,7 +31,10 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author dsl
@@ -459,8 +461,8 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
         final PsiMethod[] superMethods = method.findSuperMethods();
         new Inner().linkInheritors(superMethods);
-        final PsiClass[] subClasses =
-          mySearchHelper.findInheritors(method.getContainingClass(), GlobalSearchScope.projectScope(myProject), false);
+        PsiClass containingClass = method.getContainingClass();
+        final PsiClass[] subClasses = mySearchHelper.findInheritors(containingClass, containingClass.getUseScope(), false);
         // ??? In the theory this is non-efficient way: too many inheritors can be processed.
         // ??? But in real use it seems reasonably fast. If poor performance problems emerged,
         // ??? should be optimized
@@ -531,8 +533,9 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     // ??? In the theory this is non-efficient way: too many inheritors can be processed (and multiple times).
     // ??? But in real use it seems reasonably fast. If poor performance problems emerged,
     // ??? should be optimized
+    PsiClass containingClass = method.getContainingClass();
     final PsiClass[] subClasses =
-      mySearchHelper.findInheritors(method.getContainingClass(), GlobalSearchScope.projectScope(myProject), false);
+      mySearchHelper.findInheritors(containingClass, containingClass.getUseScope(), false);
     for (int i1 = 0; i1 != subClasses.length; ++i1) {
       final PsiMethod[] mBSs = subClasses[i1].findMethodsBySignature(method, true);
       new Inner().linkInheritors(mBSs);
