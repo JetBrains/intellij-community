@@ -50,6 +50,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.jetbrains.annotations.Nullable;
+
 class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
   private static final int START_ICON_AREA_WIDTH = 15;
@@ -461,13 +463,19 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     myLineToGutterRenderers.forEachKey(new TIntProcedure() {
       public boolean execute(int line) {
         if (firstVisibleLine > line || lastVisibleLine < line) return true;
-        int startOffset = myEditor.getDocument().getLineStartOffset(line);
-        if (myEditor.getFoldingModel().isOffsetCollapsed(startOffset)) return true;
+        if (isLineCollapsed(line)) return true;
         ArrayList<GutterIconRenderer> renderers = myLineToGutterRenderers.get(line);
         paintIconRow(line, renderers, g);
         return true;
       }
     });
+  }
+
+  private boolean isLineCollapsed(final int line) {
+    int startOffset = myEditor.getDocument().getLineStartOffset(line);
+    final FoldRegion region = myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
+    if (region != null && region.getEndOffset() >= myEditor.getDocument().getLineEndOffset(line)) return true;
+    return false;
   }
 
   private void paintIconRow(int line, ArrayList<GutterIconRenderer> row, final Graphics g) {
@@ -1099,16 +1107,21 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     HintManager.getInstance().getTooltipController().cancelTooltip(GUTTER_TOOLTIP_GROUP);
   }
 
+  @Nullable
   private GutterIconRenderer getGutterRenderer(final Point p) {
     final int ex = convertX((int)p.getX());
     int line = myEditor.xyToLogicalPosition(new Point(0, (int)p.getY())).line;
-    ArrayList<GutterIconRenderer> renderers = myLineToGutterRenderers.get(line);
-    if (renderers == null) return null;
 
     if (line >= myEditor.getDocument().getLineCount()) return null;
-
     int startOffset = myEditor.getDocument().getLineStartOffset(line);
-    if (myEditor.getFoldingModel().isOffsetCollapsed(startOffset)) return null;
+    final FoldRegion region = myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
+    if (region != null) {
+      line = myEditor.getDocument().getLineNumber(region.getEndOffset());
+      if (line >= myEditor.getDocument().getLineCount()) return null;
+    }
+
+    ArrayList<GutterIconRenderer> renderers = myLineToGutterRenderers.get(line);
+    if (renderers == null) return null;
 
     final GutterIconRenderer[] result = new GutterIconRenderer[]{null};
     processIconsRow(line, renderers, new LineGutterIconRendererProcessor() {
@@ -1124,6 +1137,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return result[0];
   }
 
+  @Nullable
   private GutterIconRenderer getGutterRenderer(final MouseEvent e) {
     return getGutterRenderer(e.getPoint());
   }

@@ -62,6 +62,8 @@ public interface FoldingModel {
    */
   boolean isOffsetCollapsed(int offset);
 
+  FoldRegion getCollapsedRegionAtOffset(int offset);
+
   /**
    * Runs an operation which is allowed to modify fold regions in the editor by calling
    * {@link #addFoldRegion(int, int, String)} and {@link #removeFoldRegion(FoldRegion)}.
