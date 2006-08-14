@@ -72,6 +72,7 @@ public class TypeConversionUtil {
    */
   public static boolean areTypesConvertible(@NotNull PsiType fromType, @NotNull PsiType toType) {
     if (isPrimitiveAndNotNull(fromType) || isPrimitiveAndNotNull(toType)) {
+      if (isVoidType(fromType) || isVoidType(toType)) return false;
       final int fromTypeRank = getTypeRank(fromType);
       final int toTypeRank = getTypeRank(toType);
       return fromTypeRank == toTypeRank ||
