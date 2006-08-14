@@ -7,7 +7,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionRegistry;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.TextConsoleBuidlerFactory;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunStrategy;
 import com.intellij.execution.runners.RunnerInfo;
@@ -47,6 +47,7 @@ import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -93,7 +94,7 @@ public final class PreviewFormAction extends AnAction{
   }
 
   private static void showPreviewFrame(@NotNull final Module module, @NotNull final VirtualFile formFile,
-                                       final DataContext dataContext, final Locale stringDescriptorLocale) {
+                                       final DataContext dataContext, @Nullable final Locale stringDescriptorLocale) {
     final String tempPath;
     try {
       final File tempDirectory = FileUtil.createTempDirectory("FormPreview", "");
@@ -246,7 +247,7 @@ public final class PreviewFormAction extends AnAction{
   }
 
   private static void runPreviewProcess(final String tempPath, final PathsList sources, final Module module, final VirtualFile formFile,
-                                        final DataContext dataContext, final Locale stringDescriptorLocale) {
+                                        final DataContext dataContext, @Nullable final Locale stringDescriptorLocale) {
     // 3. Now we are ready to launch Java process
     final JavaParameters parameters = new JavaParameters();
     parameters.getClassPath().add(tempPath);
@@ -268,7 +269,7 @@ public final class PreviewFormAction extends AnAction{
     }
     parameters.setMainClass("FormPreviewFrame");
     parameters.setWorkingDirectory(tempPath);
-    if (stringDescriptorLocale.getDisplayName().length() > 0) {
+    if (stringDescriptorLocale != null && stringDescriptorLocale.getDisplayName().length() > 0) {
       parameters.getVMParametersList().add("-Duser.language=" + stringDescriptorLocale.getLanguage());
     }
 
@@ -329,7 +330,7 @@ public final class PreviewFormAction extends AnAction{
           }
         }
       };
-      state.setConsoleBuilder(TextConsoleBuidlerFactory.getInstance().createBuilder(myModule.getProject()));
+      state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(myModule.getProject()));
       return state;
     }
 

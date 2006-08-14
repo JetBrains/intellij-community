@@ -582,6 +582,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
   }
 
+  @Nullable
   public Locale getStringDescriptorLocale() {
     return myRootContainer.getStringDescriptorLocale();
   }
