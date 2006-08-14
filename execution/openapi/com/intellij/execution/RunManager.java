@@ -48,11 +48,11 @@ public abstract class RunManager {
 
   public abstract RunnerAndConfigurationSettings createRunConfiguration(String name, ConfigurationFactory type);
 
-  public abstract void registerActionBeforeRun(String actionName, Function<RunConfiguration, String> action, Function<RunConfiguration, String> retrieveDescription);
+  public abstract void registerStepBeforeRun(String actionName, Function<RunConfiguration, String> action, Function<RunConfiguration, String> retrieveDescription);
 
-  public abstract Set<String> getPossibleActionsBeforeRun();
+  public abstract Set<String> getRegisteredStepsBeforeRun();
 
-  public abstract Function<RunConfiguration, String> getActionByName(String actionName);
+  public abstract Function<RunConfiguration, String> getStepBeforeRun(String actionName);
 
-  public abstract String getDescriptionByName(String actionName, RunConfiguration runConfiguration);
+  public abstract String getStepBeforeRunDescription(String actionName, RunConfiguration runConfiguration);
 }

@@ -37,7 +37,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   private Map<String, Boolean> mySharedConfigurations = new TreeMap<String, Boolean>();
   private Map<String, Map<String, Boolean>> myMethod2CompileBeforeRun = new TreeMap<String, Map<String, Boolean>>();
 
-  private Map<String, Function<RunConfiguration, String>> myRegisteredMethods = new LinkedHashMap<String, Function<RunConfiguration, String>>();
+  private Map<String, Function<RunConfiguration, String>> myRegisteredSteps = new LinkedHashMap<String, Function<RunConfiguration, String>>();
   private Map<String, Function<RunConfiguration, String>> myRegisteredDescriptions = new LinkedHashMap<String, Function<RunConfiguration, String>>();
 
   private Map<ConfigurationFactory, RunnerAndConfigurationSettingsImpl> myTemplateConfigurationsMap = new HashMap<ConfigurationFactory, RunnerAndConfigurationSettingsImpl>();
@@ -74,7 +74,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         ((ModuleBasedConfiguration)configuration).init();
       }
     }
-    registerActionBeforeRun(RunManagerConfig.MAKE, null, null);
+    registerStepBeforeRun(RunManagerConfig.MAKE, null, null);
   }
 
   // separate method needed for tests
@@ -427,20 +427,20 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return createConfiguration(name, type);
   }
 
-  public void registerActionBeforeRun(String actionName, Function<RunConfiguration, String> action, Function<RunConfiguration, String> retrieveDescription) {
-    myRegisteredMethods.put(actionName, action);
+  public void registerStepBeforeRun(String actionName, Function<RunConfiguration, String> action, Function<RunConfiguration, String> retrieveDescription) {
+    myRegisteredSteps.put(actionName, action);
     myRegisteredDescriptions.put(actionName, retrieveDescription);
   }
 
-  public Set<String> getPossibleActionsBeforeRun() {
-    return myRegisteredMethods.keySet();
+  public Set<String> getRegisteredStepsBeforeRun() {
+    return myRegisteredSteps.keySet();
   }
 
-  public Function<RunConfiguration, String> getActionByName(String actionName) {
-    return myRegisteredMethods.get(actionName);
+  public Function<RunConfiguration, String> getStepBeforeRun(String actionName) {
+    return myRegisteredSteps.get(actionName);
   }
 
-  public String getDescriptionByName(String actionName, RunConfiguration runConfiguration) {
+  public String getStepBeforeRunDescription(String actionName, RunConfiguration runConfiguration) {
     return myRegisteredDescriptions.get(actionName).fun(runConfiguration);
   }
 

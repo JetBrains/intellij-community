@@ -2,6 +2,7 @@ package com.intellij.ide.impl.dataRules;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -26,6 +27,12 @@ public class ModuleRule implements GetDataRule {
       if (element == null || !element.isValid()) return null;
       project = element.getProject();
     }
+
+    final PackageElement packageElement = (PackageElement)dataProvider.getData(DataConstantsEx.PACKAGE_ELEMENT);
+    if (packageElement != null) {
+      return packageElement.getModule();
+    }
+
     VirtualFile virtualFile = (VirtualFile)dataProvider.getData(DataConstants.VIRTUAL_FILE);
     if (virtualFile == null) {
       GetDataRule dataRule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(DataConstants.VIRTUAL_FILE);
@@ -34,7 +41,7 @@ public class ModuleRule implements GetDataRule {
       }
     }
 
-    if (virtualFile == null || project == null) {
+    if (virtualFile == null) {
       return null;
     }
 

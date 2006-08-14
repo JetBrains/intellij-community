@@ -111,7 +111,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
   }
 
   public void registerAntTargetBeforeRun(final RunManager runManager, final Project project) {
-    runManager.registerActionBeforeRun(ANT, new Function<RunConfiguration, String>() {
+    runManager.registerStepBeforeRun(ANT, new Function<RunConfiguration, String>() {
       public String fun(final RunConfiguration runConfiguration) {
         ExecuteBeforeRunEvent event = findExecuteBeforeRunEvent(runConfiguration);
         Pair<AntBuildFile, String> selectedTarget = myEventToTargetMap.get(event);
@@ -512,7 +512,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
             }
           });
         }
-      }, ModalityState.NON_MMODAL);
+      }, ModalityState.NON_MODAL);
     }
     catch (Exception e) {
       LOG.error(e);

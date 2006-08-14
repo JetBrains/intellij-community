@@ -60,6 +60,10 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
     return (PsiMethod) element;
   }
 
+  public ConfigurationFactory getConfigurationFactory() {
+    return myConfigurationFactory;
+  }
+
   private static class ProducerComparator implements Comparator<RuntimeConfigurationProducer> {
     public int compare(final RuntimeConfigurationProducer producer1, final RuntimeConfigurationProducer producer2) {
       final PsiElement psiElement1 = producer1.getSourceElement();

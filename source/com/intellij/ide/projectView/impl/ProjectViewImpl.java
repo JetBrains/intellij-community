@@ -964,6 +964,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         Object selected = getSelectedNodeElement();
         return selected instanceof Module ? selected : null;
       }
+      if (DataConstantsEx.PACKAGE_ELEMENT.equals(dataId)){
+        Object selected = getSelectedNodeElement();
+        return selected instanceof PackageElement ? selected : null;
+      }
       if (DataConstants.MODULE_CONTEXT_ARRAY.equals(dataId)) {
         return getSelectedModules();
       }

@@ -6,6 +6,7 @@ package com.intellij.openapi.module.impl.scopes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
 
 import java.util.Arrays;
@@ -112,5 +113,9 @@ public class ModuleRuntimeClasspathScope extends GlobalSearchScope {
 
   public boolean isSearchInLibraries() {
     return true;
+  }
+
+  public String getDisplayName() {
+    return PsiBundle.message("runtime.scope.display.name", myModule.getName());
   }
 }

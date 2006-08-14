@@ -43,7 +43,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
 
     myStepsBeforeLaunch = runManager.getCompileMethodBeforeRun(runConfiguration);
 
-    final Set<String> list = runManager.getPossibleActionsBeforeRun();
+    final Set<String> list = runManager.getRegisteredStepsBeforeRun();
     myStepsBeforeLaunchRows = new StepBeforeLaunchRow[list.size()];
     myStepsPanel.setLayout(new GridLayout(list.size(), 1));
     int idx = 0;
@@ -121,10 +121,10 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
       myCheckBox = new JCheckBox(methodName, checked != null && checked.booleanValue());
       GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0 , 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0, 0);
       add(myCheckBox, gc);
-      final Function<RunConfiguration, String> actionByName = runManager.getActionByName(methodName);
+      final Function<RunConfiguration, String> actionByName = runManager.getStepBeforeRun(methodName);
       gc.weightx = 1;
       if (actionByName != null) {
-        final String descriptionByName = runManager.getDescriptionByName(methodName, runConfiguration);
+        final String descriptionByName = runManager.getStepBeforeRunDescription(methodName, runConfiguration);
         myCheckBox.setText(getCheckboxText(descriptionByName, methodName));
 
         myButton = new FixedSizeButton(20);

@@ -89,4 +89,9 @@ public interface DataConstantsEx extends DataConstants {
    * returns {@link com.intellij.openapi.module.ModifiableModuleModel}
    */
   @NonNls String MODIFIABLE_MODULE_MODEL = "modifiable.module.model";
+
+  /**
+   * returns {@link com.intellij.ide.projectView.impl.nodes.PackageElement}
+   */
+  @NonNls String PACKAGE_ELEMENT = "package.element";
 }
