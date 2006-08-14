@@ -3,6 +3,7 @@ package com.intellij.ide;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.IdePopup;
 import com.intellij.ui.popup.StackingPopupDispatcher;
+import com.intellij.ui.popup.JBPopupImpl;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -21,6 +22,9 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
         myActivePopup = null;
         if (component == null) {
           LOG.error("Popup " + activePopup + " is set up as active but not showing (component=null)");
+        }
+        else if (activePopup instanceof JBPopupImpl) {
+          LOG.error("Popup [JBPop upImpl] " + ((JBPopupImpl) activePopup).getContent() + " is set up as active but not showing");
         }
         else {
           LOG.error("Popup " + component + " is set up as active but not showing");
