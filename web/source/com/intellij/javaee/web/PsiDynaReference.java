@@ -8,6 +8,8 @@ import com.intellij.psi.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -17,7 +19,8 @@ import java.util.Set;
 /**
  * @author Dmitry Avdeev
  */
-public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T> implements PsiPolyVariantReference {
+public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
+  implements PsiPolyVariantReference, QuickFixProvider<PsiDynaReference> {
 
   private List<PsiReference> myReferences = new ArrayList<PsiReference>();
   private int myChoosenOne = -1;
@@ -147,5 +150,13 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T> 
 
   public boolean isSoft() {
     return mySoft;
+  }
+
+  public void registerQuickfix(final HighlightInfo info, final PsiDynaReference reference) {
+    for (Object ref: reference.myReferences) {
+      if (ref instanceof QuickFixProvider) {
+        ((QuickFixProvider)ref).registerQuickfix(info, (PsiReference)ref);
+      }
+    }
   }
 }
