@@ -158,7 +158,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(new Runnable() {
       public void run() {
-        if (myProject.isOpen()) {
+        if (!myProject.isDisposed()) {
           addRootToUpdate();
         }
       }
