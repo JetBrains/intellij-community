@@ -160,4 +160,23 @@ public class FileTypeAssocTable {
     }
     return false;
   }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final FileTypeAssocTable that = (FileTypeAssocTable)o;
+
+    if (!myExtensionMappings.equals(that.myExtensionMappings)) return false;
+    if (!myMatchingMappings.equals(that.myMatchingMappings)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = myExtensionMappings.hashCode();
+    result = 31 * result + myMatchingMappings.hashCode();
+    return result;
+  }
 }
