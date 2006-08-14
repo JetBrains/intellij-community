@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.xml.DomChangeAdapter;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.ui.CommittablePanel;
 
 import javax.swing.*;
@@ -29,6 +30,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
 
   private static final int ALARM_PERIOD = 241;
 
+  private Project myProject;
   private DomElement[] myDomElements;
 
   private final DomElementsRefreshStatusRenderer myErrorStripeRenderer;
@@ -39,14 +41,15 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
     assert domElements.length > 0;
 
     myDomElements = domElements;
+    final DomManager domManager = domElements[0].getManager();
+    myProject = domManager.getProject();
 
     setPreferredSize(getDimension());
 
     myErrorStripeRenderer = new DomElementsRefreshStatusRenderer(domElements[0].getRoot().getFile());
 
     addUpdateRequest();
-
-    domElements[0].getManager().addDomEventListener(new DomChangeAdapter() {
+    domManager.addDomEventListener(new DomChangeAdapter() {
       protected void elementChanged(DomElement element) {
         updatePanel();
       }
@@ -75,13 +78,15 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
 
   private boolean isHighlightingFinished() {
     return !areValid() ||
-           DomElementAnnotationsManager.getInstance(myDomElements[0].getManager().getProject()).isHighlightingFinished(myDomElements);
+           DomElementAnnotationsManager.getInstance(myProject).isHighlightingFinished(myDomElements);
   }
 
   private void addUpdateRequest() {
     myAlarm.addRequest(new Runnable() {
       public void run() {
-        updatePanel();
+        if (myProject.isOpen()) {
+          updatePanel();
+        }
       }
     }, ALARM_PERIOD);
   }
