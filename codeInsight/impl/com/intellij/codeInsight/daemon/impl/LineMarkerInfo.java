@@ -104,10 +104,10 @@ public class LineMarkerInfo {
       final boolean sameSignature = superMethod.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(PsiSubstitutor.EMPTY));
       @NonNls final String key;
       if (isSuperAbstract && !isAbstract){
-        key = sameSignature ? "method.implements" : "method.implements.2";
+        key = sameSignature ? "method.implements" : "method.implements.in";
       }
       else{
-        key = sameSignature ? "method.overrides" : "method.overrides.2";
+        key = sameSignature ? "method.overrides" : "method.overrides.in";
       }
       return composeText(superMethods, "", DaemonBundle.message(key));
     }
@@ -176,7 +176,7 @@ public class LineMarkerInfo {
   }
 
   private static String composeText(PsiElement[] elements, String start, String formatPattern) {
-    @NonNls StringBuffer result = new StringBuffer();
+    @NonNls StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(start);
     Set<String> names = new LinkedHashSet<String>();
@@ -189,7 +189,7 @@ public class LineMarkerInfo {
       else if (element instanceof PsiMethod) {
         String methodName = ((PsiMethod)element).getName();
         String className = ClassPresentationUtil.getNameForClass(((PsiMethod)element).getContainingClass(), true);
-        descr = MessageFormat.format(formatPattern, className, methodName);
+        descr = MessageFormat.format(formatPattern, methodName, className);
       }
       else if (element instanceof PsiFile) {
         descr = MessageFormat.format(formatPattern, ((PsiFile)element).getName());
