@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.popup.BasePopup;
+import com.intellij.ui.popup.PopupIcons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -248,7 +249,18 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
 
   private class MyMouseListener extends MouseAdapter {
     public void mouseClicked(MouseEvent e) {
-      handleSelect(true);
+      boolean handleFinalChoices = true;
+      final Object selectedValue = myList.getSelectedValue();
+      final ListPopupStep listStep = getListStep();
+      if (listStep.hasSubstep(selectedValue) && listStep.isSelectable(selectedValue)) {
+        final int index = myList.getSelectedIndex();
+        final Rectangle bounds = myList.getCellBounds(index, index);
+        final Point point = e.getPoint();
+        if (point.getX() > bounds.width + bounds.getX() - PopupIcons.HAS_NEXT_ICON.getIconWidth()) { //press on handle icon
+          handleFinalChoices = false;
+        }
+      }
+      handleSelect(handleFinalChoices);
       stopTimer();
     }
   }
