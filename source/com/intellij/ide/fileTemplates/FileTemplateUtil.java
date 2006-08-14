@@ -200,9 +200,18 @@ public class FileTemplateUtil{
     }
   }
 
+  public static PsiElement createFromTemplate(final FileTemplate template, @NonNls final String fileName, Properties props, final Project project, final PsiDirectory directory) throws Exception{
+    PsiElement[] result = new PsiElement[1];
+    createFromTemplate(result, template, fileName, props, project, directory);
+    return result[0];
+  }
+
   public static boolean createFromTemplate(final PsiElement[] myCreatedElement, final FileTemplate template, final String fileName, Properties props, final Project project, final PsiDirectory directory) throws Exception{
     if (template == null){
       throw new IllegalArgumentException("template cannot be null");
+    }
+    if (props == null) {
+      props = FileTemplateManager.getInstance().getDefaultProperties();
     }
     FileTemplateManager.getInstance().addRecentName(template.getName());
 
