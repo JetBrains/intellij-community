@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 public class ControlFlowUtils{
 
@@ -37,11 +38,31 @@ public class ControlFlowUtils{
                 statement instanceof PsiThrowStatement){
             return false;
         } else if(statement instanceof PsiExpressionListStatement ||
-                statement instanceof PsiExpressionStatement ||
                 statement instanceof PsiEmptyStatement ||
                 statement instanceof PsiAssertStatement ||
                 statement instanceof PsiDeclarationStatement){
             return true;
+        } else if(statement instanceof PsiExpressionStatement){
+            final PsiExpressionStatement expressionStatement =
+                    (PsiExpressionStatement)statement;
+            final PsiExpression expression =
+                    expressionStatement.getExpression();
+            if(!(expression instanceof PsiMethodCallExpression)){
+                return true;
+            }
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression)expression;
+            final PsiMethod method = methodCallExpression.resolveMethod();
+            if(method == null){
+                return true;
+            }
+            @NonNls final String methodName = method.getName();
+            if(!methodName.equals("exit")) {
+                return true;
+            }
+            final PsiClass aClass = method.getContainingClass();
+            final String className = aClass.getQualifiedName();
+            return !"java.lang.System".equals(className);
         } else if(statement instanceof PsiForStatement){
             return forStatementMayReturnNormally((PsiForStatement) statement);
         } else if(statement instanceof PsiForeachStatement){
@@ -269,6 +290,13 @@ public class ControlFlowUtils{
         return continueFinder.continueFound();
     }
 
+    public static boolean statementContainsSystemExit(
+            @NotNull PsiStatement statement){
+        final SystemExitFinder systemExitFinder = new SystemExitFinder();
+        statement.accept(systemExitFinder);
+        return systemExitFinder.exitFound();
+    }
+
     public static boolean isInLoop(@NotNull PsiElement element){
         final PsiLoopStatement loopStatement =
                 PsiTreeUtil.getParentOfType(element, PsiLoopStatement.class);
@@ -424,7 +452,43 @@ public class ControlFlowUtils{
         return false;
     }
 
+    private static class SystemExitFinder extends PsiRecursiveElementVisitor{
+
+        private boolean m_found = false;
+
+        public boolean exitFound() {
+            return m_found;
+        }
+
+        public void visitClass(@NotNull PsiClass aClass) {
+            // do nothing to keep from drilling into inner classes
+        }
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
+            if(m_found){
+                return;
+            }
+            super.visitMethodCallExpression(expression);
+            final PsiMethod method = expression.resolveMethod();
+            if(method == null){
+                return;
+            }
+            @NonNls final String methodName = method.getName();
+            if(!methodName.equals("exit")) {
+                return;
+            }
+            final PsiClass aClass = method.getContainingClass();
+            final String className = aClass.getQualifiedName();
+            if(!"java.lang.System".equals(className)) {
+                return;
+            }
+            m_found = true;
+        }
+    }
+
     private static class ReturnFinder extends PsiRecursiveElementVisitor{
+
         private boolean m_found = false;
 
         public boolean returnFound(){
@@ -446,6 +510,7 @@ public class ControlFlowUtils{
     }
 
     private static class BreakFinder extends PsiRecursiveElementVisitor{
+
         private boolean m_found = false;
         private final PsiStatement m_target;
 
@@ -476,6 +541,7 @@ public class ControlFlowUtils{
     }
 
     private static class ContinueFinder extends PsiRecursiveElementVisitor{
+
         private boolean m_found = false;
         private int m_nestingDepth = 0;
         private String m_label = null;

@@ -73,6 +73,9 @@ public class InfiniteLoopStatementInspection extends StatementInspection {
             if (ControlFlowUtils.statementContainsReturn(statement)) {
                 return;
             }
+            if (ControlFlowUtils.statementContainsSystemExit(statement)) {
+                return;
+            }
             registerStatementError(statement);
         }
 
