@@ -164,7 +164,7 @@ public class ValueHint {
             final Value value = evaluator.evaluate(evaluationContext);
 
             final WatchItemDescriptor descriptor = new WatchItemDescriptor(myProject, text, value, false);
-            if (value instanceof PrimitiveValue || myType == MOUSE_OVER_HINT) {
+            if (!isActiveTootlipApplicable(value) || myType == MOUSE_OVER_HINT) {
               descriptor.setContext(evaluationContext);
               if (myType == MOUSE_OVER_HINT) {
                 // force using default renderer for mouse over hint in order to not to call accidentaly methods while rendering
@@ -176,7 +176,7 @@ public class ValueHint {
                   if(myCurrentRange != null) {
                     if( myType != MOUSE_OVER_HINT || descriptor.isValueValid()) {
                       final SimpleColoredText simpleColoredText = DebuggerTreeRenderer.getDescriptorText(descriptor, true);
-                      if (!(value instanceof PrimitiveValue)){
+                      if (isActiveTootlipApplicable(value)){
                         simpleColoredText.append(" (" + DebuggerBundle.message("active.tooltip.suggestion") + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
                       }
                       showHint(simpleColoredText, descriptor);
@@ -199,6 +199,10 @@ public class ValueHint {
     catch (EvaluateException e) {
       LOG.debug(e);
     }
+  }
+
+  private static boolean isActiveTootlipApplicable(final Value value) {
+    return value != null && !(value instanceof PrimitiveValue);
   }
 
   private void resize(final TreePath path, DebuggerTree tree) {
@@ -266,7 +270,7 @@ public class ValueHint {
       public void run() {
         if(myShowHint) {
           JComponent component;
-          if (descriptor.getValue()instanceof PrimitiveValue) {
+          if (!isActiveTootlipApplicable(descriptor.getValue())) {
             component = HintUtil.createInformationLabel(text);
           }
           else {
