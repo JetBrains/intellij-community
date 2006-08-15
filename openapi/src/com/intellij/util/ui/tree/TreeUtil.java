@@ -55,6 +55,24 @@ public final class TreeUtil {
     return result;
   }
 
+  public static <T> List<T> collectSelectedObjectsOfType(JTree tree, Class<T> clazz) {
+    final TreePath[] selections = tree.getSelectionPaths();
+    if (selections != null) {
+      final ArrayList<T> result = new ArrayList<T>();
+      for (TreePath selection : selections) {
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection.getLastPathComponent();
+        final Object userObject = node.getUserObject();
+        if (clazz.isInstance(userObject)) {
+          //noinspection unchecked
+          result.add((T)userObject);
+        }
+      }
+      return result;
+    }
+    return Collections.emptyList();
+
+  }
+
   public static List<TreePath> collectExpandedPaths(final JTree tree, TreePath path){
     final ArrayList<TreePath> result = new ArrayList<TreePath>();
     if (!tree.isExpanded(path)) return result;

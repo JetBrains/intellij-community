@@ -39,13 +39,13 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.List;
 
 public class PackageChooserDialog extends PackageChooser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.PackageChooserDialog");
 
   private Tree myTree;
   private DefaultTreeModel myModel;
-  private PsiPackage mySelectedPackage = null;
   private Project myProject;
   private String myTitle;
 
@@ -146,7 +146,6 @@ public class PackageChooserDialog extends PackageChooser {
   }
 
   protected void doOKAction(){
-    mySelectedPackage = getTreeSelection();
     super.doOKAction();
   }
 
@@ -159,7 +158,11 @@ public class PackageChooserDialog extends PackageChooser {
   }
 
   public PsiPackage getSelectedPackage(){
-    return mySelectedPackage;
+    return getTreeSelection();
+  }
+
+  public List<PsiPackage> getSelectedPackages() {
+    return TreeUtil.collectSelectedObjectsOfType(myTree, PsiPackage.class);
   }
 
   public void selectPackage(final String qualifiedName) {
