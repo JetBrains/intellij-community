@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -63,6 +64,17 @@ public class AssignmentToNullInspection extends ExpressionInspection {
             final PsiAssignmentExpression assignmentExpression =
                     (PsiAssignmentExpression)parent;
             final PsiExpression lhs = assignmentExpression.getLExpression();
+            if (lhs instanceof PsiReferenceExpression) {
+                final PsiReferenceExpression referenceExpression =
+                        (PsiReferenceExpression)lhs;
+                final PsiElement element = referenceExpression.resolve();
+                if (element instanceof PsiVariable) {
+                    final PsiVariable variable = (PsiVariable)element;
+                    if (AnnotationUtil.isNullable(variable)) {
+                        return;
+                    }
+                }
+            }
             registerError(lhs);
         }
     }
