@@ -21,7 +21,7 @@
       <implementation-class>com.intellij.ide.XmlRpcServerImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.ide.ActivationServer</interface-class>
+      <interface-class>com.intellij.ide.ActivationServerImpl</interface-class>
       <implementation-class>com.intellij.ide.ActivationServerImpl</implementation-class>
     </component>
     <component>
