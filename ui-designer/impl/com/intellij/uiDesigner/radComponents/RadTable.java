@@ -39,6 +39,14 @@ public class RadTable extends RadAtomicComponent {
     @NonNls Object[][] data = new Object[][] { new Object[] { "round", "red"},
       new Object[] { "square", "green" } };
     @NonNls Object[] columnNames = new Object[] { "Shape", "Color" };
-    ((JTable) getDelegee()).setModel(new DefaultTableModel(data, columnNames));
+    try {
+      ((JTable) getDelegee()).setModel(new DefaultTableModel(data, columnNames));
+    }
+    catch(Exception ex) {
+      // a custom table subclass may not like our model, so ignore the exception if thrown here
+    }
+    catch(AssertionError ex) {
+      // a custom table subclass may not like our model, so ignore the exception if thrown here
+    }
   }
 }
