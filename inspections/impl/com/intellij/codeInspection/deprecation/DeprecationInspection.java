@@ -2,7 +2,10 @@ package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -34,6 +37,11 @@ public class DeprecationInspection extends LocalInspectionTool {
 
   public String getShortName() {
     return SHORT_NAME;
+  }
+
+  @NonNls
+  public String getID() {
+    return "deprecation";
   }
 
   public boolean isEnabledByDefault() {
