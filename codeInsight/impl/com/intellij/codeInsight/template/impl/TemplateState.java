@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.DefaultCharFilter;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
@@ -49,13 +48,14 @@ public class TemplateState implements Disposable {
   private TemplateImpl myTemplate;
   private TemplateSegments mySegments = null;
 
-  private boolean toProcessChangedUpdate = true;
   private RangeMarker myTemplateRange = null;
   private ArrayList<RangeHighlighter> myTabStopHighlighters = new ArrayList<RangeHighlighter>();
   private int myCurrentVariableNumber = -1;
   private int myCurrentSegmentNumber = -1;
   private boolean toProcessTab = true;
-  private boolean myChangesFlag = false;
+
+  private boolean myDocumentChangesTerminateTemplate = true;
+  private boolean myDocumentChanged = false;
 
   private CommandAdapter myCommandListener;
 
@@ -76,17 +76,7 @@ public class TemplateState implements Disposable {
   private void initListeners() {
     myEditorDocumentListener = new DocumentAdapter() {
       public void beforeDocumentChange(DocumentEvent e) {
-        if (!isFinished()) {
-          if (toProcessChangedUpdate) {
-            UndoManager undoManager = UndoManager.getInstance(myProject);
-            if (!undoManager.isUndoInProgress() && !undoManager.isRedoInProgress()) {
-              if (myCurrentSegmentNumber >= 0) {
-                myChangesFlag = e.getOffset() < mySegments.getSegmentStart(myCurrentSegmentNumber)
-                                || e.getOffset() + e.getOldLength() > mySegments.getSegmentEnd(myCurrentSegmentNumber);
-              }
-            }
-          }
-        }
+        myDocumentChanged = true;
       }
     };
 
@@ -94,7 +84,7 @@ public class TemplateState implements Disposable {
       public void commandStarted(CommandEvent event) {
         if (myEditor != null) {
           final int offset = myEditor.getCaretModel().getOffset();
-          toProcessChangedUpdate = offset < mySegments.getSegmentStart(myCurrentSegmentNumber) ||
+          myDocumentChangesTerminateTemplate = offset < mySegments.getSegmentStart(myCurrentSegmentNumber) ||
                                    offset > mySegments.getSegmentEnd(myCurrentSegmentNumber);
         }
       }
@@ -323,20 +313,17 @@ public class TemplateState implements Disposable {
   }
 
   private void afterChangedUpdate() {
-    if (isFinished() || !toProcessChangedUpdate) return;
+    if (isFinished()) return;
     LOG.assertTrue(myTemplate != null);
     UndoManager undoManager = UndoManager.getInstance(myProject);
     if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
 
-    if (myChangesFlag) {
-      setCurrentVariableNumber(-1);
-      fireTemplateCancelled();
-    }
-    else {
-      if (!mySegments.isInvalid()) {
-        toProcessChangedUpdate = false;
+    if (myDocumentChanged) {
+      if (myDocumentChangesTerminateTemplate) {
+        setCurrentVariableNumber(-1);
+        fireTemplateCancelled();
+      } else if (!mySegments.isInvalid()) {
         calcResults(true);
-        toProcessChangedUpdate = true;
       }
     }
   }
