@@ -164,6 +164,11 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
     return getManager().getSearchHelper().getUseScope(this);
   }
 
+  /**
+   * Returns the UI presentation data for the PSI element.
+   *
+   * @return null, unless overridden in a subclass. 
+   */
   public ItemPresentation getPresentation() {
     return null;
   }
