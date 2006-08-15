@@ -3,13 +3,13 @@ package com.intellij.psi.impl.search;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.search.*;
@@ -417,51 +417,31 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return !stopped[0];
   }
 
-  private boolean processAllClassesInGlobalScope(GlobalSearchScope searchScope, PsiElementProcessor<PsiClass> processor) {
+  private boolean processAllClassesInGlobalScope(final GlobalSearchScope searchScope, final PsiElementProcessor<PsiClass> processor) {
     myManager.getRepositoryManager().updateAll();
 
-    LinkedList<PsiDirectory> queue = new LinkedList<PsiDirectory>();
-    PsiDirectory[] roots = myManager.getRootDirectories(PsiRootPackageType.SOURCE_PATH);
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
-    for (final PsiDirectory root : roots) {
-      if (fileIndex.isInContent(root.getVirtualFile())) {
-        queue.addFirst(root);
-      }
-    }
-
-    roots = myManager.getRootDirectories(PsiRootPackageType.CLASS_PATH);
-    for (PsiDirectory root1 : roots) {
-      queue.addFirst(root1);
-    }
-
-    while (!queue.isEmpty()) {
-      PsiDirectory dir = queue.removeFirst();
-      Module module = ModuleUtil.findModuleForPsiElement(dir);
-      if (!(module != null ? searchScope.isSearchInModuleContent(module) : searchScope.isSearchInLibraries())) continue;
-
-      PsiDirectory[] subdirectories = dir.getSubdirectories();
-      for (PsiDirectory subdirectory : subdirectories) {
-        queue.addFirst(subdirectory);
-      }
-
-      PsiFile[] files = dir.getFiles();
-      for (PsiFile file : files) {
-        if (!searchScope.contains(file.getVirtualFile())) continue;
-        if (!(file instanceof PsiJavaFile)) continue;
-
-        long fileId = myManager.getRepositoryManager().getFileId(file.getVirtualFile());
-        if (fileId >= 0) {
-          long[] allClasses = myManager.getRepositoryManager().getFileView().getAllClasses(fileId);
-          for (long allClass : allClasses) {
-            PsiClass psiClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(allClass);
-            if (!processor.execute(psiClass)) return false;
+    fileIndex.iterateContent(new ContentIterator() {
+      public boolean processFile(VirtualFile fileOrDir) {
+        if (!fileOrDir.isDirectory() && searchScope.contains(fileOrDir)) {
+          final PsiFile psiFile = myManager.findFile(fileOrDir);
+          if (psiFile instanceof PsiJavaFile) {
+            long fileId = myManager.getRepositoryManager().getFileId(fileOrDir);
+            if (fileId >= 0) {
+              long[] allClasses = myManager.getRepositoryManager().getFileView().getAllClasses(fileId);
+              for (long allClass : allClasses) {
+                PsiClass psiClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(allClass);
+                if (!processor.execute(psiClass)) return false;
+              }
+            }
+            else {
+              if (!processScopeRootForAllClasses(psiFile, processor)) return false;
+            }
           }
         }
-        else {
-          if (!processAllClasses(processor, new LocalSearchScope(file))) return false;
-        }
+        return true;
       }
-    }
+    });
 
     return true;
   }
