@@ -53,7 +53,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,10 +60,6 @@ import java.text.MessageFormat;
 import java.util.*;
 
 public class PostHighlightingPass extends TextEditorHighlightingPass {
-  public static final Set<String> INJECTION_ANNOS =
-    new THashSet<String>(Arrays.asList(
-      "javax.annotation.Resource", "javax.ejb.EJB", "javax.xml.ws.WebServiceRef",
-      "javax.persistence.PersistenceContext", "javax.persistence.PersistenceUnit"));
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
   private final Project myProject;
@@ -244,8 +239,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     }
     else if (parent instanceof PsiField && unusedSymbolInspection.FIELD) {
       final PsiField psiField = (PsiField)parent;
-      final boolean injected = isFieldInjected(psiField, unusedSymbolInspection.INJECTION_ANNOS);
-      info = processField(psiField, options, displayName, injected);
+      info = processField(psiField, options, displayName, unusedSymbolInspection);
     }
     else if (parent instanceof PsiParameter && unusedSymbolInspection.PARAMETER) {
       info = processParameter((PsiParameter)parent, options, displayName);
@@ -326,7 +320,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL, element, message, attributes);
   }
 
-  private HighlightInfo processField(PsiField field, final List<IntentionAction> options, final String displayName, final boolean injected) {
+  private HighlightInfo processField(PsiField field, final List<IntentionAction> options, final String displayName, final UnusedSymbolLocalInspection unusedSymbolInspection) {
     final PsiIdentifier identifier = field.getNameIdentifier();
 
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -356,12 +350,21 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
 
       if (!field.hasInitializer()) {
+        final boolean injected = isFieldInjected(field, unusedSymbolInspection.INJECTION_ANNOS);
         final boolean writeReferenced = myRefCountHolder.isReferencedForWrite(field);
         if (!writeReferenced && !injected && !isImplicitWrite(field)) {
           String message = MessageFormat.format(JavaErrorMessages.message("private.field.is.not.assigned"), identifier.getText());
           HighlightInfo info = createUnusedSymbolInfo(identifier, message);
           QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterAction(false, true, field), options, displayName);
           QuickFixAction.registerQuickFixAction(info, new CreateConstructorParameterFromFieldFix(field), options, displayName);
+          final PsiAnnotation[] psiAnnotations = field.getModifierList().getAnnotations();
+          if (psiAnnotations.length > 0) {
+            for (PsiAnnotation psiAnnotation : psiAnnotations) {
+              final String name = psiAnnotation.getQualifiedName();
+              if (name.startsWith("java.") || name.startsWith("javax.") || name.startsWith("org.jetbrains.")) continue;
+              QuickFixAction.registerQuickFixAction(info, unusedSymbolInspection.createAddToInjectionAnnotationsIntentionAction(name, field));
+            }
+          }
           return info;
         }
       }
@@ -372,7 +375,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private static boolean isFieldInjected(final PsiField field, final List<String> externalInjectionAnnos) {
     for (PsiAnnotation psiAnnotation : field.getModifierList().getAnnotations()) {
-      if (INJECTION_ANNOS.contains(psiAnnotation.getQualifiedName())) return true;
+      if (UnusedSymbolLocalInspection.STANDARD_INJECTION_ANNOS.contains(psiAnnotation.getQualifiedName())) return true;
       if (externalInjectionAnnos.contains(psiAnnotation.getQualifiedName())) return true;
     }
     return false;

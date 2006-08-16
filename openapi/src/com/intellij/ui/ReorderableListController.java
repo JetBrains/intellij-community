@@ -90,7 +90,13 @@ public abstract class ReorderableListController <T> {
   }
 
   private void handleNewElement(final T element) {
-    ((DefaultListModel)myList.getModel()).addElement(element);
+    final ListModel listModel = myList.getModel();
+    if (listModel instanceof SortedListModel) {
+      ((SortedListModel<T>)listModel).add(element);
+    }
+    else {
+      ((DefaultListModel)listModel).addElement(element);
+    }
     myList.clearSelection();
     ListScrollingUtil.selectItem(myList, element);
   }
