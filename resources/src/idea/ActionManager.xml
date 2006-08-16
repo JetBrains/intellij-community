@@ -148,12 +148,12 @@
 
       <action id="CreateSessionBean" class="com.intellij.javaee.module.view.ejb.actions.CreateSessionBeanAction"
               icon="/javaee/sessionBean.png"/>
-      <action id="CreateContainerManagedEntityBeanAction" class="com.intellij.javaee.module.view.ejb.actions.CreateCMPEntityBeanAction"
-              icon="/javaee/entityBean.png"/>
-      <action id="CreateBeanManagedEntityBeanAction" class="com.intellij.javaee.module.view.ejb.actions.CreateBMPEntityBeanAction"
-              icon="/javaee/entityBean.png"/>
       <action id="CreateMessageBean" class="com.intellij.javaee.module.view.ejb.actions.CreateMessageBeanAction"
               icon="/javaee/messageBean.png"/>
+      <action id="CreateBeanManagedEntityBeanAction" class="com.intellij.javaee.module.view.ejb.actions.CreateBMPEntityBeanAction"
+              icon="/javaee/entityBean.png"/>
+      <action id="CreateContainerManagedEntityBeanAction" class="com.intellij.javaee.module.view.ejb.actions.CreateCMPEntityBeanAction"
+              icon="/javaee/entityBean.png"/>
       <action id="CreateTransferObject" class="com.intellij.javaee.module.view.ejb.actions.CreateTransferObjectAction"
               icon="/nodes/class.png"/>
       <action id="CreateCMPField" class="com.intellij.javaee.module.view.ejb.actions.CreateCmpFieldAction" icon="/nodes/ejbCmpField.png"/>
