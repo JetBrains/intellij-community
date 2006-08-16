@@ -9,13 +9,18 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
+import com.intellij.pom.xml.events.XmlChange;
+import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
+import com.intellij.pom.xml.impl.events.XmlTagChildAddImpl;
 import com.intellij.pom.xml.impl.events.XmlTextChangedImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.xml.behavior.DefaultXmlPsiPolicy;
 import com.intellij.psi.tree.IElementType;
@@ -45,7 +50,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   @Nullable
   public XmlText split(int displayIndex) {
     try {
-      return ((XmlTagImpl)getParentTag()).splitText(this, displayIndex);
+      return _splitText(displayIndex);
     }
     catch (IncorrectOperationException e) {
       throw new IllegalArgumentException(e);
@@ -93,7 +98,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     myGapDisplayStarts = new int[gapsShifts.size()];
     myGapPhysicalStarts = new int[gapsShifts.size()];
     int currentGapsSum = 0;
-    for (int i=0; i<myGapDisplayStarts.length;i++) {
+    for (int i = 0; i < myGapDisplayStarts.length; i++) {
       currentGapsSum += gapsShifts.get(i);
       myGapDisplayStarts[i] = gapsStarts.get(i);
       myGapPhysicalStarts[i] = myGapDisplayStarts[i] + currentGapsSum;
@@ -113,12 +118,13 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     int insertionIndex = -bsResult - 1;
 
     //if (insertionIndex == myGapDisplayStarts.length) return getValue().length();
-    
+
     int prevPhysGapStart = insertionIndex > 0 ? myGapPhysicalStarts[insertionIndex - 1] : 0;
     int prevDisplayGapStart = insertionIndex > 0 ? myGapDisplayStarts[insertionIndex - 1] : 0;
 
     if (insertionIndex < myGapDisplayStarts.length) {
-      int prevDisplayGapLength = insertionIndex > 0 ? myGapDisplayStarts[insertionIndex] - myGapDisplayStarts[insertionIndex - 1] : myGapDisplayStarts[0];
+      int prevDisplayGapLength =
+        insertionIndex > 0 ? myGapDisplayStarts[insertionIndex] - myGapDisplayStarts[insertionIndex - 1] : myGapDisplayStarts[0];
       if (physicalIndex - prevPhysGapStart > prevDisplayGapLength) return myGapDisplayStarts[insertionIndex];
     }
 
@@ -135,7 +141,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     int insertionIndex = -bsResult - 1;
     int prevPhysGapStart = insertionIndex > 0 ? myGapPhysicalStarts[insertionIndex - 1] : 0;
     int prevDisplayGapStart = insertionIndex > 0 ? myGapDisplayStarts[insertionIndex - 1] : 0;
-    return (displayIndex - prevDisplayGapStart)+ prevPhysGapStart;
+    return (displayIndex - prevDisplayGapStart) + prevPhysGapStart;
   }
 
   public void setValue(String s) throws IncorrectOperationException {
@@ -145,7 +151,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   private void doSetValue(final String s, XmlPsiPolicy policy) throws IncorrectOperationException {
     final ASTNode firstEncodedElement = policy.encodeXmlTextContents(s, this, SharedImplUtil.findCharTableByTree(this));
 
-    if(firstEncodedElement == null){
+    if (firstEncodedElement == null) {
       delete();
       return;
     }
@@ -162,8 +168,8 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     });
   }
 
-  public XmlElement insertAtOffset(final XmlElement element, final int displayOffset) throws IncorrectOperationException{
-    if(element instanceof XmlText){
+  public XmlElement insertAtOffset(final XmlElement element, final int displayOffset) throws IncorrectOperationException {
+    if (element instanceof XmlText) {
       insertText(((XmlText)element).getValue(), displayOffset);
     }
     else {
@@ -172,10 +178,17 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
       model.runTransaction(new PomTransactionBase(getParent(), aspect) {
         public PomModelEvent runInner() throws IncorrectOperationException {
           final XmlTagImpl tag = (XmlTagImpl)getParentTag();
-          final XmlText rightPart = tag.splitText(XmlTextImpl.this, displayOffset);
-          if(rightPart != null) tag.addBefore(element, rightPart);
-          else tag.addAfter(element, XmlTextImpl.this);
-          return null;
+          assert tag != null;
+
+          final XmlText rightPart = _splitText(displayOffset);
+          PsiElement result;
+          if (rightPart != null) {
+            result = tag.addBefore(element, rightPart);
+          }
+          else {
+            result = tag.addAfter(element, XmlTextImpl.this);
+          }
+          return createEvent(new XmlTagChildAddImpl(tag, (XmlTagChild)result));
         }
       });
     }
@@ -188,14 +201,99 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   }
 
   public void insertText(String text, int displayOffset) throws IncorrectOperationException {
-    if(text == null || text.length() == 0) return;
-    setValue(new StringBuffer(getValue()).insert(displayOffset, text).toString());
+    if (text == null || text.length() == 0) return;
+
+    final int physicalOffset = displayToPhysical(displayOffset);
+    final PsiElement psiElement = findElementAt(physicalOffset);
+    //if (!(psiElement instanceof XmlTokenImpl)) throw new IncorrectOperationException("Can't insert at offset: " + displayOffset);
+    final IElementType elementType = psiElement != null ? psiElement.getNode().getElementType() : null;
+
+    if (elementType == XmlTokenType.XML_DATA_CHARACTERS) {
+      int insertOffset = physicalOffset - psiElement.getStartOffsetInParent();
+
+      final String oldElementText = psiElement.getText();
+      final String newElementText = oldElementText.substring(0, insertOffset) + text + oldElementText.substring(insertOffset);
+
+      final PomModel model = getProject().getModel();
+      final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
+      model.runTransaction(new PomTransactionBase(this, aspect) {
+        public PomModelEvent runInner() throws IncorrectOperationException {
+          final String oldText = getText();
+
+          final ASTNode e =
+            getPolicy().encodeXmlTextContents(newElementText, XmlTextImpl.this, SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
+
+          final ASTNode node = psiElement.getNode();
+          final ASTNode treeNext = node.getTreeNext();
+
+          addChildren(e, null, treeNext);
+
+          deleteChildInternal(node);
+
+
+          clearCaches();
+          return XmlTextChangedImpl.createXmlTextChanged(model, XmlTextImpl.this, oldText);
+        }
+      });
+    }
+    else {
+      setValue(new StringBuffer(getValue()).insert(displayOffset, text).toString());
+    }
   }
 
   public void removeText(int displayStart, int displayEnd) throws IncorrectOperationException {
     final String value = getValue();
-    if(displayStart == 0 && displayEnd == value.length()) delete();
-    else setValue(new StringBuffer(getValue()).replace(displayStart, displayEnd, "").toString());
+
+    final int physicalStart = displayToPhysical(displayStart);
+    final PsiElement psiElement = findElementAt(physicalStart);
+    if (psiElement != null) {
+      final IElementType elementType = psiElement.getNode().getElementType();
+      final int elementDisplayEnd = physicalToDisplay(psiElement.getStartOffsetInParent() + psiElement.getTextLength());
+      if (elementType == XmlTokenType.XML_DATA_CHARACTERS) {
+        if (elementDisplayEnd >= displayEnd) {
+          int physicalEnd = physicalStart;
+          while (physicalEnd < getTextRange().getLength()) {
+            if (physicalToDisplay(physicalEnd) == displayEnd) break;
+            physicalEnd++;
+          }
+
+          int removeStart = physicalStart - psiElement.getStartOffsetInParent();
+          int removeEnd = physicalEnd - psiElement.getStartOffsetInParent();
+
+          final String oldElementText = psiElement.getText();
+          final String newElementText = oldElementText.substring(0, removeStart) + oldElementText.substring(removeEnd);
+
+          final PomModel model = getProject().getModel();
+          final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
+          model.runTransaction(new PomTransactionBase(this, aspect) {
+            public PomModelEvent runInner() throws IncorrectOperationException {
+              final String oldText = getText();
+
+              if (newElementText.length() > 0) {
+                final ASTNode e =
+                  getPolicy().encodeXmlTextContents(newElementText, XmlTextImpl.this, SharedImplUtil.findCharTableByTree(XmlTextImpl.this));
+                replaceChild(psiElement.getNode(), e);
+              }
+              else {
+                psiElement.delete();
+              }
+
+              clearCaches();
+              return XmlTextChangedImpl.createXmlTextChanged(model, XmlTextImpl.this, oldText);
+            }
+          });
+
+          return;
+        }
+      }
+    }
+
+    if (displayStart == 0 && displayEnd == value.length()) {
+      delete();
+    }
+    else {
+      setValue(new StringBuffer(getValue()).replace(displayStart, displayEnd, "").toString());
+    }
   }
 
   public XmlTag getParentTag() {
@@ -243,5 +341,114 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  @Nullable
+  protected XmlText _splitText(final int displayOffset) throws IncorrectOperationException{
+    final XmlTag xmlTag = (XmlTag)getParent();
+    if(displayOffset == 0) return this;
+    final int length = this.getValue().length();
+    if(displayOffset >= length) {
+      return null;
+    }
+
+    final PomModel model = xmlTag.getProject().getModel();
+    final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
+
+    class MyTransaction extends PomTransactionBase {
+      private XmlTextImpl myRight;
+
+      public MyTransaction() {
+        super(xmlTag, aspect);
+      }
+
+      @Nullable
+      public PomModelEvent runInner() throws IncorrectOperationException {
+        final String oldText = getValue();
+        final int physicalOffset = displayToPhysical(displayOffset);
+        PsiElement childElement = findElementAt(physicalOffset);
+
+        if (childElement != null && childElement.getNode().getElementType() == XmlTokenType.XML_DATA_CHARACTERS) {
+          FileElement holder = new DummyHolder(getManager(), null).getTreeElement();
+
+          int splitOffset = physicalOffset - childElement.getStartOffsetInParent();
+          myRight = (XmlTextImpl)Factory.createCompositeElement(XmlElementType.XML_TEXT);
+          CodeEditUtil.setNodeGenerated(myRight, true);
+          TreeUtil.addChildren(holder, myRight);
+
+          PsiElement e = childElement;
+          while (e != null) {
+            CodeEditUtil.setNodeGenerated(e.getNode(), true);
+            e = e.getNextSibling();
+          }
+
+          String leftText = childElement.getText().substring(0, splitOffset);
+          String rightText = childElement.getText().substring(splitOffset);
+
+
+          LeafElement rightElement = Factory.createLeafElement(XmlTokenType.XML_DATA_CHARACTERS, rightText.toCharArray(), 0, rightText.length(), -1,
+                                                               holder.getCharTable());
+          CodeEditUtil.setNodeGenerated(rightElement, true);
+
+          LeafElement leftElement = Factory.createLeafElement(XmlTokenType.XML_DATA_CHARACTERS, leftText.toCharArray(), 0, leftText.length(), -1,
+                                                              holder.getCharTable());
+          CodeEditUtil.setNodeGenerated(leftElement, true);
+
+          TreeUtil.insertBefore(XmlTextImpl.this.getTreeNext(), myRight);
+
+          TreeUtil.addChildren(myRight, rightElement);
+          if (childElement.getNextSibling() != null) {
+            TreeUtil.addChildren(myRight, (TreeElement)childElement.getNextSibling());
+          }
+          TreeUtil.remove(((TreeElement)childElement));
+          TreeUtil.addChildren(XmlTextImpl.this, leftElement);
+        }
+        else {
+          final PsiFile containingFile = xmlTag.getContainingFile();
+          final FileElement holder = new DummyHolder(containingFile.getManager(), null, ((PsiFileImpl)containingFile).getTreeElement().getCharTable()).getTreeElement();
+          final XmlTextImpl rightText = (XmlTextImpl)Factory.createCompositeElement(XmlElementType.XML_TEXT);
+          CodeEditUtil.setNodeGenerated(rightText, true);
+
+          TreeUtil.addChildren(holder, rightText);
+
+          ((XmlTagImpl)xmlTag).addChild(rightText, XmlTextImpl.this.getTreeNext());
+
+          final String value = getValue();
+
+          setValue(value.substring(0, displayOffset));
+          rightText.setValue(value.substring(displayOffset));
+
+          CodeEditUtil.setNodeGenerated(rightText, true);
+
+          myRight = rightText;
+        }
+
+        clearCaches();
+        myRight.clearCaches();
+        return createEvent(new XmlTextChangedImpl(XmlTextImpl.this, oldText), new XmlTagChildAddImpl(xmlTag, myRight));
+      }
+
+      public XmlText getResult() {
+        return myRight;
+      }
+    }
+    final MyTransaction transaction = new MyTransaction();
+    model.runTransaction(transaction);
+
+    return transaction.getResult();
+  }
+
+  protected PomModelEvent createEvent(final XmlChange...events) {
+    final PomModelEvent event = new PomModelEvent(getProject().getModel());
+
+    final XmlAspectChangeSetImpl xmlAspectChangeSet = new XmlAspectChangeSetImpl(getProject().getModel(), (XmlFile)getContainingFile());
+
+    for (XmlChange xmlChange : events) {
+      xmlAspectChangeSet.add(xmlChange);
+    }
+
+    event.registerChangeSet(getProject().getModel().getModelAspect(XmlAspect.class), xmlAspectChangeSet);
+
+    return event;
   }
 }

@@ -134,7 +134,11 @@ public class CodeEditUtil {
     final ASTNode prevLeaf = TreeUtil.prevLeaf(first);
     final ASTNode nextLeaf = TreeUtil.nextLeaf(first);
     parent.removeRange(first, last.getTreeNext());
-    final ASTNode nextLeafToAdjust = nextLeaf;
+    ASTNode nextLeafToAdjust = nextLeaf;
+    if (nextLeafToAdjust != null && nextLeafToAdjust.getTreeParent() == null) {
+      //next element has invalidated
+      nextLeafToAdjust = prevLeaf.getTreeNext();
+    }
     makePlaceHolderBetweenTokens(prevLeaf, nextLeafToAdjust, forceReformat, tailingElement);
   }
 

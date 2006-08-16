@@ -12,12 +12,8 @@ import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.pom.xml.impl.events.XmlTagNameChangedImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.meta.MetaRegistry;
-import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.meta.PsiMetaBaseOwner;
@@ -814,54 +810,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     public TreeElement getFirstInserted(){
       return (TreeElement)myNewElement;
     }
-  }
-
-  @Nullable
-  protected XmlText splitText(final XmlTextImpl childText, final int displayOffset) throws IncorrectOperationException{
-    if(displayOffset == 0) return childText;
-    final int length = childText.getValue().length();
-    if(displayOffset >= length) {
-      return null;
-    }
-
-    final PomModel model = getProject().getModel();
-    final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
-
-    class MyTransaction extends PomTransactionBase {
-      private XmlTextImpl myRight;
-
-      public MyTransaction() {
-        super(XmlTagImpl.this, aspect);
-      }
-
-      public PomModelEvent runInner() throws IncorrectOperationException{
-        final PsiFile containingFile = getContainingFile();
-        final FileElement holder = new DummyHolder(containingFile.getManager(), null, ((PsiFileImpl)containingFile).getTreeElement().getCharTable()).getTreeElement();
-        final XmlTextImpl rightText = (XmlTextImpl)Factory.createCompositeElement(XmlElementType.XML_TEXT);     
-        CodeEditUtil.setNodeGenerated(rightText, true);
-        
-        TreeUtil.addChildren(holder, rightText);
-
-        addChild(rightText, childText.getTreeNext());
-
-        final String value = childText.getValue();
-
-        childText.setValue(value.substring(0, displayOffset));
-        rightText.setValue(value.substring(displayOffset));
-
-        CodeEditUtil.setNodeGenerated(rightText, true);
-
-        myRight = rightText;
-        return null;
-      }
-
-      public XmlText getResult() {
-        return myRight;
-      }
-    }
-    final MyTransaction transaction = new MyTransaction();
-    model.runTransaction(transaction);
-    return transaction.getResult();
   }
 
   protected class InsertAttributeTransaction extends InsertTransaction{

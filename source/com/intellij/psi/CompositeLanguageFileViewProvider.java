@@ -233,21 +233,40 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
         while (i.hasNext()) {
           final OuterLanguageElement outerElement = i.next();
-          final XmlText nextText = outerElement.getFollowingText();
+          XmlText nextText = outerElement.getFollowingText();
 
-          if (nextText != null) assert nextText.isValid() : "Invalid nextText: " + outerElement + " - " + nextText;
           final int start =
             prevText != null ? prevText.getTextRange().getEndOffset() : outerCount != 0 ? outerElement.getTextRange().getStartOffset() : 0;
 
-          final int end = nextText != null
-                          ? nextText.getTextRange().getStartOffset()
-                          : i.hasNext() ? outerElement.getTextRange().getEndOffset() : getContents().length();
+          if (nextText != null && !nextText.isValid()) {
+            final PsiElement nextSibiling = outerElement.getNextSibling();
+            assert nextSibiling == null || nextSibiling instanceof OuterLanguageElement;
+            nextText = nextSibiling != null ? ((OuterLanguageElement)nextSibiling).getFollowingText() : null;
 
-          assert start <= end;
-          final TextRange textRange = new TextRange(start, end);
-
-          if (!textRange.equals(outerElement.getTextRange())) {
+            final int end = nextText != null ? nextText.getTextRange().getStartOffset() : getContents().length();
+            assert start <= end;
+            final TextRange textRange = new TextRange(start, end);
             outerElement.setRange(textRange);
+
+            if (nextSibiling != null) {
+              TreeUtil.remove(((OuterLanguageElement)nextSibiling));
+              final OuterLanguageElement next = i.next();
+              assert next == nextSibiling;
+              i.remove();
+            }
+          }
+          else {
+
+            final int end = nextText != null
+                            ? nextText.getTextRange().getStartOffset()
+                            : i.hasNext() ? outerElement.getTextRange().getEndOffset() : getContents().length();
+
+            assert start <= end;
+            final TextRange textRange = new TextRange(start, end);
+
+            if (!textRange.equals(outerElement.getTextRange())) {
+              outerElement.setRange(textRange);
+            }
           }
           prevText = nextText;
           ++outerCount;
