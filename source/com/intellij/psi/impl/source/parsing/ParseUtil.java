@@ -304,6 +304,7 @@ public class ParseUtil implements Constants {
     }
   }
 
+  @Nullable
   private static TreeElement findFirstLeaf(TreeElement element, IElementType searchedType, CommonParentState commonParent) {
     if (commonParent != null) {
       initStrongWhitespaceHolder(commonParent, element, false);
