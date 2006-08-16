@@ -40,6 +40,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
   protected AbstractModuleNode(Project project, Module module, ViewSettings viewSettings) {
@@ -61,7 +62,7 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
     return "Module";
   }
 
-  public boolean contains(VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     Module module = getValue();
     return module != null && (PackageUtil.moduleContainsFile(module, file, false) ||
            PackageUtil.moduleContainsFile(module, file, true));

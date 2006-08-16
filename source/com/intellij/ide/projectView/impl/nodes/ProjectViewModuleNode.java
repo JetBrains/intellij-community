@@ -43,7 +43,8 @@ public class ProjectViewModuleNode extends AbstractModuleNode {
       final PsiDirectory psiDirectory = psiManager.findDirectory(contentRoot);
       LOG.assertTrue(psiDirectory != null);
 
-      children.add(new PsiDirectoryNode(getProject(), psiDirectory, getSettings()));
+      PsiDirectoryNode directoryNode = new PsiDirectoryNode(getProject(), psiDirectory, getSettings());
+      children.add(directoryNode);
     }
     if (getSettings().isShowLibraryContents()) {
       children.add(new LibraryGroupNode(getProject(), new LibraryGroupElement(getValue()), getSettings()));

@@ -133,13 +133,11 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     final String coverageString = coverageManager.getPackageCoverageInformationString(qName, value.getModule());
     presentation.setLocationString(coverageString);
 
-    if (!getSettings().isFlattenPackages()) {
-      if (getSettings().isHideEmptyMiddlePackages()) {
-        if (PackageUtil.isPackageEmpty(aPackage, value.getModule(), true, isLibraryElement())) {
-          setValue(null);
-          return;
-        }
-      }
+    if (!getSettings().isFlattenPackages()
+        && getSettings().isHideEmptyMiddlePackages()
+        && PackageUtil.isPackageEmpty(aPackage, value.getModule(), true, isLibraryElement())) {
+      setValue(null);
+      return;
     }
 
     if (showFwName(aPackage)) {

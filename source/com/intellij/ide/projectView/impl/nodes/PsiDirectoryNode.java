@@ -3,18 +3,19 @@ package com.intellij.ide.projectView.impl.nodes;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Arrays;
+import java.util.Collection;
 
 public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
@@ -27,7 +28,6 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
 
   public void updateImpl(PresentationData data) {
     PackageUtil.updatePsiDirectoryData(data, getProject(), getValue(), getSettings(), getParentValue(), this);
-
   }
 
   public Collection<AbstractTreeNode> getChildrenImpl() {
@@ -44,12 +44,10 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   }
 
   public boolean isFQNameShown() {
-
     return PackageUtil.isFQNameShown(getValue(), getParentValue(), getSettings());
-
   }
 
-  public boolean contains(VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     final PsiDirectory value = getValue();
     if (value == null) {
       return false;
@@ -75,10 +73,9 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
     if (super.canRepresent(element)) return true;
     if (getValue() == null) return false;
     if (element instanceof PackageElement) {
-      final PackageElement packageElement = ((PackageElement)element);
+      final PackageElement packageElement = (PackageElement)element;
       return Arrays.asList(packageElement.getPackage().getDirectories()).contains(getValue());
     }
     return false;
   }
-
-  }
+}

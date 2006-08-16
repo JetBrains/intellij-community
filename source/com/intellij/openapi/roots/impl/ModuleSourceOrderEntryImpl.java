@@ -73,19 +73,20 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
 
   @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     if (OrderRootType.SOURCES.equals(type)) {
-      result.addAll(Arrays.asList(myRootModel.getSourceRoots()));
+      return myRootModel.getSourceRoots();
     }
-    else if (OrderRootType.CLASSES_AND_OUTPUT.equals(type) || OrderRootType.COMPILATION_CLASSES.equals(type)) {
+    if (OrderRootType.CLASSES_AND_OUTPUT.equals(type) || OrderRootType.COMPILATION_CLASSES.equals(type)) {
+      final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
       VirtualFile outputRoot = myRootModel.getCompilerOutputPath();
       if (outputRoot != null) result.add(outputRoot);
       final VirtualFile outputPathForTests = myRootModel.getCompilerOutputPathForTests();
       if (outputPathForTests != null && !outputPathForTests.equals(outputRoot)) {
         result.add(outputPathForTests);
       }
+      return result.toArray(new VirtualFile[result.size()]);
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return VirtualFile.EMPTY_ARRAY;
   }
 
   @NotNull
