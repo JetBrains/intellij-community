@@ -3,6 +3,7 @@ package com.intellij.ui.plaf.beg;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.text.View;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.metal.MetalTabbedPaneUI;
 import java.awt.*;
@@ -345,8 +346,36 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
   protected void layoutLabel(int tabPlacement, FontMetrics metrics, int tabIndex, String title, Icon icon, Rectangle tabRect,
                              Rectangle iconRect, Rectangle textRect, boolean isSelected) {
 
-    final FontMetrics _metrics = (myLayoutMetrics != null)? myLayoutMetrics : metrics;
-    super.layoutLabel(tabPlacement, _metrics, tabIndex, title, icon, tabRect, iconRect, textRect, isSelected);
+    metrics = (myLayoutMetrics != null)? myLayoutMetrics : metrics;
+    textRect.x = textRect.y = iconRect.x = iconRect.y = 0;
+
+    View v = getTextViewForTab(tabIndex);
+    if (v != null) {
+        tabPane.putClientProperty("html", v);
+    }
+
+    SwingUtilities.layoutCompoundLabel(tabPane,
+                                       metrics, title, icon,
+                                       SwingUtilities.CENTER,
+                                       // left align title on LEFT/RIGHT placed tab
+                                       tabPlacement == RIGHT || tabPlacement == LEFT ? SwingUtilities.LEFT : SwingUtilities.CENTER,
+                                       SwingUtilities.CENTER,
+                                       SwingUtilities.TRAILING,
+                                       tabRect,
+                                       iconRect,
+                                       textRect,
+                                       textIconGap);
+
+    tabPane.putClientProperty("html", null);
+
+    int xNudge = getTabLabelShiftX(tabPlacement, tabIndex, isSelected);
+    int yNudge = getTabLabelShiftY(tabPlacement, tabIndex, isSelected);
+    iconRect.x += xNudge;
+    iconRect.y += yNudge;
+    textRect.x += xNudge;
+    textRect.y += yNudge;
+
+    //super.layoutLabel(tabPlacement, _metrics, tabIndex, title, icon, tabRect, iconRect, textRect, isSelected);
   }
 
   public void setNoIconSpace(boolean noIconSpace) {
