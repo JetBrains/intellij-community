@@ -191,8 +191,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         }
       }
       if (!showBulb) {
-        for (HighlightInfo.IntentionActionDescriptor action : intentionsToShow) {
-          if (IntentionManagerSettings.getInstance().isShowLightBulb(action.getAction())) {
+        for (HighlightInfo.IntentionActionDescriptor descriptor : intentionsToShow) {
+          final IntentionAction action = descriptor.getAction();
+          if (action.isAvailable(myProject, injectedEditor, injectedFile) &&
+              IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
             showBulb = true;
             break;
           }
