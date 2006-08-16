@@ -21,6 +21,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import sun.reflect.Reflection;
 
 import javax.swing.*;
@@ -110,6 +111,7 @@ public final class IconLoader {
     return findIcon(url);
   }
 
+  @Nullable
   private static Icon findIcon(URL url) {
     if (url == null) return null;
 
@@ -121,6 +123,7 @@ public final class IconLoader {
     return icon;
   }
 
+  @Nullable
   public static Icon findIcon(final String path, final ClassLoader aClassLoader) {
     if (!path.startsWith("/")) return null;
 
@@ -128,6 +131,7 @@ public final class IconLoader {
     return findIcon(url);
   }
 
+  @Nullable
   private static Icon checkIcon(final Image image, final URL path) {
     if (image == null || image.getHeight(ourFakeComponent) < 1) { // image wasn't loaded or broken
       return null;
@@ -145,7 +149,9 @@ public final class IconLoader {
    * Gets (creates if necessary) disabled icon based on the passed one.
    *
    * @return <code>ImageIcon</code> constructed from disabled image of passed icon.
+   * @param icon
    */
+  @Nullable
   public static Icon getDisabledIcon(final Icon icon) {
     if (icon == null) {
       return null;
