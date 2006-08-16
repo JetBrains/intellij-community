@@ -6,13 +6,13 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.jetbrains.annotations.Nullable;
 
 public class TreeUtil {
 
@@ -146,7 +146,7 @@ public class TreeUtil {
     }
   }
 
-  public static void addChildren(CompositeElement parent, TreeElement first) {
+  public static void addChildren(CompositeElement parent, @NotNull TreeElement first) {
     final TreeElement lastChild = parent.lastChild;
     if (lastChild == null){
       parent.firstChild = first;
@@ -189,7 +189,7 @@ public class TreeUtil {
     }
   }
 
-  public static void insertAfter(final TreeElement anchor, TreeElement firstNew) {
+  public static void insertAfter(final TreeElement anchor, @NotNull TreeElement firstNew) {
     removeRange(firstNew, null);
     final CompositeElement parent = anchor.getTreeParent();
     final TreeElement treeNext = anchor.getTreeNext();
@@ -374,7 +374,7 @@ public class TreeUtil {
     }
   }
 
-  public static ASTNode nextLeaf(final ASTNode node) {
+  public static ASTNode nextLeaf(@NotNull final ASTNode node) {
     return ParseUtil.nextLeaf((TreeElement)node, null);
   }
 
@@ -392,6 +392,7 @@ public class TreeUtil {
     element.setTreeParent(null);
   }
 
+  @Nullable
   public static ASTNode prevLeaf(final ASTNode node) {
     return ParseUtil.prevLeaf((TreeElement)node, null);
   }

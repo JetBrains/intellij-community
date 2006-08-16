@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TextRange {
@@ -87,7 +88,7 @@ public class TextRange {
     return beginning + replacement + ending;
   }
 
-  public boolean intersects(TextRange textRange) {
+  public boolean intersects(@NotNull TextRange textRange) {
     return Math.max(myStartOffset, textRange.getStartOffset()) <= Math.min(myEndOffset, textRange.getEndOffset());
   }
   public boolean intersectsStrict(TextRange textRange) {

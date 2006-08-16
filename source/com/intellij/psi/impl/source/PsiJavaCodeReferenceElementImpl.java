@@ -1,13 +1,13 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.classes.AnnotationTypeFilter;
+import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -22,9 +22,9 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement implements PsiJavaCodeReferenceElement, SourceJavaCodeReference {
@@ -143,7 +143,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
-  public void deleteChildInternal(final ASTNode child) {
+  public void deleteChildInternal(@NotNull final ASTNode child) {
     if (getChildRole(child) == ChildRole.QUALIFIER) {
       final ASTNode dot = findChildByRole(ChildRole.DOT);
       super.deleteChildInternal(child);

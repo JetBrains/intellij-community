@@ -17,6 +17,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -270,11 +271,13 @@ public class ParseUtil implements Constants {
     }
   }
 
-  public static LeafElement nextLeaf(TreeElement start, CommonParentState commonParent) {
+  @Nullable
+  public static LeafElement nextLeaf(@NotNull TreeElement start, CommonParentState commonParent) {
     return (LeafElement)nextLeaf(start, commonParent, null);
   }
 
-  public static TreeElement nextLeaf(TreeElement start, CommonParentState commonParent, IElementType searchedType) {
+  @Nullable
+  public static TreeElement nextLeaf(@NotNull TreeElement start, CommonParentState commonParent, IElementType searchedType) {
     TreeElement next = null;
     if (commonParent != null) {
       commonParent.startLeafBranchStart = start;
@@ -321,6 +324,7 @@ public class ParseUtil implements Constants {
     }
   }
 
+  @Nullable
   public static LeafElement prevLeaf(TreeElement start, @Nullable CommonParentState commonParent) {
     if (start == null) return null;
     LeafElement prev = null;

@@ -307,7 +307,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     return (TreeElement)CodeEditUtil.addChildren(this, first, last, anchorBefore);
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     CodeEditUtil.removeChild(this, child);
   }
 

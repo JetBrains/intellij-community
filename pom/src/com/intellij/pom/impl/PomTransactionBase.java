@@ -20,6 +20,7 @@ import com.intellij.pom.PomTransaction;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class PomTransactionBase implements PomTransaction{
   private PsiElement myScope;
@@ -48,6 +49,7 @@ public abstract class PomTransactionBase implements PomTransaction{
     }
   }
 
+  @Nullable
   public abstract PomModelEvent runInner() throws IncorrectOperationException;
 
   public PsiElement getChangeScope() {

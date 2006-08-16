@@ -47,7 +47,7 @@ public class CodeEditUtil {
     addChildren(parent, child, child, anchorBefore);
   }
 
-  public static void removeChild(CompositeElement parent, ASTNode child) {
+  public static void removeChild(CompositeElement parent, @NotNull ASTNode child) {
     removeChildren(parent, child, child);
   }
 
@@ -119,9 +119,7 @@ public class CodeEditUtil {
     return stored != null ? stored : -1;
   }
 
-  public static void removeChildren(CompositeElement parent, ASTNode first, ASTNode last) {
-    LOG.assertTrue(first != null);
-    LOG.assertTrue(last != null);
+  public static void removeChildren(CompositeElement parent, @NotNull ASTNode first, @NotNull ASTNode last) {
     final boolean tailingElement = last.getStartOffset() + last.getTextLength() == parent.getStartOffset() + parent.getTextLength();
     final boolean forceReformat = needToForceReformat(parent, first, last);
     saveWhitespacesInfo(first);
@@ -134,9 +132,8 @@ public class CodeEditUtil {
     }
 
     final ASTNode prevLeaf = TreeUtil.prevLeaf(first);
-    final ASTNode nextLeaf = TreeUtil.nextLeaf(last);
     parent.removeRange(first, last.getTreeNext());
-    makePlaceHolderBetweenTokens(prevLeaf, nextLeaf, forceReformat, tailingElement);
+    makePlaceHolderBetweenTokens(prevLeaf, prevLeaf != null ? TreeUtil.nextLeaf(prevLeaf) : null, forceReformat, tailingElement);
   }
 
   private static boolean needToForceReformat(final CompositeElement parent, final ASTNode first, final ASTNode last) {
