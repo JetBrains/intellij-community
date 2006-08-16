@@ -17,7 +17,6 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IconUtilEx;
-import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -33,12 +32,12 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryFileChooser;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -326,17 +325,18 @@ public class ClasspathPanel extends JPanel {
           }
           if (orderEntry instanceof LibraryOrderEntry) {
             final LibraryOrderEntry libEntry = (LibraryOrderEntry)orderEntry;
+            final Module module = myRootModel.getModule();
+            final Project project = module.getProject();
+            final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(project);
             if (libEntry.isValid() && moduleLibraryTable.getTableLevel().equals(libEntry.getLibraryLevel())) {
               if (modifiableModel == null) {
                 modifiableModel = moduleLibraryTable.getModifiableModel();
               }
               modifiableModel.removeLibrary(libEntry.getLibrary());
-              ProjectRootConfigurable.getInstance(myRootModel.getModule().getProject()).deleteLibraryNode(libEntry);
+              rootConfigurable.deleteLibraryNode(libEntry);
               continue;
             }
-            final Module module = myRootModel.getModule();
-            final Project project = module.getProject();
-            ProjectRootConfigurable.getInstance(project).clearCaches(module, libEntry);
+            rootConfigurable.clearCaches(module, libEntry);
           }
           myRootModel.removeOrderEntry(orderEntry);
         }
@@ -495,7 +495,7 @@ public class ClasspathPanel extends JPanel {
               Messages.showMessageDialog(ClasspathPanel.this, ProjectBundle.message("message.no.module.dependency.candidates"), getTitle(), Messages.getInformationIcon());
               return null;
             }
-            return new ChooseModulesDialog(chooseItems, ProjectBundle.message("classpath.chooser.title.add.module.dependency"));
+            return new ChooseModulesToAddDialog(chooseItems, ProjectBundle.message("classpath.chooser.title.add.module.dependency"));
           }
         }
       };
@@ -863,30 +863,9 @@ public class ClasspathPanel extends JPanel {
     boolean isOK();
   }
 
-  private class ChooseModulesDialog extends DialogWrapper implements ChooserDialog<Module>{
-    protected ElementsChooser<Module> myChooser;
-
-    public ChooseModulesDialog(final List<Module> items, final String title) {
-      super(ClasspathPanel.this, true);
-      setTitle(title);
-      myChooser = new ElementsChooser<Module>(false) {
-        protected String getItemText(final Module item) {
-          return ChooseModulesDialog.this.getItemText(item);
-        }
-      };
-      myChooser.setColorUnmarkedElements(false);
-
-      setElements(items, items.size() > 0? items.subList(0, 1) : Collections.<Module>emptyList());
-      myChooser.getComponent().registerKeyboardAction(
-        new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            doOKAction();
-          }
-        },
-        KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-        JComponent.WHEN_FOCUSED
-      );
-      init();
+  private class ChooseModulesToAddDialog extends ChooseModulesDialog implements ChooserDialog<Module>{
+    public ChooseModulesToAddDialog(final List<Module> items, final String title) {
+      super(ClasspathPanel.this, items, title);
     }
 
     public void doChoose() {
@@ -895,41 +874,6 @@ public class ClasspathPanel extends JPanel {
 
     public void dispose() {
       super.dispose();
-    }
-
-    public List<Module> getChosenElements() {
-      return myChooser.getSelectedElements();
-    }
-
-    public JComponent getPreferredFocusedComponent() {
-      return myChooser.getComponent();
-    }
-
-    protected JComponent createCenterPanel() {
-      return ScrollPaneFactory.createScrollPane(myChooser.getComponent());
-    }
-
-    private void setElements(final Collection<Module> elements, final Collection<Module> elementsToSelect) {
-      myChooser.clear();
-      for (final Module item : elements) {
-        myChooser.addElement(item, false, createElementProperties(item));
-      }
-      myChooser.selectElements(elementsToSelect);
-    }
-
-    private ElementsChooser.ElementProperties createElementProperties(final Module item) {
-      return new ElementsChooser.ElementProperties() {
-        public Icon getIcon() {
-          return IconUtilEx.getIcon(item, 0);
-        }
-        public Color getColor() {
-          return null;
-        }
-      };
-    }
-
-    private String getItemText(final Module item) {
-      return item.getName();
     }
   }
 

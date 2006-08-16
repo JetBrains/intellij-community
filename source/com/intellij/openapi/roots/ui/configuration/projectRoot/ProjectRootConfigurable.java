@@ -106,6 +106,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   private Map<ProjectJdk, Set<String>> myJdkDependencyCache = new HashMap<ProjectJdk, Set<String>>();
   private Map<Module, Boolean> myValidityCache = new HashMap<Module, Boolean>();
   private Map<Library, Boolean> myLibraryPathValidityCache = new HashMap<Library, Boolean>(); //can be invalidated on startup only
+  private Map<Module, Set<String>> myModulesDependencyCache = new HashMap<Module, Set<String>>();
+
   private Alarm myUpdateDependenciesAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   public ProjectRootConfigurable(Project project, ModuleManager manager) {
@@ -121,6 +123,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
             node.removeFromParent();
             ((DefaultTreeModel)myTree.getModel()).reload(parent);
           }
+          invalidateModules(myLibraryDependencyCache.get(library));
         }
       }
 
@@ -227,7 +230,11 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   private boolean isUnused(final Object object, MyNode node) {
-    if (object == null || object instanceof Module) return false;
+    if (object == null) return false;
+    if (object instanceof Module){
+      getCachedDependencies(object, node, false);
+      return false;
+    }
     final Set<String> dependencies = getCachedDependencies(object, node, false);
     return dependencies != null && dependencies.size() == 0;
   }
@@ -571,6 +578,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myLibraryDependencyCache.clear();
     myValidityCache.clear();
     myLibraryPathValidityCache.clear();
+    myModulesDependencyCache.clear();
     ProjectRootConfigurable.super.disposeUIResources();
   }
 
@@ -619,21 +627,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
     result.add(new MyAddAction(fromPopup));
-    result.add(new MyRemoveAction(new Condition<Object>() {
-      public boolean value(final Object object) {
-        if (object instanceof MyNode) {
-          final NamedConfigurable namedConfigurable = ((MyNode)object).getConfigurable();
-          final Object editableObject = namedConfigurable.getEditableObject();
-          if (editableObject instanceof ProjectJdk ||
-            editableObject instanceof Module) return true;
-          if (editableObject instanceof Library){
-            final LibraryTable table = ((Library)editableObject).getTable();
-            return table == null || !ApplicationServersManager.APPLICATION_SERVER_MODULE_LIBRARIES.equals(table.getTableLevel());
-          }
-        }
-        return false;
-      }
-    }));
+    result.add(new MyRemoveAction());
     final AnAction findUsages = new AnAction(ProjectBundle.message("find.usages.action.text"),
                                              ProjectBundle.message("find.usages.action.text"),
                                              FIND_ICON) {
@@ -774,6 +768,11 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       if (myJdkDependencyCache.containsKey(projectJdk)){
         return myJdkDependencyCache.get(projectJdk);
       }
+    } else if (selectedObject instanceof Module) {
+      final Module module = (Module)selectedObject;
+      if (myModulesDependencyCache.containsKey(module)) {
+        return myModulesDependencyCache.get(module);
+      }
     }
     final Computable<Set<String>> dependencies = new Computable<Set<String>>(){
       public Set<String> compute() {
@@ -783,6 +782,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         } else if (selectedObject instanceof ProjectJdk){
           final ProjectJdk projectJdk = (ProjectJdk)selectedObject;
           myJdkDependencyCache.put(projectJdk, dependencies);
+        } else if (selectedObject instanceof Module){
+          myModulesDependencyCache.put((Module)selectedObject, dependencies);
         }
         return dependencies;
       }
@@ -901,6 +902,14 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
   }
 
+  private void invalidateModules(final Set<String> modules) {
+    if (modules != null) {
+      for (String module : modules) {
+        myValidityCache.put(myModuleManager.findModuleByName(module), Boolean.TRUE);
+      }
+    }
+  }
+
   public Project getProject() {
     return myProject;
   }
@@ -975,6 +984,26 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     return myModulesConfigurator.getModuleModel().getModules();
   }
 
+  public void addLibraryOrderEntry(final Module module, final Library library) {
+    final ModuleEditor moduleEditor = myModulesConfigurator.getModuleEditor(module);
+    final ModifiableRootModel modelProxy = moduleEditor.getModifiableRootModelProxy();
+    modelProxy.addLibraryEntry(library);
+    Set<String> modules = myLibraryDependencyCache.get(library);
+    if (modules == null) {
+      modules = new HashSet<String>();
+      myLibraryDependencyCache.put(library, modules);
+    }
+    modules.add(module.getName());
+    myTree.repaint();
+  }
+
+  /*public void initDependantsPanel(final OrderPanel<ModifiableRootModel> dependantsPanel) {
+    final Module[] modules = myModulesConfigurator.getModules();
+    for (Module module : modules) {
+      dependantsPanel.add(myModulesConfigurator.getModuleEditor(module).getModifiableRootModelProxy());
+    }
+  }*/
+
   private class MyDataProviderWrapper extends JPanel implements DataProvider {
     public MyDataProviderWrapper(final JComponent component) {
       super(new BorderLayout());
@@ -997,15 +1026,28 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   private class MyRemoveAction extends MyDeleteAction {
-    public MyRemoveAction(final Condition<Object> availableCondition) {
-      super(availableCondition);
+    public MyRemoveAction() {
+      super(new Condition<Object>() {
+        public boolean value(final Object object) {
+          if (object instanceof MyNode) {
+            final NamedConfigurable namedConfigurable = ((MyNode)object).getConfigurable();
+            final Object editableObject = namedConfigurable.getEditableObject();
+            if (editableObject instanceof ProjectJdk || editableObject instanceof Module) return true;
+            if (editableObject instanceof Library) {
+              final LibraryTable table = ((Library)editableObject).getTable();
+              return table == null || !ApplicationServersManager.APPLICATION_SERVER_MODULE_LIBRARIES.equals(table.getTableLevel());
+            }
+          }
+          return false;
+        }
+      });
     }
 
     public void actionPerformed(AnActionEvent e) {
       final TreePath[] paths = myTree.getSelectionPaths();
       final Set<TreePath> pathsToRemove = new HashSet<TreePath>();
       for (TreePath path : paths) {
-        if (removeFromModel(path)){
+        if (removeFromModel(path)) {
           pathsToRemove.add(path);
         }
       }
@@ -1017,13 +1059,20 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       final NamedConfigurable configurable = node.getConfigurable();
       final Object editableObject = configurable.getEditableObject();
       if (editableObject instanceof ProjectJdk) {
-        myJdksTreeModel.removeJdk((ProjectJdk)editableObject);
+        final ProjectJdk jdk = (ProjectJdk)editableObject;
+        myJdksTreeModel.removeJdk(jdk);
+        invalidateModules(myJdkDependencyCache.get(jdk));
+        myJdkDependencyCache.remove(jdk);
       }
       else if (editableObject instanceof Module) {
-        if (!myModulesConfigurator.deleteModule((Module)editableObject)){
+        final Module module = (Module)editableObject;
+        if (!myModulesConfigurator.deleteModule(module)) {
           //wait for confirmation
           return false;
         }
+        myValidityCache.remove(module);
+        invalidateModules(myModulesDependencyCache.get(module));
+        myModulesDependencyCache.remove(module);
       }
       else if (editableObject instanceof Library) {
         final Library library = (Library)editableObject;
@@ -1039,6 +1088,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
           else {
             myApplicationServerLibrariesProvider.removeLibrary(library);
           }
+          invalidateModules(myLibraryDependencyCache.get(library));
+          myLibraryDependencyCache.remove(library);
         }
         else {
           Module module = (Module)((MyNode)node.getParent()).getConfigurable().getEditableObject();
@@ -1048,7 +1099,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       }
       return true;
     }
-  }
+ }
 
   private DefaultActionGroup createAddJdkGroup() {
     DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);

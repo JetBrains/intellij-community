@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
@@ -466,7 +467,29 @@ public class LibraryTableEditor implements Disposable {
           final DefaultMutableTreeNode libraryNode = rootConfigurable.createLibraryNode(libraryToSelect, libraryPresentableName);
           if (myNeedToSelect){
             rootConfigurable.selectNodeInTree(libraryNode);
+            if (!myEditingModuleLibraries) {
+              appendLibraryToModules(rootConfigurable, libraryToSelect);
+            }
           }
+        }
+      }
+    }
+
+    private void appendLibraryToModules(final ProjectRootConfigurable rootConfigurable, final Library libraryToSelect) {
+      final List<Module> modules = new ArrayList<Module>();
+      for (Module module : rootConfigurable.getModules()) {
+        if (module.getModuleType() != ModuleType.J2EE_APPLICATION){
+          modules.add(module);
+        }
+      }
+      final ChooseModulesDialog dlg = new ChooseModulesDialog(myProject,
+                                                              modules, ProjectBundle.message("choose.modules.dialog.title"),
+                                                              ProjectBundle.message("choose.modules.dialog.description", libraryToSelect.getName())); 
+      dlg.show();
+      if (dlg.isOK()) {
+        final List<Module> choosenModules = dlg.getChosenElements();
+        for (Module module : choosenModules) {
+          rootConfigurable.addLibraryOrderEntry(module, libraryToSelect);
         }
       }
     }
