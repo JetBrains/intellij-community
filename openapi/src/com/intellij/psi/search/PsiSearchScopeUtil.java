@@ -31,9 +31,7 @@ public class PsiSearchScopeUtil {
         return _scope1.union(_scope2);
       }
       else {
-        PsiElement[] elements1 = _scope1.getScope();
-        for (int i = 0; i < elements1.length; i++) {
-          final PsiElement element = elements1[i];
+        for (final PsiElement element : _scope1.getScope()) {
           if (isInScope(scope2, element)) return scope2;
         }
         return null;
@@ -68,8 +66,7 @@ public class PsiSearchScopeUtil {
   public static boolean isInScope(SearchScope scope, PsiElement element) {
     if (scope instanceof LocalSearchScope) {
       PsiElement[] scopeElements = ((LocalSearchScope)scope).getScope();
-      for (int i = 0; i < scopeElements.length; i++) {
-        final PsiElement scopeElement = scopeElements[i];
+      for (final PsiElement scopeElement : scopeElements) {
         if (PsiTreeUtil.isAncestor(scopeElement, element, false)) return true;
       }
       return false;
@@ -80,8 +77,7 @@ public class PsiSearchScopeUtil {
       PsiFile file = element.getContainingFile();
       if (file != null) {
         if (file.getVirtualFile() == null) return true; //?
-        if (!_scope.contains(file.getVirtualFile())) return false;
-        return true;
+        return _scope.contains(file.getVirtualFile());
       }
       else {
         return true;

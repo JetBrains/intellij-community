@@ -59,6 +59,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -334,7 +335,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     }
   }
 
-  public void registerLanguageInjector(LanguageInjector injector) {
+  public void registerLanguageInjector(@NotNull LanguageInjector injector) {
     myLanguageInjectors.add(injector);
   }
 
@@ -476,7 +477,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   @NotNull
   public PsiClass[] findClasses(String qualifiedName, GlobalSearchScope scope) {
-    List<PsiClass> classes = new ArrayList<PsiClass>();
+    List<PsiClass> classes = new SmartList<PsiClass>();
     for (PsiElementFinder finder : myElementFinders) {
       PsiClass[] finderClasses = finder.findClasses(qualifiedName, scope);
       for (PsiClass finderClass : finderClasses) {

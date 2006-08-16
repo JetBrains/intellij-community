@@ -10,10 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.Processor;
-import com.intellij.util.Query;
-import com.intellij.util.QueryExecutor;
-import com.intellij.util.QueryFactory;
+import com.intellij.util.*;
 import gnu.trove.THashSet;
 
 import java.util.Collection;
@@ -142,8 +139,8 @@ public class ClassInheritorsSearch extends QueryFactory<PsiClass, ClassInheritor
             if (searchScope instanceof GlobalSearchScope) {
               String qName = candidate.getQualifiedName();
               if (qName != null) {
-                PsiClass candidate1 = psiManager.findClass(qName, (GlobalSearchScope)searchScope);
-                if (candidate != candidate1) return true;
+                PsiClass[] candidateClasses = psiManager.findClasses(qName, (GlobalSearchScope)searchScope);
+                if (ArrayUtil.find(candidateClasses, candidate) == -1) return true;
               }
             }
             if (!consumer.process(candidate)) return false;
