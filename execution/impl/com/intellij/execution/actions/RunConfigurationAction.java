@@ -8,9 +8,9 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.util.IJSwingUtilities;
@@ -35,7 +35,7 @@ public class RunConfigurationAction extends ComboBoxAction {
   }
 
   private static IdeFrame findFrame(final DataContext dataContext) {
-    return findFrame((Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT));
+    return findFrame((Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT));
   }
 
   public void update(final AnActionEvent e) {
@@ -130,7 +130,12 @@ public class RunConfigurationAction extends ComboBoxAction {
     return allActionsGroup;
   }
 
-  static class SaveTemporaryAction extends AnAction {
+  private static class SaveTemporaryAction extends AnAction {
+    public SaveTemporaryAction() {
+      Presentation presentation = getTemplatePresentation();
+      presentation.setIcon(IconLoader.getIcon("/runConfigurations/saveTempConfig.png"));
+    }
+
     public void actionPerformed(final AnActionEvent e) {
       final RunManager runManager = RunManager.getInstance(getProject(e));
       runManager.makeStable(runManager.getTempConfiguration());
