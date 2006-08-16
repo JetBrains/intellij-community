@@ -375,7 +375,7 @@ public class EquivalenceChecker{
         return name1.equals(name2);
     }
 
-    private static boolean typesAreEquivalent(
+    public static boolean typesAreEquivalent(
             @Nullable PsiType type1, @Nullable PsiType type2){
         if(type1 == null){
             return type2 == null;

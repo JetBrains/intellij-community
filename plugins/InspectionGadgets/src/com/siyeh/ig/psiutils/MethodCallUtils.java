@@ -57,18 +57,18 @@ public class MethodCallUtils {
         return MethodUtils.isEquals(method);
     }
 
-    public static boolean isMethodCall(
+    public static boolean isCallToMethod(
             @NotNull PsiMethodCallExpression expression,
-            @NonNls String methodName, int parameterCount, PsiType returnType) {
-        final PsiReferenceExpression methodExpression =
-                expression.getMethodExpression();
-        final PsiElement element = methodExpression.resolve();
-        if (!(element instanceof PsiMethod)) {
+            @NotNull String containingClassName,
+            @NotNull PsiType returnType,
+            @NotNull String methodName,
+            PsiType... parameterTypes) {
+        final PsiMethod method = expression.resolveMethod();
+        if (method == null) {
             return false;
         }
-        final PsiMethod method = (PsiMethod)element;
-        return MethodUtils.methodMatches(method, methodName, parameterCount,
-                returnType);
+        return MethodUtils.methodMatches(method, containingClassName, returnType,
+                methodName, parameterTypes);
     }
 
     public static boolean isApplicable(PsiMethod method,

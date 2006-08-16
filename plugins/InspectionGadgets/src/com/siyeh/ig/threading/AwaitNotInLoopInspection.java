@@ -16,13 +16,13 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiType;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AwaitNotInLoopInspection extends ExpressionInspection {
@@ -46,20 +46,9 @@ public class AwaitNotInLoopInspection extends ExpressionInspection {
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            if (!MethodCallUtils.isMethodCall(expression, "await", 0,
-                    PsiType.VOID)){
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (!ClassUtils.isSubclass(containingClass,
-                    "java.util.concurrent.locks.Condition")) {
+            if (!MethodCallUtils.isCallToMethod(expression,
+                    "java.util.concurrent.locks.Condition", PsiType.VOID,
+                    "await")){
                 return;
             }
             if (ControlFlowUtils.isInLoop(expression)) {

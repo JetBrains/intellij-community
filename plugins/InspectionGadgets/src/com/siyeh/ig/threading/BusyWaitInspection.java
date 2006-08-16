@@ -16,13 +16,13 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiType;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class BusyWaitInspection extends ExpressionInspection {
@@ -45,20 +45,14 @@ public class BusyWaitInspection extends ExpressionInspection {
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            if (!MethodCallUtils.isMethodCall(expression, "sleep", 1,
-                    PsiType.VOID)) {
+            if (!MethodCallUtils.isCallToMethod(expression, "java.lang.Thread",
+                    PsiType.VOID, "sleep", PsiType.LONG) &&
+                    !MethodCallUtils.isCallToMethod(expression,
+                            "java.lang.Thread", PsiType.VOID, "sleep",
+                            PsiType.LONG, PsiType.INT)) {
                 return;
             }
             if (!ControlFlowUtils.isInLoop(expression)) {
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiClass methodClass = method.getContainingClass();
-            if (methodClass == null ||
-                    !ClassUtils.isSubclass(methodClass, "java.lang.Thread")) {
                 return;
             }
             registerMethodCallError(expression);

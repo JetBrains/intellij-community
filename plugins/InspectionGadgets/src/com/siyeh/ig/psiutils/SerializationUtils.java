@@ -16,6 +16,8 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +28,10 @@ public class SerializationUtils {
             "java.io.Serializable";
     private static final String EXTERNALIZABLE_CLASS_NAME =
             "java.io.Externalizable";
+    @NonNls
+    private static final String READ_OBJECT = "readObject";
+    @NonNls
+    private static final String WRITE_OBJECT = "writeObject";
 
     private SerializationUtils() {
         super();
@@ -58,7 +64,7 @@ public class SerializationUtils {
     }
 
     public static boolean hasReadObject(@NotNull PsiClass aClass) {
-        final PsiMethod[] methods = aClass.getMethods();
+        final PsiMethod[] methods = aClass.findMethodsByName(READ_OBJECT, false);
         for (final PsiMethod method : methods) {
             if (isReadObject(method)) {
                 return true;
@@ -68,7 +74,8 @@ public class SerializationUtils {
     }
 
     public static boolean hasWriteObject(@NotNull PsiClass aClass) {
-        final PsiMethod[] methods = aClass.getMethods();
+        final PsiMethod[] methods =
+                aClass.findMethodsByName(WRITE_OBJECT, false);
         for (final PsiMethod method : methods) {
             if (isWriteObject(method)) {
                 return true;
@@ -78,41 +85,25 @@ public class SerializationUtils {
     }
 
     public static boolean isReadObject(@NotNull PsiMethod method) {
-        final String methodName = method.getName();
-        @NonNls final String readObject = "readObject";
-        if (!readObject.equals(methodName)) {
-            return false;
-        }
-        final PsiParameterList parameterList = method.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters.length != 1) {
-            return false;
-        }
-        final PsiType argType = parameters[0].getType();
-        if (!TypeUtils.typeEquals("java.io.ObjectInputStream", argType)) {
-            return false;
-        }
-        final PsiType returnType = method.getReturnType();
-        return TypeUtils.typeEquals(PsiKeyword.VOID, returnType);
+        final PsiManager manager = method.getManager();
+        final PsiElementFactory factory = manager.getElementFactory();
+        final Project project = method.getProject();
+        final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+        final PsiClassType type = factory.createTypeByFQClassName(
+                "java.io.ObjectInputStream", scope);
+        return MethodUtils.methodMatches(method, null,
+                PsiType.VOID, READ_OBJECT, type);
     }
 
     public static boolean isWriteObject(@NotNull PsiMethod method) {
-        final String methodName = method.getName();
-        @NonNls final String writeObject = "writeObject";
-        if (!writeObject.equals(methodName)) {
-            return false;
-        }
-        final PsiParameterList parameterList = method.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters.length != 1) {
-            return false;
-        }
-        final PsiType argType = parameters[0].getType();
-        if (!TypeUtils.typeEquals("java.io.ObjectOutputStream", argType)) {
-            return false;
-        }
-        final PsiType returnType = method.getReturnType();
-        return TypeUtils.typeEquals(PsiKeyword.VOID, returnType);
+        final PsiManager manager = method.getManager();
+        final PsiElementFactory factory = manager.getElementFactory();
+        final Project project = method.getProject();
+        final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+        final PsiClassType type = factory.createTypeByFQClassName(
+                "java.io.ObjectOutputStream", scope);
+        return MethodUtils.methodMatches(method, null,
+                PsiType.VOID, WRITE_OBJECT, type);
     }
 
     public static boolean isReadResolve(@NotNull PsiMethod method) {

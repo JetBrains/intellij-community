@@ -297,6 +297,16 @@ public class ControlFlowUtils{
         return systemExitFinder.exitFound();
     }
 
+    public static boolean elementContainsCallToMethod(
+            PsiElement context, String containingClassName, PsiType returnType,
+            String methodName, PsiType... parameterTypes) {
+        final MethodCallFinder methodCallFinder =
+                new MethodCallFinder(containingClassName, returnType,
+                        methodName, parameterTypes);
+        context.accept(methodCallFinder);
+        return methodCallFinder.containsCallToMethod();
+    }
+
     public static boolean isInLoop(@NotNull PsiElement element){
         final PsiLoopStatement loopStatement =
                 PsiTreeUtil.getParentOfType(element, PsiLoopStatement.class);
@@ -353,6 +363,27 @@ public class ControlFlowUtils{
             }
             currentElement = tryStatement;
         }
+    }
+
+    public static boolean isInExitStatement(@NotNull PsiExpression expression){
+        return isInReturnStatementArgument(expression) ||
+                isInThrowStatementArgument(expression);
+    }
+
+    private static boolean isInReturnStatementArgument(
+            @NotNull PsiExpression expression){
+        final PsiReturnStatement returnStatement =
+                PsiTreeUtil.getParentOfType(expression,
+                        PsiReturnStatement.class);
+        return returnStatement != null;
+    }
+
+    private static boolean isInThrowStatementArgument(
+            @NotNull PsiExpression expression){
+        final PsiThrowStatement throwStatement =
+                PsiTreeUtil.getParentOfType(expression,
+                        PsiThrowStatement.class);
+        return throwStatement != null;
     }
 
     @Nullable
@@ -452,6 +483,20 @@ public class ControlFlowUtils{
         return false;
     }
 
+    public static boolean methodAlwaysThrowsException(
+            @NotNull PsiMethod method){
+        final PsiCodeBlock body = method.getBody();
+	    if (body == null) {
+		    return true;
+	    }
+        final ReturnFinder returnFinder = new ReturnFinder();
+        body.accept(returnFinder);
+        if(returnFinder.returnFound()){
+            return false;
+        }
+        return !codeBlockMayCompleteNormally(body);
+    }
+
     private static class SystemExitFinder extends PsiRecursiveElementVisitor{
 
         private boolean m_found = false;
@@ -480,7 +525,8 @@ public class ControlFlowUtils{
             }
             final PsiClass aClass = method.getContainingClass();
             final String className = aClass.getQualifiedName();
-            if(!"java.lang.System".equals(className)) {
+            if(!"java.lang.System".equals(className) &&
+                    !"java.lang.Runtime".equals(className)) {
                 return;
             }
             m_found = true;
@@ -623,38 +669,40 @@ public class ControlFlowUtils{
         }
     }
 
-    public static boolean isInExitStatement(@NotNull PsiExpression expression){
-        return isInReturnStatementArgument(expression) ||
-                isInThrowStatementArgument(expression);
-    }
+    public static class MethodCallFinder
+            extends PsiRecursiveElementVisitor {
 
-    private static boolean isInReturnStatementArgument(
-            @NotNull PsiExpression expression){
-        final PsiReturnStatement returnStatement =
-                PsiTreeUtil
-                        .getParentOfType(expression, PsiReturnStatement.class);
-        return returnStatement != null;
-    }
+        private final String containingClassName;
+        private final PsiType returnType;
+        private final String methodName;
+        private final PsiType[] parameterTypeNames;
+        private boolean containsCallToMethod = false;
 
-    private static boolean isInThrowStatementArgument(
-            @NotNull PsiExpression expression){
-        final PsiThrowStatement throwStatement =
-                PsiTreeUtil.getParentOfType(expression,
-                                            PsiThrowStatement.class);
-        return throwStatement != null;
-    }
+        MethodCallFinder(String containingClassName, PsiType returnType,
+                         String methodName,
+                         PsiType... parameterTypeNames) {
 
-    public static boolean methodAlwaysThrowsException(
-            @NotNull PsiMethod method){
-        final PsiCodeBlock body = method.getBody();
-	    if (body == null) {
-		    return true;
-	    }
-        final ReturnFinder returnFinder = new ReturnFinder();
-        body.accept(returnFinder);
-        if(returnFinder.returnFound()){
-            return false;
+            this.containingClassName = containingClassName;
+            this.returnType = returnType;
+            this.methodName = methodName;
+            this.parameterTypeNames = parameterTypeNames;
         }
-        return !codeBlockMayCompleteNormally(body);
+
+        public boolean containsCallToMethod() {
+            return containsCallToMethod;
+        }
+
+        public void visitMethodCallExpression(
+                PsiMethodCallExpression expression) {
+            if (containsCallToMethod) {
+                return;
+            }
+            super.visitMethodCallExpression(expression);
+            if (!MethodCallUtils.isCallToMethod(expression, containingClassName,
+                    returnType, methodName, parameterTypeNames)) {
+                return;
+            }
+            containsCallToMethod = true;
+        }
     }
 }

@@ -17,8 +17,10 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Query;
+import com.intellij.openapi.project.Project;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,41 +33,59 @@ public class MethodUtils{
     }
 
     public static boolean isCompareTo(PsiMethod method){
-        return methodMatches(method, HardcodedMethodConstants.COMPARE_TO, 1,
-                PsiType.INT);
+        return methodMatches(method, null, PsiType.INT,
+                HardcodedMethodConstants.COMPARE_TO, PsiType.NULL);
     }
 
     public static boolean isHashCode(PsiMethod method){
-        return methodMatches(method, HardcodedMethodConstants.HASH_CODE, 0,
-                PsiType.INT);
+        return methodMatches(method, null, PsiType.INT,
+                HardcodedMethodConstants.HASH_CODE);
     }
 
     public static boolean isEquals(PsiMethod method){
-        return methodMatches(method, HardcodedMethodConstants.EQUALS, 1,
-                PsiType.BOOLEAN);
+        final PsiManager manager = method.getManager();
+        final Project project = method.getProject();
+        final PsiClassType objectType = PsiType.getJavaLangObject(
+                manager, GlobalSearchScope.allScope(project));
+        return methodMatches(method, null, PsiType.BOOLEAN,
+                HardcodedMethodConstants.EQUALS, objectType);
     }
 
-    public static boolean methodMatches(
-            PsiMethod method, @NotNull String methodNameP,
-            int parameterCount, @NotNull PsiType returnTypeP) {
-        if(method == null){
-            return false;
-        }
-        if (parameterCount < 0) {
-            throw new IllegalArgumentException(
-                    "parameterCount must be greater or equals to zero");
-        }
-        final String methodName = method.getName();
-        if(!methodNameP.equals(methodName)){
+    public static boolean methodMatches(@NotNull PsiMethod method,
+                                        @Nullable String containingClassName,
+                                        @NotNull PsiType returnType,
+                                        @NotNull String methodName,
+                                        @NotNull PsiType... parameterTypes) {
+        final String name = method.getName();
+        if (!methodName.equals(name)) {
             return false;
         }
         final PsiParameterList parameterList = method.getParameterList();
         final PsiParameter[] parameters = parameterList.getParameters();
-        if(parameters.length != parameterCount){
+        if (parameters.length != parameterTypes.length) {
             return false;
         }
-        final PsiType returnType = method.getReturnType();
-        return returnTypeP.equals(returnType);
+        for (int i = 0; i < parameters.length; i++) {
+            final PsiParameter parameter = parameters[i];
+            final PsiType type = parameter.getType();
+            final PsiType parameterType = parameterTypes[i];
+            if (parameterType != PsiType.NULL &&
+                    !EquivalenceChecker.typesAreEquivalent(type, parameterType)) {
+                return false;
+            }
+        }
+        if (returnType != PsiType.NULL) {
+        final PsiType methodReturnType = method.getReturnType();
+            if (!EquivalenceChecker.typesAreEquivalent(returnType,
+                    methodReturnType)) {
+                return false;
+            }
+        }
+        if (containingClassName == null) {
+            return true;
+        }
+        final PsiClass containingClass = method.getContainingClass();
+        return ClassUtils.isSubclass(containingClass, containingClassName);
     }
 
     public static boolean isOverridden(PsiMethod method){

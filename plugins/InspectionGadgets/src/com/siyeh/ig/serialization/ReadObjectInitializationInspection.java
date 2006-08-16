@@ -17,11 +17,12 @@ package com.siyeh.ig.serialization;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.InitializationUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ReadObjectInitializationInspection extends ClassInspection {
@@ -55,7 +56,7 @@ public class ReadObjectInitializationInspection extends ClassInspection {
         public void visitMethod(@NotNull PsiMethod method) {
             // no call to super, so it doesn't drill down
             final PsiClass aClass = method.getContainingClass();
-            if(aClass == null) {
+            if (aClass == null) {
                 return;
             }
             if (aClass.isInterface() || aClass.isAnnotationType()) {
@@ -64,17 +65,27 @@ public class ReadObjectInitializationInspection extends ClassInspection {
             if (!SerializationUtils.isSerializable(aClass)) {
                 return;
             }
-
             if (!SerializationUtils.isReadObject(method)) {
                 return;
             }
+            final boolean defaultReadObjectCalled =
+                    ControlFlowUtils.elementContainsCallToMethod(method, "java.io.ObjectInputStream",
+                            PsiType.VOID, "defaultReadObject");
             final PsiField[] fields = aClass.getFields();
-            for(final PsiField field : fields) {
-                if(!isFieldInitialized(field, method)) {
-                    registerFieldError(field);
+            if (defaultReadObjectCalled) {
+                for (final PsiField field : fields) {
+                    if (field.hasModifierProperty(PsiModifier.TRANSIENT) &&
+                            !isFieldInitialized(field, method)) {
+                        registerFieldError(field);
+                    }
+                }
+            } else {
+                for (final PsiField field : fields) {
+                    if(!isFieldInitialized(field, method)) {
+                        registerFieldError(field);
+                    }
                 }
             }
-
         }
 
         public static boolean isFieldInitialized(@NotNull PsiField field,

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiDoWhileStatement;
 import com.intellij.psi.PsiForStatement;
 import com.intellij.psi.PsiWhileStatement;
+import com.intellij.psi.PsiStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
@@ -56,17 +57,21 @@ public class InfiniteLoopStatementInspection extends StatementInspection {
 
         public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
-            if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
-                return;
-            }
-            if (ControlFlowUtils.statementContainsReturn(statement)) {
-                return;
-            }
-            registerStatementError(statement);
+            checkStatement(statement);
         }
 
         public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
+            checkStatement(statement);
+        }
+
+        public void visitDoWhileStatement(
+                @NotNull PsiDoWhileStatement statement) {
+            super.visitDoWhileStatement(statement);
+            checkStatement(statement);
+        }
+
+        private void checkStatement(PsiStatement statement) {
             if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
                 return;
             }
@@ -74,18 +79,6 @@ public class InfiniteLoopStatementInspection extends StatementInspection {
                 return;
             }
             if (ControlFlowUtils.statementContainsSystemExit(statement)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
-
-        public void visitDoWhileStatement(
-                @NotNull PsiDoWhileStatement statement) {
-            super.visitDoWhileStatement(statement);
-            if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
-                return;
-            }
-            if (ControlFlowUtils.statementContainsReturn(statement)) {
                 return;
             }
             registerStatementError(statement);
