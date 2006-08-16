@@ -17,12 +17,15 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.openapi.project.Project;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class CovariantCompareToInspection extends MethodInspection {
@@ -71,39 +74,42 @@ public class CovariantCompareToInspection extends MethodInspection {
             if (aClass == null) {
                 return;
             }
-            final PsiMethod[] methods = aClass.getMethods();
-            for(PsiMethod method1 : methods){
-                if(isNonVariantCompareTo(method1)){
+            final PsiMethod[] methods = aClass.findMethodsByName(
+                    HardcodedMethodConstants.COMPARE_TO, false);
+            for(PsiMethod compareToMethod : methods){
+                if(isNonVariantCompareTo(compareToMethod)){
                     return;
                 }
             }
-
-            final PsiClass comparableClass = method.getManager().findClass("java.lang.Comparable", method.getResolveScope());
-            if (comparableClass != null && comparableClass.getTypeParameters().length == 1) {
-                final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(comparableClass, aClass, PsiSubstitutor.EMPTY);
-                if (superSubstitutor != null) {  //null iff aClass is not inheritor of comparableClass
-                    final PsiType substituted = superSubstitutor.substitute(comparableClass.getTypeParameters()[0]);
+            final PsiManager manager = method.getManager();
+            final PsiClass comparableClass =
+                    manager.findClass("java.lang.Comparable",
+                            method.getResolveScope());
+            if (comparableClass != null &&
+                    comparableClass.getTypeParameters().length == 1) {
+                final PsiSubstitutor superSubstitutor =
+                        TypeConversionUtil.getClassSubstitutor(comparableClass,
+                                aClass, PsiSubstitutor.EMPTY);
+                //null iff aClass is not inheritor of comparableClass
+                if (superSubstitutor != null) {
+                    final PsiType substituted =
+                            superSubstitutor.substitute(
+                                    comparableClass.getTypeParameters()[0]);
                     if (paramType.equals(substituted)) {
                         return;
                     }
                 }
             }
-
             registerMethodError(method);
         }
 
         private static boolean isNonVariantCompareTo(PsiMethod method) {
-            final String methodName = method.getName();
-            if (!HardcodedMethodConstants.COMPARE_TO.equals(methodName)) {
-                return false;
-            }
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
-            if (parameters.length != 1) {
-                return false;
-            }
-            final PsiType argType = parameters[0].getType();
-            return TypeUtils.isJavaLangObject(argType);
+            final PsiManager manager = method.getManager();
+            final Project project = method.getProject();
+            final PsiClassType objectType = PsiType.getJavaLangObject(
+                    manager, GlobalSearchScope.allScope(project));
+            return MethodUtils.methodMatches(method, null, PsiType.INT,
+                    HardcodedMethodConstants.COMPARE_TO, objectType);
         }
     }
 }

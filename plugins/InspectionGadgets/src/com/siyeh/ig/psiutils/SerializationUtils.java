@@ -18,31 +18,21 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SerializationUtils {
-
-    private static final String SERIALIZABLE_CLASS_NAME =
-            "java.io.Serializable";
-    private static final String EXTERNALIZABLE_CLASS_NAME =
-            "java.io.Externalizable";
-    @NonNls
-    private static final String READ_OBJECT = "readObject";
-    @NonNls
-    private static final String WRITE_OBJECT = "writeObject";
 
     private SerializationUtils() {
         super();
     }
 
     public static boolean isSerializable(@Nullable PsiClass aClass) {
-        return ClassUtils.isSubclass(aClass, SERIALIZABLE_CLASS_NAME);
+        return ClassUtils.isSubclass(aClass, "java.io.Serializable");
     }
 
     public static boolean isExternalizable(@Nullable PsiClass aClass) {
-        return ClassUtils.isSubclass(aClass, EXTERNALIZABLE_CLASS_NAME);
+        return ClassUtils.isSubclass(aClass, "java.io.Externalizable");
     }
 
     public static boolean isDirectlySerializable(@NotNull PsiClass aClass) {
@@ -54,7 +44,7 @@ public class SerializationUtils {
                 final PsiClass implemented = (PsiClass) aInterfaces.resolve();
                 if (implemented != null) {
                     final String name = implemented.getQualifiedName();
-                    if (SERIALIZABLE_CLASS_NAME.equals(name)) {
+                    if ("java.io.Serializable".equals(name)) {
                         return true;
                     }
                 }
@@ -64,7 +54,7 @@ public class SerializationUtils {
     }
 
     public static boolean hasReadObject(@NotNull PsiClass aClass) {
-        final PsiMethod[] methods = aClass.findMethodsByName(READ_OBJECT, false);
+        final PsiMethod[] methods = aClass.findMethodsByName("readObject", false);
         for (final PsiMethod method : methods) {
             if (isReadObject(method)) {
                 return true;
@@ -75,7 +65,7 @@ public class SerializationUtils {
 
     public static boolean hasWriteObject(@NotNull PsiClass aClass) {
         final PsiMethod[] methods =
-                aClass.findMethodsByName(WRITE_OBJECT, false);
+                aClass.findMethodsByName("writeObject", false);
         for (final PsiMethod method : methods) {
             if (isWriteObject(method)) {
                 return true;
@@ -92,7 +82,7 @@ public class SerializationUtils {
         final PsiClassType type = factory.createTypeByFQClassName(
                 "java.io.ObjectInputStream", scope);
         return MethodUtils.methodMatches(method, null,
-                PsiType.VOID, READ_OBJECT, type);
+                PsiType.VOID, "readObject", type);
     }
 
     public static boolean isWriteObject(@NotNull PsiMethod method) {
@@ -103,37 +93,18 @@ public class SerializationUtils {
         final PsiClassType type = factory.createTypeByFQClassName(
                 "java.io.ObjectOutputStream", scope);
         return MethodUtils.methodMatches(method, null,
-                PsiType.VOID, WRITE_OBJECT, type);
+                PsiType.VOID, "writeObject", type);
     }
 
     public static boolean isReadResolve(@NotNull PsiMethod method) {
-        final String methodName = method.getName();
-        @NonNls final String readResolve = "readResolve";
-        if (!readResolve.equals(methodName)) {
-            return false;
-        }
-        final PsiParameterList parameterList = method.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters.length != 0) {
-            return false;
-        }
-        final PsiType returnType = method.getReturnType();
-        return TypeUtils.isJavaLangObject(returnType);
+        return MethodUtils.simpleMethodMatches(method, null, "java.lang.Object",
+                "readResolve");
+
     }
 
     public static boolean isWriteReplace(@NotNull PsiMethod method) {
-        final String methodName = method.getName();
-        @NonNls final String writeReplace = "writeReplace";
-        if (!writeReplace.equals(methodName)) {
-            return false;
-        }
-        final PsiParameterList parameterList = method.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters.length != 0) {
-            return false;
-        }
-        final PsiType returnType = method.getReturnType();
-        return TypeUtils.isJavaLangObject(returnType);
+        return MethodUtils.simpleMethodMatches(method, null, "java.lang.Object",
+                "writeReplace");
     }
 
     public static boolean isProbablySerializable(PsiType type) {

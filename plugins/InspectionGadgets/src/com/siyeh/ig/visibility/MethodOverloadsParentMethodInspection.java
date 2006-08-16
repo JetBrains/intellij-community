@@ -95,21 +95,21 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection{
             }
         }
 
-        private static boolean methodOverloads(PsiMethod meth,
+        private static boolean methodOverloads(PsiMethod method,
                                                PsiClass ancestorClass){
-            if(methodOverrides(meth, ancestorClass)){
+            if(methodOverrides(method, ancestorClass)){
                 return false;
             }
-            final String methName = meth.getName();
-            final PsiParameterList parameterList = meth.getParameterList();
+            final String methName = method.getName();
+            final PsiParameterList parameterList = method.getParameterList();
             final PsiParameter[] parameters = parameterList.getParameters();
-            final PsiMethod[] methods = ancestorClass
-                    .findMethodsByName(methName, false);
+            final PsiMethod[] methods =
+                    ancestorClass.findMethodsByName(methName, false);
             for(final PsiMethod testMethod : methods){
                 if(!testMethod.hasModifierProperty(PsiModifier.PRIVATE) &&
                         !testMethod.hasModifierProperty(PsiModifier.STATIC) &&
                         !isOverriddenInClass(testMethod,
-                                             meth.getContainingClass())){
+                                             method.getContainingClass())){
                     final PsiParameterList testParameterList = testMethod
                             .getParameterList();
                     final PsiParameter[] testParameters = testParameterList

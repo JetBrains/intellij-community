@@ -51,42 +51,94 @@ public class MethodUtils{
                 HardcodedMethodConstants.EQUALS, objectType);
     }
 
-    public static boolean methodMatches(@NotNull PsiMethod method,
-                                        @Nullable String containingClassName,
-                                        @NotNull PsiType returnType,
-                                        @NotNull String methodName,
-                                        @NotNull PsiType... parameterTypes) {
+    /**
+     * @param method
+     * @param containingClassName  the name of the class which contiains the
+     * method.
+     * @param returnType  the return type, specify null if any type matches
+     * @param methodName
+     * @param parameterTypes  the type of the parameters of the method, specify
+     *  null if any number and type of parameters match or null entries in an
+     * array to match nummber but not type.
+     * @return true, if the specified method matches the specified constraints,
+     *  false otherwise
+     */
+    public static boolean methodMatches(
+            @NotNull PsiMethod method,
+            @NonNls @Nullable String containingClassName,
+            @Nullable PsiType returnType,
+            @NonNls @Nullable String methodName,
+            @Nullable PsiType... parameterTypes) {
         final String name = method.getName();
-        if (!methodName.equals(name)) {
+        if (methodName != null && !methodName.equals(name)) {
             return false;
         }
-        final PsiParameterList parameterList = method.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters.length != parameterTypes.length) {
-            return false;
-        }
-        for (int i = 0; i < parameters.length; i++) {
-            final PsiParameter parameter = parameters[i];
-            final PsiType type = parameter.getType();
-            final PsiType parameterType = parameterTypes[i];
-            if (parameterType != PsiType.NULL &&
-                    !EquivalenceChecker.typesAreEquivalent(type, parameterType)) {
+        if (parameterTypes != null) {
+            final PsiParameterList parameterList = method.getParameterList();
+            final PsiParameter[] parameters = parameterList.getParameters();
+            if (parameters.length != parameterTypes.length) {
                 return false;
             }
+            for (int i = 0; i < parameters.length; i++) {
+                final PsiParameter parameter = parameters[i];
+                final PsiType type = parameter.getType();
+                final PsiType parameterType = parameterTypes[i];
+                if (parameterType != null &&
+                        !EquivalenceChecker.typesAreEquivalent(type,
+                                parameterType)) {
+                    return false;
+                }
+            }
         }
-        if (returnType != PsiType.NULL) {
-        final PsiType methodReturnType = method.getReturnType();
+        if (returnType != null) {
+            final PsiType methodReturnType = method.getReturnType();
             if (!EquivalenceChecker.typesAreEquivalent(returnType,
                     methodReturnType)) {
                 return false;
             }
         }
-        if (containingClassName == null) {
-            return true;
+        if (containingClassName != null) {
+            final PsiClass containingClass = method.getContainingClass();
+            return ClassUtils.isSubclass(containingClass, containingClassName);
         }
-        final PsiClass containingClass = method.getContainingClass();
-        return ClassUtils.isSubclass(containingClass, containingClassName);
+        return true;
     }
+
+    public static boolean simpleMethodMatches(
+            @NotNull PsiMethod method,
+            @NonNls @Nullable String containingClassName,
+            @NonNls @Nullable String returnTypeString,
+            @NonNls @Nullable String methodName,
+            @NonNls @Nullable String... parameterTypeStrings) {
+        final PsiManager manager = method.getManager();
+        final PsiElementFactory factory = manager.getElementFactory();
+        final GlobalSearchScope scope = method.getResolveScope();
+        if (parameterTypeStrings != null) {
+            final PsiType[] parameterTypes = new PsiType[parameterTypeStrings.length];
+            for (int i = 0; i < parameterTypeStrings.length; i++) {
+                final String parameterTypeString = parameterTypeStrings[i];
+                parameterTypes[i] = factory.createTypeByFQClassName(
+                        parameterTypeString, scope);
+            }
+            if (returnTypeString != null) {
+                final PsiType returnType =
+                        factory.createTypeByFQClassName(returnTypeString, scope);
+                return methodMatches(method, containingClassName, returnType,
+                        methodName, parameterTypes);
+            } else {
+                return methodMatches(method, containingClassName, null,
+                        methodName, parameterTypes);
+            }
+        } else if (returnTypeString != null) {
+            final PsiType returnType =
+                    factory.createTypeByFQClassName(returnTypeString, scope);
+            return methodMatches(method, containingClassName, returnType,
+                    methodName);
+        } else {
+            return methodMatches(method, containingClassName, null, methodName);
+        }
+    }
+
 
     public static boolean isOverridden(PsiMethod method){
         final Query<PsiMethod> overridingMethodQuery =

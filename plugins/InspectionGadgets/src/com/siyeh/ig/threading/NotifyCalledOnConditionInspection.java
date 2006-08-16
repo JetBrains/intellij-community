@@ -16,14 +16,14 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiType;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 public class NotifyCalledOnConditionInspection extends ExpressionInspection {
 
@@ -47,29 +47,12 @@ public class NotifyCalledOnConditionInspection extends ExpressionInspection {
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            @NonNls final String methodName =
-                    methodExpression.getReferenceName();
-            if (!HardcodedMethodConstants.NOTIFY.equals(methodName) &&
-                    !HardcodedMethodConstants.NOTIFY_ALL.equals(methodName)) {
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
-            final int numParams = parameters.length;
-            if (numParams != 0) {
-                return;
-            }
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (!TypeUtils.expressionHasTypeOrSubtype(
-                    "java.util.concurrent.locks.Condition",
-                    qualifier)) {
+            if (!MethodCallUtils.isCallToMethod(expression,
+                    "java.util.concurrent.locks.Condition", PsiType.VOID,
+                    HardcodedMethodConstants.NOTIFY) &&
+                    !MethodCallUtils.isCallToMethod(expression,
+                            "java.util.concurrent.locks.Condition", PsiType.VOID,
+                            HardcodedMethodConstants.NOTIFY_ALL)) {
                 return;
             }
             registerMethodCallError(expression);

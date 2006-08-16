@@ -20,6 +20,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
@@ -59,14 +61,8 @@ public class NoExplicitFinalizeCallsInspection extends ExpressionInspection{
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if(!HardcodedMethodConstants.FINALIZE.equals(methodName)) {
-                return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            if(argumentList.getExpressions().length != 0){
+            if (!MethodCallUtils.isCallToMethod(expression, null, PsiType.VOID,
+                    HardcodedMethodConstants.FINALIZE)) {
                 return;
             }
             final PsiMethod containingMethod =
@@ -74,11 +70,8 @@ public class NoExplicitFinalizeCallsInspection extends ExpressionInspection{
             if(containingMethod == null){
                 return;
             }
-            final String containingMethodName = containingMethod.getName();
-            final PsiParameterList parameterList =
-                    containingMethod.getParameterList();
-            if(HardcodedMethodConstants.FINALIZE.equals(containingMethodName)
-                    && parameterList.getParameters().length == 0){
+            if (MethodUtils.methodMatches(containingMethod, null, PsiType.VOID,
+                    HardcodedMethodConstants.FINALIZE)) {
                 return;
             }
             registerMethodCallError(expression);

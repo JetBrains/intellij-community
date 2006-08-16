@@ -43,10 +43,10 @@ public class SerialPersistentFieldsWithWrongSignatureInspection
     }
 
     public BaseInspectionVisitor buildVisitor(){
-        return new SerializableDefinesSerialVersionUIDVisitor();
+        return new SerialPersistentFieldsWithWrongSignatureVisitor();
     }
 
-    private static class SerializableDefinesSerialVersionUIDVisitor
+    private static class SerialPersistentFieldsWithWrongSignatureVisitor
             extends BaseInspectionVisitor{
 
         public void visitClass(@NotNull PsiClass aClass){

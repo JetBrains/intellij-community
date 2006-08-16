@@ -16,12 +16,14 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class EqualsWhichDoesntCheckParameterClassInspection
@@ -54,13 +56,9 @@ public class EqualsWhichDoesntCheckParameterClassInspection
             if(!MethodUtils.isEquals(method)) {
                 return;
             }
-            final PsiParameterList paramList = method.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
+            final PsiParameterList parameterList = method.getParameterList();
+            final PsiParameter[] parameters = parameterList.getParameters();
             final PsiParameter parameter = parameters[0];
-            final PsiType argType = parameter.getType();
-            if(!TypeUtils.isJavaLangObject(argType)){
-                return;
-            }
             final PsiCodeBlock body = method.getBody();
             if(body == null){
                 return;

@@ -16,10 +16,11 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 public class MethodCallUtils {
 
@@ -57,17 +58,59 @@ public class MethodCallUtils {
         return MethodUtils.isEquals(method);
     }
 
+    public static boolean isSimpleCallToMethod(
+            @NotNull PsiMethodCallExpression expression,
+            @NonNls @Nullable String calledOnClassName,
+            @Nullable PsiType returnType,
+            @NonNls @Nullable String methodName,
+            @NonNls @Nullable String... parameterTypeStrings) {
+        if (parameterTypeStrings == null) {
+            return isCallToMethod(expression, calledOnClassName, returnType,
+                    methodName);
+        }
+        final PsiManager manager = expression.getManager();
+        final PsiElementFactory factory = manager.getElementFactory();
+        final PsiType[] parameterTypes =
+                new PsiType[parameterTypeStrings.length];
+        final GlobalSearchScope scope = expression.getResolveScope();
+        for (int i = 0; i < parameterTypeStrings.length; i++) {
+            final String parameterTypeString = parameterTypeStrings[i];
+            parameterTypes[i] = factory.createTypeByFQClassName(
+                    parameterTypeString, scope);
+        }
+        return isCallToMethod(expression, calledOnClassName, returnType,
+                methodName, parameterTypes);
+    }
+
     public static boolean isCallToMethod(
             @NotNull PsiMethodCallExpression expression,
-            @NotNull String containingClassName,
-            @NotNull PsiType returnType,
-            @NotNull String methodName,
-            PsiType... parameterTypes) {
+            @NonNls @Nullable String calledOnClassName,
+            @Nullable PsiType returnType,
+            @NonNls @Nullable String methodName,
+            @Nullable PsiType... parameterTypes) {
+        final PsiReferenceExpression methodExpression =
+                expression.getMethodExpression();
+        if (methodName != null) {
+            final String referenceName = methodExpression.getReferenceName();
+            if (!methodName.equals(referenceName)) {
+                return false;
+            }
+        }
         final PsiMethod method = expression.resolveMethod();
         if (method == null) {
             return false;
         }
-        return MethodUtils.methodMatches(method, containingClassName, returnType,
+        if (calledOnClassName != null) {
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (qualifier != null) {
+                TypeUtils.expressionHasTypeOrSubtype(calledOnClassName,
+                        qualifier);
+                return MethodUtils.methodMatches(method, null, returnType,
+                        methodName, parameterTypes);
+            }
+        }
+        return MethodUtils.methodMatches(method, calledOnClassName, returnType,
                 methodName, parameterTypes);
     }
 

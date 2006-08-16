@@ -29,7 +29,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspection {
+public class SerializableHasSerialVersionUIDFieldInspection
+        extends ClassInspection {
     
     /** @noinspection PublicField*/
     public boolean m_ignoreSerializableDueToInheritance = true;
@@ -37,6 +38,7 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
     public String getID(){
         return "serial";
     }
+
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "serializable.class.without.serialversionuid.display.name");
@@ -63,10 +65,10 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new SerializableDefinesSerialVersionUIDVisitor();
+        return new SerializableHasSerialVersionUIDFieldVisitor();
     }
 
-    private class SerializableDefinesSerialVersionUIDVisitor
+    private class SerializableHasSerialVersionUIDFieldVisitor
             extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {

@@ -61,8 +61,7 @@ public class ReadResolveAndWriteReplaceProtectedInspection
         public void visitMethod(@NotNull PsiMethod method) {
             // no call to super, so it doesn't drill down
             final PsiClass aClass = method.getContainingClass();
-            if(aClass == null)
-            {
+            if(aClass == null) {
                 return;
             }
             if (aClass.isInterface() || aClass.isAnnotationType()) {
@@ -72,15 +71,14 @@ public class ReadResolveAndWriteReplaceProtectedInspection
                 return;
             }
             if(aClass.hasModifierProperty(PsiModifier.FINAL) &&
-                   method.hasModifierProperty(PsiModifier.PRIVATE) )
-            {
+                   method.hasModifierProperty(PsiModifier.PRIVATE)) {
                 return;
             }
             if(!SerializationUtils.isReadResolve(method) &&
-                       !SerializationUtils.isWriteReplace(method)){
+                       !SerializationUtils.isWriteReplace(method)) {
                 return;
             }
-            if(!SerializationUtils.isSerializable(aClass)){
+            if(!SerializationUtils.isSerializable(aClass)) {
                 return;
             }
             registerMethodError(method);

@@ -46,10 +46,10 @@ public class SerialVersionUIDNotStaticFinalInspection extends ClassInspection {
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new SerializableDefinesSerialVersionUIDVisitor();
+        return new SerialVersionUIDNotStaticFinalVisitor();
     }
 
-    private static class SerializableDefinesSerialVersionUIDVisitor
+    private static class SerialVersionUIDNotStaticFinalVisitor
             extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
