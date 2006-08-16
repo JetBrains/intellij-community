@@ -15,6 +15,7 @@ import com.intellij.psi.PsiFile;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,7 @@ public class LastSelectedPropertiesFileStore implements ApplicationComponent, JD
     return ApplicationManager.getApplication().getComponent(LastSelectedPropertiesFileStore.class);
   }
 
+  @NotNull
   @NonNls
   public String getComponentName() {
     return "LastSelectedPropertiesFileStore";
@@ -44,7 +46,7 @@ public class LastSelectedPropertiesFileStore implements ApplicationComponent, JD
   }
 
   public String suggestLastSelectedPropertiesFileUrl(PsiFile context) {
-    VirtualFile virtualFile = context.getContainingDirectory().getVirtualFile();
+    VirtualFile virtualFile = context.getVirtualFile();
 
     while (virtualFile != null) {
       String contextUrl = virtualFile.getUrl();
@@ -65,10 +67,13 @@ public class LastSelectedPropertiesFileStore implements ApplicationComponent, JD
   }
 
   public void saveLastSelectedPropertiesFile(PsiFile context, PropertiesFile file) {
-    VirtualFile virtualFile = context.getContainingDirectory().getVirtualFile();
+    VirtualFile virtualFile = context.getVirtualFile();
+    assert virtualFile != null;
     String contextUrl = virtualFile.getUrl();
     String url = file.getVirtualFile().getUrl();
     lastSelectedUrls.put(contextUrl, url);
+    VirtualFile containingDir = virtualFile.getParent();
+    lastSelectedUrls.put(containingDir.getUrl(), url);
     lastSelectedFileUrl = url;
   }
 
@@ -88,7 +93,7 @@ public class LastSelectedPropertiesFileStore implements ApplicationComponent, JD
     lastSelectedFileUrl = element.getAttributeValue("lastSelectedFileUrl");
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(@NonNls Element element) throws WriteExternalException {
     for (Map.Entry<String, String> entry : lastSelectedUrls.entrySet()) {
       String context = entry.getKey();
       String url = entry.getValue();

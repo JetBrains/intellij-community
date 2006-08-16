@@ -16,6 +16,8 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -25,11 +27,13 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -48,6 +52,7 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -424,6 +429,45 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     return null;
   }
 
+  private boolean createPropertiesFileIfNotExists() {
+    final String path = FileUtil.toSystemIndependentName(myPropertiesFile.getText());
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(path);
+    if (fileType != StdFileTypes.PROPERTIES) {
+      Messages.showErrorDialog(myProject, "Can't create properties file '"+myPropertiesFile.getText()+"' because its name is associated with the "+fileType.getDescription() + ".", "Error creating properties file");
+      return false;
+    }
+
+    final VirtualFile virtualFile;
+    try {
+      final File file = new File(path).getCanonicalFile();
+      FileUtil.createParentDirs(file);
+      final IOException[] e = new IOException[1];
+      virtualFile = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>(){
+        public VirtualFile compute() {
+          VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.getParentFile());
+          try {
+            if (dir == null) {
+              throw new IOException("Error creating directory structure for file '" + path + "'");
+            }
+            return dir.createChildData(this, file.getName());
+          }
+          catch (IOException e1) {
+            e[0] = e1;
+          }
+          return null;
+        }
+      });
+      if (e[0] != null) throw e[0];
+    }
+    catch (IOException e) {
+      Messages.showErrorDialog(myProject, e.getLocalizedMessage(), "Error creating properties file");
+      return false;
+    }
+
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
+    return psiFile instanceof PropertiesFile;
+  }
+
   protected JComponent createCenterPanel() {
     return myPanel;
   }
@@ -438,16 +482,15 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    Collection<PropertiesFile> propetiesFiles = getAllPropertiesFiles();
-    for (PropertiesFile propertiesFile : propetiesFiles) {
+    if (!createPropertiesFileIfNotExists()) return;
+    Collection<PropertiesFile> propertiesFiles = getAllPropertiesFiles();
+    for (PropertiesFile propertiesFile : propertiesFiles) {
       Property existingProperty = propertiesFile.findPropertyByKey(getKey());
       final String propValue = myValue.getText();
       if (existingProperty != null && !Comparing.strEqual(existingProperty.getValue(), propValue)) {
-        Messages.showErrorDialog(myProject,
-                                 CodeInsightBundle.message("i18nize.dialog.error.property.already.defined.message",
-                                                           getKey(),
-                                                           propertiesFile.getName()),
-                                 CodeInsightBundle.message("i18nize.dialog.error.property.already.defined.title"));
+        Messages.showErrorDialog(myProject, CodeInsightBundle.message("i18nize.dialog.error.property.already.defined.message", getKey(),
+                                                                      propertiesFile.getName()),
+                                            CodeInsightBundle.message("i18nize.dialog.error.property.already.defined.title"));
         return;
       }
     }

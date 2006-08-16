@@ -112,7 +112,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
         ApplicationManager.getApplication().runWriteAction(new Runnable(){
           public void run() {
             try {
-              performI18nization(psiFile, getEditorForFile(psiFile), dialog.getLiteralExpression(), dialog.getAllPropertiesFiles(), dialog.getKey(),
+              performI18nization(psiFile, getEditorForFile(psiFile), dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(),
                                  dialog.getValue(), dialog.getI18nizedText());
             }
             catch (IncorrectOperationException e) {
