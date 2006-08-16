@@ -54,7 +54,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory imple
                                                final Computable<Boolean> isVisible,
                                                final Icon icon,
                                                @NonNls final String helpId) {
-    return new ProjectJdkStep(context, type){
+    return new ProjectJdkForModuleStep(context, type){
       public void updateDataModel() {
         super.updateDataModel();
         builder.setModuleJdk(getJdk());

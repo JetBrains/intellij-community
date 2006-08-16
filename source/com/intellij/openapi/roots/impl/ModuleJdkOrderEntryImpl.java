@@ -121,13 +121,12 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   }
 
   public String getJdkName() {
+    if (myJdkName != null) return myJdkName;
     ProjectJdk jdk = getJdk();
     if (jdk != null) {
       return jdk.getName();
     }
-    else {
-      return myJdkName;
-    }
+    return null;
   }
 
   public boolean isSynthetic() {

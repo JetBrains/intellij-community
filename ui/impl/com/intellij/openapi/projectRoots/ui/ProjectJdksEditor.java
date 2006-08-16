@@ -6,8 +6,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.JdksConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
+import com.intellij.openapi.roots.ui.configuration.ProjectJdksConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 
@@ -17,15 +16,19 @@ import java.awt.*;
 /**
  * @author MYakovlev
  */
-public class ProjectJdksEditor extends DialogWrapper{
-  private ProjectRootConfigurable myConfigurable;
+public class ProjectJdksEditor extends DialogWrapper {
+  private ProjectJdksConfigurable myConfigurable;
   private ProjectJdk myProjectJdk;
 
 
-  public ProjectJdksEditor(ProjectJdk jdk, Project project, Component parent) {
+  public ProjectJdksEditor(final ProjectJdk jdk, Project project, Component parent) {
     super(parent, true);
-    myConfigurable = ProjectRootConfigurable.getInstance(project);
-    myConfigurable.selectNodeInTree(jdk != null ? jdk.getName() : JdksConfigurable.JDKS);
+    myConfigurable = new ProjectJdksConfigurable(project);
+    SwingUtilities.invokeLater(new Runnable(){
+      public void run() {
+        myConfigurable.selectNodeInTree(jdk != null ? jdk.getName() : null);
+      }
+    });
     setTitle(ProjectBundle.message("sdk.configure.title"));
     init();
   }
@@ -35,10 +38,8 @@ public class ProjectJdksEditor extends DialogWrapper{
   }
 
   protected JComponent createCenterPanel(){
-    JComponent component = myConfigurable.createComponent();
     myConfigurable.reset();
-    component.setPreferredSize(new Dimension(600, 300));
-    return component;
+    return myConfigurable.createComponent();
   }
 
   protected void doOKAction(){

@@ -98,7 +98,9 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
 
     };
     myAutoScrollHandler.install(myTree);
+  }
 
+  private void initToolbar() {
     final ArrayList<AnAction> actions = createActions(false);
     if (actions != null) {
       final DefaultActionGroup group = new DefaultActionGroup();
@@ -295,6 +297,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
 
     myTree.setCellRenderer(defaultTreeCellRenderer);
 
+    initToolbar();
     ArrayList<AnAction> actions = createActions(true);
     if (actions != null) {
       final DefaultActionGroup group = new DefaultActionGroup();
@@ -359,7 +362,11 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     myTree.requestFocus();
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        TreeUtil.selectInTree(nodeToSelect, true, myTree);
+        if (nodeToSelect != null) {
+          TreeUtil.selectInTree(nodeToSelect, true, myTree);
+        } else {
+          TreeUtil.selectFirstNode(myTree);
+        }
       }
     });
   }
@@ -385,7 +392,9 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     selectNodeInTree(findNodeByObject(myRoot, object));
   }
 
+  @Nullable
   protected static MyNode findNodeByName(final TreeNode root, final String profileName) {
+    if (profileName == null) return null; //do not suggest root node
     return findNodeByCondition(root, new Condition<NamedConfigurable>() {
       public boolean value(final NamedConfigurable configurable) {
         return Comparing.strEqual(profileName, configurable.getDisplayName());
@@ -609,26 +618,32 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     int getDefaultIndex();
   }
 
-  private class MyActionGroupWrapper extends AnAction {
-    private ActionGroupWithPreselection myActionGroup;
+  protected class MyActionGroupWrapper extends AnAction {
+    private ActionGroup myActionGroup;
+    private int myDefaultIndex;
 
     public MyActionGroupWrapper(final ActionGroupWithPreselection actionGroup) {
-      super(actionGroup.getActionGroup().getTemplatePresentation().getText(),
-            actionGroup.getActionGroup().getTemplatePresentation().getDescription(),
-            actionGroup.getActionGroup().getTemplatePresentation().getIcon());
+      this(actionGroup.getActionGroup(), actionGroup.getDefaultIndex());
+    }
+
+    public MyActionGroupWrapper(final ActionGroup actionGroup, final int defaultIndex) {
+      super(actionGroup.getTemplatePresentation().getText(),
+            actionGroup.getTemplatePresentation().getDescription(),
+            actionGroup.getTemplatePresentation().getIcon());
       myActionGroup = actionGroup;
+      myDefaultIndex = defaultIndex;
     }
 
     public void actionPerformed(AnActionEvent e) {
       final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-      final ListPopupStep step = popupFactory.createActionsStep(myActionGroup.getActionGroup(),
+      final ListPopupStep step = popupFactory.createActionsStep(myActionGroup,
                                                                 e.getDataContext(),
                                                                 false,
                                                                 false,
-                                                                myActionGroup.getActionGroup().getTemplatePresentation().getText(),
+                                                                myActionGroup.getTemplatePresentation().getText(),
                                                                 myTree,
                                                                 true,
-                                                                myActionGroup.getDefaultIndex());
+                                                                myDefaultIndex != -1 ? myDefaultIndex : 0);
       final ListPopup listPopup = popupFactory.createWizardStep(step);
       listPopup.showUnderneathOf(myNorthPanel);
       SwingUtilities.invokeLater(new Runnable(){

@@ -95,7 +95,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   private ModuleManager myModuleManager;
   private ModulesConfigurator myModulesConfigurator;
   private ModulesConfigurable myModulesConfigurable;
-  private ProjectJdksModel myJdksTreeModel = new ProjectJdksModel(this);
+  private ProjectJdksModel myJdksTreeModel = new ProjectJdksModel();
 
   private MyNode myApplicationServerLibrariesNode;
   private LibrariesModifiableModel myApplicationServerLibrariesProvider;
@@ -344,6 +344,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     int i = 0;
     for (Module module : modules) {
       MyNode node = findNodeByObject(myProjectNode, module);
+      LOG.assertTrue(node != null, "Module " + module.getName() + " is not in project.");
       node.removeFromParent();
       nodes[i ++] = node;
     }
@@ -468,7 +469,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   public void reset() {
-    myJdksTreeModel.reset();
+    myJdksTreeModel.reset(myProject);
     myModulesConfigurator = new ModulesConfigurator(myProject, this);
     myModulesConfigurator.resetModuleEditors();
     myModulesConfigurable = myModulesConfigurator.getModulesConfigurable();
@@ -500,7 +501,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       }
     }
 
-    if (myJdksTreeModel.isModified() || modifiedJdks) myJdksTreeModel.apply();
+    if (myJdksTreeModel.isModified() || modifiedJdks) myJdksTreeModel.apply(this);
     myJdksTreeModel.setProjectJdk(ProjectRootManager.getInstance(myProject).getProjectJdk());
     if (isInitialized(myModulesConfigurable) && myModulesConfigurable.isModified()) myModulesConfigurable.apply();
     if (myModulesConfigurator.isModified()) myModulesConfigurator.apply();
@@ -793,12 +794,16 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     } else {
       myUpdateDependenciesAlarm.addRequest(new Runnable(){
         public void run() {
-          final Set<String> dep = dependencies.compute();
-          SwingUtilities.invokeLater(new Runnable(){
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
-              if (dep != null && dep.size() == 0 && !myDisposed){
-                myTree.repaint();
-              }
+              final Set<String> dep = dependencies.compute();
+              SwingUtilities.invokeLater(new Runnable(){
+                public void run() {
+                  if (dep != null && dep.size() == 0 && !myDisposed){
+                    myTree.repaint();
+                  }
+                }
+              });
             }
           });
         }

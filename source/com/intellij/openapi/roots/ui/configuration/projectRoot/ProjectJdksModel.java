@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.ui.NotifiableSdkModel;
 import com.intellij.openapi.projectRoots.ui.SdkEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -47,8 +48,6 @@ public class ProjectJdksModel implements NotifiableSdkModel {
   });
   private EventDispatcher<Listener> mySdkEventsDispatcher = EventDispatcher.create(SdkModel.Listener.class);
 
-  private ProjectRootConfigurable myProjectRootConfigurable;
-
   private boolean myModified = false;
 
   private ProjectJdk myProjectJdk;
@@ -58,9 +57,6 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     return ProjectRootConfigurable.getInstance(project).getProjectJdksModel();
   }
 
-  public ProjectJdksModel(final ProjectRootConfigurable treeComponent) {
-    myProjectRootConfigurable = treeComponent;
-  }
 
   public Listener getMulticaster() {
     return mySdkEventsDispatcher.getMulticaster();
@@ -86,7 +82,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     mySdkEventsDispatcher.removeListener(listener);
   }
 
-  public void reset() {
+  public void reset(Project project) {
     myProjectJdks.clear();
     final ProjectJdk[] projectJdks = ProjectJdkTable.getInstance().getAllJdks();
     for (ProjectJdk jdk : projectJdks) {
@@ -97,13 +93,14 @@ public class ProjectJdksModel implements NotifiableSdkModel {
         //can't be
       }
     }
-    myProjectJdk = (ProjectJdk)findSdk(ProjectRootManager.getInstance(myProjectRootConfigurable.getProject()).getProjectJdkName());
+    myProjectJdk = (ProjectJdk)findSdk(ProjectRootManager.getInstance(project).getProjectJdkName());
     myModified = false;
     myInitialized = true;
   }
 
   public void disposeUIResources() {
     myProjectJdks.clear();
+    myInitialized = false;
   }
 
   public TreeMap<ProjectJdk, ProjectJdk> getProjectJdks() {
@@ -114,9 +111,9 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     return myModified;
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply(MasterDetailsComponent configurable) throws ConfigurationException {
     String[] errorString = new String[1];
-    if (!canApply(errorString)) {
+    if (!canApply(errorString, configurable)) {
       throw new ConfigurationException(errorString[0]);
     }
     final ProjectJdk[] allFromTable = ProjectJdkTable.getInstance().getAllJdks();
@@ -157,7 +154,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     myModified = false;
   }
 
-  private boolean canApply(String[] errorString) throws ConfigurationException {
+  private boolean canApply(String[] errorString, MasterDetailsComponent rootConfigurable) throws ConfigurationException {
     ArrayList<String> allNames = new ArrayList<String>();
     ProjectJdk itemWithError = null;
     for (ProjectJdk currItem : myProjectJdks.values()) {
@@ -178,10 +175,10 @@ public class ProjectJdksModel implements NotifiableSdkModel {
           sdkAdditionalData.checkValid(this);
         }
         catch (ConfigurationException e) {
-          final ProjectJdk projectJdk = myProjectRootConfigurable.getSelectedJdk();
-          if (projectJdk == null ||
-              !Comparing.strEqual(projectJdk.getName(), currName)){ //do not leave current item with current name
-            myProjectRootConfigurable.selectNodeInTree(currName);
+          final Object projectJdk = rootConfigurable.getSelectedObject();
+          if (!(projectJdk instanceof ProjectJdk) ||
+              !Comparing.strEqual(((ProjectJdk)projectJdk).getName(), currName)){ //do not leave current item with current name
+            rootConfigurable.selectNodeInTree(currName);
           }
           throw e;
         }
@@ -189,7 +186,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
       allNames.add(currName);
     }
     if (itemWithError == null) return true;
-    myProjectRootConfigurable.selectNodeInTree(itemWithError.getName());
+    rootConfigurable.selectNodeInTree(itemWithError.getName());
     return false;
   }
 
