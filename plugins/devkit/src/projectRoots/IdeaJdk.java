@@ -131,7 +131,13 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   private static String getInternalRtPath(final String homePath) {
     if (SystemInfo.isLinux || SystemInfo.isWindows) {
       final @NonNls String rtJar = "rt.jar";
-      @NonNls String rtPath = homePath + File.separator + JRE_DIR_NAME + File.separator + LIB_DIR_NAME + File.separator + rtJar;
+      final String oldJrePath = homePath + File.separator + JRE_DIR_NAME + File.separator;
+      final String pathSuffix = LIB_DIR_NAME + File.separator + rtJar;
+      String rtPath = oldJrePath + pathSuffix;
+      if (new File(rtPath).exists()) {
+        return rtPath;
+      }
+      rtPath = oldJrePath + JRE_DIR_NAME + File.separator + pathSuffix;
       if (new File(rtPath).exists()) {
         return rtPath;
       }
@@ -146,9 +152,13 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   @Nullable
   private static ProjectJdk getInternalJavaSdk(final String sdkHome) {
     if (SystemInfo.isLinux || SystemInfo.isWindows) {
-      @NonNls String jreHome = sdkHome + File.separator + JRE_DIR_NAME + File.separator + JRE_DIR_NAME;
+      final String oldJrePath = sdkHome + File.separator + JRE_DIR_NAME;
+      String jreHome = oldJrePath + File.separator + JRE_DIR_NAME;
       if (new File(jreHome).exists()){
         return JavaSdk.getInstance().createJdk("", jreHome);
+      }
+      if (new File(oldJrePath).exists()){
+        return JavaSdk.getInstance().createJdk("", oldJrePath);
       }
     }
     final String jrePath = System.getProperty(JAVA_HOME_PROPERTY);
