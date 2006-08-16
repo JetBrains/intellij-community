@@ -20,6 +20,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Query;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.project.Project;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
@@ -33,11 +34,17 @@ public class MethodUtils{
     }
 
     public static boolean isCompareTo(PsiMethod method){
+        if (method == null) {
+            return false;
+        }
         return methodMatches(method, null, PsiType.INT,
                 HardcodedMethodConstants.COMPARE_TO, PsiType.NULL);
     }
 
     public static boolean isHashCode(PsiMethod method){
+        if (method == null) {
+            return false;
+        }
         return methodMatches(method, null, PsiType.INT,
                 HardcodedMethodConstants.HASH_CODE);
     }
@@ -112,30 +119,36 @@ public class MethodUtils{
             @NonNls @Nullable String... parameterTypeStrings) {
         final PsiManager manager = method.getManager();
         final PsiElementFactory factory = manager.getElementFactory();
-        final GlobalSearchScope scope = method.getResolveScope();
-        if (parameterTypeStrings != null) {
-            final PsiType[] parameterTypes = new PsiType[parameterTypeStrings.length];
-            for (int i = 0; i < parameterTypeStrings.length; i++) {
-                final String parameterTypeString = parameterTypeStrings[i];
-                parameterTypes[i] = factory.createTypeByFQClassName(
-                        parameterTypeString, scope);
-            }
-            if (returnTypeString != null) {
+        try {
+            if (parameterTypeStrings != null) {
+                final PsiType[] parameterTypes =
+                        new PsiType[parameterTypeStrings.length];
+                for (int i = 0; i < parameterTypeStrings.length; i++) {
+                    final String parameterTypeString = parameterTypeStrings[i];
+                    parameterTypes[i] = factory.createTypeFromText(
+                            parameterTypeString, method);
+                }
+                if (returnTypeString != null) {
+                    final PsiType returnType =
+                            factory.createTypeFromText(returnTypeString,
+                                    method);
+                    return methodMatches(method, containingClassName, returnType,
+                            methodName, parameterTypes);
+                } else {
+                    return methodMatches(method, containingClassName, null,
+                            methodName, parameterTypes);
+                }
+            } else if (returnTypeString != null) {
                 final PsiType returnType =
-                        factory.createTypeByFQClassName(returnTypeString, scope);
+                        factory.createTypeFromText(returnTypeString, method);
                 return methodMatches(method, containingClassName, returnType,
-                        methodName, parameterTypes);
+                        methodName);
             } else {
                 return methodMatches(method, containingClassName, null,
-                        methodName, parameterTypes);
+                        methodName);
             }
-        } else if (returnTypeString != null) {
-            final PsiType returnType =
-                    factory.createTypeByFQClassName(returnTypeString, scope);
-            return methodMatches(method, containingClassName, returnType,
-                    methodName);
-        } else {
-            return methodMatches(method, containingClassName, null, methodName);
+        } catch (IncorrectOperationException e) {
+            throw new RuntimeException(e);
         }
     }
 
