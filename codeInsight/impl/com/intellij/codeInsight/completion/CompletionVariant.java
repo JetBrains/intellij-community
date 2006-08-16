@@ -73,7 +73,7 @@ public class CompletionVariant {
   public boolean isScopeClassFinal(Class scopeClass){
     for (final Object myScopeClass : myScopeClasses) {
       Scope scope = (Scope)myScopeClass;
-      if (scope.myClass.isAssignableFrom(scopeClass) && scope.myFinalFlag) {
+      if (scope.myClass.isAssignableFrom(scopeClass) && scope.myIsFinalScope) {
         return true;
       }
     }
@@ -111,8 +111,8 @@ public class CompletionVariant {
     myScopeClasses.add(new Scope(aClass, false));
   }
 
-  public void includeScopeClass(Class aClass, boolean flag){
-    myScopeClasses.add(new Scope(aClass, flag));
+  public void includeScopeClass(Class aClass, boolean isFinalScope){
+    myScopeClasses.add(new Scope(aClass, isFinalScope));
   }
 
   public void addCompletionFilterOnElement(ElementFilter filter){
@@ -358,11 +358,11 @@ public class CompletionVariant {
 
   private static class Scope{
     Class myClass;
-    boolean myFinalFlag;
+    boolean myIsFinalScope;
 
-    Scope(Class aClass, boolean flag){
+    Scope(Class aClass, boolean isFinalScope){
       myClass = aClass;
-      myFinalFlag = flag;
+      myIsFinalScope = isFinalScope;
     }
   }
 
