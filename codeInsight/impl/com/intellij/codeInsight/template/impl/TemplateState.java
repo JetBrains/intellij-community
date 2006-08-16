@@ -319,10 +319,10 @@ public class TemplateState implements Disposable {
     if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
 
     if (myDocumentChanged) {
-      if (myDocumentChangesTerminateTemplate) {
+      if (myDocumentChangesTerminateTemplate || mySegments.isInvalid()) {
         setCurrentVariableNumber(-1);
         fireTemplateCancelled();
-      } else if (!mySegments.isInvalid()) {
+      } else {
         calcResults(true);
       }
     }
