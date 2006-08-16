@@ -183,7 +183,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   void updateFileName(final @Nullable VirtualFile file) {
     // Queue here is to prevent title flickering when tab is being closed and two events arriving: with component==null and component==next focused tab
     // only the last event makes sense to handle
-    myQueue.queue(new Update("UpdateFileName") {
+    myQueue.queue(new Update("UpdateFileName "+(file==null?"":file.getPath())) {
       public boolean isExpired() {
         if (myProject.isDisposed() || !myProject.isOpen()) return true;
         return file == null ? super.isExpired() : !file.isValid();
