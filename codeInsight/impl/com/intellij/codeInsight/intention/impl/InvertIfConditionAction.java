@@ -248,7 +248,11 @@ public class InvertIfConditionAction extends BaseIntentionAction {
 //      while (first instanceof PsiWhiteSpace) first = first.getNextSibling();
       if (first != null) {
         PsiElement last = first;
-        while (last.getNextSibling() != null) last = last.getNextSibling();
+        PsiElement next = last.getNextSibling();
+        while (next != null && !(next instanceof PsiSwitchLabelStatement)) {
+          last = next;
+          next = next.getNextSibling();
+        }
         while (first != last && (last instanceof PsiWhiteSpace || (last instanceof PsiJavaToken && ((PsiJavaToken) last).getTokenType() == JavaTokenType.RBRACE)))
           last = last.getPrevSibling();
 
