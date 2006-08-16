@@ -307,7 +307,7 @@ public class JavaCompletionData extends CompletionData{
     {
 // completion for declarations
       final CompletionVariant variant = new CompletionVariant(new OrFilter(END_OF_BLOCK, new LeftNeighbour(new TextFilter(PsiKeyword.FINAL))));
-      variant.includeScopeClass(PsiCodeBlock.class, true);
+      variant.includeScopeClass(PsiCodeBlock.class, false);
       addPrimitiveTypes(variant);
       variant.addCompletion(PsiKeyword.CLASS);
       registerVariant(variant);
