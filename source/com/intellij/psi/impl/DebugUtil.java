@@ -262,6 +262,14 @@ public class DebugUtil {
     return stringBuffer.toString();
   }
 
+  public static String psiToString(PsiElement root,
+                                 boolean skipWhiteSpaces,
+                                 boolean showRanges) {
+    final StringBuffer result = new StringBuffer();
+    psiToBuffer(result, root, 0, skipWhiteSpaces, showRanges, showRanges);
+    return result.toString();
+  }
+  
   public static void psiToBuffer(StringBuffer buffer,
                                  PsiElement root,
                                  int indent,
