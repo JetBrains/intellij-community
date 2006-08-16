@@ -20,15 +20,14 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestData;
 import com.intellij.util.Function;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Mike
@@ -43,7 +42,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   protected Editor createEditor(VirtualFile file) {
     final FileEditorManager instance = FileEditorManager.getInstance(myProject);
 
-    if (file.getFileType() != null && file.getFileType().isBinary()) {
+    if (file.getFileType().isBinary()) {
       return null;
     }
 
@@ -126,7 +125,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
-  protected VirtualFile configureByFiles(final VirtualFile[] vFiles, final File projectRoot) throws IOException {
+  protected VirtualFile configureByFiles(VirtualFile[] vFiles, final File projectRoot) throws IOException {
     myFile = null;
     myEditor = null;
 
@@ -139,6 +138,8 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     VirtualFile toDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(toDirIO.getCanonicalPath().replace(File.separatorChar, '/'));
 
     final LinkedHashMap<VirtualFile, EditorInfo> editorInfos;
+    // auxiliary files should be copied first
+    vFiles = ArrayUtil.reverseArray(vFiles);
     if (projectRoot != null) {
       FileUtil.copyDir(projectRoot, toDirIO);
       VirtualFile fromDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectRoot);
@@ -160,7 +161,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
     rootModel.commit();
 
-    openEditorsAndActivateFirst(editorInfos);
+    openEditorsAndActivateLast(editorInfos);
 
     return toDir;
   }
@@ -242,9 +243,9 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     myFile = getPsiFile(editor.getDocument());
   }
 
-  protected List<Editor> openEditorsAndActivateFirst(final LinkedHashMap<VirtualFile, EditorInfo> editorInfos) {
+  protected List<Editor> openEditorsAndActivateLast(final LinkedHashMap<VirtualFile, EditorInfo> editorInfos) {
     final List<Editor> list = openEditors(editorInfos);
-    setActiveEditor(list.get(0));
+    setActiveEditor(list.get(list.size() - 1));
     return list;
   }
 
