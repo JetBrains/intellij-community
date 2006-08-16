@@ -433,7 +433,9 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     final String path = FileUtil.toSystemIndependentName(myPropertiesFile.getText());
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(path);
     if (fileType != StdFileTypes.PROPERTIES) {
-      Messages.showErrorDialog(myProject, "Can't create properties file '"+myPropertiesFile.getText()+"' because its name is associated with the "+fileType.getDescription() + ".", "Error creating properties file");
+      String message = CodeInsightBundle.message("i18nize.cant.create.properties.file.because.its.name.is.associated",
+                                                 myPropertiesFile.getText(), fileType.getDescription());
+      Messages.showErrorDialog(myProject, message, CodeInsightBundle.message("i18nize.error.creating.properties.file"));
       return false;
     }
 
@@ -460,7 +462,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
       if (e[0] != null) throw e[0];
     }
     catch (IOException e) {
-      Messages.showErrorDialog(myProject, e.getLocalizedMessage(), "Error creating properties file");
+      Messages.showErrorDialog(myProject, e.getLocalizedMessage(), CodeInsightBundle.message("i18nize.error.creating.properties.file"));
       return false;
     }
 
