@@ -32,10 +32,10 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
   OrderEntry[] EMPTY_ARRAY = new OrderEntry[0];
 
   /**
-   * Returns list of root <code>VirtualFile</code>s of given type for this entry.
+   * Returns list of root {@link VirtualFile}s of given type for this entry.
    * Those files should be traversed in order they are returned in.
-   * Note that actual OrderEntry (as seen in UI) may contain also contain invalid roots.
-   * If you want to get list of all roots, use <code>getURLs</code> method. <br>
+   * Note that actual OrderEntry (as seen in UI) may also contain invalid roots.
+   * If you want to get list of all roots, use {@link #getUrls(OrderRootType)} method. <br>
    *
    * Note that list of roots is project dependent.
    *
