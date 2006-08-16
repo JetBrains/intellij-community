@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
@@ -120,7 +121,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     }
 
     final ProjectJdk jdk = getInternalJavaSdk(sdkHome);
-    if (jdk.getVersionString() != null){
+    if (jdk != null && jdk.getVersionString() != null){
       return jdk.getToolsPath();
     }
     return null;
@@ -136,8 +137,8 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
       }
     }
     final ProjectJdk jdk = getInternalJavaSdk(homePath);
-    if (jdk.getVersionString() != null){
-      return jdk.getToolsPath();
+    if (jdk != null && jdk.getVersionString() != null){
+      return jdk.getRtLibraryPath();
     }
     return null;
   }
@@ -145,7 +146,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   @Nullable
   private static ProjectJdk getInternalJavaSdk(final String sdkHome) {
     if (SystemInfo.isLinux || SystemInfo.isWindows) {
-      @NonNls String jreHome = sdkHome + File.separator + JRE_DIR_NAME;
+      @NonNls String jreHome = sdkHome + File.separator + JRE_DIR_NAME + File.separator + JRE_DIR_NAME;
       if (new File(jreHome).exists()){
         return JavaSdk.getInstance().createJdk("", jreHome);
       }
@@ -221,6 +222,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     File[] srcs = src.listFiles(new FileFilter() {
       public boolean accept(File pathname) {
         @NonNls final String path = pathname.getPath();
+        //noinspection SimplifiableIfStatement
         if (path.indexOf("generics") > -1) return false;
         return path.endsWith(".jar") || path.endsWith(".zip");
       }
@@ -364,6 +366,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     return DevKitBundle.message("sdk.title");
   }
 
+  @NotNull
   public String getComponentName() {
     return getName();
   }
