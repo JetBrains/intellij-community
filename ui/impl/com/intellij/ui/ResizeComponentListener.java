@@ -53,17 +53,14 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
 
 
   public void mouseExited(MouseEvent e) {
-    if (!myComponent.isDraggedState()){
-      final Window popupWindow = SwingUtilities.windowForComponent(myComponent);
-      if (popupWindow == null) return;
-      clearBorder(popupWindow);
-    }
+    final Window popupWindow = SwingUtilities.windowForComponent(myComponent);
+    if (popupWindow == null) return;
+    clearBorder(popupWindow);
   }
 
   private void endOperation() {
     final Window popupWindow = SwingUtilities.windowForComponent(myComponent);
     if (popupWindow != null) {
-      myComponent.setDraggedState(false);
       if (!SystemInfo.isMac) {
         myComponent.setBorder(BorderFactory.createEmptyBorder(2,2,2,2));
       }
