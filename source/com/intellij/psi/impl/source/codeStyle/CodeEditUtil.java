@@ -132,8 +132,10 @@ public class CodeEditUtil {
     }
 
     final ASTNode prevLeaf = TreeUtil.prevLeaf(first);
+    final ASTNode nextLeaf = TreeUtil.nextLeaf(first);
     parent.removeRange(first, last.getTreeNext());
-    makePlaceHolderBetweenTokens(prevLeaf, prevLeaf != null ? TreeUtil.nextLeaf(prevLeaf) : null, forceReformat, tailingElement);
+    final ASTNode nextLeafToAdjust = nextLeaf;
+    makePlaceHolderBetweenTokens(prevLeaf, nextLeafToAdjust, forceReformat, tailingElement);
   }
 
   private static boolean needToForceReformat(final CompositeElement parent, final ASTNode first, final ASTNode last) {
