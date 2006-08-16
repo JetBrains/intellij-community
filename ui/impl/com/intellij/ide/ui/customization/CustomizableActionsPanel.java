@@ -13,10 +13,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -525,6 +522,8 @@ public class CustomizableActionsPanel {
     if (!mySelectedSchema.getName().equals(allSchemas.getActiveSchema().getName())) {
       return true;
     }
+
+    if (Comparing.strEqual(mySelectedSchema.getName(), CustomizableActionsSchemas.DEFAULT_NAME)) return false;
 
     ArrayList<String> currentNames = new ArrayList<String>();
 
