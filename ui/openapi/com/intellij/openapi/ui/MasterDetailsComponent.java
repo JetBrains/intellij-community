@@ -339,6 +339,10 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     };
   }
 
+  protected void updateBannerSlogan(String updatedText) {
+    myBanner.setText(updatedText);
+  }
+
   protected void addNode(MyNode nodeToAdd, MyNode parent) {
     parent.add(nodeToAdd);
     TreeUtil.sort(parent, new Comparator() {
@@ -389,6 +393,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     });
   }
 
+  @Nullable
   protected static MyNode findNodeByObject(final TreeNode root, final Object editableObject) {
     if (editableObject == null) return null; //do not suggest root node
     return findNodeByCondition(root, new Condition<NamedConfigurable>() {
@@ -445,6 +450,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     return true;
   }
 
+  @Nullable
   private static String alreadyExist(MyNode root) {
     final Set<String> names = new HashSet<String>();
     for (int i = 0; i < root.getChildCount(); i++){
