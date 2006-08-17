@@ -312,10 +312,13 @@ public class GenericsHighlightUtil {
       if (!superMethod.isConstructor() || !checkMethod.getContainingClass().equals(superMethod.getContainingClass())) return;
     } else if (superMethod.isConstructor()) return;
 
-
     if (checkMethod.hasModifierProperty(PsiModifier.STATIC)) {
       if (!checkMethod.getContainingClass().equals(superMethod.getContainingClass())) return;
     }
+
+    final PsiType returnType1 = TypeConversionUtil.erasure(checkMethod.getReturnType());
+    final PsiType returnType2 = TypeConversionUtil.erasure(superMethod.getReturnType());
+    if (!Comparing.equal(returnType1, returnType2)) return;
 
     if (checkMethod.getContainingClass().equals(superMethod.getContainingClass()) ||
         !MethodSignatureUtil.isSubsignature(superSignature, toCheck)) {
