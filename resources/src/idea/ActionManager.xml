@@ -127,6 +127,7 @@
     <group id="JavaeeEditorGenerateGroup">
       <action id="GenerateEJBReference" class="com.intellij.codeInsight.generation.actions.GenerateEJBReference"/>
       <action id="GenerateResourceReference" class="com.intellij.codeInsight.generation.actions.GenerateResourceReference"/>
+      <action id="GeneratePersistenceContextReference" class="com.intellij.codeInsight.generation.actions.GeneratePersistenceContextReference"/>
       <action id="GenerateInterceptorMethods" class="com.intellij.codeInsight.generation.actions.GenerateInterceptorMethods"/>
       <action id="GenerateEntityListenerMethods" class="com.intellij.codeInsight.generation.actions.GenerateEntityListenerMethods"/>
 
