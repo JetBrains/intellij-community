@@ -1,6 +1,7 @@
 package com.intellij.psi;
 
 import com.intellij.lang.*;
+import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -362,7 +363,9 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
   private void doHolderToXmlChanges(final PsiFile psiFile) {
     boolean removeRoot = false;
-    boolean keepTree = psiFile.getLanguage().equals(StdLanguages.HTML);
+    boolean keepTree = psiFile.getLanguage().equals(StdLanguages.HTML) ||
+                       (psiFile.getLanguage().equals(StdLanguages.JAVA) || psiFile.getLanguage().equals(JspxFileViewProvider.JAVA_HOLDER_METHOD_TREE_LANGUAGE))
+                       && getBaseLanguage().equals(StdLanguages.JSP);
     if (keepTree) {
       removeRoot = myRootsInUpdate.add(psiFile);
     }
