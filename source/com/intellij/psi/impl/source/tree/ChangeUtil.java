@@ -595,7 +595,7 @@ public class ChangeUtil {
       }
     }
     else {
-      LOG.error("ChangeUtil.copyToElement() unknown element " + original);
+      LOG.error("ChangeUtil.copyToElement() unknown element " + original + " of type " + original.getClass());
       return null;
     }
   }
