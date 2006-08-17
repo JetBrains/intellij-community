@@ -45,7 +45,7 @@ public abstract class PomTransactionBase implements PomTransaction{
       return;
     }
     for (PomModelAspect aspect : event.getChangedAspects()) {
-      myAccumulatedEvent.registerChangeSet(aspect, event.getChangeSet(aspect));
+      myAccumulatedEvent.merge(event);
     }
   }
 
