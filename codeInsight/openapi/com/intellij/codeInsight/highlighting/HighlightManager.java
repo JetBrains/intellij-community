@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Collection;
@@ -33,25 +34,26 @@ public abstract class HighlightManager {
   public static HighlightManager getInstance(Project project) {
     return project.getComponent(HighlightManager.class);
   }
-
   public static final int HIDE_BY_ESCAPE = 0x01;
   public static final int HIDE_BY_ANY_KEY = 0x02;
   public static final int HIDE_BY_TEXT_CHANGE = 0x04;
 
-  public abstract void addRangeHighlight(Editor editor,
+  public abstract void addRangeHighlight(@NotNull Editor editor,
                                          int startOffset,
                                          int endOffset,
-                                         TextAttributes attributes,
+                                         @NotNull TextAttributes attributes,
                                          boolean hideByTextChange,
                                          @Nullable Collection<RangeHighlighter> outHighlighters);
 
-  public abstract boolean removeSegmentHighlighter(Editor editor, RangeHighlighter highlighter);
+  public abstract boolean removeSegmentHighlighter(@NotNull Editor editor, @NotNull RangeHighlighter highlighter);
 
-  public abstract void addOccurrenceHighlights(Editor editor, PsiReference[] occurrences,
-                                               TextAttributes attributes, boolean hideByTextChange,
-                                               Collection<RangeHighlighter> outHighlighters);
+  public abstract void addOccurrenceHighlights(@NotNull Editor editor,
+                                               @NotNull PsiReference[] occurrences,
+                                               @NotNull TextAttributes attributes,
+                                               boolean hideByTextChange,
+                                               @Nullable Collection<RangeHighlighter> outHighlighters);
 
-  public abstract void addOccurrenceHighlight(Editor editor,
+  public abstract void addOccurrenceHighlight(@NotNull Editor editor,
                                               int start,
                                               int end,
                                               TextAttributes attributes,
@@ -59,11 +61,15 @@ public abstract class HighlightManager {
                                               @Nullable Collection<RangeHighlighter> outHighlighters,
                                               @Nullable Color scrollmarkColor);
 
-  public abstract void addOccurrenceHighlights(Editor editor, PsiElement[] elements,
-                                               TextAttributes attributes, boolean hideByTextChange,
+  public abstract void addOccurrenceHighlights(@NotNull Editor editor,
+                                               @NotNull PsiElement[] elements,
+                                               @NotNull TextAttributes attributes,
+                                               boolean hideByTextChange,
                                                @Nullable Collection<RangeHighlighter> outHighlighters);
 
-  public abstract void addElementsOccurrenceHighlights(Editor editor, PsiElement[] elements,
-                                                       TextAttributes attributes, boolean hideByTextChange,
+  public abstract void addElementsOccurrenceHighlights(@NotNull Editor editor,
+                                                       @NotNull PsiElement[] elements,
+                                                       @NotNull TextAttributes attributes,
+                                                       boolean hideByTextChange,
                                                        @Nullable Collection<RangeHighlighter> outHighlighters);
 }

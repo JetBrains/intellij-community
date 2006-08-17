@@ -10,16 +10,20 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.impl.injected.EditorDelegate;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.injected.EditorDelegate;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -123,7 +127,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     return highlighter;
   }
 
-  public boolean removeSegmentHighlighter(Editor editor, RangeHighlighter highlighter) {
+  public boolean removeSegmentHighlighter(@NotNull Editor editor, @NotNull RangeHighlighter highlighter) {
     Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, false);
     if (map == null) return false;
     HighlightInfo info = map.get(highlighter);
@@ -136,8 +140,8 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     return true;
   }
 
-  public void addOccurrenceHighlights(Editor editor, PsiReference[] occurrences,
-                                      TextAttributes attributes, boolean hideByTextChange,
+  public void addOccurrenceHighlights(@NotNull Editor editor, @NotNull PsiReference[] occurrences,
+                                      @NotNull TextAttributes attributes, boolean hideByTextChange,
                                       Collection<RangeHighlighter> outHighlighters) {
     if (occurrences.length == 0) return;
     int flags = HIDE_BY_ESCAPE;
@@ -146,18 +150,28 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     }
     Color scrollmarkColor = getScrollMarkColor(attributes);
 
+    int oldOffset = editor.getCaretModel().getOffset();
+    int horizontalScrollOffset = editor.getScrollingModel().getHorizontalScrollOffset();
+    int verticalScrollOffset = editor.getScrollingModel().getVerticalScrollOffset();
     for (PsiReference occurrence : occurrences) {
       PsiElement element = occurrence.getElement();
       int startOffset = element.getTextRange().getStartOffset();
       int start = startOffset + occurrence.getRangeInElement().getStartOffset();
       int end = startOffset + occurrence.getRangeInElement().getEndOffset();
-
-      addOccurrenceHighlight(editor, start, end, attributes, flags, outHighlighters, scrollmarkColor);
+      PsiFile containingFile = element.getContainingFile();
+      Project project = element.getProject();
+      // each reference can reside in its own injected editor
+      Editor textEditor = InjectedLanguageUtil.openEditorFor(containingFile, project);
+      addOccurrenceHighlight(textEditor, start, end, attributes, flags, outHighlighters, scrollmarkColor);
     }
+    editor.getCaretModel().moveToOffset(oldOffset);
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    editor.getScrollingModel().scrollHorizontally(horizontalScrollOffset);
+    editor.getScrollingModel().scrollVertically(verticalScrollOffset);
   }
 
-  public void addElementsOccurrenceHighlights(Editor editor, PsiElement[] elements,
-                                              TextAttributes attributes, boolean hideByTextChange,
+  public void addElementsOccurrenceHighlights(@NotNull Editor editor, @NotNull PsiElement[] elements,
+                                              @NotNull TextAttributes attributes, boolean hideByTextChange,
                                               Collection<RangeHighlighter> outHighlighters) {
     if (elements.length == 0) return;
     int flags = HIDE_BY_ESCAPE;
@@ -172,7 +186,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     }
   }
 
-  public void addOccurrenceHighlight(Editor editor,
+  public void addOccurrenceHighlight(@NotNull Editor editor,
                                      int start,
                                      int end,
                                      TextAttributes attributes,
@@ -188,10 +202,10 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     }
   }
 
-  public void addRangeHighlight(Editor editor,
+  public void addRangeHighlight(@NotNull Editor editor,
                                 int startOffset,
                                 int endOffset,
-                                TextAttributes attributes,
+                                @NotNull TextAttributes attributes,
                                 boolean hideByTextChange,
                                 Collection<RangeHighlighter> highlighters) {
     int flags = HIDE_BY_ESCAPE;
@@ -204,8 +218,8 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     addOccurrenceHighlight(editor, startOffset, endOffset, attributes, flags, highlighters, scrollmarkColor);
   }
 
-  public void addOccurrenceHighlights(Editor editor, PsiElement[] elements,
-                                      TextAttributes attributes, boolean hideByTextChange,
+  public void addOccurrenceHighlights(@NotNull Editor editor, @NotNull PsiElement[] elements,
+                                      @NotNull TextAttributes attributes, boolean hideByTextChange,
                                       Collection<RangeHighlighter> outHighlighters) {
     if (elements.length == 0) return;
     int flags = HIDE_BY_ESCAPE;
@@ -264,10 +278,10 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
       final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
       if (editor == null) return;
       ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              hideHighlights(editor, HIDE_BY_ANY_KEY);
-            }
-          });
+        public void run() {
+          hideHighlights(editor, HIDE_BY_ANY_KEY);
+        }
+      });
     }
   }
 }

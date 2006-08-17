@@ -14,6 +14,8 @@ import com.intellij.openapi.editor.impl.injected.DocumentRange;
 import com.intellij.openapi.editor.impl.injected.EditorDelegate;
 import com.intellij.openapi.editor.impl.injected.VirtualFileDelegate;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -469,5 +471,17 @@ public class InjectedLanguageUtil {
     }
     injected.add(documentRange);
     return injectedPsi;
+  }
+
+  public static Editor openEditorFor(PsiFile file, Project project) {
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    // may return editor injected in current selection in the host editor, not for the file passed as argument
+    Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file.getVirtualFile(), -1), false);
+    if (editor instanceof EditorDelegate) editor = ((EditorDelegate)editor).getDelegate();
+    if (editor == null) return null;
+    if (document instanceof DocumentRange) {
+      return EditorDelegate.create((DocumentRange)document,(EditorImpl)editor,file);
+    }
+    return editor;
   }
 }

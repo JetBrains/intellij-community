@@ -139,7 +139,7 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
     return myDelegate.createRangeMarker(startOffset, endOffset, surviveOnExternalChange);
   }
 
-  @SuppressWarnings({"Deprecation"})
+  @SuppressWarnings({"deprecation"})
   public MarkupModel getMarkupModel() {
     return myDelegate.getMarkupModel();
   }
