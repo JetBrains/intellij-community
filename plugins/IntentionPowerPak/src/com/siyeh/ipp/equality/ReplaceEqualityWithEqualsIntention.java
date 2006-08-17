@@ -54,7 +54,7 @@ public class ReplaceEqualityWithEqualsIntention extends Intention {
         final IElementType tokenType = operationSign.getTokenType();
         @NonNls final String expString;
         if (tokenType.equals(JavaTokenType.EQEQ)) {
-            if (ParenthesesUtils.getPrecendence(strippedLhs) >
+            if (ParenthesesUtils.getPrecedence(strippedLhs) >
                     ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
                 expString = '(' + strippedLhs.getText() + ").equals(" +
                         strippedRhs.getText() + ')';
@@ -63,7 +63,7 @@ public class ReplaceEqualityWithEqualsIntention extends Intention {
                         strippedRhs.getText() + ')';
             }
         } else {
-            if (ParenthesesUtils.getPrecendence(strippedLhs) >
+            if (ParenthesesUtils.getPrecedence(strippedLhs) >
                     ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
                 expString = "!(" + strippedLhs.getText() + ").equals(" +
                         strippedRhs.getText() + ')';

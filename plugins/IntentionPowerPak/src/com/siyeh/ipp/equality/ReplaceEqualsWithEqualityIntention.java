@@ -55,14 +55,14 @@ public class ReplaceEqualsWithEqualityIntention extends Intention {
             return;
         }
         final String strippedArgText;
-        if (ParenthesesUtils.getPrecendence(strippedArg) >
+        if (ParenthesesUtils.getPrecedence(strippedArg) >
                 ParenthesesUtils.EQUALITY_PRECEDENCE) {
             strippedArgText = '(' + strippedArg.getText() + ')';
         } else {
             strippedArgText = strippedArg.getText();
         }
         final String strippedTargetText;
-        if (ParenthesesUtils.getPrecendence(strippedTarget) >
+        if (ParenthesesUtils.getPrecedence(strippedTarget) >
                 ParenthesesUtils.EQUALITY_PRECEDENCE) {
             strippedTargetText = '(' + strippedTarget.getText() + ')';
         } else {

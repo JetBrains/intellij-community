@@ -113,7 +113,7 @@ public class BoolUtils{
             final PsiExpression rhs = binaryExpression.getROperand();
             assert rhs != null;
             return lhs.getText() + negatedComparison + rhs.getText();
-        } else if(ParenthesesUtils.getPrecendence(condition) >
+        } else if(ParenthesesUtils.getPrecedence(condition) >
                 ParenthesesUtils.PREFIX_PRECEDENCE){
             return "!(" + condition.getText() + ')';
         } else{

@@ -17,6 +17,7 @@ package com.siyeh.ipp.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +90,14 @@ public class ParenthesesUtils{
         return parenthesized;
     }
 
-    public static int getPrecendence(PsiExpression expression){
+    public static boolean isCommutativeBinaryOperator(
+            @NotNull IElementType token) {
+        return !(token.equals(JavaTokenType.MINUS) ||
+                token.equals(JavaTokenType.DIV) ||
+                token.equals(JavaTokenType.PERC));
+    }
+
+    public static int getPrecedence(PsiExpression expression){
         if(expression instanceof PsiThisExpression ||
            expression instanceof PsiLiteralExpression ||
            expression instanceof PsiSuperExpression ||
@@ -107,11 +115,11 @@ public class ParenthesesUtils{
                 return LITERAL_PRECEDENCE;
             }
         }
-        if(expression instanceof PsiMethodCallExpression){
+        if(expression instanceof PsiMethodCallExpression ||
+                expression instanceof PsiNewExpression){
             return METHOD_CALL_PRECEDENCE;
         }
-        if(expression instanceof PsiTypeCastExpression ||
-           expression instanceof PsiNewExpression){
+        if(expression instanceof PsiTypeCastExpression){
             return TYPE_CAST_PRECEDENCE;
         }
         if(expression instanceof PsiPrefixExpression){
@@ -228,22 +236,22 @@ public class ParenthesesUtils{
         if(qualifier != null){
             final PsiType[] typeParameters =
                     referenceExpression.getTypeParameters();
-            if(typeParameters.length > 0){
-                final StringBuilder out = new StringBuilder();
-                out.append(removeParentheses(qualifier));
-                out.append(".<");
-                out.append(typeParameters[0].getCanonicalText());
+            if (typeParameters.length > 0) {
+                final StringBuilder result = new StringBuilder();
+                result.append(removeParentheses(qualifier));
+                result.append(".<");
+                result.append(typeParameters[0].getCanonicalText());
                 for (int i = 1; i < typeParameters.length; i++) {
                     final PsiType typeParameter = typeParameters[i];
-                    out.append(',');
-                    out.append(typeParameter.getCanonicalText());
+                    result.append(',');
+                    result.append(typeParameter.getCanonicalText());
                 }
-                out.append('>');
-                out.append(referenceExpression.getReferenceName());
-                return out.toString();
-            } else{
+                result.append('>');
+                result.append(referenceExpression.getReferenceName());
+                return result.toString();
+            } else {
                 return removeParentheses(qualifier) + '.' +
-                       referenceExpression.getReferenceName();
+                        referenceExpression.getReferenceName();
             }
         } else{
             return referenceExpression.getText();
@@ -263,8 +271,8 @@ public class ParenthesesUtils{
         }
         final PsiExpression parentExpression =
                 (PsiExpression) parenthesizedExpression.getParent();
-        final int parentPrecedence = getPrecendence(parentExpression);
-        final int childPrecedence = getPrecendence(body);
+        final int parentPrecedence = getPrecedence(parentExpression);
+        final int childPrecedence = getPrecedence(body);
         if(parentPrecedence < childPrecedence){
             return '(' + removeParentheses(body) + ')';
         } else if(parentPrecedence == childPrecedence){
@@ -285,11 +293,15 @@ public class ParenthesesUtils{
                 final PsiType parentType = parentBinaryExpression.getType();
                 final PsiType bodyType = body.getType();
                 if(parentType != null && parentType.equals(bodyType) &&
-                   parentOperator.equals(bodyOperator)){
-                    return removeParentheses(body);
-                } else{
-                    return '(' + removeParentheses(body) + ')';
+                        parentOperator.equals(bodyOperator)) {
+                    final PsiExpression rhs =
+                            parentBinaryExpression.getROperand();
+                    if (!PsiTreeUtil.isAncestor(rhs, body, true) ||
+                            isCommutativeBinaryOperator(bodyOperator)) {
+                        return removeParentheses(body);
+                    }
                 }
+                return '(' + removeParentheses(body) + ')';
             } else{
                 return removeParentheses(body);
             }
@@ -307,7 +319,7 @@ public class ParenthesesUtils{
                 conditionalExpression.getElseExpression();
         return removeParentheses(condition) + '?' +
                removeParentheses(thenBranch) + ':' +
-                                                   removeParentheses(elseBranch);
+               removeParentheses(elseBranch);
     }
 
     private static String removeParensFromInstanceOfExpression(
@@ -329,8 +341,8 @@ public class ParenthesesUtils{
         final PsiExpression lhs = binaryExpression.getLOperand();
         final PsiExpression rhs = binaryExpression.getROperand();
         final PsiJavaToken sign = binaryExpression.getOperationSign();
-        return removeParentheses(lhs) + ' ' + sign.getText() + ' ' +
-               removeParentheses(rhs);
+        return removeParentheses(lhs) + ' ' + sign.getText() + ' '
+               + removeParentheses(rhs);
     }
 
     private static String removeParensFromPostfixExpression(
@@ -355,8 +367,8 @@ public class ParenthesesUtils{
                 arrayAccessExpression.getArrayExpression();
         final PsiExpression indexExp =
                 arrayAccessExpression.getIndexExpression();
-        return removeParentheses(arrayExp) + '[' +
-               removeParentheses(indexExp) + ']';
+        return removeParentheses(arrayExp) + '[' + removeParentheses(indexExp) +
+               ']';
     }
 
     private static String removeParensFromTypeCastExpression(
@@ -397,7 +409,7 @@ public class ParenthesesUtils{
         final PsiExpression lhs = assignment.getLExpression();
         final PsiExpression rhs = assignment.getRExpression();
         final PsiJavaToken sign = assignment.getOperationSign();
-        return removeParentheses(lhs) + ' ' +  sign.getText() + ' ' +
+        return removeParentheses(lhs) + ' ' + sign.getText() + ' ' +
                removeParentheses(rhs);
     }
 
@@ -439,10 +451,16 @@ public class ParenthesesUtils{
         out.append(PsiKeyword.NEW + ' ');
         final PsiJavaCodeReferenceElement classReference =
                 newExpression.getClassReference();
+        final PsiType type = newExpression.getType();
         final String text;
         if(classReference == null){
-            text = "";
-        } else{
+            if (type != null) {
+                final PsiType componentType = type.getDeepComponentType();
+                text = componentType.getCanonicalText();
+            } else {
+                text = "";
+            }
+        } else {
             text = classReference.getText();
         }
         out.append(text);
@@ -456,7 +474,6 @@ public class ParenthesesUtils{
             }
             out.append(')');
         }
-        final PsiType type = newExpression.getType();
         if(strippedDimensions.length > 0){
             for(String strippedDimension : strippedDimensions){
                 out.append('[');

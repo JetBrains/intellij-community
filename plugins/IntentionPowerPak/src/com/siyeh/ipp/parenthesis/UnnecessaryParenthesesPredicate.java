@@ -41,8 +41,8 @@ class UnnecessaryParenthesesPredicate implements PsiElementPredicate{
 			return true;
 		}
 		final int parentPrecendence =
-                ParenthesesUtils.getPrecendence((PsiExpression) parent);
-		final int childPrecendence = ParenthesesUtils.getPrecendence(body);
+                ParenthesesUtils.getPrecedence((PsiExpression) parent);
+		final int childPrecendence = ParenthesesUtils.getPrecedence(body);
 		if(parentPrecendence > childPrecendence){
 			return true;
 		} else if(parentPrecendence == childPrecendence){

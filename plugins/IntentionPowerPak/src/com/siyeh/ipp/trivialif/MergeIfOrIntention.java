@@ -56,7 +56,7 @@ public class MergeIfOrIntention extends Intention {
             return;
         }
         final String childConditionText;
-        if (ParenthesesUtils.getPrecendence(childCondition)
+        if (ParenthesesUtils.getPrecedence(childCondition)
                 > ParenthesesUtils.OR_PRECEDENCE) {
             childConditionText = '(' + childCondition.getText() + ')';
         } else {
@@ -67,7 +67,7 @@ public class MergeIfOrIntention extends Intention {
             return;
         }
         final String parentConditionText;
-        if (ParenthesesUtils.getPrecendence(condition)
+        if (ParenthesesUtils.getPrecedence(condition)
                 > ParenthesesUtils.OR_PRECEDENCE) {
             parentConditionText = '(' + condition.getText() + ')';
         } else {
@@ -108,7 +108,7 @@ public class MergeIfOrIntention extends Intention {
             return;
         }
         final String childConditionText;
-        if (ParenthesesUtils.getPrecendence(childCondition)
+        if (ParenthesesUtils.getPrecedence(childCondition)
                 > ParenthesesUtils.OR_PRECEDENCE) {
             childConditionText = '(' + childCondition.getText() + ')';
         } else {
@@ -120,7 +120,7 @@ public class MergeIfOrIntention extends Intention {
             return;
         }
         final String parentConditionText;
-        if (ParenthesesUtils.getPrecendence(condition)
+        if (ParenthesesUtils.getPrecedence(condition)
                 > ParenthesesUtils.OR_PRECEDENCE) {
             parentConditionText = '(' + condition.getText() + ')';
         } else {

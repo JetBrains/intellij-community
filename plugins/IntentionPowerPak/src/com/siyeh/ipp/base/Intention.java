@@ -94,7 +94,7 @@ public abstract class Intention implements IntentionAction{
             assert rhs != null;
             expString = lhs.getText() + negatedComparison + rhs.getText();
         } else{
-            if(ParenthesesUtils.getPrecendence(newExpression) >
+            if(ParenthesesUtils.getPrecedence(newExpression) >
                     ParenthesesUtils.PREFIX_PRECEDENCE){
                 expString = "!(" + newExpressionText + ')';
             } else{

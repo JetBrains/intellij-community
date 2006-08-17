@@ -71,7 +71,7 @@ public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention {
             return;
         }
         final String callString;
-        if (ParenthesesUtils.getPrecendence(strippedArg) >
+        if (ParenthesesUtils.getPrecedence(strippedArg) >
                 ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
             callString = '(' + strippedArg.getText() + ")." + methodName + '(' +
                     strippedTarget.getText() + ')';

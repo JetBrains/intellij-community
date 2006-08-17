@@ -65,7 +65,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
                 return;
             }
             final String thenValue;
-            if (ParenthesesUtils.getPrecendence(thenRhs)
+            if (ParenthesesUtils.getPrecedence(thenRhs)
                     <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
                 thenValue = thenRhs.getText();
             } else {
@@ -76,14 +76,14 @@ public class ReplaceIfWithConditionalIntention extends Intention {
                 return;
             }
             final String elseValue;
-            if (ParenthesesUtils.getPrecendence(elseRhs)
+            if (ParenthesesUtils.getPrecedence(elseRhs)
                     <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
                 elseValue = elseRhs.getText();
             } else {
                 elseValue = '(' + elseRhs.getText() + ')';
             }
             final String conditionText;
-            if (ParenthesesUtils.getPrecendence(condition)
+            if (ParenthesesUtils.getPrecedence(condition)
                     <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
                 conditionText = condition.getText();
             } else {
@@ -110,7 +110,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
                 return;
             }
             final String thenValue;
-            if (ParenthesesUtils.getPrecendence(thenReturnValue)
+            if (ParenthesesUtils.getPrecedence(thenReturnValue)
                     <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
                 thenValue = thenReturnValue.getText();
             } else {
@@ -121,14 +121,14 @@ public class ReplaceIfWithConditionalIntention extends Intention {
                 return;
             }
             final String elseValue;
-            if (ParenthesesUtils.getPrecendence(elseReturnValue)
+            if (ParenthesesUtils.getPrecedence(elseReturnValue)
                     <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
                 elseValue = elseReturnValue.getText();
             } else {
                 elseValue = '(' + elseReturnValue.getText() + ')';
             }
             final String conditionText;
-            if (ParenthesesUtils.getPrecendence(condition)
+            if (ParenthesesUtils.getPrecedence(condition)
                     <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
                 conditionText = condition.getText();
             } else {
@@ -154,7 +154,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
                 return;
             }
             final String thenValue;
-            if (ParenthesesUtils.getPrecendence(thenReturnValue)
+            if (ParenthesesUtils.getPrecedence(thenReturnValue)
                     <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
                 thenValue = thenReturnValue.getText();
             } else {
@@ -168,14 +168,14 @@ public class ReplaceIfWithConditionalIntention extends Intention {
                 return;
             }
             final String elseValue;
-            if (ParenthesesUtils.getPrecendence(elseReturnValue)
+            if (ParenthesesUtils.getPrecedence(elseReturnValue)
                     <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
                 elseValue = elseReturnValue.getText();
             } else {
                 elseValue = '(' + elseReturnValue.getText() + ')';
             }
             final String conditionText;
-            if (ParenthesesUtils.getPrecendence(condition)
+            if (ParenthesesUtils.getPrecedence(condition)
                     <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
                 conditionText = condition.getText();
             } else {

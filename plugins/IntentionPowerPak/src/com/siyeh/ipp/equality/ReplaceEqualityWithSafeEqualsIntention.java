@@ -63,7 +63,7 @@ public class ReplaceEqualityWithSafeEqualsIntention extends Intention {
         if (tokenType.equals(JavaTokenType.NE)) {
             buffer.append('!');
         }
-        if (ParenthesesUtils.getPrecendence(strippedLhs) >
+        if (ParenthesesUtils.getPrecedence(strippedLhs) >
                 ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
             buffer.append('(');
             buffer.append(lhsText);
