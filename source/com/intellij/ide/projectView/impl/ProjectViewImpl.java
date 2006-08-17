@@ -295,6 +295,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private void showPane(AbstractProjectViewPane newPane) {
     AbstractProjectViewPane currentPane = getCurrentProjectViewPane();
     PsiElement selectedPsiElement = null;
+    Module selectedModule = null;
     if (currentPane != null) {
       if (currentPane != newPane) {
         currentPane.saveExpandedPaths();
@@ -307,6 +308,9 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         PsiPackage psiPackage = ((PackageElement)selected).getPackage();
         PsiDirectory[] directories = psiPackage.getDirectories();
         selectedPsiElement = directories.length == 0 ? null : directories[0];
+      }
+      if (selected instanceof Module) {
+        selectedModule = (Module)selected;
       }
       currentPane.dispose();
     }
@@ -334,6 +338,9 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       if (((ProjectViewSelectInTarget)newPane.createSelectInTarget()).isSubIdSelectable(newSubId, virtualFile)) {
         newPane.select(selectedPsiElement, virtualFile, true);
       }
+    }
+    else if (selectedModule != null) {
+      newPane.select(selectedModule, selectedModule.getModuleFile(), true);
     }
     installLabelFocusListener();
   }
