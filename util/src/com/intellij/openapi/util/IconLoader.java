@@ -22,6 +22,7 @@ import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import sun.reflect.Reflection;
 
 import javax.swing.*;
@@ -65,6 +66,7 @@ public final class IconLoader {
     return new MyImageIcon(image);
   }
 
+  @NotNull
   public static Icon getIcon(@NonNls final String path) {
     int stackFrameCount = 2;
     Class callerClass = Reflection.getCallerClass(stackFrameCount);
@@ -78,6 +80,7 @@ public final class IconLoader {
   }
 
 
+  @Nullable
   public static Icon findIcon(@NonNls final String path) {
     int stackFrameCount = 2;
     Class callerClass = Reflection.getCallerClass(stackFrameCount);
@@ -90,6 +93,7 @@ public final class IconLoader {
     return findIcon(path, callerClass);
   }
 
+  @NotNull
   public static Icon getIcon(final String path, final Class aClass) {
     final Icon icon = findIcon(path, aClass);
     if (icon == null) {
@@ -106,6 +110,7 @@ public final class IconLoader {
     return !ourIsActivated;
   }
 
+  @Nullable
   public static Icon findIcon(final String path, final Class aClass) {
     URL url = aClass.getResource(path);
     return findIcon(url);
