@@ -11,10 +11,10 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
+import org.jetbrains.annotations.NotNull;
 
 public class CastConstructorParametersFix {
-  public static void registerCastActions(PsiJavaCodeReferenceElement ctrRef, PsiConstructorCall constructorCall, HighlightInfo highlightInfo) {
-    if (ctrRef == null) return;
+  public static void registerCastActions(@NotNull PsiJavaCodeReferenceElement ctrRef, PsiConstructorCall constructorCall, HighlightInfo highlightInfo) {
     JavaResolveResult resolved = ctrRef.advancedResolve(false);
     PsiClass aClass = (PsiClass) resolved.getElement();
     if (aClass == null) return;
@@ -23,6 +23,6 @@ public class CastConstructorParametersFix {
     for (int i = 0; i < candidates.length; i++) {
       candidates[i] = new CandidateInfo(methods[i], resolved.getSubstitutor());
     }
-    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, constructorCall, ctrRef, highlightInfo);
+    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, constructorCall, highlightInfo);
   }
 }

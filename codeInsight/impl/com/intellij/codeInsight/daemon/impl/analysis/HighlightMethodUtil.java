@@ -446,7 +446,7 @@ public class HighlightMethodUtil {
     }
 
     MethodCandidateInfo[] candidates = candidateList.toArray(new MethodCandidateInfo[candidateList.size()]);
-    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, methodCall, methodCall.getMethodExpression(), highlightInfo);
+    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, methodCall, highlightInfo);
     WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), highlightInfo);
     ChangeParameterClassFix.registerQuickFixActions(methodCall, list, highlightInfo);
     return highlightInfo;
@@ -461,8 +461,8 @@ public class HighlightMethodUtil {
     QuickFixAction.registerQuickFixAction(highlightInfo, range, new CreateConstructorFromThisAction(methodCall), null, null);
     QuickFixAction.registerQuickFixAction(highlightInfo, range, new CreatePropertyFromUsageAction(methodCall), null, null);
     CandidateInfo[] methodCandidates = resolveHelper.getReferencedMethodCandidates(methodCall, false);
-    CastMethodArgumentFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, methodCall.getMethodExpression(), highlightInfo);
-    AddTypeArgumentsFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, methodCall.getMethodExpression(), highlightInfo);
+    CastMethodArgumentFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo);
+    AddTypeArgumentsFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo);
     registerMethodAccessLevelIntentions(methodCandidates, methodCall, list, highlightInfo);
     ChangeMethodSignatureFromUsageFix.registerIntentions(methodCandidates, list, highlightInfo, range);
     WrapExpressionFix.registerWrapAction(methodCandidates, list.getExpressions(), highlightInfo);
@@ -1012,7 +1012,12 @@ public class HighlightMethodUtil {
       if (aClass == null) return null;
     }
 
-    return checkConstructorCall(typeResult, expression, type, expression.getClassReference());
+    PsiJavaCodeReferenceElement classReference = expression.getClassReference();
+    if (classReference == null) {
+      PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
+      if (anonymousClass != null) classReference = anonymousClass.getBaseClassReference();
+    }
+    return checkConstructorCall(typeResult, expression, type, classReference);
   }
 
   //@top
@@ -1048,6 +1053,9 @@ public class HighlightMethodUtil {
         String tooltip = createMismatchedArgumentsHtmlTooltip(list, PsiParameter.EMPTY_ARRAY, constructorName, PsiSubstitutor.EMPTY, aClass);
         HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, description, tooltip);
         QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallAction(constructorCall), null, null);
+        if (classReference != null) {
+          CastConstructorParametersFix.registerCastActions(classReference, constructorCall, info);
+        }
         info.navigationShift = +1;
         return info;
       }

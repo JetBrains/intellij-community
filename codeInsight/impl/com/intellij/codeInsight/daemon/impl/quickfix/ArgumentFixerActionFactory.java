@@ -1,20 +1,18 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.diagnostic.Logger;
-
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Set;
-
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author ven
@@ -25,7 +23,7 @@ public abstract class ArgumentFixerActionFactory {
   @Nullable
   protected abstract PsiExpression getModifiedArgument(PsiExpression expression, final PsiType toType) throws IncorrectOperationException;
 
-  public void registerCastActions(CandidateInfo[] candidates, PsiCall call, PsiJavaCodeReferenceElement methodRef, HighlightInfo highlightInfo) {
+  public void registerCastActions(CandidateInfo[] candidates, PsiCall call, HighlightInfo highlightInfo) {
     if (candidates.length == 0) return;
     List<CandidateInfo> methodCandidates = new ArrayList<CandidateInfo>(Arrays.asList(candidates));
     PsiExpressionList list = call.getArgumentList();
@@ -37,6 +35,7 @@ public abstract class ArgumentFixerActionFactory {
       CandidateInfo candidate = methodCandidates.get(i);
       PsiMethod method = (PsiMethod) candidate.getElement();
       PsiSubstitutor substitutor = candidate.getSubstitutor();
+      assert method != null;
       PsiParameter[] parameters = method.getParameterList().getParameters();
       if (expressions.length != parameters.length) {
         methodCandidates.remove(i);
@@ -57,7 +56,7 @@ public abstract class ArgumentFixerActionFactory {
       }
     }
 
-    if (methodCandidates.size() == 0) return;
+    if (methodCandidates.isEmpty()) return;
 
     try {
       for (int i = 0; i < expressions.length; i++) {
@@ -68,6 +67,7 @@ public abstract class ArgumentFixerActionFactory {
         for (CandidateInfo candidate : methodCandidates) {
           PsiMethod method = (PsiMethod)candidate.getElement();
           PsiSubstitutor substitutor = candidate.getSubstitutor();
+          assert method != null;
           PsiParameter[] parameters = method.getParameterList().getParameters();
           PsiType originalParameterType = parameters[i].getType();
           PsiType parameterType = substitutor.substitute(originalParameterType);
