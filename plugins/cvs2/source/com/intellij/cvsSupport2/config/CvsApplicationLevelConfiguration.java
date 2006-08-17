@@ -46,6 +46,7 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
 
   public boolean DO_OUTPUT = false;
   @NonNls private static final String USER_HOME_PROPERTY = "user.home";
+  public boolean SEND_ENVIRONMENT_VARIABLES_TO_SERVER = false;
 
   public CvsApplicationLevelConfiguration() {
     ENCODING = DEFAULT;

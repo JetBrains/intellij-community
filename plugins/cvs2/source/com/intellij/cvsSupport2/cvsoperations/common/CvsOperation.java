@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.cvsoperations.common;
 
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
+import com.intellij.cvsSupport2.config.ui.GlobalCvsSettingsPanel;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
@@ -40,7 +41,9 @@ public abstract class CvsOperation {
 
   protected void modifyOptions(GlobalOptions options) {
     options.setUseGzip(CvsApplicationLevelConfiguration.getInstance().USE_GZIP);
-    options.setEnvVariables(EnvironmentUtil.getEnviromentProperties());
+    if (CvsApplicationLevelConfiguration.getInstance().SEND_ENVIRONMENT_VARIABLES_TO_SERVER) {
+      options.setEnvVariables(EnvironmentUtil.getEnviromentProperties());
+    }
   }
 
   public int getFilesToProcessCount() {

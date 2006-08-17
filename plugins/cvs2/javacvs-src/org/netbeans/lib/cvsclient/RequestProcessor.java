@@ -38,16 +38,15 @@ import java.util.Map;
 /**
  * @author Thomas Singer
  */
-public final class RequestProcessor
-	implements IRequestProcessor {
+public final class RequestProcessor implements IRequestProcessor {
 
-	// Fields =================================================================
+  // Fields =================================================================
 
-	private final IGlobalOptions globalOptions;
-	private final IClientEnvironment clientEnvironment;
-	private final ResponseService responseServices;
-	private final IStreamLogger streamLogger;
-	private final ICvsCommandStopper commandStopper;
+  private final IGlobalOptions globalOptions;
+  private final IClientEnvironment clientEnvironment;
+  private final ResponseService responseServices;
+  private final IStreamLogger streamLogger;
+  private final ICvsCommandStopper commandStopper;
   @NonNls private static final String OS_NAME_PROPERTY = "os.name";
   @NonNls private static final String WINDOWS_PREFIX = "Windows";
   @NonNls private static final String CASE_REQUEST = "Case";
@@ -56,253 +55,220 @@ public final class RequestProcessor
 
   // Setup ==================================================================
 
-	public RequestProcessor(IClientEnvironment clientEnvironment,
-							IGlobalOptions globalOptions,
-							IEventSender eventSender,
-							IStreamLogger streamLogger,
-							ICvsCommandStopper commandStopper) {
-		BugLog.getInstance().assertNotNull(globalOptions);
-		BugLog.getInstance().assertNotNull(clientEnvironment);
-		BugLog.getInstance().assertNotNull(eventSender);
-		BugLog.getInstance().assertNotNull(streamLogger);
-		BugLog.getInstance().assertNotNull(commandStopper);
+  public RequestProcessor(IClientEnvironment clientEnvironment,
+                          IGlobalOptions globalOptions,
+                          IEventSender eventSender,
+                          IStreamLogger streamLogger,
+                          ICvsCommandStopper commandStopper) {
+    BugLog.getInstance().assertNotNull(globalOptions);
+    BugLog.getInstance().assertNotNull(clientEnvironment);
+    BugLog.getInstance().assertNotNull(eventSender);
+    BugLog.getInstance().assertNotNull(streamLogger);
+    BugLog.getInstance().assertNotNull(commandStopper);
 
-		this.globalOptions = globalOptions;
-		this.clientEnvironment = clientEnvironment;
-		this.responseServices = new ResponseService(eventSender);
-		this.streamLogger = streamLogger;
-		this.commandStopper = commandStopper;
-	}
+    this.globalOptions = globalOptions;
+    this.clientEnvironment = clientEnvironment;
+    this.responseServices = new ResponseService(eventSender);
+    this.streamLogger = streamLogger;
+    this.commandStopper = commandStopper;
+  }
 
-	// Implemented ============================================================
+  // Implemented ============================================================
 
-	public boolean processRequests(Requests requests,
-								   IRequestsProgressHandler communicationProgressHandler)
-		throws CommandException {
-		IConnectionStreams connectionStreams = openConnection();
-		try {
-			return processRequests(requests, connectionStreams, communicationProgressHandler);
-		} finally {
-			connectionStreams.close();
-		}
-	}
+  public boolean processRequests(Requests requests, IRequestsProgressHandler communicationProgressHandler) throws CommandException {
+    IConnectionStreams connectionStreams = openConnection();
+    try {
+      return processRequests(requests, connectionStreams, communicationProgressHandler);
+    }
+    finally {
+      connectionStreams.close();
+    }
+  }
 
-	// Utils ==================================================================
+  // Utils ==================================================================
 
-	private IConnectionStreams openConnection()
-		throws CommandException {
-		try {
-			clientEnvironment.getConnection().open(streamLogger);
-		} catch (AuthenticationException ex) {
-			throw new CommandException(ex, JavaCvsSrcBundle.message("could.not.establish.connection.error.message"));
-		}
+  private IConnectionStreams openConnection() throws CommandException {
+    try {
+      clientEnvironment.getConnection().open(streamLogger);
+    }
+    catch (AuthenticationException ex) {
+      throw new CommandException(ex, JavaCvsSrcBundle.message("could.not.establish.connection.error.message"));
+    }
 
-		ConnectionStreams connectionStreams = new ConnectionStreams(clientEnvironment.getConnection(),
-			streamLogger,
-			clientEnvironment.getCharset());
-		boolean exception = true;
-		try {
-			updateValidRequests(connectionStreams);
+    ConnectionStreams connectionStreams =
+      new ConnectionStreams(clientEnvironment.getConnection(), streamLogger, clientEnvironment.getCharset());
+    boolean exception = true;
+    try {
+      updateValidRequests(connectionStreams);
 
-			sendRequest(new RootRequest(clientEnvironment.getConnection().getRepository()), connectionStreams);
-			if (passEnvVariablesToServer()) {
-				sendSetRequests(globalOptions, connectionStreams);
-			}
-			// Handle gzip-compression
-			if (globalOptions.isUseGzip() && isValidRequest(GzipStreamRequest.REQUEST)) {
-				sendRequest(new GzipStreamRequest(), connectionStreams);
+      sendRequest(new RootRequest(clientEnvironment.getConnection().getRepository()), connectionStreams);
+      sendSetRequests(globalOptions, connectionStreams);
+      // Handle gzip-compression
+      if (globalOptions.isUseGzip() && isValidRequest(GzipStreamRequest.REQUEST)) {
+        sendRequest(new GzipStreamRequest(), connectionStreams);
 
-				connectionStreams.setGzipped();
-			}
+        connectionStreams.setGzipped();
+      }
 
-			//TODO: set variables
+      //TODO: set variables
 
-			sendRequest(new ValidResponsesRequest(), connectionStreams);
+      sendRequest(new ValidResponsesRequest(), connectionStreams);
 
-			sendRequest(new UseUnchangedRequest(), connectionStreams);
-			sendGlobalOptionRequests(globalOptions, connectionStreams);
+      sendRequest(new UseUnchangedRequest(), connectionStreams);
+      sendGlobalOptionRequests(globalOptions, connectionStreams);
 
-			if (System.getProperty(OS_NAME_PROPERTY).startsWith(WINDOWS_PREFIX) && isValidRequest(CASE_REQUEST)) {
-				sendRequest(new CaseRequest(), connectionStreams);
-			}
+      if (System.getProperty(OS_NAME_PROPERTY).startsWith(WINDOWS_PREFIX) && isValidRequest(CASE_REQUEST)) {
+        sendRequest(new CaseRequest(), connectionStreams);
+      }
 
-			exception = false;
-			return connectionStreams;
-		} catch (IOException ex) {
-                        BugLog.getInstance().showException(ex);
-                        throw new IOCommandException(ex);
-		} finally {
-			if (exception) {
-				connectionStreams.close();
-			}
-		}
-	}
+      exception = false;
+      return connectionStreams;
+    }
+    catch (IOException ex) {
+      BugLog.getInstance().showException(ex);
+      throw new IOCommandException(ex);
+    }
+    finally {
+      if (exception) {
+        connectionStreams.close();
+      }
+    }
+  }
 
-	private boolean passEnvVariablesToServer() {
-          if (true) return false;
+  private void sendSetRequests(IGlobalOptions globalOptions, ConnectionStreams connectionStreams)
+    throws CommandAbortedException, IOException {
+    Map envVariables = globalOptions.getEnvVariables();
+    if (envVariables == null) {
+      return;
+    }
+    for (Iterator iterator = envVariables.keySet().iterator(); iterator.hasNext();) {
+      String varName = (String)iterator.next();
+      String varValue = (String)envVariables.get(varName);
+      sendRequest(new SetRequest(varName, varValue), connectionStreams);
+    }
+  }
 
-		String doPassProperty = System.getProperty(CVS_PASS_ENV_VARS_PROPERTY);
-		if (doPassProperty == null){
-			return true;
-		}
-		if(NO.equals(doPassProperty)){
-			return false;
-		}
-		return true;
-	}
+  private boolean processRequests(Requests requests,
+                                  IConnectionStreams connectionStreams,
+                                  IRequestsProgressHandler communicationProgressHandler)
+    throws CommandAbortedException, IOCommandException {
+    BugLog.getInstance().assertNotNull(requests);
 
-	private void sendSetRequests(IGlobalOptions globalOptions,
-								 ConnectionStreams connectionStreams)
-		throws CommandAbortedException,
-		IOException {
-		Map envVariables = globalOptions.getEnvVariables();
-		if (envVariables == null) {
-			return;
-		}
-		for (Iterator iterator = envVariables.keySet().iterator(); iterator.hasNext();) {
-			String varName = (String) iterator.next();
-			String varValue = (String) envVariables.get(varName);
-			sendRequest(new SetRequest(varName, varValue), connectionStreams);
-		}
-	}
+    try {
+      sendRequests(requests, connectionStreams, communicationProgressHandler);
 
-	private boolean processRequests(Requests requests,
-									IConnectionStreams connectionStreams,
-									IRequestsProgressHandler communicationProgressHandler)
-		throws CommandAbortedException,
-		IOCommandException {
-		BugLog.getInstance().assertNotNull(requests);
+      sendRequest(requests.getResponseExpectingRequest(), connectionStreams);
+      connectionStreams.flushForReading();
 
-		try {
-			sendRequests(requests, connectionStreams, communicationProgressHandler);
+      return handleResponses(connectionStreams, new DefaultResponseHandler());
+    }
+    catch (IOException ex) {
+      throw new IOCommandException(ex);
+    }
+  }
 
-			sendRequest(requests.getResponseExpectingRequest(), connectionStreams);
-			connectionStreams.flushForReading();
+  private void sendRequests(Requests requests, IConnectionStreams connectionStreams, IRequestsProgressHandler communicationProgressHandler)
+    throws CommandAbortedException, IOException {
+    for (Iterator it = requests.getRequests().iterator(); it.hasNext();) {
+      final IRequest request = (IRequest)it.next();
 
-			return handleResponses(connectionStreams, new DefaultResponseHandler());
-		} catch (IOException ex) {
-			throw new IOCommandException(ex);
-		}
-	}
+      sendRequest(request, connectionStreams);
 
-	private void sendRequests(Requests requests,
-							  IConnectionStreams connectionStreams,
-							  IRequestsProgressHandler communicationProgressHandler)
-		throws CommandAbortedException,
-		IOException {
-		for (Iterator it = requests.getRequests().iterator(); it.hasNext();) {
-			final IRequest request = (IRequest) it.next();
+      final FileDetails fileDetails = request.getFileForTransmission();
+      if (fileDetails != null) {
+        sendFile(fileDetails, connectionStreams);
+      }
 
-			sendRequest(request, connectionStreams);
+      communicationProgressHandler.requestSent(request);
+    }
+  }
 
-			final FileDetails fileDetails = request.getFileForTransmission();
-			if (fileDetails != null) {
-				sendFile(fileDetails, connectionStreams);
-			}
+  private void updateValidRequests(IConnectionStreams connectionStreams) throws CommandException, IOException {
+    sendRequest(new ValidRequestsRequest(), connectionStreams);
+    connectionStreams.flushForReading();
+    handleResponses(connectionStreams, new ValidRequestsResponseHandler());
 
-			communicationProgressHandler.requestSent(request);
-		}
-	}
+    if (responseServices.getValidRequests() == null) {
+      throw new ValidRequestsExpectedException();
+    }
+  }
 
-	private void updateValidRequests(IConnectionStreams connectionStreams)
-		throws CommandException,
-		IOException {
-		sendRequest(new ValidRequestsRequest(), connectionStreams);
-		connectionStreams.flushForReading();
-		handleResponses(connectionStreams, new ValidRequestsResponseHandler());
+  private void sendGlobalOptionRequests(IGlobalOptions globalOptions, IConnectionStreams connectionStreams)
+    throws CommandAbortedException, IOException {
+    if (!isValidRequest(GlobalOptionRequest.REQUEST)) {
+      return;
+    }
 
-		if (responseServices.getValidRequests() == null) {
-			throw new ValidRequestsExpectedException();
-		}
-	}
+    if (globalOptions.isCheckedOutFilesReadOnly()) {
+      sendRequest(new GlobalOptionRequest("-r"), connectionStreams);
+    }
+    if (globalOptions.isDoNoChanges()) {
+      sendRequest(new GlobalOptionRequest("-n"), connectionStreams);
+    }
+    if (globalOptions.isNoHistoryLogging()) {
+      sendRequest(new GlobalOptionRequest("-l"), connectionStreams);
+    }
+    if (globalOptions.isSomeQuiet()) {
+      sendRequest(new GlobalOptionRequest("-q"), connectionStreams);
+    }
+  }
 
-	private void sendGlobalOptionRequests(IGlobalOptions globalOptions,
-										  IConnectionStreams connectionStreams)
-		throws CommandAbortedException,
-		IOException {
-		if (!isValidRequest(GlobalOptionRequest.REQUEST)) {
-			return;
-		}
+  private boolean isValidRequest(String request) {
+    return responseServices.getValidRequests().indexOf(request) >= 0;
+  }
 
-		if (globalOptions.isCheckedOutFilesReadOnly()) {
-			sendRequest(new GlobalOptionRequest("-r"), connectionStreams);
-		}
-		if (globalOptions.isDoNoChanges()) {
-			sendRequest(new GlobalOptionRequest("-n"), connectionStreams);
-		}
-		if (globalOptions.isNoHistoryLogging()) {
-			sendRequest(new GlobalOptionRequest("-l"), connectionStreams);
-		}
-		if (globalOptions.isSomeQuiet()) {
-			sendRequest(new GlobalOptionRequest("-q"), connectionStreams);
-		}
-	}
+  private void sendRequest(IRequest request, IConnectionStreams connectionStreams) throws CommandAbortedException, IOException {
+    checkCanceled();
+    connectionStreams.getLoggedWriter().write(request.getRequestString());
+  }
 
-	private boolean isValidRequest(String request) {
-		return responseServices.getValidRequests().indexOf(request) >= 0;
-	}
+  private void checkCanceled() throws CommandAbortedException {
+    if (commandStopper.isAborted()) {
+      throw new CommandAbortedException();
+    }
+  }
 
-	private void sendRequest(IRequest request,
-							 IConnectionStreams connectionStreams)
-		throws CommandAbortedException,
-		IOException {
-		checkCanceled();
-		connectionStreams.getLoggedWriter().write(request.getRequestString());
-	}
+  private boolean handleResponses(IConnectionStreams connectionStreams, IResponseHandler responseHandler)
+    throws CommandAbortedException, IOException {
+    final ResponseParser responseParser = new ResponseParser(responseHandler, clientEnvironment.getCharset());
+    final StringBuffer responseBuffer = new StringBuffer(32);
+    for (; ;) {
+      final String responseString = readResponse(connectionStreams.getLoggedReader(), responseBuffer);
+      if (responseString.length() == 0) {
+        return false;
+      }
 
-	private void checkCanceled()
-		throws CommandAbortedException {
-		if (commandStopper.isAborted()) {
-			throw new CommandAbortedException();
-		}
-	}
+      final Boolean result = responseParser.processResponse(responseString, connectionStreams, responseServices, clientEnvironment);
+      if (result != null) {
+        return result.booleanValue();
+      }
 
-	private boolean handleResponses(IConnectionStreams connectionStreams,
-									IResponseHandler responseHandler)
-		throws CommandAbortedException,
-		IOException {
-		final ResponseParser responseParser = new ResponseParser(responseHandler, clientEnvironment.getCharset());
-		final StringBuffer responseBuffer = new StringBuffer(32);
-		for (; ;) {
-			final String responseString = readResponse(connectionStreams.getLoggedReader(), responseBuffer);
-			if (responseString.length() == 0) {
-				return false;
-			}
+      checkCanceled();
+    }
+  }
 
-			final Boolean result = responseParser.processResponse(responseString, connectionStreams, responseServices, clientEnvironment);
-			if (result != null) {
-				return result.booleanValue();
-			}
+  private static String readResponse(Reader reader, StringBuffer responseBuffer) throws IOException {
+    responseBuffer.setLength(0);
 
-			checkCanceled();
-		}
-	}
+    for (int chr = reader.read(); chr >= 0; chr = reader.read()) {
+      if (chr == '\n' || chr == ' ') {
+        break;
+      }
 
-	private static String readResponse(Reader reader,
-									   StringBuffer responseBuffer)
-		throws IOException {
-		responseBuffer.setLength(0);
+      responseBuffer.append((char)chr);
+    }
 
-		for (int chr = reader.read(); chr >= 0; chr = reader.read()) {
-			if (chr == '\n' || chr == ' ') {
-				break;
-			}
+    return responseBuffer.toString();
+  }
 
-			responseBuffer.append((char) chr);
-		}
+  private void sendFile(FileDetails fileDetails, IConnectionStreams connectionStreams) throws IOException {
+    final FileObject fileObject = fileDetails.getFileObject();
 
-		return responseBuffer.toString();
-	}
-
-	private void sendFile(FileDetails fileDetails,
-						  IConnectionStreams connectionStreams)
-		throws IOException {
-		final FileObject fileObject = fileDetails.getFileObject();
-
-		if (fileDetails.isBinary()) {
-			clientEnvironment.getLocalFileReader().transmitBinaryFile(fileObject, connectionStreams, clientEnvironment.getCvsFileSystem());
-		} else {
-			clientEnvironment.getLocalFileReader().transmitTextFile(fileObject, connectionStreams, clientEnvironment.getCvsFileSystem());
-		}
-	}
+    if (fileDetails.isBinary()) {
+      clientEnvironment.getLocalFileReader().transmitBinaryFile(fileObject, connectionStreams, clientEnvironment.getCvsFileSystem());
+    }
+    else {
+      clientEnvironment.getLocalFileReader().transmitTextFile(fileObject, connectionStreams, clientEnvironment.getCvsFileSystem());
+    }
+  }
 }
