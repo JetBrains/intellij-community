@@ -451,9 +451,15 @@ public class ParenthesesUtils{
         out.append(PsiKeyword.NEW + ' ');
         final PsiJavaCodeReferenceElement classReference =
                 newExpression.getClassReference();
+        final PsiType type = newExpression.getType();
         final String text;
         if(classReference == null){
-            text = "";
+            if (type != null) {
+                final PsiType componentType = type.getDeepComponentType();
+                text = componentType.getCanonicalText();
+            } else {
+                text = "";
+            }
         } else {
             text = classReference.getText();
         }
@@ -468,7 +474,6 @@ public class ParenthesesUtils{
             }
             out.append(')');
         }
-        final PsiType type = newExpression.getType();
         if(strippedDimensions.length > 0){
             for(String strippedDimension : strippedDimensions){
                 out.append('[');
