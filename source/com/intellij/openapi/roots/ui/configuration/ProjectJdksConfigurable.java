@@ -113,7 +113,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
         selectNodeInTree(findNodeByObject(myRoot, projectJdk));
       }
     });
-    actions.add(new MyActionGroupWrapper(group, -1));
+    actions.add(new MyActionGroupWrapper(group));
     actions.add(new MyDeleteAction(new Condition<Object>() {
       public boolean value(final Object object) {
         return true;

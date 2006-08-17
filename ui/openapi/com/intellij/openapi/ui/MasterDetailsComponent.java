@@ -283,7 +283,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
           else {
             setClosedIcon(icon);
           }
-          final Font font = getFont();
+          final Font font = UIUtil.getTreeFont();
           if (node.isDisplayInBold()) {
             setFont(font.deriveFont(Font.BOLD));
           }
@@ -620,18 +620,18 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
 
   protected class MyActionGroupWrapper extends AnAction {
     private ActionGroup myActionGroup;
-    private int myDefaultIndex;
+    private ActionGroupWithPreselection myPreselection;
 
     public MyActionGroupWrapper(final ActionGroupWithPreselection actionGroup) {
-      this(actionGroup.getActionGroup(), actionGroup.getDefaultIndex());
+      this(actionGroup.getActionGroup());
+      myPreselection = actionGroup;
     }
 
-    public MyActionGroupWrapper(final ActionGroup actionGroup, final int defaultIndex) {
+    public MyActionGroupWrapper(final ActionGroup actionGroup) {
       super(actionGroup.getTemplatePresentation().getText(),
             actionGroup.getTemplatePresentation().getDescription(),
             actionGroup.getTemplatePresentation().getIcon());
       myActionGroup = actionGroup;
-      myDefaultIndex = defaultIndex;
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -643,7 +643,9 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
                                                                 myActionGroup.getTemplatePresentation().getText(),
                                                                 myTree,
                                                                 true,
-                                                                myDefaultIndex != -1 ? myDefaultIndex : 0);
+                                                                myPreselection != null
+                                                                  ? myPreselection.getDefaultIndex()
+                                                                  : 0);
       final ListPopup listPopup = popupFactory.createWizardStep(step);
       listPopup.showUnderneathOf(myNorthPanel);
       SwingUtilities.invokeLater(new Runnable(){
