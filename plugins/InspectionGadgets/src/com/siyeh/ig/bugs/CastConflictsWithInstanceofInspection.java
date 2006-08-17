@@ -135,9 +135,6 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
                         continue;
                     }
                     condition = conditionalExpression.getCondition();
-                    if (!(condition instanceof PsiInstanceOfExpression)) {
-                        continue;
-                    }
                 } else {
                     final PsiBinaryExpression binaryExpression =
                             (PsiBinaryExpression)surroundingExpression;
@@ -160,14 +157,15 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
                         if (prefixSign.getTokenType() != JavaTokenType.EXCL) {
                             continue;
                         }
-                        condition =ParenthesesUtils.stripParentheses(
+                        condition = ParenthesesUtils.stripParentheses(
                                 prefixExpression.getOperand());
-
                     } else {
                         continue;
                     }
                 }
-
+                if (!(condition instanceof PsiInstanceOfExpression)) {
+                    continue;
+                }
                 final PsiInstanceOfExpression instanceOfCondition =
                         (PsiInstanceOfExpression)condition;
                 if (isConflicting(instanceOfCondition, operand, castType)){
