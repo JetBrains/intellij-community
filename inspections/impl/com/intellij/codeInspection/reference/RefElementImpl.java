@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +54,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private ArrayList<RefElement> myInReferences;
 
   private HashSet<RefClass> myOutTypeReferences;
+
+  private String[] mySuppressions = null;
 
   private boolean myIsDeleted ;
   private Module myModule;
@@ -397,4 +400,17 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   protected abstract void initialize();
 
+  public void addSuppression(final String text) {
+    mySuppressions = text.split(", ");
+  }
+
+  public boolean isSuppressed(final String toolId) {
+    if (mySuppressions != null) {
+      if (ArrayUtil.find(mySuppressions, toolId) != -1) {
+        return true;
+      }
+    }
+    final RefEntity entity = getOwner();
+    return entity instanceof RefElement && ((RefElementImpl)entity).isSuppressed(toolId);
+  }
 }

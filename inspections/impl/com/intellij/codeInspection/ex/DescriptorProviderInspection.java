@@ -242,8 +242,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       }
       catch (IllegalDataException e) {
         //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
-        System.out.println("Cannot save results for "
-                           + refEntity.getName());
+        System.out.println("Cannot save results for " + refEntity.getName() + ", inspection which caused problem: " + getShortName());
       }
     }
   }

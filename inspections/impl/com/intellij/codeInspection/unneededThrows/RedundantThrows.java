@@ -38,7 +38,7 @@ public class RedundantThrows extends DescriptorProviderInspection {
       public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod && !((RefMethod)refEntity).isSyntheticJSP()) {
           RefMethod refMethod = (RefMethod)refEntity;
-          if (!getContext().isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), RedundantThrows.this)) return;
+          if (!getContext().isToCheckMember(refMethod, RedundantThrows.this)) return;
           ProblemDescriptorImpl[] descriptors = checkMethod(refMethod, manager);
           if (descriptors != null) {
             addProblemElement(refMethod, descriptors);

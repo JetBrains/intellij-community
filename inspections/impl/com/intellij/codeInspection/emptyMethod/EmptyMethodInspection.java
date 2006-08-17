@@ -10,11 +10,11 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
       public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod)refEntity;
-          if (!getContext().isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), EmptyMethodInspection.this)) return;
+          if (!getContext().isToCheckMember(refMethod, EmptyMethodInspection.this)) return;
           ProblemDescriptor[] descriptors = checkMethod(refMethod, manager);
           if (descriptors != null) {
             addProblemElement(refMethod, descriptors);
@@ -145,6 +145,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     return false;
   }
 
+  @NotNull
   public JobDescriptor[] getJobDescriptors() {
     return new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
@@ -161,9 +162,6 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     return SHORT_NAME;
   }
 
-  public EmptyMethodInspection() {
-  }
-
   private LocalQuickFix getFix() {
     if (myQuickFix == null) {
       myQuickFix = new QuickFix();
@@ -172,11 +170,12 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
   }
 
   private class QuickFix implements LocalQuickFix {
+    @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.empty.method.delete.quickfix");
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
       RefElement refElement = (RefElement)getElement(descriptor);
       if (refElement.isValid() && refElement instanceof RefMethod) {
         List<RefElement> refElements = new ArrayList<RefElement>(1);
@@ -205,8 +204,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
         }
 
         ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
-        for (int i = 0; i < refElements.size(); i++) {
-          RefElement element = refElements.get(i);
+        for (RefElement element : refElements) {
           RefUtil.getInstance().removeRefElement(element, deletedRefs);
         }
 
@@ -219,6 +217,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
       }
     }
 
+    @NotNull
     public String getFamilyName() {
       return getName();
     }

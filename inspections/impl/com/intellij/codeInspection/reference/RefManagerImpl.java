@@ -15,9 +15,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
@@ -275,6 +279,46 @@ public class RefManagerImpl extends RefManager {
             for (Object aChildren : children) {
               RefElementImpl refChild = (RefElementImpl)aChildren;
               refChild.buildReferences();
+            }
+          }
+        }
+      }
+    }
+
+
+    public void visitDocComment(PsiDocComment comment) {
+      super.visitDocComment(comment);
+      final PsiDocTag[] tags = comment.getTags();
+      for (PsiDocTag tag : tags) {
+        if (Comparing.strEqual(tag.getName(), GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME)){
+          final PsiElement[] dataElements = tag.getDataElements();
+          if (dataElements != null && dataElements.length > 0){
+            final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(comment, PsiModifierListOwner.class);
+            if (listOwner != null){
+              final RefElementImpl element = (RefElementImpl)RefManagerImpl.this.getReference(listOwner);
+              if (element != null) {
+                element.addSuppression(dataElements[0].getText());
+              }
+            }
+          }
+        }
+      }
+    }
+
+    public void visitAnnotation(PsiAnnotation annotation) {
+      super.visitAnnotation(annotation);
+      if (Comparing.strEqual(annotation.getQualifiedName(), "java.lang.SuppressWarnings")){
+        final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class);
+        if (listOwner != null){
+          final RefElementImpl element = (RefElementImpl)RefManagerImpl.this.getReference(listOwner);
+          if (element != null) {
+            StringBuffer buf = new StringBuffer();
+            final PsiNameValuePair[] nameValuePairs = annotation.getParameterList().getAttributes();
+            for (PsiNameValuePair nameValuePair : nameValuePairs) {
+              buf.append(",").append(nameValuePair.getText().replaceAll("[{}\"\"]", ""));
+            }
+            if (buf.length() > 0){
+              element.addSuppression(buf.substring(1));
             }
           }
         }

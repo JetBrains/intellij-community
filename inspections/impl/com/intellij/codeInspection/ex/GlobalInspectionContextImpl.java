@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -156,12 +157,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   public boolean isSuppressed(RefEntity entity, String id) {
-    if (entity instanceof RefElement) {
-      final RefElement refElement = (RefElement)entity;
-      return isSuppressed(refElement.getElement(), id);
-
-    }
-    return false;
+    return entity instanceof RefElement && ((RefElementImpl)entity).isSuppressed(id);
   }
 
   public boolean isSuppressed(PsiElement element, String id) {
@@ -535,13 +531,14 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     return null;
   }
 
-  public boolean isToCheckMember(PsiDocCommentOwner owner, InspectionTool tool) {
-    if (RUN_WITH_EDITOR_PROFILE && InspectionProjectProfileManager.getInstance(owner.getProject()).getInspectionProfile(owner)
+  @SuppressWarnings({"SimplifiableIfStatement"})
+  public boolean isToCheckMember(RefElement owner, InspectionTool tool) {
+    final PsiElement element = owner.getElement();
+    if (RUN_WITH_EDITOR_PROFILE && InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element)
       .getInspectionTool(tool.getShortName()) != tool) {
       return false;
     }
-    //!(tool instanceof LocalInspectionToolWrapper)
-    return isToCheckMember(owner, tool.getShortName());
+    return !((RefElementImpl)owner).isSuppressed(tool.getShortName());
   }
 
   public static PsiElement getAnnotationMemberSuppressedIn(final PsiModifierListOwner owner, final String inspectionToolID) {
@@ -830,7 +827,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             }
             final VirtualFile virtualFile = file.getVirtualFile();
             if (virtualFile != null) {
-              incrementJobDoneAmount(LOCAL_ANALYSIS, virtualFile.getPresentableUrl());
+              incrementJobDoneAmount(LOCAL_ANALYSIS, VfsUtil.calcRelativeToProjectPath(virtualFile, myProject));
             }
             final Set<InspectionTool> tools = localTools.get(profile.getName());
             for (InspectionTool tool : tools) {
@@ -913,12 +910,14 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final HashSet<InspectionTool> localProfileTools = new HashSet<InspectionTool>();
     localTools.put(inspectionProfile.getName(), localProfileTools);
     for (InspectionTool tool : usedTools) {
-      if (inspectionProfile.isToolEnabled(HighlightDisplayKey.find(tool.getShortName()))) {
+      final String shortName = tool.getShortName();
+      final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+      if (inspectionProfile.isToolEnabled(key)) {
         tool.initialize(this);
-        Set<InspectionTool> sertainTools = myTools.get(tool.getShortName());
+        Set<InspectionTool> sertainTools = myTools.get(shortName);
         if (sertainTools == null){
           sertainTools = new HashSet<InspectionTool>();
-          myTools.put(tool.getShortName(), sertainTools);
+          myTools.put(shortName, sertainTools);
         }
         sertainTools.add(tool);
         if (tool instanceof LocalInspectionToolWrapper) {

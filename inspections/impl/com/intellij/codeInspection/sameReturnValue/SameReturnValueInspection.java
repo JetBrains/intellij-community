@@ -10,7 +10,6 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.codeInspection.reference.RefVisitor;
-import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +23,7 @@ public class SameReturnValueInspection extends DescriptorProviderInspection {
       public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod) refEntity;
-            if (!getContext().isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), SameReturnValueInspection.this)) return;
+            if (!getContext().isToCheckMember(refMethod, SameReturnValueInspection.this)) return;
           ProblemDescriptor[] descriptors = checkMethod(refMethod, manager);
           if (descriptors != null) {
             addProblemElement(refMethod, descriptors);

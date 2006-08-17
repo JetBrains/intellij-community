@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>A.java</file>
+    <line>1</line>
+    <description>Class has &lt;code&gt;equals()&lt;/code&gt; defined but does not define &lt;code&gt;hashCode()&lt;/code&gt;.</description>
+  </problem>
+  <problem>
+    <file>b.java</file>
+    <line>1</line>
+    <description>Class has &lt;code&gt;hashCode()&lt;/code&gt; defined but does not define &lt;code&gt;equals()&lt;/code&gt;.</description>
+  </problem>
+</problems>

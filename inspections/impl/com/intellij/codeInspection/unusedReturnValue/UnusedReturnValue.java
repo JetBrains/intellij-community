@@ -11,7 +11,10 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +31,7 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
       public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod) refEntity;
-          if (!getContext().isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), UnusedReturnValue.this)) return;
+          if (!getContext().isToCheckMember(refMethod, UnusedReturnValue.this)) return;
           ProblemDescriptor[] descriptors = checkMethod(refMethod, manager);
           if (descriptors != null) {
             addProblemElement(refMethod, descriptors);
@@ -103,11 +106,12 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
   }
 
   private class QuickFix implements LocalQuickFix {
+    @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.unused.return.value.make.void.quickfix");
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
       RefElement refElement = (RefElement)getElement(descriptor);
       if (refElement.isValid() && refElement instanceof RefMethod) {
         RefMethod refMethod = (RefMethod)refElement;
@@ -115,6 +119,7 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
       }
     }
 
+    @NotNull
     public String getFamilyName() {
       return getName();
     }

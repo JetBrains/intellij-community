@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +23,7 @@ public class SameParameterValueInspection extends DescriptorProviderInspection {
       public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod) refEntity;
-          if (!GlobalInspectionContextImpl.isToCheckMember((PsiDocCommentOwner) refMethod.getElement(), SameParameterValueInspection.this.getShortName())) return;
+          if (!getContext().isToCheckMember(refMethod, SameParameterValueInspection.this)) return;
           ProblemDescriptor[] descriptors = checkMethod(refMethod, manager);
           if (descriptors != null) {
             addProblemElement(refMethod, descriptors);

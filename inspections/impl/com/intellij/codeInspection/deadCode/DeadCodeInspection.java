@@ -10,6 +10,7 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -34,7 +35,6 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -353,7 +353,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       if (refElement.isEntry() || !((RefElementImpl)refElement).isSuspicious() || refElement.isSyntheticJSP()) return 0;
 
       final PsiElement element = refElement.getElement();
-      if (!(element instanceof PsiDocCommentOwner) || !myTool.getContext().isToCheckMember((PsiDocCommentOwner)element, myTool)) return 0;
+      if (!(element instanceof PsiDocCommentOwner) || !myTool.getContext().isToCheckMember(refElement, myTool)) return 0;
 
       if (refElement instanceof RefField) {
         RefField refField = (RefField)refElement;
@@ -675,7 +675,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         if (refEntity instanceof RefElement) {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
           final InspectionProfile profile = InspectionProjectProfileManager.getInstance(refElement.getElement().getProject()).getInspectionProfile(refElement.getElement());
-          if (((GlobalInspectionContextImpl)getContext()).RUN_WITH_EDITOR_PROFILE && profile.getInspectionTool(getShortName()) != DeadCodeInspection.this) return;
+          if (getContext().RUN_WITH_EDITOR_PROFILE && profile.getInspectionTool(getShortName()) != DeadCodeInspection.this) return;
           refElement.setReachable(false);
           refElement.accept(new RefVisitor() {
             public void visitMethod(RefMethod method) {
