@@ -34,6 +34,10 @@ public abstract class HighlightManager {
     return project.getComponent(HighlightManager.class);
   }
 
+  public static final int HIDE_BY_ESCAPE = 0x01;
+  public static final int HIDE_BY_ANY_KEY = 0x02;
+  public static final int HIDE_BY_TEXT_CHANGE = 0x04;
+
   public abstract void addRangeHighlight(Editor editor,
                                          int startOffset,
                                          int endOffset,

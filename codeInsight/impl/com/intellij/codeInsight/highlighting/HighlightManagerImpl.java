@@ -28,10 +28,6 @@ import java.util.*;
 
 public class HighlightManagerImpl extends HighlightManager implements ProjectComponent {
 
-  public static final int HIDE_BY_ESCAPE = 0x01;
-  public static final int HIDE_BY_ANY_KEY = 0x02;
-  public static final int HIDE_BY_TEXT_CHANGE = 0x04;
-
   private AnActionListener myAnActionListener;
   private DocumentListener myDocumentListener;
 
