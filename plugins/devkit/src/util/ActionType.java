@@ -93,7 +93,7 @@ public enum ActionType {
         groupTag.setAttribute("group-id", groupId);
         @NonNls final String anchor = dialog.getSelectedAnchor();
         groupTag.setAttribute("anchor", anchor);
-        if (anchor.equals("first") || anchor.equals("last")) {
+        if (anchor.equals("before") || anchor.equals("after")) {
           groupTag.setAttribute("relative-to-action", dialog.getSelectedActionId());
         }
       }
