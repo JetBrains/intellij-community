@@ -1127,7 +1127,10 @@ public final class PsiUtil {
     final PsiElement elt = file.findElementAt(offset);
     if (elt == null) return file.getLanguage();
     if (elt instanceof PsiWhiteSpace) {
-      return getLanguageAtOffset(file, elt.getTextRange().getStartOffset() - 1);
+      final int decremented = elt.getTextRange().getStartOffset() - 1;
+      if (decremented >= 0) {
+        return getLanguageAtOffset(file, decremented);
+      }
     }
     return findLanguageFromElement(elt, file);
   }
