@@ -117,7 +117,11 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
       else {
         provider = new JavaClassReferenceProvider(extendClass.value(), extendClass.instantiatable());
       }
-      return provider.getReferencesByElement(psiElement);
+      final boolean isResolvingConverter = converter instanceof ResolvingConverter;
+      provider.setSoft(soft || isResolvingConverter);
+      final PsiReference[] references = provider.getReferencesByElement(psiElement);
+      return isResolvingConverter ? ArrayUtil.append(references, new GenericDomValueReference(domValue, soft), PsiReference.class)
+        : references;
     }
     if (ReflectionCache.isAssignable(Integer.class, clazz)) {
       return new PsiReference[]{new GenericDomValueReference<Integer>((GenericDomValue<Integer>)domValue, true) {

@@ -51,6 +51,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   public static final ReferenceType CLASS_REFERENCE_TYPE = new ReferenceType(ReferenceType.JAVA_CLASS);
 
   private @Nullable Map<CustomizationKey, Object> myOptions;
+  private boolean mySoft;
 
   public static final CustomizationKey<Boolean> RESOLVE_QUALIFIED_CLASS_NAME =
     new CustomizationKey<Boolean>(PsiBundle.message("qualified.resolve.class.reference.provider.option"));
@@ -73,6 +74,14 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
   public JavaClassReferenceProvider(@NotNull String extendClassName) {
     this(extendClassName, true);
+  }
+
+  public boolean isSoft() {
+    return mySoft;
+  }
+
+  public void setSoft(final boolean soft) {
+    mySoft = soft;
   }
 
   public JavaClassReferenceProvider() {
@@ -540,7 +549,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
 
     protected boolean isSoft() {
-      return false;
+      return mySoft;
     }
   }
 }
