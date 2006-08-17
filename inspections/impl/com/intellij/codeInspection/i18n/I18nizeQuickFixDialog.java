@@ -430,6 +430,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   }
 
   private boolean createPropertiesFileIfNotExists() {
+    if (getPropertiesFile() != null) return true;
     final String path = FileUtil.toSystemIndependentName(myPropertiesFile.getText());
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(path);
     if (fileType != StdFileTypes.PROPERTIES) {
