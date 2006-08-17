@@ -376,7 +376,10 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       }
     }
 
-    SearchScope searchScope = new LocalSearchScope(file);
+    // in case of injected file, use host file to highlight all occurences of the target in each injected file
+    PsiElement context = file.getContext();
+    context = context == null ? file : context.getContainingFile();
+    SearchScope searchScope = new LocalSearchScope(context);
     Collection<PsiReference> refs;
     if (target instanceof PsiMethod) {
       refs = MethodReferencesSearch.search((PsiMethod)target, searchScope, true).findAll();
