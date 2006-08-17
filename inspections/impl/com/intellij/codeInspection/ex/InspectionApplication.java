@@ -19,6 +19,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ResourceUtil;
 import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
@@ -190,7 +191,7 @@ public class InspectionApplication {
     }
   }
 
-  private void describeInspections(String myOutputPath) throws IOException {
+  private static void describeInspections(@NonNls String myOutputPath) throws IOException {
     final InspectionProfileEntry[] profileEntries = InspectionProfileImpl.DEFAULT_PROFILE.getInspectionTools();
     final Map<String, Set<InspectionProfileEntry>> map = new HashMap<String, Set<InspectionProfileEntry>>();
     for (InspectionProfileEntry entry : profileEntries) {
@@ -206,7 +207,7 @@ public class InspectionApplication {
     FileWriter fw = null;
     try {
       fw = new FileWriter(myOutputPath);
-      final PrettyPrintWriter xmlWriter = new PrettyPrintWriter(fw);
+      @NonNls final PrettyPrintWriter xmlWriter = new PrettyPrintWriter(fw);
       xmlWriter.startNode("inspections");
       for (String groupName : map.keySet()) {
         xmlWriter.startNode("group");
