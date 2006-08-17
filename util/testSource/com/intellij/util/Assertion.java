@@ -114,15 +114,19 @@ public class Assertion extends Assert {
   }
 
   public void compareUnordered(Object[] expected, Collection actual) {
-    ArrayList expectedList = new ArrayList(Arrays.asList(new Object[Math.max(actual.size(), expected.length)]));
-    ArrayList actualList = new ArrayList(actual);
-    for (int i = 0; i < expected.length; i++) {
-      Object object = expected[i];
-      int index = actualList.indexOf(object);
-      if (index == -1) index = i;
-      expectedList.set(index, object);
+    assertEquals(expected.length, actual.size());
+    for (Object exp : expected) {
+      assertTrue(actual.contains(exp));
     }
-    compareAll(expectedList, actualList);
+    //ArrayList expectedList = new ArrayList(Arrays.asList(new Object[Math.max(actual.size(), expected.length)]));
+    //ArrayList actualList = new ArrayList(actual);
+    //for (int i = 0; i < expected.length; i++) {
+    //  Object object = expected[i];
+    //  int index = actualList.indexOf(object);
+    //  if (index == -1) index = i;
+    //  expectedList.set(index, object);
+    //}
+    //compareAll(expectedList, actualList);
   }
 
   public void compareUnordered(Collection expected, Collection actual) {
