@@ -51,6 +51,7 @@ public class UnnecessaryParenthesesInspection extends ExpressionInspection {
     private static class UnnecessaryParenthesesFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "unnecessary.parentheses.remove.quickfix");

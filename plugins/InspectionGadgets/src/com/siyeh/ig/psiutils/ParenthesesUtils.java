@@ -115,11 +115,11 @@ public class ParenthesesUtils{
                 return LITERAL_PRECEDENCE;
             }
         }
-        if(expression instanceof PsiMethodCallExpression){
+        if(expression instanceof PsiMethodCallExpression ||
+                expression instanceof PsiNewExpression){
             return METHOD_CALL_PRECEDENCE;
         }
-        if(expression instanceof PsiTypeCastExpression ||
-           expression instanceof PsiNewExpression){
+        if(expression instanceof PsiTypeCastExpression){
             return TYPE_CAST_PRECEDENCE;
         }
         if(expression instanceof PsiPrefixExpression){
