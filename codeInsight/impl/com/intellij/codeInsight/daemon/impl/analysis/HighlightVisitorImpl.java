@@ -661,9 +661,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void visitParameter(PsiParameter parameter) {
     super.visitParameter(parameter);
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkExceptionThrownInTry(parameter));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkCatchParameterIsThrowable(parameter));
-    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkCatchParameterIsClass(parameter));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkVarArgParameterIsLast(parameter));
     if (!myHolder.hasErrorResults() && parameter.getParent() instanceof PsiForeachStatement) {
       myHolder.add(GenericsHighlightUtil.checkForeachLoopParameterType((PsiForeachStatement)parameter.getParent()));
@@ -929,6 +926,18 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitThrowStatement(PsiThrowStatement statement) {
     myHolder.add(HighlightUtil.checkUnhandledExceptions(statement, null));
     if (!myHolder.hasErrorResults()) visitStatement(statement);
+  }
+
+  public void visitTryStatement(PsiTryStatement statement) {
+    super.visitTryStatement(statement);
+    if (!myHolder.hasErrorResults()) {
+      PsiParameter[] parameters = statement.getCatchBlockParameters();
+      for (PsiParameter parameter : parameters) {
+        myHolder.add(HighlightUtil.checkExceptionThrownInTry(parameter));
+        myHolder.add(HighlightUtil.checkCatchParameterIsThrowable(parameter));
+        myHolder.add(GenericsHighlightUtil.checkCatchParameterIsClass(parameter));
+      }
+    }
   }
 
   public void visitTypeElement(PsiTypeElement type) {
