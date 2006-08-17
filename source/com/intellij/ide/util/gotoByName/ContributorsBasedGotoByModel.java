@@ -35,11 +35,14 @@ import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
 
 import javax.swing.*;
 import java.util.*;
 
 public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ContributorsBasedGotoByModel");
+
   protected final Project myProject;
   private final ChooseByNameContributor[] myContributors;
 
@@ -55,7 +58,12 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   public String[] getNames(boolean checkBoxState) {
     Set<String> names = new HashSet<String>();
     for (ChooseByNameContributor contributor : myContributors) {
-      names.addAll(Arrays.asList(contributor.getNames(myProject, checkBoxState)));
+      try {
+        names.addAll(Arrays.asList(contributor.getNames(myProject, checkBoxState)));
+      }
+      catch(Exception ex) {
+        LOG.error(ex);
+      }
     }
 
     return names.toArray(new String[names.size()]);
@@ -64,7 +72,12 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   public Object[] getElementsByName(String name, boolean checkBoxState) {
     List<NavigationItem> items = new ArrayList<NavigationItem>();
     for (ChooseByNameContributor contributor : myContributors) {
-      items.addAll(Arrays.asList(contributor.getItemsByName(name, myProject, checkBoxState)));
+      try {
+        items.addAll(Arrays.asList(contributor.getItemsByName(name, myProject, checkBoxState)));
+      }
+      catch(Exception ex) {
+        LOG.error(ex);
+      }
     }
     return items.toArray();
   }
