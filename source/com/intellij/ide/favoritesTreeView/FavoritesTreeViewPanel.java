@@ -13,6 +13,7 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.idea.Main;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -189,7 +190,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         return getSelectedPsiElements();
       }
     };
-    if (!GraphicsEnvironment.isHeadless()) {
+    if (!Main.isHeadless()) {
       myTree.setTransferHandler(new TransferHandler() {
         public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
           for (DataFlavor transferFlavor : transferFlavors) {

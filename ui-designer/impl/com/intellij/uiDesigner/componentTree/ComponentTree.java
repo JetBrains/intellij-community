@@ -2,9 +2,10 @@ package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.ide.DeleteProvider;
+import com.intellij.idea.Main;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -22,8 +23,8 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.lw.LwInspectionSuppression;
 import com.intellij.uiDesigner.palette.ComponentItem;
@@ -103,7 +104,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       this
     );
 
-    if (!GraphicsEnvironment.isHeadless()) {
+    if (!Main.isHeadless()) {
       setDragEnabled(true);
       setTransferHandler(new TransferHandler() {
         public int getSourceActions(JComponent c) {

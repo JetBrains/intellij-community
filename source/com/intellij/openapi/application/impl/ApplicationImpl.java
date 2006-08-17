@@ -171,7 +171,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       PluginId pluginId = PluginManager.getPluginByClassName(componentClass.getName());
       final String errorMessage = "Plugin " + pluginId.getIdString() + " failed to initialize:\n" + ex.getMessage() +
                                   "\nPlease remove the plugin and restart " + ApplicationNamesInfo.getInstance().getFullProductName() + ".";
-      if (!GraphicsEnvironment.isHeadless()) {
+      if (!myHeadlessMode) {
         JOptionPane.showMessageDialog(null, errorMessage);
       }
       else {
@@ -596,7 +596,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         }
       };
       if (!isDispatchThread()) {
-        invokeLater(runnable, ModalityState.NON_MMODAL);
+        invokeLater(runnable, ModalityState.NON_MODAL);
       }
       else {
         runnable.run();

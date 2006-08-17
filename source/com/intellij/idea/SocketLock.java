@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -60,7 +59,7 @@ public class SocketLock {
     if (mySocket == null) {
       if (!myIsDialogShown) {
         final String productName = ApplicationNamesInfo.getInstance().getProductName();
-        if (GraphicsEnvironment.isHeadless()) { //team server inspections
+        if (Main.isHeadless()) { //team server inspections
           throw new RuntimeException("Only one instance of " + productName + " can be run at a time.");
         }
         @NonNls final String pathToLogFile = PathManager.getSystemPath() + "/log/idea.log file".replace('/', File.separatorChar);

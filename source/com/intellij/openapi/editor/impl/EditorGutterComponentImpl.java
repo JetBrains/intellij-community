@@ -13,6 +13,7 @@ import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.idea.Main;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -34,6 +35,8 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntProcedure;
 import gnu.trove.TObjectProcedure;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -49,8 +52,6 @@ import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
-
-import org.jetbrains.annotations.Nullable;
 
 class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
@@ -76,7 +77,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   public EditorGutterComponentImpl(EditorImpl editor) {
     myEditor = editor;
-    if (!GraphicsEnvironment.isHeadless()) {
+    if (!Main.isHeadless()) {
       new DropTarget(this, new MyDropTargetListener());
       final DragSource dragSource = DragSource.getDefaultDragSource();
       dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
@@ -578,13 +579,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return color != null ? color : Color.black;
   }
 
-  public void registerTextAnnotation(TextAnnotationGutterProvider provider) {
+  public void registerTextAnnotation(@NotNull TextAnnotationGutterProvider provider) {
     myTextAnnotationGutters.add(provider);
     myTextAnnotationGutterSizes.add(0);
     updateSize();
   }
 
-  public void registerTextAnnotation(TextAnnotationGutterProvider provider, EditorGutterAction action) {
+  public void registerTextAnnotation(@NotNull TextAnnotationGutterProvider provider, @NotNull EditorGutterAction action) {
     myTextAnnotationGutters.add(provider);
     myProviderToListener.put(provider, action);
     myTextAnnotationGutterSizes.add(0);
