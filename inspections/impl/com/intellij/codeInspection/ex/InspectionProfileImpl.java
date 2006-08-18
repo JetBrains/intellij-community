@@ -418,7 +418,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public InspectionProfileEntry[] getInspectionTools() {
-    if (myTools.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (myTools.isEmpty()) {
      initInspectionTools();
     }
     ArrayList<InspectionTool> result = new ArrayList<InspectionTool>();
@@ -461,11 +461,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   private void copyToolsConfigurations(InspectionProfileImpl profile) {
     try {
-      if (!profile.myTools.isEmpty()) {
-        final InspectionProfileEntry[] inspectionTools = getInspectionTools();
-        for (InspectionProfileEntry inspectionTool : inspectionTools) {
-          copyToolConfig(inspectionTool, profile);
-        }
+      final InspectionProfileEntry[] inspectionTools = getInspectionTools();
+      for (InspectionProfileEntry inspectionTool : inspectionTools) {
+        copyToolConfig(inspectionTool, profile);
       }
     }
     catch (WriteExternalException e) {
