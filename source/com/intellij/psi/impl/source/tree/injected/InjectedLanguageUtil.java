@@ -198,6 +198,16 @@ public class InjectedLanguageUtil {
 
       public void visitLeaf(LeafElement leaf) {
         TextRange range = leaf.getTextRange();
+        if (prefixLength > range.getStartOffset() && prefixLength < range.getEndOffset()) {
+          LOG.error("Prefix must not contain text that will be glued with the element body after parsing. " +
+                    "Howewer, parsed element of "+leaf.getClass()+" contains "+(range.getStartOffset()-prefixLength) + " characters from the prefix. " +
+                    "Parsed text is '"+leaf.getText()+"'");
+        }
+        if (range.getStartOffset() < contentsRange.getEndOffset() && contentsRange.getEndOffset() < range.getEndOffset()) {
+          LOG.error("Suffix must not contain text that will be glued with the element body after parsing. " +
+                    "Howewer, parsed element of "+leaf.getClass()+" contains "+(range.getEndOffset()-contentsRange.getEndOffset()) + " characters from the suffix. " +
+                    "Parsed text is '"+leaf.getText()+"'");
+        }
         if (!contentsRange.contains(range)) return;
         int offsetInSource = currentSourceOffset + prefixLength;
         int endOffsetInSource = literalTextEscaper.getOffsetInSource(range.getEndOffset()-prefixLength) + prefixLength;
@@ -476,8 +486,11 @@ public class InjectedLanguageUtil {
   public static Editor openEditorFor(PsiFile file, Project project) {
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     // may return editor injected in current selection in the host editor, not for the file passed as argument
-    Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file.getVirtualFile(), -1), false);
-    if (editor instanceof EditorDelegate) editor = ((EditorDelegate)editor).getDelegate();
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile instanceof VirtualFileDelegate) {
+      virtualFile = ((VirtualFileDelegate)virtualFile).getDelegate();
+    }
+    Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile, -1), false);
     if (editor == null) return null;
     if (document instanceof DocumentRange) {
       return EditorDelegate.create((DocumentRange)document,(EditorImpl)editor,file);
