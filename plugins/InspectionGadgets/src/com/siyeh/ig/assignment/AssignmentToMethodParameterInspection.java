@@ -21,9 +21,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -55,6 +58,7 @@ public class AssignmentToMethodParameterInspection
     private static class AssignmentToMethodParameterFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "assignment.to.catch.block.parameter.extract.quickfix");
@@ -81,16 +85,20 @@ public class AssignmentToMethodParameterInspection
             final String variableName =
                     codeStyleManager.suggestUniqueVariableName(
                             parameterName, parameterReference, true);
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
-            final PsiReference[] references =
-                    searchHelper.findReferences(parameterReference.resolve(),
-                            parameterReference.getUseScope(), false);
-            if (references.length == 0 ||
-                    !(references[0] instanceof PsiReferenceExpression)) {
+            final PsiElement parameter = parameterReference.resolve();
+            final SearchScope scope = parameterReference.getUseScope();
+            final Query<PsiReference> search =
+                    ReferencesSearch.search(parameter, scope);
+            final PsiReference reference = search.findFirst();
+            if (reference ==  null) {
                 return;
             }
-            final PsiReferenceExpression firstReference =
-                    (PsiReferenceExpression)references[0];
+            final PsiElement element = reference.getElement();
+            if (!(element instanceof PsiReferenceExpression)) {
+                return;
+            }
+           final PsiReferenceExpression firstReference =
+                    (PsiReferenceExpression)element;
             final PsiElement[] children = body.getChildren();
             final StringBuffer buffer = new StringBuffer();
             boolean newDeclarationCreated = false;
