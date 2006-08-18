@@ -7,9 +7,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindow;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +38,7 @@ public class MoveChangesToAnotherListAction extends AnAction {
 
     if (project != null && changes == null && unversionedFiles == null) {
       unversionedFiles = new ArrayList<VirtualFile>();
-      changes = getChangedFiles(project, changes, unversionedFiles, e);
+      changes = getChangesForSelectedFiles(project, changes, unversionedFiles, null, e);
     }
 
     e.getPresentation().setEnabled(project != null &&
@@ -43,45 +46,67 @@ public class MoveChangesToAnotherListAction extends AnAction {
   }
 
   @Nullable
-  private static Change[] getChangedFiles(final Project project, Change[] changes, final List<VirtualFile> unversionedFiles, final AnActionEvent e) {
+  private static Change[] getChangesForSelectedFiles(final Project project, Change[] changes, final List<VirtualFile> unversionedFiles,
+                                                     @Nullable final List<VirtualFile> changedFiles, final AnActionEvent e) {
+    if (ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length == 0) {
+      return null;
+    }
+    
     VirtualFile[] virtualFiles = (VirtualFile[])e.getDataContext().getData(DataConstants.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null) {
-      List<Change> changedFiles = new ArrayList<Change>();
+      List<Change> changesInFiles = new ArrayList<Change>();
       for(VirtualFile vFile: virtualFiles) {
         if (ChangeListManager.getInstance(project).getStatus(vFile).equals(FileStatus.UNKNOWN)) {
           unversionedFiles.add(vFile);
+          if (changedFiles != null) changedFiles.add(vFile);
         }
         else {
           Change change = ChangeListManager.getInstance(project).getChange(vFile);
           if (change != null) {
-            changedFiles.add(change);
+            changesInFiles.add(change);
+            if (changedFiles != null) changedFiles.add(vFile);
           }
         }
       }
-      if (changedFiles.size() > 0 || unversionedFiles.size() > 0) {
-        changes = changedFiles.toArray(new Change[changedFiles.size()]);
+      if (changesInFiles.size() > 0 || unversionedFiles.size() > 0) {
+        changes = changesInFiles.toArray(new Change[changesInFiles.size()]);
       }
     }
     return changes;
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
     Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
     //noinspection unchecked
     List<VirtualFile> unversionedFiles = (List<VirtualFile>) e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
 
+    final List<VirtualFile> changedFiles = new ArrayList<VirtualFile>();
+    boolean activateChangesView = false;
     if (project != null && changes == null && unversionedFiles == null) {
       unversionedFiles = new ArrayList<VirtualFile>();
-      changes = getChangedFiles(project, changes, unversionedFiles, e);
+      changes = getChangesForSelectedFiles(project, changes, unversionedFiles, changedFiles, e);
+      activateChangesView = true;
     }
 
     if (changes == null) return;
 
-    askAndMove(project, changes, unversionedFiles);
+    if (!askAndMove(project, changes, unversionedFiles)) return;
+    if (activateChangesView) {
+      ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewManager.TOOLWINDOW_ID);
+      if (!window.isVisible()) {
+        window.activate(new Runnable() {
+          public void run() {
+            if (changedFiles.size() > 0) {
+              ChangesViewManager.getInstance(project).selectFile(changedFiles.get(0));
+            }
+          }
+        });
+      }
+    }
   }
 
-  public static void askAndMove(final Project project, final Change[] changes, final List<VirtualFile> unversionedFiles) {
+  public static boolean askAndMove(final Project project, final Change[] changes, final List<VirtualFile> unversionedFiles) {
     final ChangeListManagerImpl listManager = ChangeListManagerImpl.getInstanceImpl(project);
     final List<LocalChangeList> lists = listManager.getChangeLists();
     ChangeListChooser chooser = new ChangeListChooser(project, getPreferredLists(lists, changes, true), guessPreferredList(lists, changes));
@@ -92,7 +117,9 @@ public class MoveChangesToAnotherListAction extends AnAction {
       if (unversionedFiles != null) {
         listManager.addUnversionedFiles(resultList, unversionedFiles);
       }
+      return true;
     }
+    return false;
   }
 
   @Nullable

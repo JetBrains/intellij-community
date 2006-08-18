@@ -32,7 +32,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -264,19 +263,21 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     element.setAttribute(ATT_FLATTENED_VIEW, String.valueOf(SHOW_FLATTEN_MODE));
   }
 
-  public void selectFile(final PsiElement element) {
+  public void selectFile(final VirtualFile vFile) {
+    if (vFile == null) return;
     Object objectToFind;
-    Change change = ChangeListManager.getInstance(myProject).getChange(element.getContainingFile().getVirtualFile());
+    Change change = ChangeListManager.getInstance(myProject).getChange(vFile);
     if (change != null) {
       objectToFind = change;
     }
     else {
-      objectToFind = element.getContainingFile().getVirtualFile();
+      objectToFind = vFile;
     }
 
-    if (objectToFind != null) {
-      DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
-      TreeUtil.selectNode(myView, TreeUtil.findNodeWithObject(root, objectToFind));
+    DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
+    DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, objectToFind);
+    if (node != null) {
+      TreeUtil.selectNode(myView, node);
     }
   }
 

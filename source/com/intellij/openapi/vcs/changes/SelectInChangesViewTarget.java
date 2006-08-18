@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -30,7 +31,7 @@ public class SelectInChangesViewTarget extends SelectInTargetPsiWrapper {
     return ChangesViewManager.TOOLWINDOW_ID;
   }
 
-  public String getMinorViewId() {
+  @Nullable public String getMinorViewId() {
     return null;
   }
 
@@ -53,7 +54,7 @@ public class SelectInChangesViewTarget extends SelectInTargetPsiWrapper {
   protected void select(final PsiElement element, boolean requestFocus) {
     Runnable runnable = new Runnable() {
       public void run() {
-        ChangesViewManager.getInstance(myProject).selectFile(element);
+        ChangesViewManager.getInstance(myProject).selectFile(element.getContainingFile().getVirtualFile());
       }
     };
     if (requestFocus) {
