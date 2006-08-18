@@ -113,20 +113,20 @@ public class ConstantIfStatementInspection extends StatementInspection {
                     replaceStatement(statement, elseText);
                 } else {
                     final PsiElement containingElement = statement.getParent();
-                    final PsiElement[] children = block.getChildren();
-                    if (children.length > 2) {
+                    final PsiStatement[] statements = block.getStatements();
+                    if (statements.length > 0) {
                         assert containingElement != null;
                         final PsiElement added =
-                                containingElement.addRangeBefore(children[1],
-                                        children[children.length - 2],
+                                containingElement.addRangeBefore(statements[0],
+                                        statements[statements.length - 1],
                                         statement);
                         final PsiManager manager = statement.getManager();
                         final Project project = manager.getProject();
                         final CodeStyleManager codeStyleManager =
                                 CodeStyleManager.getInstance(project);
                         codeStyleManager.reformat(added);
-                        statement.delete();
                     }
+                    statement.delete();
                 }
             } else {
                 final String elseText = branch.getText();
