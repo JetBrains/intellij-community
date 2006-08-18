@@ -418,7 +418,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public InspectionProfileEntry[] getInspectionTools() {
-    if (myTools.isEmpty()) {
+    if (myTools.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
      initInspectionTools();
     }
     ArrayList<InspectionTool> result = new ArrayList<InspectionTool>();
