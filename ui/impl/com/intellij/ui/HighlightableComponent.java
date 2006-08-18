@@ -17,14 +17,15 @@ public class HighlightableComponent extends JComponent {
   protected String myText = "";
   protected Icon myIcon;
   protected int myIconTextGap;
-  protected ArrayList myHighlightedRegions;
-  protected TIntObjectHashMap myFontMetrics;
+  protected ArrayList<HighlightedRegion> myHighlightedRegions;
+  protected TIntObjectHashMap<FontMetrics> myFontMetrics;
   protected boolean myIsSelected;
   protected boolean myHasFocus;
+  protected boolean myPaintUnfocusedSelection = false;
 
   public HighlightableComponent() {
     myIconTextGap = 4;
-    myFontMetrics = new TIntObjectHashMap();
+    myFontMetrics = new TIntObjectHashMap<FontMetrics>();
     setText("");
     fillFontMetricsMap();
     setOpaque(true);
@@ -45,7 +46,7 @@ public class HighlightableComponent extends JComponent {
       text = "";
     }
     myText = text;
-    myHighlightedRegions = new ArrayList(4);
+    myHighlightedRegions = new ArrayList<HighlightedRegion>(4);
   }
 
   public void setIcon(Icon icon) {
@@ -74,7 +75,7 @@ public class HighlightableComponent extends JComponent {
     }
     else{
       for(int i = startIndex; i < myHighlightedRegions.size(); i++){
-        HighlightedRegion hRegion = (HighlightedRegion)myHighlightedRegions.get(i);
+        HighlightedRegion hRegion = myHighlightedRegions.get(i);
 
         // must be before
         if (startOffset < hRegion.startOffset && endOffset <= hRegion.startOffset){
@@ -191,7 +192,7 @@ public class HighlightableComponent extends JComponent {
     Color fgColor;
     boolean paintHighlightsBackground;
     boolean paintHighlightsForeground;
-    if (myIsSelected && myHasFocus) {
+    if (myIsSelected && (myHasFocus || myPaintUnfocusedSelection)) {
       bgColor = UIUtil.getTreeSelectionBackground();
       fgColor = UIUtil.getTreeSelectionForeground();
       paintHighlightsBackground = false;
@@ -237,15 +238,14 @@ public class HighlightableComponent extends JComponent {
     }
     else{
       int endIndex = 0;
-      for(int i = 0; i < myHighlightedRegions.size(); i++){
-        HighlightedRegion hRegion = (HighlightedRegion)myHighlightedRegions.get(i);
+      for (HighlightedRegion hRegion : myHighlightedRegions) {
 
         String text = myText.substring(endIndex, hRegion.startOffset);
         endIndex = hRegion.endOffset;
 
         // draw plain text
 
-        if (text.length() != 0){
+        if (text.length() != 0) {
           g.setColor(fgColor);
           g.setFont(defFontMetrics.getFont());
 
@@ -254,23 +254,23 @@ public class HighlightableComponent extends JComponent {
           offset += defFontMetrics.stringWidth(text);
         }
 
-        FontMetrics fontMetrics = (FontMetrics)myFontMetrics.get(hRegion.textAttributes.getFontType());
+        FontMetrics fontMetrics = myFontMetrics.get(hRegion.textAttributes.getFontType());
 
         text = myText.substring(hRegion.startOffset, hRegion.endOffset);
 
         // paint highlight background
 
-        if (hRegion.textAttributes.getBackgroundColor() != null && paintHighlightsBackground){
+        if (hRegion.textAttributes.getBackgroundColor() != null && paintHighlightsBackground) {
           g.setColor(hRegion.textAttributes.getBackgroundColor());
           g.fillRect(offset, 0, fontMetrics.stringWidth(text), fontMetrics.getHeight() + fontMetrics.getLeading());
         }
 
         // draw highlight text
 
-        if (hRegion.textAttributes.getForegroundColor() != null && paintHighlightsForeground){
+        if (hRegion.textAttributes.getForegroundColor() != null && paintHighlightsForeground) {
           g.setColor(hRegion.textAttributes.getForegroundColor());
         }
-        else{
+        else {
           g.setColor(fgColor);
         }
 
@@ -279,7 +279,7 @@ public class HighlightableComponent extends JComponent {
 
         // draw highlight underscored line
 
-        if (hRegion.textAttributes.getEffectColor() != null){
+        if (hRegion.textAttributes.getEffectColor() != null) {
           g.setColor(hRegion.textAttributes.getEffectColor());
           int y = yOffset/*fontMetrics.getMaxAscent()*/ + 2;
           UIUtil.drawLine(g, offset, y, offset + fontMetrics.stringWidth(text) - 1, y);
@@ -287,10 +287,9 @@ public class HighlightableComponent extends JComponent {
 
         // draw highlight border
 
-        if (hRegion.textAttributes.getEffectColor() != null && hRegion.textAttributes.getEffectType() == EffectType.BOXED){
+        if (hRegion.textAttributes.getEffectColor() != null && hRegion.textAttributes.getEffectType() == EffectType.BOXED) {
           g.setColor(hRegion.textAttributes.getEffectColor());
-          g.drawRect(offset, 0, fontMetrics.stringWidth(text) - 1,
-            fontMetrics.getHeight() + fontMetrics.getLeading() - 1);
+          g.drawRect(offset, 0, fontMetrics.stringWidth(text) - 1, fontMetrics.getHeight() + fontMetrics.getLeading() - 1);
         }
 
         offset += fontMetrics.stringWidth(text);
@@ -334,27 +333,26 @@ public class HighlightableComponent extends JComponent {
       }
       else{
         int endIndex = 0;
-        for(int i = 0; i < myHighlightedRegions.size(); i++){
-          HighlightedRegion hRegion = (HighlightedRegion)myHighlightedRegions.get(i);
+        for (HighlightedRegion hRegion : myHighlightedRegions) {
 
           String text = myText.substring(endIndex, hRegion.startOffset);
           endIndex = hRegion.endOffset;
 
           width += defFontMetrics.stringWidth(text);
 
-          if(hRegion.endOffset>myText.length()){
-            if(hRegion.startOffset<myText.length()){
+          if (hRegion.endOffset > myText.length()) {
+            if (hRegion.startOffset < myText.length()) {
               text = myText.substring(hRegion.startOffset);
             }
-            else{
-              text="";
+            else {
+              text = "";
             }
           }
-          else{
+          else {
             text = myText.substring(hRegion.startOffset, hRegion.endOffset);
           }
 
-          FontMetrics fontMetrics = (FontMetrics)myFontMetrics.get(hRegion.textAttributes.getFontType());
+          FontMetrics fontMetrics = myFontMetrics.get(hRegion.textAttributes.getFontType());
           width += fontMetrics.stringWidth(text);
         }
         width += defFontMetrics.stringWidth(myText.substring(endIndex, myText.length()));
