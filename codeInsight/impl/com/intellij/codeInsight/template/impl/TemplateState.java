@@ -24,11 +24,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.jsp.JspUtil;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.lang.StdLanguages;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -237,13 +240,14 @@ public class TemplateState implements Disposable {
     mySegments = new TemplateSegments(myEditor);
     myTemplate = template;
 
-    preprocessTemplate(PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument), myEditor.getCaretModel().getOffset());
-    int caretOffset = myEditor.getCaretModel().getOffset();
 
     if (template.isInline()) {
+      int caretOffset = myEditor.getCaretModel().getOffset();
       myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset + template.getTemplateText().length());
     }
     else {
+      preprocessTemplate(PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument), myEditor.getCaretModel().getOffset(), myTemplate.getTemplateText());
+      int caretOffset = myEditor.getCaretModel().getOffset();
       myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset);
     }
     myTemplateRange.setGreedyToLeft(true);
@@ -259,15 +263,17 @@ public class TemplateState implements Disposable {
     }
   }
 
-  private void preprocessTemplate(final PsiFile file, int caretOffset) {
-    if (PsiUtil.isInJspFile(file)) {
-      try {
-        caretOffset += JspUtil.escapeCharsInJspContext((PsiUtil.getJspFile(file)), caretOffset, myTemplate.getTemplateText());
-        PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
-        myEditor.getCaretModel().moveToOffset(caretOffset);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
+  private void preprocessTemplate(final PsiFile file, int caretOffset, final String textToInsert) {
+    if (file.getLanguage().equals(StdLanguages.JSPX)) {
+      if (XmlUtil.toCode(textToInsert)) {
+        try {
+          caretOffset += JspUtil.escapeCharsInJspContext((JspFile)file, caretOffset, myTemplate.getTemplateText());
+          PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
+          myEditor.getCaretModel().moveToOffset(caretOffset);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
       }
     }
   }
