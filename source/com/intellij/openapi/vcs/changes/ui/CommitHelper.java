@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.impl.FileViewManagerImpl;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -133,7 +134,7 @@ public class CommitHelper {
                 MoveChangesToAnotherListAction.askAndMove(myProject, changes.toArray(new Change[changes.size()]), null);
               }
             }
-          }, ModalityState.NON_MMODAL);
+          }, ModalityState.NON_MODAL);
         }
       }
     }
@@ -163,8 +164,9 @@ public class CommitHelper {
             .showErrorDialog(VcsBundle.message("message.text.commit.finished.with.warnings"), VcsBundle.message("message.title.commit"));
         }
 
+        FileViewManagerImpl.getInstance(myProject).refreshFileView();
       }
-    }, ModalityState.NON_MMODAL);
+    }, ModalityState.NON_MODAL);
 
   }
 

@@ -41,6 +41,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.impl.FileViewManagerImpl;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -413,13 +414,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
   protected void refreshFileView(Project project) {
     if (project == null) return;
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-
-    ToolWindowEx fileViewToolWindow = (ToolWindowEx)toolWindowManager
-      .getToolWindow(ProjectLevelVcsManager.FILE_VIEW_TOOL_WINDOW_ID);
-    if (fileViewToolWindow == null) return;
-    if (!fileViewToolWindow.isAvailable()) return;
-    ((FileViewPanel)fileViewToolWindow.getComponent()).refresh();
+    FileViewManagerImpl.getInstance(project).refreshFileView();
   }
 
   private boolean shouldCheckin(CheckinProjectDialogImplementer d, Project project) {
