@@ -200,7 +200,7 @@ public class InjectedLanguageUtil {
         TextRange range = leaf.getTextRange();
         if (prefixLength > range.getStartOffset() && prefixLength < range.getEndOffset()) {
           LOG.error("Prefix must not contain text that will be glued with the element body after parsing. " +
-                    "Howewer, parsed element of "+leaf.getClass()+" contains "+(range.getStartOffset()-prefixLength) + " characters from the prefix. " +
+                    "Howewer, parsed element of "+leaf.getClass()+" contains "+(prefixLength-range.getStartOffset()) + " characters from the prefix. " +
                     "Parsed text is '"+leaf.getText()+"'");
         }
         if (range.getStartOffset() < contentsRange.getEndOffset() && contentsRange.getEndOffset() < range.getEndOffset()) {
