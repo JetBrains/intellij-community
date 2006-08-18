@@ -258,7 +258,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
               if (myRefreshCount > 0) {
                 myRefreshEventsToFire.clear();
-                if (mySynchronousRefreshCount == 0) {
+                if (!asynchronous && mySynchronousRefreshCount == 0) {
                   myVirtualFileManagerListenerMulticaster.getMulticaster().afterRefreshFinish(asynchronous);
                 }
               }
