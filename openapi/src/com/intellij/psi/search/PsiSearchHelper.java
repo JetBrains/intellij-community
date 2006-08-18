@@ -292,7 +292,7 @@ public interface PsiSearchHelper {
   void processUsagesInNonJavaFiles(@Nullable PsiElement originalElement,
                                    String qName,
                                    PsiNonJavaFileReferenceProcessor processor,
-                                   GlobalSearchScope searchScope);
+                                   SearchScope searchScope);
 
   /**
    * Returns the scope in which references to the specified element are searched.
