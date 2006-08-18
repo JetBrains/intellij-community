@@ -135,6 +135,7 @@ public class ScopeEditorPanel {
 
   private void onTextChange() {
     if (!myIsInUpdate) {
+      myUpdateAlarm.cancelAllRequests();
       myCurrentScope = null;
       try {
         myCurrentScope = PackageSetFactory.getInstance().compile(myPatternField.getText());
@@ -250,7 +251,11 @@ public class ScopeEditorPanel {
     else if (node instanceof DirectoryNode){
       String pattern = node.toString();
       if (pattern != null) {
-        pattern += recursively ? "/*" : "/**";
+        if (pattern.length() > 0) {
+          pattern += recursively ? "/*" : "/**";
+        } else {
+          pattern += recursively ? "*" : "**";
+        }
       }
       return getPatternSet(node, pattern);
     }
@@ -349,7 +354,7 @@ public class ScopeEditorPanel {
           }
         }.start();
       }
-    }, 300);
+    }, 600);
   }
 
   public void rebuild(final boolean updateText) {
@@ -478,6 +483,11 @@ public class ScopeEditorPanel {
     myMatchingCountPanel.add(cmp, BorderLayout.EAST);
     myMatchingCountPanel.revalidate();
     myMatchingCountPanel.repaint();
+    SwingUtilities.invokeLater(new Runnable(){
+      public void run() {
+        myPatternField.requestFocusInWindow();        
+      }
+    });
   }
 
   private static class MyTreeCellRenderer extends DefaultTreeCellRenderer {
@@ -503,6 +513,10 @@ public class ScopeEditorPanel {
 
         if (!sel && node.hasMarked() && !DependencyUISettings.getInstance().UI_FILTER_LEGALS) {
           setForeground(node.hasUnmarked() ? PARTIAL_INCLUDED : WHOLE_INCLUDED);
+        }
+        if (node instanceof DirectoryNode && node.toString().length() == 0) {
+          final DirectoryNode directoryNode = (DirectoryNode)node;
+          setText(directoryNode.getDirName());
         }
       }
 

@@ -24,11 +24,11 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiPackage;
-import com.intellij.problems.WolfTheProblemSolver;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.regex.Pattern;
@@ -99,8 +99,14 @@ public class PatternPackageSet implements PackageSet {
   }
 
   private boolean fileMatcher(VirtualFile virtualFile, ProjectFileIndex fileIndex){
-    final VirtualFile contentRoot = fileIndex.getContentRootForFile(virtualFile);
-    return myFilePattern.matcher(VfsUtil.getRelativePath(virtualFile, contentRoot, '/')).matches();
+    if (myModulePattern != null) {
+      final VirtualFile contentRoot = fileIndex.isInSource(virtualFile)
+                                      ? fileIndex.getSourceRootForFile(virtualFile)
+                                      : fileIndex.getContentRootForFile(virtualFile);
+      return myFilePattern.matcher(VfsUtil.getRelativePath(virtualFile, contentRoot, '/')).matches();
+    } else {
+      return myFilePattern.matcher(getRelativePath(virtualFile, fileIndex, true)).matches();
+    }
   }
 
   private boolean matchesModule(VirtualFile file, ProjectFileIndex fileIndex) {
@@ -199,5 +205,21 @@ public class PatternPackageSet implements PackageSet {
 
     buf.append(myAspectJSyntaxPattern != null ? myAspectJSyntaxPattern : myPathPattern);
     return buf.toString();
+  }
+
+  public static String getRelativePath(final VirtualFile virtualFile, final ProjectFileIndex index, final boolean useFQName) {
+    final Module module = index.getModuleForFile(virtualFile);
+    if (module != null) {
+      final VirtualFile projectParent = module.getProject().getProjectFile().getParent();
+      if (projectParent != null) {
+        if (VfsUtil.isAncestor(projectParent, virtualFile, false)){
+          final String projectRelativePath = VfsUtil.getRelativePath(virtualFile, projectParent, '/');
+          return useFQName ? projectRelativePath : projectRelativePath.substring(projectRelativePath.indexOf('/') + 1);
+        }
+      }
+      return virtualFile.getPath();
+    } else {
+      return VfsUtil.getRelativePath(virtualFile, index.getContentRootForFile(virtualFile), '/');
+    }
   }
 }

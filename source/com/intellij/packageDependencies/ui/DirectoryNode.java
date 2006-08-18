@@ -9,10 +9,10 @@ import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
-import java.io.File;
 import java.util.Set;
 
 public class DirectoryNode extends PackageDependenciesNode {
@@ -28,21 +28,27 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   public DirectoryNode(PsiDirectory aDirectory, boolean compactPackages, boolean showFQName) {
     myDirectory = aDirectory;
+    final VirtualFile directory = myDirectory.getVirtualFile();
+    final ProjectFileIndex index = ProjectRootManager.getInstance(myDirectory.getProject()).getFileIndex();
     final boolean showModules = DependencyUISettings.getInstance().UI_SHOW_MODULES;
-    myDirName = showModules ? aDirectory.getName() : myDirectory.getVirtualFile().getPresentableUrl();
-    myCompactPackages = compactPackages;
-    if (showFQName) {
-      if (!showModules) {
-        myFQName = myDirName;
-      } else {
-        final ProjectFileIndex index = ProjectRootManager.getInstance(myDirectory.getProject()).getFileIndex();
-        final VirtualFile directory = myDirectory.getVirtualFile();
-        final VirtualFile contentRoot = index.getContentRootForFile(directory);
+    if (showModules) {
+      myDirName = aDirectory.getName();
+      if (showFQName) {
+        final VirtualFile contentRoot = index.isInSource(directory)
+                                        ? index.getSourceRootForFile(directory)
+                                        : index.getContentRootForFile(directory);
         if (contentRoot != null) {
-          myFQName = VfsUtil.getRelativePath(directory, contentRoot.getParent(), File.separatorChar);
+          myFQName = VfsUtil.getRelativePath(directory, contentRoot, '/');
         }
       }
     }
+    else {
+      myDirName = PatternPackageSet.getRelativePath(directory, index, showFQName);
+      if (showFQName) {
+        myFQName = myDirName;
+      }
+    }    
+    myCompactPackages = compactPackages;
     setUserObject(toString());
   }
 
@@ -60,7 +66,7 @@ public class DirectoryNode extends PackageDependenciesNode {
   public String toString() {
     if (myFQName != null) return myFQName;
     if (myCompactPackages && myCompactedDirNode != null){
-      return myDirName + File.separator + myCompactedDirNode.getDirName();
+      return myDirName + "/" + myCompactedDirNode.getDirName();
     }
     return myDirName;
   }
@@ -68,7 +74,7 @@ public class DirectoryNode extends PackageDependenciesNode {
   public String getDirName(){
     if (myDirectory == null || !myDirectory.isValid()) return "";
     if (myCompactPackages && myCompactedDirNode != null){
-      return myDirectory.getName() + File.separator + myCompactedDirNode.getDirName();
+      return myDirectory.getName() + "/" + myCompactedDirNode.getDirName();
     }
     return myDirectory.getName();
   }

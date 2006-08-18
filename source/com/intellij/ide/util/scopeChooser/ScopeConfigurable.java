@@ -107,4 +107,8 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
       myPanel.cancelCurrentProgress();
     }
   }
+
+  public PackageSet getScope() {
+    return myPanel.getCurrentScope();
+  }
 }

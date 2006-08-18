@@ -585,9 +585,7 @@ public class TreeModelBuilder {
 
     final PsiDirectory directory = psiDirectory.getParentDirectory();
     if (!myFlattenPackages && directory != null) {
-      final PsiDirectory parentDirectory = directory.getParentDirectory();
-      if (parentDirectory != null &&
-          ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(parentDirectory.getVirtualFile()) == module) {
+      if (ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(directory.getVirtualFile()) == module) {
         DirectoryNode parentDirectoryNode = getMap(myModuleDirNodes, scopeType).get(directory);
         if (parentDirectoryNode != null || !myCompactEmptyMiddlePackages) {
           getModuleDirNode(directory, module, scopeType, (DirectoryNode)directoryNode).add(directoryNode);
