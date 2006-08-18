@@ -147,7 +147,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
   }
 
   public boolean isValid() {
-    return !isDisposed() && myLibrary != null;
+    return !isDisposed() && getLibrary() != null;
   }
 
   public <R> R accept(RootPolicy<R> policy, R initialValue) {

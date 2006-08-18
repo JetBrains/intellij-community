@@ -202,7 +202,7 @@ public class ModulesConfigurable extends NamedConfigurable<Project> {
   }
 
   public String getDisplayName() {
-    return getBannerSlogan();
+    return ProjectBundle.message("project.roots.project.display.name", myProject.getName());
   }
 
   public Icon getIcon() {

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.profile.Profile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashSet;
@@ -338,6 +339,17 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
         Dimension size = super.getPreferredScrollableViewportSize();
         size = new Dimension(size.width + 20, size.height);
         return size;
+      }
+
+      @SuppressWarnings({"NonStaticInitializer"})
+      public JToolTip createToolTip() {
+        final JToolTip toolTip = new JToolTip(){
+          {
+            setUI(new MultiLineTooltipUI());
+          }
+        };
+        toolTip.setComponent(this);
+        return toolTip;
       }
     };
   }

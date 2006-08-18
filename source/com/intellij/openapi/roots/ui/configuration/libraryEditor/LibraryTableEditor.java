@@ -482,6 +482,11 @@ public class LibraryTableEditor implements Disposable {
           modules.add(module);
         }
       }
+      Collections.sort(modules, new Comparator<Module>() {
+        public int compare(final Module m1, final Module m2) {
+          return m1.getName().compareToIgnoreCase(m2.getName());
+        }
+      });
       final ChooseModulesDialog dlg = new ChooseModulesDialog(myProject,
                                                               modules, ProjectBundle.message("choose.modules.dialog.title"),
                                                               ProjectBundle.message("choose.modules.dialog.description", libraryToSelect.getName())); 

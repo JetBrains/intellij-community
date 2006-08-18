@@ -11,9 +11,10 @@ import javax.swing.plaf.metal.MetalToolTipUI;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class MultiLineTooltipUI extends MetalToolTipUI {
-  private java.util.List myLines = new ArrayList();
+  private List myLines = new ArrayList();
 
   public void paint(Graphics g, JComponent c) {
     FontMetrics metrics = g.getFontMetrics(g.getFont());
@@ -38,8 +39,7 @@ public class MultiLineTooltipUI extends MetalToolTipUI {
     myLines.clear();
 
     final String[] lines = LineTokenizer.tokenize(tipText.toCharArray(), false);
-    for (int i = 0; i < lines.length; i++) {
-      String line = lines[i];
+    for (String line : lines) {
       myLines.add(line);
       int width = SwingUtilities.computeStringWidth(metrics, line);
       if (width > maxWidth) {

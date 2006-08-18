@@ -89,6 +89,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   private Map<Module, LibrariesModifiableModel> myModule2LibrariesMap = new HashMap<Module, LibrariesModifiableModel>();
 
   private MyNode myProjectNode;
+
+  private MyNode myProjectContentNode;
+  private MyNode myGlobalPartNode;
+
   private MyNode myProjectLibrariesNode;
   private Project myProject;
 
@@ -104,11 +108,14 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   private Map<Library, Set<String>> myLibraryDependencyCache = new HashMap<Library, Set<String>>();
   private Map<ProjectJdk, Set<String>> myJdkDependencyCache = new HashMap<ProjectJdk, Set<String>>();
-  private Map<Module, Boolean> myValidityCache = new HashMap<Module, Boolean>();
+  private Map<Module, Map<String, Set<String>>> myValidityCache = new HashMap<Module, Map<String, Set<String>>>();
   private Map<Library, Boolean> myLibraryPathValidityCache = new HashMap<Library, Boolean>(); //can be invalidated on startup only
   private Map<Module, Set<String>> myModulesDependencyCache = new HashMap<Module, Set<String>>();
 
   private Alarm myUpdateDependenciesAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+
+  @NonNls private static final String DELETED_LIBRARIES = "lib";
+  private static final String NO_JDK = ProjectBundle.message("project.roots.module.jdk.problem.message");
 
   public ProjectRootConfigurable(Project project, ModuleManager manager) {
     myProject = project;
@@ -145,14 +152,14 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     TreeToolTipHandler.install(myTree);
     ToolTipManager.sharedInstance().registerComponent(myTree);
     myTree.setCellRenderer(new ColoredTreeCellRenderer(){
-      public void customizeCellRenderer(JTree tree,
-                                        Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+      public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         if (value instanceof MyNode) {
           final MyNode node = ((MyNode)value);
           final String displayName = node.getDisplayName();
           final Icon icon = node.getConfigurable().getIcon();
           setIcon(icon);
           setToolTipText(null);
+          setFont(UIUtil.getTreeFont());
           if (node.isDisplayInBold()){
             append(displayName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           } else {
@@ -166,7 +173,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
               append(displayName, new SimpleTextAttributes(invalid ? SimpleTextAttributes.STYLE_WAVED : SimpleTextAttributes.STYLE_PLAIN,
                                                            fg,
                                                            Color.red));
-              setToolTipText(ProjectBundle.message("project.root.tooltip", displayName, invalid ? (unused ? 3 : 1) : 2));
+              setToolTipText(composeTooltipMessage(invalid, object, displayName, unused).toString());
             }
             else {
               append(displayName, selected && hasFocus ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -177,29 +184,44 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     });
   }
 
+  private StringBuffer composeTooltipMessage(final boolean invalid, final Object object, final String displayName, final boolean unused) {
+    StringBuffer buf = new StringBuffer();
+    if (invalid) {
+      if (object instanceof Module) {
+        final Module module = (Module)object;
+        final Map<String, Set<String>> problems = myValidityCache.get(module);
+        if (problems.containsKey(NO_JDK)){
+          buf.append(NO_JDK).append("\n");
+        }
+        final Set<String> deletedLibraries = problems.get(DELETED_LIBRARIES);
+        if (deletedLibraries != null) {
+          buf.append(ProjectBundle.message("project.roots.library.problem.message", deletedLibraries.size()));
+          for (String problem : deletedLibraries) {
+            if (deletedLibraries.size() > 1) {
+              buf.append(" - ");
+            }
+            buf.append("\'").append(problem).append("\'").append("\n");
+          }          
+        }
+      } else {
+        buf.append(ProjectBundle.message("project.roots.tooltip.library.misconfigured", displayName)).append("\n");
+      }
+    }
+    if (unused) {
+      buf.append(ProjectBundle.message("project.roots.tooltip.unused", displayName, myProject.getName()));
+    }
+    return buf;
+  }
+
   private boolean isInvalid(final Object object) {
     if (object instanceof Module){
       final Module module = (Module)object;
-      if (myValidityCache.containsKey(module)) return myValidityCache.get(module).booleanValue();
+      if (myValidityCache.containsKey(module)) return myValidityCache.get(module) != null;
       myUpdateDependenciesAlarm.addRequest(new Runnable(){
         public void run() {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
-              final OrderEntry[] entries = myModulesConfigurator.getRootModel(module).getOrderEntries();
-              for (OrderEntry entry : entries) {
-                if (!entry.isValid()){
-                  myValidityCache.put(module, Boolean.TRUE);
-                  SwingUtilities.invokeLater(new Runnable(){
-                    public void run() {
-                      if (!myDisposed){
-                        myTree.repaint();
-                      }
-                    }
-                  });
-                  return;
-                }
-              }
-              myValidityCache.put(module, Boolean.FALSE);
+              updateModuleValidityCache(module);
             }
           });
         }
@@ -211,22 +233,60 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         public void run() {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
-              boolean valid = library.allPathsValid(OrderRootType.CLASSES) && library.allPathsValid(OrderRootType.JAVADOC) && library.allPathsValid(OrderRootType.SOURCES);
-              myLibraryPathValidityCache.put(library, valid ? Boolean.FALSE : Boolean.TRUE);
-              if (valid) return;
-              SwingUtilities.invokeLater(new Runnable(){
-                public void run() {
-                  if (!myDisposed){
-                    myTree.repaint();
-                  }
-                }
-              });
+              updateLibraryValidityCache(library);
             }
           });
         }
       }, 0);
     }
     return false;
+  }
+
+  private void updateLibraryValidityCache(final LibraryEx library) {
+    if (myLibraryPathValidityCache.containsKey(library)) return; //do not check twice
+    boolean valid = library.allPathsValid(OrderRootType.CLASSES) && library.allPathsValid(OrderRootType.JAVADOC) && library.allPathsValid(OrderRootType.SOURCES);
+    myLibraryPathValidityCache.put(library, valid ? Boolean.FALSE : Boolean.TRUE);
+    if (valid) return;
+    SwingUtilities.invokeLater(new Runnable(){
+      public void run() {
+        if (!myDisposed){
+          myTree.repaint();
+        }
+      }
+    });
+  }
+
+  private void updateModuleValidityCache(final Module module) {
+    if (myValidityCache.containsKey(module)) return; //do not check twice
+    final OrderEntry[] entries = myModulesConfigurator.getRootModel(module).getOrderEntries();
+    Map<String, Set<String>> problems = null;
+    for (OrderEntry entry : entries) {
+      if (!entry.isValid()){
+        if (problems == null) {
+          problems = new HashMap<String, Set<String>>();
+        }
+        if (entry instanceof JdkOrderEntry && ((JdkOrderEntry)entry).getJdkName() == null) {
+          problems.put(NO_JDK, null);
+        } else {
+          Set<String> deletedLibraries = problems.get(DELETED_LIBRARIES);
+          if (deletedLibraries == null){
+            deletedLibraries = new HashSet<String>();
+            problems.put(DELETED_LIBRARIES, deletedLibraries);
+          }
+          deletedLibraries.add(entry.getPresentableName());
+        }
+      }
+    }
+    myValidityCache.put(module, problems);
+    if (problems != null) {
+      SwingUtilities.invokeLater(new Runnable(){
+        public void run() {
+          if (!myDisposed){
+            myTree.repaint();
+          }
+        }
+      });
+    }
   }
 
   private boolean isUnused(final Object object, MyNode node) {
@@ -249,8 +309,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
     myRoot.removeAllChildren();
 
+    myProjectContentNode = new MyNode(new ProjectContentConfigurable(), true);
+    myRoot.add(myProjectContentNode);
     createProjectNodes();
 
+    myGlobalPartNode = new MyNode(new GlobalResourcesConfigurable(), true);
+    myRoot.add(myGlobalPartNode);
     createProjectJdks();
 
     myGlobalLibrariesNode = createLibrariesNode(LibraryTablesRegistrar.getInstance().getLibraryTable(), myGlobalLibrariesProvider, getGlobalLibrariesProvider());
@@ -281,7 +345,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     for (Library library : libraries) {
       addNode(new MyNode(new LibraryConfigurable(modelProvider, library, myProject, TREE_UPDATER)), node);
     }
-    myRoot.add(node);
+    myGlobalPartNode.add(node);
     return node;
   }
 
@@ -292,7 +356,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myJdksTreeModel, TREE_UPDATER);
       addNode(new MyNode(configurable), myJdksNode);
     }
-    myRoot.add(myJdksNode);
+    myGlobalPartNode.add(myJdksNode);
   }
 
   private void createProjectNodes() {
@@ -323,6 +387,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         addNode(moduleNode, moduleGroupNode);
       }
     }
+    myProjectContentNode.add(myProjectNode);
 
     final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     myProjectLibrariesProvider = new LibrariesModifiableModel(table.getModifiableModel());
@@ -333,9 +398,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     for (Library library1 : libraries) {
       addNode(new MyNode(new LibraryConfigurable(getProjectLibrariesProvider(), library1, myProject, TREE_UPDATER)), myProjectLibrariesNode);
     }
-    myProjectNode.add(myProjectLibrariesNode);
-
-    myRoot.add(myProjectNode);
+    myProjectContentNode.add(myProjectLibrariesNode);
   }
 
   public boolean updateProjectTree(final Module[] modules, final ModuleGroup group) {
@@ -908,11 +971,15 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   private void invalidateModules(final Set<String> modules) {
-    if (modules != null) {
-      for (String module : modules) {
-        myValidityCache.put(myModuleManager.findModuleByName(module), Boolean.TRUE);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (modules != null) {
+          for (String module : modules) {
+            myValidityCache.remove(myModuleManager.findModuleByName(module));
+          }
+        }
       }
-    }
+    });
   }
 
   public Project getProject() {
@@ -1089,9 +1156,6 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
           }
           else if (level == LibraryTablesRegistrar.PROJECT_LEVEL) {
             myProjectLibrariesProvider.removeLibrary(library);
-          }
-          else {
-            myApplicationServerLibrariesProvider.removeLibrary(library);
           }
           invalidateModules(myLibraryDependencyCache.get(library));
           myLibraryDependencyCache.remove(library);
