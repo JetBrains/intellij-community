@@ -56,7 +56,7 @@ public class InheritanceUtil{
             return true;
         }
         final SearchScope scope =
-                GlobalSearchScope.projectScope(class1.getProject());
+                GlobalSearchScope.allScope(class1.getProject());
         final Query<PsiClass> search =
                 ClassInheritorsSearch.search(class1, scope, true, true);
         for (PsiClass inheritor : search) {
