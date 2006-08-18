@@ -54,7 +54,7 @@ import java.util.List;
 class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
 
-  private static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
+  static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
 
   private boolean SHOW_FLATTEN_MODE = true;
 

@@ -237,6 +237,7 @@
       <separator/>
       <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup" test="Version Control">
         <action id="Vcs.FileView" class="com.intellij.openapi.vcs.actions.FileViewAction"/>
+        <action id="Vcs.ChangesView" class="com.intellij.openapi.vcs.changes.ShowChangesViewAction"/>
         <reference ref="CheckinProject"/>
         <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction">
           <keyboard-shortcut first-keystroke="control T" keymap="$default"/>
