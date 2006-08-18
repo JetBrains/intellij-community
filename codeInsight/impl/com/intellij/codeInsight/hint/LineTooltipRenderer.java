@@ -14,14 +14,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Feb 21, 2005
- * Time: 7:17:54 PM
- * To change this template use File | Settings | File Templates.
+ * @author cdr
  */
 public class LineTooltipRenderer implements TooltipRenderer {
-  private String myText;
+  @NonNls private String myText;
 
   public LineTooltipRenderer(String text) {
     myText = text;
@@ -135,15 +131,20 @@ public class LineTooltipRenderer implements TooltipRenderer {
     return result.toString();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void addBelow(String text) {
-    String html1 = getHtmlBody(myText);
-    String html2 = getHtmlBody(text);
-    myText = "<html><body>" + html1 + "<hr size=1 noshade>" + html2 + "</body></html>";
+    @NonNls String newBody;
+    if (myText ==null) {
+      newBody = getHtmlBody(text);
+    }
+    else {
+      String html1 = getHtmlBody(myText);
+      String html2 = getHtmlBody(text);
+      newBody = html1 + "<hr size=1 noshade>" + html2;
+    }
+    myText = "<html><body>" + newBody + "</body></html>";
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static String getHtmlBody(String text) {
+  private static String getHtmlBody(@NonNls String text) {
     if (!text.startsWith("<html>")) {
       return text.replaceAll("\n","<br>");
     }

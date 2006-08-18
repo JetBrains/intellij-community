@@ -571,7 +571,7 @@ public class StringUtil {
     return h;
   }
 
-  @NotNull public static String trimEnd(@NotNull String s, @NotNull String suffix) {
+  @NotNull public static String trimEnd(@NotNull String s, @NonNls @NotNull String suffix) {
     if (s.endsWith(suffix)) {
       return s.substring(0, s.lastIndexOf(suffix));
     }
@@ -586,7 +586,7 @@ public class StringUtil {
     return s != null && s.length() != 0 && s.charAt(s.length() - 1) == suffix;
   }
 
-  @NotNull public static String trimStart(@NotNull String s, @NotNull String prefix) {
+  @NotNull public static String trimStart(@NotNull String s, @NonNls @NotNull String prefix) {
     if (s.startsWith(prefix)) {
       return s.substring(prefix.length());
     }
