@@ -10,10 +10,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.TreeExpander;
+import com.intellij.ide.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,6 +32,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -44,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -95,6 +94,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
           myToolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, createChangeViewComponent(), ToolWindowAnchor.BOTTOM);
           updateToolWindowAvailability();
           ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
+          SelectInManager.getInstance(myProject).addTarget(new SelectInChangesViewTarget(myProject));
         }
       }
     });
@@ -245,7 +245,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
       public void run() {
         refreshView();
       }
-    }, 100, ModalityState.NON_MMODAL);
+    }, 100, ModalityState.NON_MODAL);
   }
 
   void refreshView() {
@@ -262,6 +262,22 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
   public void writeExternal(Element element) throws WriteExternalException {
     element.setAttribute(ATT_FLATTENED_VIEW, String.valueOf(SHOW_FLATTEN_MODE));
+  }
+
+  public void selectFile(final PsiElement element) {
+    Object objectToFind;
+    Change change = ChangeListManager.getInstance(myProject).getChange(element.getContainingFile().getVirtualFile());
+    if (change != null) {
+      objectToFind = change;
+    }
+    else {
+      objectToFind = element.getContainingFile().getVirtualFile();
+    }
+
+    if (objectToFind != null) {
+      DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
+      TreeUtil.selectNode(myView, TreeUtil.findNodeWithObject(root, objectToFind));
+    }
   }
 
   private class MyChangeListListener implements ChangeListListener {
@@ -474,6 +490,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     }
 
     public void actionPerformed(AnActionEvent e) {
+      //noinspection unchecked
       List<File> files = (List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
       if (files != null && !files.isEmpty()) {
         new RollbackDeletionAction().actionPerformed(e);
@@ -660,7 +677,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
         public void run() {
           updateToolWindowAvailability();
         }
-      }, 100, ModalityState.NON_MMODAL);
+      }, 100, ModalityState.NON_MODAL);
     }
   }
 }
