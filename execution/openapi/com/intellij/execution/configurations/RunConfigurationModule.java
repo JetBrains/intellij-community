@@ -152,11 +152,11 @@ public class RunConfigurationModule implements JDOMExternalizable {
   public void checkForWarning() throws RuntimeConfigurationException {
     final Module module = getModule();
     if (module != null) {
-      if (ModuleRootManager.getInstance(module).getJdk() == null) {
-        throw new RuntimeConfigurationWarning(ExecutionBundle.message("no.jdk.specified.for.module.warning.text", module.getName()));
-      }
       if (module.isDisposed()){
         throw new RuntimeConfigurationError(ExecutionBundle.message("module.doesn.t.exist.in.project.error.text", module.getName()));
+      }
+      if (ModuleRootManager.getInstance(module).getJdk() == null) {
+        throw new RuntimeConfigurationWarning(ExecutionBundle.message("no.jdk.specified.for.module.warning.text", module.getName()));
       }
     }
     else {
