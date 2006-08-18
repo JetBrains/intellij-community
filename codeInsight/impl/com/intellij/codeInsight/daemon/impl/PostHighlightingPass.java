@@ -53,6 +53,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,12 +130,14 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
     final FileViewProvider viewProvider = myFile.getViewProvider();
     final Set<Language> relevantLanguages = viewProvider.getRelevantLanguages();
+    Set<PsiElement> elementSet = new THashSet<PsiElement>();
     for (Language language : relevantLanguages) {
       PsiElement psiRoot = viewProvider.getPsi(language);
       if(!HighlightUtil.shouldHighlight(psiRoot)) continue;
       List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
-      collectHighlights(elements, highlights);
+      elementSet.addAll(elements);
     }
+    collectHighlights(elementSet, highlights);
 
     PsiNamedElement[] unusedDcls = myRefCountHolder.getUnusedDcls();
     for (PsiNamedElement unusedDcl : unusedDcls) {
@@ -199,7 +202,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return myHighlights;
   }
 
-  private void collectHighlights(List<PsiElement> elements, List<HighlightInfo> array) throws ProcessCanceledException {
+  private void collectHighlights(Collection<PsiElement> elements, List<HighlightInfo> array) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     for (PsiElement element : elements) {
