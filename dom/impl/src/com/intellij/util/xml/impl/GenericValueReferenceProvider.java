@@ -98,7 +98,8 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
   @NotNull
   protected final PsiReference[] createReferences(GenericDomValue domValue, XmlElement psiElement, boolean soft, final Converter converter) {
     if (converter instanceof PsiReferenceConverter) {
-      return ((PsiReferenceConverter)converter).createReferences(psiElement, false);
+      final Convert annotation = domValue.getAnnotation(Convert.class);
+      return ((PsiReferenceConverter)converter).createReferences(psiElement, annotation != null && annotation.soft());
     }
 
     final DomInvocationHandler invocationHandler = getInvocationHandler(domValue);

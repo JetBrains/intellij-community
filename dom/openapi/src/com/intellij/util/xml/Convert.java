@@ -12,4 +12,5 @@ import java.lang.annotation.ElementType;
 @Target({ElementType.METHOD})
 public @interface Convert {
   Class<? extends Converter> value();
+  boolean soft() default false;
 }
