@@ -372,7 +372,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     if (getSuperMethods().size() == 0) {
       PsiClassType[] throwsList = method.getThrowsList().getReferencedTypes();
       if (throwsList.length > 0) {
-        EjbClassRole role = EjbRolesUtil.getEjbRolesUtil().getEjbRole(method.getContainingClass());
+        EjbClassRole role = EjbHelper.getEjbHelper().getEjbRole(method.getContainingClass());
         myUnThrownExceptions = new ArrayList<PsiClass>(throwsList.length);
         for (final PsiClassType type : throwsList) {
           String qualifiedName = type.getCanonicalText();

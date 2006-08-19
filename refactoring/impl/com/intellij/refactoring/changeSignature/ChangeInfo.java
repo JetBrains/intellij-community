@@ -5,6 +5,7 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.javaee.ejb.role.EjbMethodRole;
+import com.intellij.javaee.ejb.EjbHelper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
@@ -150,7 +151,7 @@ class ChangeInfo {
       retainsVarargs = lastNewParm.oldParameterIndex >= 0 && obtainsVarags;
     }
 
-    ejbRole = com.intellij.javaee.ejb.role.EjbRolesUtil.getEjbRolesUtil().getEjbRole(method);
+    ejbRole = EjbHelper.getEjbHelper().getEjbRole(method);
   }
 
   private void setupExceptions(ThrownExceptionInfo[] newExceptions, final PsiMethod method) {

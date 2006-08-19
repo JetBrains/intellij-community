@@ -36,6 +36,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.javaee.ejb.role.*;
+import com.intellij.javaee.ejb.EjbHelper;
 import com.intellij.javaee.model.common.ejb.EjbPsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -949,7 +950,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
 
     if (myChangeInfo.isNameChanged) {
-      final EjbMethodRole role = com.intellij.javaee.ejb.role.EjbRolesUtil.getEjbRolesUtil().getEjbRole(method);
+      final EjbMethodRole role = EjbHelper.getEjbHelper().getEjbRole(method);
       if (role instanceof EjbImplMethodRole && myChangeInfo.ejbRole instanceof EjbDeclMethodRole) {
         EjbDeclMethodRole declRole = (EjbDeclMethodRole) myChangeInfo.ejbRole;
 

@@ -1,8 +1,8 @@
 package com.intellij.refactoring.rename;
 
+import com.intellij.javaee.ejb.EjbHelper;
 import com.intellij.javaee.ejb.role.EjbDeclMethodRole;
 import com.intellij.javaee.ejb.role.EjbMethodRole;
-import com.intellij.javaee.ejb.role.EjbRolesUtil;
 import com.intellij.javaee.model.common.ejb.EjbPsiMethodUtil;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
@@ -500,7 +500,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   protected void prepareMethodRenaming(PsiMethod method, String newName) {
-    for (EjbMethodRole role : EjbRolesUtil.getEjbRolesUtil().getEjbRoles(method)) {
+    for (EjbMethodRole role : EjbHelper.getEjbHelper().getEjbRoles(method)) {
       if (role instanceof EjbDeclMethodRole) {
         final PsiMethod[] implementations = ((EjbDeclMethodRole)role).findAllImplementations();
         if (implementations.length == 0) return;

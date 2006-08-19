@@ -10,8 +10,8 @@ import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.RefUtil;
+import com.intellij.javaee.ejb.EjbHelper;
 import com.intellij.javaee.ejb.role.EjbImplMethodRole;
-import com.intellij.javaee.ejb.role.EjbRolesUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -431,7 +431,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     if (docComment == null) {
       if (isJavaDocRequired(psiMethod)) {
         if (superMethods.length > 0) return null;
-        if (EjbRolesUtil.getEjbRolesUtil().getEjbRole(psiMethod) instanceof EjbImplMethodRole) return null;
+        if (EjbHelper.getEjbHelper().getEjbRole(psiMethod) instanceof EjbImplMethodRole) return null;
         return superMethods.length == 0
                ? new ProblemDescriptor[]{createDescriptor(psiMethod.getNameIdentifier(), JavaDocLocalInspection.REQUIRED_JAVADOC_IS_ABSENT, manager)}
                : null;

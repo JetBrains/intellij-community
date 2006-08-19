@@ -29,7 +29,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
     if (refElement instanceof RefClass) {
       final RefClass refClass = ((RefClass)refElement);
       final PsiClass psiClass = refClass.getElement();
-      EjbClassRole role = EjbRolesUtil.getEjbRolesUtil().getEjbRole(psiClass);
+      EjbClassRole role = EjbHelper.getEjbHelper().getEjbRole(psiClass);
       if (role != null) {
         ((RefClassImpl)refClass).setFlag(false, CAN_BE_FINAL_MASK);
         return;
@@ -89,7 +89,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
       final PsiClass psiClass = (PsiClass)refElement.getElement();
       if (psiClass != null) {
 
-        EjbClassRole role = EjbRolesUtil.getEjbRolesUtil().getEjbRole(psiClass);
+        EjbClassRole role = EjbHelper.getEjbHelper().getEjbRole(psiClass);
         if (role != null) {
           ((RefClassImpl)refElement).setFlag(false, CAN_BE_FINAL_MASK);
         }

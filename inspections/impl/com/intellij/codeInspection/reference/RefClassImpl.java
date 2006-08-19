@@ -9,9 +9,9 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.javaee.ejb.EjbHelper;
 import com.intellij.javaee.ejb.role.EjbClassRole;
 import com.intellij.javaee.ejb.role.EjbClassRoleEnum;
-import com.intellij.javaee.ejb.role.EjbRolesUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -219,7 +219,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
         ((RefManagerImpl)getRefManager()).getMethodReference(this, psiMethod);
       }
 
-      EjbClassRole role = EjbRolesUtil.getEjbRolesUtil().getEjbRole(psiClass);
+      EjbClassRole role = EjbHelper.getEjbHelper().getEjbRole(psiClass);
       if (role != null) {
         setEjb(true);
         if (role.getType() == EjbClassRoleEnum.EJB_CLASS_ROLE_HOME_INTERFACE ||
