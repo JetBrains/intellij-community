@@ -39,7 +39,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   private boolean myModified = false;
 
-  private ModulesConfigurable myModulesConfigurable;
+  private ProjectConfigurable myProjectConfigurable;
 
   private List<ModuleEditor> myModuleEditors = new ArrayList<ModuleEditor>();
 
@@ -59,7 +59,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   public ModulesConfigurator(Project project, ProjectRootConfigurable configurable) {
     myProject = project;
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-    myModulesConfigurable = new ModulesConfigurable(project, this, configurable.getProjectJdksModel());
+    myProjectConfigurable = new ProjectConfigurable(project, this, configurable.getProjectJdksModel());
   }
 
   public void disposeUIResources() {
@@ -78,8 +78,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   }
 
-  public ModulesConfigurable getModulesConfigurable() {
-    return myModulesConfigurable;
+  public ProjectConfigurable getModulesConfigurable() {
+    return myProjectConfigurable;
   }
 
   public Module[] getModules() {
@@ -138,7 +138,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public void moduleStateChanged(final ModifiableRootModel moduleRootModel) {
-    myModulesConfigurable.updateCircularDependencyWarning();
+    myProjectConfigurable.updateCircularDependencyWarning();
   }
 
   public GraphGenerator<ModifiableRootModel> createGraphGenerator() {

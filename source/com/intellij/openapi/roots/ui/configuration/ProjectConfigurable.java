@@ -46,7 +46,7 @@ import java.util.Set;
  * @author Eugene Zhuravlev
  *         Date: Dec 15, 2003
  */
-public class ModulesConfigurable extends NamedConfigurable<Project> {
+public class ProjectConfigurable extends NamedConfigurable<Project> {
 
   private final Project myProject;
 
@@ -62,7 +62,7 @@ public class ModulesConfigurable extends NamedConfigurable<Project> {
 
   private FieldPanel myProjectCompilerOutput;
 
-  private ModulesConfigurable.MyJPanel myPanel;
+  private ProjectConfigurable.MyJPanel myPanel;
 
   private Alarm myUpdateWarningAlarm = new Alarm();
 
@@ -70,7 +70,7 @@ public class ModulesConfigurable extends NamedConfigurable<Project> {
   private ModulesConfigurator myModulesConfigurator;
   private JPanel myWholePanel;
 
-  public ModulesConfigurable(Project project, ModulesConfigurator configurator, ProjectJdksModel model) {
+  public ProjectConfigurable(Project project, ModulesConfigurator configurator, ProjectJdksModel model) {
     myProject = project;
     myModulesConfigurator = configurator;
     init(model);
@@ -83,7 +83,7 @@ public class ModulesConfigurable extends NamedConfigurable<Project> {
   }
 
   private void init(final ProjectJdksModel model) {
-    myPanel = new ModulesConfigurable.MyJPanel();
+    myPanel = new ProjectConfigurable.MyJPanel();
     myPanel.setPreferredSize(new Dimension(700, 500));
 
     myRbRelativePaths.setText(ProjectBundle.message("module.paths.outside.module.dir.relative.radio"));
@@ -234,13 +234,17 @@ public class ModulesConfigurable extends NamedConfigurable<Project> {
     final FileChooserDescriptor outputPathsChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
     InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
     outputPathsChooserDescriptor.setHideIgnored(false);
-    myProjectCompilerOutput = new FieldPanel(textField, null, null, new BrowseFilesListener(textField, ProjectBundle.message(
-      "project.compiler.output"), "", outputPathsChooserDescriptor), new Runnable() {//todo description
-
-      public void run() {
-        //do nothing
-      }
-    });
+    myProjectCompilerOutput = new FieldPanel(textField, null,
+                                             null,
+                                             new BrowseFilesListener(textField,
+                                                                     "",
+                                                                     ProjectBundle.message("project.compiler.output"),
+                                                                     outputPathsChooserDescriptor),
+                                             new Runnable() {
+                                                public void run() {
+                                                  //do nothing
+                                                }
+                                              });
   }
 
   public void setStartModuleWizardOnShow(final boolean show) {

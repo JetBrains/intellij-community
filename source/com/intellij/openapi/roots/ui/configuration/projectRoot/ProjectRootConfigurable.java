@@ -32,8 +32,8 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurable;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ProjectConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
@@ -88,9 +88,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   private Map<Module, LibrariesModifiableModel> myModule2LibrariesMap = new HashMap<Module, LibrariesModifiableModel>();
 
-  private MyNode myProjectNode;
+  private MyNode myModulesNode;
 
-  private MyNode myProjectContentNode;
+  private MyNode myProjectNode;
   private MyNode myGlobalPartNode;
 
   private MyNode myProjectLibrariesNode;
@@ -98,7 +98,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   private ModuleManager myModuleManager;
   private ModulesConfigurator myModulesConfigurator;
-  private ModulesConfigurable myModulesConfigurable;
+  private ProjectConfigurable myProjectConfigurable;
   private ProjectJdksModel myJdksTreeModel = new ProjectJdksModel();
 
   private MyNode myApplicationServerLibrariesNode;
@@ -208,7 +208,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       }
     }
     if (unused) {
-      buf.append(ProjectBundle.message("project.roots.tooltip.unused", displayName, myProject.getName()));
+      buf.append(ProjectBundle.message("project.roots.tooltip.unused", displayName));
     }
     return buf;
   }
@@ -295,6 +295,15 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       getCachedDependencies(object, node, false);
       return false;
     }
+    if (object instanceof ProjectJdk) {
+      return false;
+    }
+    if (object instanceof Library) {
+      final LibraryTable libraryTable = ((Library)object).getTable();
+      if (libraryTable == null || libraryTable.getTableLevel() != LibraryTablesRegistrar.PROJECT_LEVEL) {
+        return false;
+      }
+    }
     final Set<String> dependencies = getCachedDependencies(object, node, false);
     return dependencies != null && dependencies.size() == 0;
   }
@@ -309,8 +318,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
     myRoot.removeAllChildren();
 
-    myProjectContentNode = new MyNode(new ProjectContentConfigurable(), true);
-    myRoot.add(myProjectContentNode);
+    myProjectNode = new MyNode(myProjectConfigurable, true);
+    myRoot.add(myProjectNode);
     createProjectNodes();
 
     myGlobalPartNode = new MyNode(new GlobalResourcesConfigurable(), true);
@@ -360,7 +369,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   private void createProjectNodes() {
-    myProjectNode = new MyNode(myModulesConfigurable, true);
+    myModulesNode = new MyNode(new ModulesConfigurable(), true);
     final Map<ModuleGroup, MyNode> moduleGroup2NodeMap = new HashMap<ModuleGroup, MyNode>();
     final Module[] modules = myModuleManager.getModules();
     for (final Module module : modules) {
@@ -369,10 +378,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       createModuleLibraries(module, moduleNode);
       final String[] groupPath = myPlainMode ? null : myModulesConfigurator.getModuleModel().getModuleGroupPath(module);
       if (groupPath == null || groupPath.length == 0){
-        addNode(moduleNode, myProjectNode);
+        addNode(moduleNode, myModulesNode);
       } else {
         final MyNode moduleGroupNode = ModuleGroupUtil
-          .buildModuleGroupPath(new ModuleGroup(groupPath), myProjectNode, moduleGroup2NodeMap,
+          .buildModuleGroupPath(new ModuleGroup(groupPath), myModulesNode, moduleGroup2NodeMap,
                                 new Consumer<ModuleGroupUtil.ParentChildRelation<MyNode>>() {
                                   public void consume(final ModuleGroupUtil.ParentChildRelation<MyNode> parentChildRelation) {
                                     addNode(parentChildRelation.getChild(), parentChildRelation.getParent());
@@ -387,7 +396,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         addNode(moduleNode, moduleGroupNode);
       }
     }
-    myProjectContentNode.add(myProjectNode);
+    myProjectNode.add(myModulesNode);
 
     final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     myProjectLibrariesProvider = new LibrariesModifiableModel(table.getModifiableModel());
@@ -398,7 +407,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     for (Library library1 : libraries) {
       addNode(new MyNode(new LibraryConfigurable(getProjectLibrariesProvider(), library1, myProject, TREE_UPDATER)), myProjectLibrariesNode);
     }
-    myProjectContentNode.add(myProjectLibrariesNode);
+    myProjectNode.add(myProjectLibrariesNode);
   }
 
   public boolean updateProjectTree(final Module[] modules, final ModuleGroup group) {
@@ -406,7 +415,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     final MyNode [] nodes = new MyNode[modules.length];
     int i = 0;
     for (Module module : modules) {
-      MyNode node = findNodeByObject(myProjectNode, module);
+      MyNode node = findNodeByObject(myModulesNode, module);
       LOG.assertTrue(node != null, "Module " + module.getName() + " is not in project.");
       node.removeFromParent();
       nodes[i ++] = node;
@@ -416,12 +425,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
                                  ? null
                                  : group != null ? group.getGroupPath() : null;
       if (groupPath == null || groupPath.length == 0){
-        addNode(moduleNode, myProjectNode);
+        addNode(moduleNode, myModulesNode);
       } else {
         final MyNode moduleGroupNode = ModuleGroupUtil
-          .updateModuleGroupPath(new ModuleGroup(groupPath), myProjectNode, new Function<ModuleGroup, MyNode>() {
+          .updateModuleGroupPath(new ModuleGroup(groupPath), myModulesNode, new Function<ModuleGroup, MyNode>() {
             public MyNode fun(final ModuleGroup group) {
-              return findNodeByObject(myProjectNode, group);
+              return findNodeByObject(myModulesNode, group);
             }
           }, new Consumer<ModuleGroupUtil.ParentChildRelation<MyNode>>() {
             public void consume(final ModuleGroupUtil.ParentChildRelation<MyNode> parentChildRelation) {
@@ -436,7 +445,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         addNode(moduleNode, moduleGroupNode);
       }
     }
-    ((DefaultTreeModel)myTree.getModel()).reload(myProjectNode);
+    ((DefaultTreeModel)myTree.getModel()).reload(myModulesNode);
     return true;
   }
 
@@ -535,7 +544,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myJdksTreeModel.reset(myProject);
     myModulesConfigurator = new ModulesConfigurator(myProject, this);
     myModulesConfigurator.resetModuleEditors();
-    myModulesConfigurable = myModulesConfigurator.getModulesConfigurable();
+    myProjectConfigurable = myModulesConfigurator.getModulesConfigurable();
     final LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
     myProjectLibrariesProvider = new LibrariesModifiableModel(tablesRegistrar.getLibraryTable(myProject).getModifiableModel());
     myGlobalLibrariesProvider = new LibrariesModifiableModel(tablesRegistrar.getLibraryTable().getModifiableModel());
@@ -553,7 +562,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   public void apply() throws ConfigurationException {
     final Set<MyNode> roots = new HashSet<MyNode>();
-    roots.add(myProjectNode);
+    roots.add(myModulesNode);
     if (!canApply(roots, ProjectBundle.message("rename.message.prefix.module"), ProjectBundle.message("rename.module.title"))) return;
     boolean modifiedJdks = false;
     for (int i = 0; i < myJdksNode.getChildCount(); i++) {
@@ -566,7 +575,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
     if (myJdksTreeModel.isModified() || modifiedJdks) myJdksTreeModel.apply(this);
     myJdksTreeModel.setProjectJdk(ProjectRootManager.getInstance(myProject).getProjectJdk());
-    if (isInitialized(myModulesConfigurable) && myModulesConfigurable.isModified()) myModulesConfigurable.apply();
+    if (isInitialized(myProjectConfigurable) && myProjectConfigurable.isModified()) myProjectConfigurable.apply();
     if (myModulesConfigurator.isModified()) myModulesConfigurator.apply();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -609,7 +618,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         return true;
       }
     }
-    isModified |= isInitialized(myModulesConfigurable) && myModulesConfigurable.isModified();
+    isModified |= isInitialized(myProjectConfigurable) && myProjectConfigurable.isModified();
     isModified |= myJdksTreeModel.isModified();
     isModified |= myGlobalLibrariesProvider.isChanged();
     isModified |= myApplicationServerLibrariesProvider.isChanged();
@@ -955,12 +964,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   public DefaultMutableTreeNode createLibraryNode(final LibraryOrderEntry libraryOrderEntry, final ModifiableRootModel model) {
     final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(model), libraryOrderEntry.getLibrary(), trancateModuleLibraryName(libraryOrderEntry), myProject, TREE_UPDATER);
     final MyNode node = new MyNode(configurable);
-    addNode(node, findNodeByObject(myProjectNode, libraryOrderEntry.getOwnerModule()));
+    addNode(node, findNodeByObject(myModulesNode, libraryOrderEntry.getOwnerModule()));
     return node;
   }
 
   public void deleteLibraryNode(LibraryOrderEntry libraryOrderEntry) {
-    final MyNode node = findNodeByObject(myProjectNode, libraryOrderEntry.getLibrary());
+    final MyNode node = findNodeByObject(myModulesNode, libraryOrderEntry.getLibrary());
     if (node != null) {
       final TreeNode parent = node.getParent();
       node.removeFromParent();
@@ -1006,7 +1015,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   public void selectModuleTab(@NotNull final String moduleName, final String tabName) {
-    final MyNode node = findNodeByObject(myProjectNode, ModuleManager.getInstance(myProject).findModuleByName(moduleName));
+    final MyNode node = findNodeByObject(myModulesNode, ModuleManager.getInstance(myProject).findModuleByName(moduleName));
     if (node != null) {
       selectNodeInTree(node);
       SwingUtilities.invokeLater(new Runnable() {
@@ -1252,7 +1261,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
             final Module module = myModulesConfigurator.addModule(myTree);
             if (module != null) {
               final MyNode node = new MyNode(new ModuleConfigurable(myModulesConfigurator, module, TREE_UPDATER));
-              addNode(node, myProjectNode);
+              addNode(node, myModulesNode);
               selectNodeInTree(node);
             }
           }
@@ -1337,13 +1346,13 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
 
     private void removeModuleGroups() {
-      for(int i = myProjectNode.getChildCount() - 1; i >=0; i--){
-        final MyNode node = (MyNode)myProjectNode.getChildAt(i);
+      for(int i = myModulesNode.getChildCount() - 1; i >=0; i--){
+        final MyNode node = (MyNode)myModulesNode.getChildAt(i);
         if (node.getConfigurable().getEditableObject() instanceof ModuleGroup){
           node.removeFromParent();
         }
       }
-      ((DefaultTreeModel)myTree.getModel()).reload(myProjectNode);
+      ((DefaultTreeModel)myTree.getModel()).reload(myModulesNode);
     }
   }
 }
