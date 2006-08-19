@@ -36,8 +36,10 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
 
     Processor<PsiClass> inheritorsProcessor = new Processor<PsiClass>() {
       public boolean process(PsiClass inheritor) {
-        PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(psiClass, inheritor,
-                                                                                 PsiSubstitutor.EMPTY);
+        //could be null if not java inheritor, TODO only JavaClassInheritors are needed
+        PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(psiClass, inheritor,
+                                                                            PsiSubstitutor.EMPTY);
+        if (substitutor == null) return true;
 
         for (PsiMethod method : methods) {
           if (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
