@@ -414,7 +414,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   private class MySaveAsAction extends AnAction {
     public MySaveAsAction() {
-      super(ExecutionBundle.message("action.name.save.configuration"), ExecutionBundle.message("action.name.save.configuration"),
+      super(ExecutionBundle.message("action.name.save.as.configuration"), ExecutionBundle.message("action.name.save.as.configuration"),
             SAVE_ICON);
     }
 
