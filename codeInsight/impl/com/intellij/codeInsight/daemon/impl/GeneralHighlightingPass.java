@@ -330,13 +330,8 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       int offset = element.getTextRange().getStartOffset();
       MethodSignatureBackedByPsiMethod superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
       if (superSignature != null) {
-        boolean overrides = false;
-        if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          overrides = true;
-        }
-        else if (superSignature.getMethod().hasModifierProperty(PsiModifier.ABSTRACT)) {
-          overrides = true;
-        }
+        boolean overrides = method.hasModifierProperty(PsiModifier.ABSTRACT) ==
+                            superSignature.getMethod().hasModifierProperty(PsiModifier.ABSTRACT);
 
         return new LineMarkerInfo(LineMarkerInfo.MarkerType.OVERRIDING_METHOD, method, offset,
                                   overrides ? OVERRIDING_METHOD_ICON : IMPLEMENTING_METHOD_ICON);
