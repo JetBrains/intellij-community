@@ -1,5 +1,6 @@
 package com.intellij.openapi.options.ex;
 
+import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
@@ -33,7 +34,14 @@ public class ProjectConfigurablesGroup implements ConfigurableGroup {
   }
 
   public Configurable[] getConfigurables() {
-    return myProject.getComponents(Configurable.class);
+    Configurable[] components = myProject.getComponents(Configurable.class);
+    Configurable[] configurables = new Configurable[components.length - (isDefault() ? 1 : 0)];
+    int j = 0;
+    for (int i = 0; i < components.length; i++) {
+      if (components[i] instanceof ScopeChooserConfigurable && isDefault()) continue; //can't configgure scopes without project
+      configurables[j++] = components[i];
+    }
+    return configurables;
   }
 
   public int hashCode() {
