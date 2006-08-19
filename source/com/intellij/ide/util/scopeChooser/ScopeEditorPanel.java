@@ -514,7 +514,7 @@ public class ScopeEditorPanel {
         if (!sel && node.hasMarked() && !DependencyUISettings.getInstance().UI_FILTER_LEGALS) {
           setForeground(node.hasUnmarked() ? PARTIAL_INCLUDED : WHOLE_INCLUDED);
         }
-        if (node instanceof DirectoryNode && node.toString().length() == 0) {
+        if (node instanceof DirectoryNode) {
           final DirectoryNode directoryNode = (DirectoryNode)node;
           setText(directoryNode.getDirName());
         }

@@ -43,7 +43,7 @@ public class DirectoryNode extends PackageDependenciesNode {
       }
     }
     else {
-      myDirName = PatternPackageSet.getRelativePath(directory, index, showFQName);
+      myDirName = PatternPackageSet.getRelativePath(directory, index, true);
       if (showFQName) {
         myFQName = myDirName;
       }
