@@ -396,7 +396,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         addNode(moduleNode, moduleGroupNode);
       }
     }
-    myProjectNode.add(myModulesNode);
+    if (!myProject.isDefault()) {  //do not add modules node in case of template project
+      myProjectNode.add(myModulesNode);
+    }
 
     final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     myProjectLibrariesProvider = new LibrariesModifiableModel(table.getModifiableModel());
@@ -1198,10 +1200,6 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         editor.createAddLibraryAction(true, myWholePanel).actionPerformed(null);
         Disposer.dispose(editor);
       }
-
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(!myProject.isDefault());
-      }
     });
     group.add(new AnAction(ProjectBundle.message("add.new.global.library.text")) {
       public void actionPerformed(AnActionEvent e) {
@@ -1272,9 +1270,11 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         };
       }
       if (myFromPopup){
-        final int index = getDefaultIndex();
-        if (index == 0 || index == 1) { //omit level if any
-          return ((DefaultActionGroup)myChildren[index]).getChildren(e);
+        final Object selectedObject = getSelectedObject();      //omit some unnec. levels
+        if (selectedObject instanceof Library || selectedObject instanceof String) {
+          return ((DefaultActionGroup)myChildren[0]).getChildren(e);
+        } else if (selectedObject instanceof ProjectJdk || selectedObject instanceof ProjectJdksModel) {
+          return ((DefaultActionGroup)myChildren[1]).getChildren(e);
         }
       }
       return myChildren;
