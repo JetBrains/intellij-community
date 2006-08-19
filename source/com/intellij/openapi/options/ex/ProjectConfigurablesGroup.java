@@ -37,9 +37,9 @@ public class ProjectConfigurablesGroup implements ConfigurableGroup {
     Configurable[] components = myProject.getComponents(Configurable.class);
     Configurable[] configurables = new Configurable[components.length - (isDefault() ? 1 : 0)];
     int j = 0;
-    for (int i = 0; i < components.length; i++) {
-      if (components[i] instanceof ScopeChooserConfigurable && isDefault()) continue; //can't configgure scopes without project
-      configurables[j++] = components[i];
+    for (Configurable component : components) {
+      if (component instanceof ScopeChooserConfigurable && isDefault()) continue; //can't configgure scopes without project
+      configurables[j++] = component;
     }
     return configurables;
   }
