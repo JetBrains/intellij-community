@@ -12,8 +12,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ui.SortableColumnModel;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -65,7 +65,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
   }
 
   public void reset() {
-
+    myPluginManagerMain.reset();
   }
 
   public String getHelpTopic() {

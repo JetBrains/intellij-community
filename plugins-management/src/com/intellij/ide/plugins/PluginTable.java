@@ -1,9 +1,10 @@
 package com.intellij.ide.plugins;
 
-import com.intellij.ui.table.TableHeaderRenderer;
 import com.intellij.ui.TableUtil;
-import com.intellij.util.ui.SortableColumnModel;
+import com.intellij.ui.table.TableHeaderRenderer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.SortableColumnModel;
+import com.intellij.util.ui.Table;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
@@ -19,7 +20,7 @@ import java.awt.event.MouseEvent;
  * Time: 4:19:20 PM
  * To change this template use Options | File Templates.
  */
-public class PluginTable extends JTable {
+public class PluginTable extends Table {
   public PluginTable(final PluginTableModel model) {
     super(model);
 
@@ -30,20 +31,22 @@ public class PluginTable extends JTable {
       column.setCellRenderer(model.getColumnInfos()[i].getRenderer(null));
     }
 
-    //  Specify columns widths for particular columns:
-    //  Icon/Status
-    TableColumn column = getColumnModel().getColumn(0);
-    column.setMinWidth(30);
-    column.setMaxWidth(30);
+    if (getColumnCount() > 1) {
+      //  Specify columns widths for particular columns:
+      //  Icon/Status
+      TableColumn column;/* = getColumnModel().getColumn(0);
+      column.setMinWidth(30);
+      column.setMaxWidth(30);*/
 
-    //  Downloads
-    column = getColumnModel().getColumn(2);
-    column.setMinWidth(70);
-    column.setMaxWidth(70);
+      //  Downloads
+      column = getColumnModel().getColumn(1);
+      column.setMinWidth(70);
+      column.setMaxWidth(70);
 
-    //  Date:
-    column = getColumnModel().getColumn(3);
-    column.setMaxWidth(95);
+      //  Date:
+      column = getColumnModel().getColumn(2);
+      column.setMaxWidth(95);
+    }
 
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     setShowGrid(false);
@@ -70,7 +73,11 @@ public class PluginTable extends JTable {
           model.sortableProvider.setSortColumn(column);
         }
 
+        final IdeaPluginDescriptor[] selectedObjects = getSelectedObjects();
         model.sortByColumn(column);
+        if (selectedObjects != null){
+          select(selectedObjects);
+        }
 
         header.repaint();
       }

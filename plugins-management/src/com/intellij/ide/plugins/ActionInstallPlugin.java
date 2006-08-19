@@ -20,88 +20,75 @@ import java.util.Arrays;
  * Time: 2:47:54 PM
  * To change this template use File | Settings | File Templates.
  */
-public class ActionInstallPlugin extends AnAction
-{
-  final private static String installTitle = IdeBundle.message("action.download.and.install.plugin");
+public class ActionInstallPlugin extends AnAction {
   final private static String updateMessage = IdeBundle.message("action.update.plugin");
 
   private PluginTable pluginTable;
   private PluginManagerMain host;
 
-  public ActionInstallPlugin( PluginManagerMain mgr, PluginTable table )
-  {
-    super( installTitle, installTitle, IconLoader.getIcon("/actions/install.png") );
+  public ActionInstallPlugin(PluginManagerMain mgr, PluginTable table) {
+    super(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("action.download.and.install.plugin"), IconLoader.getIcon("/actions/install.png"));
 
     pluginTable = table;
     host = mgr;
   }
 
-  public void update(AnActionEvent e)
-  {
+  public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
+    if (!pluginTable.isShowing()) {
+      presentation.setEnabled(false);
+      return;
+    }
     IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
     boolean enabled = (selection != null);
 
-    if( enabled )
-    {
-      for( IdeaPluginDescriptor descr : selection )
-      {
-        if( descr instanceof PluginNode )
-        {
-          int status = PluginManagerColumnInfo.getRealNodeState((PluginNode) descr);
-          enabled = enabled && (status != PluginNode.STATUS_DOWNLOADED);
+    if (enabled) {
+      for (IdeaPluginDescriptor descr : selection) {
+        if (descr instanceof PluginNode) {
+          int status = PluginManagerColumnInfo.getRealNodeState((PluginNode)descr);
+          enabled &= status != PluginNode.STATUS_DOWNLOADED;
         }
-        else
-        if( descr instanceof IdeaPluginDescriptorImpl )
-        {
-          presentation.setText( updateMessage );
-          presentation.setDescription( updateMessage );
+        else if (descr instanceof IdeaPluginDescriptorImpl) {
+          presentation.setText(updateMessage);
+          presentation.setDescription(updateMessage);
           PluginId id = descr.getPluginId();
-          enabled = enabled && PluginsTableModel.hasNewerVersion( id );
+          enabled = enabled && InstalledPluginsTableModel.hasNewerVersion(id);
         }
       }
     }
 
-    presentation.setEnabled( enabled );
+    presentation.setEnabled(enabled);
   }
 
-  public void actionPerformed(AnActionEvent e)
-  {
+  public void actionPerformed(AnActionEvent e) {
     IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
 
-    if( userConfirm( selection ) )
-    {
+    if (userConfirm(selection)) {
       ArrayList<PluginNode> list = new ArrayList<PluginNode>();
-      for( IdeaPluginDescriptor descr : selection )
-      {
+      for (IdeaPluginDescriptor descr : selection) {
         PluginNode pluginNode = null;
-        if (descr instanceof PluginNode)
-        {
+        if (descr instanceof PluginNode) {
           pluginNode = (PluginNode)descr;
         }
-        else
-        if (descr instanceof IdeaPluginDescriptorImpl)
-        {
-          pluginNode = new PluginNode( descr.getPluginId() );
-          pluginNode.setName( descr.getName() );
-          pluginNode.setDepends(Arrays.asList( descr.getDependentPluginIds()) );
-          pluginNode.setSize( "-1" );
+        else if (descr instanceof IdeaPluginDescriptorImpl) {
+          pluginNode = new PluginNode(descr.getPluginId());
+          pluginNode.setName(descr.getName());
+          pluginNode.setDepends(Arrays.asList(descr.getDependentPluginIds()));
+          pluginNode.setSize("-1");
         }
 
-        if( pluginNode != null )
-          list.add( pluginNode );
-      }
-      try
-      {
-        if( PluginManagerMain.downloadPlugins( list ) )
-        {
-          host.setRequireShutdown( true );
+        if (pluginNode != null) {
+          list.add(pluginNode);
         }
       }
-      catch (IOException e1)
-      {
+      try {
+        if (PluginManagerMain.downloadPlugins(list)) {
+          host.setRequireShutdown(true);
+        }
+      }
+      catch (IOException e1) {
         PluginManagerMain.LOG.error(e1);
-        IOExceptionDialog.showErrorDialog(e1, installTitle, IdeBundle.message("error.plugin.download.failed"));
+        IOExceptionDialog.showErrorDialog(e1, IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("error.plugin.download.failed"));
       }
       pluginTable.updateUI();
     }
@@ -112,19 +99,20 @@ public class ActionInstallPlugin extends AnAction
   //  selected plugin descriptors: already downloaded plugins need "update"
   //  while non-installed yet need "install".
   //---------------------------------------------------------------------------
-  private boolean userConfirm( IdeaPluginDescriptor[] selection )
-  {
+  private boolean userConfirm(IdeaPluginDescriptor[] selection) {
     String message;
-    if( selection.length == 1 )
-    {
-      if( selection[ 0 ] instanceof IdeaPluginDescriptorImpl )
-        message = IdeBundle.message( "prompt.update.plugin", selection[ 0 ].getName() );
-      else
-        message = IdeBundle.message( "prompt.download.and.install.plugin", selection[ 0 ].getName() );
+    if (selection.length == 1) {
+      if (selection[0] instanceof IdeaPluginDescriptorImpl) {
+        message = IdeBundle.message("prompt.update.plugin", selection[0].getName());
+      }
+      else {
+        message = IdeBundle.message("prompt.download.and.install.plugin", selection[0].getName());
+      }
     }
-    else
-      message = IdeBundle.message( "prompt.install.several.plugins", selection.length );
+    else {
+      message = IdeBundle.message("prompt.install.several.plugins", selection.length);
+    }
 
-    return Messages.showYesNoDialog( host.getMainPanel(), message, installTitle, Messages.getQuestionIcon()) == 0;
+    return Messages.showYesNoDialog(host.getMainPanel(), message, IdeBundle.message("action.download.and.install.plugin"), Messages.getQuestionIcon()) == 0;
   }
 }

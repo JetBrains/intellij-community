@@ -1,9 +1,11 @@
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -72,4 +74,25 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
   public void sortByColumn(int columnIndex, int sortingType) {
     sortByColumn(columnIndex);
   }
+
+
+  public ArrayList<IdeaPluginDescriptorImpl> dependent(IdeaPluginDescriptorImpl plugin) {
+    ArrayList<IdeaPluginDescriptorImpl> list = new ArrayList<IdeaPluginDescriptorImpl>();
+    for (IdeaPluginDescriptor any : view) {
+      if (any instanceof IdeaPluginDescriptorImpl) {
+        PluginId[] dep = any.getDependentPluginIds();
+        for (PluginId id : dep) {
+          if (id == plugin.getPluginId()) {
+            list.add((IdeaPluginDescriptorImpl)any);
+            break;
+          }
+        }
+      }
+    }
+    return list;
+  }
+
+  public abstract void addData(ArrayList<IdeaPluginDescriptor> list);
+
+  public abstract void modifyData(ArrayList<IdeaPluginDescriptor> list);
 }

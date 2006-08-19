@@ -19,80 +19,77 @@ import java.util.ArrayList;
  * Time: 3:19:45 PM
  * To change this template use File | Settings | File Templates.
  */
-public class ActionUninstallPlugin extends AnAction
-{
-  final private static String title = IdeBundle.message("action.uninstall.plugin");
+public class ActionUninstallPlugin extends AnAction {
   final private static String promptTitle = IdeBundle.message("title.plugin.uninstall");
 
   private PluginTable pluginTable;
   private PluginManagerMain host;
 
-  public ActionUninstallPlugin( PluginManagerMain mgr, PluginTable table )
-  {
-    super( title, title, IconLoader.getIcon("/actions/uninstall.png") );
+  public ActionUninstallPlugin(PluginManagerMain mgr, PluginTable table) {
+    super(IdeBundle.message("action.uninstall.plugin"), IdeBundle.message("action.uninstall.plugin"), IconLoader.getIcon("/actions/uninstall.png"));
 
     pluginTable = table;
     host = mgr;
   }
 
-  public void update(AnActionEvent e)
-  {
+  public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
+    if (!pluginTable.isShowing()) {
+      presentation.setEnabled(false);
+      return;
+    }
     IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
     boolean enabled = (selection != null);
 
-    if( enabled )
-    {
-      for( IdeaPluginDescriptor descriptor : selection )
-      {
-        enabled = enabled && (descriptor instanceof IdeaPluginDescriptorImpl) &&
-                             !((IdeaPluginDescriptorImpl)descriptor).isDeleted();
+    if (enabled) {
+      for (IdeaPluginDescriptor descriptor : selection) {
+        if (descriptor instanceof IdeaPluginDescriptorImpl){
+          final IdeaPluginDescriptorImpl ideaPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
+          enabled &= !ideaPluginDescriptor.isDeleted();
+        } if (descriptor instanceof PluginNode) {
+          enabled &= PluginManagerColumnInfo.getRealNodeState((PluginNode)descriptor) == PluginNode.STATUS_DOWNLOADED;
+        }
       }
     }
-    presentation.setEnabled( enabled );
+    presentation.setEnabled(enabled);
   }
 
-  public void actionPerformed(AnActionEvent e)
-  {
-    String  message;
+  public void actionPerformed(AnActionEvent e) {
+    String message;
     IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
 
-    if( selection.length == 1 )
-      message = IdeBundle.message( "prompt.uninstall.plugin", selection[ 0 ].getName() );
-    else
-      message = IdeBundle.message( "prompt.uninstall.several.plugins", selection.length );
-    if( Messages.showYesNoDialog( host.getMainPanel(), message, promptTitle, Messages.getQuestionIcon()) != 0 )
-      return;
+    if (selection.length == 1) {
+      message = IdeBundle.message("prompt.uninstall.plugin", selection[0].getName());
+    }
+    else {
+      message = IdeBundle.message("prompt.uninstall.several.plugins", selection.length);
+    }
+    if (Messages.showYesNoDialog(host.getMainPanel(), message, promptTitle, Messages.getQuestionIcon()) != 0) return;
 
-    for( IdeaPluginDescriptor descriptor : selection )
-    {
-      IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl) descriptor;
+    for (IdeaPluginDescriptor descriptor : selection) {
+      IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
 
       boolean actualDelete = true;
 
       //  Get the list of plugins which depend on this one. If this list is
       //  not empty - issue warning instead of simple prompt.
-      ArrayList<IdeaPluginDescriptorImpl> dependant = host.getDependentList( pluginDescriptor );
-      if( dependant.size() > 0 )
-      {
+      ArrayList<IdeaPluginDescriptorImpl> dependant = host.getDependentList(pluginDescriptor);
+      if (dependant.size() > 0) {
         message = MessageFormat.format(IdeBundle.message("several.plugins.depend.on.0.continue.to.remove"), pluginDescriptor.getName());
-        actualDelete = (Messages.showYesNoDialog( host.getMainPanel(), message, promptTitle, Messages.getQuestionIcon()) == 0 );
+        actualDelete = (Messages.showYesNoDialog(host.getMainPanel(), message, promptTitle, Messages.getQuestionIcon()) == 0);
       }
 
-      if( actualDelete )
-        uninstallPlugin( pluginDescriptor );
+      if (actualDelete) uninstallPlugin(pluginDescriptor);
     }
   }
 
-  private void uninstallPlugin( IdeaPluginDescriptorImpl descriptor )
-  {
+  private void uninstallPlugin(IdeaPluginDescriptorImpl descriptor) {
     PluginId pluginId = descriptor.getPluginId();
-    descriptor.setDeleted( true );
+    descriptor.setDeleted(true);
 
-    try
-    {
-      PluginInstaller.prepareToUninstall( pluginId );
-      host.setRequireShutdown( true );
+    try {
+      PluginInstaller.prepareToUninstall(pluginId);
+      host.setRequireShutdown(true);
       pluginTable.updateUI();
     }
     catch (IOException e1) {

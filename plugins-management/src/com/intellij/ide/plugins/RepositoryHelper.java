@@ -9,8 +9,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressStream;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.io.UrlConnectionUtil;
+import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NonNls;
 import org.xml.sax.SAXException;
 
@@ -74,6 +74,7 @@ public class RepositoryHelper {
     }
     catch (RuntimeException e)
     {
+      e.printStackTrace();
       if( e.getCause() == null || !( e.getCause() instanceof InterruptedException) )
       {
       }

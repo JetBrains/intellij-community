@@ -40,30 +40,25 @@ class RepositoryContentHandler extends DefaultHandler {
   private Stack<String> categoriesStack;
 
 
-  public void startDocument() throws SAXException
-  {
+  public void startDocument() throws SAXException {
     plugins = new ArrayList<IdeaPluginDescriptor>();
     categoriesStack = new Stack<String>();
   }
 
-  public void startElement(String namespaceURI, String localName,
-                           String qName, Attributes atts)
-    throws SAXException {
-    if (qName.equals(CATEGORY))
-    {
-      categoriesStack.push( atts.getValue(NAME) );
-    } else
-    if (qName.equals(IDEA_PLUGIN))
-    {
+  public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException {
+    if (qName.equals(CATEGORY)) {
+      categoriesStack.push(atts.getValue(NAME));
+    }
+    else if (qName.equals(IDEA_PLUGIN)) {
       String categoryName = constructCategoryTree();
       currentPlugin = new PluginNode();
-      currentPlugin.setCategory( categoryName );
+      currentPlugin.setCategory(categoryName);
       currentPlugin.setDownloads(atts.getValue(DOWNLOADS));
       currentPlugin.setSize(atts.getValue(SIZE));
-      currentPlugin.setUrl (atts.getValue(URL));
-      currentPlugin.setDate (atts.getValue(DATE));
+      currentPlugin.setUrl(atts.getValue(URL));
+      currentPlugin.setDate(atts.getValue(DATE));
 
-      plugins.add( currentPlugin );
+      plugins.add(currentPlugin);
     }
     else if (qName.equals(IDEA_VERSION)) {
       currentPlugin.setSinceBuild(atts.getValue(SINCE_BUILD));
@@ -75,8 +70,7 @@ class RepositoryContentHandler extends DefaultHandler {
     currentValue = "";
   }
 
-  public void endElement(String namespaceURI, String localName, String qName)
-    throws SAXException {
+  public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
     if (qName.equals(ID)) {
       currentPlugin.setId(currentValue);
     }
@@ -98,33 +92,27 @@ class RepositoryContentHandler extends DefaultHandler {
     else if (qName.equals(CHNAGE_NOTES)) {
       currentPlugin.setChangeNotes(currentValue);
     }
-    else if (qName.equals(CATEGORY)){
+    else if (qName.equals(CATEGORY)) {
       categoriesStack.pop();
     }
     currentValue = "";
   }
 
-  public void characters(char ch[], int start, int length)
-    throws SAXException {
-    currentValue += new String (ch, start, length);
+  public void characters(char[] ch, int start, int length) throws SAXException {
+    currentValue += new String(ch, start, length);
   }
 
-  public ArrayList<IdeaPluginDescriptor> getPluginsList()
-  {
+  public ArrayList<IdeaPluginDescriptor> getPluginsList() {
     return plugins;
   }
 
-  private String constructCategoryTree()
-  {
-    StringBuffer category = new StringBuffer( "" );
-    for( int i = 0; i < categoriesStack.size(); i++ )
-    {
-      String str = categoriesStack.get( i );
-      if( str.length() > 0 )
-      {
-        if( i > 0 )
-          category.append( "/" );
-        category.append( str );
+  private String constructCategoryTree() {
+    StringBuffer category = new StringBuffer("");
+    for (int i = 0; i < categoriesStack.size(); i++) {
+      String str = categoriesStack.get(i);
+      if (str.length() > 0) {
+        if (i > 0) category.append("/");
+        category.append(str);
       }
     }
     return category.toString();

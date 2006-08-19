@@ -13,25 +13,22 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.OrderPanel;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.TableUtil;
+import com.intellij.ui.*;
 import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.event.*;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -45,8 +42,7 @@ import java.util.zip.ZipException;
  * Time: 9:47:59 PM
  * To change this template use Options | File Templates.
  */
-public class PluginManagerMain
-{
+public class PluginManagerMain {
   public static Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerMain");
 
   @NonNls public static final String TEXT_PREFIX = "<html><body style=\"font-family: Arial; font-size: 12pt;\">";
@@ -59,7 +55,7 @@ public class PluginManagerMain
 
   private JPanel myToolbarPanel;
   private JPanel main;
-  private JScrollPane installedScrollPane;
+
   private JTextPane myDescriptionTextArea;
   private JEditorPane myChangeNotesTextArea;
   private JLabel myVendorLabel;
@@ -72,53 +68,38 @@ public class PluginManagerMain
   private JProgressBar myProgressBar;
   private JButton btnCancel;
   private JLabel mySynchStatus;
+  private JPanel myTablePanel;
+  private TabbedPaneWrapper myTabbedPane;
 
-  private PluginTable pluginTable;
-  private ArrayList<IdeaPluginDescriptor> pluginsList;
-
-  private ActionToolbar toolbar;
   private DefaultActionGroup actionGroup;
-  private PluginsTableModel genericModel;
 
-  public PluginManagerMain(SortableProvider installedProvider )
-  {
+  private InstalledPluginsTableModel installedPluginsModel;
+  private PluginTable installedPluginTable;
+
+  private AvailablePluginsTableModel availablePluginsModel;
+  private PluginTable availablePluginsTable;
+  private ArrayList<IdeaPluginDescriptor> pluginsList;
+  private ActionToolbar myActionToolbar;
+
+  public PluginManagerMain(SortableProvider installedProvider) {
     myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
     myChangeNotesTextArea.addHyperlinkListener(new MyHyperlinkListener());
 
-    genericModel = new PluginsTableModel(installedProvider);
-    pluginTable = new PluginTable( genericModel );
+    installedPluginsModel = new InstalledPluginsTableModel(installedProvider);
+    installedPluginTable = new PluginTable(installedPluginsModel);
+    JScrollPane installedScrollPane = ScrollPaneFactory.createScrollPane(installedPluginTable);
 
-    installedScrollPane.getViewport().setBackground(pluginTable.getBackground());
-    installedScrollPane.getViewport().setView(pluginTable);
+    availablePluginsModel = new AvailablePluginsTableModel(installedProvider);
+    availablePluginsTable = new PluginTable(availablePluginsModel);
+    JScrollPane availableScrollPane = ScrollPaneFactory.createScrollPane(availablePluginsTable);
 
-    pluginTable.getSelectionModel().addListSelectionListener(
-      new ListSelectionListener() {
-        public void valueChanged(ListSelectionEvent e)
-        {
-          pluginInfoUpdate(pluginTable.getSelectedObject());
-          toolbar.updateActionsImmediately();
-        }
-    });
-
-    //  Add handler for right mouse button - select a row for which
-    //  we want to show a context menu.
-    pluginTable.addMouseListener( new MouseAdapter()
-    {
-       public void mousePressed( MouseEvent e)
-       {
-         Point p = e.getPoint();
-         int row = pluginTable.rowAtPoint( p );
-         if( row != -1 && SwingUtilities.isRightMouseButton( e )) {
-           pluginTable.setRowSelectionInterval(row, row);
-         }
-       }
-    });
-    PopupHandler.installUnknownPopupHandler(pluginTable, getActionGroup(), ActionManager.getInstance());
+    installTableActions(installedPluginTable);
+    installTableActions(availablePluginsTable);
 
     myToolbarPanel.setLayout(new BorderLayout());
-    toolbar = ActionManager.getInstance().createActionToolbar("PluginManaer", getActionGroup(), true);
-    myToolbarPanel.add( toolbar.getComponent(), BorderLayout.WEST );
-    toolbar.updateActionsImmediately();
+    myActionToolbar = ActionManager.getInstance().createActionToolbar("PluginManaer", getActionGroup(), true);
+    myToolbarPanel.add(myActionToolbar.getComponent(), BorderLayout.WEST);
+    myActionToolbar.updateActionsImmediately();
 
     myHttpProxySettingsButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -128,90 +109,105 @@ public class PluginManagerMain
       }
     });
 
+    myTabbedPane = new TabbedPaneWrapper();
+    myTablePanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
+    myTablePanel.setMinimumSize(new Dimension(400, -1));
+    myTabbedPane.addTab(IdeBundle.message("plugin.status.installed"), installedScrollPane);
+    myTabbedPane.addTab(IdeBundle.message("plugin.status.available"), availableScrollPane);
+    myTabbedPane.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        final PluginTable pluginTable = getPluginTable();
+        TableUtil.ensureSelectionExists(pluginTable);
+        pluginInfoUpdate(pluginTable.getSelectedObject());
+        myActionToolbar.updateActionsImmediately();
+      }
+    });
+
+  }
+
+  public void reset() {
+    TableUtil.ensureSelectionExists(getPluginTable());
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        loadAvailablePlugins();
+      }
+    });
+  }
+
+  private PluginTable getPluginTable() {
+    return myTabbedPane.getSelectedIndex() == 0 ? installedPluginTable : availablePluginsTable;
+  }
+
+  private void installTableActions(final PluginTable pluginTable) {
+    pluginTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+        final IdeaPluginDescriptor[] descriptors = pluginTable.getSelectedObjects();
+        pluginInfoUpdate(descriptors != null && descriptors.length == 1 ? descriptors[0] : null);
+        myActionToolbar.updateActionsImmediately();
+      }
+    });
+
+    PopupHandler.installUnknownPopupHandler(pluginTable, getActionGroup(), ActionManager.getInstance());
+
     myVendorEmailLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
     myVendorEmailLabel.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e)
-      {
-          IdeaPluginDescriptor pluginDescriptor = pluginTable.getSelectedObject();
-          if( pluginDescriptor != null )
-          {
-            //noinspection HardCodedStringLiteral
-            LaunchStringAction( pluginDescriptor.getVendorEmail(), "mailto:" );
-          }
+      public void mouseClicked(MouseEvent e) {
+        IdeaPluginDescriptor pluginDescriptor = getPluginTable().getSelectedObject();
+        if (pluginDescriptor != null) {
+          //noinspection HardCodedStringLiteral
+          launchBrowserAction(pluginDescriptor.getVendorEmail(), "mailto:");
+        }
       }
-      });
+    });
 
     myVendorUrlLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
     myVendorUrlLabel.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e)
-      {
-          IdeaPluginDescriptor pluginDescriptor = pluginTable.getSelectedObject();
-          if( pluginDescriptor != null )
-          {
-              LaunchStringAction( pluginDescriptor.getVendorUrl(), "" );
-          }
+      public void mouseClicked(MouseEvent e) {
+        IdeaPluginDescriptor pluginDescriptor = getPluginTable().getSelectedObject();
+        if (pluginDescriptor != null) {
+          launchBrowserAction(pluginDescriptor.getVendorUrl(), "");
+        }
       }
     });
 
     myPluginUrlLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
     myPluginUrlLabel.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e)
-      {
-          IdeaPluginDescriptor pluginDescriptor = pluginTable.getSelectedObject();
-          if( pluginDescriptor != null )
-          {
-              LaunchStringAction( pluginDescriptor.getUrl(), "" );
-          }
-      }
-    });
-
-    new MySpeedSearchBar( pluginTable );
-
-    //  Due to the problem that SwingWorker must invoke "finished" in the
-    //  appropriate modality state (and at this point modality state differs
-    //  from that in which dialog will be updated) we have to wait until
-    //  the components (any) is shown - this is the guarantee that modality
-    //  state is set to the needed one.
-    pluginTable.addHierarchyListener(new HierarchyListener() {
-      public void hierarchyChanged(HierarchyEvent e) {
-        if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0 && pluginTable.isShowing()) {
-          loadAvailablePlugins(true);
+      public void mouseClicked(MouseEvent e) {
+        IdeaPluginDescriptor pluginDescriptor = getPluginTable().getSelectedObject();
+        if (pluginDescriptor != null) {
+          launchBrowserAction(pluginDescriptor.getUrl(), "");
         }
       }
     });
+
+    new MySpeedSearchBar(pluginTable);
   }
 
-  public void setRequireShutdown( boolean val )
-  {
+  public void setRequireShutdown(boolean val) {
     requireShutdown = val;
   }
 
-  public ArrayList<IdeaPluginDescriptorImpl> getDependentList( IdeaPluginDescriptorImpl pluginDescriptor )
-  {
-    return genericModel.dependent( pluginDescriptor );
+  public ArrayList<IdeaPluginDescriptorImpl> getDependentList(IdeaPluginDescriptorImpl pluginDescriptor) {
+    return installedPluginsModel.dependent(pluginDescriptor);
   }
 
-  private void loadAvailablePlugins( boolean checkLocal )
-  {
+  void loadAvailablePlugins() {
     ArrayList<IdeaPluginDescriptor> list;
-    try
-    {
+    try {
       //  If we already have a file with downloaded plugins from the last time,
       //  then read it, load into the list and start the updating process.
       //  Otherwise just start the process of loading the list and save it
       //  into the persistent config file for later reading.
-      File file = new File( PathManager.getPluginsPath(), RepositoryHelper.extPluginsFile );
-      if( file.exists() && checkLocal )
-      {
+      File file = new File(PathManager.getPluginsPath(), RepositoryHelper.extPluginsFile);
+      if (file.exists()) {
         RepositoryContentHandler handler = new RepositoryContentHandler();
         SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-        parser.parse( file, handler );
+        parser.parse(file, handler);
         list = handler.getPluginsList();
-        modifyPluginsList( list );
+        modifyPluginsList(list);
       }
     }
-    catch( Exception ex )
-    {
+    catch (Exception ex) {
       //  Nothing to do, just ignore - if nothing can be read from the local
       //  file just start downloading of plugins' list from the site.
     }
@@ -219,12 +215,12 @@ public class PluginManagerMain
   }
 
   private void modifyPluginsList(ArrayList<IdeaPluginDescriptor> list) {
-    IdeaPluginDescriptor[] selected = pluginTable.getSelectedObjects();
+    IdeaPluginDescriptor[] selected = availablePluginsTable.getSelectedObjects();
     if (pluginsList == null) {
-      genericModel.addData(list);
+      availablePluginsModel.addData(list);
     }
     else {
-      genericModel.modifyData(list);
+      availablePluginsModel.modifyData(list);
     }
     pluginsList = list;
     if (selected != null) {
@@ -236,47 +232,48 @@ public class PluginManagerMain
    * Start a new thread which downloads new list of plugins from the site in
    * the background and updates a list of plugins in the table.
    */
-  private void loadPluginsFromHostInBackground()
-  {
-    setDownloadStatus( true );
+  private void loadPluginsFromHostInBackground() {
+    setDownloadStatus(true);
 
     new SwingWorker() {
       ArrayList<IdeaPluginDescriptor> list = null;
       Exception error;
 
       public Object construct() {
-        try { list = RepositoryHelper.Process( mySynchStatus ); }
-        catch( Exception e ) { error = e; }
+        try {
+          list = RepositoryHelper.Process(mySynchStatus);
+        }
+        catch (Exception e) {
+          error = e;
+        }
         return list;
       }
 
       public void finished() {
         if (list != null) {
-          modifyPluginsList( list );
+          modifyPluginsList(list);
         }
-        else if( error != null )
-          Messages.showErrorDialog( IdeBundle.message("error.list.of.plugins.was.not.loaded"), IdeBundle.message("title.plugins"));
-        setDownloadStatus( false );
+        else if (error != null) {
+          Messages.showErrorDialog(IdeBundle.message("error.list.of.plugins.was.not.loaded"), IdeBundle.message("title.plugins"));
+        }
+        setDownloadStatus(false);
       }
     }.start();
   }
 
-  private void setDownloadStatus( boolean what)
-  {
-    btnCancel.setVisible( what );
-    mySynchStatus.setVisible( what );
-    myProgressBar.setVisible( what );
-    myProgressBar.setEnabled( what );
-    myProgressBar.setIndeterminate( what );
+  private void setDownloadStatus(boolean what) {
+    btnCancel.setVisible(what);
+    mySynchStatus.setVisible(what);
+    myProgressBar.setVisible(what);
+    myProgressBar.setEnabled(what);
+    myProgressBar.setIndeterminate(what);
   }
 
-  private ActionGroup getActionGroup ()
-  {
-    if( actionGroup == null )
-    {
+  private ActionGroup getActionGroup() {
+    if (actionGroup == null) {
       actionGroup = new DefaultActionGroup();
-      actionGroup.add( new ActionInstallPlugin( this, pluginTable ) );
-      actionGroup.add( new ActionUninstallPlugin( this, pluginTable ) );
+      actionGroup.add(new ActionInstallPlugin(this, availablePluginsTable));
+      actionGroup.add(new ActionUninstallPlugin(this, installedPluginTable));
     }
     return actionGroup;
   }
@@ -285,17 +282,18 @@ public class PluginManagerMain
     return main;
   }
 
-  public static boolean downloadPlugins (final List <PluginNode> plugins) throws IOException {
-    final boolean[] result = new boolean[ 1 ];
+  public static boolean downloadPlugins(final List<PluginNode> plugins) throws IOException {
+    final boolean[] result = new boolean[1];
     try {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable () {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
-          result[ 0 ] = PluginInstaller.prepareToInstall( plugins );
+          result[0] = PluginInstaller.prepareToInstall(plugins);
         }
       }, IdeBundle.message("progress.download.plugins"), true, null);
-    } catch (RuntimeException e) {
+    }
+    catch (RuntimeException e) {
       if (e.getCause() != null && e.getCause() instanceof IOException) {
-        throw (IOException)e.getCause();
+        throw(IOException)e.getCause();
       }
       else {
         throw e;
@@ -304,11 +302,10 @@ public class PluginManagerMain
     return result[0];
   }
 
-  public static boolean downloadPlugin (final PluginNode pluginNode) throws IOException
-  {
+  public static boolean downloadPlugin(final PluginNode pluginNode) throws IOException {
     final boolean[] result = new boolean[1];
     try {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable () {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
 
@@ -316,7 +313,8 @@ public class PluginManagerMain
 
           try {
             result[0] = PluginInstaller.prepareToInstall(pluginNode);
-          } catch (ZipException e) {
+          }
+          catch (ZipException e) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
                 Messages.showErrorDialog(IdeBundle.message("error.plugin.zip.problems", pluginNode.getName()),
@@ -324,14 +322,16 @@ public class PluginManagerMain
 
               }
             });
-          } catch (IOException e) {
-            throw new RuntimeException (e);
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
           }
         }
       }, IdeBundle.message("progress.download.plugin", pluginNode.getName()), true, null);
-    } catch (RuntimeException e) {
+    }
+    catch (RuntimeException e) {
       if (e.getCause() != null && e.getCause() instanceof IOException) {
-        throw (IOException)e.getCause();
+        throw(IOException)e.getCause();
       }
       else {
         throw e;
@@ -349,112 +349,122 @@ public class PluginManagerMain
     requireShutdown = false;
   }
 
-    private class PluginsToUpdateChooser extends DialogWrapper{
-      private Set<PluginNode> myPluginsToUpdate;
-      private SortedSet<PluginNode> myModel;
-      protected PluginsToUpdateChooser(Set<PluginNode> pluginsToUpdate) {
-        super(false);
-        myPluginsToUpdate = pluginsToUpdate;
-        myModel = new TreeSet<PluginNode>(new Comparator<PluginNode>() {
-          public int compare(final PluginNode o1, final PluginNode o2) {
-            if (o1 == null) return 1;
-            if (o2 == null) return -1;
-            return o1.getName().compareToIgnoreCase(o2.getName());
-          }
-        });
-        myModel.addAll(myPluginsToUpdate);
-        init();
-        setTitle(IdeBundle.message("title.choose.plugins.to.update"));
+  private void createUIComponents() {
+    main = new JPanel(new GridBagLayout()) {
+      public Dimension getPreferredSize() {
+        return new Dimension(600, 600);
       }
-
-      protected JComponent createCenterPanel() {
-        OrderPanel<PluginNode> panel = new OrderPanel<PluginNode>(PluginNode.class){
-          public boolean isCheckable(final PluginNode entry) {
-            return true;
-          }
-
-          public boolean isChecked(final PluginNode entry) {
-            return myPluginsToUpdate.contains(entry);
-          }
-
-          public void setChecked(final PluginNode entry, final boolean checked) {
-            if (checked){
-              myPluginsToUpdate.add(entry);
-            } else {
-              myPluginsToUpdate.remove(entry);
-            }
-          }
-        };
-        for (PluginNode pluginNode : myModel) {
-          panel.add(pluginNode);
-        }
-        panel.setCheckboxColumnName("");
-        panel.getEntryTable().setTableHeader(null);
-        return panel;
-      }
-    }
-
-  private static void setTextValue( String val, JEditorPane pane)
-  {
-      if( val != null )
-      {
-          pane.setText(TEXT_PREFIX + val.trim() + TEXT_SUFIX);
-          pane.setCaretPosition( 0 );
-      }
-      else
-      {
-          pane.setText("");
-      }
+    };
   }
 
-  private static void setTextValue( String val, JLabel label)
-  {
-      label.setText( (val != null) ? val : "" );
+  private static class PluginsToUpdateChooser extends DialogWrapper {
+    private Set<PluginNode> myPluginsToUpdate;
+    private SortedSet<PluginNode> myModel;
+
+    protected PluginsToUpdateChooser(Set<PluginNode> pluginsToUpdate) {
+      super(false);
+      myPluginsToUpdate = pluginsToUpdate;
+      myModel = new TreeSet<PluginNode>(new Comparator<PluginNode>() {
+        public int compare(final PluginNode o1, final PluginNode o2) {
+          if (o1 == null) return 1;
+          if (o2 == null) return -1;
+          return o1.getName().compareToIgnoreCase(o2.getName());
+        }
+      });
+      myModel.addAll(myPluginsToUpdate);
+      init();
+      setTitle(IdeBundle.message("title.choose.plugins.to.update"));
+    }
+
+    protected JComponent createCenterPanel() {
+      OrderPanel<PluginNode> panel = new OrderPanel<PluginNode>(PluginNode.class) {
+        public boolean isCheckable(final PluginNode entry) {
+          return true;
+        }
+
+        public boolean isChecked(final PluginNode entry) {
+          return myPluginsToUpdate.contains(entry);
+        }
+
+        public void setChecked(final PluginNode entry, final boolean checked) {
+          if (checked) {
+            myPluginsToUpdate.add(entry);
+          }
+          else {
+            myPluginsToUpdate.remove(entry);
+          }
+        }
+      };
+      for (PluginNode pluginNode : myModel) {
+        panel.add(pluginNode);
+      }
+      panel.setCheckboxColumnName("");
+      panel.getEntryTable().setTableHeader(null);
+      return panel;
+    }
   }
 
-    private static void setHtmlValue( final String val, JLabel label)
-    {
-      boolean isValid = (val != null && val.trim().length() > 0);
-      String setVal = isValid ? HTML_PREFIX + val.trim() + HTML_SUFIX : IdeBundle.message("plugin.status.not.specified");
-
-      label.setText( setVal );
-      label.setCursor( isValid ? Cursor.getPredefinedCursor( Cursor.HAND_CURSOR ) :
-                                 Cursor.getPredefinedCursor( Cursor.DEFAULT_CURSOR ) );
+  private static void setTextValue(String val, JEditorPane pane) {
+    if (val != null) {
+      pane.setText(TEXT_PREFIX + val.trim() + TEXT_SUFIX);
+      pane.setCaretPosition(0);
     }
-
-    private void pluginInfoUpdate( Object plugin )
-    {
-        if( plugin != null )
-        {
-          IdeaPluginDescriptor pluginDescriptor = (IdeaPluginDescriptor)plugin;
-
-          myVendorLabel.setText(pluginDescriptor.getVendor());
-          setTextValue( pluginDescriptor.getDescription(), myDescriptionTextArea );
-          setTextValue( pluginDescriptor.getChangeNotes(), myChangeNotesTextArea );
-          setHtmlValue( pluginDescriptor.getVendorEmail(), myVendorEmailLabel );
-          setHtmlValue( pluginDescriptor.getVendorUrl(), myVendorUrlLabel );
-          setHtmlValue( pluginDescriptor.getUrl(), myPluginUrlLabel );
-          setTextValue( pluginDescriptor.getVersion(), myVersionLabel );
-
-          boolean isInst = !(plugin instanceof PluginNode);
-          String size = isInst ? null : ((PluginNode) plugin).getSize();
-          if (size != null) {
-            size = PluginManagerColumnInfo.getFormattedSize(size);
-          }
-          setTextValue( size, mySizeLabel );
-        }
+    else {
+      pane.setText("");
     }
+  }
 
-    private static void  LaunchStringAction( String cmd, String prefix )
-    {
-        if( cmd != null && cmd.trim().length() > 0)
-        {
-          try {
-            BrowserUtil.launchBrowser( prefix + cmd.trim());
-          }
-          catch (IllegalThreadStateException ex) { /* not a problem */ }
-        }
+  private static void setTextValue(String val, JLabel label) {
+    label.setText((val != null) ? val : "");
+  }
+
+  private static void setHtmlValue(final String val, JLabel label) {
+    boolean isValid = (val != null && val.trim().length() > 0);
+    String setVal = isValid ? HTML_PREFIX + val.trim() + HTML_SUFIX : IdeBundle.message("plugin.status.not.specified");
+
+    label.setText(setVal);
+    label.setCursor(isValid ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+  }
+
+  private void pluginInfoUpdate(Object plugin) {
+    if (plugin != null) {
+      IdeaPluginDescriptor pluginDescriptor = (IdeaPluginDescriptor)plugin;
+
+      myVendorLabel.setText(pluginDescriptor.getVendor());
+      setTextValue(pluginDescriptor.getDescription(), myDescriptionTextArea);
+      setTextValue(pluginDescriptor.getChangeNotes(), myChangeNotesTextArea);
+      setHtmlValue(pluginDescriptor.getVendorEmail(), myVendorEmailLabel);
+      setHtmlValue(pluginDescriptor.getVendorUrl(), myVendorUrlLabel);
+      setHtmlValue(pluginDescriptor.getUrl(), myPluginUrlLabel);
+      setTextValue(pluginDescriptor.getVersion(), myVersionLabel);
+
+      String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;
+      if (size != null) {
+        size = PluginManagerColumnInfo.getFormattedSize(size);
+      }
+      setTextValue(size, mySizeLabel);
+    } else {
+      myVendorLabel.setText("");
+      myDescriptionTextArea.setText("");
+      myChangeNotesTextArea.setText("");
+      myVendorEmailLabel.setText("");
+      myVendorUrlLabel.setText("");
+      myPluginUrlLabel.setText("");
+      myVersionLabel.setText("");
+      mySizeLabel.setText("");
     }
+  }
+
+  private static void launchBrowserAction(String cmd, String prefix) {
+    if (cmd != null && cmd.trim().length() > 0) {
+      try {
+        BrowserUtil.launchBrowser(prefix + cmd.trim());
+      }
+      catch (IllegalThreadStateException ex) {
+        /* not a problem */
+      }
+    }
+  }
 
   private static class MyHyperlinkListener implements HyperlinkListener {
     public void hyperlinkUpdate(HyperlinkEvent e) {
@@ -472,18 +482,26 @@ public class PluginManagerMain
     }
   }
 
-  private static class MySpeedSearchBar extends SpeedSearchBase<PluginTable>
-  {
-    public MySpeedSearchBar( PluginTable cmp ){ super( cmp );  }
+  private static class MySpeedSearchBar extends SpeedSearchBase<PluginTable> {
+    public MySpeedSearchBar(PluginTable cmp) {
+      super(cmp);
+    }
 
-    public int getSelectedIndex()                 {   return myComponent.getSelectedRow();    }
-    public Object[] getAllElements()              {   return myComponent.getElements();       }
-    public String getElementText(Object element)  {  return ((IdeaPluginDescriptor)element).getName();   }
+    public int getSelectedIndex() {
+      return myComponent.getSelectedRow();
+    }
 
-    public void selectElement(Object element, String selectedText)
-    {
-      for( int i = 0; i < myComponent.getRowCount(); i++ ) {
-        if( myComponent.getObjectAt(i).getName().equals(((IdeaPluginDescriptor)element).getName())) {
+    public Object[] getAllElements() {
+      return myComponent.getElements();
+    }
+
+    public String getElementText(Object element) {
+      return ((IdeaPluginDescriptor)element).getName();
+    }
+
+    public void selectElement(Object element, String selectedText) {
+      for (int i = 0; i < myComponent.getRowCount(); i++) {
+        if (myComponent.getObjectAt(i).getName().equals(((IdeaPluginDescriptor)element).getName())) {
           myComponent.setRowSelectionInterval(i, i);
           TableUtil.scrollSelectionToVisible(myComponent);
           break;
@@ -493,6 +511,6 @@ public class PluginManagerMain
   }
 
   public void select(IdeaPluginDescriptor... descriptors) {
-    pluginTable.select(descriptors);
+    installedPluginTable.select(descriptors);
   }
 }
