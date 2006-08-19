@@ -49,6 +49,7 @@ import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
@@ -74,7 +75,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
   private MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
   private ModuleRootListener myModuleRootListener = new MyModuleRootListener();
 
-  private JTree myTree = new JTree();
+  private Tree myTree = new Tree();
   private final Project myProject;
   private TreeModelBuilder myBuilder;
   public String CURRENT_SCOPE_NAME;
@@ -339,7 +340,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
           }
           myTreeExpansionMonitor.restore();
         }
-      }, ModalityState.NON_MMODAL);
+      }, ModalityState.NON_MODAL);
     }
 
     public void beforeChildRemoval(final PsiTreeChangeEvent event) {
@@ -358,7 +359,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
           }
           myTreeExpansionMonitor.restore();
         }
-      }, ModalityState.NON_MMODAL);
+      }, ModalityState.NON_MODAL);
     }
 
     public void beforeChildMovement(final PsiTreeChangeEvent event) {
@@ -377,7 +378,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
           }
           myTreeExpansionMonitor.restore();
         }
-      }, ModalityState.NON_MMODAL);
+      }, ModalityState.NON_MODAL);
     }
 
     public void beforeChildrenChange(final PsiTreeChangeEvent event) {
@@ -393,7 +394,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
           }
           myTreeExpansionMonitor.restore();
         }
-      }, ModalityState.NON_MMODAL);
+      }, ModalityState.NON_MODAL);
     }
 
   }
@@ -547,7 +548,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
           }
           myTreeExpansionMonitor.restore();
         }
-      }, ModalityState.NON_MMODAL);
+      }, ModalityState.NON_MODAL);
     }
   }
 }
