@@ -97,7 +97,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         }
         final ArrayList<VcsException> vcsExceptions = new ArrayList<VcsException>();
         final List<UpdateSession> updateSessions = new ArrayList<UpdateSession>();
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        final Runnable updateProcess = new Runnable() {
           public void run() {
 
             ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -107,9 +107,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
               final UpdateEnvironment updateEnvironment = myActionInfo.getEnvironment(vcs);
               updateEnvironment.fillGroups(updatedFiles);
               Collection<FilePath> files = vcsToVirtualFiles.get(vcs);
-              UpdateSession updateSession = updateEnvironment.updateDirectories(files.toArray(new FilePath[files.size()]),
-                                                                                updatedFiles,
-                                                                                progressIndicator);
+              UpdateSession updateSession =
+                updateEnvironment.updateDirectories(files.toArray(new FilePath[files.size()]), updatedFiles, progressIndicator);
               processed++;
               if (progressIndicator != null) {
                 progressIndicator.setFraction((double)processed / (double)toBeProcessed);
@@ -137,38 +136,43 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
             });
             semaphore.waitFor();
           }
+        };
 
-        }, getCompleteActionName(context), true, project);
-
-        if (!someSessionWasCanceled(updateSessions)) {
-          for (final UpdateSession updateSession : updateSessions) {
-            updateSession.onRefreshFilesCompleted();
-          }
-        }
-
-        if (!someSessionWasCanceled(updateSessions)) {
-
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              if (!vcsExceptions.isEmpty()) {
-                AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, VcsBundle.message("message.title.vcs.update.errors",
-                                                                                                   getCompleteActionName(context)));
-              }
-              if (updatedFiles.isEmpty() && vcsExceptions.isEmpty()) {
-                Messages.showMessageDialog(getAllFilesAreUpToDateMessage(roots),
-                                           getCompleteActionName(context),
-                                           Messages.getInformationIcon());
-
-              }
-              else if (!updatedFiles.isEmpty()) {
-                RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(project);
-                restoreUpdateTree.registerUpdateInformation(updatedFiles, myActionInfo);
-                showUpdateProjectInfo(project, updatedFiles, getCompleteActionName(context), myActionInfo);
-
+        Runnable finishRunnable = new Runnable() {
+          public void run() {
+            if (!someSessionWasCanceled(updateSessions)) {
+              for (final UpdateSession updateSession : updateSessions) {
+                updateSession.onRefreshFilesCompleted();
               }
             }
-          });
-        }
+
+            if (!someSessionWasCanceled(updateSessions)) {
+
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                public void run() {
+                  if (!vcsExceptions.isEmpty()) {
+                    AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, VcsBundle.message("message.title.vcs.update.errors",
+                                                                                                       getCompleteActionName(context)));
+                  }
+                  if (updatedFiles.isEmpty() && vcsExceptions.isEmpty()) {
+                    Messages.showMessageDialog(getAllFilesAreUpToDateMessage(roots),
+                                               getCompleteActionName(context),
+                                               Messages.getInformationIcon());
+
+                  }
+                  else if (!updatedFiles.isEmpty()) {
+                    RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(project);
+                    restoreUpdateTree.registerUpdateInformation(updatedFiles, myActionInfo);
+                    showUpdateProjectInfo(project, updatedFiles, getCompleteActionName(context), myActionInfo);
+
+                  }
+                }
+              });
+            }
+          }
+        };
+
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(project, getCompleteActionName(context), updateProcess, finishRunnable, finishRunnable);
       }
       catch (ProcessCanceledException e1) {
         //ignore

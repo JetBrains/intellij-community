@@ -1,7 +1,9 @@
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.find.BackgroundableProcessIndicator;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,6 +19,7 @@ import com.intellij.psi.PsiLock;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -176,5 +179,47 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
   public boolean runProcessWithProgressSynchronously(Runnable process, String progressTitle, boolean canBeCanceled, Project project) {
     return ((ApplicationEx)ApplicationManager.getApplication())
       .runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project);
+  }
+
+  public void runProcessWithProgressAsynchronously(@NotNull Project project,
+                                                   @NotNull String progressTitle,
+                                                   @NotNull final Runnable process,
+                                                   @Nullable final Runnable successRunnable,
+                                                   @Nullable final Runnable canceledRunnable) {
+
+    final ProgressIndicator progressIndicator = new BackgroundableProcessIndicator(project,
+                                                                                   progressTitle,
+                                                                                   "Cancel",
+                                                                                   "Stop " + progressTitle);
+
+    //noinspection HardCodedStringLiteral
+    Thread thread = new Thread("Process with progress") {
+      public void run() {
+        boolean canceled = false;
+        try {
+          ProgressManager.getInstance().runProcess(process, progressIndicator);
+        }
+        catch (ProcessCanceledException e) {
+          canceled = true;
+        }
+
+        if (canceled && canceledRunnable != null) {
+          ApplicationManager.getApplication().invokeLater(canceledRunnable, ModalityState.NON_MODAL);
+        }
+        else if (!canceled && successRunnable != null) {
+          ApplicationManager.getApplication().invokeLater(successRunnable, ModalityState.NON_MODAL);          
+        }
+      }
+    };
+
+    synchronized (process) {
+      thread.start();
+      try {
+        process.wait();
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 }

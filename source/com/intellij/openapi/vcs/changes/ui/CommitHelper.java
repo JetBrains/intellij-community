@@ -12,9 +12,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.impl.FileViewManagerImpl;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
+import com.intellij.openapi.vcs.impl.FileViewManagerImpl;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
 import java.util.ArrayList;
@@ -52,7 +52,7 @@ public class CommitHelper {
     final List<Change> changesFailedToCommit = new ArrayList<Change>();
 
     ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(checkinAction(vcsExceptions, changesFailedToCommit, myChangeList), myActionName, true, myProject);
+      .runProcessWithProgressAsynchronously(myProject, myActionName, checkinAction(vcsExceptions, changesFailedToCommit, myChangeList), null, null);
   }
 
   private Runnable checkinAction(final List<VcsException> vcsExceptions, final List<Change> changesFailedToCommit, final ChangeList changeList) {
