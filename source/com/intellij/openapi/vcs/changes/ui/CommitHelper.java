@@ -58,7 +58,11 @@ public class CommitHelper {
   private Runnable checkinAction(final List<VcsException> vcsExceptions, final List<Change> changesFailedToCommit, final ChangeList changeList) {
     return new Runnable() {
       public void run() {
-        performCommit(vcsExceptions, changesFailedToCommit, changeList);
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            performCommit(vcsExceptions, changesFailedToCommit, changeList);
+          }
+        });
       }
     };
   }
