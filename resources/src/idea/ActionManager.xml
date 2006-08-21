@@ -924,6 +924,7 @@
 
     <group id="J2EEViewPopupMenu">
       <action id="OpenCustomEditor" class="com.intellij.ide.actions.EditSourceAction"/>
+      <action id="OpenPersistenceERDiagramAction" class="com.intellij.javaee.persistence.view.actions.OpenPersistenceERDiagramAction"/>
       <reference ref="NewGroup"/>
       <reference ref="CutCopyPasteGroup"/>
       <separator/>
