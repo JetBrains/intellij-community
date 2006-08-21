@@ -23,10 +23,10 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.HashSet;
 
 public class CopyHandler {
@@ -164,6 +164,7 @@ public class CopyHandler {
     }
   }
 
+  @Nullable
   private static PsiDirectory getCommonParentDirectory(PsiElement[] elements){
     PsiDirectory result = null;
 
@@ -242,7 +243,7 @@ public class CopyHandler {
     }
   }
 
-  private static void copyClassImpl(final String copyClassName, final Project project, final PsiElement psiElement, final PsiDirectory targetDirectory, String commandName, final boolean selectInActivePanel) {
+  private static void copyClassImpl(final String copyClassName, final Project project, final PsiClass aClass, final PsiDirectory targetDirectory, String commandName, final boolean selectInActivePanel) {
     if (copyClassName == null || copyClassName.length() == 0) return;
     final boolean[] result = new boolean[] {false};
     Runnable command = new Runnable() {
@@ -250,14 +251,14 @@ public class CopyHandler {
         final Runnable action = new Runnable() {
           public void run() {
             try {
-              ChangeContextUtil.encodeContextInfo(psiElement.getNavigationElement(), true);
-              PsiClass classCopy = (PsiClass) psiElement.getNavigationElement().copy();
-              ChangeContextUtil.clearContextInfo(psiElement);
+              ChangeContextUtil.encodeContextInfo(aClass.getNavigationElement(), true);
+              PsiClass classCopy = (PsiClass) aClass.getNavigationElement().copy();
+              ChangeContextUtil.clearContextInfo(aClass);
               classCopy.setName(copyClassName);
               PsiClass newClass = (PsiClass) targetDirectory.add(classCopy);
               ChangeContextUtil.decodeContextInfo(newClass, null, null);
               final PsiManager psiManager = PsiManager.getInstance(project);
-              PsiReference[] refs = psiManager.getSearchHelper().findReferences(psiElement, new LocalSearchScope(newClass), true);
+              PsiReference[] refs = psiManager.getSearchHelper().findReferences(aClass, new LocalSearchScope(newClass), true);
 
               for (final PsiReference ref : refs) {
                 PsiElement element = ref.getElement();
@@ -289,7 +290,7 @@ public class CopyHandler {
 
               result[0] = true;
             } catch (final IncorrectOperationException ex) {
-              SwingUtilities.invokeLater(new Runnable() {
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
                 public void run() {
                   Messages.showMessageDialog(project, ex.getMessage(),
                                              RefactoringBundle.message("error.title"), Messages.getErrorIcon());
@@ -333,6 +334,7 @@ public class CopyHandler {
    * @param newName can be not null only if elements.length == 1
    * @return first copied PsiFile (recursivly); null if no PsiFiles copied
    */
+  @Nullable
   private static PsiFile copyToDirectory(final PsiElement elementToCopy, String newName, final PsiDirectory targetDirectory) throws IncorrectOperationException{
     if (elementToCopy instanceof PsiFile) {
       PsiFile file = (PsiFile)elementToCopy;

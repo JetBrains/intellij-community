@@ -9,6 +9,7 @@ import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
 import com.intellij.psi.impl.PsiVariableEx;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspElementType;
@@ -227,6 +228,10 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
   public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
     if (lastParent == null) return true;
+    if (lastParent.getContext() instanceof DummyHolder) {
+      return processor.execute(this, substitutor);
+    }
+
     if (lastParent.getParent() != this) return true;
     final ASTNode lastParentTree = SourceTreeToPsiMap.psiElementToTree(lastParent);
 
