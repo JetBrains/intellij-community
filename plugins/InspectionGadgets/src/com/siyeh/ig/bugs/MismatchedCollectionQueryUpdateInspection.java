@@ -26,9 +26,6 @@ import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class MismatchedCollectionQueryUpdateInspection
         extends VariableInspection{
 
