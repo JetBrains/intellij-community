@@ -110,7 +110,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     for (ProblemDescriptor descriptor : descriptors) {
       final PsiElement elt = descriptor.getPsiElement();
       if (elt == null) continue;
-      if (filterSuppressed && InspectionManagerEx.inspectionResultSuppressed(elt, myTool.getID())) continue;
+      if (filterSuppressed && InspectionManagerEx.inspectionResultSuppressed(elt, myTool)) continue;
 
       final PsiNamedElement problemElement =
         PsiTreeUtil.getNonStrictParentOfType(elt, PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class);
@@ -134,7 +134,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
   private ProblemDescriptor[] filterUnsuppressedProblemDescriptions(ProblemDescriptor[] problemDescriptions) {
     Set<ProblemDescriptor> set = null;
     for (ProblemDescriptor description : problemDescriptions) {
-      if (InspectionManagerEx.inspectionResultSuppressed(description.getPsiElement(), myTool.getID())) {
+      if (InspectionManagerEx.inspectionResultSuppressed(description.getPsiElement(), myTool)) {
         if (set == null) set = new LinkedHashSet<ProblemDescriptor>(Arrays.asList(problemDescriptions));
         set.remove(description);
       }

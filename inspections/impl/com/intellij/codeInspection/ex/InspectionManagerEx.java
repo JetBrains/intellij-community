@@ -163,10 +163,19 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return null;
   }
 
+  public static boolean inspectionResultSuppressed(PsiElement place, LocalInspectionTool tool) {
+    if (tool instanceof CustomSuppresableInspectionTool) {
+      return ((CustomSuppresableInspectionTool)tool).isSuppressedFor(place);
+    }
+
+    return inspectionResultSuppressed(place, tool.getID());
+  }
+
   public static boolean inspectionResultSuppressed(final PsiElement place, String toolId) {
     return getElementToolSuppressedIn(place, toolId) != null;
   }
 
+  @Nullable
   public static PsiElement getElementToolSuppressedIn(PsiElement place, String toolId) {
     if (place == null) return null;
     PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class);

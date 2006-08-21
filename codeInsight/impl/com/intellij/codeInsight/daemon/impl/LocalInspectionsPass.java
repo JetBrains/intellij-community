@@ -237,7 +237,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     final HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())).getSeverity();
     for (ProblemDescriptor problemDescriptor : problemDescriptors) {
       ProgressManager.getInstance().checkCanceled();
-      if (!InspectionManagerEx.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool.getID())) {
+      if (!InspectionManagerEx.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool)) {
         myDescriptors.add(problemDescriptor);
         HighlightInfoType type = highlightTypeFromDescriptor(problemDescriptor, tool, severity);
 
@@ -247,6 +247,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     }
   }
 
+  @Nullable
   private static HighlightInfoType highlightTypeFromDescriptor(final ProblemDescriptor problemDescriptor, final LocalInspectionTool tool,
                                                     final HighlightSeverity severity) {
     ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
@@ -354,7 +355,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
   private static void registerQuickFixes(final LocalInspectionTool tool, final PsiElement psiElement, final ProblemDescriptor descriptor,
                                   final HighlightInfo highlightInfo) {
-    List<IntentionAction> options = getStandardIntentionOptions(tool, psiElement);
+    List<IntentionAction> options = getStandardIntentionOptions(tool, descriptor, psiElement);
     final QuickFix[] fixes = descriptor.getFixes();
     if (fixes != null && fixes.length > 0) {
       for (int k = 0; k < fixes.length; k++) {
@@ -365,7 +366,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     }
   }
 
-  private static List<IntentionAction> getStandardIntentionOptions(final LocalInspectionTool tool, final PsiElement psiElement) {
+  private static List<IntentionAction> getStandardIntentionOptions(final LocalInspectionTool tool, ProblemDescriptor descriptor, final PsiElement psiElement) {
     List<IntentionAction> options = new ArrayList<IntentionAction>();
     options.add(new EditInspectionToolsSettingsAction(tool));
     options.add(new RunInspectionIntention(tool));
@@ -373,6 +374,11 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     options.add(new AddNoInspectionDocTagAction(tool, psiElement));
     options.add(new AddNoInspectionForClassAction(tool, psiElement));
     options.add(new AddNoInspectionAllForClassAction(psiElement));
+
+    if (tool instanceof CustomSuppresableInspectionTool) {
+      options.addAll(Arrays.asList(((CustomSuppresableInspectionTool)tool).getSuppressActions(descriptor)));
+    }
+
     options.add(new AddSuppressWarningsAnnotationAction(tool, psiElement));
     options.add(new AddSuppressWarningsAnnotationForClassAction(tool, psiElement));
     options.add(new AddSuppressWarningsAnnotationForAllAction(psiElement));
@@ -387,7 +393,11 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   private static String renderDescriptionMessage(ProblemDescriptor descriptor) {
     PsiElement psiElement = descriptor.getPsiElement();
     String message = descriptor.getDescriptionTemplate();
-    if (message == null) return ""; // no message. Should not be the case if inspection correctly implemented.
+
+    // no message. Should not be the case if inspection correctly implemented.
+    // noinspection ConstantConditions
+    if (message == null) return "";
+
     message = StringUtil.replace(message, "<code>", "'");
     message = StringUtil.replace(message, "</code>", "'");
     //message = message.replaceAll("<[^>]*>", "");

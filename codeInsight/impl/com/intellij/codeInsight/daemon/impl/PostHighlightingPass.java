@@ -54,6 +54,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -226,11 +227,12 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     }
   }
 
+  @Nullable
   private HighlightInfo processIdentifier(PsiIdentifier identifier) {
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(identifier);
     if (!profile.isToolEnabled(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME))) return null;
     final UnusedSymbolLocalInspection unusedSymbolInspection = (UnusedSymbolLocalInspection)((LocalInspectionToolWrapper)profile.getInspectionTool(UnusedSymbolLocalInspection.SHORT_NAME)).getTool();
-    if (InspectionManagerEx.inspectionResultSuppressed(identifier, unusedSymbolInspection.getID())) return null;
+    if (InspectionManagerEx.inspectionResultSuppressed(identifier, unusedSymbolInspection)) return null;
     PsiElement parent = identifier.getParent();
     if (PsiUtil.hasErrorElementChild(parent)) return null;
     List<IntentionAction> options = IntentionManager.getInstance(myProject).getStandardIntentionOptions(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME), identifier);
@@ -259,6 +261,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return info;
   }
 
+  @Nullable
   private HighlightInfo processLocalVariable(PsiLocalVariable variable, final List<IntentionAction> options, final String displayName) {
     PsiIdentifier identifier = variable.getNameIdentifier();
     if (identifier == null) return null;
@@ -323,6 +326,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_SYMBOL, element, message, attributes);
   }
 
+  @Nullable
   private HighlightInfo processField(PsiField field, final List<IntentionAction> options, final String displayName, final UnusedSymbolLocalInspection unusedSymbolInspection) {
     final PsiIdentifier identifier = field.getNameIdentifier();
 
@@ -363,7 +367,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           final PsiAnnotation[] psiAnnotations = field.getModifierList().getAnnotations();
           if (psiAnnotations.length > 0) {
             for (PsiAnnotation psiAnnotation : psiAnnotations) {
-              final String name = psiAnnotation.getQualifiedName();
+              @NonNls final String name = psiAnnotation.getQualifiedName();
+              if (name == null) continue;
               if (name.startsWith("java.") || name.startsWith("javax.") || name.startsWith("org.jetbrains.")) continue;
               QuickFixAction.registerQuickFixAction(info, unusedSymbolInspection.createAddToInjectionAnnotationsIntentionAction(name, field));
             }
@@ -384,6 +389,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return false;
   }
 
+  @Nullable
   private HighlightInfo processParameter(PsiParameter parameter, final List<IntentionAction> options, final String displayName) {
     PsiElement declarationScope = parameter.getDeclarationScope();
     if (declarationScope instanceof PsiMethod) {
@@ -412,6 +418,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return null;
   }
 
+  @Nullable
   private HighlightInfo checkUnusedParameter(final PsiParameter parameter) {
     if (!myRefCountHolder.isReferenced(parameter) && !isImplicitUsage(parameter)) {
       PsiIdentifier identifier = parameter.getNameIdentifier();
@@ -422,6 +429,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return null;
   }
 
+  @Nullable
   private HighlightInfo processMethod(PsiMethod method, final List<IntentionAction> options, final String displayName) {
     if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
       if (!myRefCountHolder.isReferenced(method)) {
@@ -443,6 +451,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return null;
   }
 
+  @Nullable
   private HighlightInfo processClass(PsiClass aClass, final List<IntentionAction> options, final String displayName) {
     if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
       if (!myRefCountHolder.isReferenced(aClass) && !isImplicitUsage(aClass)) {
@@ -476,6 +485,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return highlightInfo;
   }
 
+  @Nullable
   private HighlightInfo processImport(PsiImportStatementBase importStatement) {
     if (!InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(importStatement).isToolEnabled(HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME))) return null;
 
@@ -538,9 +548,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     if (!codeAnalyzer.isErrorAnalyzingFinished(file)) return false;
     HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
-    if (errors.length != 0) return false;
 
-    return codeAnalyzer.canChangeFileSilently(myFile);
+    return errors.length == 0 && codeAnalyzer.canChangeFileSilently(myFile);
   }
 
   private static boolean isMainMethod(PsiMethod method) {

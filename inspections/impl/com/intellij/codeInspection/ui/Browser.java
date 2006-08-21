@@ -1,7 +1,10 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
@@ -40,6 +43,7 @@ public class Browser extends JPanel {
   private JEditorPane myHTMLViewer;
   private InspectionResultsView myView;
   private HyperlinkListener myHyperLinkListener;
+  private CommonProblemDescriptor myCurrentDescriptor;
 
   public static class ClickEvent {
     public static final int REF_ELEMENT = 1;
@@ -115,6 +119,7 @@ public class Browser extends JPanel {
     }
     finally {
       myCurrentEntity = newEntity;
+      myCurrentDescriptor = null;
     }
   }
 
@@ -129,6 +134,7 @@ public class Browser extends JPanel {
     }
     finally {
       myCurrentEntity = refEntity;
+      myCurrentDescriptor = descriptor;
     }
   }
 
@@ -147,6 +153,7 @@ public class Browser extends JPanel {
 
     myClickListeners = new ArrayList<ClickListener>();
     myCurrentEntity = null;
+    myCurrentDescriptor = null;
 
     myHTMLViewer = new JEditorPane(UIUtil.HTML_MIME, InspectionsBundle.message("inspection.offline.view.empty.browser.text"));
     myHTMLViewer.setEditable(false);
@@ -201,7 +208,7 @@ public class Browser extends JPanel {
                   invokeLocalFix(actionNumber);
                 }
               } else if (ref.startsWith("suppress:")){
-                SuppressInspectionToolbarAction.getSuppressAction((RefElement)myCurrentEntity, getTool(), myView).actionPerformed(null);
+                SuppressInspectionToolbarAction.getSuppressAction((RefElement)myCurrentEntity, getTool(), myCurrentDescriptor, myView).actionPerformed(null);
               }
               else {
                 int offset = Integer.parseInt(ref);
@@ -254,7 +261,7 @@ public class Browser extends JPanel {
     uppercaseFirstLetter(buf);
 
     if (refEntity instanceof RefElement){
-      appendSuppressSection((RefElement)refEntity, buf);
+      appendSuppressSection((RefElement)refEntity, buf, null);
     }
 
     insertHeaderFooter(buf);
@@ -281,7 +288,7 @@ public class Browser extends JPanel {
     uppercaseFirstLetter(buf);
 
     if (refEntity instanceof RefElement) {
-      appendSuppressSection((RefElement)refEntity, buf);
+      appendSuppressSection((RefElement)refEntity, buf, descriptor);
     }
 
     insertHeaderFooter(buf);
@@ -300,12 +307,12 @@ public class Browser extends JPanel {
     return tool;
   }
 
-  private void appendSuppressSection(final RefElement refElement, final StringBuffer buf) {
+  private void appendSuppressSection(final RefElement refElement, final StringBuffer buf, final CommonProblemDescriptor descriptor) {
     final InspectionTool tool = getTool();
     if (tool != null) {
       final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
       if (key != null){//dummy entry points
-        final AnAction suppressAction = SuppressInspectionToolbarAction.getSuppressAction(refElement, tool, myView);
+        final AnAction suppressAction = SuppressInspectionToolbarAction.getSuppressAction(refElement, tool, descriptor, myView);
         if (suppressAction != null){
           @NonNls String font = "<font style=\"font-family:verdana;\" size = \"3\">";
           buf.append(font);

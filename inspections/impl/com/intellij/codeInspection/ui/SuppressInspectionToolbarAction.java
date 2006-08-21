@@ -9,10 +9,11 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.AddNoInspectionDocTagAction;
 import com.intellij.codeInsight.daemon.impl.AddSuppressWarningsAnnotationAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.java.JavaLanguage;
@@ -78,30 +79,52 @@ class SuppressInspectionToolbarAction extends AnAction {
 
   private AnAction getSuppressAction(final InspectionTool tool, final TreePath[] selectionPaths, final String id) {
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManagerEx.getInstance(myView.getProject());
-    final AnAction suppressAction = new AnAction(InspectionsBundle.message("inspection.quickfix.suppress", tool.getDisplayName())) {
+    return new AnAction(InspectionsBundle.message("inspection.quickfix.suppress", tool.getDisplayName())) {
       public void actionPerformed(AnActionEvent e) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            PsiDocumentManager.getInstance(myView.getProject()).commitAllDocuments();
             CommandProcessor.getInstance().executeCommand(myView.getProject(), new Runnable() {
               public void run() {
+                final CustomSuppresableInspectionTool suppresableTool = extractSuppressableTool(tool);
                 for (TreePath treePath : selectionPaths) {
                   final InspectionTreeNode node = (InspectionTreeNode)treePath.getLastPathComponent();
-                  final List<RefElement> elementsToSuppress = InspectionTree.getElementsToSuppressInSubTree(node);
-                  for (final RefElement refElement : elementsToSuppress) {
-                    final PsiElement element = refElement.getElement();
-                    final IntentionAction action = getCorrectIntentionAction(id, element);
-                    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                      public void run() {
-                        try {
-                          action.invoke(myView.getProject(), null, refElement.getElement().getContainingFile());
-                        }
-                        catch (IncorrectOperationException e1) {
-                          LOG.error(e1);
-                        }
+                  if (suppresableTool != null) {
+                    for (final ProblemDescriptor descriptor : myView.getTree().getSelectedDescriptors()) {
+                      final IntentionAction[] actions = suppresableTool.getSuppressActions(descriptor);
+                      if (actions.length > 0) {
+                        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                          public void run() {
+                            PsiDocumentManager.getInstance(myView.getProject()).commitAllDocuments();
+                            try {
+                              actions[0].invoke(myView.getProject(), null, descriptor.getPsiElement().getContainingFile());
+                            }
+                            catch (IncorrectOperationException e1) {
+                              LOG.error(e1);
+                            }
+                          }
+                        });
                       }
-                    });
+                    }
                   }
+                  else {
+                    final List<RefElement> elementsToSuppress = InspectionTree.getElementsToSuppressInSubTree(node);
+                    for (final RefElement refElement : elementsToSuppress) {
+                      final PsiElement element = refElement.getElement();
+                      final IntentionAction action = getCorrectIntentionAction(tool, id, null, element);
+                      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                        public void run() {
+                          PsiDocumentManager.getInstance(myView.getProject()).commitAllDocuments();
+                          try {
+                            action.invoke(myView.getProject(), null, refElement.getElement().getContainingFile());
+                          }
+                          catch (IncorrectOperationException e1) {
+                            LOG.error(e1);
+                          }
+                        }
+                      });
+                    }
+                  }
+
                   final List<RefEntity> elementsToIgnore = new ArrayList<RefEntity>();
                   InspectionResultsView.traverseRefElements(node, elementsToIgnore);
                   for (RefEntity element : elementsToIgnore) {
@@ -112,9 +135,11 @@ class SuppressInspectionToolbarAction extends AnAction {
                         context.refreshViews();
                       }
                     }
+
                     tool.ignoreElement(element);
                   }
                 }
+
                 myView.updateView(false);
               }
             }, InspectionsBundle.message("inspection.quickfix.suppress"), null);
@@ -124,6 +149,18 @@ class SuppressInspectionToolbarAction extends AnAction {
 
       public void update(AnActionEvent e) {
         e.getPresentation().setEnabled(true);
+        final CustomSuppresableInspectionTool suppresableTool = extractSuppressableTool(tool);
+        if (suppresableTool != null) {
+          for (ProblemDescriptor descriptor : myView.getTree().getSelectedDescriptors()) {
+            for (IntentionAction action : suppresableTool.getSuppressActions(descriptor)) {
+              if (action.isAvailable(myView.getProject(), null, descriptor.getPsiElement().getContainingFile())) {
+                e.getPresentation().setEnabled(true);
+                return;
+              }
+            }
+          }
+        }
+
         for (TreePath treePath : selectionPaths) {
           final InspectionTreeNode node = (InspectionTreeNode)treePath.getLastPathComponent();
           final List<RefElement> elementsToSuppress = InspectionTree.getElementsToSuppressInSubTree(node);
@@ -132,7 +169,7 @@ class SuppressInspectionToolbarAction extends AnAction {
             if (element instanceof PsiFile) continue;
             if (element == null || !element.isValid()) continue;
             final PsiFile file = element.getContainingFile();
-            final IntentionAction action = getCorrectIntentionAction(id, element);
+            final IntentionAction action = getCorrectIntentionAction(tool, id, null, element);
             if (action.isAvailable(myView.getProject(), null, file)) {
               e.getPresentation().setEnabled(true);
               return;
@@ -142,7 +179,6 @@ class SuppressInspectionToolbarAction extends AnAction {
         e.getPresentation().setEnabled(false);
       }
     };
-    return suppressAction;
   }
 
 
@@ -183,7 +219,23 @@ class SuppressInspectionToolbarAction extends AnAction {
     }
   }
 
-  static IntentionAction getCorrectIntentionAction(String id, PsiElement context) {
+  @Nullable
+  private static CustomSuppresableInspectionTool extractSuppressableTool(InspectionTool tool) {
+    if (tool instanceof LocalInspectionToolWrapper) {
+      final LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)tool;
+      final LocalInspectionTool localTool = wrapper.getTool();
+      if (localTool instanceof CustomSuppresableInspectionTool) return (CustomSuppresableInspectionTool)localTool;
+    }
+    return null;
+  }
+
+  private static IntentionAction getCorrectIntentionAction(InspectionTool tool, String id, CommonProblemDescriptor descriptor, PsiElement context) {
+    CustomSuppresableInspectionTool customSuppresableInspectionTool = extractSuppressableTool(tool);
+    if (customSuppresableInspectionTool != null && descriptor instanceof ProblemDescriptor) {
+      final IntentionAction[] customActions = customSuppresableInspectionTool.getSuppressActions((ProblemDescriptor)descriptor);
+      if (customActions.length > 0) return customActions[0];
+    }
+
     boolean isSuppressWarnings = false;
     final Module module = ModuleUtil.findModuleForPsiElement(context);
     if (module != null) {
@@ -202,10 +254,11 @@ class SuppressInspectionToolbarAction extends AnAction {
   @Nullable
   public static AnAction getSuppressAction( final RefElement refElement,
                                             final InspectionTool tool,
+                                            final CommonProblemDescriptor descriptor,
                                             final InspectionResultsView view){
       final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
       if (key != null) {
-        final IntentionAction action = SuppressInspectionToolbarAction.getCorrectIntentionAction(key.getID(), refElement.getElement());
+        final IntentionAction action = SuppressInspectionToolbarAction.getCorrectIntentionAction(tool, key.getID(), descriptor, refElement.getElement());
         final PsiFile file = refElement.getElement().getContainingFile();
         if (action.isAvailable(view.getProject(), null, file)) {
           return new AnAction(action.getText()) {
