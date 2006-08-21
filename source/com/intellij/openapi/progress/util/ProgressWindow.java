@@ -7,10 +7,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.WindowManager;
@@ -18,7 +15,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.StackingPopupDispatcher;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
@@ -306,7 +302,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
     private boolean myRepaintedFlag = true;
     private JPanel myFunPanel;
     private TitlePanel myTitlePanel;
-    private JBPopup myPopup;
+    private JDialog myPopup;
     private Window myParentWindow;
     private Point myLastClicked;
 
@@ -454,7 +450,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (myPopup != null) {
-            myPopup.cancel();
+            myPopup.dispose();
             myPopup = null;
           }
         }
@@ -465,19 +461,22 @@ public class ProgressWindow extends BlockingProgressIndicator {
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
       if (myParentWindow == null) return;
       if (myPopup != null) {
-        myPopup.cancel();
+        myPopup.dispose();
       }
 
-      myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myPanel, myCancelButton)
-        .setForceHeavyweight(true)
-        .setRequestFocus(true)
-        .setCancelCallback(new Computable<Boolean>() {
-          public Boolean compute() {
-            return isCanceled() || !isRunning() || ProgressWindow.this.myBackgrounded;
-          }
-        }).createPopup();
-      myPopup.showInCenterOf(myParentWindow);
-      StackingPopupDispatcher.onPopupHidden(myPopup); // Mouse click hiding is not necessary.
+      if (myParentWindow instanceof Frame) {
+        myPopup = new JDialog((Frame)myParentWindow, false);
+      }
+      else {
+        myPopup = new JDialog((Dialog)myParentWindow, false);
+      }
+
+      myPopup.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+      myPopup.setContentPane(myPanel);
+      myPopup.setUndecorated(true);
+      myPopup.pack();
+      myPopup.setLocationRelativeTo(myParentWindow);
+      myPopup.setVisible(true);
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
