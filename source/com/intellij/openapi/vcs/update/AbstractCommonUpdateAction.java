@@ -39,6 +39,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
@@ -99,7 +100,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         final List<UpdateSession> updateSessions = new ArrayList<UpdateSession>();
         final Runnable updateProcess = new Runnable() {
           public void run() {
-
+            ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
             ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
             int toBeProcessed = vcsToVirtualFiles.size();
             int processed = 0;
@@ -166,6 +167,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                     showUpdateProjectInfo(project, updatedFiles, getCompleteActionName(context), myActionInfo);
 
                   }
+
+                  ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
                 }
               });
             }
@@ -258,7 +261,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     return result;
   }
 
-  private void filterSubDirectories(Collection<FilePath> virtualFiles) {
+  private static void filterSubDirectories(Collection<FilePath> virtualFiles) {
     FilePath[] array = virtualFiles.toArray(new FilePath[virtualFiles.size()]);
     for (FilePath file : array) {
       if (containsParent(array, file)) {
@@ -314,7 +317,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
   protected void update(VcsContext vcsContext, Presentation presentation) {
     Project project = vcsContext.getProject();
 
-
     if (project != null) {
 
       String actionName = getCompleteActionName(vcsContext);
@@ -339,13 +341,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           presentation.setEnabled(false);
         }
       }
-
     } else {
       presentation.setVisible(false);
       presentation.setEnabled(false);
     }
-
-  }
+ }
 
   protected boolean forceSyncUpdate(final AnActionEvent e) {
     return true;
@@ -359,6 +359,4 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
     return true;
   }
-
-
 }

@@ -67,6 +67,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private TObjectLongHashMap<VirtualFile> mySavedTimestamps = new TObjectLongHashMap<VirtualFile>();
   private HashMap<Project, List<VirtualFile>> myChangedProjectFiles = new HashMap<Project, List<VirtualFile>>();
   private PathMacrosImpl myPathMacros;
+  private volatile int myReloadBlockCount = 0;
 
   private static ProjectManagerListener[] getListeners(Project project) {
     ArrayList<ProjectManagerListener> array = project.getUserData(LISTENERS_IN_PROJECT_KEY);
@@ -309,52 +310,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
       public void afterRefreshFinish(boolean asynchonous) {
         myIsInRefresh = false;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (myChangedProjectFiles.size() > 0) {
-              Set<Project> projects = myChangedProjectFiles.keySet();
-              List<Project> projectsToReload = new ArrayList<Project>();
-
-              for (Project project : projects) {
-                List<VirtualFile> causes = myChangedProjectFiles.get(project);
-                Set<VirtualFile> liveCauses = new HashSet<VirtualFile>(causes);
-                for (VirtualFile cause : causes) {
-                  if (!cause.isValid()) liveCauses.remove(cause);
-                }
-
-                if (!liveCauses.isEmpty()) {
-                  String message;
-                  if (liveCauses.size() == 1) {
-                    message = ProjectBundle.message("project.reload.external.change.single", causes.get(0).getPresentableUrl());
-                  }
-                  else {
-                    StringBuffer filesBuilder = new StringBuffer();
-                    boolean first = true;
-                    for (VirtualFile cause : liveCauses) {
-                      if (!first) filesBuilder.append("\n");
-                      first = false;
-                      filesBuilder.append(cause.getPresentableUrl());
-                    }
-                    message = ProjectBundle.message("project.reload.external.change.multiple", filesBuilder.toString());
-                  }
-
-                  if (Messages.showYesNoDialog(project,
-                                               message,
-                                               ProjectBundle.message("project.reload.external.change.title"),
-                                               Messages.getQuestionIcon()) == 0) {
-                    projectsToReload.add(project);
-                  }
-                }
-
-                for (final Project projectToReload : projectsToReload) {
-                  reloadProject(projectToReload);
-                }
-              }
-
-              myChangedProjectFiles.clear();
-            }
-          }
-        }, ModalityState.NON_MMODAL);
+        askToReloadProjectIfConfigFilesChangedExternally();
       }
     });
 
@@ -367,8 +323,66 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     });
   }
 
+  private void askToReloadProjectIfConfigFilesChangedExternally() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (myChangedProjectFiles.size() > 0 && myReloadBlockCount == 0) {
+          Set<Project> projects = myChangedProjectFiles.keySet();
+          List<Project> projectsToReload = new ArrayList<Project>();
+
+          for (Project project : projects) {
+            List<VirtualFile> causes = myChangedProjectFiles.get(project);
+            Set<VirtualFile> liveCauses = new HashSet<VirtualFile>(causes);
+            for (VirtualFile cause : causes) {
+              if (!cause.isValid()) liveCauses.remove(cause);
+            }
+
+            if (!liveCauses.isEmpty()) {
+              String message;
+              if (liveCauses.size() == 1) {
+                message = ProjectBundle.message("project.reload.external.change.single", causes.get(0).getPresentableUrl());
+              }
+              else {
+                StringBuffer filesBuilder = new StringBuffer();
+                boolean first = true;
+                for (VirtualFile cause : liveCauses) {
+                  if (!first) filesBuilder.append("\n");
+                  first = false;
+                  filesBuilder.append(cause.getPresentableUrl());
+                }
+                message = ProjectBundle.message("project.reload.external.change.multiple", filesBuilder.toString());
+              }
+
+              if (Messages.showYesNoDialog(project,
+                                           message,
+                                           ProjectBundle.message("project.reload.external.change.title"),
+                                           Messages.getQuestionIcon()) == 0) {
+                projectsToReload.add(project);
+              }
+            }
+
+            for (final Project projectToReload : projectsToReload) {
+              reloadProject(projectToReload);
+            }
+          }
+
+          myChangedProjectFiles.clear();
+        }
+      }
+    }, ModalityState.NON_MODAL);
+  }
+
   public boolean isFileSavedToBeReloaded(VirtualFile candidate) {
     return mySavedCopies.containsKey(candidate);
+  }
+
+  public void blockReloadingProjectOnExternalChanges() {
+    myReloadBlockCount++;
+  }
+
+  public void unblockReloadingProjectOnExternalChanges() {
+    myReloadBlockCount--;
+    askToReloadProjectIfConfigFilesChangedExternally();
   }
 
   public void saveChangedProjectFile(final VirtualFile file) {
@@ -467,7 +481,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           ProjectUtil.openProject(path, null, true);
         }
       }
-    }, ModalityState.NON_MMODAL);
+    }, ModalityState.NON_MODAL);
   }
 
   private static List<VirtualFile> getAllProjectFiles(Project project) {

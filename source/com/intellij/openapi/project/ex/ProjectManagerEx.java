@@ -30,4 +30,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public abstract void saveChangedProjectFile(VirtualFile file);
 
   public abstract boolean isFileSavedToBeReloaded(VirtualFile file);
+
+  public abstract void blockReloadingProjectOnExternalChanges();
+  public abstract void unblockReloadingProjectOnExternalChanges();
 }
