@@ -16,10 +16,7 @@
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -75,7 +72,8 @@ public class ClassWithoutLoggerInspection extends ClassInspection {
                     aClass.isAnnotationType()){
                 return;
             }
-            if (aClass instanceof PsiTypeParameter) {
+            if (aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiAnonymousClass) {
                 return;
             }
             if (aClass.getContainingClass()!=null) {
