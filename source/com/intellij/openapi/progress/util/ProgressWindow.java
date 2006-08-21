@@ -465,10 +465,10 @@ public class ProgressWindow extends BlockingProgressIndicator {
       }
 
       if (myParentWindow instanceof Frame) {
-        myPopup = new JDialog((Frame)myParentWindow, false);
+        myPopup = new JDialog((Frame)myParentWindow, true);
       }
       else {
-        myPopup = new JDialog((Dialog)myParentWindow, false);
+        myPopup = new JDialog((Dialog)myParentWindow, true);
       }
 
       myPopup.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
@@ -476,13 +476,14 @@ public class ProgressWindow extends BlockingProgressIndicator {
       myPopup.setUndecorated(true);
       myPopup.pack();
       myPopup.setLocationRelativeTo(myParentWindow);
-      myPopup.setVisible(true);
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           myCancelButton.requestFocus();
         }
       });
+
+      myPopup.setVisible(true);
     }
 
     public void setTitle(final String title) {
