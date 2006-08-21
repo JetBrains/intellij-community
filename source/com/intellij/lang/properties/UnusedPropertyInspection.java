@@ -164,12 +164,12 @@ public class UnusedPropertyInspection extends CustomSuppresableInspectionTool {
 
     @NotNull
     public String getText() {
-      return "Suppress for this property";
+      return PropertiesBundle.message("unused.property.suppress.for.property");
     }
 
     @NotNull
     public String getFamilyName() {
-      return "Suppress for this property";
+      return PropertiesBundle.message("unused.property.suppress.for.property");
     }
 
     public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -179,7 +179,7 @@ public class UnusedPropertyInspection extends CustomSuppresableInspectionTool {
     public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
-      final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
+      @NonNls final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
 
       final int start = myProperty.getTextRange().getStartOffset();
       final int line = doc.getLineNumber(start);
@@ -196,12 +196,12 @@ public class UnusedPropertyInspection extends CustomSuppresableInspectionTool {
   private static class SuppressForFile implements IntentionAction {
     @NotNull
     public String getText() {
-      return "Suppress for whole file";
+      return PropertiesBundle.message("unused.property.suppress.for.file");
     }
 
     @NotNull
     public String getFamilyName() {
-      return "Suppress for whole file";
+      return PropertiesBundle.message("unused.property.suppress.for.file");
     }
 
     public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -211,7 +211,7 @@ public class UnusedPropertyInspection extends CustomSuppresableInspectionTool {
     public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
-      final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
+      @NonNls final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
 
       doc.insertString(0, "# suppress inspection \"unused property\" for whole file\n");
     }
