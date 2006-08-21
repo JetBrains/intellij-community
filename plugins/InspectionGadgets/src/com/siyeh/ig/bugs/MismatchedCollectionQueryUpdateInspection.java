@@ -19,12 +19,15 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class MismatchedCollectionQueryUpdateInspection
         extends VariableInspection{
@@ -54,13 +57,37 @@ public class MismatchedCollectionQueryUpdateInspection
         }
     }
 
-
     public boolean isEnabledByDefault(){
         return true;
     }
 
     public BaseInspectionVisitor buildVisitor(){
         return new MismatchedCollectionQueryUpdateVisitor();
+    }
+
+    static boolean isEmptyCollectionInitializer(
+            PsiExpression initializer){
+        if(!(initializer instanceof PsiNewExpression)){
+            return false;
+        }
+        final PsiNewExpression newExpression =
+                (PsiNewExpression) initializer;
+        final PsiExpressionList argumentList =
+                newExpression.getArgumentList();
+        if(argumentList == null){
+            return false;
+        }
+        final PsiExpression[] expressions = argumentList.getExpressions();
+        for(final PsiExpression arg : expressions){
+            final PsiType argType = arg.getType();
+            if(argType == null){
+                return false;
+            }
+            if(CollectionUtils.isCollectionClassOrInterface(argType)){
+                return false;
+            }
+        }
+        return true;
     }
 
     private static class MismatchedCollectionQueryUpdateVisitor
@@ -158,7 +185,7 @@ public class MismatchedCollectionQueryUpdateInspection
                     !isEmptyCollectionInitializer(initializer)){
                 return true;
             }
-            if(VariableAccessUtils.variableIsAssigned(variable, context)){
+            if(collectionQueriedByAssignment(variable, context)){
                 return true;
             }
             if(VariableAccessUtils.variableIsAssignedFrom(variable, context)){
@@ -190,30 +217,53 @@ public class MismatchedCollectionQueryUpdateInspection
             context.accept(visitor);
             return visitor.isUpdated();
         }
+    }
 
-        private static boolean isEmptyCollectionInitializer(
-                PsiExpression initializer){
-            if(!(initializer instanceof PsiNewExpression)){
-                return false;
+    public static boolean collectionQueriedByAssignment(
+            @NotNull PsiVariable variable, @NotNull PsiElement context) {
+        final CollectionQueriedByAssignmentVisitor visitor =
+                new CollectionQueriedByAssignmentVisitor(variable);
+        context.accept(visitor);
+        return visitor.mayBeQueried();
+    }
+
+    private static class CollectionQueriedByAssignmentVisitor
+            extends PsiRecursiveElementVisitor{
+
+        private boolean mayBeQueried = false;
+        @NotNull private final PsiVariable variable;
+
+        CollectionQueriedByAssignmentVisitor(@NotNull PsiVariable variable){
+            super();
+            this.variable = variable;
+        }
+
+        public void visitElement(@NotNull PsiElement element){
+            if (mayBeQueried) {
+                return;
             }
-            final PsiNewExpression newExpression =
-                    (PsiNewExpression) initializer;
-            final PsiExpressionList argumentList =
-                    newExpression.getArgumentList();
-            if(argumentList == null){
-                return false;
+            super.visitElement(element);
+        }
+
+        public void visitAssignmentExpression(
+                @NotNull PsiAssignmentExpression assignment){
+            if(mayBeQueried){
+                return;
             }
-            final PsiExpression[] expressions = argumentList.getExpressions();
-            for(final PsiExpression arg : expressions){
-                final PsiType argType = arg.getType();
-                if(argType == null){
-                    return false;
-                }
-                if(CollectionUtils.isCollectionClassOrInterface(argType)){
-                    return false;
-                }
+            super.visitAssignmentExpression(assignment);
+            final PsiExpression lhs = assignment.getLExpression();
+            if (!VariableAccessUtils.mayEvaluateToVariable(lhs, variable)) {
+                return;
             }
-            return true;
+            final PsiExpression rhs = assignment.getRExpression();
+            if (isEmptyCollectionInitializer(rhs)) {
+                return;
+            }
+            mayBeQueried = true;
+        }
+
+        public boolean mayBeQueried(){
+            return mayBeQueried;
         }
     }
 }
