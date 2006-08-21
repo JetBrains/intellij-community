@@ -1,5 +1,6 @@
 package com.intellij.lang.properties;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
@@ -176,6 +177,8 @@ public class UnusedPropertyInspection extends CustomSuppresableInspectionTool {
     }
 
     public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+
       final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
 
       final int start = myProperty.getTextRange().getStartOffset();
@@ -206,6 +209,8 @@ public class UnusedPropertyInspection extends CustomSuppresableInspectionTool {
     }
 
     public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+
       final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
 
       doc.insertString(0, "# suppress inspection \"unused property\" for whole file\n");
