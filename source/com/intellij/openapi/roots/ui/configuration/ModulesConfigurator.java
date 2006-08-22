@@ -364,6 +364,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
    * @return pair of modules which become circular after adding dependency, or null if all remains OK
    */
   public static Pair<Module, Module> addingDependencyFormsCircularity(final Module currentModule, Module toDependOn) {
+    assert currentModule != toDependOn;
     // whatsa lotsa of @&#^%$ codes-a!
 
     final Map<Module, ModifiableRootModel> models = new LinkedHashMap<Module, ModifiableRootModel>();
