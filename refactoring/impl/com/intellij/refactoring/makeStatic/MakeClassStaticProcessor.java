@@ -169,9 +169,12 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
       if (mySettings.isMakeFieldParameters()) {
         PsiElement resolved = ((PsiReferenceExpression) element).resolve();
         if (resolved instanceof PsiField) {
-          String name = convertToFieldName(mySettings.getNameForField((PsiField) resolved));
+          String name = mySettings.getNameForField((PsiField)resolved);
           if (name != null) {
-            newRef = (PsiReferenceExpression) factory.createExpressionFromText(name, null);
+            name = convertToFieldName(name);
+            if (name != null) {
+              newRef = (PsiReferenceExpression) factory.createExpressionFromText(name, null);
+            }
           }
         }
       }

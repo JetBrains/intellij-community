@@ -15,6 +15,8 @@ import com.intellij.util.containers.HashMap;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 public final class Settings {
   private final boolean myMakeClassParameter;
   private final String myClassParameterName;
@@ -93,13 +95,12 @@ public final class Settings {
     return myMakeFieldParameters;
   }
 
+  @Nullable
   public String getNameForField(PsiField field) {
     if (myFieldToNameMapping != null) {
       return myFieldToNameMapping.get(field);
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   public List<FieldParameter> getParameterOrderList() {

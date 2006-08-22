@@ -20,6 +20,8 @@ import com.intellij.psi.PsiTypeParameterListOwner;
 
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author ven
  */
@@ -32,5 +34,6 @@ public interface MakeStaticRefactoring<T extends PsiTypeParameterListOwner> exte
 
   List<PsiField> getFields();
 
+  @Nullable
   String getParameterNameForField(PsiField field);
 }
