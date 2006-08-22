@@ -61,14 +61,16 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
       setModel(new MyButtonModel());
-      setHorizontalAlignment(JButton.LEFT);
+      setHorizontalAlignment(SwingConstants.LEFT);
       setFocusable(false);
       Insets margins = getMargin();
       setMargin(new Insets(margins.top, 2, margins.bottom, 2));
       addActionListener(
         new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-            showPopup();
+            if (!myForcePressed) {
+              showPopup();
+            }
           }
         }
       );
@@ -82,14 +84,20 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       myForcePressed = true;
       repaint();
 
+      Runnable onDispose = new Runnable() {
+        public void run() {
+          // give button chance to handle action listener
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              myForcePressed = false;
+            }
+          });
+          repaint();
+        }
+      };
       final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("", group, DataManager.getInstance().getDataContext(),
                                                                                   JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
-                                                                                  new Runnable() {
-                                                                                    public void run() {
-                                                                                      myForcePressed = false;
-                                                                                      repaint();
-                                                                                    }
-                                                                                  },
+                                                                                  onDispose,
                                                                                   30);
 
       popup.showUnderneathOf(this);
@@ -150,12 +158,15 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         if (Presentation.PROP_TEXT.equals(propertyName)) {
           setText((String)evt.getNewValue());
           updateButtonSize();
-        } else if (Presentation.PROP_DESCRIPTION.equals(propertyName)) {
+        }
+        else if (Presentation.PROP_DESCRIPTION.equals(propertyName)) {
           updateTooltipText((String)evt.getNewValue());
-        } else if (Presentation.PROP_ICON.equals(propertyName)) {
+        }
+        else if (Presentation.PROP_ICON.equals(propertyName)) {
           setIcon((Icon)evt.getNewValue());
           updateButtonSize();
-        } else if (Presentation.PROP_ENABLED.equals(propertyName)) {
+        }
+        else if (Presentation.PROP_ENABLED.equals(propertyName)) {
           setEnabled(((Boolean)evt.getNewValue()).booleanValue());
         }
       }
@@ -173,7 +184,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     protected void updateButtonSize() {
       int width;
       String text = getText();
-      if ((text == null || text.trim().length() == 0) && (getIcon() == null)) {
+      if ((text == null || text.trim().length() == 0) && getIcon() == null) {
         width = ARROW_ICON.getIconWidth() + 10;
       } else {
         width = getUI().getPreferredSize(this).width + ARROW_ICON.getIconWidth() + 2;
