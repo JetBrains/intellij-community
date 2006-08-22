@@ -132,7 +132,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     Collection<HighlightInfo> result = new THashSet<HighlightInfo>(100);
     try {
       final FileViewProvider viewProvider = myFile.getViewProvider();
-      final Set<Language> relevantLanguages = viewProvider.getRelevantLanguages();
+      final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
       for (Language language : relevantLanguages) {
         PsiElement psiRoot = viewProvider.getPsi(language);
         if(!HighlightUtil.shouldHighlight(psiRoot)) continue;

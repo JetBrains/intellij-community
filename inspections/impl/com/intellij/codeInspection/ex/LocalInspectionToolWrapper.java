@@ -56,7 +56,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
       @Override
       public void visitJspFile(JspFile file) {
         final FileViewProvider viewProvider = file.getViewProvider();
-        final Set<Language> relevantLanguages = viewProvider.getRelevantLanguages();
+        final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
         for (Language language : relevantLanguages) {
           visitElement(viewProvider.getPsi(language));
         }

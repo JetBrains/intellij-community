@@ -21,6 +21,7 @@ public interface FileViewProvider extends Cloneable{
 
   Language getBaseLanguage();
   Set<Language> getRelevantLanguages();
+  Set<Language> getPrimaryLanguages();
   PsiFile getPsi(Language target);
 
   boolean isEventSystemEnabled();

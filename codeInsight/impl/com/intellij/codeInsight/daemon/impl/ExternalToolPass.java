@@ -44,7 +44,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
 
   public void doCollectInformation(ProgressIndicator progress) {
     final FileViewProvider viewProvider = myFile.getViewProvider();
-    final Set<Language> relevantLanguages = viewProvider.getRelevantLanguages();
+    final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
     for (Language language : relevantLanguages) {
       PsiFile psiRoot = viewProvider.getPsi(language);
       if (!HighlightUtil.shouldInspect(psiRoot)) continue;

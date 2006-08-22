@@ -130,7 +130,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
     final FileViewProvider viewProvider = myFile.getViewProvider();
-    final Set<Language> relevantLanguages = viewProvider.getRelevantLanguages();
+    final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
     Set<PsiElement> elementSet = new THashSet<PsiElement>();
     for (Language language : relevantLanguages) {
       PsiElement psiRoot = viewProvider.getPsi(language);

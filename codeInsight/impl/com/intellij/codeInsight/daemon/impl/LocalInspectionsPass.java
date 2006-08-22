@@ -77,7 +77,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     myLevels = new ArrayList<HighlightInfoType>();
     myTools = new ArrayList<LocalInspectionTool>();
     final FileViewProvider fileViewProvider = myFile.getViewProvider();
-    final Set<Language> relevantLanguages = fileViewProvider.getRelevantLanguages();
+    final Set<Language> relevantLanguages = fileViewProvider.getPrimaryLanguages();
     for (Language language : relevantLanguages) {
       final PsiFile psiRoot = fileViewProvider.getPsi(language);
       if (HighlightUtil.shouldInspect(psiRoot)) {

@@ -32,6 +32,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.CompositeLanguageFileViewProvider");
   private final Map<Language, PsiFile> myRoots = new HashMap<Language, PsiFile>();
   private Set<Language> myRelevantLanguages;
+  private Set<Language> myPrimaryLanguages;
 
   public Set<Language> getRelevantLanguages() {
     if (myRelevantLanguages != null) return myRelevantLanguages;
@@ -287,6 +288,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     PsiElement ret = null;
     for (final Language language : getRelevantLanguages()) {
       if (!lang.isAssignableFrom(language.getClass())) continue;
+      if (lang.equals(Language.class) && !getPrimaryLanguages().contains(language)) continue;
 
       final PsiFile psiRoot = getPsi(language);
       final PsiElement psiElement;
@@ -308,7 +310,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   public PsiReference findReferenceAt(int offset) {
     TextRange minRange = new TextRange(0, getContents().length());
     PsiReference ret = null;
-    for (final Language language : getRelevantLanguages()) {
+    for (final Language language : getPrimaryLanguages()) {
       final PsiElement psiRoot = getPsi(language);
       final PsiReference reference = SharedPsiElementImplUtil.findReferenceAt(psiRoot, offset);
       if (reference == null) continue;

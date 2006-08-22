@@ -20,8 +20,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -357,7 +357,7 @@ public class PsiTreeUtil {
   public static <T extends PsiElement> T findElementOfClassAtRange (@NotNull PsiFile file, int startOffset, int endOffset, @NotNull Class<T> clazz) {
     final FileViewProvider viewProvider = file.getViewProvider();
     T result = null;
-    for (Language lang : viewProvider.getRelevantLanguages()) {
+    for (Language lang : viewProvider.getPrimaryLanguages()) {
       PsiElement elementAt = viewProvider.findElementAt(startOffset, lang);
       T run = getParentOfType(elementAt, clazz, false);
       T prev = run;

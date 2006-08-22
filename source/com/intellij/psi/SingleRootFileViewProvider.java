@@ -87,6 +87,10 @@ public class SingleRootFileViewProvider implements FileViewProvider {
     return Collections.singleton(getBaseLanguage());
   }
 
+  public Set<Language> getPrimaryLanguages() {
+    return getRelevantLanguages();
+  }
+
   public final PsiFile getPsi(Language target) {
     synchronized (PsiLock.LOCK) {
       if (!isPhysical()) {

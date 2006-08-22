@@ -305,7 +305,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   @NotNull
   public PsiFile[] getPsiRoots() {
-    final Set<Language> languages = getViewProvider().getRelevantLanguages();
+    final Set<Language> languages = getViewProvider().getPrimaryLanguages();
     final List<PsiFile> roots = new ArrayList<PsiFile>();
     for (Language language : languages) {
       roots.add(getViewProvider().getPsi(language));

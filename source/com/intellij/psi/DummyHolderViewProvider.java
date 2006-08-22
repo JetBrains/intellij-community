@@ -59,6 +59,10 @@ public class DummyHolderViewProvider implements FileViewProvider{
     return Collections.singleton(getBaseLanguage());
   }
 
+  public Set<Language> getPrimaryLanguages() {
+    return getRelevantLanguages();
+  }
+
   public PsiFile getPsi(Language target) {
     ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
     return target == getBaseLanguage() ? myHolder : null;

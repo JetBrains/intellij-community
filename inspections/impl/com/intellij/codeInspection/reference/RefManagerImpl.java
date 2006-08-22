@@ -255,7 +255,7 @@ public class RefManagerImpl extends RefManager {
         myContext.incrementJobDoneAmount(GlobalInspectionContextImpl.BUILD_GRAPH, virtualFile.getPresentableUrl());
       }
       final FileViewProvider viewProvider = file.getViewProvider();
-      final Set<Language> relevantLanguages = viewProvider.getRelevantLanguages();
+      final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
       for (Language language : relevantLanguages) {
         visitElement(viewProvider.getPsi(language));
       }
