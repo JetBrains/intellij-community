@@ -79,13 +79,7 @@ public class ComboBox extends JComboBox {
       new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
           final DialogWrapperDialog dialogWrapperDialog = getParentDialog(ComboBox.this);
-          if (dialogWrapperDialog == null) {
-            return;
-          }
-          final DialogWrapper dialogWrapper = dialogWrapperDialog.getDialogWrapper();
-          if (dialogWrapper == null) {
-            return;
-          }
+          final DialogWrapper dialogWrapper = dialogWrapperDialog == null ? null : dialogWrapperDialog.getDialogWrapper();
 
           if (isPopupVisible()) {
             setPopupVisible(false);
@@ -98,7 +92,7 @@ public class ComboBox extends JComboBox {
               // and do not close heavy weight dialog container (if any)
               ((CellEditor)clientProperty).cancelCellEditing();
             }
-            else{
+            else if (dialogWrapper != null) {
               dialogWrapper.doCancelAction();
             }
           }
