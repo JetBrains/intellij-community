@@ -43,10 +43,7 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
 
     final String text = method.getName();
     final PsiMethod[] methods = isStrictSignatureSearch ? new PsiMethod[]{method} : getOverloads(method);
-    if (methods.length < 2) {
-      return ReferencesSearch.search(method, searchScope, false).forEach(consumer);
-    }
-
+    
     SearchScope accessScope = methods[0].getUseScope();
     for (int i = 1; i < methods.length; i++) {
       PsiMethod method1 = methods[i];
