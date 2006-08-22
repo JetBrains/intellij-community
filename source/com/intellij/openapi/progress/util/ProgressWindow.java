@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -18,6 +19,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -302,7 +304,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
     private boolean myRepaintedFlag = true;
     private JPanel myFunPanel;
     private TitlePanel myTitlePanel;
-    private JDialog myPopup;
+    private DialogWrapper myPopup;
     private Window myParentWindow;
     private Point myLastClicked;
 
@@ -450,7 +452,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (myPopup != null) {
-            myPopup.dispose();
+            myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
             myPopup = null;
           }
         }
@@ -461,21 +463,28 @@ public class ProgressWindow extends BlockingProgressIndicator {
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
       if (myParentWindow == null) return;
       if (myPopup != null) {
-        myPopup.dispose();
+        myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
       }
 
-      if (myParentWindow instanceof Frame) {
-        myPopup = new JDialog((Frame)myParentWindow, true);
-      }
-      else {
-        myPopup = new JDialog((Dialog)myParentWindow, true);
-      }
+      myPopup = new DialogWrapper(myParentWindow, true) {
+        {
+          init();
+        }
 
-      myPopup.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-      myPopup.setContentPane(myPanel);
+        protected JComponent createCenterPanel() {
+          return myPanel;
+        }
+
+        protected JComponent createSouthPanel() {
+          return null;
+        }
+
+        protected Border createContentPaneBorder() {
+          return null;
+        }
+      };
+
       myPopup.setUndecorated(true);
-      myPopup.pack();
-      myPopup.setLocationRelativeTo(myParentWindow);
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
@@ -483,7 +492,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
         }
       });
 
-      myPopup.setVisible(true);
+      myPopup.show();
     }
 
     public void setTitle(final String title) {
