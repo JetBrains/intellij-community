@@ -259,6 +259,10 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
 
     public SearchScope getScope() {
       return new GlobalSearchScope() {
+        public String getDisplayName() {
+          return ModifiedFilesScopeDescriptor.this.getDisplay();
+        }
+
         public boolean contains(VirtualFile file) {
           return ChangeListManager.getInstance(myProject).getChange(file) != null;
         }
