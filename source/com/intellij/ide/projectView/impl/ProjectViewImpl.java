@@ -847,7 +847,24 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       for (int idx = 0; idx < elements.length; idx++) {
         final PsiElement element = elements[idx];
         if (element instanceof PsiDirectory) {
-          final VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
+          PsiDirectory directory = (PsiDirectory)element;
+          if (isHideEmptyMiddlePackages(viewPane.getId()) && directory.getChildren().length == 0 && directory.getPackage() != null) {
+            while (true) {
+              PsiDirectory parent = directory.getParentDirectory();
+              if (parent == null) break;
+              PsiPackage psiPackage = parent.getPackage();
+              if (psiPackage == null || psiPackage.getName() == null) break;
+              PsiElement[] children = parent.getChildren();
+              if (children.length == 0 || children.length == 1 && children[0] == directory) {
+                directory = parent;
+              }
+              else {
+                break;
+              }
+            }
+            elements[idx] = directory;
+          }
+          final VirtualFile virtualFile = directory.getVirtualFile();
           final String path = virtualFile.getPath();
           if (path.endsWith(JarFileSystem.JAR_SEPARATOR)) { // if is jar-file root
             final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(

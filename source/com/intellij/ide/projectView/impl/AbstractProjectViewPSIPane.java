@@ -293,15 +293,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
   }
 
-  //private AbstractTreeNode findAbstractTreeNodeByLocation(final Point point) {
-  //  final int row = myTree.getRowForLocation(point.x, point.y);
-  //  final TreePath treePath = myTree.getPathForRow(row);
-  //  if (treePath != null && treePath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
-  //    return (AbstractTreeNode)((DefaultMutableTreeNode)treePath.getLastPathComponent()).getUserObject();
-  //  }
-  //  return null;
-  //}
-
   private static class MyDragSourceListener implements DragSourceListener {
     public void dragEnter(DragSourceDragEvent dsde) {
       dsde.getDragSourceContext().setCursor(null);

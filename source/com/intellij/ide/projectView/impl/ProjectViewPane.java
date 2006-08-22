@@ -4,7 +4,6 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.SelectInManager;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.ProjectPaneSelectInTarget;
 import com.intellij.ide.projectView.ViewSettings;
@@ -27,7 +26,7 @@ public final class ProjectViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "ProjectPane";
   public static final Icon ICON = IconLoader.getIcon("/general/projectTab.png");
 
-  public ProjectViewPane(Project project, SelectInManager selectInManager) {
+  public ProjectViewPane(Project project) {
     super(project);
   }
 
@@ -73,6 +72,7 @@ public final class ProjectViewPane extends AbstractProjectViewPSIPane {
     };
   }
 
+  @NotNull
   public String getComponentName() {
     return "ProjectPane";
   }
