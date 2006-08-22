@@ -22,16 +22,17 @@ public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
   public boolean canSelect(PsiFile file) {
     final VirtualFile vFile = PsiUtil.getVirtualFile(file);
 
-    if (vFile == null || !vFile.isValid()) {
-      return false;
-    }
-
     return canSelect(vFile);
   }
 
   private boolean canSelect(final VirtualFile vFile) {
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    return fileIndex.isInSourceContent(vFile) || isInLibraryContentOnly(vFile);
+    if (vFile != null && vFile.isValid()) {
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      return fileIndex.isInSourceContent(vFile) || isInLibraryContentOnly(vFile);
+    }
+    else {
+      return false;
+    }
   }
 
   public boolean isSubIdSelectable(String subId, VirtualFile file) {

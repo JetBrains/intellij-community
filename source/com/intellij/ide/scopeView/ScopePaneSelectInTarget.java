@@ -32,7 +32,7 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
     allScopes = ArrayUtil.mergeArrays(allScopes, NamedScopeManager.getInstance(myProject).getScopes(), NamedScope.class);
     for (NamedScope scope : allScopes) {
       PackageSet packageSet = scope.getValue();
-      if (packageSet.contains(file, scopesHolder)) return true;
+      if (packageSet != null && packageSet.contains(file, scopesHolder)) return true;
     }
     return false;
   }
@@ -50,6 +50,7 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   }
 
   public boolean isSubIdSelectable(String subId, VirtualFile file) {
+    if (file == null) return false;
     NamedScopesHolder scopesHolder = NamedScopeManager.getInstance(myProject);
     NamedScope scope = scopesHolder.getScope(subId);
     if (scope == null){
@@ -58,7 +59,6 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
     if (scope == null) return false;
     PackageSet packageSet = scope.getValue();
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-    if (psiFile == null) return false;
-    return packageSet.contains(psiFile, scopesHolder);
+    return psiFile != null && packageSet != null && packageSet.contains(psiFile, scopesHolder);
   }
 }
