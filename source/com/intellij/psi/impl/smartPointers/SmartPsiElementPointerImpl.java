@@ -65,6 +65,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return element != null ? element.hashCode() : 0;
   }
 
+  @Nullable
   public E getElement() {
     if (myElement != null && !myElement.isValid()) {
       if (myElementInfo == null) {
@@ -208,7 +209,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       if (!mySyncMarkerIsValid) return null;
       if (!myFile.isValid()) return null;
 
-      PsiElement anchor = myFile.findElementAt(mySyncStartOffset);
+      PsiElement anchor = myFile.getViewProvider().findElementAt(mySyncStartOffset, myFile.getLanguage());
       if (anchor == null) return null;
 
       TextRange range = anchor.getTextRange();

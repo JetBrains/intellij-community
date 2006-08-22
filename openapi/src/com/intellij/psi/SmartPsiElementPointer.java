@@ -15,7 +15,10 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 
 public interface SmartPsiElementPointer<E extends PsiElement> {
+  @Nullable
   E getElement();
 }

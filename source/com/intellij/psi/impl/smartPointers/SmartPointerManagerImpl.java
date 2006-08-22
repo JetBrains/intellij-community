@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -51,6 +52,13 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
   }
 
   public void fastenBelts(PsiFile file) {
+    final Set<Language> languages = file.getViewProvider().getRelevantLanguages();
+    for (Language language : languages) {
+      fastenBeltsInSingleFile(file.getViewProvider().getPsi(language));
+    }
+  }
+
+  private void fastenBeltsInSingleFile(final PsiFile file) {
     synchronized (file) {
       file.putUserData(BELTS_ARE_FASTEN_KEY, Boolean.TRUE);
 
@@ -75,30 +83,42 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
   }
 
   public void unfastenBelts(PsiFile file) {
-    synchronized (file) {
-      file.putUserData(BELTS_ARE_FASTEN_KEY, null);
+    final Set<Language> languages = file.getViewProvider().getRelevantLanguages();
+    for (Language language : languages) {
+      final PsiFile f = file.getViewProvider().getPsi(language);
+      synchronized (f) {
+        f.putUserData(BELTS_ARE_FASTEN_KEY, null);
+      }
     }
   }
 
   public void synchronizePointers(PsiFile file) {
-    synchronized (file) {
-      ArrayList<WeakReference<SmartPointerEx>> pointers = file.getUserData(SMART_POINTERS_IN_PSI_FILE_KEY);
-      if (pointers == null) return;
-
-      int index = 0;
-      for (int i = 0; i < pointers.size(); i++) {
-        WeakReference<SmartPointerEx> reference = pointers.get(i);
-        SmartPointerEx pointer = reference.get();
-        if (pointer != null) {
-          pointer.documentAndPsiInSync();
-          pointers.set(index++, reference);
-        }
+    final Set<Language> languages = file.getViewProvider().getRelevantLanguages();
+    for (Language language : languages) {
+      final PsiFile f = file.getViewProvider().getPsi(language);
+      synchronized (f) {
+        _synchronizePointers(f);
       }
+    }
+  }
 
-      int size = pointers.size();
-      for (int i = size - 1; i >= index; i--) {
-        pointers.remove(i);
+  private void _synchronizePointers(final PsiFile file) {
+    ArrayList<WeakReference<SmartPointerEx>> pointers = file.getUserData(SMART_POINTERS_IN_PSI_FILE_KEY);
+    if (pointers == null) return;
+
+    int index = 0;
+    for (int i = 0; i < pointers.size(); i++) {
+      WeakReference<SmartPointerEx> reference = pointers.get(i);
+      SmartPointerEx pointer = reference.get();
+      if (pointer != null) {
+        pointer.documentAndPsiInSync();
+        pointers.set(index++, reference);
       }
+    }
+
+    int size = pointers.size();
+    for (int i = size - 1; i >= index; i--) {
+      pointers.remove(i);
     }
   }
 
