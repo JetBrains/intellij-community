@@ -134,7 +134,12 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
                             false, null,
                             method.getName(),
                             method.getReturnType(),
-                            myNewParametersInfo);
+                            myNewParametersInfo){
+        @NotNull
+        protected UsageInfo[] findUsages() {
+          return UsageInfo.EMPTY_ARRAY;
+        }
+      };
       processor.run();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
