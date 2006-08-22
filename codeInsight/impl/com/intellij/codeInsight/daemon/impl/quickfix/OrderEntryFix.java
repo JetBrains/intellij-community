@@ -53,7 +53,7 @@ public abstract class OrderEntryFix implements IntentionAction {
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile == null) continue;
       final Module classModule = fileIndex.getModuleForFile(virtualFile);
-      if (classModule != null && !ModuleRootManager.getInstance(currentModule).isDependsOn(classModule)) {
+      if (classModule != null && classModule != currentModule && !ModuleRootManager.getInstance(currentModule).isDependsOn(classModule)) {
         QuickFixAction.registerQuickFixAction(info, new OrderEntryFix(){
           @NotNull
           public String getText() {
