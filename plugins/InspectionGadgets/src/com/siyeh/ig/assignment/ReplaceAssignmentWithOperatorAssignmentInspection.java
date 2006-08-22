@@ -25,9 +25,9 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +38,9 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
 
     /** @noinspection PublicField*/
     public boolean ignoreLazyOperators = true;
+
+    /** @noinspection PublicField*/
+    public boolean ignoreObscureOperators = false;
 
     public String getID(){
         return "AssignmentReplaceableWithOperatorAssignment";
@@ -63,9 +66,15 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
 
     @Nullable
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+        final MultipleCheckboxOptionsPanel optionsPanel =
+                new MultipleCheckboxOptionsPanel(this);
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
                 "assignment.replaceable.with.operator.assignment.ignore.conditional.operators.option"),
-                this, "ignoreLazyOperators");
+                "ignoreLazyOperators");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "assignment.replaceable.with.operator.assignment.ignore.obscure.operators.option"),
+                "ignoreObscureOperators");
+        return optionsPanel;
     }
 
     static String calculateReplacementExpression(
@@ -118,11 +127,13 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
                     signText, Character.valueOf('='));
         }
 
+        @NotNull
         public String getName(){
             return m_name;
         }
 
-        public void doFix(Project project, ProblemDescriptor descriptor)
+        public void doFix(@NotNull Project project,
+                          ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiElement element = descriptor.getPsiElement();
             if(!(element instanceof PsiAssignmentExpression)){
@@ -157,14 +168,20 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
             if(!(binaryRhs.getROperand() != null)){
                 return;
             }
-            final PsiJavaToken operator = binaryRhs.getOperationSign();
-            final IElementType expressionTokenType = operator.getTokenType();
+            final IElementType expressionTokenType =
+                    binaryRhs.getOperationTokenType();
             if (expressionTokenType.equals(JavaTokenType.EQEQ)) {
                 return;
             }
             if (ignoreLazyOperators) {
                 if (expressionTokenType.equals(JavaTokenType.ANDAND) ||
                         expressionTokenType.equals(JavaTokenType.OROR)) {
+                    return;
+                }
+            }
+            if (ignoreObscureOperators) {
+                if (expressionTokenType.equals(JavaTokenType.XOR) ||
+                        expressionTokenType.equals(JavaTokenType.PERC)) {
                     return;
                 }
             }
