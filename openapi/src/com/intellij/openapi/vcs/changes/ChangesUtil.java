@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -94,20 +95,24 @@ public class ChangesUtil {
     AbstractVcs getVcsFor(T item);
   }
 
-  public static <T> void processItemsByVcs(Collection<T> items, VcsSeparator<T> separator, PerVcsProcessor<T> processor) {
-    Map<AbstractVcs, List<T>> changesByVcs = new HashMap<AbstractVcs, List<T>>();
+  public static <T> void processItemsByVcs(final Collection<T> items, final VcsSeparator<T> separator, PerVcsProcessor<T> processor) {
+    final Map<AbstractVcs, List<T>> changesByVcs = new HashMap<AbstractVcs, List<T>>();
 
-    for (T item : items) {
-      final AbstractVcs vcs = separator.getVcsFor(item);
-      if (vcs != null) {
-        List<T> vcsChanges = changesByVcs.get(vcs);
-        if (vcsChanges == null) {
-          vcsChanges = new ArrayList<T>();
-          changesByVcs.put(vcs, vcsChanges);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        for (T item : items) {
+          final AbstractVcs vcs = separator.getVcsFor(item);
+          if (vcs != null) {
+            List<T> vcsChanges = changesByVcs.get(vcs);
+            if (vcsChanges == null) {
+              vcsChanges = new ArrayList<T>();
+              changesByVcs.put(vcs, vcsChanges);
+            }
+            vcsChanges.add(item);
+          }
         }
-        vcsChanges.add(item);
       }
-    }
+    });
 
     for (Map.Entry<AbstractVcs, List<T>> entry : changesByVcs.entrySet()) {
       processor.process(entry.getKey(), entry.getValue());
