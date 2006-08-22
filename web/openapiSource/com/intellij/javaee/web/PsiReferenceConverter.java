@@ -9,16 +9,18 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Can be implemented by {@link com.intellij.util.xml.Converter} instance
+ *
  * @author Dmitry Avdeev
  */
 public interface PsiReferenceConverter {
 
   /**
    *
-   * @param psiElement
-   * @param soft
-   *  @return empty array if the converter cannot get any references
+   * @param psiElement underlying element for created references ({@link com.intellij.psi.PsiReference#getElement()})
+   * @param soft true if created references should be soft ({@link com.intellij.psi.PsiReference#isSoft()})
+   * @return empty array if the converter cannot get any references
    */
   @NotNull
-  PsiReference[] createReferences(PsiElement psiElement, final boolean soft);
+  PsiReference[] createReferences(@NotNull PsiElement psiElement, final boolean soft);
 }
