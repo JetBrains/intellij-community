@@ -19,16 +19,21 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 public class ThreadRunInspection extends ExpressionInspection {
+
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message("thread.run.display.name");
+    }
 
     public String getID() {
         return "CallToThreadRun";
@@ -49,12 +54,13 @@ public class ThreadRunInspection extends ExpressionInspection {
 
     private static class ThreadRunFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "thread.run.replace.quickfix");
         }
 
-        public void doFix(Project project, ProblemDescriptor descriptor)
+        public void doFix(@NotNull Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement methodNameIdentifier = descriptor.getPsiElement();
             final PsiReferenceExpression methodExpression =
@@ -83,11 +89,9 @@ public class ThreadRunInspection extends ExpressionInspection {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
-            @NonNls final String run = "run";
-            if (!run.equals(methodName)) {
+            if (!HardcodedMethodConstants.RUN.equals(methodName)) {
                 return;
             }
-
             final PsiMethod method = expression.resolveMethod();
             if (method == null) {
                 return;
@@ -104,7 +108,28 @@ public class ThreadRunInspection extends ExpressionInspection {
             if (!ClassUtils.isSubclass(methodClass, "java.lang.Thread")) {
                 return;
             }
+            if (isInsideThreadRun(expression)) {
+                return;
+            }
             registerMethodCallError(expression);
+        }
+
+        private static boolean isInsideThreadRun(
+                PsiElement element) {
+            final PsiMethod method =
+                    PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+            if (method == null) {
+                return false;
+            }
+            final String methodName = method.getName();
+            if (!HardcodedMethodConstants.RUN.equals(methodName)) {
+                return false;
+            }
+            final PsiClass methodClass = method.getContainingClass();
+            if (methodClass == null) {
+                return false;
+            }
+            return ClassUtils.isSubclass(methodClass, "java.lang.Thread");
         }
     }
 }

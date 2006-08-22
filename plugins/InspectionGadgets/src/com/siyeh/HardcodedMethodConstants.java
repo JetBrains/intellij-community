@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NonNls;
     public static final String PUTALL = "putAll";
     public static final String PRINT_STACK_TRACE = "printStackTrace";
     public static final String REMOVE = "remove";
+    public static final String RUN = "run";
     public static final String SERIAL_VERSION_UID = "serialVersionUID";
     public static final String SET = "set";
     public static final String SIZE = "size";

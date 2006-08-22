@@ -17,14 +17,19 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 public class ThreadWithDefaultRunMethodInspection extends ExpressionInspection {
+
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "thread.with.default.run.method.display.name");
+    }
 
     public String getID() {
         return "InstantiatingAThreadWithDefaultRunMethod";
@@ -81,8 +86,7 @@ public class ThreadWithDefaultRunMethodInspection extends ExpressionInspection {
                     }
                 }
                 registerError(baseClassReference);
-            }
-            else {
+            } else {
                 final PsiJavaCodeReferenceElement classReference =
                         expression.getClassReference();
                 if (classReference == null) {
@@ -118,13 +122,12 @@ public class ThreadWithDefaultRunMethodInspection extends ExpressionInspection {
             final PsiMethod[] methods = aClass.getMethods();
             for (final PsiMethod method : methods) {
                 final String methodName = method.getName();
-                @NonNls final String run = "run";
-                if (run.equals(methodName)) {
+                if (HardcodedMethodConstants.RUN.equals(methodName)) {
                     final PsiParameterList parameterList =
                             method.getParameterList();
                     final PsiParameter[] parameters =
                             parameterList.getParameters();
-                    if (parameters != null && parameters.length == 0) {
+                    if (parameters.length == 0) {
                         return true;
                     }
                 }
