@@ -86,14 +86,6 @@ public class ConditionalGotoInstruction extends BranchingInstruction {
     return myOffset;
   }
 
-  public boolean isTrueReachable() {
-    return myIsTrueReachable;
-  }
-
-  public boolean isFalseReachable() {
-    return myIsFalseReachable;
-  }
-
   public void setOffset(int offset) {
     myOffset = offset;
   }

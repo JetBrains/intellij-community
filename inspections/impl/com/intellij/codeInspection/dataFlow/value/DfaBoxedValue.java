@@ -47,16 +47,20 @@ public class DfaBoxedValue extends DfaValue {
 
     private final Map<PsiVariable, DfaUnboxedValue> cachedUnboxedValues = new THashMap<PsiVariable, DfaUnboxedValue>();
 
-    public DfaValue createUnboxed(DfaValue valueToWrap) {
-      if (valueToWrap instanceof DfaBoxedValue) {
-        return ((DfaBoxedValue)valueToWrap).getWrappedValue();
+    public DfaValue createUnboxed(DfaValue value) {
+      if (value instanceof DfaBoxedValue) {
+        return ((DfaBoxedValue)value).getWrappedValue();
+      }
+      if (value instanceof DfaConstValue) {
+        if (value == value.myFactory.getConstFactory().getNull()) return DfaUnknownValue.getInstance();
+        return value;
       }
       DfaValue result;
-      if (valueToWrap instanceof DfaVariableValue) {
-        PsiVariable var = ((DfaVariableValue)valueToWrap).getPsiVariable();
+      if (value instanceof DfaVariableValue) {
+        PsiVariable var = ((DfaVariableValue)value).getPsiVariable();
         result = cachedUnboxedValues.get(var);
         if (result == null) {
-          result = new DfaUnboxedValue((DfaVariableValue)valueToWrap, myFactory);
+          result = new DfaUnboxedValue((DfaVariableValue)value, myFactory);
           cachedUnboxedValues.put(var, (DfaUnboxedValue)result);
         }
       }

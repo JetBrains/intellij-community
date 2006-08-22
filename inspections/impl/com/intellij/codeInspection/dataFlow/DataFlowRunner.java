@@ -109,7 +109,7 @@ public class DataFlowRunner {
       long timeLimit = ourTimeLimit;
       final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
       final long before = System.currentTimeMillis();
-      while (queue.size() > 0) {
+      while (!queue.isEmpty()) {
         if (!unitTestMode && System.currentTimeMillis() - before > timeLimit) return false;
         ProgressManager.getInstance().checkCanceled();
 

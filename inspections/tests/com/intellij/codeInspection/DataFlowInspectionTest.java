@@ -122,4 +122,5 @@ public class DataFlowInspectionTest extends InspectionTestCase {
     runTool(testDir, "java 1.4", new LocalInspectionToolWrapper(new DataFlowInspection()));
     // should not crash
   }
+  public void testBoxingBoolean() throws Exception { doTest15();}
 }

@@ -13,8 +13,8 @@ import com.intellij.psi.PsiLiteralExpression;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class BranchingInstruction extends Instruction {
-  protected boolean myIsTrueReachable;
-  protected boolean myIsFalseReachable;
+  private boolean myIsTrueReachable;
+  private boolean myIsFalseReachable;
   private boolean isConstTrue;
   private PsiElement myExpression;
 
