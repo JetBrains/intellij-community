@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -176,6 +177,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
       }
     }
 
+    model.addElement(new ModifiedFilesScopeDescriptor());
+
     UsageView selectedUsageView = UsageViewManager.getInstance(getProject()).getSelectedUsageView();
 
     if (selectedUsageView != null && !selectedUsageView.isSearchInProgress()) {
@@ -240,6 +243,37 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     }
 
     model.addElement(new ClassHierarchyScopeDescriptor());
+  }
+
+  class ModifiedFilesScopeDescriptor extends ScopeDescriptor {
+
+    public ModifiedFilesScopeDescriptor() {
+      super(null);
+    }
+
+    public String getDisplay() {
+      return IdeBundle.message("scope.modified.files");
+    }
+
+    public SearchScope getScope() {
+      return new GlobalSearchScope() {
+        public boolean contains(VirtualFile file) {
+          return ChangeListManager.getInstance(myProject).getChange(file) != null;
+        }
+
+        public int compare(VirtualFile file1, VirtualFile file2) {
+          return 0;
+        }
+
+        public boolean isSearchInModuleContent(Module aModule) {
+          return true;
+        }
+
+        public boolean isSearchInLibraries() {
+          return false;
+        }
+      };
+    }
   }
 
   class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
