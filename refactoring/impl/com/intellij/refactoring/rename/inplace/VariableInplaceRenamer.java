@@ -5,6 +5,7 @@ package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
@@ -228,8 +229,7 @@ public class VariableInplaceRenamer {
       }
       myLookupItems = new LookupItem[names.size()];
       for (int i = 0; i < myLookupItems.length; i++) {
-        String suggestedName = names.get(i);
-        myLookupItems[i] = new LookupItem(suggestedName, suggestedName);
+        myLookupItems[i] = LookupItemUtil.objectToLookupItem(names.get(i));
       }
     }
 
