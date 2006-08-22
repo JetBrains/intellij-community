@@ -257,7 +257,6 @@ public class RefactoringUtil {
   public static void processTextOccurences(PsiElement element, String stringToSearch, GlobalSearchScope searchScope,
                                            final Processor<UsageInfo> processor, final UsageInfoFactory factory) {
     PsiSearchHelper helper = element.getManager().getSearchHelper();
-    final SearchScope finalScope = searchScope.intersectWith(element.getUseScope());
 
     helper.processUsagesInNonJavaFiles(element, stringToSearch,
                                        new PsiNonJavaFileReferenceProcessor() {
@@ -269,7 +268,7 @@ public class RefactoringUtil {
                                            return true;
                                          }
                                        },
-                                       finalScope);
+                                       searchScope);
   }
 
   private static void processStringOrComment(PsiElement element, String stringToSearch, List<UsageInfo> results,

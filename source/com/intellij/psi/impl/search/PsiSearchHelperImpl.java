@@ -573,7 +573,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public void processUsagesInNonJavaFiles(@Nullable PsiElement originalElement,
                                           String qName,
                                           PsiNonJavaFileReferenceProcessor processor,
-                                          SearchScope searchScope) {
+                                          GlobalSearchScope searchScope) {
     ProgressManager progressManager = ProgressManager.getInstance();
     ProgressIndicator progress = progressManager.getProgressIndicator();
 
@@ -581,13 +581,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     int dollarIndex = qName.lastIndexOf('$');
     int maxIndex = Math.max(dotIndex, dollarIndex);
     String wordToSearch = maxIndex >= 0 ? qName.substring(maxIndex + 1) : qName;
-    PsiFile[] files;
-    if (searchScope instanceof GlobalSearchScope) {
-      files = myManager.getCacheManager().getFilesWithWord(wordToSearch, UsageSearchContext.IN_PLAIN_TEXT, (GlobalSearchScope)searchScope, true);
-    }
-    else {
-      files = getFiles((LocalSearchScope)searchScope);
-    }
+    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(wordToSearch, UsageSearchContext.IN_PLAIN_TEXT, searchScope, true);
 
     StringSearcher searcher = new StringSearcher(qName);
     searcher.setCaseSensitive(true);
@@ -607,7 +601,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       for (int index = LowLevelSearchUtil.searchWord(text, 0, text.length, searcher); index >= 0;) {
         PsiReference referenceAt = psiFile.findReferenceAt(index);
         if (referenceAt == null ||
-            originalElement != null && !PsiSearchScopeUtil.isInScope(searchScope, psiFile)) {
+            originalElement != null && !PsiSearchScopeUtil.isInScope(getUseScope(originalElement).intersectWith(searchScope), psiFile)) {
           if (!processor.process(psiFile, index, index + searcher.getPattern().length())) break AllFilesLoop;
         }
 
@@ -622,16 +616,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (progress != null) {
       progress.popState();
     }
-  }
-
-  private PsiFile[] getFiles(final LocalSearchScope searchScope) {
-    Set<PsiFile> result = new HashSet<PsiFile>();
-    final PsiElement[] elements = searchScope.getScope();
-    for (final PsiElement element : elements) {
-      result.add(element.getContainingFile());
-    }
-
-    return result.toArray(new PsiFile[result.size()]);
   }
 
   public PsiFile[] findFormsBoundToClass(String className) {
