@@ -81,7 +81,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
         boolean hasFocus = IJSwingUtilities.hasFocus2(oldComponent);
         myTabbedPaneWrapper.setComponentAt(index, content.getComponent());
         if (hasFocus) {
-          (content.getComponent()).requestDefaultFocus();
+          content.getComponent().requestDefaultFocus();
         }
       }
     }
@@ -154,8 +154,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
 
     public void actionPerformed(AnActionEvent e) {
       Content[] contents = myManager.getContents();
-      for (int i = 0; i < contents.length; i++) {
-        Content content = contents[i];
+      for (Content content : contents) {
         if (myContent != content) {
           myManager.removeContent(content);
         }
@@ -174,7 +173,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
   /**
    * Pins tab that corresponds to the content
    */
-  private class MyPinTabAction extends ToggleAction {
+  private static class MyPinTabAction extends ToggleAction {
     private Content myContent;
 
     public MyPinTabAction(Content content) {
@@ -247,7 +246,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
       public MyTabbedPane(int tabPlacement) {
         super(tabPlacement);
         addMouseListener(new MyPopupHandler());
-        enableEvents(MouseEvent.MOUSE_EVENT_MASK);
+        enableEvents(AWTEvent.MOUSE_EVENT_MASK);
       }
 
       private void closeTabAt(int x, int y) {
@@ -396,7 +395,10 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
     }
 
     public void selectionChanged(ContentManagerEvent event) {
-      myTabbedPaneWrapper.setSelectedIndex(event.getIndex());
+      int index = event.getIndex();
+      if (index != -1) {
+        myTabbedPaneWrapper.setSelectedIndex(index);
+      }
     }
   }
 }
