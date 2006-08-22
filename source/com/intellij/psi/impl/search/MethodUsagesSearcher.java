@@ -13,9 +13,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author max
  */
@@ -45,7 +42,10 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
     }
 
     final String text = method.getName();
-    final PsiMethod[] methods = isStrictSignatureSearch ? new PsiMethod[]{method} : getOverloadsMayBeOverriden(method);
+    final PsiMethod[] methods = isStrictSignatureSearch ? new PsiMethod[]{method} : getOverloads(method);
+    if (methods.length < 2) {
+      return ReferencesSearch.search(method, searchScope, false).forEach(consumer);
+    }
 
     SearchScope accessScope = methods[0].getUseScope();
     for (int i = 1; i < methods.length; i++) {
@@ -128,22 +128,9 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
     return true;
   }
 
-  private static PsiMethod[] getOverloadsMayBeOverriden(PsiMethod method) {
+  private static PsiMethod[] getOverloads(PsiMethod method) {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return new PsiMethod[]{method};
-    PsiMethod[] methods = aClass.findMethodsByName(method.getName(), false);
-    List<PsiMethod> result = new ArrayList<PsiMethod>();
-    for (PsiMethod psiMethod : methods) {
-      PsiModifierList modList = psiMethod.getModifierList();
-      if (!modList.hasModifierProperty(PsiModifier.STATIC) &&
-          !modList.hasModifierProperty(PsiModifier.FINAL)) {
-        result.add(psiMethod);
-      }
-    }
-
-    //Should not happen
-    if (result.size() == 0) return new PsiMethod[]{method};
-
-    return result.toArray(new PsiMethod[result.size()]);
+    return aClass.findMethodsByName(method.getName(), false);
   }
 }
