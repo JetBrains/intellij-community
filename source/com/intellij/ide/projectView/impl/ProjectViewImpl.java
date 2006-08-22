@@ -422,11 +422,13 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       }
 
       public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-        viewSelectionChanged();
+        if (!viewSelectionChanged()) {
+          ToolWindowManager.getInstance(myProject).activateEditorComponent();
+        }
       }
 
       public void popupMenuCanceled(PopupMenuEvent e) {
-
+        ToolWindowManager.getInstance(myProject).activateEditorComponent();
       }
     });
     installLabelFocusListener();
@@ -462,14 +464,14 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myLabel.removeFocusListener(myLabelFocusListener);
   }
 
-  private void viewSelectionChanged() {
+  private boolean viewSelectionChanged() {
     Pair<String,String> ids = (Pair<String,String>)myCombo.getSelectedItem();
-    if (ids == null) return;
+    if (ids == null) return false;
     final String id = ids.first;
     String subId = ids.second;
-    if (ids.equals(Pair.create(myCurrentViewId, myCurrentViewSubId))) return;
+    if (ids.equals(Pair.create(myCurrentViewId, myCurrentViewSubId))) return false;
     final AbstractProjectViewPane newPane = getProjectViewPaneById(id);
-    if (newPane == null) return;
+    if (newPane == null) return false;
     newPane.setSubId(subId);
     String[] subIds = newPane.getSubIds();
 
@@ -485,6 +487,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     else {
       showPane(newPane);
     }
+    return true;
   }
 
   private void createToolbarActions() {
