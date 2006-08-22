@@ -177,7 +177,9 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
       }
     }
 
-    model.addElement(new ModifiedFilesScopeDescriptor());
+    if (ChangeListManager.getInstance(myProject).getAffectedFiles().size() > 0) {
+      model.addElement(new ModifiedFilesScopeDescriptor());
+    }
 
     UsageView selectedUsageView = UsageViewManager.getInstance(getProject()).getSelectedUsageView();
 
