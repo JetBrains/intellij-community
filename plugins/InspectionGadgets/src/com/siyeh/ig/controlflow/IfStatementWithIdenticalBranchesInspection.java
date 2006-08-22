@@ -28,6 +28,7 @@ import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class IfStatementWithIdenticalBranchesInspection
         extends StatementInspection{
@@ -59,7 +60,8 @@ public class IfStatementWithIdenticalBranchesInspection
                     "if.statement.with.identical.branches.collapse.quickfix");
         }
 
-        public void doFix(Project project, ProblemDescriptor descriptor)
+        public void doFix(@NotNull Project project,
+                          ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiElement identifier = descriptor.getPsiElement();
             final PsiIfStatement statement =
@@ -119,9 +121,7 @@ public class IfStatementWithIdenticalBranchesInspection
                     thenBranch)) {
                 return;
             }
-            PsiStatement nextStatement =
-                    PsiTreeUtil.getNextSiblingOfType(ifStatement,
-                            PsiStatement.class);
+            PsiStatement nextStatement = getNextStatement(ifStatement);
             if (thenBranch instanceof PsiBlockStatement) {
                 final PsiBlockStatement blockStatement =
                         (PsiBlockStatement) thenBranch;
@@ -144,15 +144,36 @@ public class IfStatementWithIdenticalBranchesInspection
                             statement, nextStatement)) {
                         return;
                     }
-                    nextStatement =
-                            PsiTreeUtil.getNextSiblingOfType(nextStatement,
-                                    PsiStatement.class);
+                    nextStatement = getNextStatement(nextStatement);
                 }
             } else if (!EquivalenceChecker.statementsAreEquivalent(
                     thenBranch, nextStatement)) {
                 return;
             }
             registerStatementError(ifStatement);
+        }
+
+        @Nullable
+        private static PsiStatement getNextStatement(PsiStatement statement) {
+            PsiStatement nextStatement =
+                    PsiTreeUtil.getNextSiblingOfType(statement,
+                            PsiStatement.class);
+            while (nextStatement == null) {
+                //noinspection AssignmentToMethodParameter
+                statement = PsiTreeUtil.getParentOfType(statement, 
+                        PsiStatement.class);
+                if (statement == null) {
+                    return null;
+                }
+                if (statement instanceof PsiLoopStatement) {
+                    // return in a loop statement is not the same as continuing
+                    // looping.
+                    return statement;
+                }
+                nextStatement = PsiTreeUtil.getNextSiblingOfType(statement,
+                        PsiStatement.class);
+            }
+            return nextStatement;
         }
     }
 }
