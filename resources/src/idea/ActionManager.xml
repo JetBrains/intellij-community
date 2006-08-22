@@ -127,7 +127,6 @@
     <group id="JavaeeEditorGenerateGroup">
       <action id="GenerateEJBReference" class="com.intellij.codeInsight.generation.actions.GenerateEJBReference"/>
       <action id="GenerateResourceReference" class="com.intellij.codeInsight.generation.actions.GenerateResourceReference"/>
-      <action id="GeneratePersistenceContextReference" class="com.intellij.codeInsight.generation.actions.GeneratePersistenceContextReference"/>
       <action id="GenerateInterceptorMethods" class="com.intellij.codeInsight.generation.actions.GenerateInterceptorMethods"/>
       <action id="GenerateEntityListenerMethods" class="com.intellij.codeInsight.generation.actions.GenerateEntityListenerMethods"/>
 
@@ -149,12 +148,12 @@
 
       <action id="CreateSessionBean" class="com.intellij.javaee.module.view.ejb.actions.CreateSessionBeanAction"
               icon="/javaee/sessionBean.png"/>
-      <action id="CreateMessageBean" class="com.intellij.javaee.module.view.ejb.actions.CreateMessageBeanAction"
-              icon="/javaee/messageBean.png"/>
-      <action id="CreateBeanManagedEntityBeanAction" class="com.intellij.javaee.module.view.ejb.actions.CreateBMPEntityBeanAction"
-              icon="/javaee/entityBean.png"/>
       <action id="CreateContainerManagedEntityBeanAction" class="com.intellij.javaee.module.view.ejb.actions.CreateCMPEntityBeanAction"
               icon="/javaee/entityBean.png"/>
+      <action id="CreateBeanManagedEntityBeanAction" class="com.intellij.javaee.module.view.ejb.actions.CreateBMPEntityBeanAction"
+              icon="/javaee/entityBean.png"/>
+      <action id="CreateMessageBean" class="com.intellij.javaee.module.view.ejb.actions.CreateMessageBeanAction"
+              icon="/javaee/messageBean.png"/>
       <action id="CreateTransferObject" class="com.intellij.javaee.module.view.ejb.actions.CreateTransferObjectAction"
               icon="/nodes/class.png"/>
       <action id="CreateCMPField" class="com.intellij.javaee.module.view.ejb.actions.CreateCmpFieldAction" icon="/nodes/ejbCmpField.png"/>
@@ -237,7 +236,6 @@
       <separator/>
       <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup" test="Version Control">
         <action id="Vcs.FileView" class="com.intellij.openapi.vcs.actions.FileViewAction"/>
-        <action id="Vcs.ChangesView" class="com.intellij.openapi.vcs.changes.ShowChangesViewAction"/>
         <reference ref="CheckinProject"/>
         <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction">
           <keyboard-shortcut first-keystroke="control T" keymap="$default"/>
@@ -797,7 +795,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <action id="MoveToChangeList" class="com.intellij.openapi.vcs.changes.MoveChangesToAnotherListAction"/>
       <separator/>
       <reference ref="FoldingGroup"/>
       <separator/>
@@ -861,7 +858,6 @@
       <reference ref="UnsplitAll"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="AddAllToFavorites"/>
       <separator/>
@@ -893,7 +889,6 @@
       <reference ref="ValidateXml"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
@@ -942,7 +937,6 @@
       <reference ref="ValidateXml"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
@@ -1066,7 +1060,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
@@ -1096,7 +1089,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
       <separator/>
@@ -1125,7 +1117,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
@@ -1149,7 +1140,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
@@ -1182,7 +1172,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="ValidateXml"/>
       <separator/>
@@ -1370,7 +1359,6 @@
       <!--todo: include/exclude-->
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <reference ref="FindUsages"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
@@ -1422,7 +1410,6 @@
       <reference ref="VersionControlsGroup"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
     </group>
 
