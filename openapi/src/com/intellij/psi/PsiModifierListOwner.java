@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a PSI element which has a list of modifiers (public/private/protected/etc.)
@@ -28,6 +29,7 @@ public interface PsiModifierListOwner extends PsiElement {
    * @return the list of modifiers, or null if the element (for example, an anonymous
    * inner class) does not have the list of modifiers.
    */
+  @Nullable
   PsiModifierList getModifierList();
 
   /**
