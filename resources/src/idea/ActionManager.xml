@@ -618,6 +618,7 @@
           <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
           <separator/>
           <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
+          <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.diagnostic.DumpInspectionDescriptionsAction"/>
         </group>
       </group>
 

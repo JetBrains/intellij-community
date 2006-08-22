@@ -29,7 +29,7 @@ import java.net.URL;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class DumpInspectionDescriptionsAction extends AnAction {
   public DumpInspectionDescriptionsAction() {
-    super ("Drop an error");
+    super ("Dump inspection descriptions");
   }
 
   public void actionPerformed(AnActionEvent e) {
