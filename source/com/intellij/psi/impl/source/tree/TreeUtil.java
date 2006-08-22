@@ -283,6 +283,7 @@ public class TreeUtil {
     if (parent != null){
       for(TreeElement element = start; element != null; element = element.getTreeNext()){
         element.setTreeParent(null);
+        element.onInvalidated();
       }
     }
 
@@ -390,6 +391,7 @@ public class TreeUtil {
     element.setTreeNext(null);
     element.setTreePrev(null);
     element.setTreeParent(null);
+    element.onInvalidated();
   }
 
   @Nullable

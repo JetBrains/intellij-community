@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
@@ -205,5 +206,13 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   }
 
   public abstract void acceptTree(TreeElementVisitor visitor);
+
+  public void onInvalidated() {
+    final Boolean trackInvalidation = getUserData(DebugUtil.TRACK_INVALIDATION);
+    if (trackInvalidation != null && trackInvalidation) {
+      //noinspection HardCodedStringLiteral
+      new Throwable("Element invalidated").printStackTrace();
+    }
+  }
 }
 

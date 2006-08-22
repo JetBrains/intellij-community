@@ -3,6 +3,7 @@ package com.intellij.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -23,6 +24,7 @@ public class DebugUtil {
 
   public static /*final*/ boolean CHECK = false;
   public static final boolean CHECK_INSIDE_ATOMIC_ACTION_ENABLED = true;
+  public static final Key<Boolean> TRACK_INVALIDATION = new Key<Boolean>("TRACK_INVALIDATION");
 
   public static String psiTreeToString(PsiElement element, boolean skipWhitespaces) {
     return treeToString(SourceTreeToPsiMap.psiElementToTree(element), skipWhitespaces);
@@ -314,5 +316,11 @@ public class DebugUtil {
     public ASTNode getElement() {
       return myElement;
     }
+  }
+
+  public static void trackInvalidation(PsiElement element) {
+    if (element == null) return;
+    element.putUserData(TRACK_INVALIDATION, Boolean.TRUE);
+    trackInvalidation(element.getParent());
   }
 }
