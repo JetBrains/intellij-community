@@ -196,10 +196,10 @@ public class HighlightMethodUtil {
                                                             List<? extends MethodSignatureBackedByPsiMethod> superMethodSignatures,
                                                             boolean includeRealPositionInfo, PsiClass analyzedClass) {
     PsiMethod method = methodSignature.getMethod();
-    PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(method.getContainingClass(), analyzedClass, PsiSubstitutor.EMPTY);
-    PsiClassType[] exceptions = method.getThrowsList().getReferencedTypes();
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
+    PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(aClass, analyzedClass, PsiSubstitutor.EMPTY);
+    PsiClassType[] exceptions = method.getThrowsList().getReferencedTypes();
     PsiJavaCodeReferenceElement[] referenceElements;
     List<PsiElement> exceptionContexts;
     if (includeRealPositionInfo) {
