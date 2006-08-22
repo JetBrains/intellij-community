@@ -36,7 +36,7 @@ abstract class Mover {
   public final void move(Editor editor, final PsiFile file) {
     beforeMove(editor);
     final Document document = editor.getDocument();
-    final int start = document.getLineStartOffset(toMove.startLine);
+    final int start = getLineStartSafeOffset(document, toMove.startLine);
     final int end = getLineStartSafeOffset(document, toMove.endLine);
     range1 = document.createRangeMarker(start, end);
 
