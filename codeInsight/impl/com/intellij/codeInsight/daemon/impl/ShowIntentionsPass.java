@@ -330,7 +330,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     int offset1 = ref.getTextOffset();
     int offset2 = ref.getTextRange().getEndOffset();
-    QuestionAction action = new AddImportAction(manager.getProject(), ref, classes, editor);
+    QuestionAction action = new AddImportAction(manager.getProject(), ref, editor, classes);
 
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(manager.getProject());
 

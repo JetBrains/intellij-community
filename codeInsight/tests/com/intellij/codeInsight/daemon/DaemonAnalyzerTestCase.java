@@ -152,41 +152,25 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   protected Collection<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    List<HighlightInfo> result = new ArrayList<HighlightInfo>();
 
     Document document = myEditor.getDocument();
     GeneralHighlightingPass action1 = new GeneralHighlightingPass(myProject, myFile, document, 0, myFile.getTextLength(), false, true);
     action1.doCollectInformation(new MockProgressIndicator());
-    Collection<HighlightInfo> highlights1 = action1.getHighlights();
+    result.addAll(action1.getHighlights());
 
     PostHighlightingPass action2 = new PostHighlightingPass(myProject, myFile, myEditor, 0, myFile.getTextLength(), false);
     action2.doCollectInformation(new MockProgressIndicator());
-    Collection<HighlightInfo> highlights2 = action2.getHighlights();
+    result.addAll(action2.getHighlights());
 
-    Collection<HighlightInfo> highlights3 = null;
-
-    if (myAvailableTools.size() > 0) {
+    if (!myAvailableTools.isEmpty()) {
       LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(myProject, myFile, myEditor.getDocument(), 0, myFile.getTextLength());
       inspectionsPass.doCollectInformation(new MockProgressIndicator());
-      highlights3 = inspectionsPass.getHighlights();
-    }
-
-    ArrayList<HighlightInfo> list = new ArrayList<HighlightInfo>();
-    for (HighlightInfo info : highlights1) {
-      list.add(info);
-    }
-
-    for (HighlightInfo info : highlights2) {
-      list.add(info);
-    }
-
-    if (highlights3 != null) {
-      for (HighlightInfo info : highlights3) {
-        list.add(info);
-      }
+      result.addAll(inspectionsPass.getHighlights());
     }
 
     boolean isToLaunchExternal = true;
-    for (HighlightInfo info : list) {
+    for (HighlightInfo info : result) {
       if (info.getSeverity() == HighlightSeverity.ERROR) {
         isToLaunchExternal = false;
         break;
@@ -196,15 +180,10 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     if (isToLaunchExternal && doExternalValidation()) {
       ExternalToolPass action3 = new ExternalToolPass(myFile, myEditor, 0, myEditor.getDocument().getTextLength());
       action3.doCollectInformation(new MockProgressIndicator());
-
-      highlights3 = action3.getHighlights();
-      for (HighlightInfo info : highlights3) {
-        list.add(info);
-      }
+      result.addAll(action3.getHighlights());
     }
 
-
-    return list;
+    return result;
   }
 
   protected boolean doExternalValidation() {

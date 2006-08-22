@@ -514,7 +514,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   private void dispatchPendingEvents() {
-    if (PendingEventDispatcher.isDispatchingAnyEvent()){ // optimization
+    if (myInitialized && PendingEventDispatcher.isDispatchingAnyEvent()){ // optimization
       VirtualFileManager.getInstance().dispatchPendingEvent(myVirtualFileListener);
       ProjectRootManager.getInstance(myProject).dispatchPendingEvent(myRootListener);
       //TODO: other listners!!!

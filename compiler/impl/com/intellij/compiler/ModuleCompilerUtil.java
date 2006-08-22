@@ -146,11 +146,11 @@ public final class ModuleCompilerUtil {
     final TIntArrayList sccs = builder.getSCCs();
 
     final List<Chunk<Node>> chunks = new ArrayList<Chunk<Node>>(sccs.size());
-    final Map<Node, Chunk<Node>> nodeToChunkMap = new HashMap<Node, Chunk<Node>>();
+    final Map<Node, Chunk<Node>> nodeToChunkMap = new LinkedHashMap<Node, Chunk<Node>>();
     sccs.forEach(new TIntProcedure() {
       int myTNumber = 0;
       public boolean execute(int size) {
-        final Set<Node> chunkNodes = new HashSet<Node>();
+        final Set<Node> chunkNodes = new LinkedHashSet<Node>();
         final Chunk<Node> chunk = new Chunk<Node>(chunkNodes);
         chunks.add(chunk);
         for (int j = 0; j < size; j++) {
@@ -171,7 +171,7 @@ public final class ModuleCompilerUtil {
 
       public Iterator<Chunk<Node>> getIn(Chunk<Node> chunk) {
         final Set<Node> chunkNodes = chunk.getNodes();
-        final Set<Chunk<Node>> ins = new HashSet<Chunk<Node>>();
+        final Set<Chunk<Node>> ins = new LinkedHashSet<Chunk<Node>>();
         for (final Node node : chunkNodes) {
           for (Iterator<Node> nodeIns = graph.getIn(node); nodeIns.hasNext();) {
             final Node in = nodeIns.next();

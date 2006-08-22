@@ -4,7 +4,7 @@
  */
 package com.intellij.compiler;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -15,7 +15,7 @@ public class Chunk<Node> {
   private final Set<Node> myNodes;
 
   public Chunk(Node node) {
-    this(new HashSet<Node>());
+    this(new LinkedHashSet<Node>());
     myNodes.add(node);
   }
   

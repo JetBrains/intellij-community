@@ -91,7 +91,7 @@ public class ImportClassAction implements IntentionAction {
         if (classes.length == 0) return;
         CodeInsightUtil.sortIdenticalShortNameClasses(classes);
 
-        AddImportAction action = new AddImportAction(project, myRef, classes, editor);
+        AddImportAction action = new AddImportAction(project, myRef, editor, classes);
         action.execute();
       }
     });

@@ -31,7 +31,7 @@ public class AddImportAction implements QuestionAction {
   private PsiClass[] myTargetClasses;
   private Editor myEditor;
 
-  public AddImportAction(Project project, PsiJavaCodeReferenceElement ref, PsiClass[] targetClasses, Editor editor) {
+  public AddImportAction(Project project, PsiJavaCodeReferenceElement ref, Editor editor, PsiClass... targetClasses) {
     myProject = project;
     myReference = ref;
     myTargetClasses = targetClasses;
@@ -132,9 +132,11 @@ public class AddImportAction implements QuestionAction {
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-        if (daemonCodeAnalyzer != null) {
-          daemonCodeAnalyzer.updateVisibleHighlighters(myEditor);
+        if (myProject.isOpen()) {
+          DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
+          if (daemonCodeAnalyzer != null) {
+            daemonCodeAnalyzer.updateVisibleHighlighters(myEditor);
+          }
         }
       }
     });

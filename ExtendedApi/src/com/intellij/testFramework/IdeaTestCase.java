@@ -128,7 +128,7 @@ import java.util.HashSet;
     return myModule;
   }
 
-  protected void setUpProject() throws IOException {
+  protected void setUpProject() throws Exception {
     myProjectManager = ProjectManagerEx.getInstanceEx();
     LOG.assertTrue(myProjectManager != null, "Cannot instaitiate ProjectManager component");
 

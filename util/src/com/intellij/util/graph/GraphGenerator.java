@@ -15,10 +15,7 @@
  */
 package com.intellij.util.graph;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  *  @author dsl
@@ -31,11 +28,11 @@ public class GraphGenerator<Node> implements Graph <Node>{
     Iterator<Node> getIn(Node n);
   }
 
-  private final com.intellij.util.containers.HashMap<Node, Set<Node>> myOuts;
+  private final Map<Node, Set<Node>> myOuts;
 
   public GraphGenerator(SemiGraph<Node> graph) {
     myGraph = graph;
-    myOuts = new com.intellij.util.containers.HashMap<Node, Set<Node>>();
+    myOuts = new LinkedHashMap<Node, Set<Node>>();
     buildOuts();
   }
 
@@ -45,13 +42,11 @@ public class GraphGenerator<Node> implements Graph <Node>{
 
   private void buildOuts() {
     Collection<Node> nodes = myGraph.getNodes();
-    for (Iterator<Node> iterator = nodes.iterator(); iterator.hasNext();) {
-      Node node = iterator.next();
-      myOuts.put(node, new HashSet<Node>());
+    for (Node node : nodes) {
+      myOuts.put(node, new LinkedHashSet<Node>());
     }
 
-    for (Iterator<Node> iterator = nodes.iterator(); iterator.hasNext();) {
-      Node node = iterator.next();
+    for (Node node : nodes) {
       Iterator<Node> inIt = myGraph.getIn(node);
       while (inIt.hasNext()) {
         Node inNode = inIt.next();

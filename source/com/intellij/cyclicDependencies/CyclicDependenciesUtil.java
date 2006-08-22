@@ -20,7 +20,7 @@ public class CyclicDependenciesUtil{
     sccs.forEach(new TIntProcedure() {
       int myTNumber = 0;
       public boolean execute(int size) {
-        Set<Node> packs = new HashSet<Node>();
+        Set<Node> packs = new LinkedHashSet<Node>();
         for (int j = 0; j < size; j++) {
           packs.add(dfstBuilder.getNodeByTNumber(myTNumber + j));
         }

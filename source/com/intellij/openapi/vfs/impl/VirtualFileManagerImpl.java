@@ -62,6 +62,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
   }
 
+  @NotNull
   public String getComponentName() {
     return "VirtualFileManager";
   }
@@ -96,7 +97,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     }
     else {
       final ProgressIndicator progressIndicator = myProgressManager.getProgressIndicator();
-      modalityState = (progressIndicator != null)? progressIndicator.getModalityState() : ModalityState.NON_MMODAL;
+      modalityState = progressIndicator != null ? progressIndicator.getModalityState() : ModalityState.NON_MMODAL;
     }
 
     beforeRefreshStart(asynchronous, modalityState, postAction);
@@ -115,7 +116,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     }
   }
 
-  public VirtualFile findFileByUrl(String url) {
+  public VirtualFile findFileByUrl(@NotNull String url) {
     String protocol = extractProtocol(url);
     if (protocol == null) return null;
     VirtualFileSystem fileSystem = myProtocolToSystemMap.get(protocol);
@@ -123,7 +124,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     return fileSystem.findFileByPath(extractPath(url));
   }
 
-  public VirtualFile refreshAndFindFileByUrl(String url) {
+  public VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
     String protocol = extractProtocol(url);
     if (protocol == null) return null;
     VirtualFileSystem fileSystem = myProtocolToSystemMap.get(protocol);
@@ -132,7 +133,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     return fileSystem.refreshAndFindFileByPath(path);
   }
 
-  public void addVirtualFileListener(VirtualFileListener listener) {
+  public void addVirtualFileListener(@NotNull VirtualFileListener listener) {
     myVirtualFileListenerMulticaster.addListener(listener);
   }
 
@@ -140,23 +141,23 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     myVirtualFileListenerMulticaster.addListener(listener, parentDisposable);
   }
 
-  public void removeVirtualFileListener(VirtualFileListener listener) {
+  public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
     myVirtualFileListenerMulticaster.removeListener(listener);
   }
 
-  public void dispatchPendingEvent(VirtualFileListener listener) {
+  public void dispatchPendingEvent(@NotNull VirtualFileListener listener) {
     myVirtualFileListenerMulticaster.dispatchPendingEvent(listener);
   }
 
-  public void addModificationAttemptListener(ModificationAttemptListener listener) {
+  public void addModificationAttemptListener(@NotNull ModificationAttemptListener listener) {
     myModificationAttemptListenerMulticaster.addListener(listener);
   }
 
-  public void removeModificationAttemptListener(ModificationAttemptListener listener) {
+  public void removeModificationAttemptListener(@NotNull ModificationAttemptListener listener) {
     myModificationAttemptListenerMulticaster.removeListener(listener);
   }
 
-  public void fireReadOnlyModificationAttempt(VirtualFile... files) {
+  public void fireReadOnlyModificationAttempt(@NotNull VirtualFile... files) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final ModificationAttemptEvent event = new ModificationAttemptEvent(this, files);

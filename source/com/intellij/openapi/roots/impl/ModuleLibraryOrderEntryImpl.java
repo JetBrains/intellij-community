@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -96,11 +97,14 @@ class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
     final String name = myLibrary.getName();
     if (name != null) {
       return name;
-    } else {
+    }
+    else {
       final String[] urls = myLibrary.getUrls(OrderRootType.CLASSES);
       if (urls.length > 0) {
-        return urls[0];
-      } else {
+        String url = urls[0];
+        return PathUtil.toPresentableUrl(url);
+      }
+      else {
         return null;
       }
     }

@@ -1,5 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.compiler.Chunk;
+import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.ide.util.projectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.javaee.J2EEModuleUtil;
@@ -21,6 +23,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfig
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.GraphGenerator;
 import org.jetbrains.annotations.Nullable;
@@ -355,5 +358,62 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         return;
       }
     }
+  }
+
+  /**
+   * @return pair of modules which become circular after adding dependency, or null if all remains OK
+   */
+  public static Pair<Module, Module> addingDependencyFormsCircularity(final Module currentModule, Module toDependOn) {
+    // whatsa lotsa of @&#^%$ codes-a!
+
+    final Map<Module, ModifiableRootModel> models = new LinkedHashMap<Module, ModifiableRootModel>();
+    Project project = currentModule.getProject();
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+      models.put(module, model);
+    }
+    ModifiableRootModel currentModel = models.get(currentModule);
+    ModifiableRootModel toDependOnModel = models.get(toDependOn);
+    Collection<Chunk<ModifiableRootModel>> nodesBefore = buildChunks(models);
+    for (Chunk<ModifiableRootModel> chunk : nodesBefore) {
+      if (chunk.containsNode(toDependOnModel) && chunk.containsNode(currentModel)) return null; // they circular already
+    }
+
+    try {
+      currentModel.addModuleOrderEntry(toDependOn);
+      Collection<Chunk<ModifiableRootModel>> nodesAfter = buildChunks(models);
+      for (Chunk<ModifiableRootModel> chunk : nodesAfter) {
+        if (chunk.containsNode(toDependOnModel) && chunk.containsNode(currentModel)) {
+          Iterator<ModifiableRootModel> nodes = chunk.getNodes().iterator();
+          return Pair.create(nodes.next().getModule(), nodes.next().getModule());
+        }
+      }
+    }
+    finally {
+      for (ModifiableRootModel model : models.values()) {
+        model.dispose();
+      }
+    }
+    return null;
+  }
+
+  private static Collection<Chunk<ModifiableRootModel>> buildChunks(final Map<Module, ModifiableRootModel> models) {
+    GraphGenerator<ModifiableRootModel> generator =
+      GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<ModifiableRootModel>() {
+        public Collection<ModifiableRootModel> getNodes() {
+          return models.values();
+        }
+
+        public Iterator<ModifiableRootModel> getIn(final ModifiableRootModel model) {
+          final Module[] modules = model.getModuleDependencies();
+          final List<ModifiableRootModel> dependencies = new ArrayList<ModifiableRootModel>();
+          for (Module module : modules) {
+            dependencies.add(models.get(module));
+          }
+          return dependencies.iterator();
+        }
+      }));
+
+    return ModuleCompilerUtil.toChunkGraph(generator).getNodes();
   }
 }

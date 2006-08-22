@@ -95,7 +95,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       if (!shouldBeAvailableAfterExecution()) {
         final IntentionAction afterAction = findActionWithText(text);
         if (afterAction != null) {
-          fail("Action '" + text + "' is still available after it's invocation in test " + testFullPath);
+          fail("Action '" + text + "' is still available after its invocation in test " + testFullPath);
         }
       }
       final String expectedFilePath = getBasePath() + "/after" + testName;
@@ -153,11 +153,11 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
             IntentionAction action = pair.first.getAction();
             TextRange range = pair.second;
             if (range.getStartOffset() <= offset && offset <= range.getEndOffset() &&
-                action.isAvailable(getProject(), editor, file)) {
+                action.isAvailable(editor.getProject(), editor, file)) {
               availableActions.add(action);
               if (pair.first.getOptions() != null) {
                 for (IntentionAction intentionAction : pair.first.getOptions()) {
-                  if (intentionAction.isAvailable(getProject(), editor, file)) {
+                  if (intentionAction.isAvailable(editor.getProject(), editor, file)) {
                     availableActions.add(intentionAction);
                   }
                 }

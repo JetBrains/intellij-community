@@ -1903,6 +1903,7 @@ public class HighlightUtil {
         HighlightInfo info = HighlightInfo.createHighlightInfo(type, refName, description);
         QuickFixAction.registerQuickFixAction(info, new ImportClassAction(ref));
         QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace());
+        OrderEntryFix.registerFixes(info, ref);
         if (ref instanceof PsiReferenceExpression) {
           TextRange fixRange = HighlightMethodUtil.getFixRange(ref);
           PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;

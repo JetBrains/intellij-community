@@ -16,10 +16,10 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationListener;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationAdapter;
@@ -28,7 +28,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -42,10 +41,10 @@ import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -61,7 +60,10 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
@@ -90,7 +92,7 @@ import java.util.*;
 /**
  * This class also controls the auto-reparse and auto-hints.
  */
-public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMExternalizable, ProjectComponent {
+public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl");
 
   private static final Key<HighlightInfo[]> HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY = Key.create("DaemonCodeAnalyzerImpl.HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY");
@@ -332,31 +334,37 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   private void dispose() {
     if (myDisposed) return;
-    EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-    eventMulticaster.removeDocumentListener(myDocumentListener);
-    eventMulticaster.removeCaretListener(myCaretListener);
-    eventMulticaster.removeEditorMouseMotionListener(myEditorMouseMotionListener);
-    eventMulticaster.removeEditorMouseListener(myEditorMouseListener);
+    if (myInitialized) {
+      EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
+      eventMulticaster.removeDocumentListener(myDocumentListener);
+      eventMulticaster.removeCaretListener(myCaretListener);
+      eventMulticaster.removeEditorMouseMotionListener(myEditorMouseMotionListener);
+      eventMulticaster.removeEditorMouseListener(myEditorMouseListener);
 
-    EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
-    CommandProcessor.getInstance().removeCommandListener(myCommandListener);
-    ApplicationManager.getApplication().removeApplicationListener(myApplicationListener);
-    EditorColorsManager.getInstance().removeEditorColorsListener(myEditorColorsListener);
-    InspectionProfileManager.getInstance().removeProfileChangeListener(myProfileChangeListener);
-    TodoConfiguration.getInstance().removePropertyChangeListener(myTodoListener);
-    ActionManagerEx.getInstanceEx().removeAnActionListener(myAnActionListener);
-    ExternalResourceManagerEx.getInstanceEx().removeExternalResourceListener(myExternalResourceListener);
-    VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
+      EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
+      CommandProcessor.getInstance().removeCommandListener(myCommandListener);
+      ApplicationManager.getApplication().removeApplicationListener(myApplicationListener);
+      EditorColorsManager.getInstance().removeEditorColorsListener(myEditorColorsListener);
+      InspectionProfileManager.getInstance().removeProfileChangeListener(myProfileChangeListener);
+      TodoConfiguration.getInstance().removePropertyChangeListener(myTodoListener);
+      ActionManagerEx.getInstanceEx().removeAnActionListener(myAnActionListener);
+      ExternalResourceManagerEx.getInstanceEx().removeExternalResourceListener(myExternalResourceListener);
+      VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
 
+      if (myProject.hasComponent(AntConfiguration.class)) {
+        AntConfiguration.getInstance(myProject).removeAntConfigurationListener(myAntConfigurationListener);
+      }
 
-    if (myProject.hasComponent(AntConfiguration.class)) {
-      AntConfiguration.getInstance(myProject).removeAntConfigurationListener(myAntConfigurationListener);
+      myStatusBarUpdater.dispose();
+      myEditorTracker.dispose();
+
+      ((EditorEventMulticasterEx)eventMulticaster).removeErrorStripeListener(myErrorStripeHandler);
+      IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).getFrame(myProject);
+      if (frame != null) {
+        frame.removeWindowFocusListener(myIdeFrameFocusListener);
+      }
     }
 
-    if (myStatusBarUpdater != null) myStatusBarUpdater.dispose();
-    if (myEditorTracker != null) myEditorTracker.dispose();
-
-    ((EditorEventMulticasterEx)eventMulticaster).removeErrorStripeListener(myErrorStripeHandler);
     // clear dangling references to PsiFiles/Documents. SCR#10358
     myFileStatusMap.markAllFilesDirty();
 
@@ -365,11 +373,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     stopProcess(false);
     myUpdateThreadSemaphore.waitFor();
     myLastSettings = null;
-
-    IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).getFrame(myProject);
-    if (frame != null) {
-      frame.removeWindowFocusListener(myIdeFrameFocusListener);
-    }
   }
 
   public void settingsChanged() {

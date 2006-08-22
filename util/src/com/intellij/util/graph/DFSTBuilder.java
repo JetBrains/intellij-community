@@ -16,12 +16,9 @@
 package com.intellij.util.graph;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import gnu.trove.TIntArrayList;
 
 import java.util.*;
-
-import gnu.trove.TIntArrayList;
 
 /**
  *  @author dsl, ven
@@ -41,7 +38,7 @@ public class DFSTBuilder<Node> {
 
   public DFSTBuilder(Graph<Node> graph) {
     myGraph = graph;
-    myNodeToNNumber = new HashMap<Node, Integer>(myGraph.getNodes().size());
+    myNodeToNNumber = new LinkedHashMap<Node, Integer>(myGraph.getNodes().size());
     myInvN = (Node[])new Object[myGraph.getNodes().size()];
   }
 
@@ -49,7 +46,7 @@ public class DFSTBuilder<Node> {
     if (myNBuilt) return;
     Collection<Node> nodes = myGraph.getNodes();
     int indexN = nodes.size();
-    HashSet<Node> processed = new HashSet<Node>();
+    Set<Node> processed = new LinkedHashSet<Node>();
     for (Node node : nodes) {
       if (!myGraph.getIn(node).hasNext()) {
         indexN = traverseSubGraph(node, indexN, processed);
@@ -115,7 +112,7 @@ public class DFSTBuilder<Node> {
   private Set<Node> region (Node v) {
     LinkedList<Node> frontier = new LinkedList<Node>();
     frontier.addFirst(v);
-    Set<Node> result = new HashSet<Node>();
+    Set<Node> result = new LinkedHashSet<Node>();
     int number = myNodeToNNumber.get(v).intValue();
     while (!frontier.isEmpty()) {
       Node curr = frontier.removeFirst();
@@ -139,7 +136,7 @@ public class DFSTBuilder<Node> {
     int currT = 0;
     int size = myGraph.getNodes().size();
 
-    myNodeToTNumber = new HashMap<Node, Integer>(size);
+    myNodeToTNumber = new LinkedHashMap<Node, Integer>(size);
 
     for (int i = 0; i < size; i++) {
       Node v = myInvN[i];
