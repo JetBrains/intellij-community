@@ -227,7 +227,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private boolean inProcessedState(Component focusOwner, final KeyEvent e, boolean isModalContext, DataContext dataContext) {
     // ignore typed events which come after processed pressed event
-    if (KeyEvent.KEY_TYPED==e.getID() && myPressedWasProcessed) {
+    if (KeyEvent.KEY_TYPED == e.getID() && myPressedWasProcessed) {
+      return true;
+    }
+    if (KeyEvent.KEY_RELEASED == e.getID() && KeyEvent.VK_ALT == e.getKeyCode() && myPressedWasProcessed) {
+      //see IDEADEV-8615
       return true;
     }
     myState = STATE_INIT;
