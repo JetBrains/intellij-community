@@ -28,7 +28,7 @@ import java.util.HashMap;
  */
 public class InspectionProfileConvertor {
   private HashMap<String, HighlightDisplayLevel> myDisplayLevelMap = new HashMap<String, HighlightDisplayLevel>();
-  public static final @NonNls String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHightlightingSettings";
+  public static final @NonNls String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHighlightingSettings";
   public static final @NonNls String OLD_DEFAUL_PROFILE = "OldDefaultProfile";
 
   private String myAdditionalJavadocTags;
