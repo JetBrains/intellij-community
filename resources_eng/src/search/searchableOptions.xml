@@ -2068,9 +2068,9 @@
     <option name="highlight" hit="Highlight usages of the symbol at caret in active editor" />
     <option name="symbol" hit="Highlight usages of the symbol at caret in active editor" />
     <option name="usages" hit="Highlight usages of the symbol at caret in active editor" />
-    <option name="bounds" hit="Hightlight Tag Bounds" />
-    <option name="hightlight" hit="Hightlight Tag Bounds" />
-    <option name="tag" hit="Hightlight Tag Bounds" />
+    <option name="bounds" hit="Highlight Tag Bounds" />
+    <option name="hightlight" hit="Highlight Tag Bounds" />
+    <option name="tag" hit="Highlight Tag Bounds" />
     <option name="home" hit="Home" />
     <option name="ignore" hit="Ignore" />
     <option name="implement" hit="Implement Method" />
