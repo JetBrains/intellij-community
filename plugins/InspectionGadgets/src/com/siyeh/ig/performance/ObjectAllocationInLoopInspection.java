@@ -16,8 +16,7 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiNewExpression;
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -64,18 +63,64 @@ public class ObjectAllocationInLoopInspection extends ExpressionInspection {
                     parentStatement)) {
                 return;
             }
+            if (isAllocatedOnlyOnce(expression)) {
+                return;
+            }
             registerError(expression);
         }
-    }
 
-    void foo() {
-        outer:
-        for (int i = 0; i < 10; i++) {
-            for (int j = 0; j < 10; j++) {
-                if (j == 3) {
-                    new Object();
-                    break outer;
+        private static boolean isAllocatedOnlyOnce(
+                PsiNewExpression expression) {
+            final PsiElement parent = expression.getParent();
+            if (!(parent instanceof PsiAssignmentExpression)) {
+
+                return false;
+            }
+            final PsiAssignmentExpression assignmentExpression =
+                    (PsiAssignmentExpression) parent;
+            final PsiExpression lExpression =
+                    assignmentExpression.getLExpression();
+            if (!(lExpression instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            final PsiElement assignmentParent =
+                    assignmentExpression.getParent();
+            if (!(assignmentParent instanceof PsiIfStatement)) {
+                return false;
+            }
+            final PsiIfStatement ifStatement =
+                    (PsiIfStatement) assignmentParent;
+            final PsiExpression condition = ifStatement.getCondition();
+            if (!(condition instanceof PsiBinaryExpression)) {
+                return false;
+            }
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression) condition;
+            if (binaryExpression.getOperationTokenType() != JavaTokenType.NE) {
+                return false;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) lExpression;
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            final PsiExpression rhs = binaryExpression.getROperand();
+            if (lhs instanceof PsiLiteralExpression) {
+                if (!"null".equals(lhs.getText())) {
+                    return false;
                 }
+                if (!(rhs instanceof PsiReferenceExpression)) {
+                    return false;
+                }
+                return referenceExpression.getText().equals(rhs.getText());
+            } else if (rhs instanceof PsiLiteralExpression) {
+                if (!"null" .equals(rhs.getText())) {
+                    return false;
+                }
+                if (!(lhs instanceof PsiReferenceExpression)) {
+                    return false;
+                }
+                return referenceExpression.getText().equals(lhs.getText());
+            } else {
+                return false;
             }
         }
     }
