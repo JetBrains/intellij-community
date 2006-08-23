@@ -1569,41 +1569,6 @@
     <!-- ***** yFiles actions end*************************************** -->
 
 
-    <action id="Faces.Navigation.Graph.OpenInEditorAction" class="com.intellij.jsf.graph.actions.OpenInEditorAction"
-            text="_Jump to source" use-shortcut-of="EditSource" keymap="$default">
-    </action>
-
-    <action id="Faces.Navigation.Graph.HideSelectionAction" class="com.intellij.jsf.graph.actions.HideSelectionAction"
-            text="Hide Selection" use-shortcut-of="CollapseAll">
-    </action>
-    <action id="Faces.Navigation.Graph.ShowHiddenCellsAction" class="com.intellij.jsf.graph.actions.ShowHiddenCellsAction"
-            text="Show Hidden" use-shortcut-of="ExpandAll">
-    </action>
-    <action id="Faces.Navigation.Graph.ShowNeibours" class="com.intellij.jsf.graph.actions.ShowNeiboursAction"
-            text="Show Neibours">
-    </action>
-    <action id="Faces.Navigation.Graph.HideNeibours" class="com.intellij.jsf.graph.actions.HideAllNeiboursAction"
-            text="Hide Neibour's HighLighting">
-    </action>
-    <action id="Faces.Navigation.Graph.ShowOutEdges" class="com.intellij.jsf.graph.actions.ShowOutEdgesAction"
-            text="Show Outgoing Edges">
-    </action>
-    <action id="Faces.Navigation.Graph.ShowInEdges" class="com.intellij.jsf.graph.actions.ShowIncomingEdgesAction"
-            text="Show Incoming Edges">
-    </action>
-
-    <action id="Faces.Navigation.Graph.Layout.OrganicLayout" class="com.intellij.jsf.graph.layout.actions.OrganicLayoutAction"
-            text="Organic Layout">
-    </action>
-    <action id="Faces.Navigation.Graph.Layout.SugiyamaLayout" class="com.intellij.jsf.graph.layout.actions.SugiyamaLayoutAction"
-            text="Sugiyama Layout">
-    </action>
-    <action id="Faces.Navigation.Graph.Layout.RadialTreeLayout" class="com.intellij.jsf.graph.layout.actions.RadialTreeLayoutAction"
-            text="Radial Tree Layout">
-    </action>
-    <action id="Faces.Navigation.Graph.Layout.CircleLayout" class="com.intellij.jsf.graph.layout.actions.CircleLayout"
-            text="Circle Layout">
-    </action>
 
     <action id="Faces.Navigation.Graph.PageTree.GotoSourceAction" class="com.intellij.jsf.yfilesGraph.actions.GotoSourceAction"
             text="_Jump to source">
