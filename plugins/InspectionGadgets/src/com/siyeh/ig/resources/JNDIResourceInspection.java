@@ -63,23 +63,23 @@ public class JNDIResourceInspection extends ExpressionInspection{
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            if(!isJNDIFactoryMethod(expression)) {
+            if(!isJNDIFactoryMethod(expression)){
                 return;
             }
             final PsiElement parent = expression.getParent();
-            if(!(parent instanceof PsiAssignmentExpression)) {
+            if(!(parent instanceof PsiAssignmentExpression)){
                 registerError(expression, expression);
                 return;
             }
             final PsiAssignmentExpression assignment =
                     (PsiAssignmentExpression) parent;
             final PsiExpression lhs = assignment.getLExpression();
-            if(!(lhs instanceof PsiReferenceExpression)) {
+            if(!(lhs instanceof PsiReferenceExpression)){
                 return;
             }
             final PsiElement referent =
                     ((PsiReference) lhs).resolve();
-            if(referent == null || !(referent instanceof PsiVariable)) {
+            if(referent == null || !(referent instanceof PsiVariable)){
                 return;
             }
             final PsiVariable boundVariable = (PsiVariable) referent;
@@ -89,13 +89,13 @@ public class JNDIResourceInspection extends ExpressionInspection{
                 final PsiTryStatement tryStatement =
                         PsiTreeUtil.getParentOfType(currentContext,
                                 PsiTryStatement.class);
-                if(tryStatement == null) {
+                if(tryStatement == null){
                     registerError(expression, expression);
                     return;
                 }
                 if(resourceIsOpenedInTryAndClosedInFinally(tryStatement,
                         expression,
-                        boundVariable)) {
+                        boundVariable)){
                     return;
                 }
                 currentContext = tryStatement;
@@ -106,6 +106,9 @@ public class JNDIResourceInspection extends ExpressionInspection{
         public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
             if(!isJNDIResource(expression)){
+                return;
+            }
+            if(expression.getType() == null){
                 return;
             }
             final PsiElement parent = expression.getParent();
@@ -179,14 +182,12 @@ public class JNDIResourceInspection extends ExpressionInspection{
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
-            if(!(LIST.equals(methodName) || LIST_BINDING.equals(methodName)))
-            {
+            if(!(LIST.equals(methodName) || LIST_BINDING.equals(methodName))){
                 return false;
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if(qualifier == null)
-            {
+            if(qualifier == null){
                 return false;
             }
             return TypeUtils.expressionHasTypeOrSubtype("javax.naming.Context",
@@ -195,6 +196,7 @@ public class JNDIResourceInspection extends ExpressionInspection{
     }
 
     private static class CloseVisitor extends PsiRecursiveElementVisitor{
+
         private boolean containsClose = false;
         private PsiVariable socketToClose;
 
@@ -218,7 +220,7 @@ public class JNDIResourceInspection extends ExpressionInspection{
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
-            if(!HardcodedMethodConstants.CLOSE.equals(methodName)) {
+            if(!HardcodedMethodConstants.CLOSE.equals(methodName)){
                 return;
             }
             final PsiExpression qualifier =
@@ -228,8 +230,7 @@ public class JNDIResourceInspection extends ExpressionInspection{
             }
             final PsiElement referent =
                     ((PsiReference) qualifier).resolve();
-            if(referent == null)
-            {
+            if(referent == null){
                 return;
             }
             if(referent.equals(socketToClose)){
