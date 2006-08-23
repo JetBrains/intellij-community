@@ -15,10 +15,7 @@
  */
 package com.siyeh.ipp.initialization;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiField;
+import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,16 +24,21 @@ class SplitDeclarationAndInitializationPredicate
         implements PsiElementPredicate{
 
     public boolean satisfiedBy(@NotNull PsiElement element){
-        if(!(element instanceof PsiField)){
+        final PsiElement parent = element.getParent();
+        if (!(parent instanceof PsiField)) {
             return false;
         }
-        final PsiField field = (PsiField) element;
-        final PsiClass aClass = field.getContainingClass();
-        if (aClass == null || aClass.isInterface()){
+        if (element instanceof PsiComment &&
+                element == parent.getFirstChild()) {
             return false;
         }
+        final PsiField field = (PsiField)parent;
         final PsiExpression initializer = field.getInitializer();
         if (initializer == null) {
+            return false;
+        }
+        final PsiClass containingClass = field.getContainingClass();
+        if (containingClass == null || containingClass.isInterface()) {
             return false;
         }
         return !ErrorUtil.containsError(field);

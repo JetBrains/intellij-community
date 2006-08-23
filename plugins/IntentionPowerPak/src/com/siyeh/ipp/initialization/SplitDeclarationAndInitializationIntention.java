@@ -29,9 +29,9 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
         return new SplitDeclarationAndInitializationPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        final PsiField field = (PsiField)element;
+        final PsiField field = (PsiField)element.getParent();
         field.normalizeDeclaration();
         final PsiExpression initializer = field.getInitializer();
         if (initializer == null) {
