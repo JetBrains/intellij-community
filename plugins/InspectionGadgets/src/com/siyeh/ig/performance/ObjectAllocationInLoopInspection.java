@@ -73,7 +73,6 @@ public class ObjectAllocationInLoopInspection extends ExpressionInspection {
                 PsiNewExpression expression) {
             final PsiElement parent = expression.getParent();
             if (!(parent instanceof PsiAssignmentExpression)) {
-
                 return false;
             }
             final PsiAssignmentExpression assignmentExpression =
@@ -83,20 +82,20 @@ public class ObjectAllocationInLoopInspection extends ExpressionInspection {
             if (!(lExpression instanceof PsiReferenceExpression)) {
                 return false;
             }
-            final PsiElement assignmentParent =
-                    assignmentExpression.getParent();
-            if (!(assignmentParent instanceof PsiIfStatement)) {
+            final PsiIfStatement ifStatement =
+                    PsiTreeUtil.getParentOfType(assignmentExpression,
+                            PsiIfStatement.class);
+            if (ifStatement == null) {
                 return false;
             }
-            final PsiIfStatement ifStatement =
-                    (PsiIfStatement) assignmentParent;
             final PsiExpression condition = ifStatement.getCondition();
             if (!(condition instanceof PsiBinaryExpression)) {
                 return false;
             }
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) condition;
-            if (binaryExpression.getOperationTokenType() != JavaTokenType.NE) {
+            if (binaryExpression.getOperationTokenType() !=
+                    JavaTokenType.EQEQ) {
                 return false;
             }
             final PsiReferenceExpression referenceExpression =
@@ -112,7 +111,7 @@ public class ObjectAllocationInLoopInspection extends ExpressionInspection {
                 }
                 return referenceExpression.getText().equals(rhs.getText());
             } else if (rhs instanceof PsiLiteralExpression) {
-                if (!"null" .equals(rhs.getText())) {
+                if (!"null".equals(rhs.getText())) {
                     return false;
                 }
                 if (!(lhs instanceof PsiReferenceExpression)) {
