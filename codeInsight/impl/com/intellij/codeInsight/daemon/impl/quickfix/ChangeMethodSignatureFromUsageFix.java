@@ -17,7 +17,6 @@ import com.intellij.find.findUsages.FindUsagesUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -43,19 +42,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CastMethodParametersFix");
-
   private final PsiMethod myTargetMethod;
   private final PsiExpression[] myExpressions;
   private final PsiSubstitutor mySubstitutor;
   private final PsiElement myContext;
   private ParameterInfo[] myNewParametersInfo;
 
-  ChangeMethodSignatureFromUsageFix(PsiMethod targetMethod, PsiExpression[] expressions, PsiSubstitutor substitutor, PsiElement context) {
+  ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod, @NotNull PsiExpression[] expressions, @NotNull PsiSubstitutor substitutor, @NotNull PsiElement context) {
     myTargetMethod = targetMethod;
     myExpressions = expressions;
     mySubstitutor = substitutor;
-    myContext = context; LOG.assertTrue(targetMethod != null);
+    myContext = context;
   }
 
   @NotNull
@@ -260,25 +257,26 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     }
   }
 
-  public static void registerIntentions(JavaResolveResult[] candidates,
-                                        PsiExpressionList list,
-                                        HighlightInfo highlightInfo, TextRange fixRange) {
-    if (candidates == null || candidates.length == 0) return;
+  public static void registerIntentions(@NotNull JavaResolveResult[] candidates,
+                                        @NotNull PsiExpressionList list,
+                                        @NotNull HighlightInfo highlightInfo,
+                                        TextRange fixRange) {
+    if (candidates.length == 0) return;
     PsiExpression[] expressions = list.getExpressions();
     for (JavaResolveResult candidate : candidates) {
       registerIntention(expressions, highlightInfo, fixRange, candidate, list);
     }
   }
 
-  private static void registerIntention(PsiExpression[] expressions,
-                                        HighlightInfo highlightInfo,
+  private static void registerIntention(@NotNull PsiExpression[] expressions,
+                                        @NotNull HighlightInfo highlightInfo,
                                         TextRange fixRange,
-                                        JavaResolveResult candidate,
-                                        PsiElement context) {
+                                        @NotNull JavaResolveResult candidate,
+                                        @NotNull PsiElement context) {
     if (!candidate.isStaticsScopeCorrect()) return;
     PsiMethod method = (PsiMethod)candidate.getElement();
     PsiSubstitutor substitutor = candidate.getSubstitutor();
-    if (method.getManager().isInProject(method)) {
+    if (method != null && context.getManager().isInProject(method)) {
       ChangeMethodSignatureFromUsageFix fix = new ChangeMethodSignatureFromUsageFix(method, expressions, substitutor, context);
       QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, fix, null, null);
     }

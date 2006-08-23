@@ -293,7 +293,7 @@ public final class PsiUtil {
            && expr.equals(((PsiAssignmentExpression) parent).getLExpression());
   }
 
-  public static boolean isAccessibleFromPackage(PsiModifierListOwner element, PsiPackage aPackage) {
+  public static boolean isAccessibleFromPackage(@NotNull PsiModifierListOwner element, @NotNull PsiPackage aPackage) {
     if (element.hasModifierProperty(PsiModifier.PUBLIC)) return true;
     if (element.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     return element.getManager().isInPackage(element, aPackage);
