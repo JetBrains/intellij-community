@@ -1,11 +1,11 @@
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.formatting.WrapType;
-import com.intellij.formatting.FormattingDocumentModel;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -39,7 +39,7 @@ public abstract class XmlFormattingPolicy {
   }
 
   private Block createBlockFor(final Pair<PsiElement,Language> root) {
-    final FormattingModelBuilder builder = root.getSecond().getFormattingModelBuilder();
+    final FormattingModelBuilder builder = root.getSecond().getEffectiveFormattingModelBuilder(root.getFirst());
     if (builder != null) {
       final Block result = builder.createModel(root.getFirst(), getSettings()).getRootBlock();
       if (result instanceof XmlBlock) {

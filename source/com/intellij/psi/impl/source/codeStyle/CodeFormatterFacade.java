@@ -5,6 +5,7 @@ import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -64,8 +65,8 @@ public class CodeFormatterFacade implements Constants {
   }
 
   public ASTNode process(ASTNode element, int parent_indent) {
-    final FormattingModelBuilder builder = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile().getLanguage()
-      .getFormattingModelBuilder();
+    final PsiFile file = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
+    final FormattingModelBuilder builder = file.getLanguage().getEffectiveFormattingModelBuilder(file);
     if (builder != null) {
       TextRange range = element.getTextRange();
       return processRange(element, range.getStartOffset(), range.getEndOffset());
@@ -87,8 +88,10 @@ public class CodeFormatterFacade implements Constants {
 
 
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-    final FormattingModelBuilder builder = file.getViewProvider().getBaseLanguage().getFormattingModelBuilder();
-    final FormattingModelBuilder elementBuilder = psi.getLanguage().getFormattingModelBuilder();
+    final Language baseLanguage = file.getViewProvider().getBaseLanguage();
+    final FormattingModelBuilder builder = baseLanguage.getEffectiveFormattingModelBuilder(file.getViewProvider().getPsi(baseLanguage));
+
+    final FormattingModelBuilder elementBuilder = psi.getLanguage().getEffectiveFormattingModelBuilder(psi);
 
     if (builder != null && elementBuilder != null) {
       ASTNode firstNonSpaceLeaf = TreeUtil.findFirstLeaf(node);
@@ -125,8 +128,8 @@ public class CodeFormatterFacade implements Constants {
     final FileType fileType = myHelper.getFileType();
 
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(element);
-    final FormattingModelBuilder builder = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile().getLanguage()
-      .getFormattingModelBuilder();
+    final PsiFile file = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
+    final FormattingModelBuilder builder = file.getLanguage().getEffectiveFormattingModelBuilder(file);
 
     if (builder != null) {
       TextRange range = formatComments(element, startOffset, endOffset);
@@ -159,7 +162,7 @@ public class CodeFormatterFacade implements Constants {
   private void processText(final PsiFile file, final int startOffset, final int endOffset, boolean headWhitespace) {
     final FileType fileType = myHelper.getFileType();
 
-    final FormattingModelBuilder builder = file.getLanguage().getFormattingModelBuilder();
+    final FormattingModelBuilder builder = file.getLanguage().getEffectiveFormattingModelBuilder(file);
 
     if (builder != null) {
       if (file.getTextLength() > 0) {
@@ -186,7 +189,7 @@ public class CodeFormatterFacade implements Constants {
   public void processTextWithoutHeadWhitespace(final PsiFile file, final int startOffset, final int endOffset) {
     final FileType fileType = myHelper.getFileType();
 
-    final FormattingModelBuilder builder = file.getLanguage().getFormattingModelBuilder();
+    final FormattingModelBuilder builder = file.getLanguage().getEffectiveFormattingModelBuilder(file);
 
     if (builder != null) {
       if (file.getTextLength() > 0) {

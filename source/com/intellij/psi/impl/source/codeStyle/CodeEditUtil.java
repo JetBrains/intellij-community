@@ -342,8 +342,9 @@ public class CodeEditUtil {
     return lexer.getTokenType() == null;
   }
 
-  public static String getStringWhiteSpaceBetweenTokens(ASTNode first, ASTNode second, Language language) {
-    final FormattingModelBuilder modelBuilder = language.getFormattingModelBuilder();
+  public static String getStringWhiteSpaceBetweenTokens(ASTNode first, ASTNode second, PsiFile file) {
+    Language language = file.getLanguage();
+    final FormattingModelBuilder modelBuilder = language.getEffectiveFormattingModelBuilder(file);
     if (modelBuilder == null) {
       final LeafElement leafElement = ParseUtil.nextLeaf((TreeElement)first, null);
       if (leafElement != second) {
@@ -354,16 +355,16 @@ public class CodeEditUtil {
       }
     }
     else {
-      final PsiFile file = (PsiFile)TreeUtil.getFileElement((TreeElement)second).getPsi();
       final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
-      return getWhiteSpaceBeforeToken(second, language, true).generateNewWhiteSpace(settings.getIndentOptions(file.getFileType()));
+      return getWhiteSpaceBeforeToken(second, file, true).generateNewWhiteSpace(settings.getIndentOptions(file.getFileType()));
     }
 
   }
 
-  public static IndentInfo getWhiteSpaceBeforeToken(final ASTNode tokenNode, final Language language, final boolean mayChangeLineFeeds) {
+  private static IndentInfo getWhiteSpaceBeforeToken(final ASTNode tokenNode, final PsiFile file, final boolean mayChangeLineFeeds) {
     LOG.assertTrue(tokenNode != null);
-    final PsiFile file = (PsiFile)TreeUtil.getFileElement((TreeElement)tokenNode).getPsi();
+
+    Language language = file.getLanguage();
     final Project project = file.getProject();
     final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
     final int tokenStartOffset = tokenNode.getStartOffset();
@@ -372,10 +373,10 @@ public class CodeEditUtil {
     final int oldKeepBlankLines = settings.XML_KEEP_BLANK_LINES;
     settings.XML_KEEP_BLANK_LINES = 0;
     try {
-      final FormattingModelBuilder builder = language.getFormattingModelBuilder();
+      final FormattingModelBuilder builder = language.getEffectiveFormattingModelBuilder(file);
       final PsiElement element = file.findElementAt(tokenStartOffset);
 
-      if (builder != null && element.getLanguage().getFormattingModelBuilder() != null) {
+      if (builder != null && element.getLanguage().getEffectiveFormattingModelBuilder(element) != null) {
 
         final TextRange textRange = element.getTextRange();
         final FormattingModel model = builder.createModel(file, settings);

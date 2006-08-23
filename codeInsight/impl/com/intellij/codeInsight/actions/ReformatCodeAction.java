@@ -163,7 +163,7 @@ public class ReformatCodeAction extends AnAction {
         return;
       }
 
-      if (file.getLanguage().getFormattingModelBuilder() != null) {
+      if (file.getLanguage().getEffectiveFormattingModelBuilder(file) != null) {
         presentation.setEnabled(true);
         return;
       }
@@ -179,7 +179,7 @@ public class ReformatCodeAction extends AnAction {
           presentation.setEnabled(false);
           return;
         }
-        final FormattingModelBuilder builder = psiFile.getLanguage().getFormattingModelBuilder();
+        final FormattingModelBuilder builder = psiFile.getLanguage().getEffectiveFormattingModelBuilder(psiFile);
         if (builder == null) {
           presentation.setEnabled(false);
           return;

@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -17,10 +18,11 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.Language;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -312,7 +314,7 @@ public abstract class AbstractLayoutCodeProcessor {
   private static boolean isFormatable(PsiFile file) {
     final Language language = file.getLanguage();
     if (language == null) return false;
-    return language.getFormattingModelBuilder() != null;
+    return language.getEffectiveFormattingModelBuilder(file) != null;
   }
 
   private void collectFilesToProcess(ArrayList<PsiFile> array, PsiDirectory dir, boolean recursive) {

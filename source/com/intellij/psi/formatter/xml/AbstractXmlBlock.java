@@ -126,8 +126,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
                        final Alignment alignment,
                        final Indent indent) {
     final Language myLanguage = myNode.getPsi().getLanguage();
-    final Language childLanguage = child.getPsi().getLanguage();
-    if (useMyFormatter(myLanguage, childLanguage)) {
+    final PsiElement childPsi = child.getPsi();
+    final Language childLanguage = childPsi.getLanguage();
+    if (useMyFormatter(myLanguage, childLanguage, childPsi)) {
 
       if (canBeAnotherTreeTagStart(child)) {
         XmlTag tag = JspTextBlock.findXmlTagAt(child, child.getStartOffset());
@@ -267,9 +268,10 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
                                                     final ASTNode child,
                                                     final List<Block> result,
                                                     final Indent indent) {
-    final FormattingModelBuilder builder = childLanguage.getFormattingModelBuilder();
+    final PsiElement childPsi = child.getPsi();
+    final FormattingModelBuilder builder = childLanguage.getEffectiveFormattingModelBuilder(childPsi);
     LOG.assertTrue(builder != null);
-    final FormattingModel childModel = builder.createModel(child.getPsi(), getSettings());
+    final FormattingModel childModel = builder.createModel(childPsi, getSettings());
     result.add(new AnotherLanguageBlockWrapper(child,
                                                myXmlFormattingPolicy,
                                                childModel.getRootBlock(),
@@ -356,7 +358,7 @@ private boolean canBeAnotherTreeTagStart(final ASTNode child) {
     return psi instanceof XmlTag && !(psi instanceof JspScriptlet) && !(psi instanceof JspDeclaration);
   }
 
-  private static boolean useMyFormatter(final Language myLanguage, final Language childLanguage) {
+  private static boolean useMyFormatter(final Language myLanguage, final Language childLanguage, final PsiElement childPsi) {
     return myLanguage == childLanguage
            || childLanguage == StdLanguages.JAVA
            || childLanguage == StdLanguages.HTML
@@ -364,7 +366,7 @@ private boolean canBeAnotherTreeTagStart(final ASTNode child) {
            || childLanguage == StdLanguages.XML
            || childLanguage == StdLanguages.JSP
            || childLanguage == StdLanguages.JSPX
-           || childLanguage.getFormattingModelBuilder() == null;
+           || childLanguage.getEffectiveFormattingModelBuilder(childPsi) == null;
   }
 
   protected boolean isJspxJavaContainingNode(final ASTNode child) {

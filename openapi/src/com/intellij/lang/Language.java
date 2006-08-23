@@ -15,19 +15,20 @@
  */
 package com.intellij.lang;
 
+import com.intellij.formatting.CustomFormattingModelBuilder;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
 import com.intellij.lang.refactoring.JavaNamesValidator;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
-import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
-import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
@@ -35,6 +36,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.tree.TokenSet;
@@ -70,6 +72,8 @@ public abstract class Language {
   private List<Annotator> myCachedAnnotators;
   private ExternalAnnotator myLastExternalAnnotator;
   private List<ExternalAnnotator> myCachedExternalAnnotators;
+  private final List<CustomFormattingModelBuilder> myCustomFormatters = new ArrayList<CustomFormattingModelBuilder>();
+
   private FileType myFileType;
 
   protected Language(@NonNls String id) {
@@ -134,7 +138,41 @@ public abstract class Language {
   }
 
   /**
+   * Returns a final incarnation of the formatting facilities with language's default formatting probably overriden by
+   * ones injected with {@link #registerCustomFormattingModelBuilder(com.intellij.formatting.CustomFormattingModelBuilder)}.
+   *
+   * @param context to ask {@link com.intellij.formatting.CustomFormattingModelBuilder} if they're willing to take part in actuall formatting
+   * @return a <code>FormattingModelBuilder</code> this <code>context</code> shall be formatted with.
+   */
+  @Nullable
+  public final FormattingModelBuilder getEffectiveFormattingModelBuilder(PsiElement context) {
+    for (CustomFormattingModelBuilder builder : myCustomFormatters) {
+      if (builder.isEngagedToFormat(context)) return builder;
+    }
+
+    return getFormattingModelBuilder();
+  }
+
+  /**
+   * Inject a custom (context specific) formatting.
+   * @param builder a context sensitive formatting model builder to override a language's default.
+   */
+  public final void registerCustomFormattingModelBuilder(@NotNull CustomFormattingModelBuilder builder) {
+    myCustomFormatters.add(builder);
+  }
+
+  /**
+   * Unregister previously injected context sensitive formatting.
+   * @param builder a @{CustomFormattingModelBuilder} to exclude from formatting voting races.
+   */
+  public final void unregisterCustomFormattingModelBuilder(@NotNull CustomFormattingModelBuilder builder) {
+    myCustomFormatters.remove(builder);
+  }
+
+  /**
    * Override this method to provide code formatter (aka pretty print, aka code beauitifier) for your language implementation.
+   * Language's default implementation of the FormatterModelBuilder can be overriden for certain contexts by external injections
+   * with {@link #registerCustomFormattingModelBuilder(com.intellij.formatting.CustomFormattingModelBuilder)}.
    * Note that formatter implementation is necessary to make smart enter and smart end functions to work properly.
    *
    * @return <code>FormattingModelBuilder</code> interface implementation for this particular language or <code>null</code>

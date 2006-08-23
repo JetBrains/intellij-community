@@ -340,16 +340,15 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
     final PsiElement psiElement = parent.getPsi();
 
-    final FormattingModelBuilder builder = psiElement.getContainingFile().getLanguage()
-      .getFormattingModelBuilder();
+    final PsiFile containingFile = psiElement.getContainingFile();
+    final FormattingModelBuilder builder = containingFile.getLanguage().getEffectiveFormattingModelBuilder(containingFile);
 
     if (builder != null) {
-      final PsiFile containingFile = psiElement.getContainingFile();
       final FormattingModel model = builder.createModel(containingFile, getSettings());
       FormatterEx.getInstanceEx().formatAroundRange(model, getSettings(), addedElement.getTextRange(), containingFile.getFileType());
     }
 
-    adjustLineIndent(psiElement.getContainingFile(), addedElement.getTextRange());
+    adjustLineIndent(containingFile, addedElement.getTextRange());
   }
 
   public int findEntryIndex(@NotNull PsiImportStatementBase statement) {
@@ -388,11 +387,11 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       return CharArrayUtil.shiftForward(file.textToCharArray(), offset, " \t");
     }
     final Language fileLanguage = file.getLanguage();
-    final FormattingModelBuilder builder = fileLanguage.getFormattingModelBuilder();
+    final FormattingModelBuilder builder = fileLanguage.getEffectiveFormattingModelBuilder(file);
     FormattingModelBuilder elementBuilder = builder;
     if (element != null) {
       final Language elementLanguage = element.getLanguage();
-      elementBuilder = elementLanguage.getFormattingModelBuilder();
+      elementBuilder = elementLanguage.getEffectiveFormattingModelBuilder(element);
     }
     if (builder != null && elementBuilder != null) {
       final CodeStyleSettings settings = getSettings();
@@ -413,9 +412,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
+  @Nullable
   private static PsiElement findElementInTreeWithFormatterEnabled(final PsiFile file, final int offset) {
     final PsiElement bottomost = file.findElementAt(offset);
-    if (bottomost != null && bottomost.getLanguage().getFormattingModelBuilder() != null) {
+    if (bottomost != null && bottomost.getLanguage().getEffectiveFormattingModelBuilder(bottomost) != null) {
       return bottomost;
     }
 
@@ -458,11 +458,11 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       return CharArrayUtil.shiftForward(file.textToCharArray(), offset, " \t");
     }
     final Language fileLanguage = file.getLanguage();
-    final FormattingModelBuilder builder = fileLanguage.getFormattingModelBuilder();
+    final FormattingModelBuilder builder = fileLanguage.getEffectiveFormattingModelBuilder(file);
     FormattingModelBuilder elementBuilder = builder;
     if (element != null) {
       final Language elementLanguage = element.getLanguage();
-      elementBuilder = elementLanguage.getFormattingModelBuilder();
+      elementBuilder = elementLanguage.getEffectiveFormattingModelBuilder(element);
     }
     if (builder != null && elementBuilder != null) {
       final CodeStyleSettings settings = getSettings();
@@ -488,7 +488,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   public void adjustLineIndent(@NotNull PsiFile file, TextRange rangeToAdjust) throws IncorrectOperationException {
     final Language fileLanguage = file.getLanguage();
-    final FormattingModelBuilder builder = fileLanguage.getFormattingModelBuilder();
+    final FormattingModelBuilder builder = fileLanguage.getEffectiveFormattingModelBuilder(file);
     if (builder != null) {
       final CodeStyleSettings settings = getSettings();
       final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
@@ -515,9 +515,9 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       return null;
     }
     final Language fileLanguage = file.getLanguage();
-    final FormattingModelBuilder builder = fileLanguage.getFormattingModelBuilder();
+    final FormattingModelBuilder builder = fileLanguage.getEffectiveFormattingModelBuilder(file);
     final Language elementLanguage = element.getLanguage();
-    final FormattingModelBuilder elementBuilder = elementLanguage.getFormattingModelBuilder();
+    final FormattingModelBuilder elementBuilder = elementLanguage.getEffectiveFormattingModelBuilder(element);
     if (builder != null && elementBuilder != null) {
       final CodeStyleSettings settings = getSettings();
       final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
@@ -591,6 +591,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
+  @Nullable
   private static ASTNode findNearestExpressionParent(final ASTNode current) {
     ASTNode result = current;
     while (result != null) {
@@ -924,6 +925,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
+  @Nullable
   private static String normalizeTypeName(String typeName) {
     if( typeName == null )
     {
@@ -935,6 +937,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     return typeName;
   }
 
+  @Nullable
   private static String getTypeName(PsiType type) {
     type = type.getDeepComponentType();
     if (type instanceof PsiClassType) {
@@ -1405,18 +1408,18 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       if (PsiUtil.isVariableNameUnique(name, place)) {
         if (scope instanceof PsiCodeBlock) {
           final String name1 = name;
-          class Cancel extends RuntimeException {
+          class CancelException extends RuntimeException {
           }
           try {
             scope.accept(new PsiRecursiveElementVisitor() {
                            public void visitVariable(PsiVariable variable) {
                              if (name1.equals(variable.getName())) {
-                               throw new Cancel();
+                               throw new CancelException();
                              }
                            }
                          });
           }
-          catch (Cancel e) {
+          catch (CancelException e) {
           continue;
           }
         }
