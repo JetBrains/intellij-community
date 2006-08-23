@@ -17,6 +17,8 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -50,7 +52,31 @@ public class ObjectAllocationInLoopInspection extends ExpressionInspection {
             if (ControlFlowUtils.isInExitStatement(expression)) {
                 return;
             }
+            final PsiStatement newExpressionStatement =
+                    PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
+            if (newExpressionStatement == null) {
+                return;
+            }
+            final PsiStatement parentStatement =
+                    PsiTreeUtil.getParentOfType(newExpressionStatement,
+                            PsiStatement.class);
+            if (!ControlFlowUtils.statementMayCompleteNormally(
+                    parentStatement)) {
+                return;
+            }
             registerError(expression);
+        }
+    }
+
+    void foo() {
+        outer:
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 10; j++) {
+                if (j == 3) {
+                    new Object();
+                    break outer;
+                }
+            }
         }
     }
 }

@@ -24,7 +24,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,9 +31,7 @@ import javax.swing.JComponent;
 
 public class StringConcatenationInLoopsInspection extends ExpressionInspection {
 
-    /**
-     * @noinspection PublicField
-     */
+    /** @noinspection PublicField */
     public boolean m_ignoreUnlessAssigned = false;
 
     public String getID() {
@@ -97,6 +94,9 @@ public class StringConcatenationInLoopsInspection extends ExpressionInspection {
             if (isEvaluatedAtCompileTime(expression)) {
                 return;
             }
+            if (containingStatementExits(expression)) {
+                return;
+            }
             if (m_ignoreUnlessAssigned && !isOnRHSOfAssignment(expression)) {
                 return;
             }
@@ -106,11 +106,10 @@ public class StringConcatenationInLoopsInspection extends ExpressionInspection {
         public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
-            if (!WellFormednessUtils.isWellFormed(expression)) {
+            if (expression.getRExpression() == null) {
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
-
             final IElementType tokenType = sign.getTokenType();
             if (!tokenType.equals(JavaTokenType.PLUSEQ)) {
                 return;
@@ -129,95 +128,109 @@ public class StringConcatenationInLoopsInspection extends ExpressionInspection {
             if (ControlFlowUtils.isInExitStatement(expression)) {
                 return;
             }
+            if (containingStatementExits(expression)) {
+                return;
+            }
             registerError(sign);
         }
-    }
 
-    static boolean isEvaluatedAtCompileTime(PsiExpression expression) {
-        if (expression instanceof PsiLiteralExpression) {
-            return true;
-        }
-        if (expression instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression)expression;
-            final PsiExpression lhs = binaryExpression.getLOperand();
-            final PsiExpression rhs = binaryExpression.getROperand();
-            return isEvaluatedAtCompileTime(lhs) &&
-                    isEvaluatedAtCompileTime(rhs);
-        }
-        if (expression instanceof PsiPrefixExpression) {
-            final PsiPrefixExpression prefixExpression =
-                    (PsiPrefixExpression)expression;
-            final PsiExpression operand = prefixExpression.getOperand();
-            return isEvaluatedAtCompileTime(operand);
-        }
-        if (expression instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression)expression;
-            final PsiElement qualifier = referenceExpression.getQualifier();
-            if (qualifier instanceof PsiThisExpression) {
-                return false;
+        private boolean containingStatementExits(PsiElement element) {
+            final PsiStatement newExpressionStatement =
+                    PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+            if (newExpressionStatement == null) {
+                return containingStatementExits(element);
             }
-            final PsiElement element = referenceExpression.resolve();
-            if (element instanceof PsiField) {
-                final PsiField field = (PsiField)element;
-                final PsiExpression initializer = field.getInitializer();
-                return field.hasModifierProperty(PsiModifier.FINAL) &&
-                        isEvaluatedAtCompileTime(initializer);
+            final PsiStatement parentStatement =
+                    PsiTreeUtil.getParentOfType(newExpressionStatement,
+                            PsiStatement.class);
+            return !ControlFlowUtils.statementMayCompleteNormally(
+                    parentStatement);
+        }
+
+        private boolean isEvaluatedAtCompileTime(PsiExpression expression) {
+            if (expression instanceof PsiLiteralExpression) {
+                return true;
             }
-            if (element instanceof PsiVariable) {
-                final PsiVariable variable = (PsiVariable)element;
-                if (PsiTreeUtil.isAncestor(variable, expression, true)) {
+            if (expression instanceof PsiBinaryExpression) {
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression)expression;
+                final PsiExpression lhs = binaryExpression.getLOperand();
+                final PsiExpression rhs = binaryExpression.getROperand();
+                return isEvaluatedAtCompileTime(lhs) &&
+                        isEvaluatedAtCompileTime(rhs);
+            }
+            if (expression instanceof PsiPrefixExpression) {
+                final PsiPrefixExpression prefixExpression =
+                        (PsiPrefixExpression)expression;
+                final PsiExpression operand = prefixExpression.getOperand();
+                return isEvaluatedAtCompileTime(operand);
+            }
+            if (expression instanceof PsiReferenceExpression) {
+                final PsiReferenceExpression referenceExpression =
+                        (PsiReferenceExpression)expression;
+                final PsiElement qualifier = referenceExpression.getQualifier();
+                if (qualifier instanceof PsiThisExpression) {
                     return false;
                 }
-                final PsiExpression initializer = variable.getInitializer();
-                return variable.hasModifierProperty(PsiModifier.FINAL) &&
-                        isEvaluatedAtCompileTime(initializer);
+                final PsiElement element = referenceExpression.resolve();
+                if (element instanceof PsiField) {
+                    final PsiField field = (PsiField)element;
+                    final PsiExpression initializer = field.getInitializer();
+                    return field.hasModifierProperty(PsiModifier.FINAL) &&
+                            isEvaluatedAtCompileTime(initializer);
+                }
+                if (element instanceof PsiVariable) {
+                    final PsiVariable variable = (PsiVariable)element;
+                    if (PsiTreeUtil.isAncestor(variable, expression, true)) {
+                        return false;
+                    }
+                    final PsiExpression initializer = variable.getInitializer();
+                    return variable.hasModifierProperty(PsiModifier.FINAL) &&
+                            isEvaluatedAtCompileTime(initializer);
+                }
             }
-        }
-        if (expression instanceof PsiParenthesizedExpression) {
-            final PsiParenthesizedExpression parenthesizedExpression =
-                    (PsiParenthesizedExpression)expression;
-            final PsiExpression unparenthesizedExpression =
-                    parenthesizedExpression.getExpression();
-            return isEvaluatedAtCompileTime(unparenthesizedExpression);
-        }
-        if (expression instanceof PsiConditionalExpression) {
-            final PsiConditionalExpression conditionalExpression =
-                    (PsiConditionalExpression)expression;
-            final PsiExpression condition = conditionalExpression.getCondition();
-            final PsiExpression thenExpression =
-                    conditionalExpression.getThenExpression();
-            final PsiExpression elseExpression =
-                    conditionalExpression.getElseExpression();
-            return isEvaluatedAtCompileTime(condition) &&
-                    isEvaluatedAtCompileTime(thenExpression) &&
-                    isEvaluatedAtCompileTime(elseExpression);
-        }
-        if (expression instanceof PsiTypeCastExpression) {
-            final PsiTypeCastExpression typeCastExpression =
-                    (PsiTypeCastExpression)expression;
-            final PsiTypeElement castType = typeCastExpression.getCastType();
-            if (castType == null) {
-                return false;
+            if (expression instanceof PsiParenthesizedExpression) {
+                final PsiParenthesizedExpression parenthesizedExpression =
+                        (PsiParenthesizedExpression)expression;
+                final PsiExpression unparenthesizedExpression =
+                        parenthesizedExpression.getExpression();
+                return isEvaluatedAtCompileTime(unparenthesizedExpression);
             }
-            final PsiType type = castType.getType();
-            return TypeUtils.typeEquals("java.lang.String", type);
+            if (expression instanceof PsiConditionalExpression) {
+                final PsiConditionalExpression conditionalExpression =
+                        (PsiConditionalExpression)expression;
+                final PsiExpression condition = conditionalExpression.getCondition();
+                final PsiExpression thenExpression =
+                        conditionalExpression.getThenExpression();
+                final PsiExpression elseExpression =
+                        conditionalExpression.getElseExpression();
+                return isEvaluatedAtCompileTime(condition) &&
+                        isEvaluatedAtCompileTime(thenExpression) &&
+                        isEvaluatedAtCompileTime(elseExpression);
+            }
+            if (expression instanceof PsiTypeCastExpression) {
+                final PsiTypeCastExpression typeCastExpression =
+                        (PsiTypeCastExpression)expression;
+                final PsiTypeElement castType = typeCastExpression.getCastType();
+                if (castType == null) {
+                    return false;
+                }
+                final PsiType type = castType.getType();
+                return TypeUtils.typeEquals("java.lang.String", type);
+            }
+            return false;
         }
-        return false;
-    }
 
-    static boolean isOnRHSOfAssignment(PsiExpression expression) {
-        final PsiElement parent = expression.getParent();
-        if (parent instanceof PsiParenthesizedExpression) {
-            return isOnRHSOfAssignment((PsiExpression)parent);
+        private boolean isOnRHSOfAssignment(PsiExpression expression) {
+            final PsiElement parent = expression.getParent();
+            if (parent instanceof PsiParenthesizedExpression) {
+                return isOnRHSOfAssignment((PsiExpression)parent);
+            }
+            if (parent instanceof PsiAssignmentExpression) {
+                return true;
+            }
+            return parent instanceof PsiBinaryExpression &&
+                    isOnRHSOfAssignment((PsiExpression) parent);
         }
-        if (parent instanceof PsiAssignmentExpression) {
-            return true;
-        }
-        if (parent instanceof PsiBinaryExpression) {
-            return isOnRHSOfAssignment((PsiExpression)parent);
-        }
-        return false;
     }
 }
