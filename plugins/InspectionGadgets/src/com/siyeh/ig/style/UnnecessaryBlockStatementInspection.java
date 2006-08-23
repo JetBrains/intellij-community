@@ -62,6 +62,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
 
     private static class UnnecessaryBlockFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "unnecessary.code.block.unwrap.quickfix");
@@ -79,12 +80,13 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
                     (PsiBlockStatement)block.getParent();
             assert blockStatement != null;
             final PsiElement containingElement = blockStatement.getParent();
-            final PsiElement[] children = block.getChildren();
-            if (children.length > 2) {
+            final PsiElement[] statements = block.getStatements();
+            if (statements.length > 0) {
                 assert containingElement != null;
                 final PsiElement added =
                         containingElement.addRangeBefore(
-                                children[1], children[children.length - 2],
+                                statements[0],
+                                statements[statements.length - 1],
                                 blockStatement);
                 final CodeStyleManager codeStyleManager =
                         CodeStyleManager.getInstance(project);
