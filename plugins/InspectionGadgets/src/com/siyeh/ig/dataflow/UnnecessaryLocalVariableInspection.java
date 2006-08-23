@@ -280,6 +280,9 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
                 return false;
             }
             final PsiExpression lhs = assignmentExpression.getLExpression();
+            if (lhs instanceof PsiArrayAccessExpression) {
+                return false;
+            }
             if (VariableAccessUtils.variableIsUsed(variable, lhs)) {
                 return false;
             }
