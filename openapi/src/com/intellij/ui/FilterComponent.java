@@ -25,6 +25,8 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -46,30 +48,45 @@ public abstract class FilterComponent extends JPanel {
       add(new JLabel(InspectionsBundle.message("inspection.tools.action.filter")), BorderLayout.WEST);
     }
     myFilter = new TextFieldWithStoredHistory(propertyName);
-    myFilter.getEditor().getEditorComponent().addKeyListener(new KeyAdapter() {
+    myFilter.getTextEditor().addKeyListener(new KeyAdapter() {
       //to consume enter in combo box - do not process this event by default button from DialogWrapper
       public void keyPressed(final KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           e.consume();
+          myFilter.addCurrentTextToHistory();
+          filter();
         }
+
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE && getFilter().length() > 0){
           myFilter.setText("");
           e.consume();
         }
+      }
+    });
+
+    myFilter.addDocumentListener(new DocumentListener() {
+      public void insertUpdate(DocumentEvent e) {
+        onChange();
+      }
+
+      public void removeUpdate(DocumentEvent e) {
+        onChange();
+      }
+
+      public void changedUpdate(DocumentEvent e) {
+        onChange();
+      }
+
+      public void onChange() {
         myUpdateAlarm.cancelAllRequests();
         myUpdateAlarm.addRequest(new Runnable(){
           public void run() {
-            if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-              myFilter.addCurrentTextToHistory();
-              filter();
-            } else {
-              onlineFilter();
-            }
+            onlineFilter();
           }
         }, 100, ModalityState.stateForComponent(myFilter));
       }
     });
-    myFilter.setEditable(true);
+
     myFilter.setHistorySize(historySize);
     add(myFilter, BorderLayout.CENTER);
     DefaultActionGroup group = new DefaultActionGroup();

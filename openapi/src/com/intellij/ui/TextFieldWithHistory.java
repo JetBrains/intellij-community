@@ -15,28 +15,120 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.IconLoader;
+
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.ActionListener;
 import java.awt.*;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TextFieldWithHistory extends JComboBox {
+public class TextFieldWithHistory extends JPanel {
 
   private int myHistorySize = 5;
   private MyModel myModel;
+  private JTextField myTextField;
+  private JLabel myToggleHistoryLabel;
+  private JLabel myClearFieldLabel;
+  
+  private JBPopup myPopup;
 
   public TextFieldWithHistory() {
+    super(new BorderLayout());
+
     myModel = new MyModel();
-    setModel(myModel);
-    setEditable(true);
 
-    setEditor(new MyComboBoxEditor(getEditor()));
+    myTextField = new JTextField();
+    myTextField.setColumns(15);
 
-    getTextEditor().addKeyListener(new HistoricalValuesHighlighter());
+    add(myTextField, BorderLayout.CENTER);
+
+    myToggleHistoryLabel = new JLabel(IconLoader.findIcon("/actions/search.png"));
+    myToggleHistoryLabel.setOpaque(true);
+    myToggleHistoryLabel.setBackground(myTextField.getBackground());
+    myToggleHistoryLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 4));
+    myToggleHistoryLabel.addMouseListener(new MouseAdapter() {
+      public void mousePressed(MouseEvent e) {
+        togglePopup();
+      }
+    });
+    add(myToggleHistoryLabel, BorderLayout.WEST);
+
+    myClearFieldLabel = new JLabel(IconLoader.findIcon("/actions/clean.png"));
+    myClearFieldLabel.setOpaque(true);
+    myClearFieldLabel.setBackground(myTextField.getBackground());
+    myClearFieldLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 0));
+    add(myClearFieldLabel, BorderLayout.EAST);
+    myClearFieldLabel.addMouseListener(new MouseAdapter() {
+      public void mousePressed(MouseEvent e) {
+        myTextField.setText("");
+      }
+    });
+
+    // myTextField.addKeyListener(new HistoricalValuesHighlighter());
+    myTextField.getDocument().addDocumentListener(new DocumentListener() {
+      public void insertUpdate(DocumentEvent e) {
+        updateCroppedList();
+      }
+
+      public void removeUpdate(DocumentEvent e) {
+        updateCroppedList();
+      }
+
+      public void changedUpdate(DocumentEvent e) {
+        updateCroppedList();
+      }
+
+      private void updateCroppedList() {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            String text = getTextEditor().getText();
+            myModel.setSelectedItemAndCropList(text);
+          }
+        });
+
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (0 == myModel.getSize()) {
+              hidePopup();
+              myModel.uncropList();
+            }
+            else {
+              refreshPopup();
+            }
+          }
+        });
+      }
+
+      private void refreshPopup() {
+        Runnable hider = new Runnable() {
+          public void run() {
+            hidePopup();
+          }
+        };
+
+        Runnable shower = new Runnable() {
+          public void run() {
+            showPopup();
+          }
+        };
+
+        if (myModel.croppedListEnlarged()) {
+          SwingUtilities.invokeLater(hider);
+        }
+
+        SwingUtilities.invokeLater(shower);
+      }
+    });
+
+    setBorder(new CompoundBorder(IdeBorderFactory.createEmptyBorder(4, 4, 4, 0), myTextField.getBorder()));
+    
+    myTextField.setBorder(null);
   }
 
   public void addDocumentListener(DocumentListener listener) {
@@ -47,14 +139,13 @@ public class TextFieldWithHistory extends JComboBox {
     myHistorySize = aHistorySize;
   }
 
-  public void setHistory(List aHistory) {
+  public void setHistory(List<String> aHistory) {
     myModel.setItems(aHistory);
   }
 
   public List getHistory() {
     return myModel.getItems();
   }
-
 
   public int getHistorySize() {
     return myHistorySize;
@@ -77,10 +168,8 @@ public class TextFieldWithHistory extends JComboBox {
   }
 
   protected JTextField getTextEditor() {
-    JTextField editor = (JTextField) getEditor().getEditorComponent();
-    return editor;
+    return myTextField;
   }
-
 
   public void requestFocus() {
     getTextEditor().requestFocus();
@@ -146,10 +235,10 @@ public class TextFieldWithHistory extends JComboBox {
     }
   }
 
-  public class MyModel extends AbstractListModel implements MutableComboBoxModel {
+  public class MyModel extends AbstractListModel {
 
-    private List myFullList = new ArrayList();
-    private List myCroppedList = new ArrayList();
+    private List<String> myFullList = new ArrayList<String>();
+    private List<String> myCroppedList = new ArrayList<String>();
     private String myCroppedListElementsPrefix = "";
     private int myLastCroppedListSize = 0;
 
@@ -188,10 +277,11 @@ public class TextFieldWithHistory extends JComboBox {
     }
 
     public void insertElementAt(Object obj, int index) {
-      myFullList.add(index, obj);
+      myFullList.add(index, (String)obj);
       refreshCroppedList();
     }
 
+    @SuppressWarnings({"SuspiciousMethodCalls"})
     public void removeElement(Object obj) {
       myFullList.remove(obj);
       refreshCroppedList();
@@ -212,15 +302,15 @@ public class TextFieldWithHistory extends JComboBox {
     }
 
     private void refreshCroppedList() {
-      if (null == getSelectedItem()) {
+      if (null == getSelectedItem() && myCroppedList.size() > 0) {
         return;
       }
       myLastCroppedListSize = myCroppedList.size();
 
-      myCroppedList = new ArrayList();
-      for (int i = 0; i < myFullList.size(); i++) {
-        if (((String) myFullList.get(i)).startsWith(getCroppedListElementsPrefix())) {
-          myCroppedList.add(myFullList.get(i));
+      myCroppedList = new ArrayList<String>();
+      for (String item : myFullList) {
+        if (item.startsWith(getCroppedListElementsPrefix())) {
+          myCroppedList.add(item);
         }
       }
 
@@ -250,8 +340,9 @@ public class TextFieldWithHistory extends JComboBox {
       return myFullList.contains(aNewValue);
     }
 
-    public void setItems(List aList) {
+    public void setItems(List<String> aList) {
       myFullList = aList;
+      uncropList();
       fireContentsChanged();
     }
 
@@ -259,6 +350,50 @@ public class TextFieldWithHistory extends JComboBox {
       return myFullList;
     }
   }
+
+  private void hidePopup() {
+    if (myPopup != null) {
+      myPopup.cancel();
+      myPopup = null;
+    }
+  }
+
+  private void showPopup() {
+    if (myPopup == null) {
+      final JList list = new JList(myModel);
+      myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+        .setMovable(false)
+        .setRequestFocus(false)
+        .setItemChoosenCallback(new Runnable() {
+        public void run() {
+          final String value = (String)list.getSelectedValue();
+          getTextEditor().setText(value != null ? value : "");
+          myPopup = null;
+        }
+      }).createPopup();
+
+      myPopup.showUnderneathOf(this);
+    }
+  }
+
+  private void togglePopup() {
+    if (myPopup == null) {
+      myModel.uncropList();
+      showPopup();
+    }
+    else {
+      hidePopup();
+    }
+  }
+
+  public void setSelectedItem(final String s) {
+    getTextEditor().setText(s);
+  }
+
+  public int getSelectedIndex() {
+    return myModel.myCroppedList.indexOf(getText());
+  }
+
 
   /**
    * To override
