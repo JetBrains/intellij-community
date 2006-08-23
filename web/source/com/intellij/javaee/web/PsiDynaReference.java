@@ -122,7 +122,6 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     }
     boolean flag = false;
     myChoosenOne = 0;
-    boolean strict = false;
     for(int i = 0; i < myReferences.size(); i++){
       final PsiReference reference = myReferences.get(i);
       if(reference.isSoft() && flag) continue;
@@ -133,16 +132,6 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
       }
       if(reference.resolve() != null){
         myChoosenOne = i;
-        strict = true;
-      }
-      if(!strict){
-        // One reference inside other
-        final TextRange rangeInElement1 = reference.getRangeInElement();
-        final TextRange rangeInElement2 = myReferences.get(myChoosenOne).getRangeInElement();
-        if(rangeInElement1.getStartOffset() >= rangeInElement2.getStartOffset()
-           && rangeInElement1.getEndOffset() <= rangeInElement2.getEndOffset()){
-          myChoosenOne = i;
-        }
       }
     }
     return myReferences.get(myChoosenOne);
