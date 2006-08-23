@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -31,10 +30,18 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class AssignmentToMethodParameterInspection
         extends ExpressionInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreTransformationOfOriginalParameter = false;
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -49,6 +56,13 @@ public class AssignmentToMethodParameterInspection
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "assignment.to.method.parameter.problem.descriptor");
+    }
+
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "assignment.to.method.parameter.ignore.transformation.option"), this,
+                "ignoreTransformationOfOriginalParameter");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
@@ -204,21 +218,30 @@ public class AssignmentToMethodParameterInspection
         return new AssignmentToMethodParameterVisitor();
     }
 
-    private static class AssignmentToMethodParameterVisitor
+    private class AssignmentToMethodParameterVisitor
             extends BaseInspectionVisitor {
 
         public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             final PsiExpression lhs = expression.getLExpression();
-            checkForMethodParam(lhs);
+            final PsiParameter parameter = getMethodParameter(lhs);
+            if (ignoreTransformationOfOriginalParameter) {
+                final PsiExpression rhs = expression.getRExpression();
+                if (VariableAccessUtils.variableIsUsed(parameter, rhs)) {
+                    return;
+                }
+            }
+            registerError(lhs);
         }
 
         public void visitPrefixExpression(
                 @NotNull PsiPrefixExpression expression) {
+            if (ignoreTransformationOfOriginalParameter) {
+                return;
+            }
             super.visitPrefixExpression(expression);
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
+            final IElementType tokenType = expression.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
                     !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return;
@@ -227,11 +250,15 @@ public class AssignmentToMethodParameterInspection
             if (operand == null) {
                 return;
             }
-            checkForMethodParam(operand);
+            final PsiParameter parameter = getMethodParameter(operand);
+            registerError(parameter);
         }
 
         public void visitPostfixExpression(
                 @NotNull PsiPostfixExpression expression) {
+            if (ignoreTransformationOfOriginalParameter) {
+                return;
+            }
             super.visitPostfixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
@@ -240,28 +267,29 @@ public class AssignmentToMethodParameterInspection
                 return;
             }
             final PsiExpression operand = expression.getOperand();
-            checkForMethodParam(operand);
+            final PsiParameter parameter = getMethodParameter(operand);
+            registerError(parameter);
         }
 
-        private void checkForMethodParam(PsiExpression expression) {
+        private PsiParameter getMethodParameter(PsiExpression expression) {
             if (!(expression instanceof PsiReferenceExpression)) {
-                return;
+                return null;
             }
             final PsiReferenceExpression ref =
                     (PsiReferenceExpression) expression;
             final PsiElement variable = ref.resolve();
             if (!(variable instanceof PsiParameter)) {
-                return;
+                return null;
             }
             final PsiParameter parameter = (PsiParameter)variable;
             final PsiElement declarationScope = parameter.getDeclarationScope();
             if (declarationScope instanceof PsiCatchSection) {
-                return;
+                return null;
             }
             if (declarationScope instanceof PsiForeachStatement) {
-                return;
+                return null;
             }
-            registerError(expression);
+            return parameter;
         }
     }
 }
