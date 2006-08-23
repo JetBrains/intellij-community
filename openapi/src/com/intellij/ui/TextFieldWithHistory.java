@@ -24,7 +24,10 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,9 +36,7 @@ public class TextFieldWithHistory extends JPanel {
   private int myHistorySize = 5;
   private MyModel myModel;
   private JTextField myTextField;
-  private JLabel myToggleHistoryLabel;
-  private JLabel myClearFieldLabel;
-  
+
   private JBPopup myPopup;
 
   public TextFieldWithHistory() {
@@ -48,23 +49,23 @@ public class TextFieldWithHistory extends JPanel {
 
     add(myTextField, BorderLayout.CENTER);
 
-    myToggleHistoryLabel = new JLabel(IconLoader.findIcon("/actions/search.png"));
-    myToggleHistoryLabel.setOpaque(true);
-    myToggleHistoryLabel.setBackground(myTextField.getBackground());
-    myToggleHistoryLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 4));
-    myToggleHistoryLabel.addMouseListener(new MouseAdapter() {
+    final JLabel toggleHistoryLabel = new JLabel(IconLoader.findIcon("/actions/search.png"));
+    toggleHistoryLabel.setOpaque(true);
+    toggleHistoryLabel.setBackground(myTextField.getBackground());
+    toggleHistoryLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 4));
+    toggleHistoryLabel.addMouseListener(new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
         togglePopup();
       }
     });
-    add(myToggleHistoryLabel, BorderLayout.WEST);
+    add(toggleHistoryLabel, BorderLayout.WEST);
 
-    myClearFieldLabel = new JLabel(IconLoader.findIcon("/actions/clean.png"));
-    myClearFieldLabel.setOpaque(true);
-    myClearFieldLabel.setBackground(myTextField.getBackground());
-    myClearFieldLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 0));
-    add(myClearFieldLabel, BorderLayout.EAST);
-    myClearFieldLabel.addMouseListener(new MouseAdapter() {
+    final JLabel clearFieldLabel = new JLabel(IconLoader.findIcon("/actions/clean.png"));
+    clearFieldLabel.setOpaque(true);
+    clearFieldLabel.setBackground(myTextField.getBackground());
+    clearFieldLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 0));
+    add(clearFieldLabel, BorderLayout.EAST);
+    clearFieldLabel.addMouseListener(new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
         myTextField.setText("");
       }
@@ -392,52 +393,5 @@ public class TextFieldWithHistory extends JPanel {
 
   public int getSelectedIndex() {
     return myModel.myCroppedList.indexOf(getText());
-  }
-
-
-  /**
-   * To override
-   * @see com.sun.java.swing.plaf.windows.WindowsComboBoxUI.WindowsComboBoxEditor#setItem
-   * otherwise every type (for letters only) produce selection of text Thus near every next typing removes previous ones.
-   */
-  private static class MyComboBoxEditor implements ComboBoxEditor {
-    private ComboBoxEditor myDelegate;
-
-    public MyComboBoxEditor(final ComboBoxEditor delegate) {
-      myDelegate = delegate;
-    }
-
-    public Component getEditorComponent() {
-      return myDelegate.getEditorComponent();
-    }
-
-    public void setItem(Object anObject) {
-      final Component editorComponent = myDelegate.getEditorComponent();
-      if (editorComponent instanceof JTextField){
-        if ( anObject != null )  {
-          ((JTextField)editorComponent).setText(anObject.toString());
-        } else {
-          ((JTextField)editorComponent).setText("");
-        }
-      } else {
-        myDelegate.setItem(anObject);
-      }
-    }
-
-    public Object getItem() {
-      return myDelegate.getItem();
-    }
-
-    public void selectAll() {
-      myDelegate.selectAll();
-    }
-
-    public void addActionListener(ActionListener l) {
-      myDelegate.addActionListener(l);
-    }
-
-    public void removeActionListener(ActionListener l) {
-      myDelegate.removeActionListener(l);
-    }
   }
 }
