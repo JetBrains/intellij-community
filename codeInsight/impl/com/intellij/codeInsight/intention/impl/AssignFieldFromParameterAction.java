@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -15,6 +16,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class AssignFieldFromParameterAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction");
@@ -50,6 +52,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     return true;
   }
 
+  @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.assign.field.from.parameter.family");
   }
@@ -83,7 +86,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     PsiClass targetClass = method.getContainingClass();
 
     String stmtText = fieldName + " = " + parameterName + ";";
-    if (fieldName.equals(parameterName)) {
+    if (Comparing.strEqual(fieldName, parameterName)) {
       @NonNls String prefix = isMethodStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
       stmtText = prefix + stmtText;
     }

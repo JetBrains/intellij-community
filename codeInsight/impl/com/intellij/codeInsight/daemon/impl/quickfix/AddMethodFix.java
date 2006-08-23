@@ -61,10 +61,12 @@ public class AddMethodFix implements IntentionAction {
     myText = text;
   }
 
+  @NotNull
   public String getText() {
     return myText;
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.method.family");
   }
@@ -103,5 +105,4 @@ public class AddMethodFix implements IntentionAction {
   public boolean startInWriteAction() {
     return true;
   }
-
 }

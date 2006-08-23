@@ -46,13 +46,17 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
   private final PsiExpression[] myExpressions;
   private final PsiSubstitutor mySubstitutor;
   private final PsiElement myContext;
+  private final boolean myChangeSingleUsageSignature;
   private ParameterInfo[] myNewParametersInfo;
 
-  ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod, @NotNull PsiExpression[] expressions, @NotNull PsiSubstitutor substitutor, @NotNull PsiElement context) {
+  ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod, @NotNull PsiExpression[] expressions, @NotNull PsiSubstitutor substitutor,
+                                    @NotNull PsiElement context,
+                                    boolean changeSingleUsageSignature) {
     myTargetMethod = targetMethod;
     myExpressions = expressions;
     mySubstitutor = substitutor;
     myContext = context;
+    myChangeSingleUsageSignature = changeSingleUsageSignature;
   }
 
   @NotNull
@@ -134,7 +138,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
                             myNewParametersInfo){
         @NotNull
         protected UsageInfo[] findUsages() {
-          return UsageInfo.EMPTY_ARRAY;
+          return myChangeSingleUsageSignature ? super.findUsages() : UsageInfo.EMPTY_ARRAY;
         }
       };
       processor.run();
@@ -277,7 +281,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     PsiMethod method = (PsiMethod)candidate.getElement();
     PsiSubstitutor substitutor = candidate.getSubstitutor();
     if (method != null && context.getManager().isInProject(method)) {
-      ChangeMethodSignatureFromUsageFix fix = new ChangeMethodSignatureFromUsageFix(method, expressions, substitutor, context);
+      ChangeMethodSignatureFromUsageFix fix = new ChangeMethodSignatureFromUsageFix(method, expressions, substitutor, context, false);
       QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, fix, null, null);
     }
   }
