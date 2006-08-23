@@ -2,6 +2,8 @@ package com.intellij.compiler;
 
 import com.intellij.javaee.JavaeeModuleProperties;
 import com.intellij.javaee.model.JavaeeApplicationModel;
+import com.intellij.javaee.model.xml.application.JavaeeApplication;
+import com.intellij.javaee.model.xml.application.JavaeeModule;
 import com.intellij.javaee.module.ModuleLink;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,12 +35,12 @@ public final class ModuleCompilerUtil {
       return ModuleRootManager.getInstance(module).getDependencies();
     }
     List<Module> result = new ArrayList<Module>();
-    final com.intellij.javaee.model.xml.application.JavaeeApplication root = ((JavaeeApplicationModel)JavaeeModuleProperties.getInstance(module)).getRoot();
+    final JavaeeApplication root = ((JavaeeApplicationModel)JavaeeModuleProperties.getInstance(module)).getRoot();
     if (root == null) {
       return Module.EMPTY_ARRAY;
     }
-    final List<com.intellij.javaee.model.xml.application.JavaeeModule> modules = root.getModules();
-    for (final com.intellij.javaee.model.xml.application.JavaeeModule moduleInApplication : modules) {
+    final List<JavaeeModule> modules = root.getModules();
+    for (final JavaeeModule moduleInApplication : modules) {
       final Module depModule = getReferenceModule(moduleInApplication);
       if (depModule != null && !dependsOn(depModule, module)) {
         result.add(depModule);
@@ -47,7 +49,7 @@ public final class ModuleCompilerUtil {
     return result.toArray(new Module[result.size()]);
   }
 
-  public static Module getReferenceModule(final com.intellij.javaee.model.xml.application.JavaeeModule moduleLink) {
+  public static Module getReferenceModule(final JavaeeModule moduleLink) {
     String id = moduleLink.getId().getValue();
     Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>(){
       public Module[] compute() {
@@ -83,14 +85,7 @@ public final class ModuleCompilerUtil {
     }.dependsOn(dependant, dependee);
   }
 
-  public static Comparator<Module> moduleDependencyComparator(Project project) {
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
-    final Graph<Module> graph = createModuleGraph(modules);
-    DFSTBuilder<Module> builder = new DFSTBuilder<Module>(graph);
-    return builder.comparator();
-  }
-
-  public static Graph<Module> createModuleGraph(final Module[] modules) {
+  private static Graph<Module> createModuleGraph(final Module[] modules) {
     return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
       public Collection<Module> getNodes() {
         return Arrays.asList(modules);
@@ -186,16 +181,18 @@ public final class ModuleCompilerUtil {
   }
 
   public static void sortModules(final Project project, final List<Module> modules) {
-    final Application applicationEx = ApplicationManager.getApplication();
-    if (applicationEx.isDispatchThread()) {
-      Collections.sort(modules, moduleDependencyComparator(project));
+    final Application application = ApplicationManager.getApplication();
+    Runnable sort = new Runnable() {
+      public void run() {
+        Comparator<Module> comparator = ModuleManager.getInstance(project).moduleDependencyComparator();
+        Collections.sort(modules, comparator);
+      }
+    };
+    if (application.isDispatchThread()) {
+      sort.run();
     }
     else {
-      applicationEx.runReadAction(new Runnable() {
-        public void run() {
-          Collections.sort(modules, moduleDependencyComparator(project));
-        }
-      });
+      application.runReadAction(sort);
     }
   }
 }

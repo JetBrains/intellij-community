@@ -61,14 +61,13 @@ public class GenerationOptions {
     final PathMacrosImpl pathMacros = PathMacrosImpl.getInstanceEx();
     final Set<String> macroNames = pathMacros.getUserMacroNames();
     final ReplacePathToMacroMap map = new ReplacePathToMacroMap();
-    for (final String macroName1 : macroNames) {
-      final String macroName = (String)macroName1;
+    for (final String macroName : macroNames) {
       map.put(pathMacros.getValue(macroName), BuildProperties.propertyRef(BuildProperties.getPathMacroProperty(macroName)));
     }
     return map;
   }
 
-  private Map<String, String> createOutputUrlToPropertyRefMap(ModuleChunk[] chunks) {
+  private static Map<String, String> createOutputUrlToPropertyRefMap(ModuleChunk[] chunks) {
     final Map<String, String> map = new HashMap<String, String>();
 
     for (final ModuleChunk chunk : chunks) {
@@ -99,14 +98,13 @@ public class GenerationOptions {
 
   protected ModuleChunk[] createModuleChunks(String[] representativeModuleNames) {
     final Set<String> mainModuleNames = new HashSet<String>(Arrays.asList(representativeModuleNames));
-    final Graph<Chunk<Module>> chunkGraph = ModuleCompilerUtil.toChunkGraph(ModuleCompilerUtil.createModuleGraph(ModuleManager.getInstance(myProject).getModules()));
+    final Graph<Chunk<Module>> chunkGraph = ModuleCompilerUtil.toChunkGraph(ModuleManager.getInstance(myProject).moduleGraph());
     final Map<Chunk<Module>, ModuleChunk> map = new HashMap<Chunk<Module>, ModuleChunk>();
     final Map<ModuleChunk, Chunk<Module>> reverseMap = new HashMap<ModuleChunk, Chunk<Module>>();
     for (final Chunk<Module> chunk : chunkGraph.getNodes()) {
       final Set<Module> modules = chunk.getNodes();
       final ModuleChunk moduleChunk = new ModuleChunk(modules.toArray(new Module[modules.size()]));
-      for (final Module module1 : modules) {
-        final Module module = (Module)module1;
+      for (final Module module : modules) {
         if (mainModuleNames.contains(module.getName())) {
           moduleChunk.setMainModule(module);
           break;

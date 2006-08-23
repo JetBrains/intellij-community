@@ -12,16 +12,13 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
-import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
-import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -321,19 +318,12 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
 
   private Graph<Module> buildGraph() {
-    final Graph<Module> graph = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
-      public Collection<Module> getNodes() {
-        return Arrays.asList(ModuleManager.getInstance(myProject).getModules());
-      }
-
-      public Iterator<Module> getIn(Module module) {
-        return Arrays.asList(ModuleRootManager.getInstance(module).getDependencies()).iterator();
-      }
-    }));
-    if (isForwardDirection()){
+    final Graph<Module> graph = ModuleManager.getInstance(myProject).moduleGraph();
+    if (isForwardDirection()) {
       return graph;
-    } else {
-      return new Graph<Module>(){
+    }
+    else {
+      return new Graph<Module>() {
         public Collection<Module> getNodes() {
           return graph.getNodes();
         }

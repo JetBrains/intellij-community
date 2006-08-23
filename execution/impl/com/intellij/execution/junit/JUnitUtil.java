@@ -4,20 +4,17 @@ import com.intellij.execution.*;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
-import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.THashSet;
 import junit.runner.BaseTestRunner;
 import org.jetbrains.annotations.NonNls;
@@ -221,17 +218,7 @@ public class JUnitUtil {
   }
 
   public static Map<Module, Collection<Module>> buildAllDependencies(final Project project) {
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
-    Graph<Module> graph = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
-          public Collection<Module> getNodes() {
-            return Arrays.asList(modules);
-          }
-
-          public Iterator<Module> getIn(Module module) {
-            return Arrays.asList(ModuleRootManager.getInstance(module).getDependencies()).iterator();
-          }
-        }));
-
+    Graph<Module> graph = ModuleManager.getInstance(project).moduleGraph();
     Map<Module, Collection<Module>> result = new HashMap<Module, Collection<Module>>();
     for (final Module module : graph.getNodes()) {
       buildDependenciesForModule(module, graph, result);
@@ -254,8 +241,6 @@ public class JUnitUtil {
         }
       }
     }.traverse(module);
-
-    graph.getIn(module);
   }
 
   /*public static Map<Module, Collection<Module>> buildAllDependencies(final Project project) {

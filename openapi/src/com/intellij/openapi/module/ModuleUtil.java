@@ -71,7 +71,7 @@ public class ModuleUtil {
     if (module == null) return null;
     if (expectedModuleType.equals(module.getModuleType())) return module;
     final List<Module> parents = getParentModulesOfType(expectedModuleType, module);
-    return parents.size() == 0 ? null : parents.get(0);
+    return parents.isEmpty() ? null : parents.get(0);
   }
 
   @NotNull
@@ -202,7 +202,7 @@ public class ModuleUtil {
   }
 
   public static Collection<Module> collectModulesDependsOn(@NotNull final Collection<Module> modules) {
-    if (modules.size() == 0) return new ArrayList<Module>(0);
+    if (modules.isEmpty()) return Collections.emptyList();
     final HashSet<Module> result = new HashSet<Module>();
     final Project project = modules.iterator().next().getProject();
     final ModuleManager moduleManager = ModuleManager.getInstance(project);

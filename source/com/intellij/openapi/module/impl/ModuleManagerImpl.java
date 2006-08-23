@@ -186,7 +186,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
                     ProjectBundle.message("module.loading.cancelled.load.later.action"),
                     ProjectBundle.message("module.loading.cancelled.remove.action")}, 0, Messages.getErrorIcon());
                   if (response == 1) {
-                    myModuleModel.myPath2CancelledModelMap.remove(modulePath.getPath());
+                    myModuleModel.myPathToCancelledModule.remove(modulePath.getPath());
                   }
                 }
               });
@@ -344,11 +344,11 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   private Collection<Module> getModulesToWrite() {
     Collection<Module> actual = new ArrayList<Module>();
-    actual.addAll(myModuleModel.myPath2ModelMap.values());
+    actual.addAll(myModuleModel.myPathToModule.values());
 
-    for (String cancelledPath : myModuleModel.myPath2CancelledModelMap.keySet()) {
-      if (!myModuleModel.myPath2ModelMap.containsKey(cancelledPath)) {
-        actual.add(myModuleModel.myPath2CancelledModelMap.get(cancelledPath));
+    for (String cancelledPath : myModuleModel.myPathToCancelledModule.keySet()) {
+      if (!myModuleModel.myPathToModule.containsKey(cancelledPath)) {
+        actual.add(myModuleModel.myPathToCancelledModule.get(cancelledPath));
       }
     }
     return actual;
@@ -399,7 +399,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     final Module module = modifiableModel.newModule(filePath, moduleType);
     modifiableModel.commitAssertingNoCircularDependency();
     return module;
-
   }
 
   @NotNull
@@ -498,12 +497,12 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   class ModuleModelImpl implements ModifiableModuleModel {
-    private Map<String, Module> myPath2ModelMap = new HashMap<String, Module>();
-    private Map<String, Module> myPath2CancelledModelMap = new HashMap<String, Module>();
+    private Map<String, Module> myPathToModule = new HashMap<String, Module>();
+    private Map<String, Module> myPathToCancelledModule = new HashMap<String, Module>();
 
     private List<Module> myModulesToDispose = new ArrayList<Module>();
-    private Map<Module, String> myModulesToNewNamesMap = new HashMap<Module, String>();
-    private Map<String, Module> myNewNamesToModulesMap = new HashMap<String, Module>();
+    private Map<Module, String> myModuleToNewName = new HashMap<Module, String>();
+    private Map<String, Module> myNewNameToModule = new HashMap<String, Module>();
     private boolean myIsWritable;
     private Map<Module, String []> myModuleGroupPath;
 
@@ -512,7 +511,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     ModuleModelImpl(ModuleModelImpl that) {
-      myPath2ModelMap.putAll(that.myPath2ModelMap);
+      myPathToModule.putAll(that.myPathToModule);
       final Map<Module, String[]> groupPath = that.myModuleGroupPath;
       if (groupPath != null){
         myModuleGroupPath = new THashMap<Module, String[]>();
@@ -528,7 +527,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
     @NotNull
     public Module[] getModules() {
-      Collection<Module> modules = myPath2ModelMap.values();
+      Collection<Module> modules = myPathToModule.values();
       return modules.toArray(new Module[modules.size()]);
     }
 
@@ -549,14 +548,14 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       if (oldModule != null) {
         throw new ModuleWithNameAlreadyExists(ProjectBundle.message("module.already.exists.error", newName), newName);
       }
-      final String oldName = myModulesToNewNamesMap.get(module);
-      myModulesToNewNamesMap.put(module, newName);
-      myNewNamesToModulesMap.remove(oldName);
-      myNewNamesToModulesMap.put(newName, module);
+      final String oldName = myModuleToNewName.get(module);
+      myModuleToNewName.put(module, newName);
+      myNewNameToModule.remove(oldName);
+      myNewNameToModule.put(newName, module);
     }
 
     public Module getModuleToBeRenamed(@NotNull String newName) {
-      return myNewNamesToModulesMap.get(newName);
+      return myNewNameToModule.get(newName);
     }
 
     public Module getModuleByNewName(String newName) {
@@ -565,7 +564,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         return moduleToBeRenamed;
       }
       final Module moduleWithOldName = findModuleByName(newName);
-      if (myModulesToNewNamesMap.get(moduleWithOldName) == null) {
+      if (myModuleToNewName.get(moduleWithOldName) == null) {
         return moduleWithOldName;
       }
       else {
@@ -574,7 +573,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     public String getNewName(@NotNull Module module) {
-      return myModulesToNewNamesMap.get(module);
+      return myModuleToNewName.get(module);
     }
 
     @NotNull
@@ -600,7 +599,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     private ModuleImpl getModuleByFilePath(String filePath) {
-      final Collection<Module> modules = myPath2ModelMap.values();
+      final Collection<Module> modules = myPathToModule.values();
       for (Module module : modules) {
         if (filePath.equals(module.getModuleFilePath())) {
           return (ModuleImpl)module;
@@ -663,13 +662,13 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     private void initModule(ModuleImpl module, boolean saveToCancelled) throws LoadCancelledException {
       String path = module.getModuleFilePath();
       try {
-        myPath2ModelMap.put(path, module);
+        myPathToModule.put(path, module);
         module.init();
       }
       catch (LoadCancelledException e) {
-        myPath2ModelMap.remove(path);
+        myPathToModule.remove(path);
         if (saveToCancelled) {
-          myPath2CancelledModelMap.put(path, module);
+          myPathToCancelledModule.put(path, module);
         }
         throw e;
       }
@@ -677,8 +676,8 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
     public void disposeModule(@NotNull Module module) {
       assertWritable();
-      if (myPath2ModelMap.values().contains(module)) {
-        myPath2ModelMap.values().remove(module);
+      if (myPathToModule.values().contains(module)) {
+        myPathToModule.values().remove(module);
         myModulesToDispose.add(module);
       }
       if (myModuleGroupPath != null){
@@ -749,9 +748,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     private void clearRenamingStuff() {
-      myModulesToNewNamesMap.clear();
-      myNewNamesToModulesMap.clear();
-      myNewNamesToModulesMap.clear();
+      myModuleToNewName.clear();
+      myNewNameToModule.clear();
+      myNewNameToModule.clear();
     }
 
     public void dispose() {
@@ -777,25 +776,23 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       if (!myIsWritable) {
         return false;
       }
-      Set<Module> thisModules = new HashSet<Module>(myPath2ModelMap.values());
-      Set<Module> thatModules = new HashSet<Module>(ModuleManagerImpl.this.myModuleModel.myPath2ModelMap.values());
+      Set<Module> thisModules = new HashSet<Module>(myPathToModule.values());
+      Set<Module> thatModules = new HashSet<Module>(ModuleManagerImpl.this.myModuleModel.myPathToModule.values());
       return !thisModules.equals(thatModules) || !Comparing.equal(ModuleManagerImpl.this.myModuleModel.myModuleGroupPath, myModuleGroupPath);
     }
 
     private void disposeModel() {
-      final Collection collection = myPath2ModelMap.values();
+      final Collection collection = myPathToModule.values();
       for (final Object aCollection : collection) {
         ModuleImpl module = (ModuleImpl)aCollection;
         Disposer.dispose(module);
       }
-      myPath2ModelMap.clear();
-      if (myModuleGroupPath != null) {
-        myModuleGroupPath = null;
-      }
+      myPathToModule.clear();
+      myModuleGroupPath = null;
     }
 
     public void projectOpened() {
-      final Collection<Module> collection = myPath2ModelMap.values();
+      final Collection<Module> collection = myPathToModule.values();
       for (final Module aCollection : collection) {
         ModuleImpl module = (ModuleImpl)aCollection;
         module.projectOpened();
@@ -803,7 +800,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     public void projectClosed() {
-      final Collection<Module> collection = myPath2ModelMap.values();
+      final Collection<Module> collection = myPathToModule.values();
       for (final Module aCollection : collection) {
         ModuleImpl module = (ModuleImpl)aCollection;
         module.projectClosed();
@@ -815,7 +812,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     public boolean hasModuleGroups() {
-      return myModuleGroupPath != null && myModuleGroupPath.size() > 0;  
+      return myModuleGroupPath != null && !myModuleGroupPath.isEmpty();
     }
 
     public void setModuleGroupPath(Module module, String[] groupPath) {
@@ -834,8 +831,8 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   private void commitModel(ModuleModelImpl moduleModel, Runnable runnable) {
     myModificationCount++;
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    final Collection<Module> oldModules = myModuleModel.myPath2ModelMap.values();
-    final Collection<Module> newModules = moduleModel.myPath2ModelMap.values();
+    final Collection<Module> oldModules = myModuleModel.myPathToModule.values();
+    final Collection<Module> newModules = moduleModel.myPathToModule.values();
     List<Module> removedModules = new ArrayList<Module>(oldModules);
     removedModules.removeAll(newModules);
     List<Module> addedModules = new ArrayList<Module>(newModules);
@@ -850,7 +847,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
 
       List<Module> neverAddedModules = new ArrayList<Module>(moduleModel.myModulesToDispose);
-      neverAddedModules.removeAll(myModuleModel.myPath2ModelMap.values());
+      neverAddedModules.removeAll(myModuleModel.myPathToModule.values());
       for (final Module neverAddedModule : neverAddedModules) {
         ModuleImpl module = (ModuleImpl)neverAddedModule;
         Disposer.dispose(module);
@@ -875,7 +872,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         fireModuleAdded(addedModule);
         cleanCachedStuff();
       }
-      final Map<Module, String> modulesToNewNamesMap = moduleModel.myModulesToNewNamesMap;
+      final Map<Module, String> modulesToNewNamesMap = moduleModel.myModuleToNewName;
       final Set<Module> modulesToBeRenamed = modulesToNewNamesMap.keySet();
       final List<Module> modules = new ArrayList<Module>();
       for (final Module aModulesToBeRenamed : modulesToBeRenamed) {
