@@ -22,12 +22,8 @@ import org.jetbrains.annotations.Nullable;
 
 class ScopeUtils
 {
-    public static final Class<PsiElement>[] TYPES =
-            new Class[]{PsiCodeBlock.class, PsiForStatement.class};
 
-    private ScopeUtils()
-    {
-    }
+    private ScopeUtils() {}
 
     @Nullable
     public static PsiElement findTighterDeclarationLocation(
@@ -54,17 +50,17 @@ class ScopeUtils
     public static PsiElement getChildWhichContainsElement(
             @NotNull PsiElement ancestor, @NotNull PsiElement descendant)
     {
-        PsiElement element = descendant;
-        while (!element.equals(ancestor))
+        PsiElement child = descendant;
+        PsiElement parent = child.getParent();
+        while (!parent.equals(ancestor))
         {
-            descendant = element;
-            element = descendant.getParent();
-            if (element == null)
-            {
+            child = parent;
+            parent = child.getParent();
+            if (parent == null) {
                 return null;
             }
         }
-        return descendant;
+        return child;
     }
 
     @Nullable
@@ -74,13 +70,15 @@ class ScopeUtils
         for (PsiReference reference : references)
         {
             final PsiElement referenceElement = reference.getElement();
-            final PsiElement parent = getParentOfTypes(referenceElement, TYPES);
+            final PsiElement parent = PsiTreeUtil.getParentOfType(
+                    referenceElement, PsiCodeBlock.class, PsiForStatement.class);
             if (parent != null && commonParent != null &&
                 !commonParent.equals(parent))
             {
                 commonParent =
                 PsiTreeUtil.findCommonParent(commonParent, parent);
-                commonParent = getParentOfTypes(commonParent, TYPES);
+                commonParent = PsiTreeUtil.getParentOfType(commonParent,
+                        PsiCodeBlock.class, PsiForStatement.class);
             }
             else
             {

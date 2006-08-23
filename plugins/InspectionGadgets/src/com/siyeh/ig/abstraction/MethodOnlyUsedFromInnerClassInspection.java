@@ -16,7 +16,6 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -132,7 +131,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
         public boolean process(PsiReference reference) {
             final PsiElement element = reference.getElement();
             final PsiMethod containingMethod =
-                    PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+                    PsiTreeUtil.getParentOfType(element, PsiMethod.class);;
             if (method.equals(containingMethod)) {
                 return true;
             }
@@ -164,13 +163,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
 
         public boolean isOnlyAccessedFromInnerClass() {
             final Query<PsiReference> query = ReferencesSearch.search(method);
-            final ProgressManager progressManager =
-                    ProgressManager.getInstance();
-            progressManager.runProcess(new Runnable() {
-                public void run() {
-                    query.forEach(MethodReferenceFinder.this);
-                }
-            }, null);
+            query.forEach(this);
             return onlyAccessedFromInnerClass;
         }
 

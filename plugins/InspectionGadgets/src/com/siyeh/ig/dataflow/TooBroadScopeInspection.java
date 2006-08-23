@@ -18,6 +18,8 @@ package com.siyeh.ig.dataflow;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -29,12 +31,11 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.find.FindManager;
-import com.intellij.find.FindModel;
+import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -44,13 +45,12 @@ import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.util.Collection;
 
 public class TooBroadScopeInspection extends StatementInspection
 {
-    static final Class[] SKIP_CLASSES =
-            new Class[] {PsiWhiteSpace.class, PsiComment.class};
-    
+
     /** @noinspection PublicField for externalization*/
     public boolean m_allowConstructorAsInitializer = false;
     /** @noinspection PublicField for externalization*/
@@ -109,6 +109,7 @@ public class TooBroadScopeInspection extends StatementInspection
             m_name = name;
         }
 
+        @NotNull
         public String getName()
         {
             return InspectionGadgetsBundle.message(
@@ -123,18 +124,21 @@ public class TooBroadScopeInspection extends StatementInspection
             final PsiVariable variable =
                     (PsiVariable)variableIdentifier.getParent();
             assert variable != null;
-            final PsiManager manager = variable.getManager();
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
+            final Query<PsiReference> query =
+                    ReferencesSearch.search(variable, variable.getUseScope());
+            final Collection<PsiReference> referenceCollection =
+                    query.findAll();
             final PsiReference[] references =
-                    searchHelper.findReferences(
-                            variable, variable.getUseScope(), false);
+                    referenceCollection.toArray(
+                            new PsiReference[referenceCollection.size()]);
             PsiElement commonParent = ScopeUtils.getCommonParent(references);
             assert commonParent != null;
             final PsiExpression initializer = variable.getInitializer();
             if (initializer != null)
             {
                 final PsiElement variableScope =
-                        ScopeUtils.getParentOfTypes(variable, ScopeUtils.TYPES);
+                        PsiTreeUtil.getParentOfType(variable,
+                                PsiCodeBlock.class, PsiForStatement.class);
                 assert variableScope != null;
                 commonParent = ScopeUtils.moveOutOfLoops(
                         commonParent, variableScope);
@@ -146,8 +150,8 @@ public class TooBroadScopeInspection extends StatementInspection
             final PsiReference firstReference = references[0];
             final PsiElement referenceElement = firstReference.getElement();
             final PsiElement firstReferenceScope =
-                    ScopeUtils.getParentOfTypes(referenceElement,
-                                                ScopeUtils.TYPES);
+                    PsiTreeUtil.getParentOfType(referenceElement,
+                            PsiCodeBlock.class, PsiForStatement.class);
             assert firstReferenceScope != null;
             PsiDeclarationStatement newDeclaration;
             if (firstReferenceScope.equals(commonParent))
@@ -309,7 +313,8 @@ public class TooBroadScopeInspection extends StatementInspection
                         forStatement.getInitialization();
                 newDeclaration = (PsiDeclarationStatement)
                         forStatement.addBefore(newDeclaration, initialization);
-                if (initialization != null) {
+                if (initialization != null)
+                {
                     initialization.delete();
                 }
                 return newDeclaration;
@@ -343,20 +348,23 @@ public class TooBroadScopeInspection extends StatementInspection
                 return;
             }
             final PsiElement variableScope =
-                    ScopeUtils.getParentOfTypes(variable, ScopeUtils.TYPES);
+                    PsiTreeUtil.getParentOfType(variable,
+                            PsiCodeBlock.class, PsiForStatement.class);
             if (variableScope == null)
             {
                 return;
             }
-            final PsiManager manager = variable.getManager();
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
-            final PsiReference[] references =
-                    searchHelper.findReferences(variable,
-                                                variable.getUseScope(), false);
-            if (references.length == 0)
+            final Query<PsiReference> query =
+                    ReferencesSearch.search(variable, variable.getUseScope());
+            final Collection<PsiReference> referencesCollection =
+                    query.findAll();
+            final int size = referencesCollection.size();
+            if (size == 0)
             {
                 return;
             }
+            final PsiReference[] references =
+                    referencesCollection.toArray(new PsiReference[size]);
             PsiElement commonParent = ScopeUtils.getCommonParent(references);
             if (commonParent == null)
             {
@@ -436,7 +444,7 @@ public class TooBroadScopeInspection extends StatementInspection
 
                 final PsiElement element =
                         PsiTreeUtil.skipSiblingsBackward(insertionPoint,
-                                SKIP_CLASSES);
+                                PsiWhiteSpace.class, PsiComment.class);
                 if (variable.equals(element))
                 {
                     return;

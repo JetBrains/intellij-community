@@ -108,8 +108,8 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
         private static boolean isInElse(PsiExpression expression,
                                         PsiIfStatement statement){
             final PsiStatement branch = statement.getElseBranch();
-            return branch != null && PsiTreeUtil.isAncestor(branch, expression,
-                    true);
+            return branch != null &&
+                    PsiTreeUtil.isAncestor(branch, expression, true);
         }
 
         private static boolean hasConflictingInstanceOfInConditionalAndBinaryExpressions(
