@@ -226,6 +226,9 @@ public class AssignmentToMethodParameterInspection
             super.visitAssignmentExpression(expression);
             final PsiExpression lhs = expression.getLExpression();
             final PsiParameter parameter = getMethodParameter(lhs);
+            if (parameter == null) {
+                return;
+            }
             if (ignoreTransformationOfOriginalParameter) {
                 final PsiExpression rhs = expression.getRExpression();
                 if (VariableAccessUtils.variableIsUsed(parameter, rhs)) {
@@ -251,7 +254,10 @@ public class AssignmentToMethodParameterInspection
                 return;
             }
             final PsiParameter parameter = getMethodParameter(operand);
-            registerError(parameter);
+            if (parameter == null) {
+                return;
+            }
+            registerError(operand);
         }
 
         public void visitPostfixExpression(
@@ -268,9 +274,13 @@ public class AssignmentToMethodParameterInspection
             }
             final PsiExpression operand = expression.getOperand();
             final PsiParameter parameter = getMethodParameter(operand);
-            registerError(parameter);
+            if (parameter == null) {
+                return;
+            }
+            registerError(operand);
         }
 
+        @Nullable
         private PsiParameter getMethodParameter(PsiExpression expression) {
             if (!(expression instanceof PsiReferenceExpression)) {
                 return null;
