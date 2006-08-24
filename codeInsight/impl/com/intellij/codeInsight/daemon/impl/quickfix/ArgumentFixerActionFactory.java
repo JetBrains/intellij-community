@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -23,7 +24,7 @@ public abstract class ArgumentFixerActionFactory {
   @Nullable
   protected abstract PsiExpression getModifiedArgument(PsiExpression expression, final PsiType toType) throws IncorrectOperationException;
 
-  public void registerCastActions(CandidateInfo[] candidates, PsiCall call, HighlightInfo highlightInfo) {
+  public void registerCastActions(CandidateInfo[] candidates, PsiCall call, HighlightInfo highlightInfo, final TextRange fixRange) {
     if (candidates.length == 0) return;
     List<CandidateInfo> methodCandidates = new ArrayList<CandidateInfo>(Arrays.asList(candidates));
     PsiExpressionList list = call.getArgumentList();
@@ -82,7 +83,7 @@ public abstract class ArgumentFixerActionFactory {
           JavaResolveResult resolveResult = newCall.resolveMethodGenerics();
           if (resolveResult.getElement() != null && resolveResult.isValidResult()) {
             suggestedCasts.add(parameterType.getCanonicalText());
-            QuickFixAction.registerQuickFixAction(highlightInfo, createFix(list, i, parameterType));
+            QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, createFix(list, i, parameterType),null,null);
           }
         }
       }

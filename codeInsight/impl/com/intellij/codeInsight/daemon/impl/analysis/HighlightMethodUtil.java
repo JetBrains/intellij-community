@@ -446,7 +446,9 @@ public class HighlightMethodUtil {
     }
 
     MethodCandidateInfo[] candidates = candidateList.toArray(new MethodCandidateInfo[candidateList.size()]);
-    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, methodCall, highlightInfo);
+    TextRange fixRange = getFixRange(elementToHighlight);
+    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, methodCall, highlightInfo, fixRange);
+    PermuteArgumentsFix.registerFix(highlightInfo, methodCall, fixRange);
     WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), highlightInfo);
     ChangeParameterClassFix.registerQuickFixActions(methodCall, list, highlightInfo);
     return highlightInfo;
@@ -455,16 +457,17 @@ public class HighlightMethodUtil {
   private static void registerMethodCallIntentions(HighlightInfo highlightInfo,
                                                    PsiMethodCallExpression methodCall,
                                                    PsiExpressionList list, PsiResolveHelper resolveHelper) {
-    TextRange range = getFixRange(methodCall);
-    QuickFixAction.registerQuickFixAction(highlightInfo, range, new CreateMethodFromUsageAction(methodCall), null, null);
-    QuickFixAction.registerQuickFixAction(highlightInfo, range, new CreateConstructorFromSuperAction(methodCall), null, null);
-    QuickFixAction.registerQuickFixAction(highlightInfo, range, new CreateConstructorFromThisAction(methodCall), null, null);
-    QuickFixAction.registerQuickFixAction(highlightInfo, range, new CreatePropertyFromUsageAction(methodCall), null, null);
+    TextRange fixRange = getFixRange(methodCall);
+    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateMethodFromUsageAction(methodCall), null, null);
+    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateConstructorFromSuperAction(methodCall), null, null);
+    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateConstructorFromThisAction(methodCall), null, null);
+    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreatePropertyFromUsageAction(methodCall), null, null);
     CandidateInfo[] methodCandidates = resolveHelper.getReferencedMethodCandidates(methodCall, false);
-    CastMethodArgumentFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo);
-    AddTypeArgumentsFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo);
+    CastMethodArgumentFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
+    PermuteArgumentsFix.registerFix(highlightInfo, methodCall, fixRange);
+    AddTypeArgumentsFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     registerMethodAccessLevelIntentions(methodCandidates, methodCall, list, highlightInfo);
-    ChangeMethodSignatureFromUsageFix.registerIntentions(methodCandidates, list, highlightInfo, range);
+    ChangeMethodSignatureFromUsageFix.registerIntentions(methodCandidates, list, highlightInfo, fixRange);
     WrapExpressionFix.registerWrapAction(methodCandidates, list.getExpressions(), highlightInfo);
     ChangeParameterClassFix.registerQuickFixActions(methodCall, list, highlightInfo);
   }
@@ -1054,7 +1057,7 @@ public class HighlightMethodUtil {
         HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, description, tooltip);
         QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallAction(constructorCall), null, null);
         if (classReference != null) {
-          CastConstructorParametersFix.registerCastActions(classReference, constructorCall, info);
+          CastConstructorParametersFix.registerCastActions(classReference, constructorCall, info,getFixRange(list));
         }
         info.navigationShift = +1;
         return info;
@@ -1079,7 +1082,7 @@ public class HighlightMethodUtil {
         HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, description);
         QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallAction(constructorCall), null, null);
         if (classReference != null) {
-          CastConstructorParametersFix.registerCastActions(classReference, constructorCall, info);
+          CastConstructorParametersFix.registerCastActions(classReference, constructorCall, info,getFixRange(list));
         }
         WrapExpressionFix.registerWrapAction(results, list.getExpressions(), info);
         info.navigationShift = +1;
@@ -1105,7 +1108,7 @@ public class HighlightMethodUtil {
           HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, infoElement, description, toolTip);
           QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallAction(constructorCall), null, null);
           if (classReference != null) {
-            CastConstructorParametersFix.registerCastActions(classReference, constructorCall, info);
+            CastConstructorParametersFix.registerCastActions(classReference, constructorCall, info, getFixRange(infoElement));
             ChangeMethodSignatureFromUsageFix.registerIntentions(results, list, info, null);
           }
           info.navigationShift = +1;

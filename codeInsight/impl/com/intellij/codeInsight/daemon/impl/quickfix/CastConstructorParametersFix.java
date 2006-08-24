@@ -11,10 +11,12 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 public class CastConstructorParametersFix {
-  public static void registerCastActions(@NotNull PsiJavaCodeReferenceElement ctrRef, PsiConstructorCall constructorCall, HighlightInfo highlightInfo) {
+  public static void registerCastActions(@NotNull PsiJavaCodeReferenceElement ctrRef, PsiConstructorCall constructorCall, HighlightInfo highlightInfo,
+                                         final TextRange fixRange) {
     JavaResolveResult resolved = ctrRef.advancedResolve(false);
     PsiClass aClass = (PsiClass) resolved.getElement();
     if (aClass == null) return;
@@ -23,6 +25,6 @@ public class CastConstructorParametersFix {
     for (int i = 0; i < candidates.length; i++) {
       candidates[i] = new CandidateInfo(methods[i], resolved.getSubstitutor());
     }
-    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, constructorCall, highlightInfo);
+    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, constructorCall, highlightInfo, fixRange);
   }
 }
