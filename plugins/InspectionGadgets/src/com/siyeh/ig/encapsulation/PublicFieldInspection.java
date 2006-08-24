@@ -19,9 +19,11 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.fixes.EncapsulateVariableFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
@@ -59,9 +61,14 @@ public class PublicFieldInspection extends FieldInspection {
             if (!field.hasModifierProperty(PsiModifier.PUBLIC)) {
                 return;
             }
-            if (field.hasModifierProperty(PsiModifier.STATIC) &&
-                    field.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
+            if (field.hasModifierProperty(PsiModifier.FINAL)) {
+                if (field.hasModifierProperty(PsiModifier.STATIC)) {
+                    return;
+                }
+                final PsiType type = field.getType();
+                if (ClassUtils.isImmutable(type)) {
+                    return;
+                }
             }
             registerFieldError(field);
         }
