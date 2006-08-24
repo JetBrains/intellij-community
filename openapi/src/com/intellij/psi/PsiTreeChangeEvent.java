@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EventObject;
 
@@ -100,6 +101,7 @@ public abstract class PsiTreeChangeEvent extends EventObject {
     return myNewValue;
   }
 
+  @Nullable
   public PsiFile getFile() {
     return myFile;
   }
