@@ -123,4 +123,6 @@ public class DataFlowInspectionTest extends InspectionTestCase {
     // should not crash
   }
   public void testBoxingBoolean() throws Exception { doTest15();}
+
+  public void testCheckedExceptionDominance() throws Exception { doTest15();}
 }

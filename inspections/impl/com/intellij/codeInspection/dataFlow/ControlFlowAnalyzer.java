@@ -689,7 +689,8 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
     int catchesPushCount = 0;
     PsiCatchSection[] sections = statement.getCatchSections();
-    for (PsiCatchSection section : sections) {
+    for (int i = sections.length - 1; i >= 0; i--) {
+      PsiCatchSection section = sections[i];
       PsiCodeBlock catchBlock = section.getCatchBlock();
       PsiParameter parameter = section.getParameter();
       if (parameter != null && catchBlock != null && parameter.getType() instanceof PsiClassType &&
