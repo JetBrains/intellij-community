@@ -348,7 +348,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @throws IOException if file failed to be deleted
    */
   public void delete(Object requestor) throws IOException {
-    LOG.assertTrue(isValid());
+    LOG.assertTrue(isValid(), "Deleting invalid file");
     getFileSystem().deleteFile(requestor, this);
   }
 
