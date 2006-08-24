@@ -44,7 +44,7 @@ public class PermuteArgumentsFix implements IntentionAction {
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     return !project.isDisposed() && myCall.isValid() && myCall.getManager().isInProject(myCall);
-  }
+  }                               
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiCall copy = (PsiCall)myCall.copy();
