@@ -31,12 +31,14 @@ public class PropertyReference extends GenericReference implements PsiPolyVarian
   private final String myKey;
   private final PsiElement myElement;
   @Nullable private final String myBundleName;
+  private boolean mySoft;
 
-  public PropertyReference(String key, final PsiElement element, @Nullable final String bundleName) {
+  public PropertyReference(String key, final PsiElement element, @Nullable final String bundleName, final boolean soft) {
     super(getPropertiesProvider(element.getProject()));
     myKey = key;
     myElement = element;
     myBundleName = bundleName;
+    mySoft = soft;
   }
 
   private static PsiReferenceProvider getPropertiesProvider(final Project project) {
@@ -148,8 +150,12 @@ public class PropertyReference extends GenericReference implements PsiPolyVarian
     }
   }
 
+  protected void setSoft(final boolean soft) {
+    mySoft = soft;
+  }
+
   public boolean isSoft() {
-    return false;
+    return mySoft;
   }
 
   public String getUnresolvedMessagePattern() {

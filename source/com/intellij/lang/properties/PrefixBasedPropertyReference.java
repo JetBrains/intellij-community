@@ -18,12 +18,11 @@ import java.util.Set;
  */
 public class PrefixBasedPropertyReference extends PropertyReference {
   private boolean myPrefixEvaluated;
-  private boolean myDynamic;
   @Nullable private String myKeyPrefix;
   @NonNls private static final String PREFIX_ATTR_NAME = "prefix";
 
   public PrefixBasedPropertyReference(String key, final PsiElement element, @Nullable final String bundleName) {
-    super(key, element, bundleName);
+    super(key, element, bundleName, false);
   }
 
   protected String getKeyText() {
@@ -75,7 +74,7 @@ public class PrefixBasedPropertyReference extends PropertyReference {
               myKeyPrefix = attributeValue;
             }
             else {
-              myDynamic = true;
+              setSoft(true);
             }
           }
           break;
@@ -89,6 +88,6 @@ public class PrefixBasedPropertyReference extends PropertyReference {
 
   public boolean isSoft() {
     getKeyPrefix();
-    return myDynamic;
+    return super.isSoft();
   }
 }

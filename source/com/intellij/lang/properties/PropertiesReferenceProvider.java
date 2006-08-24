@@ -31,6 +31,7 @@ public class PropertiesReferenceProvider implements PsiReferenceProvider {
     Object value = null;
     String bundleName = null;
     boolean propertyRefWithPrefix = false;
+    boolean soft = true;
 
     if (element instanceof PsiLiteralExpression) {
       PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
@@ -39,6 +40,7 @@ public class PropertiesReferenceProvider implements PsiReferenceProvider {
       final Map<String, Object> annotationParams = new HashMap<String, Object>();
       annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
       if (I18nUtil.mustBePropertyKey(literalExpression, annotationParams)) {
+        soft = false;
         final Object resourceBundleName = annotationParams.get(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
         if (resourceBundleName instanceof PsiExpression) {
           PsiExpression expr = (PsiExpression)resourceBundleName;
@@ -62,7 +64,7 @@ public class PropertiesReferenceProvider implements PsiReferenceProvider {
       String text = (String)value;
       PsiReference reference = propertyRefWithPrefix ?
                                new PrefixBasedPropertyReference(text, element, bundleName):
-                               new PropertyReference(text, element, bundleName);
+                               new PropertyReference(text, element, bundleName, soft);
       return new PsiReference[]{reference};
     }
     return PsiReference.EMPTY_ARRAY;
