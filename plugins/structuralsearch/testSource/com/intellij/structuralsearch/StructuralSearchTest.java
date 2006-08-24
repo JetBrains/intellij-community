@@ -1,5 +1,9 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.idea.IdeaTestUtil;
+
+import java.util.Calendar;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Maxim.Mossienko
@@ -1578,17 +1582,21 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       4
     );
 
-    assertEquals(
+    if (IdeaTestUtil.bombExplodes(2006, Calendar.SEPTEMBER, 5, 15, 0, "maxim.mossienko", "next token after tag correctly becomes " +
+                                                                                         "a tag parameter even if located on next line." +
+                                                                                         "Leading asterisks should not be counted as well.")) {
+      assertEquals(
       "XDoclet metadata",
-      findMatchesCount(s83,s84),
-      2
-    );
+        findMatchesCount(s83,s84),
+        2
+      );
 
-    assertEquals(
+      assertEquals(
       "XDoclet metadata 2",
-      findMatchesCount(s83,s84_2),
-      1
-    );
+        findMatchesCount(s83,s84_2),
+        1
+      );
+    }
 
     assertEquals(
       "optional tag value match",
