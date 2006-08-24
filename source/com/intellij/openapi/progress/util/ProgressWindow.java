@@ -17,6 +17,7 @@ import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -24,6 +25,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 
+@SuppressWarnings({"NonStaticInitializer"})
 public class ProgressWindow extends BlockingProgressIndicator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressWindow");
 
@@ -466,7 +468,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
         myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
       }
 
-      myPopup = new DialogWrapper(myParentWindow, true) {
+      myPopup = new DialogWrapper(myParentWindow, false) {
         {
           init();
         }
@@ -475,10 +477,12 @@ public class ProgressWindow extends BlockingProgressIndicator {
           return myPanel;
         }
 
+        @Nullable
         protected JComponent createSouthPanel() {
           return null;
         }
 
+        @Nullable
         protected Border createContentPaneBorder() {
           return null;
         }
