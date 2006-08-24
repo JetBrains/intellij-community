@@ -22,8 +22,6 @@ public class IntentionManagerImpl extends IntentionManager {
   private List<IntentionAction> myActions = new ArrayList<IntentionAction>();
   private IntentionManagerSettings mySettings;
 
-
-
   public IntentionManagerImpl(IntentionManagerSettings intentionManagerSettings) {
     mySettings = intentionManagerSettings;
 
@@ -54,6 +52,9 @@ public class IntentionManagerImpl extends IntentionManager {
 
     registerIntentionAndMetaData(new AddOnDemandStaticImportAction(), CodeInsightBundle.message("intentions.category.imports"));
     registerIntentionAndMetaData(new AddSingleMemberStaticImportAction(), CodeInsightBundle.message("intentions.category.imports"));
+
+    
+    addAction(new EditFoldingOptionsAction());
   }
 
   public void registerIntentionAndMetaData(IntentionAction action, String... category) {
@@ -90,6 +91,7 @@ public class IntentionManagerImpl extends IntentionManager {
   public void disposeComponent(){
   }
 
+  @NotNull
   public String getComponentName(){
     return "IntentionManager";
   }
