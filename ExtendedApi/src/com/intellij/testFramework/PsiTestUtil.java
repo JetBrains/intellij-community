@@ -55,8 +55,7 @@ import java.util.Collection;
     File dir = FileUtil.createTempDirectory("unitTest", null);
     filesToDelete.add(dir);
 
-    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(
-      dir.getCanonicalPath().replace(File.separatorChar, '/'));
+    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
 
     if (rootPath != null) {
       VirtualFile vDir1 = LocalFileSystem.getInstance().findFileByPath(rootPath.replace(File.separatorChar, '/'));
