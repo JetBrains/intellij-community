@@ -249,8 +249,9 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     if (psiElement != null) {
       final IElementType elementType = psiElement.getNode().getElementType();
       final int elementDisplayEnd = physicalToDisplay(psiElement.getStartOffsetInParent() + psiElement.getTextLength());
+      final int elementDisplayStart = physicalToDisplay(psiElement.getStartOffsetInParent());
       if (elementType == XmlTokenType.XML_DATA_CHARACTERS) {
-        if (elementDisplayEnd >= displayEnd) {
+        if (elementDisplayEnd >= displayEnd && elementDisplayStart <= displayStart) {
           int physicalEnd = physicalStart;
           while (physicalEnd < getTextRange().getLength()) {
             if (physicalToDisplay(physicalEnd) == displayEnd) break;

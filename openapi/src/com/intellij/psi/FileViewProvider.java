@@ -6,13 +6,14 @@ package com.intellij.psi;
 import com.intellij.lang.Language;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public interface FileViewProvider extends Cloneable{
+public interface FileViewProvider extends Cloneable, UserDataHolder {
   PsiManager getManager();
 
   @Nullable Document getDocument();

@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.Set;
 
-public class DummyHolderViewProvider implements FileViewProvider{
+public class DummyHolderViewProvider extends UserDataHolderBase implements FileViewProvider{
   private DummyHolder myHolder;
   private PsiManager myManager;
   private final long myModificationStamp;

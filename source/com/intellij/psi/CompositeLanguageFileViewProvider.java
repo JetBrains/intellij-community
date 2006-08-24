@@ -3,6 +3,7 @@ package com.intellij.psi;
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,9 +31,10 @@ import java.util.*;
 
 public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.CompositeLanguageFileViewProvider");
+  public static final Key<Object> UPDATE_IN_PROGRESS = new Key<Object>("UPDATE_IN_PROGRESS");
+  public static final Key<Integer> OUTER_LANGUAGE_MERGE_POINT = new Key<Integer>("OUTER_LANGUAGE_MERGE_POINT");
   private final Map<Language, PsiFile> myRoots = new HashMap<Language, PsiFile>();
   private Set<Language> myRelevantLanguages;
-  private Set<Language> myPrimaryLanguages;
 
   public Set<Language> getRelevantLanguages() {
     if (myRelevantLanguages != null) return myRelevantLanguages;
@@ -250,6 +252,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
             outerElement.setRange(textRange);
 
             if (nextSibiling != null) {
+              outerElement.putUserData(OUTER_LANGUAGE_MERGE_POINT, end - nextSibiling.getTextRange().getLength() - start);
               TreeUtil.remove(((OuterLanguageElement)nextSibiling));
               final OuterLanguageElement next = i.next();
               assert next == nextSibiling;
@@ -363,6 +366,8 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   }
 
   private void doHolderToXmlChanges(final PsiFile psiFile) {
+    putUserData(UPDATE_IN_PROGRESS, Boolean.TRUE);
+
     boolean removeRoot = false;
     boolean keepTree = psiFile.getLanguage().equals(StdLanguages.HTML);
     if (keepTree) {
@@ -395,9 +400,9 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
       for (final Pair<OuterLanguageElement, Pair<StringBuffer, StringBuffer>> pair : javaFragments) {
         final XmlText followingText = pair.getFirst().getFollowingText();
-        final String buffer = pair.getSecond().getFirst().toString();
-        if (followingText != null && followingText.isValid() && !followingText.getText().equals(buffer)) {
-          followingText.setValue(pair.getSecond().getSecond().toString());
+        final String newText = pair.getSecond().getSecond().toString();
+        if (followingText != null && followingText.isValid() && !followingText.getValue().equals(newText)) {
+          followingText.setValue(newText);
         }
       }
     }
@@ -411,6 +416,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
         set.remove(psiFile.getLanguage());
         updateOuterLanguageElements(set);
       }
+      putUserData(UPDATE_IN_PROGRESS, null);
     }
   }
 

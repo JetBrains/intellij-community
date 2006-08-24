@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.ReplaceChangeInfo;
 import com.intellij.pom.tree.events.TreeChange;
+import com.intellij.psi.CompositeLanguageFileViewProvider;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -334,12 +335,15 @@ public class TreeChangeImpl implements TreeChange {
 
   private int getNewOffset(ASTNode node){
     ASTNode current = myParent.getFirstChildNode();
-    final Iterator<Pair<ASTNode, Integer>> iterator = myOffsets.iterator();
-    Pair<ASTNode, Integer> currentChange = iterator.hasNext() ? iterator.next() : null;
+    final Iterator<Pair<ASTNode, Integer>> i = myOffsets.iterator();
+    Pair<ASTNode, Integer> currentChange = i.hasNext() ? i.next() : null;
     int currentOffsetInNewTree = 0;
     int currentOldOffset = 0;
-    while(current != null){
+    boolean inMergedOLE = false;
+
+    while(current != null) {
       boolean counted = false;
+
       while(currentChange != null && currentOldOffset == currentChange.getSecond().intValue()){
         if(currentChange.getFirst() == node) return currentOffsetInNewTree;
         if(current == currentChange.getFirst()){
@@ -350,16 +354,36 @@ public class TreeChangeImpl implements TreeChange {
         }
         final ChangeInfo changeInfo = myChanges.get(currentChange.getFirst());
         currentOldOffset += changeInfo.getOldLength();
-        currentChange = iterator.hasNext() ? iterator.next() : null;
+        currentChange = i.hasNext() ? i.next() : null;
       }
+
       if(current == null) break;
+
       if(!counted){
-        final int textLength = current.getTextLength();
-        currentOldOffset += textLength;
-        current = current.getTreeNext();
-        currentOffsetInNewTree += textLength;
+        if (current.getUserData(CompositeLanguageFileViewProvider.OUTER_LANGUAGE_MERGE_POINT) != null) {
+          final int textLength;
+          if (!inMergedOLE) {
+            textLength = current.getUserData(CompositeLanguageFileViewProvider.OUTER_LANGUAGE_MERGE_POINT);
+            inMergedOLE = true;
+          }
+          else {
+            textLength = current.getTextLength() - current.getUserData(CompositeLanguageFileViewProvider.OUTER_LANGUAGE_MERGE_POINT);
+            inMergedOLE = false;
+            current = current.getTreeNext();
+          }
+
+          currentOldOffset += textLength;
+          currentOffsetInNewTree += textLength;
+        }
+        else {
+          final int textLength = current.getTextLength();
+          currentOldOffset += textLength;
+          current = current.getTreeNext();
+          currentOffsetInNewTree += textLength;
+        }
       }
     }
+    
     return currentOffsetInNewTree;
   }
 
