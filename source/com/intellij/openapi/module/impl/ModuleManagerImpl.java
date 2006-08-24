@@ -497,7 +497,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   class ModuleModelImpl implements ModifiableModuleModel {
-    private Map<String, Module> myPathToModule = new HashMap<String, Module>();
+    private Map<String, Module> myPathToModule = new LinkedHashMap<String, Module>();
     private Map<String, Module> myPathToCancelledModule = new HashMap<String, Module>();
 
     private List<Module> myModulesToDispose = new ArrayList<Module>();
