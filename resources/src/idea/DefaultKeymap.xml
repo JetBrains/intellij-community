@@ -108,7 +108,6 @@
     <action id="GotoDeclaration">
       <keyboard-shortcut first-keystroke="control B"/>
       <mouse-shortcut keystroke="ctrl button1"/>
-      <mouse-shortcut keystroke="button2"/>
     </action>
     <action id="GotoDefinition">
       <keyboard-shortcut first-keystroke="control alt D"/>
@@ -1254,7 +1253,6 @@
       <keyboard-shortcut first-keystroke="ESCAPE" second-keystroke="PERIOD"/>
       <keyboard-shortcut first-keystroke="alt PERIOD"/>
       <mouse-shortcut keystroke="ctrl button1"/>
-      <mouse-shortcut keystroke="button2"/>
     </action>
     <action id="MethodUp">
       <keyboard-shortcut first-keystroke="alt UP"/>

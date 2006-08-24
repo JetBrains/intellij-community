@@ -29,7 +29,7 @@ public class PasteFromX11Action extends EditorAction {
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    if (editor == null || !SystemInfo.isUnix || SystemInfo.isMac) {
+    if (editor == null || !SystemInfo.X11PasteEnabledSystem) {
       presentation.setEnabled(false);
     }
     else {

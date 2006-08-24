@@ -201,6 +201,7 @@ public interface IdeActions {
 
   String ACTION_GOTO_BACK    = "Back";
   String ACTION_GOTO_FORWARD = "Forward";
+  String ACTION_GOTO_DECLARATION = "GotoDeclaration";
 
   String ACTION_COMMANDER_SYNC_VIEWS = "CommanderSyncViews";
   String ACTION_COMMANDER_SWAP_PANELS = "CommanderSwapPanels";
