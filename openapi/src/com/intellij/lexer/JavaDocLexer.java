@@ -125,9 +125,9 @@ public class JavaDocLexer extends MergingLexerAdapter {
           myTokenEndOffset++;
         }
 
+        myInLeadingSpace = true;
         if (myBufferIndex < myTokenEndOffset) {
           myTokenType = JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS;
-          myInLeadingSpace = true;
           return;
         }
       }
@@ -140,15 +140,16 @@ public class JavaDocLexer extends MergingLexerAdapter {
           myTokenEndOffset++;
         }
 
+        final int state = myFlex.yystate();
+        if (state == _JavaDocLexer.COMMENT_DATA) {
+          myFlex.yybegin(_JavaDocLexer.COMMENT_DATA_START);
+        }
+
         if (myBufferIndex < myTokenEndOffset) {
-          final int state = myFlex.yystate();
           myTokenType = lf || state == _JavaDocLexer.PARAM_TAG_SPACE || state == _JavaDocLexer.TAG_DOC_SPACE || state == _JavaDocLexer.INLINE_TAG_NAME || state == _JavaDocLexer.DOC_TAG_VALUE_IN_PAREN
                         ? JavaDocTokenType.DOC_SPACE
                         : JavaDocTokenType.DOC_COMMENT_DATA;
           
-          if (state == _JavaDocLexer.COMMENT_DATA) {
-            myFlex.yybegin(_JavaDocLexer.COMMENT_DATA_START);
-          }
           return;
         }
       }
