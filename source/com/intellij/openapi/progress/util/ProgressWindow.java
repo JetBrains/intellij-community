@@ -229,6 +229,10 @@ public class ProgressWindow extends BlockingProgressIndicator {
     }
   }
 
+  public String getTitle() {
+    return myTitle;
+  }
+
   protected static int getPercentage(double fraction) {
     return (int)(fraction * 99 + 0.5);
   }

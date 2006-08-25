@@ -60,7 +60,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
       super.setText(text);
     }
     else {
-      myStatusBar.setInfo(text);
+      myStatusBar.setInfo(getTitle() + ": " + text);
     }
   }
 
