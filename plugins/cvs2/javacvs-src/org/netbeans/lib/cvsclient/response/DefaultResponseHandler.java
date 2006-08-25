@@ -246,7 +246,7 @@ public final class DefaultResponseHandler extends AbstractResponseHandler {
     final ILocalFileWriter localFileWriter = clientEnvironment.getLocalFileWriter();
     localFileWriter.setNextFileDate(responseServices.getNextFileDate());
     // TODO: really???
-    localFileWriter.setNextFileMode(responseServices.getNextFileMode());
+    localFileWriter.setNextFileMode(mode);
 
     final boolean binary = entry.isBinary();
     final boolean readOnly = FileUtils.isReadOnlyMode(mode);
