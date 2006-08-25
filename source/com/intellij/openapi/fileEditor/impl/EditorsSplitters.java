@@ -66,8 +66,13 @@ public final class EditorsSplitters extends JPanel {
     myFocusWatcher.install(this);
   }
 
-  public void stopListeningFocus() {
+  private void stopListeningFocus() {
     myFocusWatcher.deinstall(this);
+  }
+
+  public void dispose() {
+    myIconUpdaterAlarm.cancelAllRequests();
+    stopListeningFocus();
   }
 
   @Nullable
@@ -280,11 +285,9 @@ public final class EditorsSplitters extends JPanel {
   }
 
   private void updateFileIconImmediately(final VirtualFile file) {
-    final EditorWindow[] windows = findWindows(file);
-    if (windows != null) {
-      for (EditorWindow window : windows) {
-        window.updateFileIcon(file);
-      }
+    final Collection<EditorWindow> windows = findWindows(file);
+    for (EditorWindow window : windows) {
+      window.updateFileIcon(file);
     }
   }
 
@@ -304,13 +307,11 @@ public final class EditorsSplitters extends JPanel {
   }
 
   public void updateFileColor(@NotNull final VirtualFile file) {
-    final EditorWindow[] windows = findWindows(file);
-    if (windows != null) {
-      for (final EditorWindow window : windows) {
-        final int index = window.findEditorIndex(window.findFileComposite(file));
-        LOG.assertTrue(index != -1);
-        window.setForegroundAt(index, getManager().getFileColor(file));
-      }
+    final Collection<EditorWindow> windows = findWindows(file);
+    for (final EditorWindow window : windows) {
+      final int index = window.findEditorIndex(window.findFileComposite(file));
+      LOG.assertTrue(index != -1);
+      window.setForegroundAt(index, getManager().getFileColor(file));
     }
   }
 
@@ -357,20 +358,22 @@ public final class EditorsSplitters extends JPanel {
   }
 
   public EditorWindow getOrCreateCurrentWindow(final VirtualFile file) {
-    final EditorWindow[] windows = findWindows(file);
+    final List<EditorWindow> windows = findWindows(file);
     if (getCurrentWindow() == null) {
       final Iterator<EditorWindow> iterator = myWindows.iterator();
-      if (windows != null && windows.length > 0) {
-        setCurrentWindow(windows[0], false);
+      if (!windows.isEmpty()) {
+        setCurrentWindow(windows.get(0), false);
       }
       else if (iterator.hasNext()) {
         setCurrentWindow(iterator.next(), false);
-      } else {
+      }
+      else {
         createCurrentWindow();
       }
-    } else if (windows != null && windows.length > 0){
-      if (ArrayUtil.find(windows, getCurrentWindow()) == -1){
-        setCurrentWindow(windows[0], false);
+    }
+    else if (!windows.isEmpty()) {
+      if (!windows.contains(getCurrentWindow())) {
+        setCurrentWindow(windows.get(0), false);
       }
     }
     return getCurrentWindow();
@@ -452,7 +455,8 @@ public final class EditorsSplitters extends JPanel {
 
   final Set<EditorWindow> myWindows = new ArrayListSet<EditorWindow>();
 
-  public EditorWithProviderComposite[] findEditorComposites(final VirtualFile file) {
+  @NotNull
+  public List<EditorWithProviderComposite> findEditorComposites(final VirtualFile file) {
     final ArrayList<EditorWithProviderComposite> res = new ArrayList<EditorWithProviderComposite>();
     for (final EditorWindow window : myWindows) {
       final EditorWithProviderComposite fileComposite = window.findFileComposite(file);
@@ -460,27 +464,18 @@ public final class EditorsSplitters extends JPanel {
         res.add(fileComposite);
       }
     }
-    return res.size() == 0 ? null : res.toArray(new EditorWithProviderComposite[res.size()]);
+    return res;
   }
 
-  public EditorWindow[] findWindows(final VirtualFile file) {
+  @NotNull
+  public List<EditorWindow> findWindows(final VirtualFile file) {
     final ArrayList<EditorWindow> res = new ArrayList<EditorWindow>();
     for (final EditorWindow window : myWindows) {
       if (window.findFileComposite(file) != null) {
         res.add(window);
       }
     }
-    return res.size() == 0 ? null : res.toArray(new EditorWindow[res.size()]);
-  }
-
-  public EditorWindow[] findWindowsWithCurrent(final VirtualFile file) {
-    final ArrayList<EditorWindow> res = new ArrayList<EditorWindow>();
-    for (final EditorWindow window : myWindows) {
-      if (window.getSelectedFile() == file) {
-        res.add(window);
-      }
-    }
-    return res.size() == 0 ? null : res.toArray(new EditorWindow[res.size()]);
+    return res;
   }
 
   public EditorWindow [] getWindows() {

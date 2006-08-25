@@ -100,8 +100,8 @@ public class EditorWindow {
   public void closeFile(final VirtualFile file, final boolean unsplit) {
     getManager().mySplitters.myInsideChange++;
     try {
-      final EditorWithProviderComposite[] editors = getManager().getEditorComposites(file);
-      LOG.assertTrue(editors != null);
+      final List<EditorWithProviderComposite> editors = getManager().getEditorComposites(file);
+      LOG.assertTrue(!editors.isEmpty());
       final EditorWithProviderComposite editor = findFileComposite(file);
       getManager().disposeComposite(editor);
 
