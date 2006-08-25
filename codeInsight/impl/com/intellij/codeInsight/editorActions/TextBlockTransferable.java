@@ -14,6 +14,7 @@ import java.io.StringReader;
 class TextBlockTransferable implements Transferable {
   private final ReferenceData[] myReferenceDatas;
   private final FoldingData[] myFoldingData;
+  private final RawText myRawText;
   private final String myText;
 
   public static class ReferenceData implements Cloneable, Serializable {
@@ -30,6 +31,25 @@ class TextBlockTransferable implements Transferable {
       this.endOffset = endOffset;
       this.qClassName = qClassName;
       this.staticMemberName = staticMemberDescriptor;
+    }
+
+    public Object clone() {
+      try{
+        return super.clone();
+      }
+      catch(CloneNotSupportedException e){
+        throw new RuntimeException();
+      }
+    }
+  }
+
+  public static class RawText implements Cloneable, Serializable {
+    public static final @NonNls DataFlavor FLAVOR = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + RawText.class.getName(),
+                                                                   "Raw Text");
+    public String rawText;
+
+    public RawText(final String rawText) {
+      this.rawText = rawText;
     }
 
     public Object clone() {
@@ -66,16 +86,18 @@ class TextBlockTransferable implements Transferable {
     }
   }
 
-  public TextBlockTransferable(String text, ReferenceData[] referenceDatas, FoldingData[] foldingData) {
+  public TextBlockTransferable(String text, ReferenceData[] referenceDatas, FoldingData[] foldingData, RawText rawText) {
     myText = text;
     myReferenceDatas = referenceDatas;
     myFoldingData = foldingData;
+    myRawText = rawText;
   }
 
   public DataFlavor[] getTransferDataFlavors() {
     return new DataFlavor[]{
       DataFlavor.stringFlavor,
       DataFlavor.plainTextFlavor,
+      RawText.FLAVOR,
       ReferenceData.FLAVOR,
       FoldingData.FLAVOR
     };
@@ -97,6 +119,9 @@ class TextBlockTransferable implements Transferable {
     }
     else if (FoldingData.FLAVOR.equals(flavor)){
       return myFoldingData;
+    }
+    else if (RawText.FLAVOR.equals(flavor)) {
+      return myRawText;
     }
     else if (DataFlavor.stringFlavor.equals(flavor)) {
       return myText;

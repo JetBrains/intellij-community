@@ -170,7 +170,16 @@ public class PasteHandler extends EditorActionHandler {
         );
       }
 
-      String newText = escapeIfStringLiteral(project, file, editor, text);
+      TextBlockTransferable.RawText rawText = null;
+      try {
+        rawText = (TextBlockTransferable.RawText)content.getTransferData(TextBlockTransferable.RawText.FLAVOR);
+      }
+      catch (UnsupportedFlavorException e) {
+      }
+      catch (IOException e) {
+      }
+
+      String newText = escapeIfStringLiteral(project, file, editor, text, rawText);
       int indentOptions = text.equals(newText) ? settings.REFORMAT_ON_PASTE : CodeInsightSettings.REFORMAT_BLOCK;
       text = newText;
 
@@ -261,8 +270,8 @@ public class PasteHandler extends EditorActionHandler {
   private static String escapeIfStringLiteral(final Project project,
                                               final PsiFile file,
                                               final Editor editor,
-                                              String text) {
-    if ("\n".equals(text)) return text;
+                                              String text, final TextBlockTransferable.RawText rawText) {
+  //  if ("\n".equals(text)) return text;
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
     int caretOffset = editor.getCaretModel().getOffset();
@@ -270,6 +279,8 @@ public class PasteHandler extends EditorActionHandler {
     if (elementAtCaret instanceof PsiJavaToken &&
         ((PsiJavaToken)elementAtCaret).getTokenType() == JavaTokenType.STRING_LITERAL &&
         caretOffset > elementAtCaret.getTextOffset()) {
+      if (rawText != null && rawText.rawText != null) return rawText.rawText; // Copied from the string literal. Copy as is.
+
       StringBuffer buffer = new StringBuffer(text.length());
       CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
       @NonNls String breaker = codeStyleSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE ? "\\n\"\n+ \"" : "\\n\" +\n\"";

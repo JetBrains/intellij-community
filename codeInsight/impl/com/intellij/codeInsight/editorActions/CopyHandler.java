@@ -14,8 +14,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,20 +60,17 @@ public class CopyHandler extends EditorActionHandler {
     final TextBlockTransferable.ReferenceData[] referenceData = collectReferencesInBlock(file, startOffsets, endOffsets);
     final TextBlockTransferable.FoldingData[] foldingData = collectFoldingsInBlock(editor, startOffsets, endOffsets);
 
-    String text = selectionModel.getSelectedText();
-    text = TextBlockTransferable.convertLineSeparators(text, "\n", referenceData, foldingData);
+    String rawText = TextBlockTransferable.convertLineSeparators(selectionModel.getSelectedText(), "\n", referenceData, foldingData);
+    String escapedText = unescapeIfInsideLiteral(file, startOffsets, endOffsets, rawText);
 
-    text = unescapeIfInsideLiteral(file, startOffsets, endOffsets, text);
-
-    //System.out.println("(copy block) " + referenceData[0].length + " references collected");
-    final Transferable transferable = referenceData.length > 0 || foldingData.length > 0
-                                      ? (Transferable)new TextBlockTransferable(text, referenceData, foldingData)
-                                      : new StringSelection(text);
-
+    final Transferable transferable = new TextBlockTransferable(escapedText != null ? escapedText : rawText,
+                                                                referenceData, foldingData,
+                                                                escapedText != null ? new TextBlockTransferable.RawText(rawText) : null);
     CopyPasteManager.getInstance().setContents(transferable);
   }
 
-  private String unescapeIfInsideLiteral(final PsiFile file, final int[] startOffsets,
+  @Nullable
+  private static String unescapeIfInsideLiteral(final PsiFile file, final int[] startOffsets,
                                          final int[] endOffsets, String text) {
     boolean isLiteral = true;
     for (int i = 0; i < startOffsets.length && isLiteral; i++) {
@@ -86,14 +83,13 @@ public class CopyHandler extends EditorActionHandler {
         isLiteral = false;
       }
     }
-    if (isLiteral) {
-      text = StringUtil.unescapeStringCharacters(text);
-    }
-    return text;
+
+    return isLiteral ? StringUtil.unescapeStringCharacters(text) : null;
   }
 
-  private TextBlockTransferable.ReferenceData[] collectReferencesInBlock
-    (PsiFile file, final int[] startOffsets, final int[] endOffsets) {
+  private static TextBlockTransferable.ReferenceData[] collectReferencesInBlock(PsiFile file,
+                                                                                final int[] startOffsets,
+                                                                                final int[] endOffsets) {
     if (file instanceof PsiCompiledElement) {
       file = (PsiFile) ((PsiCompiledElement) file).getMirror();
     }
@@ -133,7 +129,7 @@ public class CopyHandler extends EditorActionHandler {
     return array.toArray(new TextBlockTransferable.ReferenceData[array.size()]);
   }
 
-  private void addReferenceData(final PsiElement element,
+  private static void addReferenceData(final PsiElement element,
                                 final ArrayList<TextBlockTransferable.ReferenceData> array,
                                 final int startOffset,
                                 final String qClassName, final String staticMemberName) {
@@ -145,9 +141,9 @@ public class CopyHandler extends EditorActionHandler {
             qClassName, staticMemberName));
   }
 
-  private TextBlockTransferable.FoldingData[] collectFoldingsInBlock(final Editor editor,
-                                                                     final int[] startOffsets,
-                                                                     final int[] endOffsets){
+  private static TextBlockTransferable.FoldingData[] collectFoldingsInBlock(final Editor editor,
+                                                                            final int[] startOffsets,
+                                                                            final int[] endOffsets){
     // might be slow
     //CodeFoldingManager.getInstance(file.getManager().getProject()).updateFoldRegions(editor);
 
