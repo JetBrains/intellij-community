@@ -171,9 +171,10 @@ public class SmartEnterProcessor {
     atCaret = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
     for (EnterProcessor processor : ourEnterProcessors) {
       if(atCaret == null){
-        LOG.error("Can't restore element at caret after enter processor execution!");
+        // Can't restore element at caret after enter processor execution!
         break;
       }
+
       if (processor.doEnter(myEditor, atCaret, isModified())) return;
     }
 
