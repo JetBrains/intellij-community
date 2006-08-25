@@ -580,7 +580,9 @@ public class RunContentManagerImpl implements RunContentManager {
 
       public void run() {
         myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        myProgressIndicator.setText(ExecutionBundle.message("waiting.for.vm.detach.progress.text"));
+        if (myProgressIndicator != null) {
+          myProgressIndicator.setText(ExecutionBundle.message("waiting.for.vm.detach.progress.text"));
+        }
 
         myWaitThread.start();
         myCancelListener.start();
