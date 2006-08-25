@@ -3,10 +3,11 @@ package com.intellij.lang.properties;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
@@ -15,6 +16,7 @@ import java.util.List;
  */
 public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implements PsiPolyVariantReference {
   private String myBundleName;
+  @NonNls private static final String PROPERTIES = ".properties";
 
   public ResourceBundleReference(final PsiElement element) {
     super(element);
@@ -45,10 +47,32 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
     return myBundleName;
   }
 
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    if (newElementName.endsWith(PROPERTIES)) {
+      newElementName = newElementName.substring(0, newElementName.lastIndexOf(PROPERTIES));
+    }
+
+    final int index = myBundleName.lastIndexOf('.');
+    if (index != -1) {
+      newElementName = myBundleName.substring(0, index) + "." + newElementName;
+    }
+
+    return super.handleElementRename(newElementName);
+  }
+
+  public PsiElement bindToElement(final PsiElement element) throws IncorrectOperationException {
+    if (!(element instanceof PropertiesFile)) {
+      throw new IncorrectOperationException();
+    }
+    final String name = PropertiesUtil.getFullName((PropertiesFile)element);
+    return super.handleElementRename(name);
+  }
+
+
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PropertiesFile) {
-      final VirtualFile virtualFile = ((PropertiesFile)element).getVirtualFile();
-      if (virtualFile != null && PropertiesUtil.getBaseName(virtualFile).equals(myBundleName)) {
+      final String name = PropertiesUtil.getFullName((PropertiesFile)element);
+      if (name != null && name.equals(myBundleName)) {
         return true;
       }
     }

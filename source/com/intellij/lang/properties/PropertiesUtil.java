@@ -9,6 +9,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiPackage;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +68,23 @@ public class PropertiesUtil {
     }
 
     return baseName;
+  }
+
+  @Nullable
+  public static String getFullName(PropertiesFile psiFile) {
+    PsiDirectory directory = (PsiDirectory)psiFile.getParent();
+    PsiPackage pkg = directory.getPackage();
+    if (pkg == null) {
+      return null;
+    }
+    StringBuilder qName = new StringBuilder(pkg.getQualifiedName());
+      if (qName.length() > 0) {
+        qName.append(".");
+      }
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
+    assert virtualFile != null;
+    qName.append(PropertiesUtil.getBaseName(virtualFile));
+    return qName.toString();
   }
 
   @NotNull

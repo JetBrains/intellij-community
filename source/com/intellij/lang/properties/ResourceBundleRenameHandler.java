@@ -6,9 +6,8 @@ package com.intellij.lang.properties;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
@@ -18,12 +17,15 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.codeInsight.CodeInsightUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
+
+import org.jetbrains.annotations.Nullable;
 
 public class ResourceBundleRenameHandler implements RenameHandler {
   public static final RenameHandler INSTANCE = new ResourceBundleRenameHandler();
@@ -42,6 +44,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
     ResourceBundle resourceBundle = getResourceBundleFromDataContext(dataContext);
 
+    assert resourceBundle != null;
     Messages.showInputDialog(project,
                              PropertiesBundle.message("rename.bundle.enter.new.resource.bundle.base.name.prompt.text"),
                              PropertiesBundle.message("rename.resource.bundle.dialog.title"),
@@ -53,10 +56,24 @@ public class ResourceBundleRenameHandler implements RenameHandler {
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
     invoke(project, null, null, dataContext);
   }
+
+  @Nullable
   private static ResourceBundle getResourceBundleFromDataContext(DataContext dataContext) {
     VirtualFile virtualFile = (VirtualFile)dataContext.getData(DataConstantsEx.VIRTUAL_FILE);
-    if (!(virtualFile instanceof ResourceBundleAsVirtualFile)) return null;
-    return ((ResourceBundleAsVirtualFile)virtualFile).getResourceBundle();
+    if (virtualFile == null) {
+      return null;
+    }
+    if (virtualFile instanceof ResourceBundleAsVirtualFile) {
+      return ((ResourceBundleAsVirtualFile)virtualFile).getResourceBundle();
+    }
+    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    if (project != null) {
+      final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+      if (psiFile instanceof PropertiesFile) {
+        return ((PropertiesFile)psiFile).getResourceBundle();
+      }
+    }
+    return null;
   }
 
   private static class MyInputValidator implements InputValidator {
@@ -81,39 +98,17 @@ public class ResourceBundleRenameHandler implements RenameHandler {
         if (!CodeInsightUtil.prepareFileForWrite(propertiesFile)) return false;
       }
 
+      final RenameProcessor renameProcessor = new RenameProcessor(myProject, null);
+      String baseName = myResourceBundle.getBaseName();
+      for (PropertiesFile propertiesFile : propertiesFiles) {
+        final VirtualFile virtualFile = propertiesFile.getVirtualFile();
+        final String newName = inputString + virtualFile.getNameWithoutExtension().substring(baseName.length()) + "." + virtualFile
+          .getExtension();
+        renameProcessor.addElement(propertiesFile,  newName);
+      }
+      renameProcessor.doRun();
       final Ref<Boolean> success = Ref.create(Boolean.TRUE);
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-
-              String baseName = myResourceBundle.getBaseName();
-              for (PropertiesFile propertiesFile : propertiesFiles) {
-                final VirtualFile virtualFile = propertiesFile.getVirtualFile();
-                final String newName = inputString + virtualFile.getNameWithoutExtension().substring(baseName.length()) + "." + virtualFile
-                  .getExtension();
-                try {
-                  virtualFile.rename(this, newName);
-                }
-                catch (final IOException e) {
-                  ApplicationManager.getApplication().invokeLater(new Runnable() {
-                    public void run() {
-                      String path = FileUtil.toSystemDependentName(virtualFile.getPath());
-                      Messages.showErrorDialog(myProject,
-                                               PropertiesBundle.message("error.renaming.file.to.file.with.error.error.message", path,
-                                                                       newName, e.getLocalizedMessage()),
-                                               PropertiesBundle.message("rename.resource.bundle.dialog.title"));
-                    }
-                  });
-                  success.set(Boolean.FALSE);
-                  return;
-                }
-              }
-            }
-          });
-        }
-      }, PropertiesBundle.message("renaming.resource.bundle.0", myResourceBundle.getBaseName()), null);
-      return success.get().booleanValue();
+      return true;
     }
   }
 }
