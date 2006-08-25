@@ -89,6 +89,8 @@ class IntentionUsagePanel extends JPanel{
   }
 
   private void startBlinking(final List<RangeMarker> spotMarkers, final boolean show) {
+    if (ApplicationManager.getApplication().isDisposed()) return;
+
     MarkupModel markupModel = myEditor.getMarkupModel();
     if (show) {
       TextAttributes attr = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES);
