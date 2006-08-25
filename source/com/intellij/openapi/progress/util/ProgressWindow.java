@@ -11,12 +11,14 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.BlockBorder;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -472,26 +474,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
         myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
       }
 
-      myPopup = new DialogWrapper(myParentWindow, false) {
-        {
-          init();
-        }
-
-        protected JComponent createCenterPanel() {
-          return myPanel;
-        }
-
-        @Nullable
-        protected JComponent createSouthPanel() {
-          return null;
-        }
-
-        @Nullable
-        protected Border createContentPaneBorder() {
-          return null;
-        }
-      };
-
+      myPopup = myParentWindow.isShowing() ? new MyDialogWrapper(myParentWindow) : new MyDialogWrapper(myProject);
       myPopup.setUndecorated(true);
 
       SwingUtilities.invokeLater(new Runnable() {
@@ -505,6 +488,40 @@ public class ProgressWindow extends BlockingProgressIndicator {
 
     public void setTitle(final String title) {
 
+    }
+
+    private class MyDialogWrapper extends DialogWrapper {
+      public MyDialogWrapper(Project project) {
+        super(project, false);
+        init();
+      }
+
+      public MyDialogWrapper(Component parent) {
+        super(parent, false);
+        init();
+      }
+
+      protected void init() {
+        super.init();
+        setUndecorated(true);
+        if (!SystemInfo.isMac) {
+          myPanel.setBorder(new BlockBorder());
+        }
+      }
+
+      protected JComponent createCenterPanel() {
+        return myPanel;
+      }
+
+      @Nullable
+      protected JComponent createSouthPanel() {
+        return null;
+      }
+
+      @Nullable
+        protected Border createContentPaneBorder() {
+        return null;
+      }
     }
   }
 
