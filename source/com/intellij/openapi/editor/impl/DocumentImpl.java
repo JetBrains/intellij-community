@@ -614,7 +614,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       return myMarkupModel;
     }
 
-    final DocumentMarkupModelManager documentMarkupModelManager = DocumentMarkupModelManager.getInstance(project);
+    final DocumentMarkupModelManager documentMarkupModelManager = project.isDisposed() ? null : DocumentMarkupModelManager.getInstance(project);
     if (documentMarkupModelManager == null || documentMarkupModelManager.isDisposed()) {
       return new EmptyMarkupModel(this);
     }
