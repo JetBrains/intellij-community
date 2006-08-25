@@ -155,6 +155,13 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                     AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, VcsBundle.message("message.title.vcs.update.errors",
                                                                                                        getCompleteActionName(context)));
                   }
+                  else {
+                    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+                    if (indicator != null) {
+                      indicator.setText(VcsBundle.message("progress.text.updating.done"));
+                    }
+                  }
+                  
                   if (updatedFiles.isEmpty() && vcsExceptions.isEmpty()) {
                     Messages.showMessageDialog(getAllFilesAreUpToDateMessage(roots),
                                                getCompleteActionName(context),
