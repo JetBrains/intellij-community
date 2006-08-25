@@ -26,12 +26,20 @@ import java.util.Map;
  * @author cdr
  */
 public class PropertiesReferenceProvider implements PsiReferenceProvider {
+
+  private final boolean myDefaultSoft;
+
+
+  public PropertiesReferenceProvider(final boolean defaultSoft) {
+    myDefaultSoft = defaultSoft;
+  }
+
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
     Object value = null;
     String bundleName = null;
     boolean propertyRefWithPrefix = false;
-    boolean soft = true;
+    boolean soft = myDefaultSoft;
 
     if (element instanceof PsiLiteralExpression) {
       PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;

@@ -66,7 +66,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
 
   public void projectOpened() {
     final ReferenceProvidersRegistry registry = ReferenceProvidersRegistry.getInstance(myProject);
-    final PsiReferenceProvider referenceProvider = new PropertiesReferenceProvider();
+    final PsiReferenceProvider referenceProvider = new PropertiesReferenceProvider(true);
     registry.registerReferenceProvider(PsiLiteralExpression.class, referenceProvider);
     registry.registerReferenceProvider(new ElementFilter() {
       public boolean isAcceptable(Object element, PsiElement context) {

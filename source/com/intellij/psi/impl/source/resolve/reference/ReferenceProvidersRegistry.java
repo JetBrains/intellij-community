@@ -91,7 +91,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     myReferenceTypeToProviderMap.put(PATH_REFERENCES_PROVIDER, new JspxIncludePathReferenceProvider());
 //    myReferenceTypeToProviderMap.put(DYNAMIC_PATH_REFERENCES_PROVIDER, new JspxDynamicPathReferenceProvider());
     myReferenceTypeToProviderMap.put(DYNAMIC_PATH_REFERENCES_PROVIDER, new WebPathReferenceProvider(false, true, true));
-    myReferenceTypeToProviderMap.put(PROPERTIES_FILE_KEY_PROVIDER, new PropertiesReferenceProvider());
+    myReferenceTypeToProviderMap.put(PROPERTIES_FILE_KEY_PROVIDER, new PropertiesReferenceProvider(false));
 
     registerXmlAttributeValueReferenceProvider(
       new String[]{"class", "type"},
