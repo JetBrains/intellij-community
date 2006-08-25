@@ -215,10 +215,20 @@ public class ArrayUtil {
     return 0;
   }
 
-  public static void swap(Object[] array, int i1, int i2) {
-    final Object t = array[i1];
+  public static <T>void swap(T[] array, int i1, int i2) {
+    final T t = array[i1];
     array[i1] = array[i2];
     array[i2] = t;
   }
 
+  public static <T>void rotateLeft(T[] array, int i1, int i2) {
+    final T t = array[i1];
+    System.arraycopy(array, i1 + 1, array, i1, i2-i1);
+    array[i2] = t;
+  }
+  public static <T>void rotateRight(T[] array, int i1, int i2) {
+    final T t = array[i2];
+    System.arraycopy(array, i1, array, i1+1, i2-i1);
+    array[i1] = t;
+  }
 }
