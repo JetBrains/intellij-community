@@ -160,6 +160,11 @@ public class TextFieldWithHistory extends JPanel {
     return getTextEditor().getText();
   }
 
+  public void removeNotify() {
+    super.removeNotify();
+    hidePopup();
+  }
+
   public void addCurrentTextToHistory() {
     myModel.addElement(getText());
   }
@@ -310,7 +315,7 @@ public class TextFieldWithHistory extends JPanel {
 
       myCroppedList = new ArrayList<String>();
       for (String item : myFullList) {
-        if (item.startsWith(getCroppedListElementsPrefix())) {
+        if (item.startsWith(getCroppedListElementsPrefix()) && !item.equals(getCroppedListElementsPrefix())) {
           myCroppedList.add(item);
         }
       }
