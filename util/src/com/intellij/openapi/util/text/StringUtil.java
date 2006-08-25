@@ -469,9 +469,10 @@ public class StringUtil {
               sum *= 16;
               sum += Integer.valueOf(s.substring(i, i + 1), 16).intValue();
             }
-            idx = i;
+            idx += 4;
             buffer.append((char)sum);
             break;
+
           default:
             buffer.append(ch);
             break;
