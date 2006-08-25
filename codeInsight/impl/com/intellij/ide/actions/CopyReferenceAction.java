@@ -243,9 +243,10 @@ public class CopyReferenceAction extends AnAction {
     if (element == null) return;
     while (element.getParent() instanceof PsiJavaCodeReferenceElement) {
       element = element.getParent();
+      if (element == null) return;
     }
 
-    final CodeStyleManagerEx codeStyleManagerEx = (CodeStyleManagerEx)CodeStyleManager.getInstance(element.getManager().getProject());
+    final CodeStyleManagerEx codeStyleManagerEx = (CodeStyleManagerEx)CodeStyleManager.getInstance(element.getProject());
     codeStyleManagerEx.shortenClassReferences(element, CodeStyleManagerEx.UNCOMPLETE_CODE);
   }
 
