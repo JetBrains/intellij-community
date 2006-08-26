@@ -165,6 +165,7 @@ public final class ExecutionHandler {
         errorView.stopScrollerThread();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            if (project.isDisposed()) return;
             errorView.removeProgressPanel();
             ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
             if (toolWindow != null) { // can be null if project is closed

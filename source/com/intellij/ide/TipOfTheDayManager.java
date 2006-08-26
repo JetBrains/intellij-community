@@ -44,8 +44,10 @@ public class TipOfTheDayManager implements ApplicationComponent, ProjectManagerL
         if (myDoNotShowThisTime) return;
         ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
           public void run() {
+            if (project.isDisposed()) return;
             ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
               public void run() {
+                if (project.isDisposed()) return;
                 new TipDialog().show();
               }
             });
