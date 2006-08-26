@@ -13,10 +13,7 @@ import com.intellij.pom.xml.events.XmlChange;
 import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.pom.xml.impl.events.XmlTagChildAddImpl;
 import com.intellij.pom.xml.impl.events.XmlTextChangedImpl;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -250,7 +247,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
       final IElementType elementType = psiElement.getNode().getElementType();
       final int elementDisplayEnd = physicalToDisplay(psiElement.getStartOffsetInParent() + psiElement.getTextLength());
       final int elementDisplayStart = physicalToDisplay(psiElement.getStartOffsetInParent());
-      if (elementType == XmlTokenType.XML_DATA_CHARACTERS) {
+      if (elementType == XmlTokenType.XML_DATA_CHARACTERS || elementType == JavaTokenType.WHITE_SPACE) {
         if (elementDisplayEnd >= displayEnd && elementDisplayStart <= displayStart) {
           int physicalEnd = physicalStart;
           while (physicalEnd < getTextRange().getLength()) {

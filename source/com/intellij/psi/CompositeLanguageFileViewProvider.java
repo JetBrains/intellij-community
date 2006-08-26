@@ -492,4 +492,8 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     if (removedParent != null) removedParent.subtreeChanged();
     return prev;
   }
+
+  public Set<PsiFile> getRootsInUpdate() {
+    return myRootsInUpdate;
+  }
 }

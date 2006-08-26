@@ -218,7 +218,7 @@ public class CodeInsightUtil {
     return Collections.unmodifiableList(list);
   }
 
-  private static PsiElement findCommonParent(final PsiElement root, final int startOffset, final int endOffset) {
+  public static PsiElement findCommonParent(final PsiElement root, final int startOffset, final int endOffset) {
     final PsiElement left = findElementAtInRoot(root, startOffset);
     PsiElement right = findElementAtInRoot(root, endOffset);
     if(right == null) right = findElementAtInRoot(root, endOffset - 1);

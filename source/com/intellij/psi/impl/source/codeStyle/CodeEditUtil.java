@@ -126,7 +126,7 @@ public class CodeEditUtil {
 
     TreeElement child = (TreeElement)first;
     while (child != null) {
-      checkForOuters(child);
+      //checkForOuters(child);
       if (child == last) break;
       child = child.next;
     }

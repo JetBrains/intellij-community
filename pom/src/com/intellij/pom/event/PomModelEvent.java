@@ -69,4 +69,9 @@ public class PomModelEvent extends EventObject {
       }
     }
   }
+
+
+  public PomModel getSource() {
+    return (PomModel)super.getSource();
+  }
 }
