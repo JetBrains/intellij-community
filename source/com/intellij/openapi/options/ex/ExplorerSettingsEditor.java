@@ -24,9 +24,10 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashMap;
+import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -73,6 +74,24 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ex.ExplorerSettingsEditor");
 
   private JBPopup [] myPopup = new JBPopup[1];
+
+  private static final TObjectHashingStrategy<Configurable> UNWRAPPING_STRATEGY = new TObjectHashingStrategy<Configurable>() {
+    public int computeHashCode(final Configurable c) {
+      return unwrap(c).hashCode();
+    }
+
+    public boolean equals(final Configurable c1, final Configurable c2) {
+      return unwrap(c1) == unwrap(c2);
+    }
+
+    private Configurable unwrap(Configurable c) {
+      if (c instanceof DefaultSearchableConfigurable) {
+        return ((DefaultSearchableConfigurable)c).getDelegate();
+      }
+      return c;
+    }
+  };
+
   public ExplorerSettingsEditor(Project project, ConfigurableGroup[] group) {
     super(project, true);
     myProject = project;
@@ -83,8 +102,8 @@ public class ExplorerSettingsEditor extends DialogWrapper {
       throw new IllegalStateException("number of configurables must be more then zero");
     }
 
-    myInitializedConfigurables2Component = new HashMap<Configurable, JComponent>();
-    myConfigurable2PrefSize = new HashMap<Configurable, Dimension>();
+    myInitializedConfigurables2Component = new THashMap<Configurable, JComponent>(UNWRAPPING_STRATEGY);
+    myConfigurable2PrefSize = new THashMap<Configurable, Dimension>(UNWRAPPING_STRATEGY);
 
     init();
   }
@@ -138,7 +157,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
       int index = -1;
       for (int i = 0; i < configurables.length; i++) {
         Configurable configurable = configurables[i];
-        if (configurable == mySelectedConfigurable) {
+        if (UNWRAPPING_STRATEGY.equals(configurable, mySelectedConfigurable)) {
           index = i;
           break;
         }
@@ -185,14 +204,11 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     myAlarm.cancelAllRequests();
     rememberLastUsedPage();
 
-    for (ConfigurableGroup myGroup : myGroups) {
-      Configurable[] configurables = myGroup.getConfigurables();
-      for (Configurable configurable : configurables) {
-        if (myInitializedConfigurables2Component.containsKey(configurable)){ //do not dispose resources if components weren't initialized
-          configurable.disposeUIResources();
-        }
-      }
+    //do not dispose resources if components weren't initialized
+    for (Configurable configurable : myInitializedConfigurables2Component.keySet()) {
+      configurable.disposeUIResources();
     }
+
     myInitializedConfigurables2Component.clear();
     super.dispose();
   }
@@ -491,13 +507,14 @@ public class ExplorerSettingsEditor extends DialogWrapper {
 
     myOptionsPanel.removeAll();
 
+    if (configurable instanceof SearchableConfigurable){
+      configurable = new DefaultSearchableConfigurable((SearchableConfigurable)configurable);
+    }
     mySelectedConfigurable = configurable;
     myKeySelectedConfigurableIndex = index;
+
     JComponent component = myInitializedConfigurables2Component.get(configurable);
     if (component == null) {
-      if (configurable instanceof SearchableConfigurable){
-        configurable = new DefaultSearchableConfigurable((SearchableConfigurable)configurable);
-      }
       component = configurable.createComponent();
       myInitializedConfigurables2Component.put(configurable, component);
     }

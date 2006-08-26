@@ -24,8 +24,6 @@ public class DefaultSearchableConfigurable implements Configurable {
 
   public DefaultSearchableConfigurable(final SearchableConfigurable delegate) {
     myDelegate = delegate;
-    myComponent = myDelegate.createComponent();
-    myGlassPanel = new GlassPanel(myComponent);
   }
 
   @NonNls
@@ -35,7 +33,9 @@ public class DefaultSearchableConfigurable implements Configurable {
 
   public void clearSearch() {
     if (!myDelegate.clearSearch()){
-      myGlassPanel.clear();
+      if (myGlassPanel != null) {
+        myGlassPanel.clear();
+      }
     }
   }
 
@@ -62,6 +62,8 @@ public class DefaultSearchableConfigurable implements Configurable {
   }
 
   public JComponent createComponent() {
+    myComponent = myDelegate.createComponent();
+    myGlassPanel = new GlassPanel(myComponent);
     return myComponent;
   }
 
@@ -74,12 +76,19 @@ public class DefaultSearchableConfigurable implements Configurable {
   }
 
   public void reset() {
-    myComponent.getRootPane().setGlassPane(myGlassPanel);
+    if (myComponent != null) {
+      myComponent.getRootPane().setGlassPane(myGlassPanel);
+    }
     myDelegate.reset();
   }
 
   public void disposeUIResources() {
     myGlassPanel = null;
+    myComponent = null;
     myDelegate.disposeUIResources();
+  }
+
+  public Configurable getDelegate() {
+    return myDelegate;
   }
 }
