@@ -32,10 +32,9 @@ public class DefaultSearchableConfigurable implements Configurable {
   }
 
   public void clearSearch() {
+    if (myGlassPanel == null) return; // Not yet initialized.
     if (!myDelegate.clearSearch()){
-      if (myGlassPanel != null) {
-        myGlassPanel.clear();
-      }
+      myGlassPanel.clear();
     }
   }
 
