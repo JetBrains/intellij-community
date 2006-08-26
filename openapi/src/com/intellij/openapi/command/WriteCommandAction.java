@@ -57,10 +57,11 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     if (myPsiFiles != null && myPsiFiles.length > 0) {
       List<VirtualFile> list = new SmartList<VirtualFile>();
       for (final PsiFile psiFile : myPsiFiles) {
+        if (psiFile == null) continue;
         final VirtualFile virtualFile = psiFile.getVirtualFile();
         if (virtualFile != null) {
-          list.add(virtualFile);
-        }
+            list.add(virtualFile);
+          }
       }
       if (!list.isEmpty()) {
         if (ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(list.toArray(new VirtualFile[list.size()])).hasReadonlyFiles()) {
