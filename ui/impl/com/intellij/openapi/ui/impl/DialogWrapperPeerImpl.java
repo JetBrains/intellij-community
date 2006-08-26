@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.ui.FocusTrackback;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SpeedSearchBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -414,6 +415,28 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return null;
     }
 
+    public void setSize(int width, int height) {
+      Point location = getLocation();
+      Rectangle rect = new Rectangle(location.x, location.y, width, height);
+      ScreenUtil.fitToScreen(rect);
+      if (location.x != rect.x || location.y != rect.y) {
+        setLocation(rect.x, rect.y);
+      }
+
+      super.setSize(rect.width, rect.height);
+    }
+
+    public void setBounds(int x, int y, int width, int height) {
+      Rectangle rect = new Rectangle(x, y, width, height);
+      ScreenUtil.fitToScreen(rect);
+      super.setBounds(rect.x, rect.y, rect.width, rect.height);
+    }
+
+    public void setBounds(Rectangle r) {
+      ScreenUtil.fitToScreen(r);
+      super.setBounds(r);
+    }
+
     protected JRootPane createRootPane() {
       return new JRootPane();
     }
@@ -455,6 +478,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       else {
         setLocationRelativeTo(getOwner());
       }
+
+      final Rectangle bounds = getBounds();
+      ScreenUtil.fitToScreen(bounds);
+      setBounds(bounds);
 
       super.show();
     }

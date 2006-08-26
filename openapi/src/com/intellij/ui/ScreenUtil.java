@@ -30,7 +30,7 @@ public class ScreenUtil {
       GraphicsDevice device = devices[i];
       GraphicsConfiguration graphicsConfiguration = device.getDefaultConfiguration();
       Rectangle r = graphicsConfiguration.getBounds();
-      if (r.x <= aTargetX && aTargetX <= r.x + r.width && r.y <= aTargetY && aTargetY <= r.y + r.height) {
+      if (r.x <= aTargetX && aTargetX < r.x + r.width && r.y <= aTargetY && aTargetY < r.y + r.height) {
         targetGraphicsConfiguration = graphicsConfiguration;
         break;
       }
@@ -84,6 +84,30 @@ public class ScreenUtil {
 
     if (aRectangle.getMinY() < screen.getMinY()) {
       aRectangle.y = (int) screen.getMinY();
+    }
+  }
+
+  public static void fitToScreen(Rectangle r) {
+    Rectangle screen = getScreenRectangle(r.x, r.y);
+
+    int xOverdraft = r.x + r.width - screen.x - screen.width;
+    if (xOverdraft > 0) {
+      int shift = Math.min(xOverdraft, r.x - screen.x);
+      xOverdraft -= shift;
+      r.x -= shift;
+      if (xOverdraft > 0) {
+        r.width -= xOverdraft;
+      }
+    }
+
+    int yOverdraft = r.y + r.height - screen.y - screen.height;
+    if (yOverdraft > 0) {
+      int shift = Math.min(yOverdraft, r.y - screen.y);
+      yOverdraft -= shift;
+      r.y -= shift;
+      if (yOverdraft > 0) {
+        r.height -= yOverdraft;
+      }
     }
   }
 

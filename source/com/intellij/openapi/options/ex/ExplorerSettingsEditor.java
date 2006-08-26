@@ -239,9 +239,13 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     myComponentPanel.add(leftPane, BorderLayout.WEST);
 
     myOptionsPanel.setBorder(BorderFactory.createEmptyBorder(15, 5, 2, 5));
-    myComponentPanel.add(myOptionsPanel, BorderLayout.CENTER);
 
-    myOptionsPanel.setPreferredSize(myPreferredSize);
+    JScrollPane optionsScrollForTinyScreens = new JScrollPane(myOptionsPanel);
+    optionsScrollForTinyScreens.setBorder(null);
+    
+    myComponentPanel.add(optionsScrollForTinyScreens, BorderLayout.CENTER);
+
+    optionsScrollForTinyScreens.setPreferredSize(myPreferredSize);
 
     myComponentPanel.setFocusable(true);
     myComponentPanel.addKeyListener(new KeyAdapter() {
@@ -511,7 +515,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     myOptionsPanel.add(component, BorderLayout.CENTER);
     if (widthDelta > 0 || heightDelta > 0) {
       setSize(getSize().width + widthDelta, getSize().height + heightDelta);
-      centerRelativeToParent();
+//      centerRelativeToParent();
     }
 
     configurable.reset();
