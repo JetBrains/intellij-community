@@ -5,8 +5,8 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.impl.injected.DocumentRange;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.injected.DocumentRange;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
@@ -310,6 +310,17 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
                  str.charAt(newEndInString - 1) == chars.charAt(end - oldStart - 1)) {
             newEndInString--;
             end--;
+          }
+
+          //[mike] dirty hack for xml:
+          //make sure that deletion of <t> in: <tag><t/><tag> doesn't remove t/><
+          //which is perfectly valid but invalidates range markers
+          final CharSequence charsSequence = myDocument.getCharsSequence();
+          while (charsSequence.subSequence(start, end).toString().endsWith("><") && start > 0 && charsSequence.charAt(start - 1) == '<') {
+            start--;
+            newStartInString--;
+            end--;
+            newEndInString--;
           }
 
           str = str.substring(newStartInString, newEndInString);
