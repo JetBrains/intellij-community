@@ -88,6 +88,13 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     customizeField(ApplicationBundle.message("title.keep.whitespaces.inside"), myKeepWhiteSpacesTagNames);
     customizeField(ApplicationBundle.message("title.dont.wrap.if.inline.content"), myDontBreakIfInlineContent);
 
+    myInsertNewLineTagNames.getTextField().setColumns(5);
+    myRemoveNewLineTagNames.getTextField().setColumns(5);
+    myDoNotAlignChildrenTagNames.getTextField().setColumns(5);
+    myKeepWhiteSpacesTagNames.getTextField().setColumns(5);
+    myInlineElementsTagNames.getTextField().setColumns(5);
+    myDontBreakIfInlineContent.getTextField().setColumns(5);
+
 
     addPanelToWatch(myPanel);
   }
