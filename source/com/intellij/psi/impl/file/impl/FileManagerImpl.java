@@ -244,6 +244,7 @@ public class FileManagerImpl implements FileManager {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
       LOG.assertTrue(false, "Invalid file: " + vFile);
+      return null;
     }
 
     dispatchPendingEvents();
