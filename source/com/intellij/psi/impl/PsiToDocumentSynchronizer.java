@@ -316,7 +316,11 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
           //make sure that deletion of <t> in: <tag><t/><tag> doesn't remove t/><
           //which is perfectly valid but invalidates range markers
           final CharSequence charsSequence = myDocument.getCharsSequence();
-          while (charsSequence.subSequence(start, end).toString().endsWith("><") && start > 0 && charsSequence.charAt(start - 1) == '<') {
+          while (start < charsSequence.length() &&
+                 end < charsSequence.length() &&
+                 start > 0 &&
+                 charsSequence.subSequence(start, end).toString().endsWith("><") &&
+                 charsSequence.charAt(start - 1) == '<') {
             start--;
             newStartInString--;
             end--;
