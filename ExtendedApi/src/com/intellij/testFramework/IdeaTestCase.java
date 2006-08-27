@@ -77,6 +77,10 @@ import java.util.HashSet;
   public static final long DEFAULT_TEST_TIME = 300L;
   public static long ourTestTime = DEFAULT_TEST_TIME;
   private static final MyThreadGroup MY_THREAD_GROUP = new MyThreadGroup();
+
+  private static final String ourOriginalTempDir = System.getProperty("java.io.tmpdir");
+  private static int ourTestCount = 0;
+
   protected static long getTimeRequired() {
     return DEFAULT_TEST_TIME;
   }
@@ -108,6 +112,10 @@ import java.util.HashSet;
     IdeaLogger.ourErrorsOccurred = null;
 
     LOG.info(getClass().getName() + ".setUp()");
+
+    String tempdirpath = ourOriginalTempDir + "/tsttmp" + ourTestCount + "/";
+    setTmpDir(tempdirpath);
+    new File(tempdirpath).mkdir();
 
     initApplication();
 
@@ -230,6 +238,11 @@ import java.util.HashSet;
         for (final File fileToDelete : myFilesToDelete) {
           delete(fileToDelete);
         }
+
+        FileUtil.asyncDelete(new File(ourOriginalTempDir + "/tsttmp" + ourTestCount));
+        ourTestCount++;
+
+        setTmpDir(ourOriginalTempDir);
 
         Throwable fromThreadGroup = MY_THREAD_GROUP.popThrowable();
         if (fromThreadGroup != null) {
@@ -587,6 +600,23 @@ import java.util.HashSet;
       finally {
         myThrowable = null;
       }
+    }
+  }
+
+  private static void setTmpDir(String path) {
+    try {
+      System.setProperty("java.io.tmpdir", path);
+      Class<File> ioFile = File.class;
+      Field field = ioFile.getDeclaredField("tmpdir");
+      
+      field.setAccessible(true);
+      field.set(ioFile, null);
+    }
+    catch (NoSuchFieldException e) {
+      LOG.error(e);
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
     }
   }
 
