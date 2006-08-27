@@ -284,7 +284,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       if (!myProblems.isEmpty()) {
         Set<VirtualFile> problemFiles = myProblems.keySet();
         for (VirtualFile problemFile : problemFiles) {
-          if (condition.value(problemFile)) return true;
+          if (problemFile.isValid() && condition.value(problemFile)) return true;
         }
       }
       return false;
