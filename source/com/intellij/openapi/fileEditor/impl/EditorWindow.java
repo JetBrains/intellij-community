@@ -4,8 +4,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
 import java.awt.*;
@@ -502,6 +503,12 @@ public class EditorWindow {
    */
   private Icon getFileIcon(final VirtualFile file) {
     LOG.assertTrue(file != null);
+
+    if (!file.isValid()) {
+      Icon fakeIcon = StdFileTypes.UNKNOWN.getIcon();
+      assert fakeIcon != null : "Can't find the icon for unknown file type";
+      return fakeIcon;
+    }
 
     Icon icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, getManager().myProject);
     List<Icon> icons = Collections.singletonList(icon);
