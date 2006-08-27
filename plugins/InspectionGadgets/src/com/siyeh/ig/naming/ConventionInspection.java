@@ -16,12 +16,13 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.ui.DocumentAdapter;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.RegExFormatter;
 import com.siyeh.ig.RegExInputVerifier;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
-import com.siyeh.HardcodedMethodConstants;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -32,6 +33,7 @@ import javax.swing.text.Document;
 import javax.swing.text.InternationalFormatter;
 import java.awt.*;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -123,24 +125,19 @@ public abstract class ConventionInspection extends BaseInspection {
         regexField.setInputVerifier(new RegExInputVerifier());
         regexField.setFocusLostBehavior(JFormattedTextField.COMMIT);
         FormattedTextFieldMacFix.apply(regexField);
-        final DocumentListener listener = new DocumentListener() {
-            public void changedUpdate(DocumentEvent e) {
-                textChanged();
-            }
-
-            public void insertUpdate(DocumentEvent e) {
-                textChanged();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                textChanged();
-            }
-
-            private void textChanged() {
-                m_regexPattern = (Pattern) regexField.getValue();
-                m_regex = m_regexPattern.pattern();
-                m_minLength = ((Number) minLengthField.getValue()).intValue();
-                m_maxLength = ((Number) maxLengthField.getValue()).intValue();
+        final DocumentListener listener = new DocumentAdapter() {
+            public void textChanged(DocumentEvent evt) {
+                try {
+                    regexField.commitEdit();
+                    minLengthField.commitEdit();
+                    maxLengthField.commitEdit();
+                    m_regexPattern = (Pattern) regexField.getValue();
+                    m_regex = m_regexPattern.pattern();
+                    m_minLength = ((Number) minLengthField.getValue()).intValue();
+                    m_maxLength = ((Number) maxLengthField.getValue()).intValue();
+                } catch (ParseException e) {
+                    // No luck this time
+                }
             }
         };
         final Document regexDocument = regexField.getDocument();

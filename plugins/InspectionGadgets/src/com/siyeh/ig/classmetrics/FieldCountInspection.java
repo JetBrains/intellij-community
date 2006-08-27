@@ -16,21 +16,19 @@
 package com.siyeh.ig.classmetrics;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.ui.FormattedTextFieldMacFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.Document;
 import java.awt.*;
-import java.text.NumberFormat;
 
 public class FieldCountInspection extends ClassMetricInspection {
 
@@ -71,30 +69,7 @@ public class FieldCountInspection extends ClassMetricInspection {
     public JComponent createOptionsPanel() {
         final String configurationLabel = getConfigurationLabel();
         final JLabel label = new JLabel(configurationLabel);
-        final NumberFormat formatter = NumberFormat.getIntegerInstance();
-        formatter.setParseIntegerOnly(true);
-        final JFormattedTextField valueField = new JFormattedTextField(formatter);
-        valueField.setValue(Integer.valueOf(m_limit));
-        valueField.setColumns(4);
-        FormattedTextFieldMacFix.apply(valueField);
-        final Document document = valueField.getDocument();
-        document.addDocumentListener(new DocumentListener() {
-            public void changedUpdate(DocumentEvent e) {
-                textChanged();
-            }
-
-            public void insertUpdate(DocumentEvent e) {
-                textChanged();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                textChanged();
-            }
-
-            private void textChanged() {
-                m_limit = ((Number) valueField.getValue()).intValue();
-            }
-        });
+        final JFormattedTextField valueField = prepareNumberEditor("m_limit");
 
         final JCheckBox includeCheckBox =
                 new JCheckBox(InspectionGadgetsBundle.message(

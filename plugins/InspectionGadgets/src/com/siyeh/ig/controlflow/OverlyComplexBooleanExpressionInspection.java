@@ -34,6 +34,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -108,8 +109,13 @@ public class OverlyComplexBooleanExpressionInspection
             }
 
             private void textChanged() {
-                final Number number = (Number)m_termLimitTextField.getValue();
-                m_limit = number.intValue();
+                try {
+                    m_termLimitTextField.commitEdit();
+                    final Number number = (Number)m_termLimitTextField.getValue();
+                    m_limit = number.intValue();
+                } catch (ParseException e) {
+                    // No luck this time
+                }
             }
         });
         return m_contentPanel;

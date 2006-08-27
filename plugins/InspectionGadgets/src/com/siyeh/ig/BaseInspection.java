@@ -15,21 +15,31 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.ui.DocumentAdapter;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.text.Document;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.text.NumberFormat;
+import java.text.ParseException;
 
 public abstract class BaseInspection extends LocalInspectionTool {
+    private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.BaseInspection");
 
     private String m_shortName = null;
     private InspectionRunListener listener = null;
@@ -259,5 +269,39 @@ public abstract class BaseInspection extends LocalInspectionTool {
         visitor.setOnTheFly(isOnTheFly);
         visitor.setInspection(this);
         return visitor;
+    }
+
+
+    protected JFormattedTextField prepareNumberEditor(@NonNls String fieldName) {
+        try {
+            final NumberFormat formatter = NumberFormat.getIntegerInstance();
+            formatter.setParseIntegerOnly(true);
+            final JFormattedTextField valueField = new JFormattedTextField(formatter);
+            final Field field = getClass().getField(fieldName);
+            valueField.setValue(field.get(this));
+            valueField.setColumns(4);
+            FormattedTextFieldMacFix.apply(valueField);
+            final Document document = valueField.getDocument();
+            document.addDocumentListener(new DocumentAdapter() {
+                public void textChanged(DocumentEvent evt) {
+                    try {
+                        valueField.commitEdit();
+                        field.set(BaseInspection.this, ((Number) valueField.getValue()).intValue());
+                    } catch (IllegalAccessException e) {
+                        LOG.error(e);
+                    } catch (ParseException e) {
+                        // No luck this time. Will update the field when correct value is entered.
+                    }
+                }
+            });
+
+            return valueField;
+        } catch (NoSuchFieldException e) {
+            LOG.error(e);
+        } catch (IllegalAccessException e) {
+            LOG.error(e);
+        }
+        
+        return null;
     }
 }

@@ -19,18 +19,12 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.Document;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.text.NumberFormat;
+import java.awt.*;
 
 public class MethodCouplingInspection extends MethodMetricInspection {
 
@@ -70,31 +64,8 @@ public class MethodCouplingInspection extends MethodMetricInspection {
         final JPanel panel = new JPanel(new GridBagLayout());
         final String configurationLabel = getConfigurationLabel();
         final JLabel label = new JLabel(configurationLabel);
-        final NumberFormat formatter = NumberFormat.getIntegerInstance();
-        formatter.setParseIntegerOnly(true);
-        final JFormattedTextField valueField = new JFormattedTextField(formatter);
-        valueField.setValue(m_limit);
-        valueField.setColumns(4);
-        FormattedTextFieldMacFix.apply(valueField);
-        final Document document = valueField.getDocument();
-        document.addDocumentListener(new DocumentListener() {
 
-            public void changedUpdate(DocumentEvent e) {
-                textChanged();
-            }
-
-            public void insertUpdate(DocumentEvent e) {
-                textChanged();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                textChanged();
-            }
-
-            private void textChanged() {
-                m_limit = ((Number)valueField.getValue()).intValue();
-            }
-        });
+        final JFormattedTextField valueField = prepareNumberEditor("m_limit");
 
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;
