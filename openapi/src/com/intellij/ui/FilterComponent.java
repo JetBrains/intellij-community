@@ -38,15 +38,9 @@ import java.awt.event.KeyEvent;
 public abstract class FilterComponent extends JPanel {
   private final TextFieldWithStoredHistory myFilter;
   private final Alarm myUpdateAlarm = new Alarm();
-  public FilterComponent(@NonNls String propertyName, int historySize) {
-    this(propertyName, historySize, true);
-  }
 
-  public FilterComponent(@NonNls String propertyName, int historySize, boolean showLabel) {
+  public FilterComponent(@NonNls String propertyName, int historySize) {
     super(new BorderLayout());
-    if (showLabel) {
-      add(new JLabel(InspectionsBundle.message("inspection.tools.action.filter")), BorderLayout.WEST);
-    }
     myFilter = new TextFieldWithStoredHistory(propertyName);
     myFilter.getTextEditor().addKeyListener(new KeyAdapter() {
       //to consume enter in combo box - do not process this event by default button from DialogWrapper
