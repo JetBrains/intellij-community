@@ -48,7 +48,7 @@ class JdkComboBox extends JComboBox{
               append(str, SimpleTextAttributes.REGULAR_ATTRIBUTES);
               append(" (" + jdk.getName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
             } else {
-              append(str, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+              append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
             }
           }
           else {
