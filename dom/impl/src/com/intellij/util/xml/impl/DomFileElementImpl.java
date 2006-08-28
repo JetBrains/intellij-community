@@ -244,6 +244,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return this;
   }
 
+  @Nullable
   public DomElement getParent() {
     return null;
   }

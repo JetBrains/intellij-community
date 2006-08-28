@@ -9,6 +9,7 @@ import com.intellij.util.ReflectionCache;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,18 +94,29 @@ public class DomUtil {
       if (parent instanceof DomFileElement) {
         break;
       }
-      final String xmlElementName = element.getXmlElementName();
-      final DomGenericInfo genericInfo = parent.getGenericInfo();
-
-      final DomFixedChildDescription description = genericInfo.getFixedChildDescription(xmlElementName);
-      if (description == null) {
+      final JavaMethod method = getGetterMethod(element, parent);
+      if (method == null) {
         return null;
       }
-
-      methods.addFirst(description.getGetterMethod(description.getValues(parent).indexOf(element)));
+      methods.addFirst(method);
       element = element.getParent();
     }
     return methods;
+  }
+
+  @Nullable
+  private static JavaMethod getGetterMethod(final DomElement element, final DomElement parent) {
+    final String xmlElementName = element.getXmlElementName();
+    final DomGenericInfo genericInfo = parent.getGenericInfo();
+
+    if (element instanceof GenericAttributeValue) {
+      final DomAttributeChildDescription description = genericInfo.getAttributeChildDescription(xmlElementName);
+      assert description != null;
+      return description.getGetterMethod();
+    }
+
+    final DomFixedChildDescription description = genericInfo.getFixedChildDescription(xmlElementName);
+    return description != null ? description.getGetterMethod(description.getValues(parent).indexOf(element)) : null;
   }
 
   public static Class getGenericValueParameter(Type type) {

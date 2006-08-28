@@ -55,12 +55,15 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
     return null;
   }
 
+  @NotNull
   public <T extends DomElement> DomFileElementImpl<T> getRoot() {
-    return isValid() ? (DomFileElementImpl<T>)myParent : null;
+    LOG.assertTrue(isValid());
+    return (DomFileElementImpl<T>)myParent;
   }
 
   public DomElement getParent() {
-    return isValid() ? myParent : null;
+    LOG.assertTrue(isValid());
+    return myParent;
   }
 
   public <T extends DomElement> T createStableCopy() {

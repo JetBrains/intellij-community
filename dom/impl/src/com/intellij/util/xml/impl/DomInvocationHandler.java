@@ -125,14 +125,16 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     attach(tag);
   }
 
-  @Nullable
+  @NotNull
   public <T extends DomElement> DomFileElementImpl<T> getRoot() {
-    return isValid() ? (DomFileElementImpl<T>)myParent.getRoot() : null;
+    LOG.assertTrue(isValid());
+    return (DomFileElementImpl<T>)myParent.getRoot();
   }
 
   @Nullable
   public DomElement getParent() {
-    return isValid() ? myParent.getProxy() : null;
+    LOG.assertTrue(isValid());
+    return myParent.getProxy();
   }
 
   final DomInvocationHandler getParentHandler() {
@@ -406,6 +408,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return parameter == null ? null : converterManager.getConverterByClass(parameter);
   }
 
+  @NotNull
   public final DomElement getProxy() {
     return myProxy;
   }
