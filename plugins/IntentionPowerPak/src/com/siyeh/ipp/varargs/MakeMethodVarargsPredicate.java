@@ -24,11 +24,11 @@ import org.jetbrains.annotations.NotNull;
 class MakeMethodVarargsPredicate implements PsiElementPredicate {
 
     public boolean satisfiedBy(@NotNull PsiElement element) {
-        final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(element);
-        if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+        if (!(element instanceof PsiParameterList)) {
             return false;
         }
-        if (!(element instanceof PsiParameterList)) {
+        final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(element);
+        if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
             return false;
         }
         final PsiParameterList parameterList = (PsiParameterList) element;
