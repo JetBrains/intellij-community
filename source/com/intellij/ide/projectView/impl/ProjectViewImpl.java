@@ -1015,7 +1015,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       ArrayList<Module> result = new ArrayList<Module>();
       for (Object element : elements) {
         if (element instanceof Module) {
-          result.add((Module)element);
+          final Module module = (Module)element;
+          if (!module.isDisposed()) {
+            result.add(module);
+          }
         }
         else if (element instanceof ModuleGroup) {
           Collection<Module> modules = ((ModuleGroup)element).modulesInGroup(myProject, true);
