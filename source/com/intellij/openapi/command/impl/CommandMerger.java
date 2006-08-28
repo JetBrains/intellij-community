@@ -120,7 +120,8 @@ class CommandMerger {
     if (!isEmpty()) {
       int commandCounter = myManager.getCommandCounterAndInc();
       UndoableGroup undoableGroup = new UndoableGroup(myCommandName, myIsComplex, myManager.getProject(),
-                                                      myStateBefore, myStateAfter, commandCounter, myUndoConfirmationPolicy);
+                                                      myStateBefore, myStateAfter, commandCounter, myUndoConfirmationPolicy,
+                                                      myHasUndoTransparents && myOnlyUndoTransparents);
       undoableGroup.addTailActions(myCurrentActions);
       addToAllStacks(undoableGroup);
     }

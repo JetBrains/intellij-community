@@ -28,6 +28,7 @@ class UndoableGroup {
   private String myCommandName;
   private boolean myComplex;
   private int myCommandCounter;
+  private boolean myTransparentsOnly;
   private ArrayList<UndoableAction> myActions;
   private EditorAndState myStateBefore;
   private EditorAndState myStateAfter;
@@ -35,7 +36,7 @@ class UndoableGroup {
   private final UndoConfirmationPolicy myUndoConfirmationPolicy;
 
   public UndoableGroup(String commandName, boolean isComplex, Project project, EditorAndState stateBefore, EditorAndState stateAfter, int commandCounter,
-                       UndoConfirmationPolicy undoConfirmationPolicy) {
+                       UndoConfirmationPolicy undoConfirmationPolicy, boolean transparentsOnly) {
     myCommandName = commandName;
     myComplex = isComplex;
     myCommandCounter = commandCounter;
@@ -44,6 +45,7 @@ class UndoableGroup {
     myStateBefore = stateBefore;
     myStateAfter = stateAfter;
     myUndoConfirmationPolicy = undoConfirmationPolicy;
+    myTransparentsOnly = transparentsOnly;
   }
 
   public boolean isComplex() {
@@ -205,5 +207,9 @@ class UndoableGroup {
     }
 
     return count > 1;
+  }
+
+  public boolean isTransparentsOnly() {
+    return myTransparentsOnly;
   }
 }

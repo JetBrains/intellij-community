@@ -274,14 +274,26 @@ abstract class UndoOrRedo {
   }
 
   public static void execute(UndoManagerImpl manager, FileEditor editor, boolean isUndo) {
-    if (isUndo) {
-      new Undo(manager, editor).execute();
+    boolean repeat;
+    do {
+      if (isUndo) {
+        final Undo undo = new Undo(manager, editor);
+        undo.execute();
+        repeat = undo.isTransparentsOnly();
+      }
+      else {
+        final Redo redo = new Redo(manager, editor);
+        redo.execute();
+        repeat = redo.isTransparentsOnly();
+      }
     }
-    else {
-      new Redo(manager, editor).execute();
-    }
+    while (repeat);
+    
   }
 
+  public boolean isTransparentsOnly() {
+    return myUndoableGroup.isTransparentsOnly();
+  }
 }
 
 
