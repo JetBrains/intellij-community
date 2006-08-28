@@ -406,7 +406,7 @@ public class PluginManager {
     for (Iterator<IdeaPluginDescriptorImpl> it = result.iterator(); it.hasNext();) {
       final IdeaPluginDescriptor pluginDescriptor = it.next();
       final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
-      final Set<PluginId> optionalDependencies = new HashSet<PluginId>(Arrays.asList(pluginDescriptor.getDependentPluginIds()));
+      final Set<PluginId> optionalDependencies = new HashSet<PluginId>(Arrays.asList(pluginDescriptor.getOptionalDependentPluginIds()));
       for (final PluginId dependentPluginId : dependentPluginIds) {
         if (!idToDescriptorMap.containsKey(dependentPluginId) && !optionalDependencies.contains(dependentPluginId)) {
           if (message.length() > 0) {
