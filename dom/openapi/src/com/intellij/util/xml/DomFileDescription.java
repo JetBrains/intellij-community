@@ -64,6 +64,12 @@ public abstract class DomFileDescription<T> {
 
   protected abstract void initializeFileDescription();
 
+  /**
+   * Create custom DOM annotator that will be used when error-highlighting DOM. The results will be collected to
+   * {@link com.intellij.util.xml.highlighting.DomElementsProblemsHolder}. The highlighting will be most probably done in an
+   * {@link com.intellij.util.xml.highlighting.BasicDomElementsInspection} instance.
+   * @return Annotator or null
+   */
   @Nullable
   public DomElementsAnnotator createAnnotator() {
     return null;

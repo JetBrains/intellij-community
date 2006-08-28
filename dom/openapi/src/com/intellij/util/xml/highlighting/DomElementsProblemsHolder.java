@@ -30,6 +30,8 @@ public interface DomElementsProblemsHolder extends Iterable<DomElementProblemDes
 
   void createProblem(DomElement domElement, DomCollectionChildDescription childDescription, @Nullable String message);
 
+  void createProblem(DomElement domElement, HighlightSeverity highlightType, String message);
+
   List<DomElementProblemDescriptor> getProblems(DomElement domElement);
 
   List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems);
@@ -46,5 +48,4 @@ public interface DomElementsProblemsHolder extends Iterable<DomElementProblemDes
   HighlightSeverity getDefaultHighlightSeverity();
 
   void setDefaultHighlightSeverity(final HighlightSeverity defaultHighlightSeverity);
-
 }
