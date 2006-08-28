@@ -139,6 +139,10 @@ public class ProgressWindow extends BlockingProgressIndicator {
   }
 
   private void showDialog() {
+    if (!isRunning() || isCanceled()) {
+      return;
+    }
+    
     if (myShouldShowBackground && GeneralSettings.getInstance().isSearchInBackground()) {
       return;
     }
