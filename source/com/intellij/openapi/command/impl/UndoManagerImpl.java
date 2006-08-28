@@ -206,7 +206,9 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       myLastMerger.dispose();
       myFileOperationUndoProvider.dispose();
     }
-    myVirtualFileManager.removeVirtualFileListener(myBeforeFileDeletionListener);
+    if (myBeforeFileDeletionListener != null) {
+      myVirtualFileManager.removeVirtualFileListener(myBeforeFileDeletionListener);
+    }
     myProject = null;
   }
 
