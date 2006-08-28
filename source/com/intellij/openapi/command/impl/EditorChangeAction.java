@@ -91,5 +91,9 @@ class EditorChangeAction implements UndoableAction {
     if (myDocument != null) return myDocument;
     return (DocumentEx)FileDocumentManager.getInstance().getDocument(myDocumentFile);
   }
+
+  public String toString() {
+    return "editor change: '"+myOldString+"' to '"+myNewString+"'";
+  }
 }
 

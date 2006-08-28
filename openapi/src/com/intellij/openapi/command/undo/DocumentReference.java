@@ -56,4 +56,8 @@ public abstract class DocumentReference {
     else
       return url.compareToIgnoreCase(url1) == 0;
   }
+
+  public String toString() {
+    return getUrl();
+  }
 }
