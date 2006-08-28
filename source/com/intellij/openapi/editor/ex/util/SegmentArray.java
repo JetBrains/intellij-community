@@ -111,7 +111,7 @@ public class SegmentArray {
       }
     }
 
-    assert (offset >= myStarts[start] && offset < myEnds[start]);
+    assert offset >= myStarts[start] && offset < myEnds[start] : start;
 
     return start;
   }
