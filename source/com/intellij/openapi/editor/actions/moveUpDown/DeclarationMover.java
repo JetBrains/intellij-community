@@ -41,7 +41,6 @@ class DeclarationMover extends LineMover {
         final LogicalPosition position = editor.offsetToLogicalPosition(inserted.getTextRange().getEndOffset());
 
         toMove2 = new LineRange(position.line+1, position.line+1);
-        //insertOffset = nextLineOffset(editor, inserted.getTextRange().getEndOffset());
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -134,13 +133,7 @@ class DeclarationMover extends LineMover {
       LineRange intraClassRange = moveInsideOutsideClassPosition(editor, sibling, isDown, areWeMovingClass);
       if (intraClassRange == null) {
         toMove2 = new LineRange(sibling, sibling, document);
-        if (isDown) {
-          if (sibling.getNextSibling() == null) return false;
-          //insertOffset = document.getLineStartOffset(document.getLineNumber(sibling.getTextRange().getEndOffset()) + 1);
-        }
-        else {
-          //insertOffset = sibling.getTextRange().getStartOffset();
-        }
+        if (isDown && sibling.getNextSibling() == null) return false;
       }
       else {
         toMove2 = intraClassRange;
@@ -148,7 +141,6 @@ class DeclarationMover extends LineMover {
     }
     catch (IllegalMoveException e) {
       toMove2 = null;
-      //insertOffset = -1;
     }
     return true;
   }
@@ -203,9 +195,6 @@ class DeclarationMover extends LineMover {
     }
     return false;
   }
-
-  private static final int ILLEGAL_MOVE = -1;
-  private static final int NOT_CROSSING_CLASS_BORDER = -2;
 
   private static class IllegalMoveException extends Exception {
   }
@@ -267,10 +256,5 @@ class DeclarationMover extends LineMover {
     }
     // no enum constants at all ?
     return aClass.getLBrace();
-  }
-
-  private static int nextLineOffset(Editor editor, final int offset) {
-    final LogicalPosition position = editor.offsetToLogicalPosition(offset);
-    return editor.logicalPositionToOffset(new LogicalPosition(position.line + 1, 0));
   }
 }
