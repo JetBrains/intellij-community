@@ -37,9 +37,9 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
   private final EventDispatcher<CommitListener> myDispatcher = EventDispatcher.create(CommitListener.class);
   private DomTableView myCollectionPanel;
 
-  private final List<T> myCollectionElements = new ArrayList<T>();
   private final DomElement myParentDomElement;
   private final DomCollectionChildDescription myChildDescription;
+  private List<T> myCollectionElements = new ArrayList<T>();
   private ColumnInfo<T, ?>[] myColumnInfos;
   private boolean myEditable = false;
   private AnAction myAddAction = new AddDomElementAction() {
@@ -180,7 +180,6 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
     myCollectionPanel.setToolbarActions(myAddAction, myEditAction, myRemoveAction);
     myCollectionPanel.installPopup(createPopupActionGroup());
     myCollectionPanel.initializeTable();
-    myCollectionPanel.setColumnInfos(createColumnInfos(myParentDomElement));
     myCollectionPanel.addChangeListener(new DomTableView.ChangeListener() {
       public void changed() {
         reset();
@@ -298,16 +297,8 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
   }
 
   public final void reset() {
-    final List<T> newData = getCollectionElements();
-    if (!myCollectionElements.equals(newData)) {
-      myCollectionElements.clear();
-      myCollectionElements.addAll(newData);
-      if (myCollectionPanel != null) {
-        myCollectionPanel.setItems(myCollectionElements);
-      }
-    }
-    myCollectionPanel.setColumnInfos(createColumnInfos(myParentDomElement));
-    myCollectionPanel.reset();
+    myCollectionElements = new ArrayList<T>(getCollectionElements());
+    myCollectionPanel.reset(createColumnInfos(myParentDomElement), myCollectionElements);
     validate();
   }
 

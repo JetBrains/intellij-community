@@ -46,18 +46,15 @@ import java.util.List;
 public class DomTableView extends JPanel implements DataProvider{
   @NonNls private static final String TREE = "Tree";
   @NonNls private static final String EMPTY_PANE = "EmptyPane";
+  private final EventDispatcher<ChangeListener> myDispatcher = EventDispatcher.create(ChangeListener.class);
   private final MyListTableModel myTableModel = new MyListTableModel();
-  private final TableView myTable = new TableView() {
-    public TableCellRenderer getCellRenderer(int row, int column) {
-      return getTableCellRenderer(row, column, super.getCellRenderer(row, column), myTableModel.getItems().get(row));
-    }
-  };
+  private final MyTableView myTable = new MyTableView();
   private final String myHelpID;
   private final String myEmptyPaneText;
   private final JPanel myInnerPanel;
-  private EmptyPane myEmptyPane;
   private final Project myProject;
-  private final EventDispatcher<ChangeListener> myDispatcher = EventDispatcher.create(ChangeListener.class);
+  private TableCellRenderer[][] myCachedRenderers;
+  private EmptyPane myEmptyPane;
 
   public DomTableView(final Project project) {
     this(project, null, null);
@@ -105,9 +102,7 @@ public class DomTableView extends JPanel implements DataProvider{
   }
 
   protected TableCellRenderer getTableCellRenderer(final int row, final int column, final TableCellRenderer superRenderer, final Object value) {
-    final ColumnInfo columnInfo = (getTableModel()).getColumnInfos()[column];
-
-    return columnInfo.getCustomizedRenderer(value, new StripeTableCellRenderer(superRenderer));
+    return getTableModel().getColumnInfos()[column].getCustomizedRenderer(value, new StripeTableCellRenderer(superRenderer));
   }
 
   protected final void installPopup(final DefaultActionGroup group) {
@@ -157,23 +152,6 @@ public class DomTableView extends JPanel implements DataProvider{
     if (tooltipText == null) ToolTipManager.sharedInstance().registerComponent(myTable);
   }
 
-  public final void setColumnInfos(final ColumnInfo[] columnInfos) {
-    if (myTableModel.setColumnInfos(columnInfos)) {
-      adjustColumnWidths();
-    }
-  }
-
-  public final void setItems(List items) {
-    if (myTable.isEditing()) {
-      myTable.getCellEditor().cancelCellEditing();
-    }
-    final int row = myTable.getSelectedRow();
-    myTableModel.setItems(new ArrayList(items));
-    if (row >= 0 && row < myTableModel.getRowCount()) {
-      myTable.getSelectionModel().setSelectionInterval(row, row);
-    }
-  }
-
   protected final void initializeTable() {
     myTable.setModel(myTableModel);
     if (getEmptyPaneText() != null) {
@@ -185,9 +163,6 @@ public class DomTableView extends JPanel implements DataProvider{
       });
     }
     tuneTable(myTable);
-
-    adjustColumnWidths();
-    fireTableChanged();
   }
 
   protected final void fireTableChanged() {
@@ -264,8 +239,33 @@ public class DomTableView extends JPanel implements DataProvider{
     myDispatcher.addListener(listener);
   }
 
-  public final void reset() {
+  public final void reset(ColumnInfo[] columnInfos, List data) {
+    if (myTable.isEditing()) {
+      myTable.getCellEditor().cancelCellEditing();
+    }
+    final boolean columnsChanged = myTableModel.setColumnInfos(columnInfos);
+    final boolean dataChanged = !data.equals(myTableModel.getItems());
+    if (dataChanged) {
+      final int selectedRow = myTable.getSelectedRow();
+      myTableModel.setItems(new ArrayList(data));
+      if (selectedRow >= 0 && selectedRow < myTableModel.getRowCount()) {
+        myTable.getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
+      }
+    }
+
     myTableModel.cacheValues();
+    final int rowCount = myTableModel.getRowCount();
+    final int columnCount = myTableModel.getColumnCount();
+    myCachedRenderers = new TableCellRenderer[rowCount][columnCount];
+    for (int row = 0; row < rowCount; row++) {
+      for (int column = 0; column < columnCount; column++) {
+        final TableCellRenderer superRenderer = myTable.getSuperCellRenderer(row, column);
+        myCachedRenderers[row][column] = getTableCellRenderer(row, column, superRenderer, myTableModel.getItems().get(row));
+      }
+    }
+    if (columnsChanged) {
+      adjustColumnWidths();
+    }
   }
 
   private class MyListTableModel extends ListTableModel {
@@ -333,5 +333,16 @@ public class DomTableView extends JPanel implements DataProvider{
 
   public interface ChangeListener extends EventListener {
     void changed();
+  }
+
+  private class MyTableView extends TableView {
+
+    public final TableCellRenderer getSuperCellRenderer(int row, int column) {
+      return super.getCellRenderer(row, column);
+    }
+
+    public final TableCellRenderer getCellRenderer(int row, int column) {
+      return myCachedRenderers[row][column];
+    }
   }
 }
