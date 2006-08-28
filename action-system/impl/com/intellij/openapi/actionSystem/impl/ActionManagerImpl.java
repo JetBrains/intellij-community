@@ -504,27 +504,29 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       assertActionIsGroupOrStub(action);
     }
 
+    String actionName = (action instanceof ActionStub) ? ((ActionStub) action).getClassName() : action.getClass().getName();
+
     if (!ADD_TO_GROUP_ELEMENT_NAME.equals(element.getName())) {
       LOG.error("unexpected name of element \"" + element.getName() + "\"");
       return;
     }
     String groupId = element.getAttributeValue(GROUPID_ATTR_NAME);
     if (groupId == null || groupId.length() == 0) {
-      LOG.error("attribute \"group-id\" should be defined");
+      LOG.error(actionName + ": attribute \"group-id\" should be defined");
       return;
     }
     AnAction parentGroup = getActionImpl(groupId, true);
     if (parentGroup == null) {
-      LOG.error("action with id \"" + groupId + "\" isn't registered; action will be added to the \"Other\" group");
+      LOG.error(actionName + ": action with id \"" + groupId + "\" isn't registered; action will be added to the \"Other\" group");
       parentGroup = getActionImpl(IdeActions.GROUP_OTHER_MENU, true);
     }
     if (!(parentGroup instanceof DefaultActionGroup)) {
-      LOG.error("action with id \"" + groupId + "\" should be instance of " + DefaultActionGroup.class.getName());
+      LOG.error(actionName + ": action with id \"" + groupId + "\" should be instance of " + DefaultActionGroup.class.getName());
       return;
     }
     String anchorStr = element.getAttributeValue(ANCHOR_ELEMENT_NAME);
     if (anchorStr == null) {
-      LOG.error("attribute \"anchor\" should be defined");
+      LOG.error(actionName + ": attribute \"anchor\" should be defined");
       return;
     }
     Anchor anchor;
@@ -541,12 +543,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       anchor = Anchor.AFTER;
     }
     else {
-      LOG.error("anchor should be one of the following constants: \"first\", \"last\", \"before\" or \"after\"");
+      LOG.error(actionName + ": anchor should be one of the following constants: \"first\", \"last\", \"before\" or \"after\"");
       return;
     }
     String relativeToActionId = element.getAttributeValue(RELATIVE_TO_ACTION_ATTR_NAME);
     if ((Anchor.BEFORE == anchor || Anchor.AFTER == anchor) && relativeToActionId == null) {
-      LOG.error("\"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"");
+      LOG.error(actionName + ": \"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"");
       return;
     }
     ((DefaultActionGroup)parentGroup).add(action, new Constraints(anchor, relativeToActionId), this);
