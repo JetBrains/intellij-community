@@ -8,12 +8,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import org.jetbrains.annotations.NotNull;
 
 public class EnableOptimizeImportsOnTheFlyFix implements IntentionAction{
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("enable.optimize.imports.on.the.fly");
   }
 
+  @NotNull
   public String getFamilyName() {
     return getText();
   }
@@ -27,7 +30,6 @@ public class EnableOptimizeImportsOnTheFlyFix implements IntentionAction{
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY = true;
-
     DaemonCodeAnalyzer.getInstance(project).restart();
   }
 
