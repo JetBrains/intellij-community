@@ -14,12 +14,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.Icons;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.xml.DomElement;
+import com.intellij.util.Icons;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,11 +33,12 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
-import java.util.EventObject;
-import java.util.List;
 import java.util.EventListener;
+import java.util.List;
 
 /**
  * @author peter
@@ -47,29 +48,6 @@ public class DomTableView extends JPanel implements DataProvider{
   @NonNls private static final String EMPTY_PANE = "EmptyPane";
   private final MyListTableModel myTableModel = new MyListTableModel();
   private final TableView myTable = new TableView() {
-    public boolean editCellAt(final int row, final int column, final EventObject e) {
-      final boolean b = super.editCellAt(row, column, e);
-      if (b) {
-        final Component editor = getEditorComponent();
-        editor.addFocusListener(new FocusAdapter() {
-          public void focusLost(FocusEvent e) {
-            if (!e.isTemporary() && myTable.isEditing()) {
-              final Component oppositeComponent = e.getOppositeComponent();
-              if (editor.equals(oppositeComponent)) return;
-              editor.removeFocusListener(this);
-              if (editor instanceof Container && ((Container)editor).isAncestorOf(oppositeComponent)) {
-                oppositeComponent.addFocusListener(this);
-              }
-              else {
-                myTable.getCellEditor().stopCellEditing();
-              }
-            }
-          }
-        });
-      }
-      return b;
-    }
-
     public TableCellRenderer getCellRenderer(int row, int column) {
       return getTableCellRenderer(row, column, super.getCellRenderer(row, column), myTableModel.getItems().get(row));
     }
