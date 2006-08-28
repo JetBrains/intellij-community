@@ -447,7 +447,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   @NotNull
   private static TextRange getTextRange(final VirtualFile virtualFile, final int line, final int column) {
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    int offset = document.getLineStartOffset(line - 1) + column - 1;
+    int offset = document.getLineStartOffset(line == 0 ? line : line - 1) + (column == 0 ? column : column - 1);
     return new TextRange(offset, offset);
   }
 
