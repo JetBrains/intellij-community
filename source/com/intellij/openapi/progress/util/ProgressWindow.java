@@ -393,10 +393,6 @@ public class ProgressWindow extends BlockingProgressIndicator {
       setCancelButtonText(text);
     }
 
-    protected boolean isProgressDialog() {
-      return true;
-    }
-
     public void doCancelAction() {
       if (myShouldShowCancel) {
         ProgressWindow.this.cancel();
@@ -511,6 +507,10 @@ public class ProgressWindow extends BlockingProgressIndicator {
         if (!SystemInfo.isMac) {
           myPanel.setBorder(new BlockBorder());
         }
+      }
+
+      protected boolean isProgressDialog() {
+        return true;
       }
 
       protected JComponent createCenterPanel() {
