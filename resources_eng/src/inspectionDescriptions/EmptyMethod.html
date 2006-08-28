@@ -5,6 +5,13 @@
 &nbsp;- all implementations of interface method are empty OR<br>
 &nbsp;- method is empty itself and is overridden only by empty methods<br><br>
 Note that a method containing only the <b><font color="#000080">super()</font></b>
-call and passing its own parameter is also considered empty.</font>
+call and passing its own parameter is also considered empty.
+<br><br>
+This inspection is automatically suppressed for methods annotated with special annotations:<br><br>
+&nbsp;- javax.ejb.Init<br>
+&nbsp;- javax.ejb.Remove<br>
+<br>
+Additional annotations can be configured below.
+</font>
 </body>
 </html>

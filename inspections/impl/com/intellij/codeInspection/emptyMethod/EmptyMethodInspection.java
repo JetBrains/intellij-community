@@ -2,32 +2,42 @@ package com.intellij.codeInspection.emptyMethod;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import javax.swing.*;
+import java.util.*;
 import java.util.List;
+import java.awt.*;
 
 /**
  * @author max
  */
 public class EmptyMethodInspection extends DescriptorProviderInspection {
+  public static final Collection<String> STANDARD_EXCLUDE_ANNOS = Collections.unmodifiableCollection(new HashSet<String>(Arrays.asList(
+    "javax.ejb.Remove", "javax.ejb.Init")));
+
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.empty.method.display.name");
   private QuickFix myQuickFix;
   @NonNls public static final String SHORT_NAME = "EmptyMethod";
+
+  public JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
 
   public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     getRefManager().iterate(new RefVisitor() {
@@ -49,7 +59,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
   }
 
   @Nullable
-  private ProblemDescriptor[] checkMethod(RefMethod refMethod, InspectionManager manager) {
+  private ProblemDescriptor[] checkMethod(final RefMethod refMethod, InspectionManager manager) {
     if (!refMethod.isBodyEmpty()) return null;
     if (refMethod.isConstructor()) return null;
     if (refMethod.isSyntheticJSP()) return null;
@@ -57,6 +67,8 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     for (RefMethod refSuper : refMethod.getSuperMethods()) {
       if (checkMethod(refSuper, manager) != null) return null;
     }
+
+    if (SpecialAnnotationsUtil.isSpecialAnnotationPresent(refMethod.getElement(), STANDARD_EXCLUDE_ANNOS, EXCLUDE_ANNOS)) return null;
 
     String message = null;
     if (refMethod.isOnlyCallsSuper()) {
@@ -87,8 +99,20 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     }
 
     if (message != null) {
+      final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+      fixes.add(getFix());
+      SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(refMethod.getElement(), new Processor<String>() {
+        public boolean process(final String qualifiedName) {
+          fixes.add(SpecialAnnotationsUtil.createAddToSpecialAnnotationsListQuickFix(
+            QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
+            QuickFixBundle.message("fix.add.special.annotation.family"),
+            EXCLUDE_ANNOS, qualifiedName, refMethod.getElement()));
+          return true;
+        }
+      });
+
       return new ProblemDescriptor[]{
-        manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message, getFix(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+        manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message, fixes.toArray(new LocalQuickFix[fixes.size()]), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
     }
 
     return null;
@@ -168,6 +192,17 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     }
     return myQuickFix;
   }
+
+  @Nullable
+  public JComponent createOptionsPanel() {
+    final JPanel listPanel = SpecialAnnotationsUtil
+      .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, InspectionsBundle.message("special.annotations.annotations.list"));
+
+    final JPanel panel = new JPanel(new BorderLayout(2, 2));
+    panel.add(listPanel, BorderLayout.NORTH);
+    return panel;
+  }
+
 
   private class QuickFix implements LocalQuickFix {
     @NotNull

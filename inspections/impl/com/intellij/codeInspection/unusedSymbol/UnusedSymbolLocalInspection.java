@@ -4,39 +4,24 @@
 
 package com.intellij.codeInspection.unusedSymbol;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Factory;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.ui.ReorderableListController;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SortedListModel;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * User: anna
@@ -86,56 +71,6 @@ public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
     final JCheckBox classes = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option3"), CLASS);
     final JCheckBox parameters = new JCheckBox(InspectionsBundle.message("inspection.unused.symbol.option4"), PARAMETER);
 
-    final SortedListModel<String> listModel = new SortedListModel<String>(new Comparator<String>() {
-      public int compare(final String o1, final String o2) {
-        return o1.compareTo(o2);
-      }
-    });
-    final JList injectionList = new JList(listModel);
-    for (String s : INJECTION_ANNOS) {
-      listModel.add(s);
-    }
-    injectionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-    final DefaultActionGroup actionGroup = new DefaultActionGroup();
-    final ReorderableListController<String> controller = ReorderableListController.create(injectionList, actionGroup);
-    controller.addAddAction(InspectionsBundle.message("dependency.injection.add.annotation.class"), new Factory<String>() {
-      public String create() {
-        return Messages.showInputDialog(InspectionsBundle.message("dependency.injection.annotation.class"), InspectionsBundle.message("dependency.injection.add.annotation.class"), Messages.getQuestionIcon());
-      }
-    }, true);
-    controller.addRemoveAction(InspectionsBundle.message("dependency.injection.remove.annotation.class"));
-    injectionList.getModel().addListDataListener(new ListDataListener() {
-      public void intervalAdded(ListDataEvent e) {
-        listChanged();
-      }
-
-      private void listChanged() {
-        INJECTION_ANNOS.clear();
-        for (int i = 0; i < listModel.getSize(); i++) {
-            INJECTION_ANNOS.add((String)listModel.getElementAt(i));
-        }
-      }
-
-      public void intervalRemoved(ListDataEvent e) {
-        listChanged();
-      }
-
-      public void contentsChanged(ListDataEvent e) {
-        listChanged();
-      }
-    });
-    final JScrollPane listScrollPane = ScrollPaneFactory.createScrollPane(injectionList);
-    listScrollPane.setBorder(BorderFactory.createEtchedBorder());
-    listScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-    listScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    final FontMetrics fontMetrics = injectionList.getFontMetrics(injectionList.getFont());
-    listScrollPane.setPreferredSize(new Dimension(0, fontMetrics.getHeight() * 5));
-
-    final JPanel listPanel = new JPanel(new BorderLayout());
-    listPanel.setBorder(BorderFactory.createTitledBorder(InspectionsBundle.message("dependency.injection.annotations.list")));
-
-    listPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.PROJECT_VIEW_TOOLBAR, actionGroup, true).getComponent(), BorderLayout.NORTH);
-    listPanel.add(listScrollPane, BorderLayout.SOUTH);
     final ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         LOCAL_VARIABLE = local.isSelected();
@@ -156,6 +91,9 @@ public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
     panel.add(classes);
     panel.add(parameters);
 
+    final JPanel listPanel = SpecialAnnotationsUtil
+      .createSpecialAnnotationsListControl(INJECTION_ANNOS, InspectionsBundle.message("dependency.injection.annotations.list"));
+
     JPanel doNotExpand = new JPanel(new BorderLayout());
     final JPanel north = new JPanel(new BorderLayout(2, 2));
     north.add(panel, BorderLayout.NORTH);
@@ -164,34 +102,11 @@ public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
     return doNotExpand;
   }
 
-  public IntentionAction createAddToInjectionAnnotationsIntentionAction(final String qualifiedName, final PsiElement context) {
-    return new IntentionAction() {
-      @NotNull
-      public String getText() {
-        return QuickFixBundle.message("fix.unused.symbol.injection.text", qualifiedName);
-      }
-
-      @NotNull
-      public String getFamilyName() {
-        return QuickFixBundle.message("fix.unused.symbol.injection.family");
-      }
-
-      public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-        return true;
-      }
-
-      public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-        INJECTION_ANNOS.add(qualifiedName);
-        Collections.sort(INJECTION_ANNOS);
-        final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile(context);
-        //correct save settings
-        ((InspectionProfileImpl)inspectionProfile).isProperSetting(HighlightDisplayKey.find(SHORT_NAME));
-        inspectionProfile.save();
-      }
-
-      public boolean startInWriteAction() {
-        return true;
-      }
-    };
+  public IntentionAction createQuickFix(final String qualifiedName, final PsiElement context) {
+    return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
+      QuickFixBundle.message("fix.unused.symbol.injection.text", qualifiedName),
+      QuickFixBundle.message("fix.unused.symbol.injection.family"),
+      INJECTION_ANNOS, qualifiedName, context);
   }
+
 }

@@ -24,6 +24,7 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -53,8 +54,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -327,7 +328,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @Nullable
-  private HighlightInfo processField(PsiField field, final List<IntentionAction> options, final String displayName, final UnusedSymbolLocalInspection unusedSymbolInspection) {
+  private HighlightInfo processField(final PsiField field, final List<IntentionAction> options, final String displayName, final UnusedSymbolLocalInspection unusedSymbolInspection) {
     final PsiIdentifier identifier = field.getNameIdentifier();
 
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -357,36 +358,25 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
 
       if (!field.hasInitializer()) {
-        final boolean injected = isFieldInjected(field, unusedSymbolInspection.INJECTION_ANNOS);
+        final boolean injected = SpecialAnnotationsUtil.isSpecialAnnotationPresent(field, UnusedSymbolLocalInspection.STANDARD_INJECTION_ANNOS, unusedSymbolInspection.INJECTION_ANNOS);
         final boolean writeReferenced = myRefCountHolder.isReferencedForWrite(field);
         if (!writeReferenced && !injected && !isImplicitWrite(field)) {
           String message = MessageFormat.format(JavaErrorMessages.message("private.field.is.not.assigned"), identifier.getText());
-          HighlightInfo info = createUnusedSymbolInfo(identifier, message);
+          final HighlightInfo info = createUnusedSymbolInfo(identifier, message);
           QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterAction(false, true, field), options, displayName);
           QuickFixAction.registerQuickFixAction(info, new CreateConstructorParameterFromFieldFix(field), options, displayName);
-          final PsiAnnotation[] psiAnnotations = field.getModifierList().getAnnotations();
-          if (psiAnnotations.length > 0) {
-            for (PsiAnnotation psiAnnotation : psiAnnotations) {
-              @NonNls final String name = psiAnnotation.getQualifiedName();
-              if (name == null) continue;
-              if (name.startsWith("java.") || name.startsWith("javax.") || name.startsWith("org.jetbrains.")) continue;
-              QuickFixAction.registerQuickFixAction(info, unusedSymbolInspection.createAddToInjectionAnnotationsIntentionAction(name, field));
+          SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(field, new Processor<String>() {
+            public boolean process(final String annoName) {
+              QuickFixAction.registerQuickFixAction(info, unusedSymbolInspection.createQuickFix(annoName, field));
+              return true;
             }
-          }
+          });
           return info;
         }
       }
     }
 
     return null;
-  }
-
-  private static boolean isFieldInjected(final PsiField field, final List<String> externalInjectionAnnos) {
-    for (PsiAnnotation psiAnnotation : field.getModifierList().getAnnotations()) {
-      if (UnusedSymbolLocalInspection.STANDARD_INJECTION_ANNOS.contains(psiAnnotation.getQualifiedName())) return true;
-      if (externalInjectionAnnos.contains(psiAnnotation.getQualifiedName())) return true;
-    }
-    return false;
   }
 
   @Nullable
