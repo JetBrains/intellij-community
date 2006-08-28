@@ -100,7 +100,7 @@ public abstract class DomFileDescription<T> {
   }
 
   /**
-   * Get dependency items (the same, as in {@link com.intellij.psi.util.CachedValue}) for file. On any depemndency item change, the
+   * Get dependency items (the same, as in {@link com.intellij.psi.util.CachedValue}) for file. On any dependency item change, the
    * {@link #isMyFile(com.intellij.psi.xml.XmlFile)} method will be invoked once more to ensure that the file description still
    * accepts this file 
    * @param file XML file to get dependencies of
