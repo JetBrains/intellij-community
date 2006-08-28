@@ -23,14 +23,6 @@ public abstract class AbstractDomElementComponent<T extends DomElement> extends 
     return myDomElement;
   }
 
-  public void commit() {
-    super.commit();
-  }
-
-  public void reset() {
-    super.reset();
-  }
-
   protected static void setEnabled(Component component, boolean enabled) {
     UIUtil.setEnabled(component, enabled, true);
   }
