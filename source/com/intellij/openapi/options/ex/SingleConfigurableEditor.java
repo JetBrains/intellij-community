@@ -110,6 +110,12 @@ public class SingleConfigurableEditor extends DialogWrapper {
     super.doOKAction();
   }
 
+  protected static String createDimensionKey(Configurable configurable) {
+    String displayName = configurable.getDisplayName();
+    displayName = displayName.replaceAll("\n", "_").replaceAll(" ", "_");
+    return "#" + displayName;
+  }
+
   protected class ApplyAction extends AbstractAction {
     private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 

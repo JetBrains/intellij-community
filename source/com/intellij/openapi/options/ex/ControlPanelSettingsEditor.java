@@ -304,14 +304,8 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
       }
     }
     final SingleConfigurableEditor configurableEditor =
-      new SingleConfigurableEditor(myProject, actualConfigurable, createDimensionKey(configurable));
+      new SingleConfigurableEditor(myProject, actualConfigurable, SingleConfigurableEditor.createDimensionKey(configurable));
     configurableEditor.show();
-  }
-
-  private static String createDimensionKey(Configurable configurable) {
-    String displayName = configurable.getDisplayName();
-    displayName = displayName.replaceAll("\n", "_").replaceAll(" ", "_");
-    return "#" + displayName;
   }
 
 

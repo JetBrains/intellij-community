@@ -141,7 +141,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     private InspectionManagerEx myManager;
 
     public MySingleConfigurableEditor(final Project project, final ErrorOptionsConfigurable configurable, InspectionManagerEx manager) {
-      super(project, configurable);
+      super(project, configurable, createDimensionKey(configurable));
       myManager = manager;
     }
 
