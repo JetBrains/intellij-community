@@ -47,8 +47,9 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Cached
   }
 
   final void fireEvents() {
-    if (myPostRunnable != null) {
-      myPostRunnable.run();
+    final Runnable postRunnable = myPostRunnable;
+    if (postRunnable != null) {
+      postRunnable.run();
       myPostRunnable = null;
     }
   }
