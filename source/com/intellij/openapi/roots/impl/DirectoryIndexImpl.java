@@ -29,7 +29,7 @@ import java.util.*;
 public class DirectoryIndexImpl extends DirectoryIndex implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.DirectoryIndexImpl");
 
-  private boolean LAZY_MODE;
+  private final boolean LAZY_MODE;
 
   private final Project myProject;
 
@@ -735,8 +735,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       String oldPackageName = info.packageName;
       if (oldPackageName != null) {
         VirtualFile[] oldPackageDirs = myPackageNameToDirsMap.get(oldPackageName);
-        assert (oldPackageDirs != null);
-        assert (oldPackageDirs.length > 0);
+        assert oldPackageDirs != null;
+        assert oldPackageDirs.length > 0;
         if (oldPackageDirs.length != 1) {
           VirtualFile[] dirs = new VirtualFile[oldPackageDirs.length - 1];
 
@@ -755,7 +755,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
           myPackageNameToDirsMap.put(oldPackageName, dirs);
         }
         else {
-          assert (dir.equals(oldPackageDirs[0]));
+          assert dir.equals(oldPackageDirs[0]);
           myPackageNameToDirsMap.remove(oldPackageName);
         }
 
@@ -828,7 +828,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
           fillMapWithLibrarySources(file, newDirPackageName, parentInfo.sourceRoot, null);
         }
 
-        if (parentInfo.getOrderEntries().size() > 0) {
+        if (!parentInfo.getOrderEntries().isEmpty()) {
           fillMapWithOrderEntries(file, parentInfo.getOrderEntries(), null, null, null, null, parentInfo, null);
         }
       }

@@ -143,14 +143,20 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   public final void updateFromRoot(boolean restoreExpandedPaths) {
     final ArrayList<Object> pathsToExpand = new ArrayList<Object>();
     final ArrayList<Object> selectionPaths = new ArrayList<Object>();
+    Runnable expandPaths = null;
     if (restoreExpandedPaths) {
       TreeBuilderUtil.storePaths(myTreeBuilder, (DefaultMutableTreeNode)myTree.getModel().getRoot(), pathsToExpand, selectionPaths, true);
+      expandPaths = new Runnable() {
+        public void run() {
+          if (myTree != null && myTreeBuilder != null && !myTreeBuilder.isDisposed()) {
+            myTree.setSelectionPaths(new TreePath[0]);
+            TreeBuilderUtil.restorePaths(myTreeBuilder, pathsToExpand, selectionPaths, true);
+          }
+        }
+      };
     }
-    myTreeBuilder.updateFromRoot();
-    if (restoreExpandedPaths) {
-      myTree.setSelectionPaths(new TreePath[0]);
-      TreeBuilderUtil.restorePaths(myTreeBuilder, pathsToExpand, selectionPaths, true);
-    }
+    myTreeBuilder.addSubtreeToUpdate((DefaultMutableTreeNode)myTreeBuilder.getTreeModel().getRoot(), expandPaths);
+    //myTreeBuilder.updateFromRoot();
   }
 
   public void select(Object element, VirtualFile file, boolean requestFocus) {

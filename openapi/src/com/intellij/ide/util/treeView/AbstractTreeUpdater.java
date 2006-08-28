@@ -88,7 +88,7 @@ public class AbstractTreeUpdater implements Disposable {
       myRunBeforeUpdate.run();
     }
 
-    while(myNodesToUpdate.size() > 0){
+    while(!myNodesToUpdate.isEmpty()){
       DefaultMutableTreeNode node = myNodesToUpdate.removeFirst();
       updateSubtree(node);
     }
@@ -96,7 +96,7 @@ public class AbstractTreeUpdater implements Disposable {
     if (myRunAfterUpdate != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            synchronized (this) {
+            synchronized (AbstractTreeUpdater.this) {
               if (myRunAfterUpdate != null) {
                 myRunAfterUpdate.run();
                 myRunAfterUpdate = null;

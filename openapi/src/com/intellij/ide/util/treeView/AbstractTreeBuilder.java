@@ -664,7 +664,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   private void insertNodesInto(ArrayList<TreeNode> nodes, DefaultMutableTreeNode parentNode) {
-    if (nodes.size() == 0) return;
+    if (nodes.isEmpty()) return;
 
     nodes = new ArrayList<TreeNode>(nodes);
     Collections.sort(nodes, myNodeComparator);
@@ -700,7 +700,13 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   public void addSubtreeToUpdate(final DefaultMutableTreeNode root) {
-    myUpdater.addSubtreeToUpdate(root);
+    addSubtreeToUpdate(root, null);
+  }
+  public void addSubtreeToUpdate(final DefaultMutableTreeNode root, Runnable runAfterUpdate) {
+    myUpdater.runAfterUpdate(runAfterUpdate);
+    if (runAfterUpdate != null) {
+      myUpdater.addSubtreeToUpdate(root);
+    }
   }
 
   private class MyExpansionListener implements TreeExpansionListener {
@@ -816,7 +822,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
       List<DefaultMutableTreeNode> nodes = (List<DefaultMutableTreeNode>)value;
       final boolean reallyRemoved = nodes.remove(node);
       if (reallyRemoved) {
-        if (nodes.size() == 0) {
+        if (nodes.isEmpty()) {
           myElementToNodeMap.remove(element);
         }
       }
@@ -832,7 +838,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
       return (DefaultMutableTreeNode)value;
     }
     final List<DefaultMutableTreeNode> nodes = (List<DefaultMutableTreeNode>)value;
-    return nodes.size() > 0 ? nodes.get(0) : null;
+    return !nodes.isEmpty() ? nodes.get(0) : null;
   }
 
   protected Object findNodeByElement(Object element) {

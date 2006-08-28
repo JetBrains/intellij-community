@@ -29,10 +29,11 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.ComboBox;
@@ -125,7 +126,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   static final String PROJECT_VIEW_DATA_CONSTANT = "com.intellij.ide.projectView.impl.ProjectViewImpl";
   private DefaultActionGroup myActionGroup;
   private final Runnable myTreeChangeListener;
-  private final ModuleListener myModulesListener;
   private String mySavedPaneId = ProjectViewPane.ID;
   private String mySavedPaneSubId;
   private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
@@ -157,8 +157,9 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private MyPanel myDataProvider;
   private final SplitterProportionsData splitterProportions = new SplitterProportionsData();
   private static final Icon BULLET_ICON = IconLoader.getIcon("/general/bullet.png");
+  private final ModuleRootListener myModuleRootListener;
 
-  public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, SelectInManager selectInManager) {
+  public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, SelectInManager selectInManager, ProjectRootManager rootManager) {
     myProject = project;
     myFileEditorManager = fileEditorManager;
     mySelectInManager = selectInManager;
@@ -167,22 +168,17 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         updateToolWindowTitle();
       }
     };
-    myModulesListener = new ModuleListener() {
-      public void moduleRemoved(Project project, Module module) {
-        refresh();
+
+    myModuleRootListener = new ModuleRootListener() {
+      public void beforeRootsChange(ModuleRootEvent event) {
+
       }
 
-      public void modulesRenamed(Project project, List<Module> modules) {
+      public void rootsChanged(ModuleRootEvent event) {
         refresh();
-      }
-
-      public void moduleAdded(Project project, Module module) {
-        refresh();
-      }
-
-      public void beforeModuleRemoved(Project project, Module module) {
       }
     };
+    rootManager.addModuleRootListener(myModuleRootListener);
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler();
 
     myDataProvider = new MyPanel();
@@ -200,7 +196,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     if (toolWindowManager != null) {
       toolWindowManager.unregisterToolWindow(ToolWindowId.PROJECT_VIEW);
     }
-    ModuleManager.getInstance(myProject).removeModuleListener(myModulesListener);
+    ProjectRootManager.getInstance(myProject).removeModuleRootListener(myModuleRootListener);
     dispose();
   }
 
@@ -440,7 +436,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       }
     });
 
-    ModuleManager.getInstance(myProject).addModuleListener(myModulesListener);
     isInitialized = true;
     doAddUninitializedPanes();
   }
