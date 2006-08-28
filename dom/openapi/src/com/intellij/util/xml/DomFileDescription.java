@@ -99,6 +99,13 @@ public abstract class DomFileDescription<T> {
     return false;
   }
 
+  /**
+   * Get dependency items (the same, as in {@link com.intellij.psi.util.CachedValue}) for file. On any depemndency item change, the
+   * {@link #isMyFile(com.intellij.psi.xml.XmlFile)} method will be invoked once more to ensure that the file description still
+   * accepts this file 
+   * @param file XML file to get dependencies of
+   * @return dependency item set 
+   */
   @NotNull
   public Set<? extends Object> getDependencyItems(XmlFile file) {
     return Collections.emptySet();
