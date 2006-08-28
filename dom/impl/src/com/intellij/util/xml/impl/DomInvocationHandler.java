@@ -381,7 +381,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   @NotNull
-  protected final Converter getScalarConverter(final JavaMethod method) {
+  protected final synchronized Converter getScalarConverter(final JavaMethod method) {
     return myScalarConverters.get(method);
   }
 
@@ -389,12 +389,12 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private Converter getConverter(final AnnotatedElement annotationProvider,
                                  Class parameter,
                                  final Factory<Converter> continuation) {
-    final Resolve resolveAnnotation = (Resolve)annotationProvider.getAnnotation(Resolve.class);
+    final Resolve resolveAnnotation = annotationProvider.getAnnotation(Resolve.class);
     if (resolveAnnotation != null) {
       return DomResolveConverter.createConverter(resolveAnnotation.value());
     }
 
-    final Convert convertAnnotation = (Convert)annotationProvider.getAnnotation(Convert.class);
+    final Convert convertAnnotation = annotationProvider.getAnnotation(Convert.class);
     final ConverterManager converterManager = myManager.getConverterManager();
     if (convertAnnotation != null) {
       return converterManager.getConverterInstance(convertAnnotation.value());
