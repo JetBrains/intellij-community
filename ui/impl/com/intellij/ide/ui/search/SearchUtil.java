@@ -432,6 +432,8 @@ public class SearchUtil {
           if (e.getKeyCode() == KeyEvent.VK_ESCAPE && getText().length() > 0) {
             setText("");
             e.consume();
+          } else if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0) {
+            e.consume();
           }
         }
       });
