@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Alarm;
+import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -173,10 +174,14 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
   private void updateNodesContaining(final Collection<VirtualFile> filesToRefresh, final DefaultMutableTreeNode rootNode) {
     if (!(rootNode.getUserObject() instanceof ProjectViewNode)) return;
     ProjectViewNode node = (ProjectViewNode)rootNode.getUserObject();
-    Set<VirtualFile> containingFiles = null;
+    Collection<VirtualFile> containingFiles = null;
     for (VirtualFile virtualFile : filesToRefresh) {
+      if (!virtualFile.isValid()) {
+        addSubtreeToUpdate(rootNode); // file must be deleted
+        return;
+      }
       if (node.contains(virtualFile)) {
-        if (containingFiles == null) containingFiles = new THashSet<VirtualFile>();
+        if (containingFiles == null) containingFiles = new SmartList<VirtualFile>();
         containingFiles.add(virtualFile);
       }
     }

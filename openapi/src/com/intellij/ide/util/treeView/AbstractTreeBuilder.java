@@ -267,7 +267,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     boolean changes = descriptor.update();
     if (descriptor.getElement() == null) {
       LOG.assertTrue(false, "element == null, updateSubtree should be invoked for parent! builder=" + this + ", prevElement = " +
-                            prevElement + ", node = " + node);
+                            prevElement + ", node = " + node+"; parentDescriptor="+ descriptor.getParentDescriptor());
     }
     if (changes) {
       updateNodeImageAndPosition(node);
@@ -704,9 +704,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
   public void addSubtreeToUpdate(final DefaultMutableTreeNode root, Runnable runAfterUpdate) {
     myUpdater.runAfterUpdate(runAfterUpdate);
-    if (runAfterUpdate != null) {
-      myUpdater.addSubtreeToUpdate(root);
-    }
+    myUpdater.addSubtreeToUpdate(root);
   }
 
   private class MyExpansionListener implements TreeExpansionListener {

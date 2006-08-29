@@ -24,8 +24,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -58,7 +57,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       }
     }));
   private final ProblemListener fireProblemListeners = new ProblemListener() {
-
     public void problemsAppeared(VirtualFile file) {
       for (final ProblemListener problemListener : myProblemListeners) {
         problemListener.problemsAppeared(file);
@@ -76,7 +74,28 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         problemListener.problemsDisappeared(file);
       }
     }
+  };
 
+  private final VirtualFileListener myVirtualFileListener = new VirtualFileAdapter() {
+    public void beforeFileDeletion(VirtualFileEvent event) {
+      VirtualFile file = event.getFile();
+      onDeleted(file);
+    }
+
+    private void onDeleted(final VirtualFile file) {
+      if (file.isDirectory()) {
+        for (VirtualFile virtualFile : file.getChildren()) {
+          onDeleted(virtualFile);
+        }
+      }
+      else if (myProblems.remove(file) != null) {
+        fireProblemListeners.problemsDisappeared(file);
+      }
+    }
+
+    public void beforeFileMovement(VirtualFileMoveEvent event) {
+      beforeFileDeletion(event);
+    }
   };
 
   private long myPsiModificationCount = -1000;
@@ -105,7 +124,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  public WolfTheProblemSolverImpl(Project project, PsiManager psiManager) {
+  public WolfTheProblemSolverImpl(Project project, PsiManager psiManager, VirtualFileManager virtualFileManager) {
     myProject = project;
     myChangeListener = new PsiTreeChangeAdapter() {
       public void childAdded(PsiTreeChangeEvent event) {
@@ -133,6 +152,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       }
     };
     psiManager.addPsiTreeChangeListener(myChangeListener);
+    virtualFileManager.addVirtualFileListener(myVirtualFileListener);
   }
 
   private void clearSyntaxErrorFlag(final PsiTreeChangeEvent event) {
@@ -150,6 +170,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   public void projectClosed() {
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myChangeListener);
+    VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
   }
 
   @NotNull

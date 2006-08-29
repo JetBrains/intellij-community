@@ -207,7 +207,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     //DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
   }
 
-  public void updateTreePopoupHandler(){
+  public void updateTreePopupHandler(){
     myTree.removeMouseListener(myTreePopupHandler);
     ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_FAVORITES_VIEW_POPUP);
     myTreePopupHandler = PopupHandler.installPopupHandler(myTree, group, ActionPlaces.FAVORITES_VIEW_POPUP, ActionManager.getInstance());

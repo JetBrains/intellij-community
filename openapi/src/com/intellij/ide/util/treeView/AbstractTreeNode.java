@@ -18,8 +18,8 @@ package com.intellij.ide.util.treeView;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -59,7 +59,6 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
 
     boolean updated = !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, myLocationString, myColor, myAttributesKey},
                                         new Object[]{openIcon, closedIcon, name, locationString, color, attributesKey});
-
     myOpenIcon = openIcon;
     myClosedIcon = closedIcon;
     myName = name;
@@ -67,10 +66,6 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
     myColor = color;
     myAttributesKey = attributesKey;
 
-    if (hasProblemFileBeneath() ) {
-      updated |= myAttributesKey != CodeInsightColors.ERRORS_ATTRIBUTES;
-      myAttributesKey = CodeInsightColors.ERRORS_ATTRIBUTES;
-    }
     return updated;
   }
 
@@ -95,6 +90,9 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
     PresentationData presentation = new PresentationData();
     if (shouldUpdateData()) {
       update(presentation);
+    }
+    if (hasProblemFileBeneath() ) {
+      presentation.setAttributesKey(CodeInsightColors.ERRORS_ATTRIBUTES);
     }
     return presentation;
   }

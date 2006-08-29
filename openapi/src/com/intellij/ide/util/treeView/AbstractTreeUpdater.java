@@ -42,7 +42,7 @@ public class AbstractTreeUpdater implements Disposable {
   public void dispose() {
   }
 
-  public void addSubtreeToUpdate(@NotNull DefaultMutableTreeNode rootNode) {
+  public synchronized void addSubtreeToUpdate(@NotNull DefaultMutableTreeNode rootNode) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("addSubtreeToUpdate:" + rootNode);
     }
@@ -83,7 +83,7 @@ public class AbstractTreeUpdater implements Disposable {
     myTreeBuilder.updateSubtree(node);
   }
 
-  public void performUpdate() {
+  public synchronized void performUpdate() {
     if (myRunBeforeUpdate != null){
       myRunBeforeUpdate.run();
     }
@@ -95,15 +95,15 @@ public class AbstractTreeUpdater implements Disposable {
 
     if (myRunAfterUpdate != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            synchronized (AbstractTreeUpdater.this) {
-              if (myRunAfterUpdate != null) {
-                myRunAfterUpdate.run();
-                myRunAfterUpdate = null;
-              }
+        public void run() {
+          synchronized (AbstractTreeUpdater.this) {
+            if (myRunAfterUpdate != null) {
+              myRunAfterUpdate.run();
+              myRunAfterUpdate = null;
             }
           }
-        });
+        }
+      });
     }
   }
 

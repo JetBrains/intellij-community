@@ -467,7 +467,7 @@ public class CustomizableActionsPanel {
       //final FavoritesManager favoritesView = FavoritesManager.getInstance(project);
       //final String[] availableFavoritesLists = favoritesView.getAvailableFavoritesLists();
       //for (String favoritesList : availableFavoritesLists) {
-      //  favoritesView.getFavoritesTreeViewPanel(favoritesList).updateTreePopoupHandler();
+      //  favoritesView.getFavoritesTreeViewPanel(favoritesList).updateTreePopupHandler();
       //}
     }
     final IdeFrame frame = WindowManagerEx.getInstanceEx().getFrame(null);
