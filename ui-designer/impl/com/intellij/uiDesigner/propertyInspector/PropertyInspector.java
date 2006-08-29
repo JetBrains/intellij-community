@@ -103,6 +103,11 @@ public final class PropertyInspector extends JPanel{
       if (myEditor != null) {
         myEditor.addComponentSelectionListener(myComponentSelectionListener);
       }
+      else {
+        if (myCustomPropertiesPanel != null) {
+          myCustomPropertiesPanel.removeChangeListener(myCustomPropertiesChangeListener);
+        }
+      }
     }
   }
 
