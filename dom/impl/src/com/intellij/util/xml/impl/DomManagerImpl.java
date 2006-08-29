@@ -525,8 +525,9 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   @Nullable
   private DomFileDescription findFileDescription(DomElement element) {
+    final XmlFile file = element.getRoot().getFile();
     synchronized (PsiLock.LOCK) {
-      return getOrCreateCachedValueProvider(element.getRoot().getFile()).getFileDescription();
+      return getOrCreateCachedValueProvider(file).getFileDescription();
     }
   }
 
