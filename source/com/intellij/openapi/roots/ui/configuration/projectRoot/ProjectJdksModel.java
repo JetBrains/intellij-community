@@ -180,7 +180,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
               !Comparing.strEqual(((ProjectJdk)projectJdk).getName(), currName)){ //do not leave current item with current name
             rootConfigurable.selectNodeInTree(currName);
           }
-          throw e;
+          throw new ConfigurationException(ProjectBundle.message("sdk.configuration.exception", currName) + " " + e.getMessage());
         }
       }
       allNames.add(currName);
