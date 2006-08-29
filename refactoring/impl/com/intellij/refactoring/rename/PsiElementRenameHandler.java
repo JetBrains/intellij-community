@@ -44,6 +44,7 @@ public class PsiElementRenameHandler implements RenameHandler {
 
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
     PsiElement element = elements != null && elements.length == 1 ? elements[0] : null;
+    if (element == null) element = getElement(dataContext);
     LOG.assertTrue(element != null);
     Editor editor = (Editor) dataContext.getData(DataConstants.EDITOR);
     invoke(element, project, element, editor);
