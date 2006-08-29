@@ -29,11 +29,10 @@ public class CharToStringIntention extends Intention {
         return new CharToStringPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiLiteralExpression charLiteral =
                 (PsiLiteralExpression)element;
-        assert charLiteral != null;
         final String charLiteralText = charLiteral.getText();
         final String stringLiteral = stringForCharLiteral(charLiteralText);
         replaceExpression(stringLiteral, charLiteral);

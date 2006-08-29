@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.chartostring;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -30,6 +31,13 @@ class CharToStringPredicate implements PsiElementPredicate{
                 (PsiLiteralExpression) element;
         final PsiType type = expression.getType();
         if(!PsiType.CHAR.equals(type)){
+            return false;
+        }
+        final String charLiteral = element.getText();
+        final String charText =
+                charLiteral.substring(1, charLiteral.length() - 1);
+        if (StringUtil.unescapeStringCharacters(charText).length() != 1) {
+            // not satisfied with character literals of more than one character 
             return false;
         }
         return isInConcatenationContext(expression);
