@@ -40,45 +40,45 @@ public class Disposer {
     ourTree.executeChildAndReplace(toDipose, toReplace, true, ourDisposeAction);
   }
 
-  public static boolean isRegistered(Disposable aDisposable) {
-    return ourTree.isRegistered(aDisposable);
-  }
-
-  public static boolean isRoot(Disposable disposable) {
-    return ourTree.isRoot(disposable);
-  }
-
   static ObjectTree getTree() {
     return ourTree;
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
   public static void assertIsEmpty() {
-    final Set objects = ourTree.getRootObjects();
-    if (!objects.isEmpty()) {
-      System.err.println("***********************************************************************************************");
-      System.err.println("***                        M E M O R Y    L E A K S   D E T E C T E D                       ***");
-      System.err.println("***********************************************************************************************");
-      System.err.println("***                                                                                         ***");
-      System.err.println("***   The following objects were not disposed: ");
+    boolean firstObject = true;
 
-      for (Object object : objects) {
-        System.err.println("***   " + object + " of class " + object.getClass());
-        final ObjectNode objectNode = ourTree.getObject2NodeMap().get(object);
-        final Throwable trace = objectNode.getTrace();
-        if (trace != null) {
-          System.err.println("***         First seen at: ");
-          trace.printStackTrace();
-        }
+    final Set<Object> objects = ourTree.getRootObjects();
+    for (Object object : objects) {
+      if (object == null) continue;
+      final ObjectNode objectNode = ourTree.getObject2NodeMap().get(object);
+      if (objectNode == null) continue;
+
+      if (firstObject) {
+        firstObject = false;
+        System.err.println("***********************************************************************************************");
+        System.err.println("***                        M E M O R Y    L E A K S   D E T E C T E D                       ***");
+        System.err.println("***********************************************************************************************");
+        System.err.println("***                                                                                         ***");
+        System.err.println("***   The following objects were not disposed: ");
       }
 
+      System.err.println("***   " + object + " of class " + object.getClass());
+      final Throwable trace = objectNode.getTrace();
+      if (trace != null) {
+        System.err.println("***         First seen at: ");
+        trace.printStackTrace();
+      }
+    }
+
+    if (!firstObject) {
       System.err.println("***                                                                                         ***");
       System.err.println("***********************************************************************************************");
     }
   }
 
   public static void setDebugMode(final boolean b) {
-    ourDebugMode = true;
+    ourDebugMode = b;
   }
 
 

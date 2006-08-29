@@ -7,7 +7,10 @@ package com.intellij.openapi.util.objectTree;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +20,7 @@ public final class ObjectNode {
   private ObjectTree myTree;
 
   private ObjectNode myParent;
-  private Object myObject;
+  private Reference<Object> myReference;
 
   private List<ObjectNode> myChildren;
   private Throwable myTrace;
@@ -25,7 +28,7 @@ public final class ObjectNode {
   public ObjectNode(ObjectTree tree, ObjectNode parentNode, Object object) {
     myTree = tree;
     myParent = parentNode;
-    myObject = object;
+    myReference = new WeakReference<Object>(object);
 
     if (Disposer.isDebugMode()) {
       myTrace = new Throwable();
@@ -77,6 +80,9 @@ public final class ObjectNode {
   }
 
   public void execute(boolean disposeTree, ObjectTreeAction action) {
+    final Object object = myReference.get();
+    if (object == null) return;
+
     if (myTree.getExecutedObjects().contains(this)) {
       return;
     }
@@ -96,27 +102,28 @@ public final class ObjectNode {
     }
 
     try {
-      action.execute(myObject);
+      action.execute(object);
     }
     catch (Throwable e) {
       LOG.error(e);
     }
 
     if (disposeTree) {
-      myTree.getObject2NodeMap().remove(myObject);
+      myTree.getObject2NodeMap().remove(object);
       if (myParent != null) {
         myParent.removeChild(this);
       }
       else {
-        myTree.getRootObjects().remove(myObject);
+        myTree.getRootObjects().remove(object);
       }
     }
 
     myTree.getExecutedObjects().remove(this);
   }
 
+  @Nullable
   public Object getObject() {
-    return myObject;
+    return myReference.get();
   }
 
   public List getChildren() {
@@ -125,7 +132,7 @@ public final class ObjectNode {
 
   @NonNls
   public String toString() {
-    return "Node: " + myObject.toString();
+    return "Node: " + myReference.toString();
   }
 
 

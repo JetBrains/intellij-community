@@ -8,6 +8,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.objectTree.ObjectNode;
 import junit.framework.TestCase;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -149,6 +151,24 @@ public class DisposerTest extends TestCase {
     Disposer.dispose(myRoot);
     assertDisposed(myFolder1);
     assertDisposed(myLeaf1);
+  }
+
+  public void testDisposerDoesntHandleReferenceToChildObject() throws Exception {
+    Disposable root = new MyDisposable("root");
+    Disposable child = new MyDisposable("child");
+
+
+    Disposer.register(root, child);
+
+    child = null;
+
+    Reference r = new WeakReference<Disposable>(child);
+    System.gc();
+    System.gc();
+    System.gc();
+
+    assertNull(r.get());
+    assertEquals("[child]", myDisposedObjects.toString());
   }
 
   private void assertDisposed(MyDisposable aDisposable) {
