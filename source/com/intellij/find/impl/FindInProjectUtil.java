@@ -416,6 +416,10 @@ public class FindInProjectUtil {
     for (int i = 0; i < words.size(); i++) {
       String word = words.get(i);
       PsiFile[] files = cacheManager.getFilesWithWord(word, UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
+      if (files.length == 0) {
+        resultFiles.clear();
+        break;
+      }
 
       final List<PsiFile> psiFiles = Arrays.asList(files);
       if (i == 0) {
