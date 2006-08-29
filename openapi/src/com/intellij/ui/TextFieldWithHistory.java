@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -38,6 +39,10 @@ public class TextFieldWithHistory extends JPanel {
   private JTextField myTextField;
 
   private JBPopup myPopup;
+  private JLabel myClearFieldLabel;
+  private JLabel myToggleHistoryLabel;
+
+  private boolean myFreaze = false;
 
   public TextFieldWithHistory() {
     super(new BorderLayout());
@@ -49,43 +54,32 @@ public class TextFieldWithHistory extends JPanel {
 
     add(myTextField, BorderLayout.CENTER);
 
-    final JLabel toggleHistoryLabel = new JLabel(IconLoader.findIcon("/actions/search.png"));
-    toggleHistoryLabel.setOpaque(true);
-    toggleHistoryLabel.setBackground(myTextField.getBackground());
-    toggleHistoryLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 4));
-    toggleHistoryLabel.addMouseListener(new MouseAdapter() {
+    myToggleHistoryLabel = new JLabel(IconLoader.findIcon("/actions/search.png"));
+    myToggleHistoryLabel.setOpaque(true);
+    myToggleHistoryLabel.setBackground(myTextField.getBackground());
+    myToggleHistoryLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 4));
+    myToggleHistoryLabel.addMouseListener(new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
         togglePopup();
       }
     });
-    add(toggleHistoryLabel, BorderLayout.WEST);
+    add(myToggleHistoryLabel, BorderLayout.WEST);
 
-    final JLabel clearFieldLabel = new JLabel(IconLoader.findIcon("/actions/clean.png"));
-    clearFieldLabel.setOpaque(true);
-    clearFieldLabel.setBackground(myTextField.getBackground());
-    clearFieldLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 0));
-    add(clearFieldLabel, BorderLayout.EAST);
-    clearFieldLabel.addMouseListener(new MouseAdapter() {
+    myClearFieldLabel = new JLabel(IconLoader.findIcon("/actions/clean.png"));
+    myClearFieldLabel.setOpaque(true);
+    myClearFieldLabel.setBackground(myTextField.getBackground());
+    myClearFieldLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 0));
+    add(myClearFieldLabel, BorderLayout.EAST);
+    myClearFieldLabel.addMouseListener(new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
         myTextField.setText("");
       }
     });
 
     // myTextField.addKeyListener(new HistoricalValuesHighlighter());
-    myTextField.getDocument().addDocumentListener(new DocumentListener() {
-      public void insertUpdate(DocumentEvent e) {
-        updateCroppedList();
-      }
-
-      public void removeUpdate(DocumentEvent e) {
-        updateCroppedList();
-      }
-
-      public void changedUpdate(DocumentEvent e) {
-        updateCroppedList();
-      }
-
-      private void updateCroppedList() {
+    myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        if (myFreaze) return; //do not suggest during batch update
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             String text = getTextEditor().getText();
@@ -127,13 +121,23 @@ public class TextFieldWithHistory extends JPanel {
       }
     });
 
-    setBorder(new CompoundBorder(IdeBorderFactory.createEmptyBorder(4, 4, 4, 0), myTextField.getBorder()));
+    setBorder(new CompoundBorder(IdeBorderFactory.createEmptyBorder(4, 0, 4, 0), myTextField.getBorder()));
     
     myTextField.setBorder(null);
   }
 
   public void addDocumentListener(DocumentListener listener) {
     getTextEditor().getDocument().addDocumentListener(listener);
+  }
+
+
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    final Color bg = enabled
+                     ? UIUtil.getTextFieldBackground()
+                     : UIUtil.getPanelBackground();
+    myToggleHistoryLabel.setBackground(bg);
+    myClearFieldLabel.setBackground(bg);
   }
 
   public void setHistorySize(int aHistorySize) {
@@ -153,7 +157,9 @@ public class TextFieldWithHistory extends JPanel {
   }
 
   public void setText(String aText) {
+    myFreaze = true;
     getTextEditor().setText(aText);
+    myFreaze = false;
   }
 
   public String getText() {
@@ -378,7 +384,7 @@ public class TextFieldWithHistory extends JPanel {
         }
       }).createPopup();
 
-      myPopup.showUnderneathOf(this);
+      if (isShowing()) myPopup.showUnderneathOf(this);
     }
   }
 
@@ -393,7 +399,9 @@ public class TextFieldWithHistory extends JPanel {
   }
 
   public void setSelectedItem(final String s) {
+    myFreaze = true;
     getTextEditor().setText(s);
+    myFreaze = false;
   }
 
   public int getSelectedIndex() {

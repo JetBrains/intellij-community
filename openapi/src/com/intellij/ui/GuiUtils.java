@@ -46,11 +46,19 @@ public class GuiUtils {
   public static final int lengthForFileField = 25;
 
   public static JPanel constructFieldWithBrowseButton(JComponent aComponent, ActionListener aActionListener) {
-    JPanel result = new JPanel(new BorderLayout(2, 0));
-    result.add(aComponent, BorderLayout.CENTER);
-    FixedSizeButton browseButton = new FixedSizeButton(aComponent.getPreferredSize().height);
+    return constructFieldWithBrowseButton(aComponent, aActionListener, 0);
+  }
+
+  public static JPanel constructFieldWithBrowseButton(TextFieldWithHistory aComponent, ActionListener aActionListener) {
+    return constructFieldWithBrowseButton(aComponent, aActionListener, 8);
+  }
+
+  private static JPanel constructFieldWithBrowseButton(final JComponent aComponent, final ActionListener aActionListener, int delta) {
+    JPanel result = new JPanel(new GridBagLayout());
+    result.add(aComponent, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0,0));
+    FixedSizeButton browseButton = new FixedSizeButton(aComponent.getPreferredSize().height - delta);//ignore border in case of browse button
     TextFieldWithBrowseButton.MyDoClickAction.addTo(browseButton, aComponent);
-    result.add(browseButton, BorderLayout.EAST);
+    result.add(browseButton, new GridBagConstraints(1, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0));
     browseButton.addActionListener(aActionListener);
 
     return result;
