@@ -16,13 +16,19 @@
 package com.intellij.ui.dualView;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.table.ItemsProvider;
 import com.intellij.ui.table.SelectionProvider;
 import com.intellij.ui.table.TableHeaderRenderer;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
-import com.intellij.util.ui.treetable.*;
+import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
+import com.intellij.util.ui.treetable.TreeTable;
+import com.intellij.util.ui.treetable.TreeTableCellRenderer;
+import com.intellij.util.ui.treetable.TreeTableModel;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -32,9 +38,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
 
 public class TreeTableView extends TreeTable implements ItemsProvider, SelectionProvider {
@@ -83,22 +88,12 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
   }
 
   public TableCellEditor getCellEditor(int row, int column) {
-    ColumnInfo columnInfo = getTreeViewModel().getColumnInfos()[column];
-    TableCellEditor editor = getEditor(columnInfo, getTree().getPathForRow(row).getLastPathComponent());
-    if (editor == null) {
-      return super.getCellEditor(row, column);
-    }
-    else {
-      return editor;
-    }
-  }
-
-  protected TableCellEditor getEditor(final ColumnInfo columnInfo, final Object o) {
-    return columnInfo.getEditor(o);
+    TableCellEditor editor = getColumnInfo(column).getEditor(getRowElement(row));
+    return editor == null ? super.getCellEditor(row, column) : editor;
   }
 
   public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
-    return new TreeTableCellRenderer(TreeTableView.this, (TreeTableTree)getTree()) {
+    return new TreeTableCellRenderer(TreeTableView.this, getTree()) {
       public Component getTableCellRendererComponent(JTable table,
                                                      Object value,
                                                      boolean isSelected,
@@ -126,26 +121,19 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
     return (ListTreeTableModelOnColumns)getTableModel();
   }
 
-  public List getFlattenItems() {
-    List items = getTreeViewModel().getItems();
-    ArrayList result = new ArrayList();
-    for (Iterator each = items.iterator(); each.hasNext();) {
-      DualTreeElement object = (DualTreeElement)each.next();
-      if (object.shouldBeInTheFlatView()) result.add(object);
-    }
-
-    return result;
-  }
-
-  protected boolean isRenderWithDefaultColors() {
-    return true;
+  public List<DualTreeElement> getFlattenItems() {
+    List<DualTreeElement> items = getTreeViewModel().getItems();
+    return ContainerUtil.findAll(items, new Condition<DualTreeElement>() {
+      public boolean value(final DualTreeElement object) {
+        return object.shouldBeInTheFlatView();
+      }
+    });
   }
 
   public TableCellRenderer getCellRenderer(int row, int column) {
-    ColumnInfo columnInfo = getTreeViewModel().getColumnInfos()[convertColumnIndexToModel(column)];
-    TableCellRenderer renderer = getRenderer(columnInfo, getTree().getPathForRow(row).getLastPathComponent());
+    TableCellRenderer renderer = getColumnInfo(column).getRenderer(getRowElement(row));
     final TableCellRenderer baseRenderer = renderer == null ? super.getCellRenderer(row, column) : renderer;
-    return isRenderWithDefaultColors() ? new TableCellRenderer() {
+    return new TableCellRenderer() {
       public Component getTableCellRendererComponent(JTable table,
                                                      Object value,
                                                      boolean isSelected,
@@ -165,11 +153,15 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
         rendererComponent.setOpaque(isSelected);
         return rendererComponent;
       }
-    } : baseRenderer;
+    };
   }
 
-  protected TableCellRenderer getRenderer(final ColumnInfo columnInfo, final Object o) {
-    return columnInfo.getRenderer(o);
+  protected Object getRowElement(final int row) {
+    return getTree().getPathForRow(row).getLastPathComponent();
+  }
+
+  protected final ColumnInfo<Object,?> getColumnInfo(final int column) {
+    return getTreeViewModel().getColumnInfos()[convertColumnIndexToModel(column)];
   }
 
   public List getItems() {
@@ -177,13 +169,12 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
   }
 
   public Collection getSelection() {
-    ArrayList result = new ArrayList();
     TreePath[] selectionPaths = getTree().getSelectionPaths();
-    if (selectionPaths == null) return result;
-    for (int i = 0; i < selectionPaths.length; i++) {
-      result.add(selectionPaths[i].getLastPathComponent());
-    }
-    return result;
+    return selectionPaths == null ? Collections.emptyList() : ContainerUtil.map(selectionPaths, new Function<TreePath, Object>() {
+      public Object fun(final TreePath s) {
+        return s.getLastPathComponent();
+      }
+    });
   }
 
   public void addSelection(Object item) {

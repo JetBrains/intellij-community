@@ -16,7 +16,6 @@
 package com.intellij.util.ui.treetable;
 
 import com.intellij.util.ui.Table;
-import com.intellij.util.ui.Tree;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -31,7 +30,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.EventObject;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -57,6 +55,7 @@ public class TreeTable extends Table {
 
   }
 
+  @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
   public void setModel(TreeTableModel treeTableModel) {// Create the tree. It will be used as a renderer and editor.
     if (myTree != null){
       myTree.removePropertyChangeListener(JTree.ROW_HEIGHT_PROPERTY, myTreeRowHeightPropertyListener);
@@ -160,9 +159,9 @@ public class TreeTable extends Table {
   }
 
   /**
-   * Returns the tree that is being shared between the model.
+   * @return the tree that is being shared between the model.
    */
-  public Tree getTree() {
+  public TreeTableTree getTree() {
     return myTree;
   }
 
@@ -197,7 +196,7 @@ public class TreeTable extends Table {
     }
 
     /**
-     * Returns the list selection model. ListToTreeSelectionModelWrapper
+     * @return the list selection model. ListToTreeSelectionModelWrapper
      * listens for changes to this model and updates the selected paths
      * accordingly.
      */
@@ -214,7 +213,7 @@ public class TreeTable extends Table {
       if (!updatingListSelectionModel) {
         updatingListSelectionModel = true;
         try {
-          Set selectedRows = new HashSet();
+          Set<Integer> selectedRows = new HashSet<Integer>();
           int min = listSelectionModel.getMinSelectionIndex();
           int max = listSelectionModel.getMaxSelectionIndex();
 
@@ -229,8 +228,8 @@ public class TreeTable extends Table {
           super.resetRowSelection();
 
           listSelectionModel.clearSelection();
-          for (Iterator i = selectedRows.iterator(); i.hasNext();) {
-            Integer row = (Integer)i.next();
+          for (final Object selectedRow : selectedRows) {
+            Integer row = (Integer)selectedRow;
             listSelectionModel.addSelectionInterval(row.intValue(), row.intValue());
           }
         }
@@ -246,7 +245,7 @@ public class TreeTable extends Table {
     }
 
     /**
-     * Creates and returns an instance of ListSelectionHandler.
+     * @return a newly created instance of ListSelectionHandler.
      */
     protected ListSelectionListener createListSelectionListener() {
       return new ListSelectionHandler();
