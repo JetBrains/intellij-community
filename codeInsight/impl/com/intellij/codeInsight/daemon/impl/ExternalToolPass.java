@@ -70,7 +70,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     // This should be done for any result for removing old highlights
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset,
                                                    infos, UpdateHighlightersUtil.EXTERNAL_TOOLS_HIGHLIGHTERS_GROUP);
-    HighlightUtil.reportErrorsToWolf(infos, myFile, false);
+    HighlightUtil.addErrorsToWolf(infos, myFile, false);
   }
 
   public List<HighlightInfo> getHighlights() {

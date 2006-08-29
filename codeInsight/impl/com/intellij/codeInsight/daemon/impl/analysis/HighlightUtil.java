@@ -2133,12 +2133,8 @@ public class HighlightUtil {
     return info;
   }
 
-  public static void reportErrorsToWolf(final Collection<HighlightInfo> infos, @NotNull PsiFile psiFile, boolean hasErrorElement) {
-    if (!psiFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
-    Project project = psiFile.getProject();
-    if (!PsiManager.getInstance(project).isInProject(psiFile)) return; // do not report problems in libraries
-    VirtualFile file = psiFile.getVirtualFile();
-
+  public static List<Problem> convertToProblems(final Collection<HighlightInfo> infos, final VirtualFile file,
+                                                 final boolean hasErrorElement) {
     List<Problem> problems = new SmartList<Problem>();
     for (HighlightInfo info : infos) {
       if (info.getSeverity() == HighlightSeverity.ERROR) {
@@ -2146,7 +2142,19 @@ public class HighlightUtil {
         problems.add(problem);
       }
     }
+    return problems;
+  }
+
+  public static void addErrorsToWolf(final List<HighlightInfo> infos, final PsiFile psiFile, final boolean hasErrorElement) {
+    if (!psiFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
+    Project project = psiFile.getProject();
+    if (!PsiManager.getInstance(project).isInProject(psiFile)) return; // do not report problems in libraries
+    VirtualFile file = psiFile.getVirtualFile();
+
+    List<Problem> problems = convertToProblems(infos, file, hasErrorElement);
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
-    wolf.reportProblems(file, problems);
+    for (Problem problem : problems) {
+      wolf.weHaveGotProblem(problem);
+    }
   }
 }

@@ -23,11 +23,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.problems.Problem;
+import com.intellij.problems.WolfTheProblemSolver;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -155,7 +158,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       }
     }
     myHighlights = result;
-    HighlightUtil.reportErrorsToWolf(result, myFile, myHasErrorElement);
+    reportErrorsToWolf(result, myFile, myHasErrorElement);
   }
 
   private void addHighlights(Collection<HighlightInfo> result, Collection<HighlightInfo> highlights) {
@@ -368,4 +371,14 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     return 0;
   }
 
+  private static void reportErrorsToWolf(final Collection<HighlightInfo> infos, @NotNull PsiFile psiFile, boolean hasErrorElement) {
+    if (!psiFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
+    Project project = psiFile.getProject();
+    if (!PsiManager.getInstance(project).isInProject(psiFile)) return; // do not report problems in libraries
+    VirtualFile file = psiFile.getVirtualFile();
+
+    List<Problem> problems = HighlightUtil.convertToProblems(infos, file, hasErrorElement);
+    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
+    wolf.reportProblems(file, problems);
+  }
 }

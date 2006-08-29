@@ -291,7 +291,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(renderer);
     }
 
-    HighlightUtil.reportErrorsToWolf(infos, myFile, false);
+    HighlightUtil.addErrorsToWolf(infos, myFile, false);
   }
 
   private void addHighlightsFromDescriptors(final List<HighlightInfo> infos) {
