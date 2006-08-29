@@ -182,7 +182,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
         Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"), Messages.getErrorIcon());
     }
 
-    public List<Change> createChangeFromAbstractRevisions(final List<AbstractRevisions> revisions) {
+  private static List<Change> createChangeFromAbstractRevisions(final List<AbstractRevisions> revisions) {
     List<Change> result = new ArrayList<Change>();
     for (AbstractRevisions revision : revisions) {
       final DifferenceType type = revision.getDifference();
@@ -259,7 +259,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     };
   }
 
-  private FileStatus convertDiffTypeToStatus(final DifferenceType type) {
+  private static FileStatus convertDiffTypeToStatus(final DifferenceType type) {
     if (type == DifferenceType.MODIFIED) return FileStatus.MODIFIED;
     if (type == DifferenceType.INSERTED) return FileStatus.ADDED;
     if (type == DifferenceType.DELETED) return FileStatus.DELETED;
@@ -295,8 +295,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
           }
         }, VcsBundle.message("command.name.open.error.message.view"), null);
 
-        for (final VcsException abstractVcsException : abstractVcsExceptions) {
-          VcsException exception = abstractVcsException;
+        for (final VcsException exception : abstractVcsExceptions) {
           String[] messages = exception.getMessages();
           if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
           errorTreeView.addMessage(getErrorCategory(exception), messages, exception.getVirtualFile(), -1, -1, null);
@@ -307,7 +306,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     });
   }
 
-  private int getErrorCategory(VcsException exception) {
+  private static int getErrorCategory(VcsException exception) {
     if (exception.isWarning()) {
       return MessageCategory.WARNING;
     }
@@ -456,7 +455,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
           runnable.run();
         }
         else {
-          ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.NON_MMODAL);
+          ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.NON_MODAL);
         }
       }
     }
@@ -468,6 +467,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   public void projectClosed() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "AbstractVcsHelper";
   }
@@ -573,8 +573,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   public CheckinProjectDialogImplementer createCheckinProjectDialog(String title, boolean requestComments, Collection<String> roots) {
-    final CheckinProjectDialogImplementerImpl result = new CheckinProjectDialogImplementerImpl(myProject, title, requestComments, roots);
-    return result;
+    return new CheckinProjectDialogImplementerImpl(myProject, title, requestComments, roots);
   }
 
   public void showAnnotation(FileAnnotation annotation, VirtualFile file) {
@@ -679,9 +678,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     frameWrapper.show();
   }
 
-  private JComponent createChangeBrowsePanel(final TreeTable directoryDiffTree,
-                                             final String commitMessage,
-                                             final String commitMessageTitle) {
+  private static JComponent createChangeBrowsePanel(final TreeTable directoryDiffTree,
+                                                    final String commitMessage,
+                                                    final String commitMessageTitle) {
     if (commitMessage == null || commitMessageTitle == null) {
       return new JScrollPane(directoryDiffTree);
     }
@@ -713,15 +712,17 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+        @Nullable final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         for (int i = 0; i < filesToCheck.size(); i++) {
 
-          if (progress.isCanceled()) throw new ProcessCanceledException();
+          if (progress != null && progress.isCanceled()) throw new ProcessCanceledException();
 
           VirtualFile file = filesToCheck.get(i);
 
-          progress.setText(VcsBundle.message("searching.for.code.smells.processing.file.progress.text", file.getPresentableUrl()));
-          progress.setFraction((double)i / (double)filesToCheck.size());
+          if (progress != null) {
+            progress.setText(VcsBundle.message("searching.for.code.smells.processing.file.progress.text", file.getPresentableUrl()));
+            progress.setFraction((double)i / (double)filesToCheck.size());
+          }
 
           final PsiFile psiFile = manager.findFile(file);
           if (psiFile != null) {
@@ -763,9 +764,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   }
 
-  private void collectErrorsAndWarnings(final Collection<HighlightInfo> highlights,
-                                        final List<CodeSmellInfo> result,
-                                        final Document document) {
+  private static void collectErrorsAndWarnings(final Collection<HighlightInfo> highlights,
+                                               final List<CodeSmellInfo> result,
+                                               final Document document) {
     for (HighlightInfo highlightInfo : highlights) {
       final HighlightSeverity severity = highlightInfo.getSeverity();
       if (severity.compareTo(HighlightSeverity.WARNING) >= 0) {
@@ -775,7 +776,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     }
   }
 
-  private String getDescription(final HighlightInfo highlightInfo) {
+  private static String getDescription(final HighlightInfo highlightInfo) {
     final String description = highlightInfo.description;
     final HighlightInfoType type = highlightInfo.type;
     if (type instanceof HighlightInfoType.HighlightInfoTypeSeverityByKey) {
@@ -788,7 +789,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     return description;
   }
 
-  private DiffContent getContentForVersion(final VcsFileRevision version, final File file) throws IOException {
+  private static DiffContent getContentForVersion(final VcsFileRevision version, final File file) throws IOException {
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     if (vFile != null && (version instanceof CurrentRevision) && !vFile.getFileType().isBinary()) {
       return new DocumentContent(FileDocumentManager.getInstance().getDocument(vFile), vFile.getFileType());
@@ -798,7 +799,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     }
   }
 
-  private boolean reformat(final VcsConfiguration configuration, boolean checkinProject) {
+  private static boolean reformat(final VcsConfiguration configuration, boolean checkinProject) {
     return checkinProject ? configuration.REFORMAT_BEFORE_PROJECT_COMMIT : configuration.REFORMAT_BEFORE_FILE_COMMIT;
   }
 
