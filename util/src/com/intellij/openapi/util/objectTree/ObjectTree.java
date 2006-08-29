@@ -5,17 +5,19 @@
 package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.WeakHashMap;
-import org.jetbrains.annotations.NotNull;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class ObjectTree {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
-  private static Object FAKE_VALUE = new Object();
 
-  private Map<Object, Object> myRootObjects = new WeakHashMap<Object, Object>();
-  private Map<Object, ObjectNode> myObject2NodeMap = new com.intellij.util.containers.WeakHashMap<Object, ObjectNode>();
+  private Set<Object> myRootObjects = new THashSet<Object>();
+  private Map<Object, ObjectNode> myObject2NodeMap = new THashMap<Object, ObjectNode>();
 
   private List<ObjectNode> myExecutedObjects = new ArrayList<ObjectNode>();
 
@@ -27,20 +29,8 @@ public final class ObjectTree {
     return myExecutedObjects;
   }
 
-  public final Set<Object> getRootObjects() {
-    Set<Object> result = new HashSet<Object>();
-
-    for (Iterator<Object> i = myRootObjects.keySet().iterator(); i.hasNext();) {
-      Object object = i.next();
-      if (object != null) {
-        result.add(object);
-      }
-      else {
-        i.remove();
-      }
-    }
-
-    return result;
+  public final Set getRootObjects() {
+    return myRootObjects;
   }
 
   public final void register(Object parent, Object child) {
@@ -49,11 +39,11 @@ public final class ObjectTree {
     final ObjectNode parentNode = getNodeFor(parent);
     final ObjectNode childNode = getNodeFor(child);
 
-    if (childNode.getParent() != parentNode && childNode.getParent() != null) {
+    if (childNode != null && childNode.getParent() != parentNode && childNode.getParent() != null) {
       childNode.getParent().removeChild(childNode);
       parentNode.addChild(childNode);
     }
-    else if (myRootObjects.containsKey(child)) {
+    else if (myRootObjects.contains(child)) {
       final ObjectNode parentless = getNodeFor(child);
       parentNode.addChild(parentless);
       myRootObjects.remove(child);
@@ -81,14 +71,13 @@ public final class ObjectTree {
     }
   }
 
-  @NotNull
   private ObjectNode getNodeFor(Object parentObject) {
     final ObjectNode parentNode = getObject2NodeMap().get(parentObject);
 
     if (parentNode != null) return parentNode;
 
     final ObjectNode parentless = new ObjectNode(this, null, parentObject);
-    myRootObjects.put(parentObject, FAKE_VALUE);
+    myRootObjects.add(parentObject);
     getObject2NodeMap().put(parentObject, parentless);
     return parentless;
   }
@@ -117,4 +106,17 @@ public final class ObjectTree {
     register(parent.getObject(), toReplace);
   }
 
+  public final boolean isRegistered(Object object) {
+    return getObject2NodeMap().containsKey(object);
+  }
+
+  public final Object getParent(Object object) {
+    ObjectNode parent = getObject2NodeMap().get(object).getParent();
+    if (parent == null) return null;
+    return parent.getObject();
+  }
+
+  public boolean isRoot(Object object) {
+    return myRootObjects.contains(object);
+  }
 }
