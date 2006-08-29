@@ -45,7 +45,7 @@ class JdkComboBox extends JComboBox{
             final ProjectJdk jdk = jdksModel.getProjectJdk();
             if (jdk != null){
               setIcon(jdk.getSdkType().getIcon());
-              append(str, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+              append(ProjectBundle.message("project.roots.project.jdk.inherited"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
               append(" (" + jdk.getName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
             } else {
               append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
