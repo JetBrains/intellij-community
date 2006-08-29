@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NotNull;
 
 public interface JspFile extends XmlFile {
   JspFile[] EMPTY_ARRAY = new JspFile[0];
@@ -46,5 +47,6 @@ public interface JspFile extends XmlFile {
    */
   PsiFile getErrorPage();
 
+  @NotNull
   JspxFileViewProvider getViewProvider();
 }

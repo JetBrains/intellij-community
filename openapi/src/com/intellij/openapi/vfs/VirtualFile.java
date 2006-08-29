@@ -58,7 +58,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    *
    * @return file name
    */
-  @NotNull
+  @NotNull @NonNls
   public abstract String getName();
 
   /**
@@ -165,7 +165,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @param newName the new file name
    * @throws IOException if file failed to be renamed
    */
-  public void rename(Object requestor, String newName) throws IOException {
+  public void rename(Object requestor, @NotNull @NonNls String newName) throws IOException {
     if (getName().equals(newName)) return;
     if (!VfsUtil.isValidName(newName)) {
       throw new IOException(VfsBundle.message("file.invalid.name.error", newName));
@@ -221,7 +221,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @param name  the file name to search by
    * @return the file if found any, <code>null</code> otherwise
    */
-  public VirtualFile findChild(@NonNls String name){
+  public VirtualFile findChild(@NotNull @NonNls String name){
     VirtualFile[] children = getChildren();
     if (children == null) return null;
     for (VirtualFile child : children) {
@@ -318,7 +318,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @return <code>VirtualFile</code> representing the created file
    * @throws IOException if file failed to be created
    */
-  public VirtualFile createChildData(Object requestor, @NonNls String name) throws IOException {
+  public VirtualFile createChildData(Object requestor, @NotNull @NonNls String name) throws IOException {
     if (!isDirectory()) {
       throw new IOException(VfsBundle.message("file.create.wrong.parent.error"));
     }
@@ -516,7 +516,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @return whether file name equals to this name
    *         result depends on the filesystem specifics
    */
-  protected boolean nameEquals(String name) {
+  protected boolean nameEquals(@NotNull @NonNls String name) {
     return getName().equals(name);
   }
 

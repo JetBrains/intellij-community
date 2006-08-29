@@ -334,7 +334,6 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
   @Nullable
   private HighlightInfo createHighlightInfo(final ProblemDescriptor descriptor, final LocalInspectionTool tool, final HighlightInfoType level) {
-    //TODO
     PsiElement psiElement = descriptor.getPsiElement();
     if (psiElement == null) return null;
     @NonNls String message = renderDescriptionMessage(descriptor);
@@ -343,10 +342,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
     if (!inspectionProfile.isToolEnabled(key)) return null;
 
-
-    HighlightInfoType type =
-      new HighlightInfoType.HighlightInfoTypeImpl(inspectionProfile.getErrorLevel(key).getSeverity(), level.getAttributesKey());
-    String plainMessage = XmlUtil.unescape(message.replaceAll("<[^>]*>", ""));
+    HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(inspectionProfile.getErrorLevel(key).getSeverity(), level.getAttributesKey());
+    String plainMessage = message.startsWith("<html>") ? XmlUtil.unescape(message.replaceAll("<[^>]*>", "")) : message;
     @NonNls String tooltip = message.startsWith("<html>") ? message : "<html><body>" + XmlUtil.escapeString(message) + "</body></html>";
     HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);
     registerQuickFixes(tool, psiElement, descriptor, highlightInfo);
