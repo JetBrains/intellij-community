@@ -106,6 +106,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     return getDescriptorText(titleDescriptor);
   }
 
+  @Nullable
   private String getDescriptorText(@Nullable final StringDescriptor titleDescriptor) {
     if (titleDescriptor == null) return null;
     final String value = titleDescriptor.getValue();
@@ -206,6 +207,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     return id2Constraints;
   }
 
+  @Nullable
   public RadComponent getSelectedTab() {
     int index = getTabbedPane().getSelectedIndex();
     return index < 0 ? null : getComponent(index);
@@ -225,6 +227,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
 
   public boolean refreshChildTitle(final RadComponent radComponent) {
     StringDescriptor childTitle = getChildTitle(radComponent);
+    if (childTitle == null) return false;
     String oldTitle = childTitle.getResolvedValue();
     childTitle.setResolvedValue(null);
     try {
