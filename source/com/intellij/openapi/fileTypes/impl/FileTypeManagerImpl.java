@@ -147,6 +147,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @NotNull
   public FileType getFileTypeByFile(VirtualFile file) {
+    if (file.isDirectory()) return StdFileTypes.UNKNOWN;
+
     // first let file recognize its type
     for (FakeFileType fileType : mySpecialFileTypes) {
       if (fileType.isMyFileType(file)) return fileType;
