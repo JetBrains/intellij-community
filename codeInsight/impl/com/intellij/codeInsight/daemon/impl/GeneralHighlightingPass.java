@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,15 +23,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.problems.Problem;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -160,23 +155,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       }
     }
     myHighlights = result;
-    reportFoundProblems(result);
-  }
-
-  private void reportFoundProblems(final Collection<HighlightInfo> infos) {
-    VirtualFile file = myFile.getVirtualFile();
-    if (!myFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
-    if (!PsiManager.getInstance(myProject).isInProject(myFile)) return; // do not report problems in libraries
-
-    List<Problem> problems = new SmartList<Problem>();
-    for (HighlightInfo info : infos) {
-      if (info.getSeverity() == HighlightSeverity.ERROR) {
-        Problem problem = new ProblemImpl(file, info, myHasErrorElement);
-        problems.add(problem);
-      }
-    }
-    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-    wolf.reportProblems(file, problems);
+    HighlightUtil.reportErrorsToWolf(result, myFile, myHasErrorElement);
   }
 
   private void addHighlights(Collection<HighlightInfo> result, Collection<HighlightInfo> highlights) {

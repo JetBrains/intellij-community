@@ -6,6 +6,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -39,7 +40,10 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.problems.Problem;
+import com.intellij.problems.WolfTheProblemSolver;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -2127,5 +2131,22 @@ public class HighlightUtil {
       HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, JavaErrorMessages.message("expected.class.or.package"));
     QuickFixAction.registerQuickFixAction(info, new RemoveQualifierFix(qualifier, expression, (PsiClass)resolved));
     return info;
+  }
+
+  public static void reportErrorsToWolf(final Collection<HighlightInfo> infos, @NotNull PsiFile psiFile, boolean hasErrorElement) {
+    if (!psiFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
+    Project project = psiFile.getProject();
+    if (!PsiManager.getInstance(project).isInProject(psiFile)) return; // do not report problems in libraries
+    VirtualFile file = psiFile.getVirtualFile();
+
+    List<Problem> problems = new SmartList<Problem>();
+    for (HighlightInfo info : infos) {
+      if (info.getSeverity() == HighlightSeverity.ERROR) {
+        Problem problem = new ProblemImpl(file, info, hasErrorElement);
+        problems.add(problem);
+      }
+    }
+    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
+    wolf.reportProblems(file, problems);
   }
 }

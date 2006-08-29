@@ -39,7 +39,6 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     myEndOffset = endOffset;
     myProject = file.getProject();
     myAnnotationHolder = new AnnotationHolderImpl();
-
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
@@ -50,7 +49,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
       if (!HighlightUtil.shouldInspect(psiRoot)) continue;
       final List<ExternalAnnotator> externalAnnotators = language.getExternalAnnotators();
 
-      if (externalAnnotators.size() > 0) {
+      if (!externalAnnotators.isEmpty()) {
         final HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject, myStartOffset, myEndOffset);
 
         for (HighlightInfo error : errors) {
@@ -71,6 +70,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     // This should be done for any result for removing old highlights
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset,
                                                    infos, UpdateHighlightersUtil.EXTERNAL_TOOLS_HIGHLIGHTERS_GROUP);
+    HighlightUtil.reportErrorsToWolf(infos, myFile, false);
   }
 
   public List<HighlightInfo> getHighlights() {
