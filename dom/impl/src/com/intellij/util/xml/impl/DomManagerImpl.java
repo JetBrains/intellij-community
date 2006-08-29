@@ -358,7 +358,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   @Nullable
-  public final <T extends DomElement> DomFileElementImpl<T> getCachedValueAndFireEvent(XmlFile file, CachedValue<DomFileElementImpl<T>> value) {
+  private static <T extends DomElement> DomFileElementImpl<T> getCachedValueAndFireEvent(XmlFile file, CachedValue<DomFileElementImpl<T>> value) {
     final DomFileElementImpl<T> element = value.getValue();
     getCachedValueProvider(file).fireEvents();
     return element;
