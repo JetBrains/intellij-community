@@ -30,7 +30,6 @@ import com.intellij.util.Alarm;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 class Line {
   private final String myValue;
@@ -51,13 +50,12 @@ class Line {
 }
 
 public class EditorAdapter {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.EditorAdapter");
 
   private final Editor myEditor;
 
   private Alarm myFlushAlarm = new Alarm();
-  private Collection myLines = new ArrayList();
+  private final Collection<Line> myLines = new ArrayList<Line>();
   private final Project myProject;
 
   private final Runnable myFlushDeferredRunnable = new Runnable() {
@@ -67,8 +65,12 @@ public class EditorAdapter {
   };
 
   private synchronized void flushStoredLines() {
-    ApplicationManager.getApplication().runWriteAction(writingCommand());
-    myLines = new ArrayList();
+    Collection<Line> lines;
+    synchronized (myLines) {
+      lines = new ArrayList<Line>(myLines);
+      myLines.clear();
+    }
+    ApplicationManager.getApplication().runWriteAction(writingCommand(lines));
   }
 
 
@@ -78,34 +80,33 @@ public class EditorAdapter {
     LOG.assertTrue(myEditor.isViewer());
   }
 
-  public synchronized void appendString(String string, TextAttributes attrs) {
-    myLines.add(new Line(string, attrs));
+  public void appendString(String string, TextAttributes attrs) {
+    synchronized (myLines) {
+      myLines.add(new Line(string, attrs));
+    }
+
     if (myFlushAlarm.getActiveRequestCount() == 0) {
-      myFlushAlarm.addRequest(myFlushDeferredRunnable, 200, ModalityState.NON_MMODAL);
+      myFlushAlarm.addRequest(myFlushDeferredRunnable, 200, ModalityState.NON_MODAL);
     }
   }
 
-  private Runnable writingCommand() {
+  private Runnable writingCommand(final Collection<Line> lines) {
     final Runnable command = new Runnable() {
           public void run() {
 
             Document document = myEditor.getDocument();
 
-            if (document.getMarkupModel(myProject) == null) return;
-
             StringBuffer buffer = new StringBuffer();
-            for (Iterator each = myLines.iterator(); each.hasNext();) {
-              Line line = (Line) each.next();
+            for (Line line : lines) {
               buffer.append(line.getValue());
             }
             int endBefore = document.getTextLength();
             int endBeforeLine = endBefore;
             document.insertString(endBefore, buffer.toString());
-            for (Iterator each = myLines.iterator(); each.hasNext();) {
-              Line line = (Line) each.next();
-              myEditor.getMarkupModel().addRangeHighlighter(endBeforeLine,
-                  endBeforeLine + line.getValue().length(), HighlighterLayer.ADDITIONAL_SYNTAX,
-                  line.getAttributes(), HighlighterTargetArea.EXACT_RANGE);
+            for (Line line : lines) {
+              myEditor.getMarkupModel().addRangeHighlighter(endBeforeLine, endBeforeLine + line.getValue().length(),
+                                                            HighlighterLayer.ADDITIONAL_SYNTAX, line.getAttributes(),
+                                                            HighlighterTargetArea.EXACT_RANGE);
               endBeforeLine += line.getValue().length();
             }
             shiftCursorToTheEndOfDocument();
