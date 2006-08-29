@@ -392,7 +392,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
                                                               holder.getCharTable());
           CodeEditUtil.setNodeGenerated(leftElement, true);
 
-          TreeUtil.insertBefore(XmlTextImpl.this.getTreeNext(), myRight);
+          TreeUtil.insertAfter(XmlTextImpl.this, myRight);
 
           TreeUtil.addChildren(myRight, rightElement);
           if (childElement.getNextSibling() != null) {

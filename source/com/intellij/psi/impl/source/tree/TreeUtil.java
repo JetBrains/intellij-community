@@ -166,7 +166,7 @@ public class TreeUtil {
     }
   }
 
-  public static void insertBefore(final TreeElement anchor, TreeElement firstNew) {
+  public static void insertBefore(@NotNull final TreeElement anchor, @NotNull TreeElement firstNew) {
     final TreeElement anchorPrev = anchor.getTreePrev();
     if(anchorPrev == null){
       removeRange(firstNew, null);
@@ -189,7 +189,7 @@ public class TreeUtil {
     }
   }
 
-  public static void insertAfter(final TreeElement anchor, @NotNull TreeElement firstNew) {
+  public static void insertAfter(@NotNull final TreeElement anchor, @NotNull TreeElement firstNew) {
     removeRange(firstNew, null);
     final CompositeElement parent = anchor.getTreeParent();
     final TreeElement treeNext = anchor.getTreeNext();

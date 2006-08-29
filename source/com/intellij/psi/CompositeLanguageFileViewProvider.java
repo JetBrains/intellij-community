@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.LightPsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -181,6 +182,10 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     final PsiFile fileForNewText = createFile(lang);
     assert fileForNewText != null;
     final ASTNode newFileTree = fileForNewText.getNode();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Old Tree:\n" + DebugUtil.treeToString(oldFileTree, false, true));
+      LOG.debug("New Tree:\n" + DebugUtil.treeToString(newFileTree, false, true));
+    }
     ChameleonTransforming.transformChildren(newFileTree, true);
     ChameleonTransforming.transformChildren(oldFileTree, true);
     CompositeLanguageParsingUtil.mergeTreeElements((TreeElement)newFileTree.getFirstChildNode(),

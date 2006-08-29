@@ -211,7 +211,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
     final Boolean trackInvalidation = getUserData(DebugUtil.TRACK_INVALIDATION);
     if (trackInvalidation != null && trackInvalidation) {
       //noinspection HardCodedStringLiteral
-      new Throwable("Element invalidated").printStackTrace();
+      new Throwable("Element invalidated:" + this).printStackTrace();
     }
   }
 }
