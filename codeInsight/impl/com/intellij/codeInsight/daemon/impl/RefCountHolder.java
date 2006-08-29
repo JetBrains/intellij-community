@@ -91,8 +91,7 @@ public class RefCountHolder {
     myLocalRefsMap.put(ref, refElement);
     if(refElement instanceof PsiNamedElement) {
       PsiNamedElement namedElement = (PsiNamedElement)refElement;
-      if(!myUsedElements.contains(namedElement)) {
-        myUsedElements.add(namedElement);
+      if(myUsedElements.add(namedElement)) {
         addStatistics(namedElement);
       }
     }
@@ -111,18 +110,23 @@ public class RefCountHolder {
     }
     for (Iterator<PsiReference> iterator = myImportStatements.keySet().iterator(); iterator.hasNext();) {
       PsiReference ref = iterator.next();
-      if (!ref.getElement().isValid()) iterator.remove();
+      if (!ref.getElement().isValid()) {
+        iterator.remove();
+      }
     }
     for(Iterator<PsiNamedElement> iterator = myDclsUsedMap.keySet().iterator(); iterator.hasNext();) {
       PsiNamedElement element = iterator.next();
-
+      if (!element.isValid()) iterator.remove();
+    }
+    for(Iterator<PsiNamedElement> iterator = myUsedElements.iterator(); iterator.hasNext();) {
+      PsiNamedElement element = iterator.next();
       if (!element.isValid()) iterator.remove();
     }
   }
 
   public synchronized boolean isReferenced(PsiNamedElement element) {
     List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
-    if(array != null && array.size() > 0 && !isParameterUsedRecursively(element, array)) return true;
+    if(array != null && !array.isEmpty() && !isParameterUsedRecursively(element, array)) return true;
 
     Boolean usedStatus = myDclsUsedMap.get(element);
     return usedStatus == Boolean.TRUE;
