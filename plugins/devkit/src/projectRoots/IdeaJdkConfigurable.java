@@ -96,9 +96,9 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   }
 
   public void apply() throws ConfigurationException {
-    if (mySandboxHome.getText() == null || mySandboxHome.getText().length() == 0) {
+    /*if (mySandboxHome.getText() == null || mySandboxHome.getText().length() == 0) {
       throw new ConfigurationException(DevKitBundle.message("sandbox.specification"));
-    }
+    }*/
     mySandboxHome.addCurrentTextToHistory();
     Sandbox sandbox = new Sandbox(mySandboxHome.getText());
     final SdkModificator modificator = myIdeaJdk.getSdkModificator();
