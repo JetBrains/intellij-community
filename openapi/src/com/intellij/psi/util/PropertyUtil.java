@@ -442,4 +442,49 @@ public class PropertyUtil {
     }
     else return null;
   }
+
+  @Nullable
+  public static PsiType getPropertyType(final PsiMember member) {
+    if (member instanceof PsiField) {
+      return ((PsiField)member).getType();
+    }
+    else if (member instanceof PsiMethod) {
+      final PsiMethod psiMethod = (PsiMethod)member;
+      if (isSimplePropertyGetter(psiMethod)) {
+        return psiMethod.getReturnType();
+      }
+      else if (isSimplePropertySetter(psiMethod)) {
+        return psiMethod.getParameterList().getParameters()[0].getType();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiTypeElement getPropertyTypeElement(final PsiMember member) {
+    if (member instanceof PsiField) {
+      return ((PsiField)member).getTypeElement();
+    }
+    else if (member instanceof PsiMethod) {
+      final PsiMethod psiMethod = (PsiMethod)member;
+      if (isSimplePropertyGetter(psiMethod)) {
+        return psiMethod.getReturnTypeElement();
+      }
+      else if (isSimplePropertySetter(psiMethod)) {
+        return psiMethod.getParameterList().getParameters()[0].getTypeElement();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiIdentifier getPropertyNameIdentifier(final PsiMember member) {
+    if (member instanceof PsiField) {
+      return ((PsiField)member).getNameIdentifier();
+    }
+    else if (member instanceof PsiMethod) {
+      return ((PsiMethod)member).getNameIdentifier();
+    }
+    return null;
+  }
 }
