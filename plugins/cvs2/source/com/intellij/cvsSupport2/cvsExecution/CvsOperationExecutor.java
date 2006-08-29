@@ -75,7 +75,7 @@ public class CvsOperationExecutor {
   public void performActionSync(final CvsHandler handler,
                                 final CvsOperationExecutorCallback callback) {
 
-    final CvsTabbedWindow tabbedWindow = openTabbedWindow(handler);
+    final CvsTabbedWindow tabbedWindow = myIsQuietOperation ? null : openTabbedWindow(handler);
 
     final Runnable finish = new Runnable() {
       public void run() {
@@ -115,20 +115,20 @@ public class CvsOperationExecutor {
       public void run() {
         try {
           if (handler == CvsHandler.NULL) return;
-          setText(com.intellij.CvsBundle.message("progress.text.preparing.for.login"));
+          setText(CvsBundle.message("progress.text.preparing.for.login"));
 
           handler.beforeLogin();
 
 
           if (myResult.finishedUnsuccessfully(false, handler)) return;
 
-          setText(com.intellij.CvsBundle.message("progress.text.login"));
+          setText(CvsBundle.message("progress.text.login"));
           setCancelText(handler);
 
           login(handler);
           if (myResult.finishedUnsuccessfully(true, handler)) return;
 
-          setText(com.intellij.CvsBundle.message("progress.text.preparing.for.action", handler.getTitle()));
+          setText(CvsBundle.message("progress.text.preparing.for.action", handler.getTitle()));
 
           handler.run(myExecutor);
           if (myResult.finishedUnsuccessfully(true, handler)) return;
@@ -169,14 +169,14 @@ public class CvsOperationExecutor {
         catch (CvsException ex) {
           Set<VcsException> vcsExceptions = Collections.singleton((VcsException)ex);
           myResult.addAllErrors(vcsExceptions);
-          showErrors(new ArrayList(vcsExceptions),
+          showErrors(new ArrayList<VcsException>(vcsExceptions),
                      openTabbedWindow(handler));
 
         }
         catch (Exception e) {
           Set<VcsException> vcsExceptions = Collections.singleton(new VcsException(e));
           myResult.addAllErrors(vcsExceptions);
-          showErrors(new ArrayList(vcsExceptions),
+          showErrors(new ArrayList<VcsException>(vcsExceptions),
                      openTabbedWindow(handler));
         }
 
@@ -184,14 +184,14 @@ public class CvsOperationExecutor {
     });
   }
 
-  private void setText(String text) {
+  private static void setText(String text) {
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null) {
       progressIndicator.setText(text);
     }
   }
 
-  private void setCancelText(final CvsHandler handler) {
+  private static void setCancelText(final CvsHandler handler) {
     ProgressManager progressManager = ProgressManager.getInstance();
     String cancelButtonText = handler.getCancelButtonText();
     if (cancelButtonText != null) {
@@ -203,11 +203,11 @@ public class CvsOperationExecutor {
     return isInProgress() || isInTestMode() || !myShowProgress || !ApplicationManager.getApplication().isDispatchThread();
   }
 
-  private boolean isInTestMode() {
+  private static boolean isInTestMode() {
     return ApplicationManager.getApplication().isUnitTestMode();
   }
 
-  private boolean isInProgress() {
+  private static boolean isInProgress() {
     return (ProgressManager.getInstance().getProgressIndicator() != null);
   }
 
@@ -263,10 +263,9 @@ public class CvsOperationExecutor {
 
   }
 
-  @NotNull private Editor createView(Project project) {
+  @NotNull private static Editor createView(Project project) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = editorFactory.createDocument("");
-    LOG.assertTrue(document != null);
     Editor result = editorFactory.createViewer(document, project);
 
     EditorSettings editorSettings = result.getSettings();
@@ -276,12 +275,12 @@ public class CvsOperationExecutor {
     return result;
   }
 
-  private String getStatusMessage(final CvsHandler handler) {
+  private static String getStatusMessage(final CvsHandler handler) {
     final String actionName = handler.getTitle();
     if (handler.getErrors().isEmpty()) {
-      return com.intellij.CvsBundle.message("status.text.action.completed", actionName);
+      return CvsBundle.message("status.text.action.completed", actionName);
     } else {
-      return com.intellij.CvsBundle.message("status.text.action.completed.with.errors", actionName);
+      return CvsBundle.message("status.text.action.completed.with.errors", actionName);
     }
   }
 
@@ -333,7 +332,7 @@ public class CvsOperationExecutor {
 
   private class ReconfigureCvsRootAction extends AnAction {
     public ReconfigureCvsRootAction() {
-      super(com.intellij.CvsBundle.message("action.name.reconfigure.cvs.root"), null, IconLoader.getIcon("/nodes/cvs_roots.png"));
+      super(CvsBundle.message("action.name.reconfigure.cvs.root"), null, IconLoader.getIcon("/nodes/cvs_roots.png"));
     }
 
     public void update(AnActionEvent e) {
