@@ -111,11 +111,19 @@ public abstract class DomFileDescription<T> {
     return Collections.emptySet();
   }
 
+  /**
+   * @return set of DOM root interfaces, whose changes may cause file of this file description change.
+   */
   @NotNull
   public Set<Class<? extends DomElement>> getDomModelDependencyItems() {
     return Collections.emptySet();
   }
 
+  /**
+   * @param changedRoot Changed DOM file element, that is registered with {@link com.intellij.util.xml.DomFileDescription}, that
+   * mentioned this description in {@link #getDomModelDependencyItems()}. 
+   * @return set of files, whose DOM may change on changedRoot changes
+   */
   @NotNull
   public Set<XmlFile> getDomModelDependentFiles(DomFileElement changedRoot) {
     return Collections.emptySet();

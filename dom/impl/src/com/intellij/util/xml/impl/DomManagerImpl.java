@@ -126,8 +126,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
         final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(xmlAspect);
         if (changeSet != null) {
           if (!myChanging) {
-          new ExternalChangeProcessor(DomManagerImpl.this, changeSet).processChanges();
-        }
+            new ExternalChangeProcessor(DomManagerImpl.this, changeSet).processChanges();
+          }
           final XmlFile xmlFile = changeSet.getChangedFile();
           if (xmlFile == null) return;
           final FileDescriptionCachedValueProvider provider = getCachedValueProvider(xmlFile);
@@ -145,7 +145,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
                 }));
               }
               for (final XmlFile file : toUpdate) {
-                updateFileDomness(file, fileElement);
+                updateFileDomness(file, fileElement);                                 
               }
             }
           }
@@ -172,7 +172,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     }, project);
   }
 
-  private void updateFileDomness(final XmlFile file, DomFileElement changedRoot) {
+  private synchronized void updateFileDomness(final XmlFile file, DomFileElement changedRoot) {
     final FileDescriptionCachedValueProvider<DomElement> provider = getOrCreateCachedValueProvider(file);
     final DomFileElementImpl oldElement = provider.getOldValue();
     final boolean wasInModel = oldElement != null && provider.isInModel();
@@ -345,7 +345,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   @Nullable
-  public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file) {
+  public final synchronized <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file) {
     if (file == null) return null;
 
     CachedValue<DomFileElementImpl<T>> value = file.getUserData(CACHED_FILE_ELEMENT_VALUE);

@@ -54,8 +54,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Cached
     }
   }
 
-  final void setFireEvents() {
-    myFireEvents = true;
+  final void setFireEvents(final boolean b) {
+    myFireEvents = b;
   }
 
   public Result<DomFileElementImpl<T>> compute() {
@@ -155,7 +155,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Cached
 
   public final void changed() {
     myModCount++;
-    setFireEvents();
+    setFireEvents(true);
   }
 
   public long getModificationCount() {
