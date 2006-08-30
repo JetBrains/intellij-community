@@ -140,9 +140,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
           myComponent.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.black.brighter()));
         }
         popupWindow.setCursor(Cursor.getPredefinedCursor(cursor));
-      } else {
-        myComponent.focusBorder(true);
-      }
+      } 
       e.consume();
     } else {
       clearBorder(popupWindow);
@@ -153,8 +151,6 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     if (!SystemInfo.isMac){
       myComponent.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
       popupWindow.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-    } else {
-      myComponent.focusBorder(false);
     }
   }
 
