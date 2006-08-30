@@ -280,7 +280,7 @@ public class ActionsTreeUtil {
     return group;
   }
 
-  private static Group createQuickListsGroup(final String filter, final boolean forceFiltering, final QuickList[] quickLists) {
+  private static Group createQuickListsGroup(final Condition<AnAction> filtered, final String filter, final boolean forceFiltering, final QuickList[] quickLists) {
     Arrays.sort(quickLists, new Comparator<QuickList>() {
       public int compare(QuickList l1, QuickList l2) {
         return l1.getActionId().compareTo(l2.getActionId());
@@ -289,8 +289,12 @@ public class ActionsTreeUtil {
 
     Group group = new Group(KeyMapBundle.message("quick.lists.group.title"), null, null);
     for (QuickList quickList : quickLists) {
-      if (filter == null || SearchUtil.isComponentHighlighted(quickList.getDisplayName(), filter, forceFiltering,
-                                                              ApplicationManager.getApplication().getComponent(KeymapConfigurable.class))) {
+      if (filtered != null && filtered.value(ActionManagerEx.getInstanceEx().getAction(quickList.getActionId()))) {
+        group.addQuickList(quickList);
+      } else if (SearchUtil.isComponentHighlighted(quickList.getDisplayName(), filter, forceFiltering,
+                                                   ApplicationManager.getApplication().getComponent(KeymapConfigurable.class))) {
+        group.addQuickList(quickList);
+      } else if (filtered == null && filter == null) {
         group.addQuickList(quickList);
       }
     }
@@ -460,7 +464,7 @@ public class ActionsTreeUtil {
     mainGroup.addGroup(createBookmarksActionsGroup(filtered));
     mainGroup.addGroup(createExternalToolsGroup(filtered));
     mainGroup.addGroup(createMacrosGroup(filtered));
-    mainGroup.addGroup(createQuickListsGroup(filter, forceFiltering, quickLists));
+    mainGroup.addGroup(createQuickListsGroup(filtered, filter, forceFiltering, quickLists));
     mainGroup.addGroup(createOtherGroup(filtered, mainGroup, keymap));
     mainGroup.addGroup(createPluginsActionsGroup(filtered));
     if (filter != null || filtered != null) {

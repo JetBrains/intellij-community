@@ -102,12 +102,14 @@ public class ActionsTree {
           setIcon(layeredIcon);
 
           Color foreground;
-          if(selected){
+          if (selected && hasFocus) {
             foreground = UIUtil.getTreeSelectionForeground();
-          }else{
-            if(changed){
+          }
+          else {
+            if (changed) {
               foreground = Color.BLUE;
-            }else{
+            }
+            else {
               foreground = UIUtil.getTreeForeground();
             }
           }
