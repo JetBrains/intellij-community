@@ -1,9 +1,10 @@
 package com.intellij.ui;
 
 import java.awt.*;
-import java.awt.event.MouseListener;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 
 public class ListenerUtil {
   public static void addFocusListener(Component component, FocusListener l) {
@@ -32,6 +33,17 @@ public class ListenerUtil {
       Container container = (Container)component;
       for (int i = 0; i < container.getComponentCount(); i++) {
         addMouseListener(container.getComponent(i), l);
+      }
+    }
+  }
+
+  public static void addMouseMotionListener(Component c, MouseMotionListener l) {
+    c.addMouseMotionListener(l);
+    if (c instanceof Container) {
+      final Container container = (Container)c;
+      Component[] children = container.getComponents();
+      for (Component child : children) {
+        addMouseMotionListener(child, l);
       }
     }
   }
