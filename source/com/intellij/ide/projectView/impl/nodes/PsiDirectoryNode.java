@@ -4,11 +4,14 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -33,7 +36,6 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   public Collection<AbstractTreeNode> getChildrenImpl() {
     return PackageUtil.getDirectoryChildren(getValue(), getSettings(), true);
   }
-
 
   public String getTestPresentation() {
     return "PsiDirectory: " + getValue().getName();
@@ -70,12 +72,23 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   }
 
   public boolean canRepresent(final Object element) {
-    if (super.canRepresent(element)) return true;
+    if (super.canRepresent(element)) return true;               
     if (getValue() == null) return false;
     if (element instanceof PackageElement) {
       final PackageElement packageElement = (PackageElement)element;
       return Arrays.asList(packageElement.getPackage().getDirectories()).contains(getValue());
     }
     return false;
+  }
+
+  public boolean canNavigateToSource() {
+    return PackageUtil.isSourceOrTestRoot(getVirtualFile(), getProject());
+  }
+
+  public void navigate(final boolean requestFocus) {
+    Module module = ModuleUtil.findModuleForPsiElement(getValue());
+    if (module != null) {
+      ModulesConfigurator.showDialog(getProject(), module.getName(), ContentEntriesEditor.NAME, false);
+    }
   }
 }

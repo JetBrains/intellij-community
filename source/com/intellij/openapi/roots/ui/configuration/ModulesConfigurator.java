@@ -334,14 +334,14 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  public static boolean showDialog(Project project, @Nullable final String moduleToSelect, final String tabNameToSelect, final boolean show) {
+  public static boolean showDialog(Project project, @Nullable final String moduleToSelect, final String tabNameToSelect, final boolean showModuleWizard) {
     final ProjectRootConfigurable projectRootConfigurable = ProjectRootConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, projectRootConfigurable, new Runnable() {
       public void run() {
         if (moduleToSelect != null) {
           projectRootConfigurable.selectModuleTab(moduleToSelect, tabNameToSelect);
         }
-        projectRootConfigurable.setStartModuleWizard(show);
+        projectRootConfigurable.setStartModuleWizard(showModuleWizard);
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             projectRootConfigurable.setStartModuleWizard(false);

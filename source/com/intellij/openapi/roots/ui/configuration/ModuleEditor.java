@@ -243,6 +243,7 @@ public class ModuleEditor {
 
   public void setSelectedTabName(String name) {
     if (name != null) {
+      getPanel();
       final int editorTabIndex = getEditorTabIndex(name);
       if (editorTabIndex >= 0 && editorTabIndex < myTabbedPane.getTabCount()) {
         myTabbedPane.setSelectedIndex(editorTabIndex);

@@ -294,7 +294,7 @@ public class PackageUtil {
           while (parentPackage != null && !parentPackage.equals(parentPackageInTree)) {
             final String parentPackageName = parentPackage.getName();
             if (parentPackageName == null || "".equals(parentPackageName)) {
-            break; // reached default package
+              break; // reached default package
             }
             buf.insert(0, ".");
             buf.insert(0, parentPackageName);
@@ -329,7 +329,7 @@ public class PackageUtil {
     }
   }
 
-  private static boolean isSourceOrTestRoot(final VirtualFile virtualFile, final Project project) {
+  public static boolean isSourceOrTestRoot(final VirtualFile virtualFile, final Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Module module = projectFileIndex.getModuleForFile(virtualFile);
     if (module == null) return false;
