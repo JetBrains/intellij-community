@@ -66,9 +66,10 @@ public class RefCountHolder {
 
   public synchronized void registerReference(@NotNull PsiJavaReference ref, JavaResolveResult resolveResult) {
     PsiElement refElement = resolveResult.getElement();
-    final PsiFile psiFile = refElement != null ? refElement.getContainingFile() : null;
+    PsiFile psiFile = refElement == null ? null : refElement.getContainingFile();
+    if (psiFile != null) psiFile = (PsiFile)psiFile.getNavigationElement(); // look at navigation elements because all references resolve into Cls elements when highlighting library source
     if (refElement != null && psiFile != null && getFile().getViewProvider().equals(psiFile.getViewProvider())) {
-      registerLocalRef(ref, refElement);
+      registerLocalRef(ref, refElement.getNavigationElement());
     }
 
     PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();

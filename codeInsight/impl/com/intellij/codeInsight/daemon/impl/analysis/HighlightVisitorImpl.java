@@ -200,6 +200,46 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
   }
 
+  public void visitAnnotation(PsiAnnotation annotation) {
+    super.visitAnnotation(annotation);
+    myHolder.add(AnnotationsHighlightUtil.checkApplicability(annotation));
+    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkAnnotationType(annotation));
+    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkMissingAttributes(annotation));
+    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkTargetAnnotationDuplicates(annotation));
+  }
+
+  public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
+    PsiMethod method = null;
+    PsiElement parent = initializer.getParent();
+    if (parent instanceof PsiNameValuePair) {
+      method = (PsiMethod)parent.getReference().resolve();
+    }
+    else if (parent instanceof PsiAnnotationMethod) {
+      method = (PsiMethod)parent;
+    }
+    if (method != null) {
+      PsiType type = method.getReturnType();
+      if (type instanceof PsiArrayType) {
+        type = ((PsiArrayType)type).getComponentType();
+        PsiAnnotationMemberValue[] initializers = initializer.getInitializers();
+        for (PsiAnnotationMemberValue initializer1 : initializers) {
+          myHolder.add(AnnotationsHighlightUtil.checkMemberValueType(initializer1, type));
+        }
+      }
+    }
+  }
+
+  public void visitAnnotationMethod(PsiAnnotationMethod method) {
+    PsiType returnType = method.getReturnType();
+    PsiAnnotationMemberValue value = method.getDefaultValue();
+    if (returnType != null && value != null) {
+      myHolder.add(AnnotationsHighlightUtil.checkMemberValueType(value, returnType));
+    }
+
+    myHolder.add(AnnotationsHighlightUtil.checkValidAnnotationType(method.getReturnTypeElement()));
+    myHolder.add(AnnotationsHighlightUtil.checkCyclicMemberType(method.getReturnTypeElement(), method.getContainingClass()));
+  }
+
   public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
     super.visitArrayInitializerExpression(expression);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkArrayInitializerApplicable(expression));
@@ -384,7 +424,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
 
     return element.getParent().getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null;
-
   }
 
   public void visitEnumConstant(PsiEnumConstant enumConstant) {
@@ -437,19 +476,19 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightControlFlowUtil.checkFinalFieldInitialized(field));
   }
 
-  public void visitImportStaticStatement(PsiImportStaticStatement statement) {
-    if (PsiUtil.getLanguageLevel(statement).compareTo(LanguageLevel.JDK_1_5) < 0) {
-      myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                     statement.getFirstChild(),
-                                                     JavaErrorMessages.message("static.imports.prior.15")));
-    }
-  }
-
   public void visitForeachStatement(PsiForeachStatement statement) {
     if (PsiUtil.getLanguageLevel(statement).compareTo(LanguageLevel.JDK_1_5) < 0) {
       myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                      statement.getFirstChild(),
                                                      JavaErrorMessages.message("foreach.prior.15")));
+    }
+  }
+
+  public void visitImportStaticStatement(PsiImportStaticStatement statement) {
+    if (PsiUtil.getLanguageLevel(statement).compareTo(LanguageLevel.JDK_1_5) < 0) {
+      myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                     statement.getFirstChild(),
+                                                     JavaErrorMessages.message("static.imports.prior.15")));
     }
   }
 
@@ -477,6 +516,60 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSingleImportClassConflict(statement, mySingleImportedClasses));
   }
 
+  public void visitImportStaticReferenceElement(PsiImportStaticReferenceElement ref) {
+    String refName = ref.getReferenceName();
+    JavaResolveResult[] results = ref.multiResolve(false);
+
+    if (results.length == 0) {
+      String description = JavaErrorMessages.message("cannot.resolve.symbol", refName);
+      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(), description);
+      myHolder.add(info);
+      QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace());
+    }
+    else {
+      PsiManager manager = ref.getManager();
+      for (JavaResolveResult result : results) {
+        PsiElement element = result.getElement();
+        if (!(element instanceof PsiModifierListOwner) || !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
+          continue;
+        }
+        @NonNls String messageKey = null;
+        if (element instanceof PsiClass) {
+          Pair<PsiImportStatement, PsiClass> imported = mySingleImportedClasses.get(refName);
+          PsiClass aClass = imported == null ? null : imported.getSecond();
+          PsiImportStatement statement = PsiTreeUtil.getParentOfType(ref, PsiImportStatement.class);
+
+          if (aClass != null && !manager.areElementsEquivalent(aClass, element) && !manager.areElementsEquivalent(statement, imported.getFirst())) {
+            messageKey = "class.is.already.defined.in.single.type.import";
+          }
+          mySingleImportedClasses.put(refName, Pair.create(statement, (PsiClass)element));
+        }
+        else if (element instanceof PsiField) {
+          Pair<PsiImportStaticReferenceElement, PsiField> imported = mySingleImportedFields.get(refName);
+          PsiField field = imported == null ? null : imported.getSecond();
+
+          if (field != null && !manager.areElementsEquivalent(field, element) && !manager.areElementsEquivalent(ref, imported.getFirst())) {
+            messageKey = "field.is.already.defined.in.single.type.import";
+          }
+          mySingleImportedFields.put(refName, Pair.create(ref, (PsiField)element));
+        }
+        else if (element instanceof PsiMethod) {
+          MethodSignature signature = ((PsiMethod)element).getSignature(PsiSubstitutor.EMPTY);
+          Pair<PsiImportStaticReferenceElement, PsiMethod> imported = mySingleImportedMethods.get(signature);
+          PsiMethod method = imported == null ? null : imported.getSecond();
+          if (method != null && !manager.areElementsEquivalent(method, element) && !manager.areElementsEquivalent(imported.getFirst(), ref)) {
+            messageKey = "method.is.already.defined.in.single.type.import";
+          }
+          mySingleImportedMethods.put(signature, Pair.create(ref, (PsiMethod)element));
+        }
+
+        if (messageKey != null) {
+          String description = JavaErrorMessages.message(messageKey, refName);
+          myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, ref, description));
+        }
+      }
+    }
+  }
 
   public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
     super.visitInstanceOfExpression(expression);
@@ -632,12 +725,12 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
   }
 
-  public void visitAnnotation(PsiAnnotation annotation) {
-    super.visitAnnotation(annotation);
-    myHolder.add(AnnotationsHighlightUtil.checkApplicability(annotation));
-    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkAnnotationType(annotation));
-    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkMissingAttributes(annotation));
-    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkTargetAnnotationDuplicates(annotation));
+  public void visitNameValuePair(PsiNameValuePair pair) {
+    myHolder.add(AnnotationsHighlightUtil.checkNameValuePair(pair));
+    if (!myHolder.hasErrorResults()) {
+      PsiIdentifier nameId = pair.getNameIdentifier();
+      if (nameId != null) myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ANNOTATION_ATTRIBUTE_NAME, nameId, null));
+    }
   }
 
   public void visitNewExpression(PsiNewExpression expression) {
@@ -667,6 +760,14 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
   }
 
+  public void visitParameterList(PsiParameterList list) {
+    if (list.getParent() instanceof PsiAnnotationMethod && list.getParameters().length > 0) {
+      myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                     list,
+                                                     JavaErrorMessages.message("annotation.interface.members.may.not.have.parameters")));
+    }
+  }
+
   public void visitPostfixExpression(PsiPostfixExpression expression) {
     super.visitPostfixExpression(expression);
     if (!myHolder.hasErrorResults()) {
@@ -681,66 +782,13 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
   }
 
-  public void visitImportStaticReferenceElement(PsiImportStaticReferenceElement ref) {
-    String refName = ref.getReferenceName();
-    JavaResolveResult[] results = ref.multiResolve(false);
-
-    if (results.length == 0) {
-      String description = JavaErrorMessages.message("cannot.resolve.symbol", refName);
-      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(), description);
-      myHolder.add(info);
-      QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace());
-    }
-    else {
-      PsiManager manager = ref.getManager();
-      for (JavaResolveResult result : results) {
-        PsiElement element = result.getElement();
-        if (!(element instanceof PsiModifierListOwner) || !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
-          continue;
-        }
-        @NonNls String messageKey = null;
-        if (element instanceof PsiClass) {
-          Pair<PsiImportStatement, PsiClass> imported = mySingleImportedClasses.get(refName);
-          PsiClass aClass = imported == null ? null : imported.getSecond();
-          PsiImportStatement statement = PsiTreeUtil.getParentOfType(ref, PsiImportStatement.class);
-
-          if (aClass != null && !manager.areElementsEquivalent(aClass, element) && !manager.areElementsEquivalent(statement, imported.getFirst())) {
-            messageKey = "class.is.already.defined.in.single.type.import";
-          }
-          mySingleImportedClasses.put(refName, Pair.create(statement, (PsiClass)element));
-        }
-        else if (element instanceof PsiField) {
-          Pair<PsiImportStaticReferenceElement, PsiField> imported = mySingleImportedFields.get(refName);
-          PsiField field = imported == null ? null : imported.getSecond();
-
-          if (field != null && !manager.areElementsEquivalent(field, element) && !manager.areElementsEquivalent(ref, imported.getFirst())) {
-            messageKey = "field.is.already.defined.in.single.type.import";
-          }
-          mySingleImportedFields.put(refName, Pair.create(ref, (PsiField)element));
-        }
-        else if (element instanceof PsiMethod) {
-          MethodSignature signature = ((PsiMethod)element).getSignature(PsiSubstitutor.EMPTY);
-          Pair<PsiImportStaticReferenceElement, PsiMethod> imported = mySingleImportedMethods.get(signature);
-          PsiMethod method = imported == null ? null : imported.getSecond();
-          if (method != null && !manager.areElementsEquivalent(method, element) && !manager.areElementsEquivalent(imported.getFirst(), ref)) {
-            messageKey = "method.is.already.defined.in.single.type.import";
-          }
-          mySingleImportedMethods.put(signature, Pair.create(ref, (PsiMethod)element));
-        }
-
-        if (messageKey != null) {
-          String description = JavaErrorMessages.message(messageKey, refName);
-          myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, ref, description));
-        }
-      }
-    }
-  }
-
   private void registerConstructorCall(PsiConstructorCall constructorCall) {
-    JavaResolveResult resolveResult = constructorCall.resolveMethodGenerics();
-    final PsiElement resolved = resolveResult.getElement();
-    if (myRefCountHolder != null && resolved instanceof PsiNamedElement) {
-      myRefCountHolder.registerLocallyReferenced((PsiNamedElement)resolved);
+    if (myRefCountHolder != null) {
+      JavaResolveResult resolveResult = constructorCall.resolveMethodGenerics();
+      final PsiElement resolved = resolveResult.getElement();
+      if (resolved instanceof PsiNamedElement) {
+        myRefCountHolder.registerLocallyReferenced((PsiNamedElement)resolved);
+      }
     }
   }
 
@@ -789,46 +837,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
   }
 
-  public void visitAnnotationMethod(PsiAnnotationMethod method) {
-    PsiType returnType = method.getReturnType();
-    PsiAnnotationMemberValue value = method.getDefaultValue();
-    if (returnType != null && value != null) {
-      myHolder.add(AnnotationsHighlightUtil.checkMemberValueType(value, returnType));
-    }
-
-    myHolder.add(AnnotationsHighlightUtil.checkValidAnnotationType(method.getReturnTypeElement()));
-    myHolder.add(AnnotationsHighlightUtil.checkCyclicMemberType(method.getReturnTypeElement(), method.getContainingClass()));
-  }
-
-  public void visitNameValuePair(PsiNameValuePair pair) {
-    myHolder.add(AnnotationsHighlightUtil.checkNameValuePair(pair));
-    if (!myHolder.hasErrorResults()) {
-      PsiIdentifier nameId = pair.getNameIdentifier();
-      if (nameId != null) myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ANNOTATION_ATTRIBUTE_NAME, nameId, null));
-    }
-  }
-
-  public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
-    PsiMethod method = null;
-    PsiElement parent = initializer.getParent();
-    if (parent instanceof PsiNameValuePair) {
-      method = (PsiMethod)parent.getReference().resolve();
-    }
-    else if (parent instanceof PsiAnnotationMethod) {
-      method = (PsiMethod)parent;
-    }
-    if (method != null) {
-      PsiType type = method.getReturnType();
-      if (type instanceof PsiArrayType) {
-        type = ((PsiArrayType)type).getComponentType();
-        PsiAnnotationMemberValue[] initializers = initializer.getInitializers();
-        for (PsiAnnotationMemberValue initializer1 : initializers) {
-          myHolder.add(AnnotationsHighlightUtil.checkMemberValueType(initializer1, type));
-        }
-      }
-    }
-  }
-
   public void visitReferenceExpression(PsiReferenceExpression expression) {
     visitReferenceElement(expression);
     if (!myHolder.hasErrorResults()) {
@@ -872,21 +880,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
   }
 
-
   public void visitReferenceParameterList(PsiReferenceParameterList list) {
     myHolder.add(GenericsHighlightUtil.checkParametersOnRaw(list));
-  }
-
-  public void visitParameterList(PsiParameterList list) {
-    if (list.getParent() instanceof PsiAnnotationMethod && list.getParameters().length > 0) {
-      myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                     list,
-                                                     JavaErrorMessages.message("annotation.interface.members.may.not.have.parameters")));
-    }
-  }
-
-  public void visitTypeParameterList(PsiTypeParameterList list) {
-    myHolder.add(GenericsHighlightUtil.checkTypeParametersList(list));
   }
 
   public void visitReturnStatement(PsiReturnStatement statement) {
@@ -950,6 +945,10 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     super.visitTypeCastExpression(typeCast);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkInconvertibleTypeCast(typeCast));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkUncheckedTypeCast(typeCast));
+  }
+
+  public void visitTypeParameterList(PsiTypeParameterList list) {
+    myHolder.add(GenericsHighlightUtil.checkTypeParametersList(list));
   }
 
   public void visitVariable(PsiVariable variable) {
