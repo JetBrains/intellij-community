@@ -127,7 +127,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     myScrollPane.setMaximumSize(new Dimension(150, -1));
     final JPanel panel = new JPanel(new BorderLayout()) {
       public Dimension getPreferredSize() {
-        return new Dimension(600, 800);
+        return new Dimension(800, 600);
       }
     };
     panel.add(myWholePanel, BorderLayout.CENTER);
