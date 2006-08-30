@@ -60,7 +60,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
 
   @Nullable
   private ProblemDescriptor[] checkMethod(final RefMethod refMethod, InspectionManager manager) {
-    if (!refMethod.isBodyEmpty()) return null;
+    if (!isBodyEmpty(refMethod)) return null;
     if (refMethod.isConstructor()) return null;
     if (refMethod.isSyntheticJSP()) return null;
 
@@ -118,6 +118,11 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     return null;
   }
 
+  private boolean isBodyEmpty(final RefMethod refMethod) {
+    return refMethod.isBodyEmpty() &&
+           !SpecialAnnotationsUtil.isSpecialAnnotationPresent(refMethod.getElement(), STANDARD_EXCLUDE_ANNOS, EXCLUDE_ANNOS);
+  }
+
   private static RefMethod findSuperWithBody(RefMethod refMethod) {
     for (RefMethod refSuper : refMethod.getSuperMethods()) {
       if (refSuper.hasBody()) return refSuper;
@@ -125,8 +130,8 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     return null;
   }
 
-  private static boolean areAllImplementationsEmpty(RefMethod refMethod) {
-    if (refMethod.hasBody() && !refMethod.isBodyEmpty()) return false;
+  private boolean areAllImplementationsEmpty(RefMethod refMethod) {
+    if (refMethod.hasBody() && !isBodyEmpty(refMethod)) return false;
 
     for (RefMethod refDerived : refMethod.getDerivedMethods()) {
       if (!areAllImplementationsEmpty(refDerived)) return false;
@@ -135,9 +140,9 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     return true;
   }
 
-  private static boolean hasEmptySuperImplementation(RefMethod refMethod) {
+  private boolean hasEmptySuperImplementation(RefMethod refMethod) {
     for (RefMethod refSuper : refMethod.getSuperMethods()) {
-      if (refSuper.hasBody() && refSuper.isBodyEmpty()) return true;
+      if (refSuper.hasBody() && isBodyEmpty(refSuper)) return true;
     }
 
     return false;
