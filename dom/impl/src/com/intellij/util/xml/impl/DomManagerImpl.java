@@ -122,7 +122,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     myProject = project;
     myAnnotationsManager = annotationsManager;
     pomModel.addModelListener(new PomModelListener() {
-      public synchronized void modelChanged(PomModelEvent event) {
+      public void modelChanged(PomModelEvent event) {
         final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(xmlAspect);
         if (changeSet != null) {
           if (!myChanging) {
@@ -172,16 +172,23 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     }, project);
   }
 
-  private synchronized void updateFileDomness(final XmlFile file, DomFileElement changedRoot) {
-    final FileDescriptionCachedValueProvider<DomElement> provider = getOrCreateCachedValueProvider(file);
-    final DomFileElementImpl oldElement = provider.getOldValue();
-    final boolean wasInModel = oldElement != null && provider.isInModel();
-    
-    provider.changed();
+  private void updateFileDomness(final XmlFile file, DomFileElement changedRoot) {
+    final boolean wasInModel;
+    final boolean isInModel;
+    final DomFileElementImpl oldElement;
+    final DomFileElementImpl<DomElement> fileElement;
 
-    final DomFileElementImpl<DomElement> fileElement = getFileElement(file);
-    final boolean isInModel = fileElement != null && provider.getFileDescription().getDomModelDependentFiles(changedRoot).contains(file);
-    provider.setInModel(isInModel);
+    synchronized (PsiLock.LOCK) {
+      final FileDescriptionCachedValueProvider<DomElement> provider = getOrCreateCachedValueProvider(file);
+      oldElement = provider.getOldValue();
+      wasInModel = oldElement != null && provider.isInModel();
+
+      provider.changed();
+
+      fileElement = getFileElement(file);
+      isInModel = fileElement != null && provider.getFileDescription().getDomModelDependentFiles(changedRoot).contains(file);
+      provider.setInModel(isInModel);
+    }
     if (oldElement == null || fileElement == null) return;
 
     if (!isInModel && wasInModel) fireEvent(new ElementChangedEvent(oldElement), true);
@@ -345,16 +352,18 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   @Nullable
-  public final synchronized <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file) {
+  public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file) {
     if (file == null) return null;
 
-    CachedValue<DomFileElementImpl<T>> value = file.getUserData(CACHED_FILE_ELEMENT_VALUE);
-    if (value == null) {
-      final FileDescriptionCachedValueProvider<T> provider = getOrCreateCachedValueProvider(file);
-      value = file.getManager().getCachedValuesManager().createCachedValue(provider, false);
-      file.putUserData(CACHED_FILE_ELEMENT_VALUE, value);
+    synchronized (PsiLock.LOCK) {
+      CachedValue<DomFileElementImpl<T>> value = file.getUserData(CACHED_FILE_ELEMENT_VALUE);
+      if (value == null) {
+        final FileDescriptionCachedValueProvider<T> provider = getOrCreateCachedValueProvider(file);
+        value = file.getManager().getCachedValuesManager().createCachedValue(provider, false);
+        file.putUserData(CACHED_FILE_ELEMENT_VALUE, value);
+      }
+      return getCachedValueAndFireEvent(file, value);
     }
-    return getCachedValueAndFireEvent(file, value);
   }
 
   @Nullable
