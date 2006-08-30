@@ -318,7 +318,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
   }
 
   @NotNull @Override
-  public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+  public DropLocation getDropLocation(@NotNull RadContainer container, @Nullable final Point location) {
     FormLayout formLayout = getFormLayout(container);
     if (formLayout.getRowCount() == 0 && formLayout.getColumnCount() == 0) {
       if (location != null) {
@@ -499,12 +499,12 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     copyFormSpecs(sourceLayout, destinationLayout, isRow, cellIndex, cellCount, targetIndex);
   }
 
-  private void copyFormSpecs(final FormLayout sourceLayout,
-                             final FormLayout destinationLayout,
-                             final boolean isRow,
-                             int cellIndex,
-                             final int cellCount,
-                             int targetIndex) {
+  private static void copyFormSpecs(final FormLayout sourceLayout,
+                                    final FormLayout destinationLayout,
+                                    final boolean isRow,
+                                    int cellIndex,
+                                    int cellCount,
+                                    int targetIndex) {
     for(int i=0; i < cellCount; i++) {
       if (isRow) {
         RowSpec rowSpec = sourceLayout.getRowSpec(cellIndex + 1);
