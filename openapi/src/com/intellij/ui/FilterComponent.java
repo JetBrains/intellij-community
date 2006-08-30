@@ -15,12 +15,7 @@
  */
 package com.intellij.ui;
 
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 
@@ -82,14 +77,7 @@ public abstract class FilterComponent extends JPanel {
     });
 
     myFilter.setHistorySize(historySize);
-    add(myFilter, BorderLayout.CENTER);
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new AnAction(InspectionsBundle.message("inspection.tools.action.filter"), InspectionsBundle.message("inspection.tools.action.filter"), IconLoader.getIcon("/ant/filter.png")) {
-      public void actionPerformed(AnActionEvent e) {
-        myFilter.addCurrentTextToHistory();
-        filter();
-      }
-    });
+    add(myFilter, BorderLayout.CENTER);    
   }
 
   public void setHistorySize(int historySize){
