@@ -809,8 +809,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     mySelectedProfile = modifiableModel;
     myInitialProfile = mySelectedProfile.getName();
     initDescriptors();
-    fillTreeData(myProfileFilter != null ? myProfileFilter.getFilter() : null, true);
-    repaintTableData();
+    filterTree(myProfileFilter != null ? myProfileFilter.getFilter() : null);
   }
 
   @Nullable
@@ -904,7 +903,9 @@ public class SingleInspectionProfilePanel extends JPanel {
   public void reset() {
     myModified = false;
     setSelectedProfile(mySelectedProfile);
+    final String filter = myProfileFilter.getFilter();
     myProfileFilter.reset();
+    myProfileFilter.setSelectedItem(filter);
   }
 
   public void apply() throws ConfigurationException {
