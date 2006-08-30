@@ -31,7 +31,7 @@ public class ProgressIndicatorBase implements ProgressIndicator {
   private volatile int myNonCancelableCount = 0;
 
   private ProgressIndicator myModalityProgress = null;
-  private ModalityState myModalityState = ModalityState.NON_MMODAL;
+  private ModalityState myModalityState = ModalityState.NON_MODAL;
 
   public void start(){
     LOG.assertTrue(!isRunning());

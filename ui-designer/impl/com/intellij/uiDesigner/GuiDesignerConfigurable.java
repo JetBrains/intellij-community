@@ -97,19 +97,17 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
   }
 
   public void apply() {
-    final DispatchThreadProgressWindow progressWindow = new DispatchThreadProgressWindow(false, myProject);
-    progressWindow.setTitle(UIDesignerBundle.message("title.converting.project"));
-    progressWindow.start();
-
     final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(myProject);
     configuration.COPY_FORMS_RUNTIME_TO_OUTPUT = myGeneralUI.myChkCopyFormsRuntime.isSelected();
     configuration.DEFAULT_LAYOUT_MANAGER = (String)myGeneralUI.myLayoutManagerCombo.getSelectedItem();
+    configuration.INSTRUMENT_CLASSES = myGeneralUI.myRbInstrumentClasses.isSelected();
 
-    // We have to store value of the radio button here because myGeneralUI will be cleared
-    // just after apply is invoked (applyImpl is invoked later)
-    final boolean instrumentClasses = myGeneralUI.myRbInstrumentClasses.isSelected();
-    ApplicationManager.getApplication()
-      .invokeLater(new MyApplyRunnable(progressWindow, instrumentClasses), progressWindow.getModalityState());
+    if (configuration.INSTRUMENT_CLASSES && !myProject.isDefault()) {
+      final DispatchThreadProgressWindow progressWindow = new DispatchThreadProgressWindow(false, myProject);
+      progressWindow.setRunnable(new MyApplyRunnable(progressWindow));
+      progressWindow.setTitle(UIDesignerBundle.message("title.converting.project"));
+      progressWindow.start();
+    }
   }
 
   public void reset() {
@@ -147,11 +145,9 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
 
   private final class MyApplyRunnable implements Runnable {
     private final DispatchThreadProgressWindow myProgressWindow;
-    private final boolean myInstrumentClasses;
 
-    public MyApplyRunnable(final DispatchThreadProgressWindow progressWindow, final boolean instrumentClasses) {
+    public MyApplyRunnable(final DispatchThreadProgressWindow progressWindow) {
       myProgressWindow = progressWindow;
-      myInstrumentClasses = instrumentClasses;
     }
 
     /**
@@ -184,28 +180,23 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
     /**
      * Launches vanish/generate sources processes
      */
-    private void applyImpl(final boolean instrumentClasses) {
-      final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(myProject);
-      configuration.INSTRUMENT_CLASSES = instrumentClasses;
-
-      if (configuration.INSTRUMENT_CLASSES && !myProject.isDefault()) {
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-                vanishGeneratedSources();
-              }
-            });
-          }
-        }, "", null);
-      }
+    private void applyImpl() {
+      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+              vanishGeneratedSources();
+            }
+          });
+        }
+      }, "", null);
     }
 
     public void run() {
       ProgressManager.getInstance().runProcess(new Runnable() {
         public void run() {
-          applyImpl(myInstrumentClasses);
+          applyImpl();
         }
       }, myProgressWindow);
     }

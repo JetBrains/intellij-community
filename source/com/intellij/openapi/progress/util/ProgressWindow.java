@@ -94,20 +94,24 @@ public class ProgressWindow extends BlockingProgressIndicator {
 
     super.start();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myShowWindowAlarm.addRequest(new Runnable() {
-            public void run() {
-              if (isRunning()) {
-                showDialog();
-              }
-            }
-          }, 300, ModalityState.current());
-        }
-      });
+      prepareShowDialog();
     }
 
     myStared = true;
+  }
+
+  protected void prepareShowDialog() {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        myShowWindowAlarm.addRequest(new Runnable() {
+          public void run() {
+            if (isRunning()) {
+              showDialog();
+            }
+          }
+        }, 300, ModalityState.current());
+      }
+    });
   }
 
   public void startBlocking() {
@@ -138,7 +142,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
     exitModality();
   }
 
-  private void showDialog() {
+  protected void showDialog() {
     if (!isRunning() || isCanceled()) {
       return;
     }
