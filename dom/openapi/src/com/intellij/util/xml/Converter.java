@@ -55,7 +55,7 @@ public abstract class Converter<T> {
 
   public static final Converter<PsiClass> PSI_CLASS_CONVERTER = new Converter<PsiClass>() {
     public PsiClass fromString(final String s, final ConvertContext context) {
-      return s == null? null:context.findClass(s);
+      return s == null? null:context.findClass(s, null);
     }
 
     public String toString(final PsiClass t, final ConvertContext context) {
