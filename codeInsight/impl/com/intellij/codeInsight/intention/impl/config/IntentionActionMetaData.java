@@ -112,7 +112,7 @@ public final class IntentionActionMetaData {
         }
       }
     }
-    return urls.toArray(new URL[urls.size()]);
+    return urls.isEmpty() ? null : urls.toArray(new URL[urls.size()]);
   }
 
   private static URL getIntentionDescriptionDirURL(ClassLoader aClassLoader, String intentionFolderName) {
