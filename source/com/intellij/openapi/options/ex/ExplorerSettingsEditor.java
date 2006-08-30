@@ -24,6 +24,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
@@ -68,12 +69,12 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   private JPanel myComponentPanel;
   private SearchUtil.SearchTextField mySearchField;
   private Set<Configurable> myOptionContainers = null;
-  private Alarm myShowHintAlarm = new Alarm();
+  private Alarm mySearchUpdater = new Alarm();
   private JTree myTree;
   @NonNls final DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode("Root");
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ex.ExplorerSettingsEditor");
 
-  private JBPopup [] myPopup = new JBPopup[1];
+  private JBPopup [] myPopup = new JBPopup[2];
 
   private static final TObjectHashingStrategy<Configurable> UNWRAPPING_STRATEGY = new TObjectHashingStrategy<Configurable>() {
     public int computeHashCode(final Configurable c) {
@@ -198,8 +199,10 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   }
 
   public final void dispose() {
-    if (myPopup[0] != null) {
-      myPopup[0].cancel();
+    for (JBPopup popup : myPopup) {
+      if (popup != null) {
+        popup.cancel();
+      }
     }
     myAlarm.cancelAllRequests();
     rememberLastUsedPage();
@@ -378,43 +381,72 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   }
 
   protected JComponent createNorthPanel() {
+    final Consumer<String> selectConfigurable = new Consumer<String>() {
+      public void consume(final String configurableId) {
+        if (myOptionContainers != null) {
+          for (int groupIdx = 0; groupIdx < myGroups.length; groupIdx++) {
+            final ConfigurableGroup group = myGroups[groupIdx];
+            final Configurable[] configurables = group.getConfigurables();
+            int idx = 0;
+            for (Configurable configurable : configurables) {
+              if (myOptionContainers.contains(configurable)) {
+                if (Comparing.strEqual(configurable.getDisplayName(), configurableId)) {
+                  rememberLastUsedPage();
+                  mySelectedGroup = myGroups[groupIdx];
+                  ourLastGroup = mySelectedGroup.getShortName();
+
+                  final DefaultMutableTreeNode groupNode = (DefaultMutableTreeNode)myRoot.getChildAt(groupIdx);
+                  myTree.expandPath(new TreePath(groupNode.getPath()));
+                  TreeUtil.selectNode(myTree, groupNode.getChildAt(idx));
+
+                  selectConfigurable(configurable, idx);
+
+                  requestFocusForMainPanel();
+                  return;
+                }
+                idx++;
+              }
+            }
+          }
+        }
+      }
+    };
+    final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final JPanel panel = new JPanel(new GridBagLayout());
     mySearchField = new SearchUtil.SearchTextField();
-    mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
-        final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-        final @NonNls String searchPattern = mySearchField.getText();
-        if (searchPattern != null && searchPattern.length() > 0) {
-          myOptionContainers = optionsRegistrar.getConfigurables(myGroups, e.getType(), myOptionContainers, searchPattern, CodeStyleSettingsManager.getInstance(myProject).USE_PER_PROJECT_SETTINGS);
-        } else {
-          myOptionContainers = null;
-        }
-        myShowHintAlarm.cancelAllRequests();
-        myShowHintAlarm.addRequest(new Runnable() {
+    mySearchField.addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        mySearchUpdater.cancelAllRequests();
+        mySearchUpdater.addRequest(new Runnable() {
           public void run() {
-            SearchUtil.showHintPopup(mySearchField,
-                                     optionsRegistrar,
-                                     myPopup,
-                                     myShowHintAlarm,
-                                     myProject);
+            final @NonNls String searchPattern = mySearchField.getText();
+            if (searchPattern != null && searchPattern.length() > 0) {
+              myOptionContainers = optionsRegistrar.getConfigurables(myGroups, e.getType(), myOptionContainers, searchPattern, CodeStyleSettingsManager.getInstance(myProject).USE_PER_PROJECT_SETTINGS);
+            } else {
+              myOptionContainers = null;
+            }
+            SearchUtil.showHintPopup(mySearchField, myPopup, mySearchUpdater, selectConfigurable, myProject);
+            initToolbar();
+            TreeUtil.expandAll(myTree);
+            if (mySelectedConfigurable instanceof SearchableConfigurable) {
+              selectOption(new DefaultSearchableConfigurable((SearchableConfigurable)mySelectedConfigurable));
+            }
+            myComponentPanel.revalidate();
+            myComponentPanel.repaint();
           }
         }, 300, ModalityState.defaultModalityState());
-        initToolbar();
-        TreeUtil.expandAll(myTree);
-        if (mySelectedConfigurable instanceof DefaultSearchableConfigurable){
-          selectOption((DefaultSearchableConfigurable)mySelectedConfigurable);
-        }
-        myComponentPanel.revalidate();
-        myComponentPanel.repaint();
       }
     });
+    SearchUtil.registerKeyboardNavigation(mySearchField, myPopup, mySearchUpdater, selectConfigurable, myProject);
     final GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
     panel.add(Box.createHorizontalBox(), gc);
 
     gc.gridx++;
     gc.weightx = 0;
     gc.fill = GridBagConstraints.NONE;
-    panel.add(new JLabel(IdeBundle.message("search.textfield.title")), gc);
+    final JLabel label = new JLabel(IdeBundle.message("search.textfield.title"));
+    panel.add(label, gc);
+    label.setLabelFor(mySearchField);
 
     gc.gridx++;
     final int height = mySearchField.getPreferredSize().height;
@@ -507,11 +539,12 @@ public class ExplorerSettingsEditor extends DialogWrapper {
 
     myOptionsPanel.removeAll();
 
+    mySelectedConfigurable = configurable;
+    myKeySelectedConfigurableIndex = index;
+
     if (configurable instanceof SearchableConfigurable){
       configurable = new DefaultSearchableConfigurable((SearchableConfigurable)configurable);
     }
-    mySelectedConfigurable = configurable;
-    myKeySelectedConfigurableIndex = index;
 
     JComponent component = myInitializedConfigurables2Component.get(configurable);
     if (component == null) {
@@ -549,6 +582,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   }
 
   private void selectOption(final DefaultSearchableConfigurable searchableConfigurable) {
+    searchableConfigurable.setupGlassPane(myInitializedConfigurables2Component.get(searchableConfigurable)); //restore
     searchableConfigurable.clearSearch();
     if (myOptionContainers == null || myOptionContainers.isEmpty()) return; //do not highlight current editor when nothing can be selected
     @NonNls final String filter = mySearchField.getText();

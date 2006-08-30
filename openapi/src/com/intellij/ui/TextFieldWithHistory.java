@@ -25,10 +25,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,20 +33,27 @@ public class TextFieldWithHistory extends JPanel {
 
   private int myHistorySize = 5;
   private MyModel myModel;
-  private JTextField myTextField;
+  private TextFieldWithProcessing myTextField;
 
   private JBPopup myPopup;
   private JLabel myClearFieldLabel;
   private JLabel myToggleHistoryLabel;
 
   private boolean myFreaze = false;
+  private boolean myCropList;
+
+  private KeyListener myListener = null;
 
   public TextFieldWithHistory() {
-    super(new BorderLayout());
+    this(true);
+  }
 
+  public TextFieldWithHistory(final boolean cropList) {
+    super(new BorderLayout());
+    myCropList = cropList;
     myModel = new MyModel();
 
-    myTextField = new JTextField();
+    myTextField = new TextFieldWithProcessing();
     myTextField.setColumns(15);
 
     add(myTextField, BorderLayout.CENTER);
@@ -79,6 +83,7 @@ public class TextFieldWithHistory extends JPanel {
     // myTextField.addKeyListener(new HistoricalValuesHighlighter());
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
+        if (!cropList) return;
         if (myFreaze) return; //do not suggest during batch update
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
@@ -130,6 +135,9 @@ public class TextFieldWithHistory extends JPanel {
     getTextEditor().getDocument().addDocumentListener(listener);
   }
 
+  public void addKeyboardListener(final KeyListener listener) {
+    getTextEditor().addKeyListener(listener);
+  }
 
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
@@ -179,8 +187,13 @@ public class TextFieldWithHistory extends JPanel {
     getTextEditor().selectAll();
   }
 
-  protected JTextField getTextEditor() {
+  protected TextFieldWithProcessing getTextEditor() {
     return myTextField;
+  }
+
+
+  public boolean requestFocusInWindow() {
+    return myTextField.requestFocusInWindow();   
   }
 
   public void requestFocus() {
@@ -261,11 +274,11 @@ public class TextFieldWithHistory extends JPanel {
     }
 
     public Object getElementAt(int index) {
-      return myCroppedList.get(index);
+      return myCropList ? myCroppedList.get(index) : myFullList.get(index);
     }
 
     public int getSize() {
-      return myCroppedList.size();
+      return myCropList ? myCroppedList.size() : myFullList.size();
     }
 
     public void addElement(Object obj) {
@@ -314,15 +327,17 @@ public class TextFieldWithHistory extends JPanel {
     }
 
     private void refreshCroppedList() {
-      if (null == getSelectedItem() && myCroppedList.size() > 0) {
-        return;
-      }
-      myLastCroppedListSize = myCroppedList.size();
+      if (myCropList) {
+        if (null == getSelectedItem() && myCroppedList.size() > 0) {
+          return;
+        }
+        myLastCroppedListSize = myCroppedList.size();
 
-      myCroppedList = new ArrayList<String>();
-      for (String item : myFullList) {
-        if (item.startsWith(getCroppedListElementsPrefix()) && !item.equals(getCroppedListElementsPrefix())) {
-          myCroppedList.add(item);
+        myCroppedList = new ArrayList<String>();
+        for (String item : myFullList) {
+          if (item.startsWith(getCroppedListElementsPrefix()) && !item.equals(getCroppedListElementsPrefix())) {
+            myCroppedList.add(item);
+          }
         }
       }
 
@@ -373,6 +388,23 @@ public class TextFieldWithHistory extends JPanel {
   private void showPopup() {
     if (myPopup == null) {
       final JList list = new JList(myModel);
+      if (myListener != null) {
+        removeKeyListener(myListener);
+      }
+      myListener = new KeyAdapter() {
+        public void keyPressed(KeyEvent e) {
+          if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            if (list.getSelectedIndex() < list.getModel().getSize() - 1) {
+              list.setSelectedIndex(list.getSelectedIndex() + 1);
+            }
+          } else if (e.getKeyCode() == KeyEvent.VK_UP){
+            if (list.getSelectedIndex() > 0) {
+              list.setSelectedIndex(list.getSelectedIndex() - 1);
+            }
+          }
+        }
+      };
+      addKeyboardListener(myListener);
       myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setMovable(false)
         .setRequestFocus(false)
@@ -406,5 +438,11 @@ public class TextFieldWithHistory extends JPanel {
 
   public int getSelectedIndex() {
     return myModel.myCroppedList.indexOf(getText());
+  }
+
+  protected static class TextFieldWithProcessing extends JTextField {
+    public void processKeyEvent(KeyEvent e) {
+      super.processKeyEvent(e);
+    }
   }
 }

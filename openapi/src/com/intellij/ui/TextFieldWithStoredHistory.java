@@ -27,6 +27,11 @@ import java.util.ArrayList;
 public class TextFieldWithStoredHistory extends TextFieldWithHistory {
   private String myPropertyName;
 
+  public TextFieldWithStoredHistory(@NonNls final String propertyName, boolean cropList) {
+    super(cropList);
+    myPropertyName = propertyName;
+  }
+
   public TextFieldWithStoredHistory(@NonNls final String propertyName) {
     super();
     myPropertyName = propertyName;

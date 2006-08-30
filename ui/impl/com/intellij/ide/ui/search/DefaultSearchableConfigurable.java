@@ -75,9 +75,7 @@ public class DefaultSearchableConfigurable implements Configurable {
   }
 
   public void reset() {
-    if (myComponent != null) {
-      myComponent.getRootPane().setGlassPane(myGlassPanel);
-    }
+    setupGlassPane(myComponent);
     myDelegate.reset();
   }
 
@@ -89,5 +87,13 @@ public class DefaultSearchableConfigurable implements Configurable {
 
   public Configurable getDelegate() {
     return myDelegate;
+  }
+
+  public void setupGlassPane(final JComponent component) {
+    myComponent = component;
+    if (myComponent != null) {
+      myGlassPanel = new GlassPanel(myComponent);
+      myComponent.getRootPane().setGlassPane(myGlassPanel);
+    }
   }
 }

@@ -13,6 +13,7 @@ public class ControlPanelMnemonicsUtil {
   }
 
   public static Configurable getConfigurableFromMnemonic(KeyEvent e, ConfigurableGroup[] groups) {
+    if (e.getModifiers() != 0) return null;
     ConfigurableGroup group = getGroupFromKeycode(e.getKeyCode(), groups);
     if (group == null) return null;
 
