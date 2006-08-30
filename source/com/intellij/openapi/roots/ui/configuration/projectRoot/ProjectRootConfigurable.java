@@ -4,7 +4,6 @@
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
-import com.intellij.CommonBundle;
 import com.intellij.find.FindBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
@@ -34,14 +33,16 @@ import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelPr
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ProjectConfigurable;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -51,7 +52,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -369,7 +369,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   private void createProjectNodes() {
-    myModulesNode = new MyNode(new ModulesConfigurable(), true);
+    myModulesNode = new MyNode(new ModulesConfigurable(myProject), true);
     final Map<ModuleGroup, MyNode> moduleGroup2NodeMap = new HashMap<ModuleGroup, MyNode>();
     final Module[] modules = myModuleManager.getModules();
     for (final Module module : modules) {
@@ -701,7 +701,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
-    result.add(new MyAddAction(fromPopup));
+    result.add(new AddAction(this, fromPopup));
     result.add(new MyRemoveAction());
     final AnAction findUsages = new AnAction(ProjectBundle.message("find.usages.action.text"),
                                              ProjectBundle.message("find.usages.action.text"),
@@ -792,10 +792,11 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         return node;
       }
     } else { //module library
-      Module module = (Module)getSelectedObject();
-      final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(myModulesConfigurator.getModuleEditor(module).getModifiableRootModelProxy()), library, presentableName, myProject, TREE_UPDATER);
+      Module module = getSelectedModule();
+      final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(module), library, presentableName, myProject, TREE_UPDATER);
       final MyNode node = new MyNode(configurable);
-      addNode(node, (MyNode)myTree.getSelectionPath().getLastPathComponent());
+      MyNode parent = (MyNode)myTree.getSelectionPath().getLastPathComponent();
+      addNode(node, parent.getConfigurable().getEditableObject() instanceof Module ? parent : (MyNode)parent.getParent());
       return node;
     }
   }
@@ -1029,9 +1030,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
   }
 
-  public boolean addJdkNode(final ProjectJdk jdk) {
+  public boolean addJdkNode(final ProjectJdk jdk, final boolean selectInTree) {
     if (!myDisposed) {
       addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel, TREE_UPDATER)), myJdksNode);
+      if (selectInTree) {
+        selectNodeInTree(MasterDetailsComponent.findNodeByObject(myJdksNode, jdk));
+      }
       return true;
     }
     return false;
@@ -1078,6 +1082,29 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
     modules.add(module.getName());
     myTree.repaint();
+  }
+
+  public void addModule() {
+    final Module module = myModulesConfigurator.addModule(myTree);
+    if (module != null) {
+      final MasterDetailsComponent.MyNode node = new MasterDetailsComponent.MyNode(new ModuleConfigurable(myModulesConfigurator, module, TREE_UPDATER));
+      myModulesNode.add(node);
+      selectNodeInTree(node);
+    }
+  }
+
+  public Module getSelectedModule() {
+    final Object selectedObject = getSelectedObject();
+    if (selectedObject instanceof Module) {
+      return (Module)selectedObject;
+    }
+    if (selectedObject instanceof Library) {
+      if (((Library)selectedObject).getTable() == null) {
+        final MyNode node = (MyNode)myTree.getSelectionPath().getLastPathComponent();
+        return (Module)((MyNode)node.getParent()).getConfigurable().getEditableObject();
+      }
+    }
+    return null;
   }
 
   /*public void initDependantsPanel(final OrderPanel<ModifiableRootModel> dependantsPanel) {
@@ -1181,47 +1208,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
  }
 
-  private DefaultActionGroup createAddJdkGroup() {
-    DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
-    myJdksTreeModel.createAddActions(group, myTree, new Consumer<ProjectJdk>() {
-      public void consume(final ProjectJdk projectJdk) {
-        addJdkNode(projectJdk);
-        selectNodeInTree(findNodeByObject(myJdksNode, projectJdk));
-      }
-    });
-    return group;
-  }
-
-  private DefaultActionGroup createAddLibrariesGroup() {
-    DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.library.text"), true);
-    group.add(new AnAction(ProjectBundle.message("add.new.project.library.text")) {
-      public void actionPerformed(AnActionEvent e) {
-        final LibraryTableEditor editor = LibraryTableEditor.editLibraryTable(getProjectLibrariesProvider(), myProject);
-        editor.createAddLibraryAction(true, myWholePanel).actionPerformed(null);
-        Disposer.dispose(editor);
-      }
-    });
-    group.add(new AnAction(ProjectBundle.message("add.new.global.library.text")) {
-      public void actionPerformed(AnActionEvent e) {
-        final LibraryTableEditor editor = LibraryTableEditor.editLibraryTable(getGlobalLibrariesProvider(), myProject);
-        editor.createAddLibraryAction(true, myWholePanel).actionPerformed(null);
-        Disposer.dispose(editor);
-      }
-    });
-    group.add(new AnAction(ProjectBundle.message("add.new.module.library.text")) {
-      public void actionPerformed(AnActionEvent e) {
-        Module module = (Module)getSelectedObject();
-        final LibraryTableModifiableModelProvider modifiableModelProvider = getModifiableModelProvider(myModulesConfigurator.getModuleEditor(module).getModifiableRootModelProxy());
-        final LibraryTableEditor editor = LibraryTableEditor.editLibraryTable(modifiableModelProvider, myProject);
-        editor.createAddLibraryAction(true, myWholePanel).actionPerformed(null);
-        Disposer.dispose(editor);
-      }
-
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(getSelectedObject() instanceof Module);
-      }
-    });
-    return group;
+  public LibraryTableModifiableModelProvider getModifiableModelProvider(final Module module) {
+    return getModifiableModelProvider(myModulesConfigurator.getModuleEditor(module).getModifiableRootModelProxy());
   }
 
   private LibraryTableModifiableModelProvider getModifiableModelProvider(final ModifiableRootModel model) {
@@ -1236,67 +1224,6 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         return LibraryTableImplUtil.MODULE_LEVEL;
       }
     };
-  }
-
-  private class MyAddAction extends ActionGroup implements ActionGroupWithPreselection{
-    private AnAction [] myChildren;
-    private boolean myFromPopup;
-    public MyAddAction(final boolean fromPopup) {
-      super(CommonBundle.message("button.add"), true);
-      myFromPopup = fromPopup;
-      final Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(Icons.ADD_ICON);
-      registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
-    }
-
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      if (myChildren == null) {
-        myChildren = new AnAction[3];
-        myChildren[0] = createAddLibrariesGroup();
-        myChildren[1] = createAddJdkGroup();
-        myChildren[2] = new AnAction(ProjectBundle.message("add.new.module.text")) {
-          public void actionPerformed(AnActionEvent e) {
-            final Module module = myModulesConfigurator.addModule(myTree);
-            if (module != null) {
-              final MyNode node = new MyNode(new ModuleConfigurable(myModulesConfigurator, module, TREE_UPDATER));
-              addNode(node, myModulesNode);
-              selectNodeInTree(node);
-            }
-          }
-
-          public void update(AnActionEvent e) {
-            e.getPresentation().setEnabled(!myProject.isDefault());
-          }
-        };
-      }
-      if (myFromPopup){
-        final Object selectedObject = getSelectedObject();      //omit some unnec. levels
-        if (selectedObject instanceof Library || selectedObject instanceof String) {
-          return ((DefaultActionGroup)myChildren[0]).getChildren(e);
-        } else if (selectedObject instanceof ProjectJdk || selectedObject instanceof ProjectJdksModel) {
-          return ((DefaultActionGroup)myChildren[1]).getChildren(e);
-        }
-      }
-      return myChildren;
-    }
-
-    public ActionGroup getActionGroup() {
-      return this;
-    }
-
-    public int getDefaultIndex() {
-      final Object selectedObject = getSelectedObject();
-      if (selectedObject instanceof Library || selectedObject instanceof String) {
-        return 0;
-      }
-      else if (selectedObject instanceof ProjectJdk || selectedObject instanceof ProjectJdksModel) {
-        return 1;
-      }
-      else if (selectedObject instanceof Module || selectedObject instanceof ModuleGroup) {
-        return 2;
-      }
-      return selectedObject instanceof Project ? -1 : 0;
-    }
   }
 
   private class MyGroupAction extends ToggleAction {

@@ -181,6 +181,7 @@ public class ModuleEditor {
   }
 
   public void updateOrderEntriesInEditors() {
+    getPanel();  //init editor if needed
     for (final ModuleConfigurationEditor myEditor : myEditors) {
       myEditor.moduleStateChanged();
     }

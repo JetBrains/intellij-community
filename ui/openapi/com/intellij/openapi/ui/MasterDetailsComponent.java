@@ -50,6 +50,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
       MyNode node = (MyNode)myTree.getSelectionPath().getLastPathComponent();
       if (node != null) {
         myLastEditedConfigurable = node.getDisplayName(); //survive after rename
+        myBanner.setText(myLastEditedConfigurable);
         ((DefaultTreeModel)myTree.getModel()).reload(node);
         fireItemsChangedExternally();
       }
@@ -415,7 +416,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
   }
 
   @Nullable
-  protected static MyNode findNodeByObject(final TreeNode root, final Object editableObject) {
+  public static MyNode findNodeByObject(final TreeNode root, final Object editableObject) {
     if (editableObject == null) return null; //do not suggest root node
     return findNodeByCondition(root, new Condition<NamedConfigurable>() {
       public boolean value(final NamedConfigurable configurable) {
@@ -485,6 +486,10 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     return null;
   }
 
+  public Tree getTree() {
+    return myTree;
+  }
+
   protected class MyDeleteAction extends AnAction {
     private Condition<Object> myCondition;
 
@@ -533,7 +538,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     }
   }
 
-  protected static class MyNode extends DefaultMutableTreeNode {
+  public static class MyNode extends DefaultMutableTreeNode {
     private boolean myDisplayInBold;
 
     public MyNode(NamedConfigurable userObject) {
@@ -625,7 +630,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     void itemsExternallyChanged();
   }
 
-  protected static interface ActionGroupWithPreselection {
+  public static interface ActionGroupWithPreselection {
     ActionGroup getActionGroup();
     int getDefaultIndex();
   }
@@ -644,6 +649,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
             actionGroup.getTemplatePresentation().getDescription(),
             actionGroup.getTemplatePresentation().getIcon());
       myActionGroup = actionGroup;
+      registerCustomShortcutSet(actionGroup.getShortcutSet(), myTree);
     }
 
     public void actionPerformed(AnActionEvent e) {

@@ -76,7 +76,7 @@ class JdkComboBox extends JComboBox{
         DefaultActionGroup group = new DefaultActionGroup();
         jdksModel.createAddActions(group, JdkComboBox.this, new Consumer<ProjectJdk>() {
           public void consume(final ProjectJdk jdk) {
-            configurable.addJdkNode(jdk);
+            configurable.addJdkNode(jdk, false);
             reloadModel(firstItem, project);
             setSelectedJdk(jdk); //restore selection
             if (additionalSetup != null) {
