@@ -12,6 +12,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.util.ui.MappingListCellRenderer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -55,6 +56,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     return myUpdatesSettingsPanel.myPanel;
   }
 
+  @NotNull
   public String getComponentName() {
     return "UpdatesConfigurable";
   }
@@ -93,7 +95,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
   public boolean isModified() {
     return CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected() ||
-           !CHECK_PERIOD.equals(myUpdatesSettingsPanel.myPeriodCombo.getSelectedItem());
+           !Comparing.equal(CHECK_PERIOD, myUpdatesSettingsPanel.myPeriodCombo.getSelectedItem());
   }
 
   public void readExternal(Element element) throws InvalidDataException {
