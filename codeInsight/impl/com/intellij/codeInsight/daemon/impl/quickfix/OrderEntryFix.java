@@ -17,14 +17,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.java.LanguageLevel;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.Set;
@@ -126,10 +126,9 @@ public abstract class OrderEntryFix implements IntentionAction {
       }
     }
     if (classes.length == 0) {
-      final String referenceName = reference.getReferenceName();
+      @NonNls final String referenceName = reference.getReferenceName();
       if ("TestCase".equals(referenceName)
-           //todo redist junit 4
-          //|| reference.getParent() instanceof PsiAnnotation && "Test".equals(referenceName) && PsiUtil.getLanguageLevel(reference).compareTo(LanguageLevel.JDK_1_5) >= 0
+          || reference.getParent() instanceof PsiAnnotation && "Test".equals(referenceName) && PsiUtil.getLanguageLevel(reference).compareTo(LanguageLevel.JDK_1_5) >= 0
         ) {
         QuickFixAction.registerQuickFixAction(info, new OrderEntryFix(){
           @NotNull
@@ -160,7 +159,8 @@ public abstract class OrderEntryFix implements IntentionAction {
             ModifiableRootModel model = ModuleRootManager.getInstance(currentModule).getModifiableModel();
             Library library = model.getModuleLibraryTable().createLibrary();
             Library.ModifiableModel libModel = library.getModifiableModel();
-            String junitPath = PathManager.getLibPath() + "/junit.jar";
+            boolean isJunit4 = referenceName.equals("Test");
+            @NonNls String junitPath = PathManager.getLibPath() + (isJunit4 ? "/junit-4.0.jar" : "/junit.jar");
             String url = VfsUtil.getUrlForLibraryRoot(new File(junitPath));
             VirtualFile junit = VirtualFileManager.getInstance().findFileByUrl(url);
             assert junit != null : junitPath;
@@ -168,7 +168,7 @@ public abstract class OrderEntryFix implements IntentionAction {
             libModel.commit();
             model.commit();
             GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
-            String className = referenceName.equals("TestCase") ? "junit.framework.TestCase" : "org.junit.Test";
+            String className = isJunit4 ? "org.junit.Test" : "junit.framework.TestCase";
             PsiClass aClass = PsiManager.getInstance(project).findClass(className, scope);
             new AddImportAction(project, reference, editor, aClass).execute();
           }
