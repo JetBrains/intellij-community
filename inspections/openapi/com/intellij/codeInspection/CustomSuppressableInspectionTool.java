@@ -9,7 +9,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.PsiElement;
 
-public abstract class CustomSuppresableInspectionTool extends LocalInspectionTool {
+public abstract class CustomSuppressableInspectionTool extends LocalInspectionTool {
   public abstract IntentionAction[] getSuppressActions(ProblemDescriptor context);
 
   public abstract boolean isSuppressedFor(PsiElement element);

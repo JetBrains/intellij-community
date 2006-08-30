@@ -321,6 +321,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       //noinspection ForLoopReplaceableByForEach
       for (int j = 0; j < result.foundProblems.size(); j++) {
         ProblemDescriptor descriptor = result.foundProblems.get(j);
+        if (InspectionManagerEx.inspectionResultSuppressed(descriptor.getPsiElement(), tool)) continue;
         HighlightInfoType level = highlightTypeFromDescriptor(descriptor, tool, severity);
         HighlightInfo info = createHighlightInfo(descriptor, tool, level);
         if (info == null) continue;
@@ -374,8 +375,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     options.add(new AddNoInspectionForClassAction(tool, psiElement));
     options.add(new AddNoInspectionAllForClassAction(psiElement));
 
-    if (tool instanceof CustomSuppresableInspectionTool) {
-      options.addAll(Arrays.asList(((CustomSuppresableInspectionTool)tool).getSuppressActions(descriptor)));
+    if (tool instanceof CustomSuppressableInspectionTool) {
+      options.addAll(Arrays.asList(((CustomSuppressableInspectionTool)tool).getSuppressActions(descriptor)));
     }
 
     options.add(new AddSuppressWarningsAnnotationAction(tool, psiElement));

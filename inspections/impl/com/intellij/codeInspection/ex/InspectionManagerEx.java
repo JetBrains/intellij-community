@@ -164,8 +164,8 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   public static boolean inspectionResultSuppressed(PsiElement place, LocalInspectionTool tool) {
-    if (tool instanceof CustomSuppresableInspectionTool) {
-      return ((CustomSuppresableInspectionTool)tool).isSuppressedFor(place);
+    if (tool instanceof CustomSuppressableInspectionTool) {
+      return ((CustomSuppressableInspectionTool)tool).isSuppressedFor(place);
     }
 
     return inspectionResultSuppressed(place, tool.getID());

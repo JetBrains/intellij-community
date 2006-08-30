@@ -85,7 +85,7 @@ class SuppressInspectionToolbarAction extends AnAction {
           public void run() {
             CommandProcessor.getInstance().executeCommand(myView.getProject(), new Runnable() {
               public void run() {
-                final CustomSuppresableInspectionTool suppresableTool = extractSuppressableTool(tool);
+                final CustomSuppressableInspectionTool suppresableTool = extractSuppressableTool(tool);
                 for (TreePath treePath : selectionPaths) {
                   final InspectionTreeNode node = (InspectionTreeNode)treePath.getLastPathComponent();
                   if (suppresableTool != null) {
@@ -149,7 +149,7 @@ class SuppressInspectionToolbarAction extends AnAction {
 
       public void update(AnActionEvent e) {
         e.getPresentation().setEnabled(true);
-        final CustomSuppresableInspectionTool suppresableTool = extractSuppressableTool(tool);
+        final CustomSuppressableInspectionTool suppresableTool = extractSuppressableTool(tool);
         if (suppresableTool != null) {
           for (ProblemDescriptor descriptor : myView.getTree().getSelectedDescriptors()) {
             for (IntentionAction action : suppresableTool.getSuppressActions(descriptor)) {
@@ -220,17 +220,17 @@ class SuppressInspectionToolbarAction extends AnAction {
   }
 
   @Nullable
-  private static CustomSuppresableInspectionTool extractSuppressableTool(InspectionTool tool) {
+  private static CustomSuppressableInspectionTool extractSuppressableTool(InspectionTool tool) {
     if (tool instanceof LocalInspectionToolWrapper) {
       final LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)tool;
       final LocalInspectionTool localTool = wrapper.getTool();
-      if (localTool instanceof CustomSuppresableInspectionTool) return (CustomSuppresableInspectionTool)localTool;
+      if (localTool instanceof CustomSuppressableInspectionTool) return (CustomSuppressableInspectionTool)localTool;
     }
     return null;
   }
 
   private static IntentionAction getCorrectIntentionAction(InspectionTool tool, String id, CommonProblemDescriptor descriptor, PsiElement context) {
-    CustomSuppresableInspectionTool customSuppresableInspectionTool = extractSuppressableTool(tool);
+    CustomSuppressableInspectionTool customSuppresableInspectionTool = extractSuppressableTool(tool);
     if (customSuppresableInspectionTool != null && descriptor instanceof ProblemDescriptor) {
       final IntentionAction[] customActions = customSuppresableInspectionTool.getSuppressActions((ProblemDescriptor)descriptor);
       if (customActions.length > 0) return customActions[0];

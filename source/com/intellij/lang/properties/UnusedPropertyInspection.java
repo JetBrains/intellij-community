@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class UnusedPropertyInspection extends CustomSuppresableInspectionTool {
+public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.UnusedPropertyInspection");
   private static final RemovePropertyLocalFix QUICK_FIX = new RemovePropertyLocalFix();
 
