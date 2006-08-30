@@ -17,6 +17,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AntTargetReference extends AntGenericReference {
 
@@ -58,6 +59,7 @@ public class AntTargetReference extends AntGenericReference {
     return element;
   }
 
+  @Nullable
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
     if (element instanceof AntTarget) {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
@@ -69,8 +71,8 @@ public class AntTargetReference extends AntGenericReference {
 
   public PsiElement resolve() {
     final String name = getCanonicalRepresentationText();
-    AntElement element = getElement();
-    AntProject project = element.getAntProject();
+    final AntElement element = getElement();
+    final AntProject project = element.getAntProject();
     AntTarget result = project.getTarget(name);
     if (result == null) {
       for (final AntTarget target : project.getImportTargets()) {
@@ -90,8 +92,11 @@ public class AntTargetReference extends AntGenericReference {
         else {
           antFile = (AntFile)psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
         }
-        if (antFile.getAntProject() != null) {
-          result = antFile.getAntProject().getTarget(name);
+        if (antFile != null) {
+          final AntProject antProject = antFile.getAntProject();
+          if (antProject != null) {
+            result = antProject.getTarget(name);
+          }
         }
       }
     }
