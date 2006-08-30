@@ -1,11 +1,11 @@
 package com.intellij.util.xml.tree;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,15 +22,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class DomModelTreeView extends Wrapper implements DataProvider, Disposable {
 
@@ -86,7 +86,9 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
 
     myDomManager.addDomEventListener(new DomChangeAdapter() {
       protected void elementChanged(DomElement element) {
-        queueUpdate(element.getRoot().getFile().getVirtualFile());
+        if (element.isValid()) {
+          queueUpdate(element.getRoot().getFile().getVirtualFile());
+        }
       }
     }, this);
     WolfTheProblemSolver.getInstance(myDomManager.getProject()).addProblemListener(new WolfTheProblemSolver.ProblemListener() {
