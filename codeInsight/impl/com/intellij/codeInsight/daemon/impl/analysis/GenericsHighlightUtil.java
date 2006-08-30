@@ -50,7 +50,7 @@ public class GenericsHighlightUtil {
       PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
       for (PsiClassType type : extendsTypes) {
         PsiType extendsType = substitutor.substituteAndFullCapture(type);
-        if (!TypeConversionUtil.isAssignable(extendsType, substituted)) {
+        if (!TypeConversionUtil.isAssignable(extendsType, substituted, false)) {
           PsiClass boundClass = extendsType instanceof PsiClassType ? ((PsiClassType)extendsType).resolve() : null;
 
           @NonNls String messageKey = boundClass == null || typeParameter.isInterface() == boundClass.isInterface()
@@ -139,7 +139,7 @@ public class GenericsHighlightUtil {
         final PsiClassType[] bounds = classParameter.getSuperTypes();
         for (PsiClassType type1 : bounds) {
           PsiType bound = substitutor.substituteWithoutBoundsPromotion(type1);
-          if (!TypeConversionUtil.isAssignable(bound, type)) {
+          if (!TypeConversionUtil.isAssignable(bound, type, false)) {
             PsiClass boundClass = bound instanceof PsiClassType ? ((PsiClassType)bound).resolve() : null;
 
             @NonNls final String messageKey = boundClass == null || referenceClass.isInterface() == boundClass.isInterface()
