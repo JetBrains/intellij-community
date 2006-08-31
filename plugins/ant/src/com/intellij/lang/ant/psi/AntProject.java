@@ -21,7 +21,7 @@ public interface AntProject extends AntStructuredElement {
   AntTarget getDefaultTarget();
 
   @NotNull
-  AntTarget[] getImportTargets();
+  AntTarget[] getImportedTargets();
 
   @NotNull
   AntFile[] getImportedFiles();

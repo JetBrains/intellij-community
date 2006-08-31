@@ -119,7 +119,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
       list.add(new AntBuildTargetImpl(target, model));
     }
     if (project != null) {
-      for (final AntTarget target : project.getImportTargets()) {
+      for (final AntTarget target : project.getImportedTargets()) {
         list.add(new AntBuildTargetImpl(target, model));
       }
     }

@@ -80,6 +80,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   @NotNull
   public synchronized AntTarget[] getTargets() {
     if (myTargets != null) return myTargets;
+    //noinspection NonPrivateFieldAccessedInSynchronizedContext
+    if (myInGettingChildren) return AntTarget.EMPTY_TARGETS;
     final List<AntTarget> targets = new ArrayList<AntTarget>();
     for (final AntElement child : getChildren()) {
       if (child instanceof AntTarget) targets.add((AntTarget)child);
@@ -100,7 +102,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   }
 
   @NotNull
-  public AntTarget[] getImportTargets() {
+  public AntTarget[] getImportedTargets() {
     if (myImportedTargets == null) {
       final AntFile[] importedFiles = getImportedFiles();
       if (importedFiles.length == 0) {
@@ -267,7 +269,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       }
       builder.append("</project>");
       final PsiElementFactory elementFactory = getManager().getElementFactory();
-      final XmlFile xmlFile = (XmlFile)elementFactory.createFileFromText("dummy.xml", StdFileTypes.XML, builder, LocalTimeCounter.currentTime(), false, false);
+      final XmlFile xmlFile =
+        (XmlFile)elementFactory.createFileFromText("dummy.xml", StdFileTypes.XML, builder, LocalTimeCounter.currentTime(), false, false);
       final XmlDocument document = xmlFile.getDocument();
       if (document == null) return;
       final XmlTag rootTag = document.getRootTag();

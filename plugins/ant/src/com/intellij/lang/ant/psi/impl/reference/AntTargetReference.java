@@ -75,7 +75,7 @@ public class AntTargetReference extends AntGenericReference {
     final AntProject project = element.getAntProject();
     AntTarget result = project.getTarget(name);
     if (result == null) {
-      for (final AntTarget target : project.getImportTargets()) {
+      for (final AntTarget target : project.getImportedTargets()) {
         if (name.equals(target.getName())) {
           return target;
         }
