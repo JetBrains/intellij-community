@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.tools.Tool;
 import com.intellij.tools.ToolManager;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -509,8 +508,7 @@ public class ActionsTreeUtil {
 
   public static Condition<AnAction> isActionFiltered(final ActionManager actionManager,
                                                      final Keymap keymap,
-                                                     final KeyboardShortcut keyboardShortcut,
-                                                     final boolean force) {
+                                                     final KeyboardShortcut keyboardShortcut) {
     return new Condition<AnAction>() {
       public boolean value(final AnAction action) {
         if (keyboardShortcut == null) return true;
@@ -522,13 +520,6 @@ public class ActionsTreeUtil {
             final KeyboardShortcut keyboardActionShortcut = (KeyboardShortcut)shortcut;
             if (Comparing.equal(keyboardActionShortcut, keyboardShortcut)) {
               return true;
-            }
-            if (!force) {
-              KeyStroke[] array = new KeyStroke[]{keyboardActionShortcut.getFirstKeyStroke(), keyboardActionShortcut.getSecondKeyStroke()};
-              if ((keyboardShortcut.getSecondKeyStroke() != null && ArrayUtil.find(array, keyboardShortcut.getSecondKeyStroke()) != -1) ||
-                  (keyboardShortcut.getFirstKeyStroke() != null && ArrayUtil.find(array, keyboardShortcut.getFirstKeyStroke()) != -1)) {
-                return true;
-              }
             }
           }
         }
