@@ -1,23 +1,20 @@
 package com.intellij.uiDesigner.make;
 
 import com.intellij.uiDesigner.compiler.GridBagConverter;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
-import com.intellij.uiDesigner.core.Spacer;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author yole
  */
 public class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
   private boolean myHaveGbc = false;
-  private Map myIdToConstraintsMap = new HashMap();
   @NonNls private static TIntObjectHashMap<String> myFillMap = new TIntObjectHashMap<String>();
   @NonNls private static TIntObjectHashMap<String> myAnchorMap = new TIntObjectHashMap<String>();
 
@@ -40,16 +37,12 @@ public class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
   public void generateContainerLayout(final LwContainer container,
                                       final FormSourceCodeGenerator generator,
                                       final String variable) {
-    if (container.isGrid()) {
-      generator.startMethodCall(variable, "setLayout");
+    generator.startMethodCall(variable, "setLayout");
 
-      generator.startConstructor(GridBagLayout.class.getName());
-      generator.endConstructor();
+    generator.startConstructor(GridBagLayout.class.getName());
+    generator.endConstructor();
 
-      generator.endMethod();
-
-      GridBagConverter.prepareConstraints(container, myIdToConstraintsMap);
-    }
+    generator.endMethod();
   }
 
   @Override
@@ -57,10 +50,17 @@ public class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
                                       final FormSourceCodeGenerator generator,
                                       final String variable,
                                       final String parentVariable) {
-    GridBagConverter.Result result = (GridBagConverter.Result) myIdToConstraintsMap.get(component.getId());
-    if (result != null) {
-      generateConversionResult(generator, result, variable, parentVariable);
+    GridBagConstraints gbc;
+    if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
+      gbc = (GridBagConstraints) component.getCustomLayoutConstraints();
     }
+    else {
+      gbc = new GridBagConstraints();
+    }
+
+    GridBagConverter.constraintsToGridBag(component.getConstraints(), gbc);
+
+    generateGridBagConstraints(generator, gbc, variable, parentVariable);
   }
 
   private void generateConversionResult(final FormSourceCodeGenerator generator,
@@ -70,6 +70,13 @@ public class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
     checkSetSize(generator, variable, "setPreferredSize", result.preferredSize);
     checkSetSize(generator, variable, "setMaximumSize", result.maximumSize);
 
+    generateGridBagConstraints(generator, result.constraints, variable, parentVariable);
+  }
+
+  private void generateGridBagConstraints(final FormSourceCodeGenerator generator,
+                                          final GridBagConstraints constraints,
+                                          final String variable,
+                                          final String parentVariable) {
     if (!myHaveGbc) {
       generator.append("GridBagConstraints gbc;\n");
       myHaveGbc = true;
@@ -77,7 +84,6 @@ public class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.append("gbc = new GridBagConstraints();\n");
 
     GridBagConstraints defaults = new GridBagConstraints();
-    GridBagConstraints constraints = result.constraints;
     if (defaults.gridx != constraints.gridx) {
       setIntField(generator, "gridx", constraints.gridx);
     }

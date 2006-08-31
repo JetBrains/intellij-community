@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadAbstractGridLayoutManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,11 +29,9 @@ public class FirstComponentInsertLocation extends GridDropLocation {
   protected final int myYPart;
 
   public FirstComponentInsertLocation(@NotNull final RadContainer container,
-                                      final int row,
-                                      final int column,
                                       final Point targetPoint,
                                       @NotNull final Rectangle cellRect) {
-    super(container, row, column);
+    super(container, 0, 0);
     myCellRect = cellRect;
     int midX1 = myCellRect.x + myCellRect.width / 3;
     int midX2 = myCellRect.x + (myCellRect.width*2) / 3;
@@ -59,12 +58,10 @@ public class FirstComponentInsertLocation extends GridDropLocation {
   }
 
   public FirstComponentInsertLocation(@NotNull final RadContainer container,
-                                      final int row,
-                                      final int column,
                                       final Rectangle cellRect,
                                       final int xPart,
                                       final int yPart) {
-    super(container, row, column);
+    super(container, 0, 0);
     myCellRect = cellRect;
     myXPart = xPart;
     myYPart = yPart;
@@ -149,10 +146,24 @@ public class FirstComponentInsertLocation extends GridDropLocation {
     return defaultSize;
   }
 
+  @Override
+  public boolean canDrop(final ComponentDragObject dragObject) {
+    if (dragObject.getComponentCount() == 1 && myContainer.getGridRowCount() == 0 && myContainer.getGridColumnCount() == 0) {
+      return true;
+    }
+    return super.canDrop(dragObject);
+  }
+
   @Override public void processDrop(final GuiEditor editor,
                                     final RadComponent[] components,
                                     final GridConstraints[] constraintsToAdjust,
                                     final ComponentDragObject dragObject) {
+    RadAbstractGridLayoutManager gridLayout = myContainer.getGridLayoutManager();
+    if (myContainer.getGridRowCount() == 0 && myContainer.getGridColumnCount() == 0) {
+      gridLayout.insertGridCells(myContainer, 0, false, true, true);
+      gridLayout.insertGridCells(myContainer, 0, true, true, true);
+    }
+
     super.processDrop(editor, components, constraintsToAdjust, dragObject);
 
     Palette palette = Palette.getInstance(editor.getProject());
@@ -194,7 +205,7 @@ public class FirstComponentInsertLocation extends GridDropLocation {
   }
 
   protected FirstComponentInsertLocation createAdjacentLocation(final int xPart, final int yPart) {
-    return new FirstComponentInsertLocation(myContainer, myRow, myColumn, myCellRect, xPart, yPart);
+    return new FirstComponentInsertLocation(myContainer, myCellRect, xPart, yPart);
   }
 
   private void insertSpacer(InsertComponentProcessor icp, ComponentItem spacerItem, GridInsertMode mode) {

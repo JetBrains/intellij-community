@@ -24,8 +24,6 @@ import org.objectweb.asm.commons.Method;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author yole
@@ -35,7 +33,6 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
   private static Type ourGridBagConstraintsType = Type.getType(GridBagConstraints.class);
   private static Method ourDefaultConstructor = Method.getMethod("void <init> ()");
 
-  private Map myIdToConstraintsMap = new HashMap();
   private static Type myPanelType = Type.getType(JPanel.class);
 
   public String mapComponentClass(final String componentClassName) {
@@ -46,17 +43,13 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
   }
 
   public void generateContainerLayout(final LwContainer lwContainer, final GeneratorAdapter generator, final int componentLocal) {
-    if (lwContainer.isGrid()) {
-      generator.loadLocal(componentLocal);
+    generator.loadLocal(componentLocal);
 
-      generator.newInstance(ourGridBagLayoutType);
-      generator.dup();
-      generator.invokeConstructor(ourGridBagLayoutType, ourDefaultConstructor);
+    generator.newInstance(ourGridBagLayoutType);
+    generator.dup();
+    generator.invokeConstructor(ourGridBagLayoutType, ourDefaultConstructor);
 
-      generator.invokeVirtual(ourContainerType, ourSetLayoutMethod);
-
-      GridBagConverter.prepareConstraints(lwContainer, myIdToConstraintsMap);
-    }
+    generator.invokeVirtual(ourContainerType, ourSetLayoutMethod);
   }
 
   private void generateFillerPanel(final GeneratorAdapter generator, final int parentLocal, final GridBagConverter.Result result) {
@@ -71,14 +64,21 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
 
   }
 
-  public void generateComponentLayout(final LwComponent lwComponent,
+  public void generateComponentLayout(final LwComponent component,
                                       final GeneratorAdapter generator,
                                       final int componentLocal,
                                       final int parentLocal) {
-    GridBagConverter.Result result = (GridBagConverter.Result) myIdToConstraintsMap.get(lwComponent.getId());
-    if (result != null) {
-      generateConversionResult(generator, result, componentLocal, parentLocal);
+    GridBagConstraints gbc;
+    if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
+      gbc = (GridBagConstraints) component.getCustomLayoutConstraints();
     }
+    else {
+      gbc = new GridBagConstraints();
+    }
+
+    GridBagConverter.constraintsToGridBag(component.getConstraints(), gbc);
+
+    generateGridBagConstraints(generator, gbc, componentLocal, parentLocal);
   }
 
   private static void generateConversionResult(final GeneratorAdapter generator, final GridBagConverter.Result result,
@@ -87,6 +87,11 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
     checkSetSize(generator, componentLocal, "setPreferredSize", result.preferredSize);
     checkSetSize(generator, componentLocal, "setMaximumSize", result.maximumSize);
 
+    generateGridBagConstraints(generator, result.constraints, componentLocal, parentLocal);
+  }
+
+  private static void generateGridBagConstraints(final GeneratorAdapter generator, GridBagConstraints constraints, final int componentLocal,
+                                                 final int parentLocal) {
     int gbcLocal = generator.newLocal(ourGridBagConstraintsType);
 
     generator.newInstance(ourGridBagConstraintsType);
@@ -95,7 +100,6 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
     generator.storeLocal(gbcLocal);
 
     GridBagConstraints defaults = new GridBagConstraints();
-    GridBagConstraints constraints = result.constraints;
     if (defaults.gridx != constraints.gridx) {
       setIntField(generator, gbcLocal, "gridx", constraints.gridx);
     }

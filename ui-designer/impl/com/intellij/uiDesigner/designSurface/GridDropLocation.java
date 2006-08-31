@@ -178,8 +178,10 @@ public class GridDropLocation implements DropLocation {
 
       assert row + relativeRow >= 0;
       assert column + relativeCol >= 0;
-      assert relativeRow + rowSpan <= container.getGridRowCount();
-      assert relativeCol + colSpan <= container.getGridColumnCount();
+      if (!container.getGridLayoutManager().isGridDefinedByComponents()) {
+        assert relativeRow + rowSpan <= container.getGridRowCount();
+        assert relativeCol + colSpan <= container.getGridColumnCount();
+      }
 
       RadComponent old = container.findComponentInRect(row + relativeRow, column + relativeCol, rowSpan, colSpan);
       if (old != null) {

@@ -21,38 +21,24 @@ import java.awt.Rectangle;
  * @author yole
  */
 public class FormFirstComponentInsertLocation extends FirstComponentInsertLocation {
-  public FormFirstComponentInsertLocation(final RadContainer container, final int row, final int column, final Point targetPoint,
-                                          final Rectangle cellRect) {
-    super(container, row, column, targetPoint, cellRect);
+  public FormFirstComponentInsertLocation(final RadContainer container, final Point targetPoint, final Rectangle cellRect) {
+    super(container, targetPoint, cellRect);
   }
 
 
-  public FormFirstComponentInsertLocation(final RadContainer container,
-                                          final int row, final int column, final Rectangle cellRect, final int xPart, final int yPart) {
-    super(container, row, column, cellRect, xPart, yPart);
+  public FormFirstComponentInsertLocation(RadContainer container, Rectangle cellRect, int xPart, int yPart) {
+    super(container, cellRect, xPart, yPart);
   }
 
   @Override
   protected FirstComponentInsertLocation createAdjacentLocation(final int xPart, final int yPart) {
-    return new FormFirstComponentInsertLocation(myContainer, myRow, myColumn, myCellRect, xPart, yPart);
-  }
-
-  @Override
-  public boolean canDrop(final ComponentDragObject dragObject) {
-    if (dragObject.getComponentCount() == 1 && myContainer.getGridRowCount() == 0 && myContainer.getGridColumnCount() == 0) {
-      return true;
-    }
-    return super.canDrop(dragObject);
+    return new FormFirstComponentInsertLocation(myContainer, myCellRect, xPart, yPart);
   }
 
   @Override
   public void processDrop(final GuiEditor editor, final RadComponent[] components, final GridConstraints[] constraintsToAdjust,
                           final ComponentDragObject dragObject) {
     RadAbstractGridLayoutManager gridLayout = myContainer.getGridLayoutManager();
-    if (myContainer.getGridRowCount() == 0 && myContainer.getGridColumnCount() == 0) {
-      gridLayout.insertGridCells(myContainer, 0, false, true, true);
-      gridLayout.insertGridCells(myContainer, 0, true, true, true);
-    }
     dropIntoGrid(myContainer, components, myRow, myColumn, dragObject);
 
     FormLayout formLayout = (FormLayout) myContainer.getDelegee().getLayout();

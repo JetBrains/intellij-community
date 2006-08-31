@@ -622,33 +622,6 @@ public final class GridLayoutManager extends AbstractLayout {
     return isRow ? myHeights : myWidths;
   }
 
-  /**
-   * @return index of the row that contains point with <code>y</code> coordinate.
-   *         If <code>y</code> doesn't belong to any row then the method returns <code>-1</code>.
-   *         Note, that <code>y</code> is in <code>group</code> coordinate system.
-   */
-  public int getRowAt(final int y) {
-    for (int i = 0; i < myYs.length; i++) {
-      if (myYs[i] <= y && y <= myYs[i] + myHeights[i]) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  /**
-   * @return index of the column that contains point with <code>x</code> coordinate.
-   *         Note, that <code>x</code> is in <code>group</code> coordinate system.
-   */
-  public int getColumnAt(final int x) {
-    for (int i = 0; i < myXs.length; i++) {
-      if (myXs[i] <= x && x <= myXs[i] + myWidths[i]) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
   private int[] getMinSizes(final DimensionInfo info) {
     return getMinOrPrefSizes(info, true);
   }
@@ -950,43 +923,6 @@ public final class GridLayoutManager extends AbstractLayout {
     }
     result [myXs.length] = myXs [myXs.length-1] + myWidths [myXs.length-1];
     return result;
-  }
-
-  public int getHorizontalGridLineNear(int y, int epsilon) {
-    return getGridLineNear(y, epsilon, getHorizontalGridLines());
-  }
-
-  public int getVerticalGridLineNear(int x, int epsilon) {
-    return getGridLineNear(x, epsilon, getVerticalGridLines());
-  }
-
-  private static int getGridLineNear(final int coord, final int epsilon, final int[] gridLines) {
-    for(int col = 1; col <gridLines.length; col++) {
-      if (coord < gridLines [col]) {
-        if (coord - gridLines [col-1] < epsilon) {
-          return col-1;
-        }
-        if (gridLines [col] - coord < epsilon) {
-          return col;
-        }
-        return -1;
-      }
-    }
-    if (coord - gridLines [gridLines.length-1] < epsilon) {
-      return gridLines.length-1;
-    }
-    return -1;
-  }
-
-  public Rectangle getCellRangeGridlineRect(final int startRow, final int startCol, final int endRow, final int endCol) {
-    int[] horzGridLines = getHorizontalGridLines();
-    int[] vertGridLines = getVerticalGridLines();
-
-    return new Rectangle(vertGridLines [startCol],
-                         horzGridLines [startRow],
-                         vertGridLines [endCol+1] - vertGridLines [startCol],
-                         horzGridLines [endRow+1] - horzGridLines [startRow]);
-
   }
 
   public int getCellCount(final boolean isRow) {

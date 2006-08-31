@@ -111,6 +111,19 @@ public final class LwXmlReader {
     }
   }
 
+  public static double getOptionalDouble(final Element element, final String attributeName, double defaultValue) {
+    final String str = element.getAttributeValue(attributeName);
+    if (str == null) {
+      return defaultValue;
+    }
+    try {
+      return Double.parseDouble(str);
+    }
+    catch (NumberFormatException e) {
+      throw new IllegalArgumentException("attribute '" + attributeName + "' is not a proper double: " + str);
+    }
+  }
+
   public static float getRequiredFloat(final Element element, final String attributeName) {
     final String str = getRequiredString(element, attributeName);
     try {

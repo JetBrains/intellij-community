@@ -46,7 +46,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class RadFormLayoutManager extends RadGridLayoutManager implements AlignPropertyProvider {
+public class RadFormLayoutManager extends RadAbstractGridLayoutManager implements AlignPropertyProvider {
   private FormLayoutColumnProperties myPropertiesPanel;
   private Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<RadComponent, MyPropertyChangeListener>();
 
@@ -228,7 +228,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
 
   @Override
   public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
-    super.writeChildConstraints(writer, child);
+    writeGridConstraints(writer, child);
     if (child.getCustomLayoutConstraints() instanceof CellConstraints) {
       CellConstraints cc = (CellConstraints) child.getCustomLayoutConstraints();
       writer.startElement(UIFormXmlConstants.ELEMENT_FORMS);
@@ -250,10 +250,6 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
         writer.endElement();
       }
     }
-  }
-
-  @Override public boolean isGrid() {
-    return true;
   }
 
   private static FormLayout getFormLayout(final RadContainer container) {
@@ -323,7 +319,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
     if (formLayout.getRowCount() == 0 && formLayout.getColumnCount() == 0) {
       if (location != null) {
         Rectangle rc = new Rectangle(new Point(), container.getDelegee().getSize());
-        return new FormFirstComponentInsertLocation(container, 0, 0, location, rc);
+        return new FormFirstComponentInsertLocation(container, location, rc);
       }
     }
     final FormLayout.LayoutInfo layoutInfo = formLayout.getLayoutInfo(container.getDelegee());
@@ -332,7 +328,7 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
       if (row == -1) {
         return NoDropLocation.INSTANCE;
       }
-      return new GridInsertLocation(container, row, getGridColumnCount(container)-1, GridInsertMode.ColumnAfter);
+        return new GridInsertLocation(container, row, getGridColumnCount(container)-1, GridInsertMode.ColumnAfter);
     }
     if (location != null && location.y > layoutInfo.getHeight()) {
       int column = findCell(layoutInfo.columnOrigins, location.x);
@@ -346,9 +342,9 @@ public class RadFormLayoutManager extends RadGridLayoutManager implements AlignP
         getComponentAtGrid(container, 0, 0) == null) {
       final Rectangle rc = getGridCellRangeRect(container, 0, 0, 0, 0);
       if (location == null) {
-        return new FormFirstComponentInsertLocation(container, 0, 0, rc, 0, 0);
+        return new FormFirstComponentInsertLocation(container, rc, 0, 0);
       }
-      return new FormFirstComponentInsertLocation(container, 0, 0, location, rc);
+      return new FormFirstComponentInsertLocation(container, location, rc);
     }
 
     return super.getDropLocation(container, location);

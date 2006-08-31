@@ -212,25 +212,6 @@ public class GridBagConverter {
     }
   }
 
-  private void addFillerPanels(final ArrayList results) {
-    for(int row=0; row<=myLastRow; row++) {
-      for(int col=0; col<=myLastCol; col++) {
-        if (isCellEmpty(row, col)) {
-          Result result = new Result(null);
-          result.constraints.gridx = col;
-          result.constraints.gridy = row;
-          result.constraints.gridwidth = 1;
-          result.constraints.gridheight = 1;
-          result.constraints.weightx = 0.0;
-          result.constraints.weighty = 0.0;
-          result.constraints.fill = GridBagConstraints.BOTH;
-          result.isFillerPanel = true;
-          results.add(result);
-        }
-      }
-    }
-  }
-
   private Result convert(final JComponent component, final GridConstraints constraints) {
     final Result result = new Result(component);
 
@@ -241,28 +222,10 @@ public class GridBagConverter {
 
     int indent = Util.DEFAULT_INDENT * constraints.getIndent();
 
-    result.constraints.gridx = constraints.getColumn();
-    result.constraints.gridy = constraints.getRow();
-    result.constraints.gridwidth = constraints.getColSpan();
-    result.constraints.gridheight = constraints.getRowSpan();
+    constraintsToGridBag(constraints, result.constraints);
     result.constraints.weightx = getWeight(constraints, true);
     result.constraints.weighty = getWeight(constraints, false);
     result.constraints.insets = new Insets(myInsets.top, myInsets.left + indent, myInsets.bottom, myInsets.right);
-    switch(constraints.getFill()) {
-      case GridConstraints.FILL_HORIZONTAL: result.constraints.fill = GridBagConstraints.HORIZONTAL; break;
-      case GridConstraints.FILL_VERTICAL:   result.constraints.fill = GridBagConstraints.VERTICAL; break;
-      case GridConstraints.FILL_BOTH:       result.constraints.fill = GridBagConstraints.BOTH; break;
-    }
-    switch(constraints.getAnchor()) {
-      case GridConstraints.ANCHOR_NORTHWEST: result.constraints.anchor = GridBagConstraints.NORTHWEST; break;
-      case GridConstraints.ANCHOR_NORTH:     result.constraints.anchor = GridBagConstraints.NORTH; break;
-      case GridConstraints.ANCHOR_NORTHEAST: result.constraints.anchor = GridBagConstraints.NORTHEAST; break;
-      case GridConstraints.ANCHOR_EAST:      result.constraints.anchor = GridBagConstraints.EAST; break;
-      case GridConstraints.ANCHOR_SOUTHEAST: result.constraints.anchor = GridBagConstraints.SOUTHEAST; break;
-      case GridConstraints.ANCHOR_SOUTH:     result.constraints.anchor = GridBagConstraints.SOUTH; break;
-      case GridConstraints.ANCHOR_SOUTHWEST: result.constraints.anchor = GridBagConstraints.SOUTHWEST; break;
-      case GridConstraints.ANCHOR_WEST:      result.constraints.anchor = GridBagConstraints.WEST; break;
-    }
 
     Dimension minSize = constraints.myMinimumSize;
     if (component != null && minSize.width <= 0 && minSize.height <= 0) {
@@ -292,6 +255,29 @@ public class GridBagConverter {
     }
 
     return result;
+  }
+
+  public static void constraintsToGridBag(final GridConstraints constraints, final GridBagConstraints result) {
+    result.gridx = constraints.getColumn();
+    result.gridy = constraints.getRow();
+    result.gridwidth = constraints.getColSpan();
+    result.gridheight = constraints.getRowSpan();
+    switch(constraints.getFill()) {
+      case GridConstraints.FILL_HORIZONTAL: result.fill = GridBagConstraints.HORIZONTAL; break;
+      case GridConstraints.FILL_VERTICAL:   result.fill = GridBagConstraints.VERTICAL; break;
+      case GridConstraints.FILL_BOTH:       result.fill = GridBagConstraints.BOTH; break;
+      default:                              result.fill = GridBagConstraints.NONE; break;
+    }
+    switch(constraints.getAnchor()) {
+      case GridConstraints.ANCHOR_NORTHWEST: result.anchor = GridBagConstraints.NORTHWEST; break;
+      case GridConstraints.ANCHOR_NORTH:     result.anchor = GridBagConstraints.NORTH; break;
+      case GridConstraints.ANCHOR_NORTHEAST: result.anchor = GridBagConstraints.NORTHEAST; break;
+      case GridConstraints.ANCHOR_EAST:      result.anchor = GridBagConstraints.EAST; break;
+      case GridConstraints.ANCHOR_SOUTHEAST: result.anchor = GridBagConstraints.SOUTHEAST; break;
+      case GridConstraints.ANCHOR_SOUTH:     result.anchor = GridBagConstraints.SOUTH; break;
+      case GridConstraints.ANCHOR_SOUTHWEST: result.anchor = GridBagConstraints.SOUTHWEST; break;
+      case GridConstraints.ANCHOR_WEST:      result.anchor = GridBagConstraints.WEST; break;
+    }
   }
 
   private double getWeight(final GridConstraints constraints, final boolean horizontal) {
@@ -325,18 +311,4 @@ public class GridBagConverter {
     int otherEnd = otherStart + otherConstraints.getSpan(!horizontal) - 1;
     return start <= otherEnd && otherStart <= end;
   }
-
-  private boolean isCellEmpty(final int row, final int col) {
-    for (Iterator iterator = myConstraints.iterator(); iterator.hasNext();) {
-      GridConstraints gridConstraints = (GridConstraints)iterator.next();
-      if (row >= gridConstraints.getRow() &&
-          row < gridConstraints.getRow() + gridConstraints.getRowSpan() &&
-          col >= gridConstraints.getColumn() &&
-          col < gridConstraints.getColumn() + gridConstraints.getColSpan()) {
-        return false;
-      }
-    }
-    return true;
-  }
-
 }

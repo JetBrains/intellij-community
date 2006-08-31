@@ -1,10 +1,12 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadAbstractGridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 
 /**
  * @author Anton Katilin
@@ -46,7 +48,7 @@ public final class GridChangeUtil {
   public static void insertRowOrColumn(final RadContainer grid, final int cellIndex, final boolean isRow, final boolean isBefore) {
     check(grid, isRow, cellIndex);
 
-    final GridLayoutManager oldLayout = (GridLayoutManager)grid.getLayout();
+    final RadAbstractGridLayoutManager oldLayout = grid.getGridLayoutManager();
 
     int beforeIndex = cellIndex;
     if (!isBefore) {
@@ -54,11 +56,13 @@ public final class GridChangeUtil {
       beforeIndex++;
     }
 
-    final GridLayoutManager newLayout = copyLayout(oldLayout, isRow ? 1 : 0, isRow ? 0 : 1);
+    final LayoutManager newLayout = oldLayout.copyLayout(grid.getLayout(), isRow ? 1 : 0, isRow ? 0 : 1);
 
     for (int i=grid.getComponentCount() - 1; i >= 0; i--){
       final GridConstraints constraints = grid.getComponent(i).getConstraints();
+      final GridConstraints oldConstraints = (GridConstraints) constraints.clone();
       adjustConstraintsOnInsert(constraints, isRow, beforeIndex, 1);
+      grid.getComponent(i).fireConstraintsChanged(oldConstraints);
     }
 
     grid.setLayout(newLayout);
@@ -145,12 +149,13 @@ public final class GridChangeUtil {
       throw new IllegalArgumentException("cell cannot be deleted");
     }
 
-    final GridLayoutManager oldLayout = (GridLayoutManager)grid.getLayout();
+    final RadAbstractGridLayoutManager oldLayout = grid.getGridLayoutManager();
 
-    final GridLayoutManager newLayout = copyLayout(oldLayout, isRow ? -1 : 0, isRow ? 0 : -1);
+    final LayoutManager newLayout = oldLayout.copyLayout(grid.getLayout(), isRow ? -1 : 0, isRow ? 0 : -1);
 
     for (int i=grid.getComponentCount() - 1; i >= 0; i--){
       final GridConstraints constraints = grid.getComponent(i).getConstraints();
+      final GridConstraints oldConstraints = (GridConstraints) constraints.clone();
 
       if (constraints.getCell(isRow) > cellIndex) {
         // component starts after the cell being deleted - move it
@@ -160,6 +165,7 @@ public final class GridChangeUtil {
         // component belongs to the cell being deleted - decrement component's span
         addToSpan(constraints, isRow, -1);
       }
+      grid.getComponent(i).fireConstraintsChanged(oldConstraints);
     }
 
     grid.setLayout(newLayout);
@@ -181,17 +187,10 @@ public final class GridChangeUtil {
     }
 
     final int cellCount = isRow ? grid.getGridRowCount() : grid.getGridColumnCount();
+    if (cellIndex == 0 && cellCount == 0) return;
     if (cellIndex < 0 || cellIndex >= cellCount) {
       throw new IllegalArgumentException("invalid index: " + cellIndex);
     }
-  }
-
-  private static GridLayoutManager copyLayout(final GridLayoutManager oldLayout, final int rowDelta, final int columnDelta){
-    final GridLayoutManager newLayout = new GridLayoutManager(oldLayout.getRowCount() + rowDelta, oldLayout.getColumnCount() + columnDelta);
-    newLayout.setMargin(oldLayout.getMargin());
-    newLayout.setHGap(oldLayout.getHGap());
-    newLayout.setVGap(oldLayout.getVGap());
-    return newLayout;
   }
 
   private static void addToCell(final GridConstraints constraints, final boolean isRow, final int delta){

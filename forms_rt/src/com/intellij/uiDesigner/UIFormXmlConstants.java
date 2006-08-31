@@ -68,6 +68,10 @@ public class UIFormXmlConstants {
   public static final String ATTRIBUTE_BOUND = "bound";
   public static final String ATTRIBUTE_LAYOUT_MANAGER = "layout-manager";
   public static final String ATTRIBUTE_DEFAULT_BINDING = "default-binding";
+  public static final String ATTRIBUTE_WEIGHTX = "weightx";
+  public static final String ATTRIBUTE_WEIGHTY = "weighty";
+  public static final String ATTRIBUTE_IPADX = "ipadx";
+  public static final String ATTRIBUTE_IPADY = "ipady";
 
   public static final String ELEMENT_BUTTON_GROUPS = "buttonGroups";
   public static final String ELEMENT_GROUP = "group";
@@ -94,6 +98,7 @@ public class UIFormXmlConstants {
   public static final String ELEMENT_FORMS = "forms";
   public static final String ELEMENT_INSPECTION_SUPPRESSIONS = "inspectionSuppressions";
   public static final String ELEMENT_SUPPRESS = "suppress";
+  public static final String ELEMENT_GRIDBAG = "gridbag";
 
   public static final String LAYOUT_INTELLIJ = "GridLayoutManager";
   public static final String LAYOUT_GRIDBAG = "GridBagLayout";

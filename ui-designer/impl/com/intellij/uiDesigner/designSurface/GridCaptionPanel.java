@@ -9,6 +9,7 @@ import com.intellij.ide.dnd.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.LightColors;
 import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -34,6 +35,8 @@ import java.util.ArrayList;
  * @author yole
  */
 public class GridCaptionPanel extends JPanel implements ComponentSelectionListener, DataProvider {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridCaptionPanel");
+
   private GuiEditor myEditor;
   private boolean myIsRow;
   private RadContainer mySelectedContainer;
@@ -293,7 +296,9 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
                                               mySelectedContainer.getDelegee());
       RadAbstractGridLayoutManager layout = mySelectedContainer.getGridLayoutManager();
-      myResizeLine = layout.getGridLineNear(mySelectedContainer, myIsRow, pnt, 4);
+      if (layout.canResizeCells()) {
+        myResizeLine = layout.getGridLineNear(mySelectedContainer, myIsRow, pnt, 4);
+      }
       if (!checkShowPopupMenu(e)) {
         int cell = getCellAt(e.getPoint());
         if (cell == -1) return;
@@ -359,7 +364,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     }
 
     public void mouseMoved(MouseEvent e) {
-      if (mySelectedContainer == null) return;
+      if (mySelectedContainer == null || !mySelectedContainer.getGridLayoutManager().canResizeCells()) return;
       Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
                                               mySelectedContainer.getDelegee());
       int gridLine = mySelectedContainer.getGridLayoutManager().getGridLineNear(mySelectedContainer, myIsRow, pnt, 4);
@@ -435,20 +440,25 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
   private class MyDnDSource implements DnDSource {
     public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+      LOG.debug("canStartDragging(): dragOrigin=" + dragOrigin);
       if (myResizeLine != -1) {
+        LOG.debug("canStartDragging(): have resize line");
         return false;
       }
       RadContainer container = getSelectedGridContainer();
       if (container != null &&
           container.getGridLayoutManager().getGridLineNear(mySelectedContainer, myIsRow, dragOrigin, 4) != -1) {
+        LOG.debug("canStartDragging(): have gridline near");
         return false;
       }
       int[] selectedCells = getSelectedCells(dragOrigin);
       for(int cell: selectedCells) {
         if (!canDragCell(cell)) {
+          LOG.debug("canStartDragging(): cannot drag cell");
           return false;
         }
       }
+      LOG.debug("canStartDragging(): starting drag");
       return true;
     }
 

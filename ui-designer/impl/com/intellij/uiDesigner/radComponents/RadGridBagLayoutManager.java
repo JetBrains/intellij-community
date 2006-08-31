@@ -4,26 +4,224 @@
 
 package com.intellij.uiDesigner.radComponents;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
+import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.compiler.GridBagConverter;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Util;
+import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.FirstComponentInsertLocation;
+import com.intellij.uiDesigner.propertyInspector.Property;
+import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.editors.DoubleEditor;
+import com.intellij.uiDesigner.propertyInspector.properties.AbstractInsetsProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.AbstractIntProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty;
+import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author yole
  */
-public class RadGridBagLayoutManager extends RadGridLayoutManager {
+public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
   private int myLastSnapshotRow = -1;
   private int myLastSnapshotCol = -1;
   private int[] mySnapshotXMax = new int[512];
   private int[] mySnapshotYMax = new int[512];
+  private Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<RadComponent, MyPropertyChangeListener>();
 
   @Override public String getName() {
     return UIFormXmlConstants.LAYOUT_GRIDBAG;
+  }
+
+  @Override
+  public LayoutManager createLayout() {
+    return new GridBagLayout();
+  }
+
+  @Override public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {
+    // TODO: implement changing layout to GridBag
+    if (container.getComponentCount() != 0) {
+      throw new IncorrectOperationException("Only empty containers can be changed to GridBagLayout");
+    }
+    super.changeContainerLayout(container);
+  }
+
+  public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
+    writeGridConstraints(writer, child);
+    if (child.getCustomLayoutConstraints() instanceof GridBagConstraints) {
+      GridBagConstraints gbc = (GridBagConstraints) child.getCustomLayoutConstraints();
+      writer.startElement(UIFormXmlConstants.ELEMENT_GRIDBAG);
+      try {
+        if (!gbc.insets.equals(new Insets(0, 0, 0, 0))) {
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_TOP, gbc.insets.top);
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_LEFT, gbc.insets.left);
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_BOTTOM, gbc.insets.bottom);
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_RIGHT, gbc.insets.right);
+        }
+        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_WEIGHTX, gbc.weightx);
+        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_WEIGHTY, gbc.weighty);
+        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_IPADX, gbc.ipadx);
+        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_IPADY, gbc.ipady);
+      }
+      finally {
+        writer.endElement();
+      }
+    }
+  }
+
+  @Override
+  public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
+    MyPropertyChangeListener listener = new MyPropertyChangeListener(component);
+    myListenerMap.put(component, listener);
+    component.addPropertyChangeListener(listener);
+    final GridBagConstraints gbc;
+    if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
+      gbc = (GridBagConstraints) component.getCustomLayoutConstraints();
+    }
+    else {
+      gbc = new GridBagConstraints();
+    }
+    GridBagConverter.constraintsToGridBag(component.getConstraints(), gbc);
+    component.setCustomLayoutConstraints(gbc);
+    container.getDelegee().add(component.getDelegee(), gbc, index);
+  }
+
+  @Override
+  public void removeComponentFromContainer(final RadContainer container, final RadComponent component) {
+    final MyPropertyChangeListener listener = myListenerMap.get(component);
+    if (listener != null) {
+      component.removePropertyChangeListener(listener);
+      myListenerMap.remove(component);
+    }
+    super.removeComponentFromContainer(container, component);
+  }
+
+  @Override
+  public Property[] getContainerProperties(final Project project) {
+    return Property.EMPTY_ARRAY;
+  }
+
+  @Override
+  public Property[] getComponentProperties(final Project project, final RadComponent component) {
+    return new Property[] {
+      new HorzAlignProperty(),
+      new VertAlignProperty(),
+      new ComponentInsetsProperty(),
+      new WeightProperty(true),
+      new WeightProperty(false),
+      new IPadProperty(true),
+      new IPadProperty(false)
+    };
+  }
+  
+  private static GridBagLayout getGridBag(RadContainer container) {
+    return (GridBagLayout) container.getLayout();
+  }
+
+  @Override
+  public int getGridRowCount(RadContainer container) {
+    int[][] layoutDimensions = getGridBag(container).getLayoutDimensions();
+    return layoutDimensions [1].length;
+  }
+
+  @Override
+  public int getGridColumnCount(RadContainer container) {
+    int[][] layoutDimensions = getGridBag(container).getLayoutDimensions();
+    return layoutDimensions [0].length;
+  }
+
+  @Override
+  public int[] getHorizontalGridLines(RadContainer container) {
+    return getGridLines(container, 1, 1);
+  }
+
+  @Override
+  public int[] getVerticalGridLines(RadContainer container) {
+    return getGridLines(container, 0, 1);
+  }
+
+  @Override
+  public int[] getGridCellCoords(RadContainer container, boolean isRow) {
+    return getGridLines(container, isRow ? 1 : 0, 0);
+  }
+
+  @Override
+  public int[] getGridCellSizes(RadContainer container, boolean isRow) {
+    int[][] layoutDimensions = getGridBag(container).getLayoutDimensions();
+    return layoutDimensions [isRow ? 1 : 0];
+  }
+
+  private static int[] getGridLines(final RadContainer container, final int rowColIndex, final int delta) {
+    final GridBagLayout gridBag = getGridBag(container);
+    Point layoutOrigin = gridBag.getLayoutOrigin();
+    int[][] layoutDimensions = gridBag.getLayoutDimensions();
+    int[] result = new int [layoutDimensions [rowColIndex].length+delta];
+    if (result.length > 0) {
+      result [0] = (rowColIndex == 0) ? layoutOrigin.x : layoutOrigin.y;
+      for(int i=1; i<result.length; i++) {
+        result [i] = result [i-1]+layoutDimensions [rowColIndex] [i-1];
+      }
+    }
+    return result;
+  }
+
+  @NotNull @Override
+  public DropLocation getDropLocation(@NotNull RadContainer container, @Nullable final Point location) {
+    if (getGridRowCount(container) == 0 && getGridColumnCount(container) == 0) {
+      return new FirstComponentInsertLocation(container, container.getBounds(), 0, 0);
+    }
+    return super.getDropLocation(container, location);
+  }
+
+  public void copyGridSection(final RadContainer source, final RadContainer destination, final Rectangle rc) {
+    destination.setLayout(new GridBagLayout());
+  }
+
+  private static void updateConstraints(final RadComponent component) {
+    GridBagLayout layout = (GridBagLayout) component.getParent().getLayout();
+    GridBagConstraints gbc;
+    if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
+      gbc = (GridBagConstraints) component.getCustomLayoutConstraints();
+    }
+    else {
+      gbc = new GridBagConstraints();
+    }
+    GridBagConverter.constraintsToGridBag(component.getConstraints(), gbc);
+    layout.setConstraints(component.getDelegee(), gbc);
+    component.getParent().revalidate();
+  }
+
+  @Override
+  public boolean isGridDefinedByComponents() {
+    return true;
+  }
+
+  @Override
+  public boolean canResizeCells() {
+    return false;
+  }
+
+  public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int i, final Graphics2D g,
+                                     final Rectangle rc) {
+    GridBagLayout gridBag = getGridBag(container);
+    double[][] weights = gridBag.getLayoutWeights();
+    if (weights != null && i >= 0 && i < weights.length && weights [isRow ? 1 : 0][i] >= 0.1) {
+      drawGrowMarker(isRow, g, rc);
+    }
   }
 
   @Override
@@ -31,41 +229,7 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
                                    final JComponent parent,
                                    final RadContainer container,
                                    final LayoutManager layout) {
-    Dimension gridSize = getGridBagSize(parent, layout);
-
-    boolean gridHGrow = true;
-    boolean gridVGrow = true;
-    if (parent.getParent().getLayout() instanceof GridBagLayout) {
-      final GridBagLayout parentLayout = (GridBagLayout)parent.getParent().getLayout();
-      GridBagConstraints gbc = parentLayout.getConstraints(parent);
-      if (gbc.weightx < 0.01) gridHGrow = false;
-      if (gbc.weighty < 0.01) gridVGrow = false;
-    }
-
-    boolean haveHGrow = false;
-    boolean haveVGrow = false;
-    GridBagLayout gridBag = (GridBagLayout) layout;
-    for(Component component: parent.getComponents()) {
-      final GridBagConstraints constraints = gridBag.getConstraints(component);
-      if (constraints.weightx > 0.01) haveHGrow = true;
-      if (constraints.weighty > 0.01) haveVGrow = true;
-    }
-
-    if (gridHGrow && !haveHGrow) {
-      gridSize.width++;
-    }
-    if (gridVGrow && !haveVGrow) {
-      gridSize.height++;
-    }
-
-    container.setLayout(new GridLayoutManager(gridSize.height, gridSize.width));
-
-    if (gridHGrow && !haveHGrow) {
-      container.addComponent(new RadHSpacer(context.newId(), gridSize.width-1));
-    }
-    if (gridVGrow && !haveVGrow) {
-      container.addComponent(new RadVSpacer(context.newId(), gridSize.height-1));
-    }
+    container.setLayout(new GridBagLayout());
   }
 
   public static Dimension getGridBagSize(final JComponent parent, final LayoutManager layout) {
@@ -90,7 +254,8 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
                                    final JComponent child,
                                    final RadContainer container,
                                    final RadComponent component) {
-    GridLayoutManager grid = (GridLayoutManager) container.getLayout();
+    GridBagLayout grid = (GridBagLayout) container.getLayout();
+    Dimension gridBagSize = getGridBagSize(parent, grid);
 
     // logic copied from GridBagLayout.java
 
@@ -116,7 +281,7 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
 
     if (curX < 0) {
       if (curHeight <= 0) {
-        curHeight += grid.getRowCount() - curY;
+        curHeight += gridBagSize.height - curY;
         if (curHeight < 1)
           curHeight = 1;
       }
@@ -131,7 +296,7 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
     }
     else if (curY < 0) {
       if (curWidth <= 0) {
-        curWidth += grid.getColumnCount() - curX;
+        curWidth += gridBagSize.width - curX;
         if (curWidth < 1)
           curWidth = 1;
       }
@@ -146,13 +311,13 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
     }
 
     if (curWidth <= 0) {
-      curWidth += grid.getColumnCount() - curX;
+      curWidth += gridBagSize.width - curX;
       if (curWidth < 1)
         curWidth = 1;
     }
 
     if (curHeight <= 0) {
-      curHeight += grid.getRowCount() - curY;
+      curHeight += gridBagSize.height - curY;
       if (curHeight < 1)
         curHeight = 1;
     }
@@ -188,6 +353,7 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
 
     component.getConstraints().setAnchor(convertAnchor(constraints));
     component.getConstraints().setFill(convertFill(constraints));
+    component.setCustomLayoutConstraints(constraints.clone());
     container.addComponent(component);
   }
 
@@ -210,6 +376,133 @@ public class RadGridBagLayoutManager extends RadGridLayoutManager {
       case GridBagConstraints.VERTICAL: return GridConstraints.FILL_VERTICAL;
       case GridBagConstraints.BOTH: return GridConstraints.FILL_BOTH;
       default: return GridConstraints.FILL_NONE;
+    }
+  }
+
+  private static class MyPropertyChangeListener implements PropertyChangeListener {
+    private final RadComponent myComponent;
+
+    public MyPropertyChangeListener(final RadComponent component) {
+      myComponent = component;
+    }
+
+    public void propertyChange(PropertyChangeEvent evt) {
+      if (evt.getPropertyName().equals(RadComponent.PROP_CONSTRAINTS)) {
+        updateConstraints(myComponent);
+      }
+    }
+  }
+
+  private static class ComponentInsetsProperty extends AbstractInsetsProperty<RadComponent> {
+    public ComponentInsetsProperty() {
+      super(null, "Insets");
+    }
+
+    public Insets getValue(final RadComponent component) {
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
+        final GridBagConstraints gbc = (GridBagConstraints)component.getCustomLayoutConstraints();
+        return gbc.insets;
+      }
+      return new Insets(0, 0, 0, 0);
+    }
+
+    protected void setValueImpl(final RadComponent component, final Insets value) throws Exception {
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
+        final GridBagConstraints cellConstraints = (GridBagConstraints)component.getCustomLayoutConstraints();
+        cellConstraints.insets = value;
+
+        GridBagLayout layout = (GridBagLayout) component.getParent().getLayout();
+        GridBagConstraints gbc = (GridBagConstraints)layout.getConstraints(component.getDelegee()).clone();
+        gbc.insets = value;
+        layout.setConstraints(component.getDelegee(), gbc);
+      }
+    }
+  }
+
+  private static class WeightProperty extends Property<RadComponent, Double> {
+    private boolean myIsWeightX;
+    private LabelPropertyRenderer<Double> myRenderer;
+    private DoubleEditor myEditor;
+
+    public WeightProperty(final boolean isWeightX) {
+      super(null, isWeightX ? "Weight X" : "Weight Y");
+      myIsWeightX = isWeightX;
+    }
+
+    public Double getValue(final RadComponent component) {
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
+        GridBagConstraints gbc = (GridBagConstraints) component.getCustomLayoutConstraints();
+        return myIsWeightX ? gbc.weightx : gbc.weighty;
+      }
+      return 0.0;
+    }
+
+    protected void setValueImpl(final RadComponent component, final Double value) throws Exception {
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
+        GridBagConstraints gbc = (GridBagConstraints) component.getCustomLayoutConstraints();
+        if (myIsWeightX) {
+          gbc.weightx = value.doubleValue();
+        }
+        else {
+          gbc.weighty = value.doubleValue();
+        }
+        ((GridBagLayout) component.getParent().getLayout()).setConstraints(component.getDelegee(), gbc);
+      }
+    }
+
+    @NotNull
+    public PropertyRenderer<Double> getRenderer() {
+      if (myRenderer == null) {
+        myRenderer = new LabelPropertyRenderer<Double>();
+      }
+      return myRenderer;
+    }
+
+    public PropertyEditor<Double> getEditor() {
+      if (myEditor == null) {
+        myEditor = new DoubleEditor();
+      }
+      return myEditor;
+    }
+
+    @Override
+    public boolean isModified(final RadComponent component) {
+      return !(new Double(0.0).equals(getValue(component)));
+    }
+
+    @Override
+    public void resetValue(final RadComponent component) throws Exception {
+      setValue(component, 0.0);
+    }
+  }
+
+  private static class IPadProperty extends AbstractIntProperty<RadComponent> {
+    private boolean myIsIpadX;
+
+    public IPadProperty(final boolean isIpadX) {
+      super(null, isIpadX ? "Ipad X" : "Ipad Y", 0);
+      myIsIpadX = isIpadX;
+    }
+
+    public Integer getValue(final RadComponent component) {
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
+        GridBagConstraints gbc = (GridBagConstraints) component.getCustomLayoutConstraints();
+        return myIsIpadX ? gbc.ipadx : gbc.ipady;
+      }
+      return 0;
+    }
+
+    protected void setValueImpl(final RadComponent component, final Integer value) throws Exception {
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
+        GridBagConstraints gbc = (GridBagConstraints) component.getCustomLayoutConstraints();
+        if (myIsIpadX) {
+          gbc.ipadx = value.intValue();
+        }
+        else {
+          gbc.ipady = value.intValue();
+        }
+        ((GridBagLayout) component.getParent().getLayout()).setConstraints(component.getDelegee(), gbc);
+      }
     }
   }
 }

@@ -116,6 +116,9 @@ public final class XmlWriter{
     addAttributeImpl(name, Boolean.toString(value));
   }
 
+  public void addAttribute(@NonNls final String name, final Double value){
+    addAttributeImpl(name, Double.toString(value));
+  }
 
   public void writeElement(final Element element){
     startElement(element.getName());
