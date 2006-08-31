@@ -1,23 +1,22 @@
 package com.intellij.application.options;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.TabbedPaneWrapper;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.DocumentListener;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final String SYSTEM_DEPENDANT_STRING = ApplicationBundle.message("combobox.crlf.system.dependent");
@@ -100,7 +99,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JPanel createTabOptionsPanel() {
     OptionGroup optionGroup = new OptionGroup(ApplicationBundle.message("group.tabs.and.indents"));
 
-    myCbUseSameIndents = createCheckBox(ApplicationBundle.message("checkbox.indent.use.same.settings.for.all.file.types"));
+    myCbUseSameIndents = new JCheckBox(ApplicationBundle.message("checkbox.indent.use.same.settings.for.all.file.types"));
     optionGroup.add(myCbUseSameIndents);
 
     myIndentOptionsTabs = new TabbedPaneWrapper(JTabbedPane.RIGHT);
@@ -113,10 +112,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     return optionGroup.createPanel();
   }
 
-
-  private JCheckBox createCheckBox(final String s) {
-    return new JCheckBox(s);
-  }
 
   protected int getRightMargin() {
     return myRightMargin;
@@ -284,7 +279,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       myLineSeparatorCombo.setSelectedItem(SYSTEM_DEPENDANT_STRING);
     }
 
-    myRightMarginField.setText("" + settings.RIGHT_MARGIN);
+    myRightMarginField.setText(String.valueOf(settings.RIGHT_MARGIN));
     update();
   }
 
@@ -329,11 +324,11 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     }
 
     public JPanel createPanel() {
-      myCbUseTab = createCheckBox(ApplicationBundle.message("checkbox.indent.use.tab.character"));
+      myCbUseTab = new JCheckBox(ApplicationBundle.message("checkbox.indent.use.tab.character"));
       add(myCbUseTab);
 
       if (isListSmartTabs()) {
-        myCbSmartTabs = createCheckBox(ApplicationBundle.message("checkbox.indent.smart.tabs"));
+        myCbSmartTabs = new JCheckBox(ApplicationBundle.message("checkbox.indent.smart.tabs"));
         add(myCbSmartTabs, true);
       }
 
@@ -358,10 +353,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
         myLabelIndent = new JTextField(4);
         add(myLabelIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.label.indent")), myLabelIndent);
 
-        myLabelIndentAbsolute = createCheckBox(ApplicationBundle.message("checkbox.indent.absolute.label.indent"));
-        add(myLabelIndentAbsolute);
+        myLabelIndentAbsolute = new JCheckBox(ApplicationBundle.message("checkbox.indent.absolute.label.indent"));
+        add(myLabelIndentAbsolute, true);
 
-        myCbDontIndentTopLevelMembers = createCheckBox(ApplicationBundle.message("checkbox.do.not.indent.top.level.class.members"));
+        myCbDontIndentTopLevelMembers = new JCheckBox(ApplicationBundle.message("checkbox.do.not.indent.top.level.class.members"));
         add(myCbDontIndentTopLevelMembers);
       }
 
@@ -410,6 +405,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
         return Math.max(Integer.parseInt(myIndentField.getText()), 1);
       }
       catch (NumberFormatException e) {
+        //stay with default
       }
 
       return 4;
@@ -420,6 +416,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
         return Math.max(Integer.parseInt(myTabSizeField.getText()), 1);
       }
       catch (NumberFormatException e) {
+        //stay with default
       }
 
       return 4;
@@ -435,6 +432,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
           options.CONTINUATION_INDENT_SIZE = Math.max(Integer.parseInt(myContinuationIndentField.getText()), 0);
         }
         catch (NumberFormatException e) {
+          //stay with default
         }
       }
 
@@ -447,17 +445,18 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
           options.LABEL_INDENT_SIZE = Integer.parseInt(myLabelIndent.getText());
         }
         catch (NumberFormatException e) {
+          //stay with default
         }
         options.LABEL_INDENT_ABSOLUTE = myLabelIndentAbsolute.isSelected();
       }
     }
 
     public void reset(CodeStyleSettings.IndentOptions options) {
-      myTabSizeField.setText("" + options.TAB_SIZE);
+      myTabSizeField.setText(String.valueOf(options.TAB_SIZE));
       myCbUseTab.setSelected(options.USE_TAB_CHARACTER);
 
-      myIndentField.setText("" + options.INDENT_SIZE);
-      if (isListContIndent()) myContinuationIndentField.setText("" + options.CONTINUATION_INDENT_SIZE);
+      myIndentField.setText(String.valueOf(options.INDENT_SIZE));
+      if (isListContIndent()) myContinuationIndentField.setText(String.valueOf(options.CONTINUATION_INDENT_SIZE));
       if (isListLabelIndent()) {
         myLabelIndent.setText(Integer.toString(options.LABEL_INDENT_SIZE));
         myLabelIndentAbsolute.setSelected(options.LABEL_INDENT_ABSOLUTE);
