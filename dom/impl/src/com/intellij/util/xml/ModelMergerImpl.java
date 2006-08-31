@@ -252,7 +252,7 @@ public class ModelMergerImpl implements ModelMerger {
   }
 
   @Nullable
-  protected Object getPrimaryKey(Object implementation, final boolean singleValuedInvocation) throws IllegalAccessException, InvocationTargetException {
+  protected static Object getPrimaryKey(Object implementation, final boolean singleValuedInvocation) throws IllegalAccessException, InvocationTargetException {
     if (implementation instanceof GenericValue) {
       return singleValuedInvocation? Boolean.TRUE : ((GenericValue)implementation).getValue();
     }
@@ -264,7 +264,7 @@ public class ModelMergerImpl implements ModelMerger {
   }
 
   @Nullable
-  private Method getPrimaryKeyMethod(final Class<? extends Object> aClass) {
+  private static Method getPrimaryKeyMethod(final Class<? extends Object> aClass) {
     Method method = ourPrimaryKeyMethods.get(aClass);
     if (method == null) {
       if (ourPrimaryKeyMethods.containsKey(aClass)) return null;
@@ -279,6 +279,7 @@ public class ModelMergerImpl implements ModelMerger {
     return method;
   }
 
+  @Nullable
   private static Method findPrimaryKeyAnnotatedMethod(final Method method, final Class aClass) {
     return method.getReturnType() != void.class && method.getParameterTypes().length == 0 ? JavaMethodSignature.getSignature(method)
       .findAnnotatedMethod(PrimaryKey.class, aClass) : null;
@@ -291,7 +292,7 @@ public class ModelMergerImpl implements ModelMerger {
 
     final List<Object> results = new ArrayList<Object>();
 
-    if (returnType.isInterface()) {
+    if (ReflectionCache.isInterface(returnType)) {
       final List<Object> orderedPrimaryKeys = new SmartList<Object>();
       final FactoryMap<Object, List<Set<Object>>> map = new FactoryMap<Object, List<Set<Object>>>() {
         @NotNull
