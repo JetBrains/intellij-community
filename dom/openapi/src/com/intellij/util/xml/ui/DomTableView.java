@@ -23,15 +23,6 @@ import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.border.MatteBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -39,6 +30,12 @@ import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
+import javax.swing.*;
+import javax.swing.border.MatteBorder;
+import javax.swing.event.*;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 
 /**
  * @author peter
@@ -240,11 +237,12 @@ public class DomTableView extends JPanel implements DataProvider{
   }
 
   public final void reset(ColumnInfo[] columnInfos, List data) {
-    if (myTable.isEditing()) {
-      myTable.getCellEditor().cancelCellEditing();
-    }
     final boolean columnsChanged = myTableModel.setColumnInfos(columnInfos);
     final boolean dataChanged = !data.equals(myTableModel.getItems());
+    if ((dataChanged || columnsChanged) && myTable.isEditing()) {
+      myTable.getCellEditor().cancelCellEditing();
+    }
+
     if (dataChanged) {
       final int selectedRow = myTable.getSelectedRow();
       myTableModel.setItems(new ArrayList(data));
