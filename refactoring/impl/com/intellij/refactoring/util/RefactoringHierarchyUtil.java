@@ -12,7 +12,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.SuperClassSearch;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.Processor;
 
 import java.util.*;
 
@@ -140,23 +142,17 @@ public class RefactoringHierarchyUtil {
    * @param results
    * @param includeNonProject
    */
-  public static void getSuperClasses(PsiClass aClass, Set<PsiClass> results, boolean includeNonProject) {
-    getSuperClassesOfList(aClass.getSuperTypes(), results, includeNonProject);
-  }
-
-  private static void getSuperClassesOfList(PsiClassType[] types, Set<PsiClass> results,
-                                                     boolean includeNonProject) {
-    for (PsiClassType type : types) {
-      PsiClass resolved = type.resolve();
-      if (resolved != null) {
-        if (!results.contains(resolved)) {
-          if (includeNonProject || resolved.getManager().isInProject(resolved)) {
-            results.add(resolved);
+  public static void getSuperClasses(PsiClass aClass, final Set<PsiClass> results, final boolean includeNonProject) {
+    SuperClassSearch.search(aClass).forEach(new Processor<PsiClass>() {
+      public boolean process(final PsiClass psiClass) {
+        if (!results.contains(psiClass)) {
+          if (includeNonProject || psiClass.getManager().isInProject(psiClass)) {
+            results.add(psiClass);
           }
-          getSuperClasses(resolved, results, includeNonProject);
         }
+        return true;
       }
-    }
+    });
   }
 
   public static void processSuperTypes(PsiType type, SuperTypeVisitor visitor) {
