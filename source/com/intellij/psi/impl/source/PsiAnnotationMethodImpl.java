@@ -4,6 +4,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -24,7 +25,9 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
   }
 
   public PsiAnnotationMemberValue getDefaultValue() {
-    return (PsiAnnotationMemberValue)calcTreeElement().findChildByRole(ChildRole.ANNOTATION_DEFAULT_VALUE).getPsi();
+    final ASTNode node = calcTreeElement().findChildByRole(ChildRole.ANNOTATION_DEFAULT_VALUE);
+    if (node == null) return null;
+    return (PsiAnnotationMemberValue)node.getPsi();
   }
 
   @NonNls
