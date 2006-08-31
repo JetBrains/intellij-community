@@ -703,26 +703,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
     result.add(new AddAction(this, fromPopup));
     result.add(new MyRemoveAction());
-    final AnAction findUsages = new AnAction(ProjectBundle.message("find.usages.action.text"),
-                                             ProjectBundle.message("find.usages.action.text"),
-                                             FIND_ICON) {
-      public void update(AnActionEvent e) {
-        final Presentation presentation = e.getPresentation();
-        final TreePath selectionPath = myTree.getSelectionPath();
-        if (selectionPath != null){
-          final MyNode node = (MyNode)selectionPath.getLastPathComponent();
-          presentation.setEnabled(!node.isDisplayInBold());
-        } else {
-          presentation.setEnabled(false);
-        }
-      }
-
-      public void actionPerformed(AnActionEvent e) {
-        showDependencies();
-      }
-    };
-    findUsages.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES).getShortcutSet(), myTree);
-    result.add(findUsages);
+    result.add(new MyFindUsagesAction());
     result.add(new MyGroupAction());
     final TreeExpander expander = new TreeExpander() {
       public void expandAll() {
@@ -799,38 +780,6 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       addNode(node, parent.getConfigurable().getEditableObject() instanceof Module ? parent : (MyNode)parent.getParent());
       return node;
     }
-  }
-
-  private void showDependencies() {
-    final Set<String> dependencies = getDependencies();
-    if (dependencies == null || dependencies.size() == 0){
-      Messages.showInfoMessage(myTree, FindBundle.message("find.usage.view.no.usages.text"), FindBundle.message("find.pointcut.applications.not.found.title"));
-      return;
-    }
-    final int selectedRow = myTree.getSelectionRows()[0];
-    final Rectangle rowBounds = myTree.getRowBounds(selectedRow);
-    final Point location = rowBounds.getLocation();
-    location.x += rowBounds.width;
-    JBPopupFactory.getInstance().createWizardStep(new BaseListPopupStep<String>(ProjectBundle.message("dependencies.used.in.popup.title"),
-                                                                                dependencies.toArray(new String[dependencies.size()])) {
-
-      public PopupStep onChosen(final String nameToSelect, final boolean finalChoice) {
-        selectNodeInTree(nameToSelect);
-        return PopupStep.FINAL_CHOICE;
-      }
-
-      public Icon getIconFor(String selection){
-        return myModulesConfigurator.getModule(selection).getModuleType().getNodeIcon(false);
-      }
-
-    }).show(new RelativePoint(myTree, location));
-  }
-
-  @Nullable
-  private Set<String> getDependencies() {
-    final Object selectedObject = getSelectedObject();
-    final MyNode selectedNode = (MyNode)myTree.getSelectionPath().getLastPathComponent();
-    return getCachedDependencies(selectedObject, selectedNode, true);
   }
 
   private Set<String> getCachedDependencies(final Object selectedObject, final MyNode selectedNode, boolean force) {
@@ -1280,6 +1229,52 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         }
       }
       ((DefaultTreeModel)myTree.getModel()).reload(myModulesNode);
+    }
+  }
+
+  private class MyFindUsagesAction extends AnAction {
+    public MyFindUsagesAction() {
+      super(ProjectBundle.message("find.usages.action.text"), ProjectBundle.message("find.usages.action.text"), ProjectRootConfigurable.FIND_ICON);
+      registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES).getShortcutSet(), myTree);
+    }
+
+    public void update(AnActionEvent e) {
+      final Presentation presentation = e.getPresentation();
+      final TreePath selectionPath = myTree.getSelectionPath();
+      if (selectionPath != null){
+        final MyNode node = (MyNode)selectionPath.getLastPathComponent();
+        presentation.setEnabled(!node.isDisplayInBold());
+      } else {
+        presentation.setEnabled(false);
+      }
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final Object selectedObject = getSelectedObject();
+      final MyNode selectedNode = (MyNode)myTree.getSelectionPath().getLastPathComponent();
+      final Set<String> dependencies = getCachedDependencies(selectedObject, selectedNode, true);
+      if (dependencies == null || dependencies.size() == 0) {
+        Messages.showInfoMessage(myTree, FindBundle.message("find.usage.view.no.usages.text"),
+                                 FindBundle.message("find.pointcut.applications.not.found.title"));
+        return;
+      }
+      final int selectedRow = myTree.getSelectionRows()[0];
+      final Rectangle rowBounds = myTree.getRowBounds(selectedRow);
+      final Point location = rowBounds.getLocation();
+      location.x += rowBounds.width;
+      JBPopupFactory.getInstance().createWizardStep(new BaseListPopupStep<String>(
+        ProjectBundle.message("dependencies.used.in.popup.title"), dependencies.toArray(new String[dependencies.size()])) {
+
+        public PopupStep onChosen(final String nameToSelect, final boolean finalChoice) {
+          selectNodeInTree(nameToSelect);
+          return PopupStep.FINAL_CHOICE;
+        }
+
+        public Icon getIconFor(String selection) {
+          return myModulesConfigurator.getModule(selection).getModuleType().getNodeIcon(false);
+        }
+
+      }).show(new RelativePoint(myTree, location));
     }
   }
 }
