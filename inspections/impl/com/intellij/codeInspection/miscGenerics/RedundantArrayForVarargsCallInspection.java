@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,8 +22,8 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection");
   private LocalQuickFix myQuickFixAction = new MyQuickFix();
 
-  private class MyQuickFix implements LocalQuickFix {
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
+  private static class MyQuickFix implements LocalQuickFix {
+    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
       PsiNewExpression arrayCreation = (PsiNewExpression) descriptor.getPsiElement();
       if (!CodeInsightUtil.prepareFileForWrite(arrayCreation.getContainingFile())) return;
 
@@ -30,9 +31,13 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
       if (argumentList == null) return;
       PsiExpression[] args = argumentList.getExpressions();
       PsiArrayInitializerExpression arrayInitializer = arrayCreation.getArrayInitializer();
-      if (arrayInitializer == null) return;
-      PsiExpression[] initializers = arrayInitializer.getInitializers();
       try {
+        if (arrayInitializer == null) {
+          arrayCreation.delete();
+          return;
+        }
+        
+        PsiExpression[] initializers = arrayInitializer.getInitializers();
         if (initializers.length > 0) {
           argumentList.addRange(initializers[0], initializers[initializers.length - 1]);
         }
@@ -42,10 +47,12 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
       }
     }
 
+    @NotNull
     public String getFamilyName() {
       return getName();
     }
 
+    @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.redundant.array.creation.quickfix");
     }
@@ -65,6 +72,10 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         checkCall(enumConstant);
       }
 
+      public void visitClass(PsiClass aClass) {
+        //do not go inside to prevent multiple signals of the same problem
+      }
+
       private void checkCall(PsiCall expression) {
         PsiMethod method = expression.resolveMethod();
         if (method != null && method.isVarArgs()) {
@@ -79,15 +90,14 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
               LOG.assertTrue(lastParamType instanceof PsiEllipsisType);
               if (lastArg instanceof PsiNewExpression && ((PsiEllipsisType) lastParamType).toArrayType().equals(lastArg.getType())) {
                 PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression) lastArg).getArrayInitializer();
-                if (arrayInitializer != null) {
-                  if (isSafeToFlatten(expression, method, arrayInitializer.getInitializers())) {
-                    final ProblemDescriptor descriptor = manager.createProblemDescriptor(lastArg,
-                                                                                         InspectionsBundle.message("inspection.redundant.array.creation.for.varargs.call.descriptor"),
-                                                                                         myQuickFixAction,
-                                                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                PsiExpression[] initializers = arrayInitializer != null ? arrayInitializer.getInitializers() : PsiExpression.EMPTY_ARRAY;
+                if (isSafeToFlatten(expression, method, initializers)) {
+                  final ProblemDescriptor descriptor = manager.createProblemDescriptor(lastArg,
+                                                                                       InspectionsBundle.message("inspection.redundant.array.creation.for.varargs.call.descriptor"),
+                                                                                       myQuickFixAction,
+                                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
 
-                    problems.add(descriptor);
-                  }
+                  problems.add(descriptor);
                 }
               }
             }
