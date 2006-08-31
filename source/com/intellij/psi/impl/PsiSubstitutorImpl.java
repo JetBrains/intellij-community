@@ -2,6 +2,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -207,7 +208,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
         PsiType substitutedBoundType = boundType.accept(myInternalSimpleSubstitutionVisitor);
         PsiWildcardType wildcardType = (PsiWildcardType)substituted;
         if (substitutedBoundType != null && !(substitutedBoundType instanceof PsiWildcardType) && !substitutedBoundType.equalsToText("java.lang.Object")) {
-          if (originalBound == null || !substitutedBoundType.isAssignableFrom(originalBound)) {
+          if (originalBound == null || !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(originalBound)) { //erasure is essential to avoid infinite recursion
             if (wildcardType.isExtends()) {
               final PsiType glb = GenericsUtil.getGreatestLowerBound(wildcardType.getBound(), substitutedBoundType);
               if (glb != null) {
