@@ -283,12 +283,15 @@ public class DebuggerSessionTab implements LogConsoleManager {
       }
     }
     base.createAdditionalTabComponents();
+    final ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
     for (Object key : base.getAdditionalTabKeys()) {
       final AdditionalTabComponent tabComponent = base.getAdditionalTabComponent(key);
-      Content logContent = PeerFactory.getInstance().getContentFactory().createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), false);
-      logContent.putUserData(CONTENT_KIND, LOG_CONTENTS);
-      myAdditionalContent.put(key, logContent);
-      myViewsContentManager.addContent(logContent);
+      if (tabComponent != null) {
+        Content logContent = contentFactory.createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), false);
+        logContent.putUserData(CONTENT_KIND, LOG_CONTENTS);
+        myAdditionalContent.put(key, logContent);
+        myViewsContentManager.addContent(logContent);
+      }
     }
   }
 
@@ -312,7 +315,9 @@ public class DebuggerSessionTab implements LogConsoleManager {
     myViewsContentManager.removeContent(myAdditionalContent.get(path));
     if (myConfiguration instanceof RunConfigurationBase){
       final AdditionalTabComponent logConsole = ((RunConfigurationBase)myConfiguration).getAdditionalTabComponent(path);
-      logConsole.dispose();
+      if (logConsole != null) {
+        logConsole.dispose();
+      }
     }
   }
 
@@ -419,7 +424,10 @@ public class DebuggerSessionTab implements LogConsoleManager {
     if (myConfiguration instanceof RunConfigurationBase){
       final RunConfigurationBase configurationBase = ((RunConfigurationBase)myConfiguration);
       for (final Object key : configurationBase.getAdditionalTabKeys()) {
-        configurationBase.getAdditionalTabComponent(key).dispose();
+        final AdditionalTabComponent tabComponent = configurationBase.getAdditionalTabComponent(key);
+        if (tabComponent != null) {
+          tabComponent.dispose();
+        }
       }
 
       myManager.unregisterFileMatcher();

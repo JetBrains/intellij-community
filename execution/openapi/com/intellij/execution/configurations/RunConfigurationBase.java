@@ -134,7 +134,7 @@ public abstract class RunConfigurationBase implements RunConfiguration {
     return myLogFiles.isEmpty();
   }
 
-  public AdditionalTabComponent getAdditionalTabComponent(Object key){
+  public @Nullable AdditionalTabComponent getAdditionalTabComponent(Object key){
     return myAdditionalTabs != null ? myAdditionalTabs.get(key) : null;
   }
 

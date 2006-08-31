@@ -134,8 +134,10 @@ public class RunContentBuilder implements LogConsoleManager {
     }
     for (Object key : base.getAdditionalTabKeys()) {
       final AdditionalTabComponent tabComponent = base.getAdditionalTabComponent(key);
-      myDisposeables.add(tabComponent);
-      ((JTabbedPane)myComponent).addTab(tabComponent.getTabTitle(), tabComponent.getComponent());
+      if (tabComponent != null) {
+        myDisposeables.add(tabComponent);
+        ((JTabbedPane)myComponent).addTab(tabComponent.getTabTitle(), tabComponent.getComponent());
+      }
     }
   }
 
@@ -152,8 +154,10 @@ public class RunContentBuilder implements LogConsoleManager {
   public void removeLogConsole(final String path) {
     if (myRunProfile instanceof RunConfigurationBase){
       final AdditionalTabComponent logConsole = ((RunConfigurationBase)myRunProfile).getAdditionalTabComponent(path);
-      logConsole.dispose();
-      myComponent.remove(logConsole);
+      if (logConsole != null) {
+        logConsole.dispose();
+        myComponent.remove(logConsole);
+      }
     }
   }
 
