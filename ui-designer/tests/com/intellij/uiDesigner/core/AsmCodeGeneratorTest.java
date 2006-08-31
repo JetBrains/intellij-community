@@ -200,9 +200,6 @@ public class AsmCodeGeneratorTest extends TestCase {
     assertEquals(new Insets(1, 2, 3, 4), gbc.insets);
     assertEquals(GridBagConstraints.HORIZONTAL, gbc.fill);
     assertEquals(GridBagConstraints.NORTHWEST, gbc.anchor);
-    assertEquals(new Dimension(21, 24), btn.getMinimumSize());
-    assertEquals(new Dimension(23, 24), btn.getPreferredSize());
-    assertEquals(new Dimension(25, 26), btn.getMaximumSize());
   }
 
   public void testGridBagSpacer() throws Exception {

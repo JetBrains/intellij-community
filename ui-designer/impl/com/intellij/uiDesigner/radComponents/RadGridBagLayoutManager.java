@@ -420,6 +420,16 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
         layout.setConstraints(component.getDelegee(), gbc);
       }
     }
+
+    @Override
+    public boolean isModified(final RadComponent component) {
+      return !getValue(component).equals(new Insets(0, 0, 0, 0));
+    }
+
+    @Override
+    public void resetValue(final RadComponent component) throws Exception {
+      setValue(component, new Insets(0, 0, 0, 0));
+    }
   }
 
   private static class WeightProperty extends Property<RadComponent, Double> {
