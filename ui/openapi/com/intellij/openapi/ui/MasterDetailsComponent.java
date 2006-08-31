@@ -90,7 +90,9 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
         if (path != null) {
           final MyNode node = (MyNode)path.getLastPathComponent();
           final NamedConfigurable configurable = node.getConfigurable();
-          updateSelection(configurable);
+          if (configurable != null) {
+            updateSelection(configurable);
+          }
         }
       }
 
@@ -439,7 +441,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     return nodeToSelect[0];
   }
 
-  protected void updateSelection(NamedConfigurable configurable) {
+  protected void updateSelection(@NotNull NamedConfigurable configurable) {
     myLastEditedConfigurable = configurable.getDisplayName();
     myBanner.setText(configurable.getBannerSlogan());
     myBanner.repaint();

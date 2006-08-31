@@ -335,7 +335,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myDisposed = false;
   }
 
-  protected void updateSelection(NamedConfigurable configurable) {
+  protected void updateSelection(@NotNull NamedConfigurable configurable) {
     final String selectedTab = ModuleEditor.getSelectedTab();
     super.updateSelection(configurable);
     if (configurable instanceof ModuleConfigurable){
