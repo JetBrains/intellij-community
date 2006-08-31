@@ -30,13 +30,11 @@ import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -46,6 +44,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
@@ -970,7 +969,23 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         return myIdeView;
       }
       if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
-        return getSelectedNodeElement() instanceof Module ? myDeleteModuleProvider : myDeletePSIElementProvider;
+        Object selectedNode = getSelectedNodeElement();
+        if (selectedNode instanceof Module) {
+          return myDeleteModuleProvider;
+        }
+        final LibraryOrderEntry orderEntry = getSelectedLibrary();
+        if (orderEntry != null) {
+          return new DeleteProvider(){
+            public void deleteElement(DataContext dataContext) {
+              detachLibrary(orderEntry, myProject);
+            }
+
+            public boolean canDeleteElement(DataContext dataContext) {
+              return true;
+            }
+          };
+        }
+        return myDeletePSIElementProvider;
       }
       if (DataConstants.HELP_ID.equals(dataId)) {
         return HelpID.PROJECT_VIEWS;
@@ -1006,6 +1021,59 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[selectedElements.size()]);
       }
       return null;
+    }
+
+    private LibraryOrderEntry getSelectedLibrary() {
+      final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
+      DefaultMutableTreeNode node = viewPane != null ? viewPane.getSelectedNode() : null;
+      if (node == null) return null;
+      while (true) {
+        DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
+        if (parent == null) break;
+        Object userObject = parent.getUserObject();
+        if (userObject instanceof LibraryGroupNode) {
+          userObject = node.getUserObject();
+          if (userObject instanceof NamedLibraryElementNode) {
+            NamedLibraryElement element = ((NamedLibraryElementNode)userObject).getValue();
+            OrderEntry orderEntry = element.getOrderEntry();
+            return orderEntry instanceof LibraryOrderEntry ? (LibraryOrderEntry)orderEntry : null;
+          }
+          PsiDirectory directory = ((PsiDirectoryNode)userObject).getValue();
+          VirtualFile virtualFile = directory.getVirtualFile();
+          Module module = (Module)((AbstractTreeNode)((DefaultMutableTreeNode)parent.getParent()).getUserObject()).getValue();
+
+          if (module == null) return null;
+          ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
+          return (LibraryOrderEntry)index.getOrderEntryForFile(virtualFile);
+        }
+        node = parent;
+      }
+
+      return null;
+    }
+
+    private void detachLibrary(final LibraryOrderEntry orderEntry, final Project project) {
+      final Module module = orderEntry.getOwnerModule();
+      String message = IdeBundle.message("detach.library.from.module", orderEntry.getPresentableName(), module.getName());
+      String title = IdeBundle.message("detach.library");
+      int ret = Messages.showOkCancelDialog(project, message, title, Messages.getQuestionIcon());
+      if (ret != 0) return;
+      CommandProcessor.getInstance().executeCommand(module.getProject(), new Runnable() {
+        public void run() {
+          final Runnable action = new Runnable() {
+            public void run() {
+              ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+              for (OrderEntry entry : model.getOrderEntries()) {
+                if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() == orderEntry.getLibrary()) {
+                  model.removeOrderEntry(entry);
+                }
+              }
+              model.commit();
+            }
+          };
+          ApplicationManager.getApplication().runWriteAction(action);
+        }
+      }, title, null);
     }
 
     private Module[] getSelectedModules() {

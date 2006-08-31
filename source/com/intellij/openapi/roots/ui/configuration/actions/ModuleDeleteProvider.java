@@ -8,23 +8,20 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.ProjectBundle;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ModuleDeleteProvider  implements DeleteProvider  {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider");
-
   public boolean canDeleteElement(DataContext dataContext) {
     return dataContext.getData(DataConstantsEx.MODULE_CONTEXT) != null;
   }
 
   public void deleteElement(DataContext dataContext) {
-    final Module module = ((Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT));
+    final Module module = (Module)dataContext.getData(DataConstantsEx.MODULE_CONTEXT);
 
     int ret = Messages.showOkCancelDialog(ProjectBundle.message("module.remove.confirmation.prompt", module.getName()),
                                           ProjectBundle.message("module.remove.confirmation.title"), Messages.getQuestionIcon());

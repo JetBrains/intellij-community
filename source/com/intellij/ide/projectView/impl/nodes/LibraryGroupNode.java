@@ -1,24 +1,26 @@
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
 
@@ -35,8 +37,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
     final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(getValue().getModule());
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
-    for (int idx = 0; idx < orderEntries.length; idx++) {
-      final OrderEntry orderEntry = orderEntries[idx];
+    for (final OrderEntry orderEntry : orderEntries) {
       if (orderEntry instanceof LibraryOrderEntry) {
         final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
         final Library library = libraryOrderEntry.getLibrary();
@@ -64,8 +65,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   public static void addLibraryChildren(final OrderEntry entry, final List<AbstractTreeNode> children, Project project, ProjectViewNode node) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final VirtualFile[] files = entry.getFiles(OrderRootType.CLASSES);
-    for (int idx = 0; idx < files.length; idx++) {
-      final VirtualFile file = files[idx];
+    for (final VirtualFile file : files) {
       final PsiDirectory psiDir = psiManager.findDirectory(file);
       if (psiDir == null) {
         continue;
@@ -79,12 +79,21 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
     return "Libraries";
   }
 
-  public boolean contains(VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     return someChildContainsFile(file);
   }
 
   public void update(PresentationData presentation) {
     presentation.setPresentableText(IdeBundle.message("node.projectview.libraries"));
     presentation.setIcons(Icons.LIBRARY_ICON);
+  }
+
+  public boolean canNavigateToSource() {
+    return true;
+  }
+
+  public void navigate(final boolean requestFocus) {
+    Module module = getValue().getModule();
+    ModulesConfigurator.showDialog(getProject(), module.getName(), ClasspathEditor.NAME, false);
   }
 }
