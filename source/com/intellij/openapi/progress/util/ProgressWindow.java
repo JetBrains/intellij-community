@@ -3,7 +3,6 @@ package com.intellij.openapi.progress.util;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -109,7 +108,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
               showDialog();
             }
           }
-        }, 300, ModalityState.current());
+        }, 300, getModalityState());
       }
     });
   }

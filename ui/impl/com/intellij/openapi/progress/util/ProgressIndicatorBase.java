@@ -32,6 +32,7 @@ public class ProgressIndicatorBase implements ProgressIndicator {
 
   private ProgressIndicator myModalityProgress = null;
   private ModalityState myModalityState = ModalityState.NON_MODAL;
+  private boolean myModalityEntered = false;
 
   public void start(){
     LOG.assertTrue(!isRunning());
@@ -46,8 +47,9 @@ public class ProgressIndicatorBase implements ProgressIndicator {
     enterModality();
   }
 
-  protected void enterModality() {
-    if (myModalityProgress == this){
+  protected final synchronized void enterModality() {
+    if (myModalityProgress == this && !myModalityEntered){
+      myModalityEntered = true;
       if (!EventQueue.isDispatchThread()){
         SwingUtilities.invokeLater(
           new Runnable() {
@@ -70,8 +72,9 @@ public class ProgressIndicatorBase implements ProgressIndicator {
     exitModality();
   }
 
-  protected void exitModality() {
-    if (myModalityProgress == this){
+  protected final synchronized void exitModality() {
+    if (myModalityProgress == this && myModalityEntered){
+      myModalityEntered = false;
       if (!EventQueue.isDispatchThread()){
         SwingUtilities.invokeLater(
           new Runnable() {
