@@ -12,11 +12,11 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.lang.reflect.InvocationTargetException;
+import javax.swing.*;
 
 /**
  * @author peter
@@ -210,6 +210,7 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
   public void navigate(DomElement element) {
   }
 
+  @Nullable
   protected abstract T getValue();
   protected abstract void setValue(T value);
 

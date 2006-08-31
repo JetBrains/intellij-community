@@ -16,15 +16,17 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
+import javax.swing.*;
+import javax.swing.text.JTextComponent;
 
 /**
  * @author peter
@@ -33,7 +35,7 @@ public class ComboControl extends BaseControl<JComboBox, String> {
   private static final Pair<String, Icon> EMPTY = Pair.create(" ", null);
   private final Factory<List<Pair<String, Icon>>> myDataFactory;
   private boolean myNullable;
-  private Map<String, Icon> myIcons = new com.intellij.util.containers.HashMap<String, Icon>();
+  private Map<String, Icon> myIcons = new THashMap<String, Icon>();
   private final ActionListener myCommitListener = new ActionListener() {
     public void actionPerformed(ActionEvent e) {
       commit();
@@ -206,11 +208,33 @@ public class ComboControl extends BaseControl<JComboBox, String> {
     return myNullable && object == EMPTY.first || myIcons.containsKey(object);
   }
 
+  private boolean dataChanged(List<Pair<String, Icon>> newData) {
+    final JComboBox comboBox = getComponent();
+    final int size = comboBox.getItemCount();
+    final List<Pair<String, Icon>> oldData = new ArrayList<Pair<String, Icon>>(size);
+    for (int i = 0; i < size; i++) {
+      oldData.add((Pair<String, Icon>)comboBox.getItemAt(i));
+    }
+
+    if (myNullable) {
+      final LinkedList<Pair<String, Icon>> list = new LinkedList<Pair<String, Icon>>(newData);
+      list.addFirst(EMPTY);
+      newData = list;
+    }
+
+    return !newData.equals(oldData);
+  }
+
   protected void doReset() {
+    final List<Pair<String, Icon>> data = myDataFactory.create();
+    if (!dataChanged(data)) {
+      super.doReset();
+      return;
+    }
+
     final JComboBox comboBox = getComponent();
     comboBox.removeActionListener(myCommitListener);
     final String oldValue = getValue();
-    final List<Pair<String, Icon>> data = myDataFactory.create();
     myIcons.clear();
     comboBox.removeAllItems();
     if (myNullable) {
@@ -225,6 +249,7 @@ public class ComboControl extends BaseControl<JComboBox, String> {
     comboBox.addActionListener(myCommitListener);
   }
 
+  @Nullable
   protected final String getValue() {
     final Pair<String, Icon> pair = (Pair<String, Icon>)getComponent().getSelectedItem();
     return pair == null || pair == EMPTY ? null : pair.first;
