@@ -31,8 +31,8 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -46,6 +46,7 @@ import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -54,9 +55,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Alarm;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,9 +66,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 public abstract class CodeStyleAbstractPanel {
   private static Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
@@ -153,18 +152,22 @@ public abstract class CodeStyleAbstractPanel {
       myTextToReformat = myEditor.getDocument().getText();
     }
 
-    CommandProcessor.getInstance().executeCommand(ProjectManager.getInstance().getDefaultProject(),
+    Project project = /*(Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT); //todo uncomment - do not load default project
+    if (project == null) {
+      project =*/ ProjectManager.getInstance().getDefaultProject();
+    //}
+    final Project finalProject = project;
+    CommandProcessor.getInstance().executeCommand(finalProject,
                                                   new Runnable() {
                                                     public void run() {
-                                                      replaceText();
+                                                      replaceText(finalProject);
                                                     }
                                                   }, null, null);
     myEditor.getSettings().setRightMargin(getRightMargin());
     myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
   }
 
-  private void replaceText() {
-    final Project project = ProjectManager.getInstance().getDefaultProject();
+  private void replaceText(final Project project) {
     final PsiManager manager = PsiManager.getInstance(project);
     final LanguageLevel effectiveLanguageLevel = manager.getEffectiveLanguageLevel();
     manager.setEffectiveLanguageLevel(LanguageLevel.HIGHEST);
