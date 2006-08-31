@@ -1,8 +1,10 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
+import com.intellij.lang.Language;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.xml.XmlFileViewProvider;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
@@ -107,6 +109,12 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
         myDaemonCodeAnalyzer.getFileStatusMap().markAllFilesDirty();
         return;
       }
+    }
+    // change in e.g. sciptlet may lead to error in any other place
+    Language language = file.getLanguage();
+    if (language == StdLanguages.JSPX || language == StdLanguages.JSP) {
+      myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirty(document, file);
+      return;
     }
 
     // optimization:
