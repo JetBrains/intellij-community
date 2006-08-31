@@ -42,6 +42,11 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
   }
 
   @Nullable
+  public ProblemDescriptor[] checkField(PsiField field, InspectionManager manager, boolean isOnTheFly) {
+    return checkMember(field, manager);
+  }
+
+  @Nullable
   private ProblemDescriptor[] checkMember(final PsiDocCommentOwner docCommentOwner, final InspectionManager manager) {
     ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
     final PsiDocComment docComment = docCommentOwner.getDocComment();
@@ -49,7 +54,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
 
     final String[] refMessage = new String[]{null};
     final PsiJavaCodeReferenceElement[] references = new PsiJavaCodeReferenceElement[]{null};
-    docCommentOwner.accept(getVisitor(references, refMessage, docCommentOwner, problems, manager));
+    docComment.accept(getVisitor(references, refMessage, docCommentOwner, problems, manager));
     if (refMessage[0] != null) {
       problems.add(createDescriptor(references[0], refMessage[0], manager));
     }
