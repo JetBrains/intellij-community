@@ -153,9 +153,12 @@ public abstract class BaseCompleteMacro implements Macro {
       }
 
       if (goNextTab) {
-        TemplateState templateState = TemplateManagerImpl.getTemplateState(myContext.getEditor());
-        if (templateState != null) {
-          templateState.nextTab();
+        final Editor editor = myContext.getEditor();
+        if (editor != null) {
+          TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+          if (templateState != null) {
+            templateState.nextTab();
+          }
         }
       }
     }
