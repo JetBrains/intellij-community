@@ -60,7 +60,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   public JComponent createComponent() {
     mySandboxHome.setHistorySize(5);
     JPanel wholePanel = new JPanel(new GridBagLayout());
-    wholePanel.add(mySandboxHomeLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST,
+    wholePanel.add(mySandboxHomeLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.CENTER,
                                                               GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     wholePanel.add(GuiUtils.constructFieldWithBrowseButton(mySandboxHome,
                                                            new ActionListener() {
@@ -78,7 +78,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
                                                                myModified = true;
                                                              }
                                                            }),
-                   new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
+                   new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER,
                                           GridBagConstraints.HORIZONTAL, new Insets(0, 66, 0, 0), 0, 0));
 
     mySandboxHome.addDocumentListener(new DocumentAdapter() {
