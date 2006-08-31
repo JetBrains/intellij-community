@@ -108,7 +108,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
           }
         }
         myCandidates.add(new ClassCandidateInfo(aClass, substitutor, !accessible, myGrouped, myCurrentFileContext));
-        return false;
+        return !accessible;
       }
     }
     return true;
