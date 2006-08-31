@@ -462,7 +462,7 @@ public class ClasspathPanel extends JPanel {
     if (myPopupActions == null) {
       final ProjectRootConfigurable projectRootConfigurable = ProjectRootConfigurable.getInstance(myProject);
       myPopupActions = new PopupAction[] {
-        new ChooseAndAddAction<Library>(1, ProjectBundle.message("classpath.add.jar.directory.action"), Icons.JAR_ICON) {
+        new ChooseAndAddAction<Library>(1, ProjectBundle.message("classpath.add.module.library.action"), Icons.JAR_ICON) {
           protected TableItem createTableItem(final Library item) {
             final OrderEntry[] entries = myRootModel.getOrderEntries();
             for (OrderEntry entry : entries) {
