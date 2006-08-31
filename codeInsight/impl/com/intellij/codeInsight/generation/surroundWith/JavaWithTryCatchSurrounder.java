@@ -38,7 +38,7 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
       }
     }
 
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append("try{\n}");
     for (PsiClassType exception : exceptions) {
       buffer.append("catch(Exception e){\n}");

@@ -30,6 +30,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -233,7 +234,7 @@ public class CopyReferenceAction extends AnAction {
     CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
 
     int caretOffset = rangeMarker.getEndOffset();
-    if (elementToInsert instanceof PsiMethod) {
+    if (elementToInsert instanceof PsiMethod && StringUtil.endsWithChar(toInsert+suffix,')')) {
       caretOffset --;
     }
     editor.getCaretModel().moveToOffset(caretOffset);
