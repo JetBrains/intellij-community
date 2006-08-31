@@ -6,6 +6,7 @@ package com.intellij.psi.search.searches;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.Query;
 import com.intellij.util.QueryFactory;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +57,7 @@ public class SuperMethodsSearch extends QueryFactory<MethodSignatureBackedByPsiM
 
   public static Query<MethodSignatureBackedByPsiMethod> search(final PsiMethod derivedMethod, final PsiClass psiClass, boolean checkBases, boolean allowStaticMethod) {
     final SearchParameters parameters = new SearchParameters(derivedMethod, psiClass, checkBases, allowStaticMethod);
-    return SUPER_METHODS_SEARCH_INSTANCE.createQuery(parameters);
+    return SUPER_METHODS_SEARCH_INSTANCE.createUniqueResultsQuery(parameters, MethodSignatureUtil.METHOD_BASED_HASHING_STRATEGY);
   }
 
 }

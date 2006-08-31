@@ -41,7 +41,7 @@ public class AllOverridingMethodsSearch extends QueryFactory<Pair<PsiMethod, Psi
 
   public static Query<Pair<PsiMethod, PsiMethod>> search(final PsiClass aClass, SearchScope scope) {
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) return AllOverridingMethodsSearch.EMPTY; // Optimization
-    return INSTANCE.createQuery(new SearchParameters(aClass, scope));
+    return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope));
   }
 
   public static Query<Pair<PsiMethod, PsiMethod>> search(final PsiClass aClass) {

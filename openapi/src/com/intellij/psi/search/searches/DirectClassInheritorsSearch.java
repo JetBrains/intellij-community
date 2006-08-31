@@ -40,6 +40,6 @@ public class DirectClassInheritorsSearch extends QueryFactory<PsiClass, DirectCl
   }
 
   public static Query<PsiClass> search(final PsiClass aClass, SearchScope scope) {
-    return INSTANCE.createQuery(new SearchParameters(aClass, scope));
+    return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope));
   }
 }

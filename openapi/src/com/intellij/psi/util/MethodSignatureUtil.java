@@ -31,6 +31,16 @@ import java.util.Map;
 
 public class MethodSignatureUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.MethodSignatureUtil");
+  public static TObjectHashingStrategy<MethodSignatureBackedByPsiMethod> METHOD_BASED_HASHING_STRATEGY =
+    new TObjectHashingStrategy<MethodSignatureBackedByPsiMethod>() {
+      public int computeHashCode(final MethodSignatureBackedByPsiMethod signature) {
+        return signature.getMethod().hashCode();
+      }
+
+      public boolean equals(final MethodSignatureBackedByPsiMethod s1, final MethodSignatureBackedByPsiMethod s2) {
+        return s1.getMethod().equals(s2.getMethod());
+      }
+    };
 
   private MethodSignatureUtil() {
   }

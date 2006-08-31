@@ -17,6 +17,7 @@
 package com.intellij.util;
 
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -25,18 +26,26 @@ import java.util.*;
  * @author max
  */
 public class UniqueResultsQuery<T> implements Query<T> {
-  private Query<T> myOriginal;
+  private final Query<T> myOriginal;
+  private final TObjectHashingStrategy<T> myHashingStrategy;
 
   public UniqueResultsQuery(final Query<T> original) {
     myOriginal = original;
+    //noinspection unchecked
+    myHashingStrategy = TObjectHashingStrategy.CANONICAL;
+  }
+
+  public UniqueResultsQuery(final Query<T> original, TObjectHashingStrategy<T> hashingStrategy) {
+    myOriginal = original;
+    myHashingStrategy = hashingStrategy;
   }
 
   public T findFirst() {
     return myOriginal.findFirst();
   }
 
-  public boolean forEach(final Processor<T> consumer) {
-    final Set<T> processedElements = new THashSet<T>();
+  public boolean forEach(@NotNull final Processor<T> consumer) {
+    final Set<T> processedElements = new THashSet<T>(myHashingStrategy);
     return myOriginal.forEach(new Processor<T>() {
       public boolean process(final T t) {
         if (processedElements.contains(t)) return true;
