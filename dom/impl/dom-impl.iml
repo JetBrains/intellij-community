@@ -18,6 +18,8 @@
     <orderEntry type="module" module-name="plugins-management" />
     <orderEntry type="module" module-name="ExtendedApi" />
     <orderEntry type="module" module-name="UsageView" />
+    <orderEntry type="module" module-name="resources" />
+    <orderEntry type="module" module-name="resources_eng" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
