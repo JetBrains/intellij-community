@@ -2,9 +2,13 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.*;
-import com.intellij.ide.projectView.impl.nodes.*;
+import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
+import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
+import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -12,10 +16,12 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -96,8 +102,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   public synchronized boolean addRoots(@NotNull String name, Module moduleContext, @NotNull Object elements) {
     Collection<AbstractTreeNode> nodes = AddToFavoritesAction.createNodes(myProject, moduleContext, elements, true, ViewSettings.DEFAULT);
-    if (nodes.isEmpty()) return false;
-    return addRoots(name, nodes);
+    return !nodes.isEmpty() && addRoots(name, nodes);
   }
 
   public boolean addRoots(final String name, final Collection<AbstractTreeNode> nodes) {
@@ -163,9 +168,9 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   public void readExternal(Element element) throws InvalidDataException {
     myName2FavoritesRoots.clear();
-    for (Element list : (Iterable<Element>)element.getChildren(ELEMENT_FAVORITES_LIST)) {
-      final String name = list.getAttributeValue(ATTRIBUTE_NAME);
-      List<Pair<AbstractUrl, String>> roots = readRoots(list);
+    for (Object list : element.getChildren(ELEMENT_FAVORITES_LIST)) {
+      final String name = ((Element)list).getAttributeValue(ATTRIBUTE_NAME);
+      List<Pair<AbstractUrl, String>> roots = readRoots((Element)list);
       myName2FavoritesRoots.put(name, roots);
     }
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -177,9 +182,9 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   private static List<Pair<AbstractUrl, String>> readRoots(final Element list) {
     List<Pair<AbstractUrl, String>> result = new ArrayList<Pair<AbstractUrl, String>>();
-    for (Element favorite : (Iterable<Element>)list.getChildren(FAVORITES_ROOT)) {
-      final String className = favorite.getAttributeValue(CLASS_NAME);
-      final AbstractUrl abstractUrl = readUrlFromElement(favorite);
+    for (Object favorite : list.getChildren(FAVORITES_ROOT)) {
+      final String className = ((Element)favorite).getAttributeValue(CLASS_NAME);
+      final AbstractUrl abstractUrl = readUrlFromElement(((Element)favorite));
       if (abstractUrl != null) {
         result.add(Pair.create(abstractUrl, className));
       }
@@ -283,6 +288,9 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     List<Pair<AbstractUrl, String>> urls = getFavoritesListRootUrls(name);
     for (Pair<AbstractUrl, String> pair : urls) {
       AbstractUrl abstractUrl = pair.getFirst();
+      if (abstractUrl == null) {
+        continue;
+      }
       final Object[] path = abstractUrl.createPath(myProject);
       if (path == null || path.length < 1 || path[0] == null) {
         continue;
@@ -344,8 +352,8 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
           ModuleRootManager.getInstance(module).getFileIndex().iterateContent(contentIterator);
         }
       }
-      if (element instanceof com.intellij.lang.properties.ResourceBundle) {
-        com.intellij.lang.properties.ResourceBundle bundle = (com.intellij.lang.properties.ResourceBundle)element;
+      if (element instanceof ResourceBundle) {
+        ResourceBundle bundle = (ResourceBundle)element;
         final List<PropertiesFile> propertiesFiles = bundle.getPropertiesFiles(myProject);
         for (PropertiesFile file : propertiesFiles) {
           final VirtualFile virtualFile = file.getVirtualFile();
