@@ -83,6 +83,7 @@ public class VariableInplaceRenamer {
           public void run() {
             int offset = editor.getCaretModel().getOffset();
             Template template = builder.buildInlineTemplate();
+            template.setToShortenLongNames(false);
             assert scope != null;
             TextRange range = scope.getTextRange();
             assert range != null;

@@ -28,4 +28,6 @@ public interface Template {
   int getSegmentOffset(int segmentIndex);
 
   String getTemplateText();
+
+  void setToShortenLongNames(boolean toShortenLongNames);
 }
