@@ -154,12 +154,9 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
     return group;
   }
 
-  public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int i, final Graphics2D g,
-                                     final Rectangle rc) {
-    GridLayoutManager layout = (GridLayoutManager) container.getLayout();
-    if (layout.willGrow(isRow, i)) {
-      drawGrowMarker(isRow, g, rc);
-    }
+  @Override
+  public boolean canCellGrow(RadContainer container, boolean isRow, int i) {
+    return ((GridLayoutManager) container.getLayout()).willGrow(isRow, i);
   }
 
   public void processCellResized(RadContainer container, final boolean isRow, final int cell, final int newSize) {

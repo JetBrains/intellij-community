@@ -219,13 +219,15 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
     return false;
   }
 
-  public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int i, final Graphics2D g,
-                                     final Rectangle rc) {
+  @Override
+  public boolean canCellGrow(RadContainer container, boolean isRow, int i) {
     GridBagLayout gridBag = getGridBag(container);
     double[][] weights = gridBag.getLayoutWeights();
-    if (weights != null && i >= 0 && i < weights.length && weights [isRow ? 1 : 0][i] >= 0.1) {
-      drawGrowMarker(isRow, g, rc);
+    if (weights != null) {
+      double[] cellWeights = weights [isRow ? 1 : 0];
+      return i >= 0 && i < cellWeights.length && cellWeights [i] >= 0.1;
     }
+    return false;
   }
 
   @Override

@@ -372,6 +372,13 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   }
 
   @Override
+  public boolean canCellGrow(RadContainer container, boolean isRow, int index) {
+    FormLayout layout = (FormLayout) container.getLayout();
+    FormSpec spec = isRow ? layout.getRowSpec(index+1) : layout.getColumnSpec(index+1);
+    return spec.getResizeWeight() > 0.01d;
+  }
+
+  @Override
   public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int index, final Graphics2D g2d,
                                      final Rectangle rc) {
     // don't paint gap rows/columns with red background
@@ -380,12 +387,11 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
       g2d.fillRect(rc.x, rc.y, rc.width, rc.height);
     }
 
-    FormLayout layout = (FormLayout) container.getLayout();
-    FormSpec spec = isRow ? layout.getRowSpec(index+1) : layout.getColumnSpec(index+1);
-    if (spec.getResizeWeight() > 0.01d) {
+    if (canCellGrow(container, isRow, index)) {
       drawGrowMarker(isRow, g2d, rc);
     }
 
+    FormLayout layout = (FormLayout) container.getLayout();
     int[][] groups = isRow ? layout.getRowGroups() : layout.getColumnGroups();
     //noinspection MultipleVariablesInDeclaration
     boolean haveTopLeft = false, haveTopRight = false, haveTopLine = false;

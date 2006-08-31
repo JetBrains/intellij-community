@@ -5,13 +5,13 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.GridChangeUtil;
+import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -106,13 +106,20 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
                          ys[endRow] + heights[endRow] - ys[startRow]);
   }
 
+  public boolean canCellGrow(RadContainer container, boolean isRow, int i) {
+    return false;
+  }
+
   @Nullable
   public ActionGroup getCaptionActions() {
     return null;
   }
 
-  public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int i, final Graphics2D g2d,
+  public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int i, final Graphics2D g,
                                      final Rectangle rc) {
+    if (canCellGrow(container, isRow, i)) {
+      drawGrowMarker(isRow, g, rc);
+    }
   }
 
   /**
