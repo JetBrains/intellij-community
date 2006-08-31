@@ -84,7 +84,7 @@ public class AntPropertyReference extends AntGenericReference {
 
   public PsiElement resolve() {
     final PsiElement element = AntElementImpl.resolveProperty(getElement(), getCanonicalText());
-    if(element instanceof AntPropertyImpl) {
+    if (element instanceof AntPropertyImpl) {
       return ((AntPropertyImpl)element).getFormatElement();
     }
     return element;
@@ -99,7 +99,12 @@ public class AntPropertyReference extends AntGenericReference {
     try {
       final AntProject project = getElement().getAntProject();
       for (final AntProperty property : project.getProperties()) {
-        variants.add(property.getName());
+        final String[] names = property.getNames();
+        if (names != null) {
+          for (final String name : names) {
+            variants.add(name);
+          }
+        }
       }
       getVariants(project, variants);
       for (final AntFile imported : project.getImportedFiles()) {
@@ -122,9 +127,12 @@ public class AntPropertyReference extends AntGenericReference {
       for (final PsiElement child : project.getChildren()) {
         if (child instanceof AntProperty) {
           final PropertiesFile propFile = ((AntProperty)child).getPropertiesFile();
-          if (propFile != null && !files.contains(propFile.getName())) {
-            files.add(propFile.getName());
-            result.add(new AntCreatePropertyAction(this, propFile));
+          if (propFile != null) {
+            final String fileName = propFile.getName();
+            if (!files.contains(fileName)) {
+              files.add(fileName);
+              result.add(new AntCreatePropertyAction(this, propFile));
+            }
           }
         }
       }
@@ -143,9 +151,11 @@ public class AntPropertyReference extends AntGenericReference {
           AntProperty property = (AntProperty)child;
           final PropertiesFile propertiesFile = property.getPropertiesFile();
           if (propertiesFile == null) {
-            final String name = property.getName();
-            if (name != null) {
-              variants.add(name);
+            final String[] names = property.getNames();
+            if (names != null) {
+              for (final String name : names) {
+                variants.add(name);
+              }
             }
           }
           else {

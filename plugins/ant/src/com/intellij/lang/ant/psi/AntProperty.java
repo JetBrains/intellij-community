@@ -27,4 +27,7 @@ public interface AntProperty extends AntTask {
 
   @Nullable
   String getEnvironment();
+
+  @Nullable
+  String[] getNames();
 }

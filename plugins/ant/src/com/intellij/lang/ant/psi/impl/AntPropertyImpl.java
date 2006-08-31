@@ -1,10 +1,7 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.AntElementRole;
-import com.intellij.lang.ant.psi.AntCall;
-import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntProperty;
-import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiElement;
@@ -14,16 +11,14 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.StringSetSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.util.*;
 
 public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
@@ -35,9 +30,10 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
                          final AntTypeDefinition definition,
                          @NonNls final String nameElementAttribute) {
     super(parent, sourceElement, definition, nameElementAttribute);
+    final AntProject project = getAntProject();
     myPropHolder = parent;
-    if (myPropHolder instanceof AntCall) {
-      myPropHolder = myPropHolder.getAntProject();
+    if (parent instanceof AntTarget || parent instanceof AntCall) {
+      myPropHolder = project;
     }
     final String name = getName();
     if (name != null) {
@@ -46,21 +42,23 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     else {
       final String environment = getEnvironment();
       if (environment != null) {
-        getAntProject().addEnvironmentPropertyPrefix(environment);
+        project.addEnvironmentPropertyPrefix(environment);
       }
       else {
         final XmlTag se = getSourceElement();
         if ("tstamp".equals(se.getName())) {
           String prefix = se.getAttributeValue("prefix");
           if (prefix == null) {
-            prefix = "";
+            myPropHolder.setProperty("DSTAMP", this);
+            myPropHolder.setProperty("TSTAMP", this);
+            myPropHolder.setProperty("TODAY", this);
           }
           else {
             prefix += '.';
+            myPropHolder.setProperty(prefix + "DSTAMP", this);
+            myPropHolder.setProperty(prefix + "TSTAMP", this);
+            myPropHolder.setProperty(prefix + "TODAY", this);
           }
-          myPropHolder.setProperty(prefix + "DSTAMP", this);
-          myPropHolder.setProperty(prefix + "TSTAMP", this);
-          myPropHolder.setProperty(prefix + "TODAY", this);
           final XmlAttributeValue value = getTstampPropertyAttributeValue();
           if (value != null && value.getValue() != null) {
             myPropHolder.setProperty(value.getValue(), this);
@@ -159,6 +157,41 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   @Nullable
   public String getEnvironment() {
     return computeAttributeValue(getSourceElement().getAttributeValue("environment"));
+  }
+
+  @Nullable
+  public String[] getNames() {
+    final XmlTag se = getSourceElement();
+    if ("tstamp".equals(se.getName())) {
+      final Set<String> strings = StringSetSpinAllocator.alloc();
+      try {
+        String prefix = se.getAttributeValue("prefix");
+        if (prefix == null) {
+          strings.add("DSTAMP");
+          strings.add("TSTAMP");
+          strings.add("TODAY");
+        }
+        else {
+          prefix += '.';
+          strings.add(prefix + "DSTAMP");
+          strings.add(prefix + "TSTAMP");
+          strings.add(prefix + "TODAY");
+        }
+        final XmlAttributeValue value = getTstampPropertyAttributeValue();
+        if (value != null && value.getValue() != null) {
+          strings.add(value.getValue());
+        }
+        return strings.toArray(new String[strings.size()]);
+      }
+      finally {
+        StringSetSpinAllocator.dispose(strings);
+      }
+    }
+    final String name = getName();
+    if (name != null) {
+      return new String[]{name};
+    }
+    return null;
   }
 
   public void clearCaches() {
