@@ -492,12 +492,18 @@ public class ActionsTreeUtil {
             .isComponentHighlighted(text, filter, force, ApplicationManager.getApplication().getComponent(KeymapConfigurable.class))) {
             return true;
           }
+          else if (text.indexOf(filter) != -1) {
+            return true;
+          }
         }
         final String description = action.getTemplatePresentation().getDescription();
         if (description != null) {
           if (SearchUtil
-            .isComponentHighlighted(description, filter, force, ApplicationManager.getApplication().getComponent(KeymapConfigurable.class)))
-          {
+            .isComponentHighlighted(description, filter, force,
+                                    ApplicationManager.getApplication().getComponent(KeymapConfigurable.class))) {
+            return true;
+          }
+          else if (description.indexOf(filter) != -1) {
             return true;
           }
         }
