@@ -11,6 +11,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -103,6 +104,13 @@ public class ProjectJdkStep extends ModuleWizardStep {
       if (result != 0) {
         return false;
       }
+    }
+    try {
+      myProjectJdksConfigurable.apply();
+    }
+    catch (ConfigurationException e) {
+      Messages.showErrorDialog(myJDKsComponent, e.getMessage(), e.getTitle());
+      return false;
     }
     return true;
   }
