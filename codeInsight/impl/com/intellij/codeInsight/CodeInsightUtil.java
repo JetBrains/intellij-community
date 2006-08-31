@@ -13,17 +13,19 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportList;
-import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -398,15 +400,22 @@ public class CodeInsightUtil {
     return findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), (Class<? extends T>)element.getClass());
   }
 
+  private static Key<Boolean> ANT_FILE_SIGN = new Key<Boolean>("FORCED ANT FILE");
+
   public static boolean isAntFile(final PsiFile file) {
-    if (file instanceof XmlFileImpl) {
-      final XmlFileImpl xmlFile = (XmlFileImpl)file;
+    if (file instanceof XmlFile) {
+      final XmlFile xmlFile = (XmlFile)file;
       final XmlDocument document = xmlFile.getDocument();
       if (document != null) {
         final XmlTag tag = document.getRootTag();
-        if (tag != null && "project".equals(tag.getName()) && tag.getContext()instanceof XmlDocument &&
-            tag.getAttributeValue("default") != null) {
-          return true;
+        if (tag != null && "project".equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
+          if (tag.getAttributeValue("default") != null) {
+            return true;
+          }
+          final VirtualFile vFile = xmlFile.getVirtualFile();
+          if (vFile != null && vFile.getUserData(ANT_FILE_SIGN) != null) {
+            return true;
+          }
         }
       }
     }

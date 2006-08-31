@@ -15,18 +15,19 @@ public class AntLanguageExtension implements LanguageExtension {
   public static Key<Boolean> ANT_FILE_SIGN = new Key<Boolean>("FORCED ANT FILE");
 
   public boolean isRelevantForFile(final PsiFile psi) {
-    if (!(psi instanceof XmlFile)) return false;
-    final XmlFile xmlFile = (XmlFile)psi;
-    final XmlDocument document = xmlFile.getDocument();
-    if (document != null) {
-      final XmlTag tag = document.getRootTag();
-      if (tag != null && "project".equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
-        if (tag.getAttributeValue("default") != null) {
-          return true;
-        }
-        final VirtualFile file = xmlFile.getVirtualFile();
-        if( file != null && file.getUserData(ANT_FILE_SIGN) != null) {
-          return true;
+    if (psi instanceof XmlFile) {
+      final XmlFile xmlFile = (XmlFile)psi;
+      final XmlDocument document = xmlFile.getDocument();
+      if (document != null) {
+        final XmlTag tag = document.getRootTag();
+        if (tag != null && "project".equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
+          if (tag.getAttributeValue("default") != null) {
+            return true;
+          }
+          final VirtualFile file = xmlFile.getVirtualFile();
+          if (file != null && file.getUserData(ANT_FILE_SIGN) != null) {
+            return true;
+          }
         }
       }
     }
