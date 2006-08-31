@@ -8,10 +8,12 @@
       <interface-class>com.intellij.openapi.application.ApplicationInfo</interface-class>
       <implementation-class>com.intellij.openapi.application.impl.ApplicationInfoImpl</implementation-class>
     </component>
+    <!--
     <component>
       <interface-class>com.intellij.lang.jsp.jspxLike.JspxLikeTreeParserDefinition</interface-class>
       <implementation-class>com.intellij.lang.jsp.jspxLike.JspxLikeTreeParserDefinitionImpl</implementation-class>
     </component>
+    -->
     <component>
       <interface-class>com.intellij.psi.meta.MetaDataRegistrar</interface-class>
       <implementation-class>com.intellij.psi.impl.meta.MetaRegistry</implementation-class>
@@ -333,9 +335,11 @@
     <component>
       <implementation-class>com.intellij.psi.impl.source.PostprocessReformattingAspect</implementation-class>
     </component>
+    <!--
     <component>
       <implementation-class>com.intellij.lang.jsp.jspxLike.impl.JspxLikeXmlTextSynchronizer</implementation-class>
     </component>
+    -->
   </project-components>
 
 
