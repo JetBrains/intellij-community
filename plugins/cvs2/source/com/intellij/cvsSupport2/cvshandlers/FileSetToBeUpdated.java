@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.CvsBundle;
 
 
 /**
@@ -44,9 +45,11 @@ public abstract class FileSetToBeUpdated {
   public abstract void refreshFilesAsync(Runnable postRunnable);
 
   public void refreshSync() {
+    ModalityState modalityState = ModalityState.NON_MODAL;
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null) {
       setSynchronizingFilesTextToProgress(progressIndicator);
+      modalityState = progressIndicator.getModalityState();
     }
 
     final Semaphore semaphore = new Semaphore();
@@ -61,12 +64,12 @@ public abstract class FileSetToBeUpdated {
           }
         });
       }
-    });
+    }, modalityState);
     semaphore.waitFor();
   }
 
   protected void setSynchronizingFilesTextToProgress(ProgressIndicator progressIndicator) {
-    progressIndicator.setText(com.intellij.CvsBundle.message("progress.text.synchronizing.files"));
+    progressIndicator.setText(CvsBundle.message("progress.text.synchronizing.files"));
     progressIndicator.setText2("");
   }
 }
