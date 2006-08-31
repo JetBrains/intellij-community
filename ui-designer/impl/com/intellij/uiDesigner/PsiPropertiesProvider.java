@@ -61,16 +61,6 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
         continue;
       }
 
-      //noinspection HardCodedStringLiteral
-      if (
-        name.equals("preferredSize") ||
-        name.equals("minimumSize") ||
-        name.equals("maximumSize")
-        ) {
-        // our own properties must be used instead
-        continue;
-      }
-
       final PsiType type = getter.getReturnType();
       final String propertyClassName = type.getCanonicalText();
 

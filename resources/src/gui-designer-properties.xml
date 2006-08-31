@@ -16,6 +16,9 @@
       <property name="focusTraversalPolicyProvider"/>
       <property name="alignmentX"/>
       <property name="alignmentY"/>
+      <property name="minimumSize"/>
+      <property name="maximumSize"/>
+      <property name="preferredSize"/>
     </expert-properties>
   </class>
   

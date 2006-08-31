@@ -5,6 +5,7 @@ import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadGridLayoutManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -128,4 +129,14 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
     return (V) myReadMethod.invoke(newComponent, EMPTY_OBJECT_ARRAY);
   }
 
+  @Override
+  public boolean appliesTo(final RadComponent component) {
+    @NonNls String name = getName();
+    //noinspection SimplifiableIfStatement
+    if (name.equals("preferredSize") || name.equals("minimumSize") || name.equals("maximumSize")) {
+      // our own properties must be used instead
+      return !(component.getParent().getLayoutManager() instanceof RadGridLayoutManager);
+    }
+    return true;
+  }
 }

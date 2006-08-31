@@ -74,8 +74,12 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
         }
         writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_WEIGHTX, gbc.weightx);
         writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_WEIGHTY, gbc.weighty);
-        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_IPADX, gbc.ipadx);
-        writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_IPADY, gbc.ipady);
+        if (gbc.ipadx != 0) {
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_IPADX, gbc.ipadx);
+        }
+        if (gbc.ipady != 0) {
+          writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_IPADY, gbc.ipady);
+        }
       }
       finally {
         writer.endElement();

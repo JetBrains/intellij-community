@@ -531,7 +531,6 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
       }
     }
   }
-
   /**
    * Helper method
    */
@@ -588,11 +587,6 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
         }
 
         @NonNls final String name = descriptor.getName();
-
-        if (name.equals("preferredSize") || name.equals("minimumSize") || name.equals("maximumSize")) {
-          // our own properties must be used instead
-          continue;
-        }
 
         final IntrospectedProperty property;
 

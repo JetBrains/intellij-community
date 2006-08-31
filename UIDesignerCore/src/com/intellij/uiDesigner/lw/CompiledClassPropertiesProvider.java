@@ -79,15 +79,6 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
 
       final String name = descriptor.getName();
 
-      if (
-        "preferredSize".equals(name) ||
-        "minimumSize".equals(name) ||
-        "maximumSize".equals(name)
-      ) {
-        // our own properties must be used instead
-        continue;
-      }
-
       final LwIntrospectedProperty property = propertyFromClass(descriptor.getPropertyType(), name);
 
       if (property != null) {
