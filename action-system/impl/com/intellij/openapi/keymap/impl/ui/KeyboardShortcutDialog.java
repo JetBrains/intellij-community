@@ -3,9 +3,9 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.IdeBorderFactory;
@@ -15,12 +15,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
-
-import org.jetbrains.annotations.NonNls;
 
 public class KeyboardShortcutDialog extends DialogWrapper {
   private StrokePanel myFirstStrokePanel;
@@ -28,7 +25,6 @@ public class KeyboardShortcutDialog extends DialogWrapper {
   private JCheckBox myEnableSecondKeystroke;
   private JLabel myKeystrokePreview;
   private JTextArea myConflictInfoArea;
-  private JScrollPane myConflictInfoScroll;
   private Keymap myKeymap;
   private String myActionId;
   private Group myMainGroup;
@@ -97,10 +93,10 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     myConflictInfoArea.setBackground(panel.getBackground());
     myConflictInfoArea.setLineWrap(true);
     myConflictInfoArea.setWrapStyleWord(true);
-    myConflictInfoScroll = new JScrollPane(myConflictInfoArea);
-    myConflictInfoScroll.setPreferredSize(new Dimension(260, 60));
-    myConflictInfoScroll.setBorder(null);
-    conflictsPanel.add(myConflictInfoScroll);
+    final JScrollPane conflictInfoScroll = new JScrollPane(myConflictInfoArea);
+    conflictInfoScroll.setPreferredSize(new Dimension(260, 60));
+    conflictInfoScroll.setBorder(null);
+    conflictsPanel.add(conflictInfoScroll);
     panel.add(
       conflictsPanel,
       new GridBagConstraints(0,4,1,1,1,1,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,0,0,0),0,0)
@@ -171,14 +167,13 @@ public class KeyboardShortcutDialog extends DialogWrapper {
 
     Set<String> keys = conflicts.keySet();
     String[] actionIds = keys.toArray(new String[keys.size()]);
-    for(int i = 0; i < actionIds.length; i++) {
-      String actionId = actionIds[i];
+    for (String actionId : actionIds) {
       String actionPath = myMainGroup.getActionQualifiedPath(actionId);
       // actionPath == null for editor actions having corresponding $-actions
-      if (actionPath == null){
+      if (actionPath == null) {
         continue;
       }
-      if(buffer.length() > 1) {
+      if (buffer.length() > 1) {
         buffer.append('\n');
       }
       buffer.append('[');
@@ -209,7 +204,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     return new KeyboardShortcut(firstStroke, secondStroke);
   }
 
-  private String getTextByKeyStroke(KeyStroke keyStroke) {
+  static String getTextByKeyStroke(KeyStroke keyStroke) {
     if(keyStroke == null) {
       return "";
     }
@@ -232,7 +227,11 @@ public class KeyboardShortcutDialog extends DialogWrapper {
         )
       );
 
-      myShortcutTextField = new ShortcutTextField();
+      myShortcutTextField = new ShortcutTextField(){
+        protected void updateCurrentKeyStrokeInfo() {
+          KeyboardShortcutDialog.this.updateCurrentKeyStrokeInfo();
+        }
+      };
       add(myShortcutTextField);
     }
 
@@ -247,42 +246,6 @@ public class KeyboardShortcutDialog extends DialogWrapper {
 
     public KeyStroke getKeyStroke() {
       return myShortcutTextField.getKeyStroke();
-    }
-  }
-
-  public class ShortcutTextField extends JTextField {
-    private KeyStroke myKeyStroke;
-
-    public ShortcutTextField() {
-      enableEvents(KeyEvent.KEY_EVENT_MASK);
-      setFocusTraversalKeysEnabled(false);
-    }
-
-    protected void processKeyEvent(KeyEvent e) {
-      if (e.getID() == KeyEvent.KEY_PRESSED) {
-        int keyCode = e.getKeyCode();
-        if (
-          keyCode == KeyEvent.VK_SHIFT ||
-          keyCode == KeyEvent.VK_ALT ||
-          keyCode == KeyEvent.VK_CONTROL ||
-          keyCode == KeyEvent.VK_ALT_GRAPH ||
-          keyCode == KeyEvent.VK_META
-        ){
-          return;
-        }
-
-        setKeyStroke(KeyStroke.getKeyStroke(keyCode, e.getModifiers()));
-      }
-    }
-
-    public void setKeyStroke(KeyStroke keyStroke) {
-      myKeyStroke = keyStroke;
-      setText(getTextByKeyStroke(keyStroke));
-      updateCurrentKeyStrokeInfo();
-    }
-
-    public KeyStroke getKeyStroke() {
-      return myKeyStroke;
     }
   }
 }

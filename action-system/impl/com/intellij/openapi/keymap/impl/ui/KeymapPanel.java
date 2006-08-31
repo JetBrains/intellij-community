@@ -23,6 +23,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
+import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -33,7 +34,6 @@ import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -238,7 +238,7 @@ public class KeymapPanel extends JPanel {
     rightPanel.add(createDescriptionPanel());
     rightPanel.add(createShortcutsPanel());
 
-    panel.add(rightPanel, new GridBagConstraints(1,1,1,1,0,1,GridBagConstraints.WEST, GridBagConstraints.BOTH,new Insets(0,5,0,0),0,0));
+    panel.add(rightPanel, new GridBagConstraints(1,1,1,1,0,1,GridBagConstraints.WEST, GridBagConstraints.VERTICAL,new Insets(0,5,0,0),0,0));
 
     myTreeExpansionMonitor = TreeExpansionMonitor.install(myActionsTree.getTree());
     return panel;
@@ -272,17 +272,24 @@ public class KeymapPanel extends JPanel {
     panel.add(toolbar, new GridBagConstraints(0,0,1,1,1,0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(8,0,0,0), 0,0));
     group = new DefaultActionGroup();
     final JComponent searchToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+    final Alarm alarm = new Alarm();
     myFilterComponent = new FilterComponent("KEYMAP", 5){
       public void filter() {
-        if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
-        final String filter = getFilter();
-        myActionsTree.filter(filter, myQuickListsPanel.getCurrentQuickListIds());
-        final JTree tree = myActionsTree.getTree();
-        TreeUtil.expandAll(tree);
-        if (filter == null || filter.length() == 0){
-          TreeUtil.collapseAll(tree, 0);
-          myTreeExpansionMonitor.restore();
-        }
+        alarm.cancelAllRequests();
+        alarm.addRequest(new Runnable() {
+          public void run() {
+            if (!myFilterComponent.isShowing()) return;
+            if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
+            final String filter = getFilter();
+            myActionsTree.filter(filter, myQuickListsPanel.getCurrentQuickListIds());
+            final JTree tree = myActionsTree.getTree();
+            TreeUtil.expandAll(tree);
+            if (filter == null || filter.length() == 0){
+              TreeUtil.collapseAll(tree, 0);
+              myTreeExpansionMonitor.restore();
+            }
+          }
+        }, 300);
       }
     };
     myFilterComponent.reset();
@@ -386,7 +393,11 @@ public class KeymapPanel extends JPanel {
     enable2Shortcut.setSelected(false);
     secondLabel.setEnabled(false);
     secondShortcut.setEnabled(false);
-    firstShortcut.requestFocusInWindow();
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        firstShortcut.requestFocus();
+      }
+    });
     return filterComponent;
   }
 
@@ -826,33 +837,6 @@ public class KeymapPanel extends JPanel {
 
   public void selectAction(String actionId) {
     myActionsTree.selectAction(actionId);
-  }
-
-
-  public static class ShortcutTextField extends JTextField {
-    private KeyStroke myKeyStroke;
-
-    public ShortcutTextField() {
-      enableEvents(KeyEvent.KEY_EVENT_MASK);
-      setFocusTraversalKeysEnabled(false);
-    }
-
-    protected void processKeyEvent(KeyEvent e) {
-      if (e.getID() == KeyEvent.KEY_PRESSED) {
-        int keyCode = e.getKeyCode();
-        if (keyCode == KeyEvent.VK_SHIFT || keyCode == KeyEvent.VK_ALT || keyCode == KeyEvent.VK_CONTROL ||
-            keyCode == KeyEvent.VK_ALT_GRAPH || keyCode == KeyEvent.VK_META) {
-          return;
-        }
-
-        myKeyStroke = KeyStroke.getKeyStroke(keyCode, e.getModifiers());
-        setText(KeymapUtil.getKeystrokeText(myKeyStroke));
-      }
-    }
-
-    public KeyStroke getKeyStroke() {
-      return myKeyStroke;
-    }
   }
 
   private static class MyEditor implements ComboBoxEditor {

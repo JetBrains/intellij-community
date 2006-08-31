@@ -13,7 +13,7 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.impl.ui.KeyboardShortcutDialog;
+import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -87,7 +87,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     Component focusOwner = focusManager.getFocusOwner();
 
     // shortcuts should not work in shortcut setup fields
-    if (focusOwner instanceof KeyboardShortcutDialog.ShortcutTextField) {
+    if (focusOwner instanceof ShortcutTextField) {
       return false;
     }
 
@@ -129,7 +129,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   /**
    * @return <code>true</code> if and only if the <code>component</code> represents
    * modal context.
-   * @throws java.lang.IllegalArgumentException if <code>component</code> is <code>null</code>.
+   * @throws IllegalArgumentException if <code>component</code> is <code>null</code>.
    */
   public static boolean isModalContext(Component component) {
     if(component==null){
@@ -160,17 +160,16 @@ public final class IdeKeyEventDispatcher implements Disposable {
    * This is hack. AWT doesn't allow to create KeyStroke with specified key code and key char
    * simultaneously. Therefore we are using reflection.
    */
-  private KeyStroke getKeyStrokeWithoutMouseModifiers(KeyStroke originalKeyStroke){
+  private static KeyStroke getKeyStrokeWithoutMouseModifiers(KeyStroke originalKeyStroke){
     int modifier=originalKeyStroke.getModifiers()&~InputEvent.BUTTON1_DOWN_MASK&~InputEvent.BUTTON1_MASK&
                  ~InputEvent.BUTTON2_DOWN_MASK&~InputEvent.BUTTON2_MASK&
                  ~InputEvent.BUTTON3_DOWN_MASK&~InputEvent.BUTTON3_MASK;
     try {
       Method[] methods=AWTKeyStroke.class.getDeclaredMethods();
       Method getCachedStrokeMethod=null;
-      for(int i=0;i<methods.length;i++){
-        Method method=methods[i];
-        if(GET_CACHED_STROKE_METHOD_NAME.equals(method.getName())){
-          getCachedStrokeMethod=method;
+      for (Method method : methods) {
+        if (GET_CACHED_STROKE_METHOD_NAME.equals(method.getName())) {
+          getCachedStrokeMethod = method;
           getCachedStrokeMethod.setAccessible(true);
           break;
         }
@@ -178,12 +177,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if(getCachedStrokeMethod==null){
         throw new IllegalStateException("not found method with name getCachedStrokeMethod");
       }
-      Object[] getCachedStrokeMethodArgs=new Object[]{
-        new Character(originalKeyStroke.getKeyChar()),
-        new Integer(originalKeyStroke.getKeyCode()),
-        new Integer(modifier),
-        new Boolean(originalKeyStroke.isOnKeyRelease())
-      };
+      Object[] getCachedStrokeMethodArgs=new Object[]{originalKeyStroke.getKeyChar(), originalKeyStroke.getKeyCode(), modifier, originalKeyStroke.isOnKeyRelease()};
       KeyStroke keyStroke=(KeyStroke)getCachedStrokeMethod.invoke(
         originalKeyStroke,
         getCachedStrokeMethodArgs
@@ -261,11 +255,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if(hasSecondStroke){
       myFirstKeyStroke=keyStroke;
       ArrayList<Pair<AnAction, KeyStroke>> secondKeyStorkes = new ArrayList<Pair<AnAction,KeyStroke>>();
-      for (int i = 0; i < myActions.size(); i++) {
-        AnAction action = myActions.get(i);
+      for (AnAction action : myActions) {
         Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
-        for (int j = 0; j < shortcuts.length; j++) {
-          Shortcut shortcut = shortcuts[j];
+        for (Shortcut shortcut : shortcuts) {
           if (shortcut instanceof KeyboardShortcut) {
             KeyboardShortcut keyShortcut = (KeyboardShortcut)shortcut;
             if (keyShortcut.getFirstKeyStroke().equals(myFirstKeyStroke)) {
@@ -300,13 +292,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
   }
 
-  private boolean hasMnemonicInWindow(Component focusOwner, int keyCode) {
+  private static boolean hasMnemonicInWindow(Component focusOwner, int keyCode) {
     if (keyCode == KeyEvent.VK_ALT || keyCode == 0) return false; // Optimization
     final Container container = getContainer(focusOwner);
     return hasMnemonic(container, keyCode);
   }
 
-  private Container getContainer(final Component focusOwner) {
+  private static Container getContainer(final Component focusOwner) {
     if (focusOwner.isLightweight()) {
       Container container = focusOwner.getParent();
       while (container != null) {
@@ -325,7 +317,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return SwingUtilities.windowForComponent(focusOwner);
   }
 
-  private boolean hasMnemonic(final Container container, final int keyCode) {
+  private static boolean hasMnemonic(final Container container, final int keyCode) {
     if (container == null) return false;
 
     final Component[] components = container.getComponents();
@@ -343,14 +335,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private boolean processAction(final KeyEvent e, DataContext dataContext) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    for (int i=0; i < myActions.size(); i++) {
-      final AnAction action = myActions.get(i);
+    for (final AnAction action : myActions) {
       final Presentation presentation = myPresentationFactory.getPresentation(action);
 
       // Mouse modifiers are 0 because they have no any sense when action is invoked via keyboard
-      final AnActionEvent actionEvent = new AnActionEvent(e, dataContext, ActionPlaces.MAIN_MENU, presentation,
-                                                          ActionManager.getInstance(),
-                                                          0);
+      final AnActionEvent actionEvent =
+        new AnActionEvent(e, dataContext, ActionPlaces.MAIN_MENU, presentation, ActionManager.getInstance(), 0);
       action.beforeActionPerformedUpdate(actionEvent);
       if (!presentation.isEnabled()) {
         continue;
@@ -393,12 +383,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if (listOfActions == null) {
         continue;
       }
-      for (int i=0; i < listOfActions.size(); i++) {
-        Object o = listOfActions.get(i);
-        if (!(o instanceof AnAction)) {
+      for (Object listOfAction : listOfActions) {
+        if (!(listOfAction instanceof AnAction)) {
           continue;
         }
-        AnAction action = (AnAction)o;
+        AnAction action = (AnAction)listOfAction;
         hasSecondStroke |= addAction(action, firstKeyStroke, secondKeyStroke);
       }
       // once we've found a proper local shortcut(s), we continue with non-local shortcuts
@@ -420,11 +409,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     ActionManager actionManager = ActionManager.getInstance();
-    for (int i = 0; i < actionIds.length; i++) {
-      String actionId = actionIds[i];
+    for (String actionId : actionIds) {
       AnAction action = actionManager.getAction(actionId);
-      if (action != null){
-        if (isModalContext && !action.isEnabledInModalContext()){
+      if (action != null) {
+        if (isModalContext && !action.isEnabledInModalContext()) {
           continue;
         }
         hasSecondStroke |= addAction(action, firstKeyStroke, secondKeyStroke);
@@ -440,16 +428,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
     boolean hasSecondStroke = false;
 
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
-    for (int j = 0; j < shortcuts.length; j++) {
-      Shortcut shortcut = shortcuts[j];
+    for (Shortcut shortcut : shortcuts) {
       if (!(shortcut instanceof KeyboardShortcut)) {
         continue;
       }
       KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
-      if (
-        firstKeyStroke.equals(keyboardShortcut.getFirstKeyStroke()) &&
-        (secondKeyStroke == null || secondKeyStroke.equals(keyboardShortcut.getSecondKeyStroke()))
-      ) {
+      if (firstKeyStroke.equals(keyboardShortcut.getFirstKeyStroke()) &&
+          (secondKeyStroke == null || secondKeyStroke.equals(keyboardShortcut.getSecondKeyStroke()))) {
         if (!myActions.contains(action)) {
           myActions.add(action);
         }
