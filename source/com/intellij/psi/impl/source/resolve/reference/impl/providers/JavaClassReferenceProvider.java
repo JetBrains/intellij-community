@@ -428,7 +428,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
           if (psiElement instanceof PsiClass) {
             final PsiClass psiClass = ((PsiClass)psiElement).findInnerClassByName(getCanonicalText(), false);
-            if (psiClass != null) return new ClassCandidateInfo(psiClass, PsiSubstitutor.EMPTY, false, false, myElement);
+            if (psiClass != null) return new ClassCandidateInfo(psiClass, PsiSubstitutor.EMPTY, false, myElement);
             return JavaResolveResult.EMPTY;
           }
         }
@@ -439,7 +439,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
         if (myIndex == myReferences.length - 1) {
           final PsiClass aClass = manager.findClass(qName, GlobalSearchScope.allScope(myElement.getProject()));
           if (aClass != null) {
-            return new ClassCandidateInfo(aClass, PsiSubstitutor.EMPTY, false, false, myElement);
+            return new ClassCandidateInfo(aClass, PsiSubstitutor.EMPTY, false, myElement);
           } else {
             final Boolean value = RESOLVE_ONLY_CLASSES.getValue(myOptions);
             if (value != null && value.booleanValue()) {
@@ -485,7 +485,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
           }
         }
         return resolveResult != null
-               ? new ClassCandidateInfo(resolveResult, PsiSubstitutor.EMPTY, false, false, myElement)
+               ? new ClassCandidateInfo(resolveResult, PsiSubstitutor.EMPTY, false, myElement)
                : JavaResolveResult.EMPTY;
       }
 

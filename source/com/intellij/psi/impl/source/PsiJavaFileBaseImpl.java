@@ -381,9 +381,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
           if (targetElement != null) {
             staticImportProcessor.setNameToFilter(null);
             staticImportProcessor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, importStaticStatement);
-            staticImportProcessor.handleEvent(PsiScopeProcessor.Event.BEGIN_GROUP, null);
             final boolean result = targetElement.processDeclarations(staticImportProcessor, substitutor, lastParent, place);
-            staticImportProcessor.handleEvent(PsiScopeProcessor.Event.END_GROUP, null);
             if (!result) return false;
           }
         }
@@ -397,11 +395,9 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private static boolean processOnDemandTarget (PsiElement target, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement place) {
     if (target instanceof PsiPackage) {
-      processor.handleEvent(PsiScopeProcessor.Event.BEGIN_GROUP, null);
       if (!PsiScopesUtil.processScope(target, processor, substitutor, null, place)) {
         return false;
       }
-      processor.handleEvent(PsiScopeProcessor.Event.END_GROUP, null);
     }
     else if (target instanceof PsiClass) {
       PsiClass[] inners = ((PsiClass)target).getInnerClasses();

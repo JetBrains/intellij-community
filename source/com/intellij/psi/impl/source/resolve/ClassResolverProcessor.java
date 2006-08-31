@@ -16,7 +16,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   private final String myClassName;
   private PsiElement myPlace;
   private PsiClass myAccessClass = null;
-  private List<CandidateInfo> myCandidates = null;
+  private List<ClassCandidateInfo> myCandidates = null;
   private boolean myHasAccessibleCandidate;
   private boolean myHasInaccessibleCandidate;
   private JavaResolveResult[] myResult = JavaResolveResult.EMPTY_ARRAY;
@@ -45,7 +45,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     if (myResult != null) return myResult;
     if (myCandidates == null) return myResult = JavaResolveResult.EMPTY_ARRAY;
     if (myHasAccessibleCandidate && myHasInaccessibleCandidate) {
-      for (Iterator<CandidateInfo> iterator = myCandidates.iterator(); iterator.hasNext();) {
+      for (Iterator<ClassCandidateInfo> iterator = myCandidates.iterator(); iterator.hasNext();) {
         CandidateInfo info = iterator.next();
         if (!info.isAccessible()) iterator.remove();
       }
@@ -64,22 +64,13 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     return PsiClass.class.isAssignableFrom(elementClass);
   }
 
-  private boolean myGrouped = false;
   private boolean myStaticContext = false;
 
   public void handleEvent(Event event, Object associated) {
-    if (event == Event.BEGIN_GROUP) {
-      myGrouped = true;
-    }
-    else if (event == Event.END_GROUP) {
-      myGrouped = false;
-    }
-    else if (event == Event.START_STATIC) {
+    if (event == Event.START_STATIC) {
       myStaticContext = true;
     } else if (event == Event.SET_CURRENT_FILE_CONTEXT) {
       myCurrentFileContext = (PsiElement)associated;
-    }
-    else if (event == Event.SET_DECLARATION_HOLDER) {
     }
   }
 
@@ -88,26 +79,33 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       final PsiClass aClass = (PsiClass)element;
       final String name = aClass.getName();
       if (myClassName.equals(name)) {
-        boolean accessible = myPlace == null || checkAccessibility(aClass);
-        myHasAccessibleCandidate |= accessible;
-        myHasInaccessibleCandidate |= !accessible;
-
-        myResult = null;
         if (myCandidates == null) {
-          myCandidates = new ArrayList<CandidateInfo>();
+          myCandidates = new ArrayList<ClassCandidateInfo>();
         }
         else {
           String fqName = aClass.getQualifiedName();
           if (fqName != null) {
-            for (final CandidateInfo myCandidate : myCandidates) {
-              final ClassCandidateInfo info = (ClassCandidateInfo)myCandidate;
-              if (fqName.equals(info.getCandidate().getQualifiedName())) {
+            for (ClassCandidateInfo info : myCandidates) {
+              final PsiClass otherClass = info.getElement();
+              assert otherClass != null;
+              if (fqName.equals(otherClass.getQualifiedName())) {
+                return true;
+              }
+              final PsiClass containingclass1 = aClass.getContainingClass();
+              final PsiClass containingclass2 = otherClass.getContainingClass();
+              if (containingclass1 != null && containingclass2 != null && containingclass2.isInheritor(containingclass1, true)) {
+                //shadowing
                 return true;
               }
             }
           }
         }
-        myCandidates.add(new ClassCandidateInfo(aClass, substitutor, !accessible, myGrouped, myCurrentFileContext));
+
+        boolean accessible = myPlace == null || checkAccessibility(aClass);
+        myHasAccessibleCandidate |= accessible;
+        myHasInaccessibleCandidate |= !accessible;
+        myCandidates.add(new ClassCandidateInfo(aClass, substitutor, !accessible, myCurrentFileContext));
+        myResult = null;
         return !accessible;
       }
     }

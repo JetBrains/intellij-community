@@ -26,15 +26,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 
 public interface PsiScopeProcessor {
-  final class Event{
-    public static final Event START_STATIC = new Event();
-    public static final Event BEGIN_GROUP = new Event();
-    public static final Event END_GROUP = new Event();
-    public static final Event CHANGE_LEVEL = new Event();
-    public static final Event SET_DECLARATION_HOLDER = new Event();
-    public static final Event SET_CURRENT_FILE_CONTEXT = new Event();
-    public static final Event CHANGE_PROPERTY_PREFIX = new Event();
-    public static final Event SET_PARAMETERS = new Event();
+  enum Event {
+    START_STATIC,
+    CHANGE_LEVEL,
+    SET_DECLARATION_HOLDER,
+    SET_CURRENT_FILE_CONTEXT,
+    CHANGE_PROPERTY_PREFIX,
+    SET_PARAMETERS
   }
 
   boolean execute(PsiElement element, PsiSubstitutor substitutor);

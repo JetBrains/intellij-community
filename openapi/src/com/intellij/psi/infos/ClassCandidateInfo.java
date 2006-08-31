@@ -27,23 +27,15 @@ import com.intellij.psi.PsiSubstitutor;
  * To change this template use Options | File Templates.
  */
 public class ClassCandidateInfo extends CandidateInfo{
-  private boolean myGrouped;
-  public ClassCandidateInfo(PsiElement candidate, PsiSubstitutor substitutor, boolean accessProblem, boolean grouped, PsiElement currFileContext){
+  public ClassCandidateInfo(PsiElement candidate, PsiSubstitutor substitutor, boolean accessProblem, PsiElement currFileContext){
     super(candidate, substitutor, accessProblem, false, currFileContext);
-    myGrouped = grouped;
   }
 
   public ClassCandidateInfo(PsiElement candidate, PsiSubstitutor substitutor){
     super(candidate, substitutor, false, false);
-    myGrouped = false;
   }
 
-
-  public boolean isGrouped(){
-    return myGrouped;
-  }
-
-  public PsiClass getCandidate(){
-    return (PsiClass) getElement();
+  public PsiClass getElement(){
+    return (PsiClass)super.getElement();
   }
 }
