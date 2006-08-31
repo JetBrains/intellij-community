@@ -50,7 +50,7 @@ public class UpdateRootInfo {
 
   public SVNURL getUrl() {
     try {
-      return SVNURL.parseURIDecoded(myUrl);
+      return SVNURL.parseURIEncoded(myUrl);
     }
     catch (SVNException e) {
       return null;
