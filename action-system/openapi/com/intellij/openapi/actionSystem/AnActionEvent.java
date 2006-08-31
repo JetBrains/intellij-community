@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.InputEvent;
 import java.util.HashMap;
@@ -33,9 +34,9 @@ import java.util.Map;
 public final class AnActionEvent {
   private final InputEvent myInputEvent;
   private final ActionManager myActionManager;
-  private final DataContext myDataContext;
-  private final String myPlace;
-  private final Presentation myPresentation;
+  @NotNull private final DataContext myDataContext;
+  @NotNull private final String myPlace;
+  @NotNull private final Presentation myPresentation;
   private final int myModifiers;
   private boolean myWorksInInjected;
   @NonNls private static final String ourInjectedPrefix = "$injected$.";
@@ -47,26 +48,17 @@ public final class AnActionEvent {
    */
   public AnActionEvent(
     InputEvent inputEvent,
-    DataContext dataContext,
-    @NonNls String place,
-    Presentation presentation,
+    @NotNull DataContext dataContext,
+    @NotNull @NonNls String place,
+    @NotNull Presentation presentation,
     ActionManager actionManager,
     int modifiers
   ){
     // TODO[vova,anton] make this constructor package local. No one is allowed to create AnActionEvents
     myInputEvent = inputEvent;
     myActionManager = actionManager;
-    if(dataContext==null){
-      throw new IllegalArgumentException("dataContext cannot be null");
-    }
     myDataContext = dataContext;
-    if(place==null){
-      throw new IllegalArgumentException("place cannot be null");
-    }
     myPlace = place;
-    if(presentation==null){
-      throw new IllegalArgumentException("presentation cannot be null");
-    }
     myPresentation = presentation;
     myModifiers = modifiers;
   }
@@ -103,6 +95,7 @@ public final class AnActionEvent {
    *
    * @return the data context instance.
    */
+  @NotNull
   public DataContext getDataContext() {
     if (!myWorksInInjected) {
       return myDataContext;
@@ -124,6 +117,7 @@ public final class AnActionEvent {
    * @return the place identifier
    * @see ActionPlaces
    */
+  @NotNull
   public String getPlace() {
     return myPlace;
   }
@@ -134,6 +128,7 @@ public final class AnActionEvent {
    *
    * @return the presentation instance.
    */
+  @NotNull
   public Presentation getPresentation() {
     return myPresentation;
   }
