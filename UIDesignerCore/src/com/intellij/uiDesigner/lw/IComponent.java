@@ -44,5 +44,7 @@ public interface IComponent {
 
   GridConstraints getConstraints();
 
+  Object getCustomLayoutConstraints();
+
   boolean accept(ComponentVisitor visitor);
 }

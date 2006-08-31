@@ -155,8 +155,13 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
   }
 
   @Override
-  public boolean canCellGrow(RadContainer container, boolean isRow, int i) {
-    return ((GridLayoutManager) container.getLayout()).willGrow(isRow, i);
+  public boolean canCellGrow(RadContainer container, boolean isRow, int cellIndex) {
+    final GridLayoutManager gridLayoutManager = ((GridLayoutManager)container.getLayout());
+    int maxSizePolicy = 0;
+    for(int i=0; i<gridLayoutManager.getCellCount(isRow); i++) {
+      maxSizePolicy = Math.max(maxSizePolicy, gridLayoutManager.getCellSizePolicy(isRow, i));
+    }
+    return gridLayoutManager.getCellSizePolicy(isRow, cellIndex) == maxSizePolicy;
   }
 
   public void processCellResized(RadContainer container, final boolean isRow, final int cell, final int newSize) {

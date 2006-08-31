@@ -12,10 +12,9 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.actions.*;
-import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.compiler.FormLayoutUtils;
+import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.uiDesigner.lw.FormLayoutSerializer;
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -25,7 +24,6 @@ import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.jgoodies.forms.factories.FormFactory;
 import com.jgoodies.forms.layout.*;
 import org.jetbrains.annotations.NonNls;
@@ -63,50 +61,31 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   }
 
   @Override
-  public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {
-    if (container.getLayout() instanceof GridLayoutManager) {
-      GridLayoutManager grid = (GridLayoutManager) container.getLayout();
+  protected void changeLayoutFromGrid(final RadContainer container, final List<RadComponent> contents, final List<Boolean> canRowsGrow,
+                                      final List<Boolean> canColumnsGrow) {
+    int rowCount = canRowsGrow.size();
+    int columnCount = canColumnsGrow.size();
+    RowSpec[] rowSpecs = new RowSpec [rowCount * 2 - 1];
+    ColumnSpec[] colSpecs = new ColumnSpec [columnCount * 2 - 1];
 
-      List<RadComponent> contents = collectComponents(container);
-
-      RowSpec[] rowSpecs = new RowSpec [grid.getRowCount() * 2 - 1];
-      ColumnSpec[] colSpecs = new ColumnSpec [grid.getColumnCount() * 2 - 1];
-
-      for(int i=0; i<grid.getRowCount(); i++) {
-        rowSpecs [i*2] = grid.willGrow(true, i) ? new RowSpec(ENCODED_FORMSPEC_GROW) : new RowSpec(DEFAULT_NOGROW_SIZE);
-        if (i*2+1 < rowSpecs.length) {
-          rowSpecs [i*2+1] = FormFactory.RELATED_GAP_ROWSPEC;
-        }
-      }
-      for(int i=0; i<grid.getColumnCount(); i++) {
-        colSpecs [i*2] = grid.willGrow(false, i) ? new ColumnSpec(ENCODED_FORMSPEC_GROW) : new ColumnSpec(DEFAULT_NOGROW_SIZE);
-        if (i*2+1 < colSpecs.length) {
-          colSpecs [i*2+1] = FormFactory.RELATED_GAP_COLSPEC;
-        }
-      }
-
-      container.setLayoutManager(this, new FormLayout(colSpecs, rowSpecs));
-
-      for(RadComponent c: contents) {
-        GridConstraints gc = c.getConstraints();
-        gc.setRow(gc.getRow() * 2);
-        gc.setColumn(gc.getColumn() * 2);
-        container.addComponent(c);
+    for(int i=0; i<rowCount; i++) {
+      rowSpecs [i*2] = canRowsGrow.get(i).booleanValue() ? new RowSpec(ENCODED_FORMSPEC_GROW) : new RowSpec(DEFAULT_NOGROW_SIZE);
+      if (i*2+1 < rowSpecs.length) {
+        rowSpecs [i*2+1] = FormFactory.RELATED_GAP_ROWSPEC;
       }
     }
-    else if (container.getLayoutManager().isIndexed()) {
-      convertIndexedToForm(container);
+    for(int i=0; i<columnCount; i++) {
+      colSpecs [i*2] = canColumnsGrow.get(i).booleanValue() ? new ColumnSpec(ENCODED_FORMSPEC_GROW) : new ColumnSpec(DEFAULT_NOGROW_SIZE);
+      if (i*2+1 < colSpecs.length) {
+        colSpecs [i*2+1] = FormFactory.RELATED_GAP_COLSPEC;
+      }
     }
-    else if (container.getComponentCount() == 0) {
-      container.setLayoutManager(this, new FormLayout(ENCODED_FORMSPEC_GROW, ENCODED_FORMSPEC_GROW));
-    }
-    else {
-      throw new IncorrectOperationException("Cannot change from " + container.getLayout() + " to grid layout");
-    }
+
+    container.setLayoutManager(this, new FormLayout(colSpecs, rowSpecs));
   }
 
-  private void convertIndexedToForm(final RadContainer container) {
-    List<RadComponent> components = collectComponents(container);
+  @Override
+  protected void changeLayoutFromIndexed(final RadContainer container, final List<RadComponent> components) {
     int maxSizePolicy = 0;
     for(RadComponent c: components) {
       maxSizePolicy = Math.max(maxSizePolicy, c.getConstraints().getHSizePolicy());
@@ -121,26 +100,6 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
       }
     }
     container.setLayoutManager(this, new FormLayout(colSpecs, new RowSpec[] { FormFactory.DEFAULT_ROWSPEC } ));
-    for(int i=0; i<components.size(); i++) {
-      GridConstraints gc = components.get(i).getConstraints();
-      gc.setRow(0);
-      gc.setColumn(i*2);
-      gc.setRowSpan(1);
-      gc.setColSpan(1);
-      container.addComponent(components.get(i));
-    }
-  }
-
-  private static List<RadComponent> collectComponents(final RadContainer container) {
-    List<RadComponent> contents = new ArrayList<RadComponent>();
-    for(int i=container.getComponentCount()-1; i >= 0; i--) {
-      final RadComponent component = container.getComponent(i);
-      if (!(component instanceof RadHSpacer) && !(component instanceof RadVSpacer)) {
-        contents.add(0, component);
-      }
-      container.removeComponent(component);
-    }
-    return contents;
   }
 
   @Override
@@ -262,10 +221,6 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
 
   @Override public int getGridColumnCount(RadContainer container) {
     return getFormLayout(container).getColumnCount();
-  }
-
-  private int getGridCellCount(RadContainer container, boolean isRow) {
-    return isRow ? getGridRowCount(container) : getGridColumnCount(container);
   }
 
   @Override public int[] getGridCellCoords(RadContainer container, boolean isRow) {
@@ -545,6 +500,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
 
   @Override
   public boolean isGapCell(RadContainer grid, boolean isRow, int cellIndex) {
+    //noinspection SimplifiableIfStatement
     if (cellIndex < 0 || cellIndex >= (isRow ? getGridRowCount(grid) : getGridColumnCount(grid))) {
       return false;
     }

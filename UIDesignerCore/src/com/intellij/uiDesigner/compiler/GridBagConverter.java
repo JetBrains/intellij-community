@@ -19,10 +19,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.Util;
-import com.intellij.uiDesigner.lw.LwContainer;
-import com.intellij.uiDesigner.lw.LwComponent;
-import com.intellij.uiDesigner.lw.LwHSpacer;
-import com.intellij.uiDesigner.lw.LwVSpacer;
+import com.intellij.uiDesigner.lw.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -255,6 +252,18 @@ public class GridBagConverter {
     }
 
     return result;
+  }
+
+  public static GridBagConstraints getGridBagConstraints(IComponent component) {
+    final GridBagConstraints gbc;
+    if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
+      gbc = (GridBagConstraints) component.getCustomLayoutConstraints();
+    }
+    else {
+      gbc = new GridBagConstraints();
+    }
+    constraintsToGridBag(component.getConstraints(), gbc);
+    return gbc;
   }
 
   public static void constraintsToGridBag(final GridConstraints constraints, final GridBagConstraints result) {

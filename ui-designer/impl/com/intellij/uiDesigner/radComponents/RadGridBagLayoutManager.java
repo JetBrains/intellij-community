@@ -52,10 +52,21 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
     return new GridBagLayout();
   }
 
-  @Override public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {
-    // TODO: implement changing layout to GridBag
-    if (container.getComponentCount() != 0) {
-      throw new IncorrectOperationException("Only empty containers can be changed to GridBagLayout");
+  @Override
+  public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {
+    if (container.getLayoutManager().isGrid()) {
+      // preprocess: store weights in GridBagConstraints
+      RadAbstractGridLayoutManager grid = container.getGridLayoutManager();
+      for(RadComponent c: container.getComponents()) {
+        GridBagConstraints gbc = GridBagConverter.getGridBagConstraints(c);
+        if (grid.canCellGrow(container, false, c.getConstraints().getColumn())) {
+          gbc.weightx = 1.0;
+        }
+        if (grid.canCellGrow(container, true, c.getConstraints().getRow())) {
+          gbc.weighty = 1.0;
+        }
+        c.setCustomLayoutConstraints(gbc);
+      }
     }
     super.changeContainerLayout(container);
   }
@@ -92,14 +103,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
     MyPropertyChangeListener listener = new MyPropertyChangeListener(component);
     myListenerMap.put(component, listener);
     component.addPropertyChangeListener(listener);
-    final GridBagConstraints gbc;
-    if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
-      gbc = (GridBagConstraints) component.getCustomLayoutConstraints();
-    }
-    else {
-      gbc = new GridBagConstraints();
-    }
-    GridBagConverter.constraintsToGridBag(component.getConstraints(), gbc);
+    GridBagConstraints gbc = GridBagConverter.getGridBagConstraints(component);
     component.setCustomLayoutConstraints(gbc);
     container.getDelegee().add(component.getDelegee(), gbc, index);
   }
@@ -197,14 +201,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
 
   private static void updateConstraints(final RadComponent component) {
     GridBagLayout layout = (GridBagLayout) component.getParent().getLayout();
-    GridBagConstraints gbc;
-    if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
-      gbc = (GridBagConstraints) component.getCustomLayoutConstraints();
-    }
-    else {
-      gbc = new GridBagConstraints();
-    }
-    GridBagConverter.constraintsToGridBag(component.getConstraints(), gbc);
+    GridBagConstraints gbc = GridBagConverter.getGridBagConstraints(component);
     layout.setConstraints(component.getDelegee(), gbc);
     component.getParent().revalidate();
   }

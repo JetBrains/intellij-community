@@ -10,10 +10,13 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -26,6 +29,10 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
 
   public abstract int getGridRowCount(RadContainer container);
   public abstract int getGridColumnCount(RadContainer container);
+
+  public int getGridCellCount(RadContainer container, boolean isRow) {
+    return isRow ? getGridRowCount(container) : getGridColumnCount(container);
+  }
 
   public int getGridRowAt(RadContainer container, int y) {
     return getGridCellAt(container, y, true);
@@ -346,5 +353,77 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
       g2d.drawLine(midX, yEnd, midX-2, yEnd-2);
       g2d.drawLine(midX, yEnd, midX+2, yEnd-2);
     }
+  }
+
+  @Override
+  public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {
+    if (container.getLayoutManager().isGrid()) {
+      RadAbstractGridLayoutManager grid = container.getGridLayoutManager();
+      List<Boolean> canRowsGrow = collectCanCellsGrow(grid, container, true);
+      List<Boolean> canColumnsGrow = collectCanCellsGrow(grid, container, false);
+      List<RadComponent> contents = collectComponents(container);
+
+      changeLayoutFromGrid(container, contents, canRowsGrow, canColumnsGrow);
+
+      int oldGapMultiplier = grid.getGapCellCount()+1;
+      int gapMultiplier = getGapCellCount()+1;
+      for(RadComponent c: contents) {
+        GridConstraints gc = c.getConstraints();
+        gc.setRow(gc.getRow() * gapMultiplier / oldGapMultiplier);
+        gc.setColumn(gc.getColumn() * gapMultiplier / oldGapMultiplier);
+        container.addComponent(c);
+      }
+    }
+    else if (container.getLayoutManager().isIndexed()) {
+      List<RadComponent> components = collectComponents(container);
+      changeLayoutFromIndexed(container, components);
+
+      int gapMultiplier = getGapCellCount()+1;
+      for(int i=0; i<components.size(); i++) {
+        GridConstraints gc = components.get(i).getConstraints();
+        gc.setRow(0);
+        gc.setColumn(i*gapMultiplier);
+        gc.setRowSpan(1);
+        gc.setColSpan(1);
+        container.addComponent(components.get(i));
+      }
+    }
+    else if (container.getComponentCount() == 0) {
+      container.setLayoutManager(this);
+    }
+    else {
+      throw new IncorrectOperationException("Cannot change from " + container.getLayout() + " to grid layout");
+    }
+  }
+
+  protected void changeLayoutFromGrid(final RadContainer container, final List<RadComponent> contents, final List<Boolean> canRowsGrow,
+                                    final List<Boolean> canColumnsGrow) {
+    container.setLayoutManager(this);
+  }
+
+  protected void changeLayoutFromIndexed(final RadContainer container, final List<RadComponent> components) {
+    container.setLayoutManager(this);
+  }
+
+  private static List<Boolean> collectCanCellsGrow(final RadAbstractGridLayoutManager grid, final RadContainer container, final boolean isRow) {
+    List<Boolean> result = new ArrayList<Boolean>();
+    for(int i=0; i<grid.getGridCellCount(container, isRow); i++) {
+      if (!grid.isGapCell(container, isRow, i)) {
+        result.add(grid.canCellGrow(container, isRow, i));
+      }
+    }
+    return result;
+  }
+
+  private static List<RadComponent> collectComponents(final RadContainer container) {
+    List<RadComponent> contents = new ArrayList<RadComponent>();
+    for(int i=container.getComponentCount()-1; i >= 0; i--) {
+      final RadComponent component = container.getComponent(i);
+      if (!(component instanceof RadHSpacer) && !(component instanceof RadVSpacer)) {
+        contents.add(0, component);
+      }
+      container.removeComponent(component);
+    }
+    return contents;
   }
 }
