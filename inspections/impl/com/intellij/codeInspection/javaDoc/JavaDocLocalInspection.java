@@ -613,7 +613,6 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
             final PsiClass psiClass = declaredExceptions.get(classType);
             if (InheritanceUtil.isInheritorOrSelf(exceptionClass, psiClass, true)) {
               it.remove();
-              break;
             }
           }
         }
