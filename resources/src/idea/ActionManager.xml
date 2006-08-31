@@ -1498,6 +1498,13 @@
     <action id="Faces.Create.Model.Element" class="com.intellij.jsf.ui.actions.CreateFacesElementAction"
             text="Generate" use-shortcut-of="Generate"/>
 
+
+    <action id="Faces.User.Defined.Faces.Config"
+            class="com.intellij.jsf.actions.UserDefinedFacesConfigAction"
+            text="Use as Faces Config">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+      <add-to-group group-id="J2EEViewPopupMenu" anchor="last"/>
+    </action>
      <!-- ***** yFiles actions *************************************** -->
     <action id="Graph.ZoomIn" class="com.intellij.openapi.graph.builder.actions.ZoomInAction" text="Zoom In">
       <keyboard-shortcut first-keystroke="ADD" keymap="$default"/>
