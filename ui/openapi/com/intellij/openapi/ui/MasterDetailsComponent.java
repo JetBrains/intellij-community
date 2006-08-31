@@ -50,7 +50,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
       MyNode node = (MyNode)myTree.getSelectionPath().getLastPathComponent();
       if (node != null) {
         myLastEditedConfigurable = node.getDisplayName(); //survive after rename
-        myBanner.setText(myLastEditedConfigurable);
+        myBanner.setText(node.getConfigurable().getBannerSlogan());
         ((DefaultTreeModel)myTree.getModel()).reload(node);
         fireItemsChangedExternally();
       }
