@@ -17,9 +17,9 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.table.TableCellEditor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import javax.swing.table.TableCellEditor;
 
 /**
  * @author peter
@@ -157,5 +157,12 @@ public abstract class DomUIFactory implements ApplicationComponent {
     return new StringColumnInfo(presentableName);
   }
 
+  /**
+   * Adds an error-checking square that is usually found in the top-right ange of a text editor
+   * to the specified CaptionComponent.
+   * @param captionComponent The component to add error panel to
+   * @param elements DOM elements that will be error-checked
+   * @return captionComponent
+   */
   public abstract CaptionComponent addErrorPanel(CaptionComponent captionComponent, DomElement... elements);
 }
