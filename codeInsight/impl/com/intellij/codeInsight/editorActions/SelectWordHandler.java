@@ -3,6 +3,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -15,6 +16,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -127,27 +130,32 @@ public class SelectWordHandler extends EditorActionHandler {
     editor.getSelectionModel().setSelection(selectionRange.getStartOffset(), selectionRange.getEndOffset());
   }
 
+  @Nullable
   private static PsiElement findElementAt(final PsiFile file, final int caretOffset) {
     return (CodeInsightUtil.isAntFile(file))
            ? file.getViewProvider().findElementAt(caretOffset, file.getLanguage())
            : file.findElementAt(caretOffset);
   }
 
+  @NotNull
   private static PsiElement getUpperElement(final PsiElement e, final TextRange selectionRange) {
     final PsiElement parent = e.getParent();
 
-    if (PsiUtil.isInJspFile(e.getContainingFile()) && e.getLanguage()instanceof JavaLanguage) {
+    if (PsiUtil.isInJspFile(e.getContainingFile()) && e.getLanguage()instanceof JavaLanguage && !(e instanceof PsiErrorElement)) {
       final JspFile psiFile = PsiUtil.getJspFile(e.getContainingFile());
       if (e.getParent().getTextLength() == psiFile.getTextLength()) {
         PsiFile baseRoot = psiFile.getBaseLanguageRoot();
-        PsiElement elt = baseRoot.getNode().findLeafElementAt(e.getTextRange().getStartOffset()).getPsi();
-        return elt;
+        final ASTNode node = baseRoot.getNode();
+        if (node == null) return parent;
+        final ASTNode leafElementAt = node.findLeafElementAt(e.getTextRange().getStartOffset());
+        return leafElementAt != null ? leafElementAt.getPsi() : parent;
       }
     }
 
     return parent;
   }
 
+  @Nullable
   private static TextRange advance(TextRange selectionRange, PsiElement element, CharSequence text, int cursorOffset, Editor editor) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: advance(selectionRange='" + selectionRange + "', element='" + element + "')");
