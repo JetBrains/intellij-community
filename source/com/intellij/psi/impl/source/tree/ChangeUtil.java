@@ -671,7 +671,7 @@ public class ChangeUtil {
 
     final ASTNode referenceParameterList = reference.findChildByRole(ChildRole.REFERENCE_PARAMETER_LIST);
     int index = 0;
-    for (ASTNode child = referenceParameterList.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+    for (ASTNode child = referenceParameterList.getFirstChildNode(); child != null && index < typeParameters.length; child = child.getTreeNext()) {
       if (child.getElementType() == JavaElementType.TYPE) {
         final PsiType substitutedType = substitutor.substitute(typeParameters[index]);
         if (substitutedType != null) {
