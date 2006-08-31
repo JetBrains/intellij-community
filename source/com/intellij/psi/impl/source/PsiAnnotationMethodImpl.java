@@ -24,7 +24,7 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
   }
 
   public PsiAnnotationMemberValue getDefaultValue() {
-    return (PsiAnnotationMemberValue)calcTreeElement().findChildByRole(ChildRole.ANNOTATION_DEFAULT_VALUE);
+    return (PsiAnnotationMemberValue)calcTreeElement().findChildByRole(ChildRole.ANNOTATION_DEFAULT_VALUE).getPsi();
   }
 
   @NonNls
