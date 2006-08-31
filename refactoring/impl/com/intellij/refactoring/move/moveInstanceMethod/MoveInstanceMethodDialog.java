@@ -9,6 +9,8 @@ import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -18,8 +20,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -87,6 +87,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     }
   }
 
+  @Nullable
   private JPanel createParametersPanel () {
     myThisClassesMap = MoveInstanceMembersUtil.getThisClassesToMembers(myMethod);
     myOldClassParameterNameFields = new HashMap<PsiClass, EditorTextField>();
@@ -98,6 +99,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
       String suggestedName = MoveInstanceMethodHandler.suggestParameterNameForThisClass(aClass);
       final EditorTextField field = new EditorTextField(suggestedName, getProject(), StdFileTypes.JAVA);
+      field.setMinimumSize(new Dimension(field.getPreferredSize()));
       myOldClassParameterNameFields.put(aClass, field);
       panel.add(field);
     }
