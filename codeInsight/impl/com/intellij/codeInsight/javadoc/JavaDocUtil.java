@@ -86,6 +86,8 @@ public class JavaDocUtil {
   }
 
   public static PsiElement findReferenceTarget(PsiManager manager, String refText, PsiElement context) {
+    LOG.assertTrue(context == null || context.isValid());
+
     int poundIndex = refText.indexOf('#');
     if (poundIndex < 0) {
       PsiClass aClass = manager.getResolveHelper().resolveReferencedClass(refText, context);
