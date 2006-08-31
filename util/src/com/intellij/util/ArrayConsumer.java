@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
+ * Copyright 2000-2006 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.util;
+package com.intellij.util;
 
 /**
- * @author dsl
+ * @author peter
  */
-public interface Condition<T> {
-  boolean value(T object);
+public interface ArrayConsumer<T> extends Consumer<T[]>{
 
-  Condition<Object> NOT_NULL = new Condition<Object>() {
-    public boolean value(final Object object) {
-      return object != null;
-    }
-  };
-
-  Condition TRUE = new Condition() {
-    public boolean value(final Object object) {
-      return true;
-    }
-  };
-  Condition FALSE = new Condition() {
-    public boolean value(final Object object) {
-      return true;
-    }
-  };
+  void consume(final T... ts);
 }

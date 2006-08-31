@@ -34,12 +34,12 @@ import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
+import javax.swing.*;
 
 /**
  * @author peter
@@ -247,11 +247,32 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public boolean isValid() {
-    if (!myInvalidated && (myXmlTag != null && !myXmlTag.isValid() || myParent != null && !myParent.isValid())) {
-      myInvalidated = true;
-      return false;
+    if (myInvalidated) return false;
+
+    if (myXmlTag != null) {
+      if (!myXmlTag.isValid()) {
+        return invalidate();
+      }
+    } else if (myParent != null && !myParent.isValidLight()) {
+      return invalidate();
     }
-    return !myInvalidated;
+
+    return myParent == null || myParent.isValid() || invalidate();
+  }
+
+  protected boolean isValidLight() {
+    if (myInvalidated) return false;
+
+    if (myXmlTag != null && !myXmlTag.isValid()) {
+      return invalidate();
+    }
+
+    return myParent == null || myParent.isValidLight() || invalidate();
+  }
+
+  private boolean invalidate() {
+    myInvalidated = true;
+    return false;
   }
 
   @NotNull

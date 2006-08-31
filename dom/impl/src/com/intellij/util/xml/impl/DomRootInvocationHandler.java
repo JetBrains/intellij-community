@@ -50,6 +50,10 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
     return super.isValid() && myParent.isValid();
   }
 
+  public boolean isValidLight() {
+    return super.isValidLight() && myParent.isValidLight();
+  }
+
   @Nullable
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return null;

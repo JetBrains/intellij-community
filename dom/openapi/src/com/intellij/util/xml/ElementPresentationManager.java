@@ -15,26 +15,37 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.WeakFactoryMap;
 import net.sf.cglib.proxy.Factory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.lang.reflect.Method;
 import java.util.*;
+import javax.swing.*;
 
 /**
  * @author peter
  */
 public abstract class ElementPresentationManager {
+  private static final WeakFactoryMap<Class,Method> ourNameValueMethods = new WeakFactoryMap<Class, Method>() {
+    protected Method create(final Class key) {
+      for (final Method method : ReflectionCache.getMethods(key)) {
+      if (DomReflectionUtil.findAnnotationDFS(method, NameValue.class) != null) {
+        return method;
+      }
+    }
+    return null;
+    }
+  };
 
   private final static Function<? extends DomElement, String> DEFAULT_NAMER = new Function<DomElement, String>() {
     public String fun(final DomElement element) {
@@ -208,12 +219,9 @@ public abstract class ElementPresentationManager {
   }
 
   public static Method findNameValueMethod(final Class<? extends Object> aClass) {
-    for (final Method method : ReflectionCache.getMethods(aClass)) {
-      if (DomReflectionUtil.findAnnotationDFS(method, NameValue.class) != null) {
-        return method;
-      }
+    synchronized (ourNameValueMethods) {
+      return ourNameValueMethods.get(aClass);
     }
-    return null;
   }
 
   public static <T> T findByName(Collection<T> collection, final String name) {

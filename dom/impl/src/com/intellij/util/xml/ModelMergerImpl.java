@@ -3,8 +3,10 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.util.SmartList;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.WeakArrayHashMap;
 import com.intellij.util.xml.impl.AdvancedProxy;
@@ -23,11 +25,23 @@ import java.util.*;
  */
 public class ModelMergerImpl implements ModelMerger {
   private final WeakArrayHashMap<Object, Object> myMergedMap = new WeakArrayHashMap<Object, Object>();
-  private final List<InvocationStrategy> myInvocationStrategies = new ArrayList<InvocationStrategy>();
-  private final List<Class> myInvocationStrategyClasses = new ArrayList<Class>();
+  private final List<Pair<InvocationStrategy,Class>> myInvocationStrategies = new ArrayList<Pair<InvocationStrategy,Class>>();
   private final List<MergingStrategy> myMergingStrategies = new ArrayList<MergingStrategy>();
   private final List<Class> myMergingStrategyClasses = new ArrayList<Class>();
   private static final Class<MergedObject> MERGED_OBJECT_CLASS = MergedObject.class;
+
+  private final ConcurrentFactoryMap<Method,List<Pair<InvocationStrategy,Class>>> myAcceptsCache = new ConcurrentFactoryMap<Method,List<Pair<InvocationStrategy,Class>>>() {
+    protected List<Pair<InvocationStrategy,Class>> create(final Method method) {
+      List<Pair<InvocationStrategy,Class>> result = new ArrayList<Pair<InvocationStrategy,Class>>();
+      for (int i = myInvocationStrategies.size() - 1; i >= 0; i--) {
+        final Pair<InvocationStrategy, Class> pair = myInvocationStrategies.get(i);
+        if (pair.first.accepts(method)) {
+          result.add(pair);
+        }
+      }
+      return result;
+    }
+  };
 
   public ModelMergerImpl() {
     addInvocationStrategy(Object.class, new InvocationStrategy<Object>() {
@@ -118,7 +132,7 @@ public class ModelMergerImpl implements ModelMerger {
 
       public Object invokeMethod(final JavaMethod method, final Object[] args, final Object[] implementations)
         throws IllegalAccessException, InvocationTargetException {
-        assert"getImplementations".equals(method.getName());
+        assert "getImplementations".equals(method.getName());
         return Arrays.asList(implementations);
       }
     });
@@ -126,8 +140,7 @@ public class ModelMergerImpl implements ModelMerger {
   }
 
   public final <T> void addInvocationStrategy(Class<T> aClass, InvocationStrategy<T> strategy) {
-    myInvocationStrategies.add(strategy);
-    myInvocationStrategyClasses.add(aClass);
+    myInvocationStrategies.add(Pair.<InvocationStrategy,Class>create(strategy, aClass));
   }
 
   public final <T> void addMergingStrategy(Class<T> aClass, MergingStrategy<T> strategy) {
@@ -202,22 +215,25 @@ public class ModelMergerImpl implements ModelMerger {
       myImplementations = implementations;
     }
 
+    @NotNull
+    private InvocationStrategy findStrategy(final Object proxy, final Method method) {
+      for (final Pair<InvocationStrategy, Class> pair : myAcceptsCache.get(method)) {
+        if (pair.second.isInstance(proxy)) {
+          return pair.first;
+        }
+      }
+      throw new AssertionError("impossible");
+    }
 
     public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
       InvocationStack.INSTANCE.push(method, proxy);
       try {
-        for (int i = myInvocationStrategies.size() - 1; i >= 0; i--) {
-          InvocationStrategy strategy = myInvocationStrategies.get(i);
-          if (myInvocationStrategyClasses.get(i).isInstance(proxy) && strategy.accepts(method)) {
-            try {
-              return strategy.invokeMethod(getJavaMethod(method), args, myImplementations);
-            }
-            catch (InvocationTargetException e) {
-              throw e.getCause();
-            }
-          }
+        try {
+          return findStrategy(proxy, method).invokeMethod(getJavaMethod(method), args, myImplementations);
         }
-        throw new AssertionError("impossible");
+        catch (InvocationTargetException e) {
+          throw e.getCause();
+        }
       }
       finally {
         InvocationStack.INSTANCE.pop();
@@ -228,7 +244,7 @@ public class ModelMergerImpl implements ModelMerger {
       if (ReflectionCache.isAssignable(MERGED_OBJECT_CLASS, method.getDeclaringClass())) {
         return JavaMethod.getMethod(MERGED_OBJECT_CLASS, method);
       }
-      if (method.getDeclaringClass().isAssignableFrom(myClass)) {
+      if (ReflectionCache.isAssignable(method.getDeclaringClass(), myClass)) {
         return JavaMethod.getMethod(myClass, method);
       }
       return JavaMethod.getMethod(method.getDeclaringClass(), method);
@@ -243,8 +259,8 @@ public class ModelMergerImpl implements ModelMerger {
     final Method method = getPrimaryKeyMethod(implementation.getClass());
     if (method == null) return null;
 
-    final Object o = method.invoke(implementation);
-    return GenericValue.class.isAssignableFrom(method.getReturnType()) ? ((GenericValue)o).getValue() : o;
+    final Object o = DomReflectionUtil.invokeMethod(method, implementation);
+    return ReflectionCache.isAssignable(GenericValue.class, method.getReturnType()) ? ((GenericValue)o).getValue() : o;
   }
 
   @Nullable
@@ -327,11 +343,10 @@ public class ModelMergerImpl implements ModelMerger {
     return results;
   }
 
-  protected Object mergeImplementations(final Class returnType, final Object... implementations) {
+  protected final Object mergeImplementations(final Class returnType, final Object... implementations) {
     for (int i = myMergingStrategies.size() - 1; i >= 0; i--) {
-      if (myMergingStrategyClasses.get(i).isAssignableFrom(returnType)) {
-        MergingStrategy function = myMergingStrategies.get(i);
-        final Object o = function.mergeChildren(returnType, implementations);
+      if (ReflectionCache.isAssignable(myMergingStrategyClasses.get(i), returnType)) {
+        final Object o = myMergingStrategies.get(i).mergeChildren(returnType, implementations);
         if (o != null) {
           return o;
         }

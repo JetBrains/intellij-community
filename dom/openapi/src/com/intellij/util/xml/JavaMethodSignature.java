@@ -19,13 +19,13 @@ import java.util.*;
  * @author peter
  */
 public class JavaMethodSignature {
-  private static final Map<Method, JavaMethodSignature> ourSignatures = new HashMap<Method, JavaMethodSignature>();
-  private static final Map<Pair<String, Class[]>, JavaMethodSignature> ourSignatures2 = new HashMap<Pair<String, Class[]>, JavaMethodSignature>();
+  private static final Map<Method, JavaMethodSignature> ourSignatures = new THashMap<Method, JavaMethodSignature>();
+  private static final Map<Pair<String, Class[]>, JavaMethodSignature> ourSignatures2 = new THashMap<Pair<String, Class[]>, JavaMethodSignature>();
   private final String myMethodName;
   private final Class[] myMethodParameters;
-  private final Set<Class> myKnownClasses = Collections.synchronizedSet(new THashSet<Class>());
-  private final List<Method> myAllMethods = Collections.synchronizedList(new SmartList<Method>());
-  private final Map<Class,Method> myMethods = Collections.synchronizedMap(new THashMap<Class, Method>());
+  private final Set<Class> myKnownClasses = new THashSet<Class>();
+  private final List<Method> myAllMethods = new SmartList<Method>();
+  private final Map<Class,Method> myMethods = new THashMap<Class, Method>();
 
   private JavaMethodSignature(final String methodName, final Class[] methodParameters) {
     myMethodName = methodName;
@@ -48,7 +48,7 @@ public class JavaMethodSignature {
   }
 
   @Nullable
-  public final Method findMethod(final Class aClass) {
+  public final synchronized Method findMethod(final Class aClass) {
     if (myMethods.containsKey(aClass)) {
       return myMethods.get(aClass);
     }
@@ -58,13 +58,6 @@ public class JavaMethodSignature {
     }
     myMethods.put(aClass, method);
     return method;
-  }
-
-  private void addKnownMethod(Method method) {
-    final Class<?> aClass = method.getDeclaringClass();
-    if (!myKnownClasses.contains(aClass)) {
-      addMethodWithSupers(aClass, method);
-    }
   }
 
   private void addMethodsIfNeeded(final Class aClass) {
@@ -107,10 +100,11 @@ public class JavaMethodSignature {
   }
 
   @Nullable
-  public final <T extends Annotation> T findAnnotation(final Class<T> annotationClass, final Class startFrom) {
+  public final synchronized <T extends Annotation> T findAnnotation(final Class<T> annotationClass, final Class startFrom) {
     addMethodsIfNeeded(startFrom);
     //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < myAllMethods.size(); i++) {
+    final int size = myAllMethods.size();
+    for (int i = 0; i < size; i++) {
       Method method = myAllMethods.get(i);
       final T annotation = method.getAnnotation(annotationClass);
       if (annotation != null && ReflectionCache.isAssignable(method.getDeclaringClass(), startFrom)) {
@@ -121,7 +115,7 @@ public class JavaMethodSignature {
   }
 
   @Nullable
-  public final <T extends Annotation> Method findAnnotatedMethod(final Class<T> annotationClass, final Class startFrom) {
+  public final synchronized <T extends Annotation> Method findAnnotatedMethod(final Class<T> annotationClass, final Class startFrom) {
     addMethodsIfNeeded(startFrom);
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myAllMethods.size(); i++) {
@@ -143,7 +137,7 @@ public class JavaMethodSignature {
     synchronized (ourSignatures) {
       methodSignature = ourSignatures.get(method);
       if (methodSignature == null) {
-        ourSignatures.put(method, methodSignature = getSignature(method.getName(), method.getParameterTypes()));
+        ourSignatures.put(method, methodSignature = _getSignature(method.getName(), method.getParameterTypes()));
       }
       //methodSignature.addKnownMethod(method);
     }

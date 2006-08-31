@@ -5,9 +5,11 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
-import java.util.Stack;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author peter
@@ -15,19 +17,20 @@ import java.util.Stack;
 public class InvocationStack<T> {
   public static final InvocationStack<Object> INSTANCE = new InvocationStack<Object>();
 
-  private final ThreadLocal<Stack<Pair<JavaMethodSignature,T>>> myCallStacks = new ThreadLocal<Stack<Pair<JavaMethodSignature, T>>>();
+  private final ThreadLocal<List<Pair<JavaMethodSignature,T>>> myCallStacks = new ThreadLocal<List<Pair<JavaMethodSignature, T>>>();
 
   public final void push(Method method, T o) {
     JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
-    Stack<Pair<JavaMethodSignature, T>> stack = myCallStacks.get();
+    List<Pair<JavaMethodSignature, T>> stack = myCallStacks.get();
     if (stack == null) {
-      myCallStacks.set(stack = new Stack<Pair<JavaMethodSignature, T>>());
+      myCallStacks.set(stack = new ArrayList<Pair<JavaMethodSignature, T>>());
     }
-    stack.push(Pair.create(signature, o));
+    stack.add(Pair.create(signature, o));
   }
                                                  
+  @Nullable
   public final T findDeepestInvocation(Method method, Condition<T> stopAt) {
-    final Stack<Pair<JavaMethodSignature, T>> stack = myCallStacks.get();
+    final List<Pair<JavaMethodSignature, T>> stack = myCallStacks.get();
 
     JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
     for (int i = stack.size() - 2; i >= 0; i--) {
@@ -43,6 +46,7 @@ public class InvocationStack<T> {
   }
 
   public final Pair<JavaMethodSignature,T> pop() {
-    return myCallStacks.get().pop();
+    final List<Pair<JavaMethodSignature, T>> list = myCallStacks.get();
+    return list.remove(list.size() - 1);
   }
 }

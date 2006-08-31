@@ -3,27 +3,26 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.util.xml.ElementPresentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.lang.annotation.Annotation;
 import java.util.*;
+import javax.swing.*;
 
 /**
  * @author peter
@@ -264,8 +263,12 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   public void undefine() {
   }
 
-  public boolean isValid() {
-    return myFile.isValid() && myManager.getFileElement(myFile) == this;
+  public final boolean isValid() {
+    return myFile.isValid() && isValidLight();
+  }
+
+  protected final boolean isValidLight() {
+    return myManager.getFileElement(myFile) == this;
   }
 
   @NotNull
