@@ -26,6 +26,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -35,6 +37,7 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.io.File;
@@ -65,11 +68,8 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       if (progressIndicator != null && progressIndicator.isCanceled()) {
         throw new ProcessCanceledException();
       }
-      if (contentRoot.getIOFile() != null) {
-        Collection<File> roots = SvnUtil.crawlWCRoots(contentRoot.getIOFile(), crawler, progressIndicator);
-        updatedRoots.addAll(roots);
-
-      }
+      Collection<File> roots = SvnUtil.crawlWCRoots(contentRoot.getIOFile(), crawler, progressIndicator);
+      updatedRoots.addAll(roots);
     }
     if (updatedRoots.isEmpty()) {
       Messages.showErrorDialog(myVcs.getProject(), SvnBundle.message("message.text.update.no.directories.found"), SvnBundle.message("messate.text.update.error"));
@@ -81,9 +81,13 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
         if (conflictedFiles != null && !conflictedFiles.isEmpty()) {
           List<VirtualFile> vfFiles = new ArrayList<VirtualFile>();
           for (final String conflictedFile : conflictedFiles) {
-            @NonNls String path = conflictedFile;
-            path = "file://" + path.replace(File.separatorChar, '/');
-            VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(path);
+            @NonNls final String path = "file://" + conflictedFile.replace(File.separatorChar, '/');
+            VirtualFile vf = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+              @Nullable public VirtualFile compute() {
+                return VirtualFileManager.getInstance().findFileByUrl(path);
+              }
+
+            });
             if (vf != null) {
               vfFiles.add(vf);
             }
