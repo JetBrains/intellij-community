@@ -7,20 +7,21 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.projectWizard.ProjectJdkListRenderer;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
@@ -30,6 +31,8 @@ import java.util.Collection;
  *         Date: May 18, 2005
  */
 class JdkComboBox extends JComboBox{
+  private JButton myEditButton = new JButton(ApplicationBundle.message("button.edit"));
+
   public JdkComboBox(final ProjectJdksModel jdksModel) {
     super(new JdkComboBoxModel(jdksModel));
     setRenderer(new ProjectJdkListRenderer() {
@@ -69,7 +72,7 @@ class JdkComboBox extends JComboBox{
                                    final JdkComboBoxItem firstItem,
                                    final Condition<ProjectJdk> additionalSetup,
                                    final boolean moduleJdkSetup) {
-    final FixedSizeButton setUpButton = new FixedSizeButton(this);
+    final JButton setUpButton = new JButton(ApplicationBundle.message("button.new"));
     setUpButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final ProjectRootConfigurable configurable = ProjectRootConfigurable.getInstance(project);
@@ -92,8 +95,27 @@ class JdkComboBox extends JComboBox{
           .showUnderneathOf(setUpButton);
       }
     });
-    ComponentWithBrowseButton.MyDoClickAction.addTo(setUpButton, this);
     return setUpButton;
+  }
+
+  public void appendEditButton(final Project project, final JPanel panel, GridBagConstraints gc, final Computable<ProjectJdk> retrieveJDK){
+    myEditButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final ProjectJdk projectJdk = retrieveJDK.compute();
+        ProjectRootConfigurable.getInstance(project).selectNodeInTree(projectJdk);
+      }
+    });
+    addActionListener(new ActionListener(){
+      public void actionPerformed(ActionEvent e) {
+        final JdkComboBoxItem selectedItem = getSelectedItem();
+        if (selectedItem instanceof ProjectJdkComboBoxItem) {
+          myEditButton.setEnabled(ProjectRootConfigurable.getInstance(project).getProjectJdksModel().getProjectJdk() != null);
+        } else {
+          myEditButton.setEnabled(!(selectedItem instanceof InvalidJdkComboBoxItem) && selectedItem != null && selectedItem.getJdk() != null);
+        }
+      }
+    });
+    panel.add(myEditButton, gc);
   }
 
   public JdkComboBoxItem getSelectedItem() {

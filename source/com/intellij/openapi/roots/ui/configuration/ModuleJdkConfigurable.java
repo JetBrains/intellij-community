@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 
 import javax.swing.*;
@@ -130,9 +131,14 @@ public class ModuleJdkConfigurable implements Disposable {
           return false;
         }
       }, true);
-    myJdkPanel.add(setUpButton, new GridBagConstraints(2, 0, 1, 1, 1.0, 1.0,
+    myJdkPanel.add(setUpButton, new GridBagConstraints(2, 0, 1, 1, 0, 0,
                                                        GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                        new Insets(0, 4, 7, 0), 0, 0));
+    myCbModuleJdk.appendEditButton(myRootModel.getModule().getProject(), myJdkPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 7, 0), 0, 0) , new Computable<ProjectJdk>() {
+      public ProjectJdk compute() {
+        return myRootModel.getJdk();
+      }
+    });
   }
 
   public void reset() {
