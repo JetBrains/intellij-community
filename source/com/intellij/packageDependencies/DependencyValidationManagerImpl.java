@@ -43,6 +43,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   private NamedScope myProjectScope;
   private NamedScope myProjectTestScope;
   private List<NamedScope> myPredifinedScopes;
+  private NamedScope myProblemsScope;
 
   public DependencyValidationManagerImpl(Project project) {
     myProject = project;
@@ -97,23 +98,26 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   public NamedScope getProblemsScope() {
-    return new NamedScope(IdeBundle.message("predifined.scope.problems.name"), new PackageSet() {
-      public boolean contains(PsiFile file, NamedScopesHolder holder) {
-        return file.getProject() == myProject && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file.getVirtualFile());
-      }
+    if (myProblemsScope == null) {
+      myProblemsScope = new NamedScope(IdeBundle.message("predifined.scope.problems.name"), new PackageSet() {
+        public boolean contains(PsiFile file, NamedScopesHolder holder) {
+          return file.getProject() == myProject && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file.getVirtualFile());
+        }
 
-      public PackageSet createCopy() {
-        return this;
-      }
+        public PackageSet createCopy() {
+          return this;
+        }
 
-      public String getText() {
-        return PatternPackageSet.SCOPE_PROBLEM + ":*..*";
-      }
+        public String getText() {
+          return PatternPackageSet.SCOPE_PROBLEM + ":*..*";
+        }
 
-      public int getNodePriority() {
-        return 1;
-      }
-    });
+        public int getNodePriority() {
+          return 1;
+        }
+      });
+    }
+    return myProblemsScope;
   }
 
   @NotNull

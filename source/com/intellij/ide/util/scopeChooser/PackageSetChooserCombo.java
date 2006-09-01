@@ -29,7 +29,7 @@ public class PackageSetChooserCombo extends ComboboxWithBrowseButton {
           public void run() {
             configurable.selectNodeInTree(scope.getName());
           }
-        });
+        }, true);
         if (dlg.isOK()){
           rebuild();
           final NamedScope namedScope = dlg.getSelectedScope();
@@ -73,7 +73,9 @@ public class PackageSetChooserCombo extends ComboboxWithBrowseButton {
 
   private DefaultComboBoxModel createModel() {
     DependencyValidationManager manager = DependencyValidationManager.getInstance(myProject);
-    return new DefaultComboBoxModel(manager.getScopes());
+    final DefaultComboBoxModel model = new DefaultComboBoxModel(manager.getScopes());
+    model.removeElement(manager.getProblemsScope());
+    return model;
   }
 
   @Nullable
