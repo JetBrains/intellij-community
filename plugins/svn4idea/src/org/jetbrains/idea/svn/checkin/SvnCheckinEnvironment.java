@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.checkin.*;
@@ -215,10 +216,12 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
             progress.setText2(SvnBundle.message("progress.text2.adding", path));
           }
           else if (event.getAction() == SVNEventAction.COMMIT_DELETED) {
-            String filePath = event.getFile().getAbsolutePath();
-            filePath = filePath.replace(File.separatorChar, '/');
-            filePath = "file://" + filePath;
-            VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(filePath);
+            final String filePath = "file://" + event.getFile().getAbsolutePath().replace(File.separatorChar, '/');
+            VirtualFile vf = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+              @Nullable public VirtualFile compute() {
+                return VirtualFileManager.getInstance().findFileByUrl(filePath);
+              }
+            });
             if (vf != null) {
               deletedFiles.add(vf);
             }
@@ -337,7 +340,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return result;
   }
 
-  private void addParents(SVNStatusClient statusClient, File file, Collection<File> files) {
+  private static void addParents(SVNStatusClient statusClient, File file, Collection<File> files) {
     SVNStatus status;
     try {
       status = statusClient.doStatus(file, false);
@@ -357,7 +360,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-  private List<String> collectPaths(FilePath[] roots) {
+  private static List<String> collectPaths(FilePath[] roots) {
     ArrayList<String> result = new ArrayList<String>();
     for (FilePath file : roots) {
       // if file is scheduled for addition[r] and its parent is also scheduled for additio[r] ->
@@ -367,7 +370,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return result;
   }
 
-  private List<String> collectFilePaths(List<VcsOperation> checkinOperations) {
+  private static List<String> collectFilePaths(List<VcsOperation> checkinOperations) {
     ArrayList<String> result = new ArrayList<String>();
     for (final VcsOperation checkinOperation : checkinOperations) {
       CommitChangeOperation<SVNStatus> operation = (CommitChangeOperation<SVNStatus>)checkinOperation;
