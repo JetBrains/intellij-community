@@ -21,6 +21,7 @@ import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.infos.ClassCandidateInfo;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -485,7 +486,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
           }
         }
         return resolveResult != null
-               ? new ClassCandidateInfo(resolveResult, PsiSubstitutor.EMPTY, false, myElement)
+               ? new CandidateInfo(resolveResult, PsiSubstitutor.EMPTY, false, false, myElement)
                : JavaResolveResult.EMPTY;
       }
 
