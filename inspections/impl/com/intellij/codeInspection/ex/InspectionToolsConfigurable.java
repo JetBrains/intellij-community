@@ -46,9 +46,6 @@ public class InspectionToolsConfigurable implements Configurable {
   }
 
   public JComponent createComponent() {
-    if (mySelectedTool != null) {
-      myPanel.selectInspectionTool(mySelectedTool);
-    }
     return myPanel;
   }
 
@@ -62,6 +59,9 @@ public class InspectionToolsConfigurable implements Configurable {
 
   public void reset() {
     myPanel.reset();
+    if (mySelectedTool != null) {
+      myPanel.selectInspectionTool(mySelectedTool);
+    }
   }
 
   public void disposeUIResources() {
