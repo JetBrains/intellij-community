@@ -25,6 +25,9 @@
     <action id="FullyExpandTreeNode">
       <keyboard-shortcut first-keystroke="MULTIPLY"/>
     </action>
+    <action id="TextComponent.ClearAction">
+      <keyboard-shortcut first-keystroke="ESCAPE"/>
+    </action>
     <action id="ExpandTreeNode">
       <keyboard-shortcut first-keystroke="ADD"/>
     </action>

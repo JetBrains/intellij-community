@@ -45,11 +45,6 @@ public abstract class FilterComponent extends JPanel {
           myFilter.addCurrentTextToHistory();
           filter();
         }
-
-        if (e.getKeyCode() == KeyEvent.VK_ESCAPE && getFilter().length() > 0){
-          myFilter.setText("");
-          e.consume();
-        }
       }
     });
 
