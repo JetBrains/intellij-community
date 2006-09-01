@@ -208,9 +208,15 @@ public class PopupChooserBuilder {
     }
 
     table.addMouseMotionListener(new MouseMotionAdapter() {
+      boolean myIsEngaged = false;
       public void mouseMoved(MouseEvent e) {
-        int index = table.rowAtPoint(e.getPoint());
-        table.getSelectionModel().setSelectionInterval(index, index);
+        if (myIsEngaged) {
+          int index = table.rowAtPoint(e.getPoint());
+          table.getSelectionModel().setSelectionInterval(index, index);
+        }
+        else {
+          myIsEngaged = true;
+        }
       }
     });
 
@@ -237,10 +243,16 @@ public class PopupChooserBuilder {
     }
 
     tree.addMouseMotionListener(new MouseMotionAdapter() {
+      boolean myIsEngaged = false;
       public void mouseMoved(MouseEvent e) {
-        final Point p = e.getPoint();
-        int index = tree.getRowForLocation(p.x, p.y);
-        tree.setSelectionRow(index);
+        if (myIsEngaged) {
+          final Point p = e.getPoint();
+          int index = tree.getRowForLocation(p.x, p.y);
+          tree.setSelectionRow(index);
+        }
+        else {
+          myIsEngaged = true;
+        }
       }
     });
 
@@ -254,10 +266,16 @@ public class PopupChooserBuilder {
     public MyListWrapper(final JList list) {
       super(list);
       list.addMouseMotionListener(new MouseMotionAdapter() {
+        boolean myIsEngaged = false;
         public void mouseMoved(MouseEvent e) {
-          Point point = e.getPoint();
-          int index = list.locationToIndex(point);
-          list.setSelectedIndex(index);
+          if (myIsEngaged) {
+            Point point = e.getPoint();
+            int index = list.locationToIndex(point);
+            list.setSelectedIndex(index);
+          }
+          else {
+            myIsEngaged = true;
+          }
         }
       });
 
