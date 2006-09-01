@@ -51,7 +51,7 @@ public abstract class OrderEntryFix implements IntentionAction {
     if (classVFile == null) return;
     final Module currentModule = fileIndex.getModuleForFile(classVFile);
     if (currentModule == null) return;
-    Set<Library> librariesToAdd = new THashSet<Library>();
+    Set<VirtualFile> librariesToAdd = new THashSet<VirtualFile>();
     PsiClass[] classes = reference.getManager().getShortNamesCache().getClassesByName(name, GlobalSearchScope.allScope(project));
     for (final PsiClass aClass : classes) {
       if (!aClass.getManager().getResolveHelper().isAccessible(aClass, reference, aClass)) continue;
@@ -99,7 +99,11 @@ public abstract class OrderEntryFix implements IntentionAction {
         if (orderEntry instanceof LibraryOrderEntry) {
           final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)orderEntry;
           final Library library = libraryEntry.getLibrary();
-          if (!librariesToAdd.add(library)) continue;
+          VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+          if (files.length == 0) continue;
+          final VirtualFile jar = files[0];
+
+          if (jar == null || !librariesToAdd.add(jar)) continue;
           QuickFixAction.registerQuickFixAction(info, new OrderEntryFix(){
             @NotNull
             public String getText() {
@@ -116,9 +120,7 @@ public abstract class OrderEntryFix implements IntentionAction {
             }
 
             public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-              ModifiableRootModel model = ModuleRootManager.getInstance(currentModule).getModifiableModel();
-              model.addLibraryEntry(library);
-              model.commit();
+              addJarToRoots(jar, currentModule);
               new AddImportAction(project, reference, editor, aClass).execute();
             }
           });
@@ -145,28 +147,15 @@ public abstract class OrderEntryFix implements IntentionAction {
             return !project.isDisposed() && !currentModule.isDisposed();
           }
 
-          protected void addLibraryToRoots(final VirtualFile jarFile, OrderRootType rootType, final Module myModule) {
-            final ModuleRootManager manager = ModuleRootManager.getInstance(myModule);
-            final ModifiableRootModel rootModel = manager.getModifiableModel();
-            final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
-            final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
-            libraryModel.addRoot(jarFile, rootType);
-            libraryModel.commit();
-            rootModel.commit();
-          }
-
           public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-            ModifiableRootModel model = ModuleRootManager.getInstance(currentModule).getModifiableModel();
-            Library library = model.getModuleLibraryTable().createLibrary();
-            Library.ModifiableModel libModel = library.getModifiableModel();
             boolean isJunit4 = referenceName.equals("Test");
             @NonNls String junitPath = PathManager.getLibPath() + (isJunit4 ? "/junit-4.0.jar" : "/junit.jar");
             String url = VfsUtil.getUrlForLibraryRoot(new File(junitPath));
             VirtualFile junit = VirtualFileManager.getInstance().findFileByUrl(url);
             assert junit != null : junitPath;
-            libModel.addRoot(junit, OrderRootType.CLASSES);
-            libModel.commit();
-            model.commit();
+
+            addJarToRoots(junit, currentModule);
+
             GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
             String className = isJunit4 ? "org.junit.Test" : "junit.framework.TestCase";
             PsiClass aClass = PsiManager.getInstance(project).findClass(className, scope);
@@ -175,6 +164,16 @@ public abstract class OrderEntryFix implements IntentionAction {
         });
       }
     }
+  }
+
+  protected static void addJarToRoots(final VirtualFile jarFile, final Module module) {
+    final ModuleRootManager manager = ModuleRootManager.getInstance(module);
+    final ModifiableRootModel rootModel = manager.getModifiableModel();
+    final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
+    final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
+    libraryModel.addRoot(jarFile, OrderRootType.CLASSES);
+    libraryModel.commit();
+    rootModel.commit();
   }
 
   private static void showCircularWarningAndContinue(final Project project, final Pair<Module, Module> circularModules,
