@@ -331,7 +331,8 @@ public class IdTableBuilding {
 
     final VirtualFile virtualFile = fileContent.getVirtualFile();
     LOG.assertTrue(virtualFile.isValid());
-    if (virtualFile.getLength() > FILE_SIZE_LIMIT) return null;
+    //seems we don't want this check anymore
+    //if (virtualFile.getLength() > FILE_SIZE_LIMIT) return null;
     final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
     if (fileType.isBinary()) return null;
     if (StdFileTypes.CLASS.equals(fileType)) return null;
