@@ -30,11 +30,10 @@ public class OSProcessHandler extends ProcessHandler {
 
   private final ProcessWaitFor myWaitFor;
 
-  public OSProcessHandler(final Process process, final String commandLine)
-  {
+  public OSProcessHandler(final Process process, final String commandLine) {
     myProcess = process;
     myCommandLine = commandLine;
-    myWaitFor = new ProcessWaitFor( process );
+    myWaitFor = new ProcessWaitFor(process);
   }
 
   private static class ProcessWaitFor  {
@@ -42,6 +41,11 @@ public class OSProcessHandler extends ProcessHandler {
 
     private final Thread myWaitForThread;
     private int myExitCode;
+
+    public void detach() {
+      myWaitForThread.interrupt();
+      myWaitSemaphore.up();
+    }
 
     public ProcessWaitFor(final Process process) {
       myWaitSemaphore.down();
@@ -58,11 +62,6 @@ public class OSProcessHandler extends ProcessHandler {
       myWaitForThread.start();
     }
 
-    public void detach() {
-      myWaitForThread.interrupt();
-      myWaitSemaphore.up();
-    }
-
     public int waitFor() {
       myWaitSemaphore.waitFor();
       return myExitCode;
@@ -73,23 +72,20 @@ public class OSProcessHandler extends ProcessHandler {
     return myProcess;
   }
 
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  public void startNotify()
-  {
-    Reader outReader = new BufferedReader( new InputStreamReader( myProcess.getInputStream(), getCharset() ));
-    final ReadProcessThread stdoutThread = new ReadProcessThread( outReader ) {
-      protected void textAvailable( String s ) {
-        notifyTextAvailable( s, ProcessOutputTypes.STDOUT );  }
-    };
-
-    Reader errReader = new BufferedReader( new InputStreamReader( myProcess.getErrorStream(), getCharset() ));
-    final ReadProcessThread stderrThread = new ReadProcessThread( errReader ) {
-      protected void textAvailable( String s ) {
-        notifyTextAvailable( s, ProcessOutputTypes.STDERR );
+  public void startNotify() {
+    final ReadProcessThread stdoutThread = new ReadProcessThread(createProcessOutReader()) {
+      protected void textAvailable(String s) {
+        notifyTextAvailable(s, ProcessOutputTypes.STDOUT);
       }
     };
 
-    notifyTextAvailable( myCommandLine + '\n', ProcessOutputTypes.SYSTEM );
+    final ReadProcessThread stderrThread = new ReadProcessThread(createProcessErrReader()) {
+      protected void textAvailable(String s) {
+        notifyTextAvailable(s, ProcessOutputTypes.STDERR);
+      }
+    };
+
+    notifyTextAvailable(myCommandLine + '\n', ProcessOutputTypes.SYSTEM);
 
     addProcessListener(new ProcessAdapter() {
       public void startNotified(final ProcessEvent event) {
@@ -115,7 +111,7 @@ public class OSProcessHandler extends ProcessHandler {
           }.start();
         }
         finally {
-          removeProcessListener( this );
+          removeProcessListener(this);
         }
       }
     });
@@ -127,14 +123,17 @@ public class OSProcessHandler extends ProcessHandler {
     notifyProcessTerminated(exitCode);
   }
 
-  protected void destroyProcessImpl()
-  {
+  protected Reader createProcessOutReader() {
+    return new BufferedReader(new InputStreamReader(myProcess.getInputStream(), getCharset()));
+  }
+
+  protected Reader createProcessErrReader() {
+    return new BufferedReader(new InputStreamReader(myProcess.getErrorStream(), getCharset()));
+  }
+
+  protected void destroyProcessImpl() {
     try {
-      myProcess.getOutputStream().close();
-      myProcess.getErrorStream().close();
-    }
-    catch (IOException e) {
-      LOG.error(e);
+      closeStreams();
     }
     finally {
       myProcess.destroy();
@@ -144,18 +143,22 @@ public class OSProcessHandler extends ProcessHandler {
   protected void detachProcessImpl() {
     new Thread(new Runnable() {
       public void run() {
-        try {
-          myProcess.getOutputStream().close();
-          myProcess.getErrorStream().close();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+        closeStreams();
 
         myWaitFor.detach();
         notifyProcessDetached();
       }
     }).start();
+  }
+
+  private void closeStreams() {
+    try {
+      myProcess.getOutputStream().close();
+      myProcess.getErrorStream().close();
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
   }
 
   public boolean detachIsDefault() {
