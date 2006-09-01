@@ -63,6 +63,18 @@ public class CodeEditUtil {
         current = current.getTreeNext();
       }
     }
+
+    if (anchorBefore != null && isComment(anchorBefore.getElementType())) {
+      final ASTNode anchorPrev = anchorBefore.getTreePrev();
+      if (anchorPrev != null && anchorPrev.getElementType() == ElementType.WHITE_SPACE) {
+        anchorBefore = anchorPrev;
+        /*
+        final int blCount = getBlankLines(anchorPrev.getText());
+        if (bl)
+        */
+      }
+    }
+
     parent.addChildren(first, lastChild, anchorBefore);
     final ASTNode firstAddedLeaf = findFirstLeaf(first, last);
     final ASTNode prevLeaf = TreeUtil.prevLeaf(first);
@@ -75,6 +87,11 @@ public class CodeEditUtil {
     }
     else makePlaceHolderBetweenTokens(prevLeaf, TreeUtil.nextLeaf(last), isFormattingRequiered(prevLeaf, first), false);
     return first;
+  }
+
+  private static boolean isComment(IElementType type) {
+    final ParserDefinition def = type.getLanguage().getParserDefinition();
+    return def != null && def.getCommentTokens().contains(type);
   }
 
   private static boolean isFormattingRequiered(final ASTNode prevLeaf, ASTNode first) {
