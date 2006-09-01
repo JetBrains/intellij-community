@@ -40,8 +40,13 @@ public class ClassElement extends RepositoryTreeElement {
         if (before == null) {
           if (first == last) {
             PsiElement firstPsi = SourceTreeToPsiMap.treeElementToPsi(first);
-            PsiElement psiElement = firstPsi instanceof PsiMember ? getDefaultAnchor(psiClass, (PsiMember)firstPsi) : null;
-            anchor = psiElement != null ? SourceTreeToPsiMap.psiElementToTree(psiElement) : null;
+            if (firstPsi instanceof PsiEnumConstant) {
+              anchor = findEnumConstantListDelimiterPlace();
+            }
+            else {
+              PsiElement psiElement = firstPsi instanceof PsiMember ? getDefaultAnchor(psiClass, (PsiMember)firstPsi) : null;
+              anchor = psiElement != null ? SourceTreeToPsiMap.psiElementToTree(psiElement) : null;
+            }
           }
           else {
             anchor = findChildByRole(ChildRole.RBRACE);
@@ -115,7 +120,30 @@ public class ClassElement extends RepositoryTreeElement {
       }
     }
 
-    return super.addInternal(first, last, anchor, before);
+    final TreeElement firstAdded = super.addInternal(first, last, anchor, before);
+    if (firstAdded.getElementType() == ENUM_CONSTANT) {
+      final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
+      for (ASTNode child = ((ASTNode)first).getTreeNext(); child != null; child = child.getTreeNext()) {
+        final IElementType elementType = child.getElementType();
+        if (elementType == COMMA || elementType == SEMICOLON) break;
+        if (elementType == ENUM_CONSTANT) {
+          TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
+          super.addInternal(comma, comma, first, Boolean.FALSE);
+          break;
+        }
+      }
+
+      for (ASTNode child = ((ASTNode)first).getTreePrev(); child != null; child = child.getTreePrev()) {
+        final IElementType elementType = child.getElementType();
+        if (elementType == COMMA || elementType == SEMICOLON) break;
+        if (elementType == ENUM_CONSTANT) {
+          TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
+          super.addInternal(comma, comma, child, Boolean.FALSE);
+          break;
+        }
+      }
+    }
+    return firstAdded;
   }
 
   public void deleteChildInternal(ASTNode child) {

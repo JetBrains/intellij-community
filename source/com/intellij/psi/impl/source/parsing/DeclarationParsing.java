@@ -31,6 +31,13 @@ public class DeclarationParsing extends Parsing {
     super(context);
   }
 
+  public TreeElement parseEnumConstantText(PsiManager manager, char[] buffer) {
+    Lexer originalLexer = new JavaLexer(LanguageLevel.JDK_1_5);
+    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
+    lexer.start(buffer, 0, buffer.length);
+    return parseEnumConstant(lexer);
+  }
+
   public TreeElement parseDeclarationText(PsiManager manager,
                                           LanguageLevel languageLevel,
                                           char[] buffer,

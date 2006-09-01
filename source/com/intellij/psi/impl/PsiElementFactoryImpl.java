@@ -199,6 +199,18 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
   @NotNull
+  public PsiEnumConstant createEnumConstantFromText(String text, PsiElement context) throws IncorrectOperationException {
+    final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
+    TreeElement decl = getJavaParsingContext(holderElement).getDeclarationParsing().parseEnumConstantText(myManager, text.toCharArray());
+    if (decl == null || decl.getElementType() != JavaElementType.ENUM_CONSTANT) {
+      throw new IncorrectOperationException("Incorrect enum constant text \"" + text + "\".");
+    }
+    TreeUtil.addChildren(holderElement, decl);
+    holderElement.acceptTree(new GeneratedMarkerVisitor());
+    return (PsiEnumConstant)SourceTreeToPsiMap.treeElementToPsi(decl);
+  }
+
+  @NotNull
   public PsiMethod createMethod(String name, PsiType returnType) throws IncorrectOperationException {
     CheckUtil.checkIsIdentifier(myManager, name);
     if (returnType == PsiType.NULL) {

@@ -515,7 +515,7 @@ public class CreateFromUsageUtils {
 
     if (expectedTypes == null || expectedTypes.length == 0) {
       PsiType t = allowVoidType ? PsiType.VOID : PsiType.getJavaLangObject(manager, resolveScope);
-      expectedTypes = new ExpectedTypeInfo[] {provider.createInfo(t, ExpectedTypeInfo.TYPE_STRICTLY, t, TailType.NONE)};
+      expectedTypes = new ExpectedTypeInfo[] {provider.createInfo(t, ExpectedTypeInfo.TYPE_OR_SUBTYPE, t, TailType.NONE)};
     }
 
     return expectedTypes;
