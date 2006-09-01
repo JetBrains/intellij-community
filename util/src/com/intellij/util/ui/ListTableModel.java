@@ -16,11 +16,11 @@
 package com.intellij.util.ui;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Arrays;
 
-public class ListTableModel <Item> extends TableViewModel<Item> implements ItemRemovable {
+public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRemovable {
   private ColumnInfo[] myColumnInfos;
   private List<Item> myItems;
   private int mySortByColumn;
@@ -81,6 +81,7 @@ public class ListTableModel <Item> extends TableViewModel<Item> implements ItemR
 
   /**
    * true if changed
+   *
    * @param columnInfos
    * @return
    */
@@ -99,28 +100,37 @@ public class ListTableModel <Item> extends TableViewModel<Item> implements ItemR
   }
 
   public void sortByColumn(int columnIndex) {
-    if (mySortByColumn != columnIndex) {
-      mySortingType = SortableColumnModel.SORT_ASCENDING;
+    if (mySortByColumn == columnIndex) {
+      reverseOrder(columnIndex);
     }
     else {
-      switchSorting();
+      mySortByColumn = columnIndex;
+      mySortingType = SortableColumnModel.SORT_ASCENDING;
+      resort();
     }
-    mySortByColumn = columnIndex;
-    resort();
   }
 
   public void sortByColumn(int columnIndex, int sortingType) {
-    mySortByColumn = columnIndex;
-    mySortingType = sortingType;
-    resort();
+    if (mySortByColumn != columnIndex) {
+      mySortByColumn = columnIndex;
+      mySortingType = sortingType;
+      resort();
+    }
+    else if (mySortingType != sortingType) {
+      reverseOrder(columnIndex);
+    }
   }
 
-  private void switchSorting() {
+  private void reverseOrder(final int columnIndex) {
     if (mySortingType == SortableColumnModel.SORT_ASCENDING) {
       mySortingType = SortableColumnModel.SORT_DESCENDING;
     }
     else {
       mySortingType = SortableColumnModel.SORT_ASCENDING;
+    }
+    if (myIsSortable && myColumnInfos[columnIndex].isSortable()) {
+      Collections.reverse(myItems);
+      fireTableDataChanged();
     }
   }
 
@@ -139,7 +149,6 @@ public class ListTableModel <Item> extends TableViewModel<Item> implements ItemR
         fireTableDataChanged();
       }
     }
-
   }
 
   public int getSortedColumnIndex() {
