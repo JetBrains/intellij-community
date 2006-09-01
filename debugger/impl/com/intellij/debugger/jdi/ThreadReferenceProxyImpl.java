@@ -182,7 +182,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
 
   public StackFrameProxyImpl frame(int i) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(!getThreadReference().isSuspended()) return null;
+    final ThreadReference threadReference = getThreadReference();
+    if(threadReference == null || !threadReference.isSuspended()) {
+      return null;
+    }
     checkFrames();
     return myFramesFromBottom.get(frameCount() - i  - 1);
   }

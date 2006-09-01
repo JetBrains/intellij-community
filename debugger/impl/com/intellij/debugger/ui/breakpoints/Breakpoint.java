@@ -161,10 +161,17 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
     final String[] title = new String[] {DebuggerBundle.message("title.error.evaluating.breakpoint.condition") };
 
     try {
-      StackFrameProxyImpl frameProxy = context.getThread().frame(0);
+      final StackFrameProxyImpl frameProxy = context.getThread().frame(0);
+      if (frameProxy == null) {
+        // might be if the thread has been collected
+        return true;
+      }
 
-      EvaluationContextImpl evaluationContext = new EvaluationContextImpl(action.getSuspendContext(), frameProxy,
-        Breakpoint.this.getThisObject(context, event));
+      final EvaluationContextImpl evaluationContext = new EvaluationContextImpl(
+        action.getSuspendContext(),
+        frameProxy,
+        getThisObject(context, event)
+      );
 
       if(!evaluateCondition(evaluationContext, event)) {
         return true;
