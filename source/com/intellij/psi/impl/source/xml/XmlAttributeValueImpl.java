@@ -66,7 +66,8 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
 
   public void fixText(String text) {
     try {
-      new XmlAttributeValueManipulator().handleContentChange(this, text);
+      String contents = StringUtil.trimEnd(StringUtil.trimStart(text, "\""), "\"");
+      new XmlAttributeValueManipulator().handleContentChange(this, contents);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

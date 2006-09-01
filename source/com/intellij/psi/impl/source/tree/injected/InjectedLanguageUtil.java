@@ -491,7 +491,7 @@ public class InjectedLanguageUtil {
       virtualFile = ((VirtualFileDelegate)virtualFile).getDelegate();
     }
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile, -1), false);
-    if (editor == null) return null;
+    if (editor == null || editor instanceof EditorDelegate) return editor;
     if (document instanceof DocumentRange) {
       return EditorDelegate.create((DocumentRange)document,(EditorImpl)editor,file);
     }
