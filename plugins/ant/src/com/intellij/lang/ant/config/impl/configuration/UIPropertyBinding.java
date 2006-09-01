@@ -13,7 +13,6 @@ import com.intellij.util.config.ListProperty;
 import com.intellij.util.config.StorageProperty;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.SortableColumnModel;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -29,8 +28,11 @@ import java.util.*;
 
 public abstract class UIPropertyBinding {
   public abstract void loadValues(AbstractProperty.AbstractPropertyContainer container);
+
   public abstract void apply(AbstractProperty.AbstractPropertyContainer container);
-  public void beforeClose(AbstractProperty.AbstractPropertyContainer container) {}
+
+  public void beforeClose(AbstractProperty.AbstractPropertyContainer container) {
+  }
 
   public abstract void beDisabled();
 
@@ -40,6 +42,7 @@ public abstract class UIPropertyBinding {
 
   public static class Composite extends UIPropertyBinding {
     private final ArrayList<UIPropertyBinding> myBindings = new ArrayList<UIPropertyBinding>();
+
     public ToggleButtonBinding bindBoolean(JToggleButton toggleButton, AbstractProperty<Boolean> property) {
       ToggleButtonBinding binding = new ToggleButtonBinding(toggleButton, property);
       myBindings.add(binding);
@@ -57,22 +60,19 @@ public abstract class UIPropertyBinding {
     }
 
     public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
-      for (Iterator<UIPropertyBinding> iterator = myBindings.iterator(); iterator.hasNext();) {
-        UIPropertyBinding binding = iterator.next();
+      for (final UIPropertyBinding binding : myBindings) {
         binding.loadValues(container);
       }
     }
 
     public void apply(AbstractProperty.AbstractPropertyContainer container) {
-      for (Iterator<UIPropertyBinding> iterator = myBindings.iterator(); iterator.hasNext();) {
-        UIPropertyBinding propertyBinding = iterator.next();
+      for (final UIPropertyBinding propertyBinding : myBindings) {
         propertyBinding.apply(container);
       }
     }
 
     public void beforeClose(AbstractProperty.AbstractPropertyContainer container) {
-      for (Iterator<UIPropertyBinding> iterator = myBindings.iterator(); iterator.hasNext();) {
-        UIPropertyBinding binding = iterator.next();
+      for (final UIPropertyBinding binding : myBindings) {
         binding.beforeClose(container);
       }
     }
@@ -82,7 +82,7 @@ public abstract class UIPropertyBinding {
     }
 
     public <T extends JDOMExternalizable> TableListBinding bindList(JTable table, ColumnInfo[] columns, ListProperty<T> property) {
-      TableListBinding binding = new TableListBinding(table, columns, property);
+      final TableListBinding binding = new TableListBinding(table, columns, property);
       myBindings.add(binding);
       return binding;
     }
@@ -92,22 +92,19 @@ public abstract class UIPropertyBinding {
     }
 
     public void beDisabled() {
-      for (Iterator<UIPropertyBinding> iterator = myBindings.iterator(); iterator.hasNext();) {
-        UIPropertyBinding binding = iterator.next();
+      for (final UIPropertyBinding binding : myBindings) {
         binding.beDisabled();
       }
     }
 
     public void beEnabled() {
-      for (Iterator<UIPropertyBinding> iterator = myBindings.iterator(); iterator.hasNext();) {
-        UIPropertyBinding binding = iterator.next();
+      for (final UIPropertyBinding binding : myBindings) {
         binding.beEnabled();
       }
     }
 
     public void addAllPropertiesTo(Collection<AbstractProperty> properties) {
-      for (Iterator<UIPropertyBinding> iterator = myBindings.iterator(); iterator.hasNext();) {
-        UIPropertyBinding binding = iterator.next();
+      for (final UIPropertyBinding binding : myBindings) {
         binding.addAllPropertiesTo(properties);
       }
     }
@@ -175,7 +172,7 @@ public abstract class UIPropertyBinding {
     }
 
     public void apply(AbstractProperty.AbstractPropertyContainer container) {
-      getProperty().set(container, Boolean.valueOf(getComponent().isSelected()));
+      getProperty().set(container, getComponent().isSelected());
     }
 
     public void addChangeListener(PropertyChangeListener listener) {
@@ -208,7 +205,9 @@ public abstract class UIPropertyBinding {
       };
 
     public abstract Listener create(PropertyChangeSupport changeSupport, String propertyName);
+
     public abstract void setListener(Comp component, Listener documentListener);
+
     public abstract void removeListener(Comp component, Listener changeListener);
 
     public final static ListenerInstaller<JTextComponent, DocumentListener> TEXT_LISTENER_INSTALLER =
@@ -233,7 +232,7 @@ public abstract class UIPropertyBinding {
 
   private static class ChangeValueSupport<Comp extends JComponent, Listener> {
     private final Comp myComponent;
-    private final ListenerInstaller<Comp,Listener> myInstaller;
+    private final ListenerInstaller<Comp, Listener> myInstaller;
     private final PropertyChangeSupport myChangeSupport;
     private Listener myChangeListener = null;
     private final String myPropertyName;
@@ -318,8 +317,11 @@ public abstract class UIPropertyBinding {
       int value;
       try {
         value = Integer.parseInt(getComponent().getText());
-      } catch(NumberFormatException e) { return; } // TODO[dyoma] report error
-      getProperty().set(container, new Integer(value));
+      }
+      catch (NumberFormatException e) {
+        return;
+      } // TODO[dyoma] report error
+      getProperty().set(container, value);
     }
   }
 
@@ -364,7 +366,7 @@ public abstract class UIPropertyBinding {
           }
         }
       });
-      myModel.addTableModelListener(new TableModelListener(){
+      myModel.addTableModelListener(new TableModelListener() {
         public void tableChanged(final TableModelEvent e) {
           final JTableHeader header = getComponent().getTableHeader();
           if (header != null) {
@@ -390,25 +392,20 @@ public abstract class UIPropertyBinding {
           }
         }
         if (sortByColumn != -1) {
-          myModel.sortByColumn(sortByColumn);
-          if (myModel.getSortingType() != SortableColumnModel.SORT_ASCENDING) {
-            myModel.sortByColumn(sortByColumn);
-          }
+          myModel.sortByColumn(sortByColumn, myModel.getSortingType());
         }
       }
       TableUtil.ensureSelectionExists(getComponent());
     }
 
     public void beDisabled() {
-      for (Iterator<JComponent> iterator = myComponents.iterator(); iterator.hasNext();) {
-        JComponent component = iterator.next();
+      for (JComponent component : myComponents) {
         component.setEnabled(false);
       }
     }
 
     public void beEnabled() {
-      for (Iterator<JComponent> iterator = myComponents.iterator(); iterator.hasNext();) {
-        JComponent component = iterator.next();
+      for (JComponent component : myComponents) {
         component.setEnabled(true);
       }
     }
@@ -479,7 +476,7 @@ public abstract class UIPropertyBinding {
     }
   }
 
-  private static abstract class BaseListBinding<Model extends ListModel, Item> extends UIPropertyBinding {
+  private static abstract class BaseListBinding<Item> extends UIPropertyBinding {
     private final ArrayList<JComponent> myComponents = new ArrayList<JComponent>();
     private final JList myList;
     private final ListProperty<Item> myProperty;
@@ -491,15 +488,13 @@ public abstract class UIPropertyBinding {
     }
 
     public void beDisabled() {
-      for (Iterator<JComponent> iterator = myComponents.iterator(); iterator.hasNext();) {
-        JComponent component = iterator.next();
+      for (final JComponent component : myComponents) {
         component.setEnabled(false);
       }
     }
 
     public void beEnabled() {
-      for (Iterator<JComponent> iterator = myComponents.iterator(); iterator.hasNext();) {
-        JComponent component = iterator.next();
+      for (final JComponent component : myComponents) {
         component.setEnabled(true);
       }
     }
@@ -530,7 +525,7 @@ public abstract class UIPropertyBinding {
     }
   }
 
-  public static class SortedListBinding<T extends JDOMExternalizable> extends BaseListBinding<SortedListModel, T> {
+  public static class SortedListBinding<T extends JDOMExternalizable> extends BaseListBinding<T> {
     public SortedListBinding(JList list, ListProperty<T> property, Comparator<T> comparator) {
       super(property, list);
       list.setModel(new SortedListModel<T>(comparator));
@@ -546,7 +541,7 @@ public abstract class UIPropertyBinding {
     }
   }
 
-  public static class OrderListBinding<T> extends BaseListBinding<DefaultListModel, T> {
+  public static class OrderListBinding<T> extends BaseListBinding<T> {
     public OrderListBinding(JList list, ListProperty<T> property) {
       super(property, list);
       list.setModel(new DefaultListModel());
@@ -575,8 +570,7 @@ public abstract class UIPropertyBinding {
           if (items == null || items.size() == 0) {
             return;
           }
-          for (Iterator<T> iterator = items.iterator(); iterator.hasNext();) {
-            T item = iterator.next();
+          for (final T item : items) {
             getModel().addElement(item);
             ListScrollingUtil.selectItem(getList(), item);
           }

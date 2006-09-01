@@ -31,10 +31,21 @@ public class ListProperty<T> extends AbstractProperty<List<T>> {
   }
 
   public ArrayList<T> getModifiableList(AbstractPropertyContainer container) {
-    List<T> list = get(container);
-    if (list instanceof ArrayList) return (ArrayList<T>)list;
-    ArrayList<T> modifiableList = new ArrayList<T>(list);
-    set(container, modifiableList);
+    final ArrayList<T> modifiableList;
+    final List<T> list = get(container);
+    if (list instanceof ArrayList) {
+      modifiableList = (ArrayList<T>)list;
+    }
+    else {
+      modifiableList = new ArrayList<T>(list);
+      set(container, modifiableList);
+    }
+    // remove nulls
+    for (int i = modifiableList.size() - 1; i >= 0; --i) {
+      if (modifiableList.get(i) == null) {
+        modifiableList.remove(i);
+      }
+    }
     return modifiableList;
   }
 

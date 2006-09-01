@@ -27,7 +27,8 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
 
   @Nullable
   public String getName() {
-    return myTarget.getName();
+    final String name = myTarget.getName();
+    return (name == null) ? "" : name;
   }
 
   @Nullable
