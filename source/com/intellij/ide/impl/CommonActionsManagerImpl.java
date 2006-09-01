@@ -32,8 +32,20 @@ public class CommonActionsManagerImpl extends CommonActionsManager implements Ap
     return new ExpandAllToolbarAction(expander);
   }
 
+  public AnAction createExpandAllAction(TreeExpander expander, JComponent component) {
+    final ExpandAllToolbarAction expandAllToolbarAction = new ExpandAllToolbarAction(expander);
+    expandAllToolbarAction.registerCustomShortcutSet(expandAllToolbarAction.getShortcutSet(), component);
+    return expandAllToolbarAction;
+  }
+
   public AnAction createCollapseAllAction(TreeExpander expander) {
     return new CollapseAllToolbarAction(expander);
+  }
+
+  public AnAction createCollapseAllAction(TreeExpander expander, JComponent component) {
+    final CollapseAllToolbarAction collapseAllToolbarAction = new CollapseAllToolbarAction(expander);
+    collapseAllToolbarAction.registerCustomShortcutSet(collapseAllToolbarAction.getShortcutSet(), component);
+    return collapseAllToolbarAction;
   }
 
   public AnAction createHelpAction(String helpId) {

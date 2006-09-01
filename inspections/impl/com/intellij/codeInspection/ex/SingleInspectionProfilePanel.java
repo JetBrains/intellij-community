@@ -284,14 +284,9 @@ public class SingleInspectionProfilePanel extends JPanel {
   protected ActionToolbar createTreeToolbarPanel() {
     final CommonActionsManager actionManager = CommonActionsManager.getInstance();
 
-    AnAction expandAllToolbarAction = actionManager.createExpandAllAction(myTreeExpander);
-    expandAllToolbarAction.registerCustomShortcutSet(expandAllToolbarAction.getShortcutSet(), myTree);
     DefaultActionGroup actions = new DefaultActionGroup();
-    actions.add(expandAllToolbarAction);
-
-    AnAction collapseAllToolbarAction = actionManager.createCollapseAllAction(myTreeExpander);
-    collapseAllToolbarAction.registerCustomShortcutSet(collapseAllToolbarAction.getShortcutSet(), myTree);
-    actions.add(collapseAllToolbarAction);
+    actions.add(actionManager.createExpandAllAction(myTreeExpander, myTree));
+    actions.add(actionManager.createCollapseAllAction(myTreeExpander, myTree));
 
     actions.add(new ToggleAction(InspectionsBundle.message("inspection.tools.action.show.global.inspections.text"),
                                  InspectionsBundle.message("inspection.tools.action.show.global.inspections.description"),
@@ -872,8 +867,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     treePanel.add(northPanel, BorderLayout.NORTH);
 
     Splitter splitter = new Splitter(false);
-
-    splitter.setShowDividerControls(true);
+    splitter.setShowDividerControls(false);
     splitter.setFirstComponent(treePanel);
     splitter.setSecondComponent(rightPanel);
     splitter.setProportion((float)treePanel.getPreferredSize().width/getPreferredSize().width);

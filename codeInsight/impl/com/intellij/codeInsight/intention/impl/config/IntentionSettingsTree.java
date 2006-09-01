@@ -6,7 +6,10 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.CheckboxTree;
@@ -112,14 +115,9 @@ public abstract class IntentionSettingsTree {
       }
     };
 
-    AnAction expandAllToolbarAction = actionManager.createExpandAllAction(treeExpander);
-    expandAllToolbarAction.registerCustomShortcutSet(expandAllToolbarAction.getShortcutSet(), myTree);
     DefaultActionGroup actions = new DefaultActionGroup();
-    actions.add(expandAllToolbarAction);
-
-    AnAction collapseAllToolbarAction = actionManager.createCollapseAllAction(treeExpander);
-    collapseAllToolbarAction.registerCustomShortcutSet(collapseAllToolbarAction.getShortcutSet(), myTree);
-    actions.add(collapseAllToolbarAction);
+    actions.add(actionManager.createExpandAllAction(treeExpander, myTree));
+    actions.add(actionManager.createCollapseAllAction(treeExpander, myTree));
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, actions, true);
   }

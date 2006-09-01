@@ -291,13 +291,9 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
     final CommonActionsManager actionManager = CommonActionsManager.getInstance();
     if (isRightTree){
-      AnAction expandAllToolbarAction = actionManager.createExpandAllAction(treeExpander);
-      expandAllToolbarAction.registerCustomShortcutSet(expandAllToolbarAction.getShortcutSet(), tree);
-      group.add(expandAllToolbarAction);
+      group.add(actionManager.createExpandAllAction(treeExpander, tree));
     }
-    AnAction collapseAllToolbarAction = actionManager.createCollapseAllAction(treeExpander);
-    collapseAllToolbarAction.registerCustomShortcutSet(collapseAllToolbarAction.getShortcutSet(), tree);
-    group.add(collapseAllToolbarAction);
+    group.add(actionManager.createCollapseAllAction(treeExpander, tree));
     group.add(ActionManager.getInstance().getAction(IdeActions.MODULE_SETTINGS));
     appendDependenciesAction(group);
     return group;

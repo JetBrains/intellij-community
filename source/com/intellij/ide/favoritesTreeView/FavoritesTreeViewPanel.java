@@ -97,34 +97,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     new TreeSpeedSearch(myTree);
     ToolTipManager.sharedInstance().registerComponent(myTree);
     TreeToolTipHandler.install(myTree);
-    final TreeExpander treeExpander = new TreeExpander() {
-      public void expandAll() {
-        TreeUtil.expandAll(myTree);
-        if (myTree.getLeadSelectionPath() == null) {
-          TreeUtil.selectFirstNode(myTree);
-        }
-      }
-
-      public boolean canExpand() {
-        return true;
-      }
-
-      public void collapseAll() {
-        TreeUtil.collapseAll(myTree, 1);
-        if (myTree.getLeadSelectionPath() == null) {
-          TreeUtil.selectFirstNode(myTree);
-        }
-      }
-
-      public boolean canCollapse() {
-        return true;
-      }
-    };
-    final CommonActionsManager actionManager = CommonActionsManager.getInstance();
-    AnAction expandAllToolbarAction = actionManager.createExpandAllAction(treeExpander);
-    expandAllToolbarAction.registerCustomShortcutSet(expandAllToolbarAction.getShortcutSet(), myTree);
-    AnAction collapseAllToolbarAction = actionManager.createCollapseAllAction(treeExpander);
-    collapseAllToolbarAction.registerCustomShortcutSet(collapseAllToolbarAction.getShortcutSet(), myTree);
     myTree.setCellRenderer(new NodeRenderer() {
       public void customizeCellRenderer(JTree tree,
                                         Object value,

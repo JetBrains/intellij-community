@@ -217,8 +217,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         return true;
       }
     };
-    group.add(actionsManager.createExpandAllAction(treeExpander));
-    group.add(actionsManager.createCollapseAllAction(treeExpander));
+    group.add(actionsManager.createExpandAllAction(treeExpander, myTree));
+    group.add(actionsManager.createCollapseAllAction(treeExpander, myTree));
     group.add(actionsManager.createPrevOccurenceAction(getOccurenceNavigator()));
     group.add(actionsManager.createNextOccurenceAction(getOccurenceNavigator()));
     group.add(myGlobalInspectionContext.createToggleAutoscrollAction());

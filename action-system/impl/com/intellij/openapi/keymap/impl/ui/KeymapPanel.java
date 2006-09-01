@@ -228,10 +228,11 @@ public class KeymapPanel extends JPanel {
     JPanel panel = new JPanel();
     panel.setLayout(new GridBagLayout());
 
-    panel.add(createToolbarPanel(), new GridBagConstraints(0,0,1,1,1,0,GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
     myActionsTree = new ActionsTree();
     JComponent component = myActionsTree.getComponent();
     component.setPreferredSize(new Dimension(100, 300));
+
+    panel.add(createToolbarPanel(), new GridBagConstraints(0,0,1,1,1,0,GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
     panel.add(component, new GridBagConstraints(0,1,1,1,1,1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
 
     JPanel rightPanel = new JPanel(new GridLayout(2, 1, 0, 5));
@@ -266,8 +267,8 @@ public class KeymapPanel extends JPanel {
         return true;
       }
     };
-    group.add(commonActionsManager.createExpandAllAction(treeExpander));
-    group.add(commonActionsManager.createCollapseAllAction(treeExpander));
+    group.add(commonActionsManager.createExpandAllAction(treeExpander, myActionsTree.getTree()));
+    group.add(commonActionsManager.createCollapseAllAction(treeExpander, myActionsTree.getTree()));
 
     panel.add(toolbar, new GridBagConstraints(0,0,1,1,1,0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(8,0,0,0), 0,0));
     group = new DefaultActionGroup();

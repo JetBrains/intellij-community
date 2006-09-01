@@ -723,8 +723,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       }
     };
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    result.add(actionsManager.createExpandAllAction(expander));
-    result.add(actionsManager.createCollapseAllAction(expander));
+    result.add(actionsManager.createExpandAllAction(expander, myTree));
+    result.add(actionsManager.createCollapseAllAction(expander, myTree));
     return result;
   }
 
@@ -1038,6 +1038,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     if (module != null) {
       final MasterDetailsComponent.MyNode node = new MasterDetailsComponent.MyNode(new ModuleConfigurable(myModulesConfigurator, module, TREE_UPDATER));
       myModulesNode.add(node);
+      ((DefaultTreeModel)myTree.getModel()).reload(myModulesNode);
       selectNodeInTree(node);
     }
   }
