@@ -1911,8 +1911,8 @@ public class HighlightUtil {
         if (ref instanceof PsiReferenceExpression) {
           TextRange fixRange = HighlightMethodUtil.getFixRange(ref);
           PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
-          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateConstantFieldFromUsageAction(refExpr), null, null);
           QuickFixAction.registerQuickFixAction(info, fixRange, new CreateEnumConstantFromUsageAction(refExpr), null, null);
+          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateConstantFieldFromUsageAction(refExpr), null, null);
           QuickFixAction.registerQuickFixAction(info, fixRange, new CreateFieldFromUsageAction(refExpr), null, null);
           QuickFixAction.registerQuickFixAction(info, new RenameWrongRefAction(refExpr));
           if (!ref.isQualified()) {
