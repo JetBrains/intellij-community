@@ -15,6 +15,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.cls.ClsUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -59,11 +60,17 @@ public class MakeUtil {
     // the name of a dir should be lowercased because javac seem to allow difference in case
     // between the physical directory and package name.
     final int dotIndex = qName.lastIndexOf('.');
-    final StringBuffer buf = new StringBuffer(qName);
-    for (int idx = 0; idx < dotIndex; idx++) {
-      buf.setCharAt(idx, Character.toLowerCase(buf.charAt(idx)));
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append(qName);
+      for (int idx = 0; idx < dotIndex; idx++) {
+        builder.setCharAt(idx, Character.toLowerCase(builder.charAt(idx)));
+      }
+      return builder.toString();
     }
-    return buf.toString();
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 
   public static boolean isAnonymous(String name) {

@@ -430,11 +430,11 @@ public class DependencyCache {
       final CachingSearcher searcher = new CachingSearcher(project);
       final ChangedRetentionPolicyDependencyProcessor changedRetentionPolicyDependencyProcessor = new ChangedRetentionPolicyDependencyProcessor(project, searcher, this);
       for (int qName : qNamesToUpdate) {
-        int oldInfoId = getCache().getClassId(qName);
+        final int oldInfoId = getCache().getClassId(qName);
         if (oldInfoId == Cache.UNKNOWN) {
           continue;
         }
-        int newInfoId = getNewClassesCache().getClassId(qName);
+        final int newInfoId = getNewClassesCache().getClassId(qName);
         if (newInfoId != Cache.UNKNOWN) { // there is a new class file created
           new DependencyProcessor(project, this, qName).run();
           ArrayList<ChangedConstantsDependencyProcessor.FieldChangeInfo> changed =

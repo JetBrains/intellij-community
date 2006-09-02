@@ -341,6 +341,16 @@ public class Cache {
     }
   }
 
+  public synchronized void setPath(int classId, String path) throws CacheCorruptedException {
+    try {
+      final ClassInfoView view = myViewPool.getClassInfoView(classId);
+      view.setPath(path);
+    }
+    catch (Throwable e) {
+      throw new CacheCorruptedException(e);
+    }
+  }
+
   public synchronized int getGenericSignature(int classId) throws CacheCorruptedException {
     try {
       final ClassInfoView view = myViewPool.getClassInfoView(classId);

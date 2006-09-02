@@ -44,7 +44,7 @@ public class BackendCompilerWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.BackendCompilerWrapper");
 
   private final BackendCompiler myCompiler;
-  private final Map<String, Set<Pair<String, String>>> myFileNameToSourceMap;
+  private final Map<String, Set<CompiledClass>> myFileNameToSourceMap;
   private final List<File> myFilesToRefresh;
   private final Set<VirtualFile> mySuccesfullyCompiledJavaFiles; // VirtualFile
   private final List<TranslatingCompiler.OutputItem> myOutputItems;
@@ -68,7 +68,7 @@ public class BackendCompilerWrapper {
     myProjectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     mySuccesfullyCompiledJavaFiles = new HashSet<VirtualFile>(filesToCompile.length);
     myOutputItems = new ArrayList<TranslatingCompiler.OutputItem>(filesToCompile.length);
-    myFileNameToSourceMap = new HashMap<String, Set<Pair<String, String>>>(filesToCompile.length);
+    myFileNameToSourceMap = new HashMap<String, Set<CompiledClass>>(filesToCompile.length);
     myFilesToRefresh = new ArrayList<File>(filesToCompile.length);
   }
 
@@ -568,13 +568,21 @@ public class BackendCompilerWrapper {
         if (LOG.isDebugEnabled()) {
           LOG.debug("myFileNameToSourceMap contains entries: " + myFileNameToSourceMap.size());
         }
-        for (final VirtualFile root : sourceRoots) {
-          final String packagePrefix = myProjectFileIndex.getPackageNameByDirectory(root);
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Building output items for " + root.getPresentableUrl() + "; output dir = " + outputDirPath + "; packagePrefix = \"" +
-                      packagePrefix + "\"");
+        try {
+          for (final VirtualFile root : sourceRoots) {
+            final String packagePrefix = myProjectFileIndex.getPackageNameByDirectory(root);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Building output items for " + root.getPresentableUrl() + "; output dir = " + outputDirPath + "; packagePrefix = \"" +
+                        packagePrefix + "\"");
+            }
+            buildOutputItemsList(outputDirPath, root, typeManager, compiledWithErrors, root, packagePrefix);
           }
-          buildOutputItemsList(outputDirPath, root, typeManager, compiledWithErrors, root, packagePrefix);
+        }
+        catch (CacheCorruptedException e) {
+          myCompileContext.requestRebuildNextTime(CompilerBundle.message("error.compiler.caches.corrupted"));
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(e);
+          }
         }
       }
     });
@@ -603,7 +611,7 @@ public class BackendCompilerWrapper {
                                     FileTypeManager typeManager,
                                     Set<VirtualFile> compiledWithErrors,
                                     final VirtualFile sourceRoot,
-                                    final String packagePrefix) {
+                                    final String packagePrefix) throws CacheCorruptedException {
     final VirtualFile[] children = from.getChildren();
     for (final VirtualFile child : children) {
       if (child.isDirectory()) {
@@ -615,39 +623,39 @@ public class BackendCompilerWrapper {
     }
   }
 
-  private void putName(String sourceFileName, String relativePathToSource, String pathToClass) {
+  private void putName(String sourceFileName, int classQName, String relativePathToSource, String pathToClass) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Registering [sourceFileName, relativePathToSource, pathToClass] = [" + sourceFileName + "; " + relativePathToSource +
                 "; " + pathToClass + "]");
     }
-    Set<Pair<String, String>> paths = myFileNameToSourceMap.get(sourceFileName);
+    Set<CompiledClass> paths = myFileNameToSourceMap.get(sourceFileName);
 
     if (paths == null) {
-      paths = new HashSet<Pair<String, String>>();
+      paths = new HashSet<CompiledClass>();
       myFileNameToSourceMap.put(sourceFileName, paths);
     }
-    paths.add(new Pair<String, String>(pathToClass, relativePathToSource));
+    paths.add(new CompiledClass(classQName, relativePathToSource, pathToClass));
   }
 
-  private void updateOutputItemsList(final String outputDir,
-                                     VirtualFile javaFile,
-                                     Set<VirtualFile> compiledWithErrors,
-                                     VirtualFile sourceRoot,
-                                     final String packagePrefix) {
-    final Set<Pair<String, String>> paths = myFileNameToSourceMap.get(javaFile.getName());
+  private void updateOutputItemsList(
+    final String outputDir, VirtualFile javaFile, Set<VirtualFile> compiledWithErrors, VirtualFile sourceRoot, final String packagePrefix) throws CacheCorruptedException {
+
+    final Cache newCache = myCompileContext.getDependencyCache().getNewClassesCache();
+    final Set<CompiledClass> paths = myFileNameToSourceMap.get(javaFile.getName());
     if (paths != null && paths.size() > 0) {
       final String prefix = packagePrefix != null && packagePrefix.length() > 0 ? packagePrefix.replace('.', '/') + "/" : "";
       final String filePath = "/" + prefix + VfsUtil.getRelativePath(javaFile, sourceRoot, '/');
 
-      for (final Pair<String, String> pair : paths) {
+      for (final CompiledClass cc : paths) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Checking pair [pathToClass; relPathToSource] = " + pair);
+          LOG.debug("Checking [pathToClass; relPathToSource] = " + cc);
         }
-        if (FileUtil.pathsEqual(filePath, pair.getSecond())) {
-          final String outputPath = pair.getFirst().replace(File.separatorChar, '/');
+        if (FileUtil.pathsEqual(filePath, cc.relativePathToSource)) {
+          final String outputPath = cc.pathToClass.replace(File.separatorChar, '/');
           final Pair<String, String> realLocation = moveToRealLocation(outputDir, outputPath, javaFile);
           if (realLocation != null) {
             myOutputItems.add(new OutputItemImpl(realLocation.getFirst(), realLocation.getSecond(), javaFile));
+            newCache.setPath(newCache.getClassId(cc.qName), realLocation.getSecond());
             if (LOG.isDebugEnabled()) {
               LOG.debug("Added output item: [outputDir; outputPath; sourceFile]  = [" + realLocation.getFirst() + "; " +
                         realLocation.getSecond() + "; " + javaFile.getPresentableUrl() + "]");
@@ -831,7 +839,7 @@ public class BackendCompilerWrapper {
         final String sourceFileName = newClassesCache.getSourceFileName(newClassesCache.getClassId(newClassQName));
         String relativePathToSource =
           "/" + MakeUtil.createRelativePathToSource(myCompileContext.getDependencyCache().resolve(newClassQName), sourceFileName);
-        putName(sourceFileName, relativePathToSource, path);
+        putName(sourceFileName, newClassQName, relativePathToSource, path);
       }
       catch (ClsFormatException e) {
         String message;
@@ -892,6 +900,43 @@ public class BackendCompilerWrapper {
       int result = myPath.hashCode();
       result = 29 * result + myKind;
       return result;
+    }
+  }
+
+  private static final class CompiledClass {
+    public final int qName;
+    public final String relativePathToSource;
+    public final String pathToClass;
+
+    public CompiledClass(final int qName, final String relativePathToSource, final String pathToClass) {
+      this.qName = qName;
+      this.relativePathToSource = relativePathToSource;
+      this.pathToClass = pathToClass;
+    }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final CompiledClass that = (CompiledClass)o;
+
+      if (qName != that.qName) return false;
+      if (!pathToClass.equals(that.pathToClass)) return false;
+      if (!relativePathToSource.equals(that.relativePathToSource)) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      int result;
+      result = qName;
+      result = 31 * result + relativePathToSource.hashCode();
+      result = 31 * result + pathToClass.hashCode();
+      return result;
+    }
+
+    public String toString() {
+      return "[" + pathToClass + ";" + relativePathToSource + "]";
     }
   }
 
