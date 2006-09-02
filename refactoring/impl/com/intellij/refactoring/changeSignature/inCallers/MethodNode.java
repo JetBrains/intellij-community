@@ -13,12 +13,15 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
+
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -84,7 +87,7 @@ public class MethodNode extends CheckedTreeNode {
           }
         }
       }
-    }, com.intellij.refactoring.RefactoringBundle.message("caller.chooser.looking.for.callers"), false, project);
+    }, RefactoringBundle.message("caller.chooser.looking.for.callers"), false, project);
     return callers.toArray(new PsiMethod[callers.size()]);
   }
 
@@ -115,7 +118,8 @@ public class MethodNode extends CheckedTreeNode {
     renderer.append("  (" + packageName + ")", new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, Color.GRAY));
   }
 
-  private String getPackageName(final PsiClass aClass) {
+  @Nullable
+  private static String getPackageName(final PsiClass aClass) {
     final PsiFile file = aClass.getContainingFile();
     if (file instanceof PsiJavaFile) {
       return ((PsiJavaFile)file).getPackageName();
