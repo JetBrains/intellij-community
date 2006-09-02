@@ -26,9 +26,11 @@ import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
 
 import java.util.*;
+import java.util.HashSet;
 
 public class PullUpHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPullUp.PullUpHelper");
@@ -190,15 +192,16 @@ public class PullUpHelper {
 
   private static class Initializer {
     public final PsiExpression initializer;
-    public final HashSet<PsiField> movedFieldsUsed;
-    public final ArrayList<PsiElement> statementsToRemove;
+    public final Set<PsiField> movedFieldsUsed;
+    public final Set<PsiParameter> usedParameters;
+    public final List<PsiElement> statementsToRemove;
 
-    public Initializer(PsiExpression initializer, HashSet<PsiField> movedFieldsUsed, ArrayList<PsiElement> statementsToRemove) {
+    public Initializer(PsiExpression initializer, Set<PsiField> movedFieldsUsed, Set<PsiParameter> usedParameters, List<PsiElement> statementsToRemove) {
       this.initializer = initializer;
       this.movedFieldsUsed = movedFieldsUsed;
       this.statementsToRemove = statementsToRemove;
+      this.usedParameters = usedParameters;
     }
-
   }
 
   private void tryToMoveInitializers(PsiMethod constructor, HashSet<PsiMethod> subConstructors, HashSet<PsiField> movedFields) throws IncorrectOperationException {
@@ -213,10 +216,10 @@ public class PullUpHelper {
         if (commonInitializer == null) break;
       }
       if (commonInitializer != null) {
-        final MovedFieldsUsed visitor = new MovedFieldsUsed(movedFields);
+        final ParametersAndMovedFieldsUsedCollector visitor = new ParametersAndMovedFieldsUsedCollector(movedFields);
         commonInitializer.accept(visitor);
         fieldsToInitializers.put(field, new Initializer(commonInitializer,
-                                                        visitor.getUsedFields(), fieldInitializersToRemove));
+                                                        visitor.getUsedFields(), visitor.getUsedParameters(), fieldInitializersToRemove));
         anyFound = true;
       }
     }
@@ -276,7 +279,6 @@ public class PullUpHelper {
       // create assignment statement
       PsiExpressionStatement assignmentStatement =
         (PsiExpressionStatement)factory.createStatementFromText(initializedField.getName() + "=0;", constructor.getBody());
-      assignmentStatement = (PsiExpressionStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(assignmentStatement);
       assignmentStatement = (PsiExpressionStatement)constructor.getBody().add(assignmentStatement);
       PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)assignmentStatement.getExpression();
 
@@ -295,6 +297,53 @@ public class PullUpHelper {
                                           myTargetSuperClass, RefactoringUtil.createThisExpression(myManager, null));
       for (PsiElement psiElement : initializer.statementsToRemove) {
         psiElement.delete();
+      }
+
+      //correct constructor parameters and subConstructors super calls
+      final PsiParameterList parameterList = constructor.getParameterList();
+      for (final PsiParameter parameter : initializer.usedParameters) {
+        parameterList.add(parameter);
+      }
+
+      for (final PsiMethod subConstructor : subConstructors) {
+        modifySuperCall(subConstructor, initializer.usedParameters);
+      }
+    }
+  }
+
+  private static void modifySuperCall(final PsiMethod subConstructor, final Set<PsiParameter> parametersToPassToSuper) {
+    final PsiCodeBlock body = subConstructor.getBody();
+    if (body != null) {
+      PsiMethodCallExpression superCall = null;
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length > 0) {
+        if (statements[0] instanceof PsiExpressionStatement) {
+          final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+          if (expression instanceof PsiMethodCallExpression) {
+            final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
+            if ("super".equals(methodCall.getMethodExpression().getText())) {
+              superCall = methodCall;
+            }
+          }
+        }
+      }
+
+      final PsiElementFactory factory = subConstructor.getManager().getElementFactory();
+      try {
+        if (superCall == null) {
+            PsiExpressionStatement statement =
+              (PsiExpressionStatement)factory.createStatementFromText("super();", null);
+            statement = (PsiExpressionStatement)body.addAfter(statement, null);
+            superCall = (PsiMethodCallExpression)statement.getExpression();
+        }
+
+        final PsiExpressionList argList = superCall.getArgumentList();
+        for (final PsiParameter parameter : parametersToPassToSuper) {
+          argList.add(factory.createExpressionFromText(parameter.getName(), null));
+        }
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     }
   }
@@ -374,16 +423,22 @@ public class PullUpHelper {
     return commonInitializerCandidate;
   }
 
-  private static class MovedFieldsUsed extends PsiRecursiveElementVisitor {
-    private final HashSet<PsiField> myMovedFields;
-    private final HashSet<PsiField> myUsedFields;
+  private static class ParametersAndMovedFieldsUsedCollector extends PsiRecursiveElementVisitor {
+    private final Set<PsiField> myMovedFields;
+    private final Set<PsiField> myUsedFields;
 
-    public MovedFieldsUsed(HashSet<PsiField> movedFields) {
+    private final Set<PsiParameter> myUsedParameters = new HashSet<PsiParameter>();
+
+    public ParametersAndMovedFieldsUsedCollector(HashSet<PsiField> movedFields) {
       myMovedFields = movedFields;
       myUsedFields = new HashSet<PsiField>();
     }
 
-    public HashSet<PsiField> getUsedFields() {
+    public Set<PsiParameter> getUsedParameters() {
+      return myUsedParameters;
+    }
+
+    public Set<PsiField> getUsedFields() {
       return myUsedFields;
     }
 
@@ -394,7 +449,9 @@ public class PullUpHelper {
         return;
       }
       final PsiElement resolved = expression.resolve();
-      if (myMovedFields.contains(resolved)) {
+      if (resolved instanceof PsiParameter) {
+        myUsedParameters.add((PsiParameter)resolved);
+      } else if (myMovedFields.contains(resolved)) {
         myUsedFields.add((PsiField)resolved);
       }
     }
@@ -421,11 +478,13 @@ public class PullUpHelper {
       }
       if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
         final PsiElement resolved = referenceElement.resolve();
-        PsiClass containingClass = null;
-        if (resolved instanceof PsiMember && !((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) {
-          containingClass = ((PsiMember) resolved).getContainingClass();
+        if (!(resolved instanceof PsiParameter)) {
+          PsiClass containingClass = null;
+          if (resolved instanceof PsiMember && !((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+            containingClass = ((PsiMember) resolved).getContainingClass();
+          }
+          myIsMovable = containingClass != null && InheritanceUtil.isInheritorOrSelf(myTargetSuperClass, containingClass, true);
         }
-        myIsMovable = containingClass != null && InheritanceUtil.isInheritorOrSelf(myTargetSuperClass, containingClass, true);
       } else {
         qualifier.accept(this);
       }
@@ -439,7 +498,7 @@ public class PullUpHelper {
   }
 
   private HashMap<PsiMethod,HashSet<PsiMethod>> buildConstructorsToSubConstructorsMap(final PsiMethod[] constructors) {
-    final com.intellij.util.containers.HashMap<PsiMethod,HashSet<PsiMethod>> constructorsToSubConstructors = new com.intellij.util.containers.HashMap<PsiMethod, HashSet<PsiMethod>>();
+    final HashMap<PsiMethod,HashSet<PsiMethod>> constructorsToSubConstructors = new HashMap<PsiMethod, HashSet<PsiMethod>>();
     for (PsiMethod constructor : constructors) {
       final HashSet<PsiMethod> referencingSubConstructors = new HashSet<PsiMethod>();
       constructorsToSubConstructors.put(constructor, referencingSubConstructors);

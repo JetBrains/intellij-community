@@ -19,6 +19,8 @@ import org.jetbrains.annotations.NonNls;
  * @author dsl
  */
 public class ExtractSuperClassUtil {
+  private ExtractSuperClassUtil() {}
+
   public static PsiClass extractSuperClass(final Project project,
                                            final PsiDirectory targetDirectory,
                                            final String superclassName,
@@ -29,7 +31,9 @@ public class ExtractSuperClassUtil {
     PsiClass superclass;
     PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
     superclass = targetDirectory.createClass(superclassName);
-    superclass.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
+    final PsiModifierList superClassModifierList = superclass.getModifierList();
+    assert superClassModifierList != null;
+    superClassModifierList.setModifierProperty(PsiModifier.FINAL, false);
     copyPsiReferenceList(subclass.getExtendsList(), superclass.getExtendsList());
 
     // create constructors if neccesary
@@ -54,7 +58,7 @@ public class ExtractSuperClassUtil {
 
     MethodSignature[] toImplement = OverrideImplementUtil.getMethodSignaturesToImplement(superclass);
     if (toImplement.length > 0) {
-      superclass.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
+      superClassModifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
     }
     return superclass;
   }
@@ -63,10 +67,6 @@ public class ExtractSuperClassUtil {
     PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
     CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
     for (PsiMethod baseConstructor : patternConstructors) {
-      /*if (baseConstructor instanceof PsiCompiledElement) { // to get some parameter names
-        PsiClass dummyClass = factory.createClass("Dummy");
-        baseConstructor = (PsiMethod) dummyClass.add(baseConstructor);
-      }*/
       PsiMethod constructor = (PsiMethod)superclass.add(factory.createConstructor());
       PsiParameterList paramList = constructor.getParameterList();
       PsiParameter[] baseParams = baseConstructor.getParameterList().getParameters();
@@ -83,14 +83,10 @@ public class ExtractSuperClassUtil {
       superCallText.append(");");
       PsiStatement statement = factory.createStatementFromText(superCallText.toString(), null);
       statement = (PsiStatement)styleManager.reformat(statement);
-      constructor.getBody().add(statement);
-      PsiReferenceList baseThrowsList = baseConstructor.getThrowsList();
-      if (baseThrowsList != null) {
-        final PsiJavaCodeReferenceElement[] thrown = baseThrowsList.getReferenceElements();
-        for (PsiJavaCodeReferenceElement ref : thrown) {
-          constructor.getThrowsList().add(ref);
-        }
-      }
+      final PsiCodeBlock body = constructor.getBody();
+      assert body != null;
+      body.add(statement);
+      constructor.getThrowsList().replace(baseConstructor.getThrowsList());
     }
   }
 
@@ -123,20 +119,16 @@ public class ExtractSuperClassUtil {
 
   private static void clearPsiReferenceList(PsiReferenceList refList) throws IncorrectOperationException {
     PsiJavaCodeReferenceElement[] refs = refList.getReferenceElements();
-    if (refs != null) {
-      for (PsiJavaCodeReferenceElement ref : refs) {
-        ref.delete();
-      }
+    for (PsiJavaCodeReferenceElement ref : refs) {
+      ref.delete();
     }
   }
 
   private static void copyPsiReferenceList(PsiReferenceList sourceList, PsiReferenceList destinationList) throws IncorrectOperationException {
     clearPsiReferenceList(destinationList);
     PsiJavaCodeReferenceElement[] refs = sourceList.getReferenceElements();
-    if (refs != null) {
-      for (PsiJavaCodeReferenceElement ref : refs) {
-        destinationList.add(ref);
-      }
+    for (PsiJavaCodeReferenceElement ref : refs) {
+      destinationList.add(ref);
     }
   }
 }
