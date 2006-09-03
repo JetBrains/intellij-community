@@ -50,6 +50,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -57,6 +58,7 @@ import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -169,40 +171,35 @@ public abstract class CodeStyleAbstractPanel {
 
   private void replaceText(final Project project) {
     final PsiManager manager = PsiManager.getInstance(project);
-    final LanguageLevel effectiveLanguageLevel = manager.getEffectiveLanguageLevel();
-    manager.setEffectiveLanguageLevel(LanguageLevel.HIGHEST);
-    try {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          PsiElementFactory factory = manager.getElementFactory();
-          try {
-            PsiFile psiFile = factory.createFileFromText("a." + getFileType().getDefaultExtension(), myTextToReformat);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        PsiElementFactory factory = manager.getElementFactory();
+        try {
+          //important not mark as generated not to get the classes before setting language level
+          PsiFile psiFile = factory.createFileFromText("a." + getFileType().getDefaultExtension(), getFileType(),
+                                                       myTextToReformat, LocalTimeCounter.currentTime(), false, false);
 
-            apply(mySettings);
-            CodeStyleSettings clone = (CodeStyleSettings)mySettings.clone();
-            if (getRightMargin() > 0) {
-              clone.RIGHT_MARGIN = getRightMargin();
-            }
-
-
-            CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
-            CodeStyleManager.getInstance(project).reformat(psiFile);
-            CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-
-            myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
-            Document document = myEditor.getDocument();
-            document.replaceString(0, document.getTextLength(), psiFile.getText());
+          psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
+          apply(mySettings);
+          CodeStyleSettings clone = (CodeStyleSettings)mySettings.clone();
+          if (getRightMargin() > 0) {
+            clone.RIGHT_MARGIN = getRightMargin();
           }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
+
+
+          CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
+          CodeStyleManager.getInstance(project).reformat(psiFile);
+          CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+
+          myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
+          Document document = myEditor.getDocument();
+          document.replaceString(0, document.getTextLength(), psiFile.getText());
         }
-
-      });
-    }
-    finally {
-      manager.setEffectiveLanguageLevel(effectiveLanguageLevel);
-    }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    });
   }
 
   @NotNull

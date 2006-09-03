@@ -706,5 +706,5 @@ public interface PsiElementFactory {
                                       long modificationStamp, final boolean physical, boolean markAsCopy);
 
   @NotNull
-  public PsiEnumConstant createEnumConstantFromText(String text, PsiElement context) throws IncorrectOperationException;
+  PsiEnumConstant createEnumConstantFromText(String text, PsiElement context) throws IncorrectOperationException;
 }

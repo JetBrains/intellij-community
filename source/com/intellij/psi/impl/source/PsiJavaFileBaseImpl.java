@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
@@ -451,6 +452,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private LanguageLevel getLanguageLevelInner() {
     if (myOriginalFile != null) return ((PsiJavaFile)myOriginalFile).getLanguageLevel();
+    final LanguageLevel forcedLanguageLevel = getUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY);
+    if (forcedLanguageLevel != null) return forcedLanguageLevel;
     final VirtualFile virtualFile = getVirtualFile();
     if (virtualFile == null) {
       final PsiFile originalFile = getOriginalFile();

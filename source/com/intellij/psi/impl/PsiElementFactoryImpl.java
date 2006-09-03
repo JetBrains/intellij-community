@@ -301,8 +301,12 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
   @NotNull
-  public PsiFile createFileFromText(String name, FileType fileType, CharSequence text,
-                                    long modificationStamp, final boolean physical, boolean markAsCopy) {
+  public PsiFile createFileFromText(@NotNull String name,
+                                    @NotNull FileType fileType,
+                                    @NotNull CharSequence text,
+                                    long modificationStamp,
+                                    final boolean physical,
+                                    boolean markAsCopy) {
     final LightVirtualFile virtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
 
     if(fileType instanceof LanguageFileType){
