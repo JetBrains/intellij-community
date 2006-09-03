@@ -162,16 +162,13 @@ public class ProgressWindow extends BlockingProgressIndicator {
       myInstallFunAlarm.addRequest(installer, 3000, getModalityState());
     }
 
-    myDialog.setIndeterminate(getFraction() == 0 || isIndeterminate());
     myDialog.show();
     myDialog.myRepaintRunnable.run();
   }
 
   public void setIndeterminate(boolean indeterminate) {
     super.setIndeterminate(indeterminate);
-    if (myDialog != null) {
-      myDialog.setIndeterminate(indeterminate);
-    }
+    update();
   }
 
   public synchronized void stop() {
@@ -265,19 +262,10 @@ public class ProgressWindow extends BlockingProgressIndicator {
           myPercentLabel.setText(" ");
         }
 
-        final int perc = (int)(fraction * 100);
-        if (perc != myProgressBar.getValue()) {
-          if (perc != 0) {
-            if (myProgressBar.isIndeterminate()) {
-              myProgressBar.setIndeterminate(false);
-            }
-            myProgressBar.setValue(perc);
-          }
-          else {
-            if (myProgressBar.isIndeterminate()) {
-              myProgressBar.setIndeterminate(true);
-            }
-          }
+        if (myProgressBar.isShowing()) {
+          final int perc = (int)(fraction * 100);
+          myProgressBar.setIndeterminate(perc == 0 || isIndeterminate());
+          myProgressBar.setValue(perc);
         }
 
         myText2Label.setText(getTitle2Text(text2, myText2Label.getWidth()));
@@ -323,10 +311,6 @@ public class ProgressWindow extends BlockingProgressIndicator {
     private Window myParentWindow;
     private Point myLastClicked;
 
-    public void setIndeterminate (boolean indeterminate) {
-      myProgressBar.setIndeterminate(indeterminate);
-    }
-
     public MyDialog(boolean shouldShowCancel, boolean shouldShowBackground, Project project, String cancelText) {
       myParentWindow = WindowManager.getInstance().suggestParentWindow(project);
       if (myParentWindow == null) {
@@ -365,7 +349,6 @@ public class ProgressWindow extends BlockingProgressIndicator {
         setCancelButtonText(cancelText);
       }
       myProgressBar.setMaximum(100);
-      myProgressBar.setIndeterminate(true);
       createCenterPanel();
 
       myTitlePanel.addMouseListener(new MouseAdapter() {
