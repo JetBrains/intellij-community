@@ -53,4 +53,8 @@ public abstract class FactoryMap<T,V> {
   public Set<T> keySet() {
     return myMap.keySet();
   }
+
+  public void clear() {
+    myMap.clear();
+  }
 }

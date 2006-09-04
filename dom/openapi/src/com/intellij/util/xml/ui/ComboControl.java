@@ -39,7 +39,6 @@ public class ComboControl extends BaseControl<JComboBox, String> {
   private final ActionListener myCommitListener = new ActionListener() {
     public void actionPerformed(ActionEvent e) {
       commit();
-      reset();
     }
   };
 
@@ -227,26 +226,30 @@ public class ComboControl extends BaseControl<JComboBox, String> {
 
   protected void doReset() {
     final List<Pair<String, Icon>> data = myDataFactory.create();
-    if (!dataChanged(data)) {
-      super.doReset();
-      return;
-    }
-
     final JComboBox comboBox = getComponent();
     comboBox.removeActionListener(myCommitListener);
-    final String oldValue = getValue();
-    myIcons.clear();
-    comboBox.removeAllItems();
-    if (myNullable) {
-      comboBox.addItem(EMPTY);
+    try {
+      if (!dataChanged(data)) {
+        super.doReset();
+        return;
+      }
+
+      final String oldValue = getValue();
+      myIcons.clear();
+      comboBox.removeAllItems();
+      if (myNullable) {
+        comboBox.addItem(EMPTY);
+      }
+      for (final Pair<String, Icon> s : data) {
+        comboBox.addItem(s);
+        myIcons.put(s.first, s.second);
+      }
+      setValue(oldValue);
+      super.doReset();
     }
-    for (final Pair<String, Icon> s : data) {
-      comboBox.addItem(s);
-      myIcons.put(s.first, s.second);
+    finally {
+      comboBox.addActionListener(myCommitListener);
     }
-    setValue(oldValue);
-    super.doReset();
-    comboBox.addActionListener(myCommitListener);
   }
 
   @Nullable

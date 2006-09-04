@@ -19,8 +19,8 @@ package com.intellij.util.containers;
  * @author peter
  */
 public class WeakArrayHashMap<T,V> {
-  private WeakValueHashMap<T,WeakArrayHashMap<T,V>> myContinuationMap;
-  private WeakValueHashMap<T,V> myValuesMap;
+  private SoftHashMap<T,WeakArrayHashMap<T,V>> myContinuationMap;
+  private SoftHashMap<T,V> myValuesMap;
   private V myEmptyValue;
 
   private V get(T[] array, int index) {
@@ -49,12 +49,12 @@ public class WeakArrayHashMap<T,V> {
     final T key = array[index];
     if (index == array.length - 1) {
       if (myValuesMap == null) {
-        myValuesMap = new WeakValueHashMap<T, V>();
+        myValuesMap = new SoftHashMap<T, V>();
       }
       myValuesMap.put(key, value);
     } else {
       if (myContinuationMap == null) {
-        myContinuationMap = new WeakValueHashMap<T, WeakArrayHashMap<T, V>>();
+        myContinuationMap = new SoftHashMap<T, WeakArrayHashMap<T, V>>();
       }
       WeakArrayHashMap<T, V> weakArrayHashMap = myContinuationMap.get(key);
       if (weakArrayHashMap == null) {
@@ -72,4 +72,13 @@ public class WeakArrayHashMap<T,V> {
     }
   }
 
+  public final void clear() {
+    myContinuationMap = null;
+    myValuesMap = null;
+    myEmptyValue = null;
+  }
+
+  public final boolean containsKey(final T[] path) {
+    return get(path) != null;
+  }
 }

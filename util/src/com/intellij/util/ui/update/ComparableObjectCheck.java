@@ -54,9 +54,8 @@ public class ComparableObjectCheck {
     }
 
     int result = 0;
-    for (int i = 0; i < objects.length; i++) {
-      Object each = objects[i] != null ? objects[i] : new Object();
-      result = 29 * result + each.hashCode();
+    for (Object object : objects) {
+      result = 29 * result + (object != null ? object.hashCode() : 239);
     }
     return result;
   }

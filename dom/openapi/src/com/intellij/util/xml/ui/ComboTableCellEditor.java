@@ -19,11 +19,12 @@ package com.intellij.util.xml.ui;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.HashMap;
 
-import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.Map;
+import javax.swing.*;
 
 /**
  * @author peter
@@ -60,7 +61,6 @@ public class ComboTableCellEditor extends DefaultCellEditor {
     final List<Pair<String, Icon>> list = myDataFactory.create();
     myData = new HashMap<String,Icon>();
 
-    final String string = (String) value;
     final JComboBox comboBox = (JComboBox)editorComponent;
     comboBox.removeAllItems();
     if (myNullable) {
@@ -70,12 +70,10 @@ public class ComboTableCellEditor extends DefaultCellEditor {
       myData.put(pair.first, pair.second);
       comboBox.addItem(pair);
     }
-    super.getTableCellEditorComponent(table, value, isSelected, row, column);
-    if (!myData.containsKey(string)) {
-      comboBox.setEditable(true);
-      comboBox.setSelectedItem(Pair.create(value, myData.get(value)));
-      comboBox.setEditable(false);
-    }
+    final Pair<Object, Icon> pair = Pair.create(value, myData.get(value));
+    comboBox.setEditable(true);
+    super.getTableCellEditorComponent(table, pair, isSelected, row, column);
+    comboBox.setEditable(false);
     return comboBox;
   }
 }
