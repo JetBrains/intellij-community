@@ -180,6 +180,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
         public void visitErrorElement(PsiErrorElement element) {
           HighlightInfo info = createErrorElementInfo(element);
+          if (!documentRange.isEditable(new TextRange(info.startOffset, info.endOffset))) return; //do not highlight generated header/footer
           HighlightInfo fixed = new HighlightInfo(HighlightInfoType.ERROR, documentRange.injectedToHost(info.startOffset),
                                                   documentRange.injectedToHost(info.endOffset), info.description, info.toolTip);
           myHolder.add(fixed);
