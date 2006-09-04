@@ -17,8 +17,8 @@ public class TagOperation extends CvsOperationOnFiles{
   private final boolean myOverrideExisting;
 
   public TagOperation(VirtualFile[] files, String tag, boolean removeTag, boolean overrideExisting) {
-    for (int i = 0; i < files.length; i++) {
-      addFile(files[i]);
+    for (VirtualFile file : files) {
+      addFile(file);
     }
     myRemoveTag = removeTag;
     myTag = tag;
@@ -26,8 +26,8 @@ public class TagOperation extends CvsOperationOnFiles{
   }
 
   public TagOperation(FilePath[] files, String tag, boolean overrideExisting) {
-    for (int i = 0; i < files.length; i++) {
-      addFile(files[i].getIOFile());
+    for (FilePath file : files) {
+      addFile(file.getIOFile());
     }
     myRemoveTag = false;
     myTag = tag;
