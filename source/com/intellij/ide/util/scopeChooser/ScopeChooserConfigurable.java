@@ -275,7 +275,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void addNewScope(final NamedScope scope, final boolean isLocal) {
-    final NamedScopesHolder holder = isLocal ? myLocalScopesManager : mySharedScopesManager;
+    final NamedScopesHolder holder = (NamedScopesHolder)(isLocal ? myLocalScopesManager : mySharedScopesManager);
     final Icon icon = isLocal ? LOCAL_SCOPES : SHARED_SCOPES;
     final MyNode nodeToAdd = new MyNode(new ScopeConfigurable(scope,
                                                               myProject, holder, icon,
