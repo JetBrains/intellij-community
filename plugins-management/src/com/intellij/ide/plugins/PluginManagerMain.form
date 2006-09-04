@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.ide.plugins.PluginManagerMain">
-  <grid id="a6e0d" binding="main" custom-create="true" layout-manager="GridBagLayout" row-count="4" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="a6e0d" binding="main" layout-manager="GridLayoutManager" row-count="4" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="49" y="40" width="779" height="603"/>
+      <xy x="49" y="40" width="779" height="540"/>
     </constraints>
-    <properties/>
+    <properties>
+      <preferredSize width="600" height="600"/>
+    </properties>
     <border type="none"/>
     <children>
       <xy id="64745" binding="myToolbarPanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
@@ -17,249 +19,6 @@
         <border type="none"/>
         <children/>
       </xy>
-      <splitpane id="70cdc">
-        <constraints>
-          <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
-            <preferred-size width="200" height="200"/>
-          </grid>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children>
-          <grid id="7d113" layout-manager="GridLayoutManager" row-count="4" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="4" bottom="0" right="0"/>
-            <constraints>
-              <splitpane position="right"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <component id="c8342" class="javax.swing.JLabel">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="10" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/IdeBundle" key="label.plugin.home.page"/>
-                </properties>
-              </component>
-              <grid id="50d9b" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                <margin top="5" left="5" bottom="5" right="5"/>
-                <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="0" anchor="10" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties/>
-                <border type="none" title-resource-bundle="messages/IdeBundle" title-key="group.vendor"/>
-                <children>
-                  <component id="c8f9f" class="javax.swing.JLabel">
-                    <constraints>
-                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <text resource-bundle="messages/IdeBundle" key="label.plugin.vendor.home.page"/>
-                    </properties>
-                  </component>
-                  <component id="94bc5" class="javax.swing.JLabel">
-                    <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <text resource-bundle="messages/IdeBundle" key="label.plugin.vendor.name"/>
-                    </properties>
-                  </component>
-                  <component id="20d29" class="javax.swing.JLabel">
-                    <constraints>
-                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <text resource-bundle="messages/IdeBundle" key="label.plugin.vendor.email"/>
-                    </properties>
-                  </component>
-                  <component id="ea08a" class="javax.swing.JLabel" binding="myVendorUrlLabel">
-                    <constraints>
-                      <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                        <minimum-size width="10" height="-1"/>
-                      </grid>
-                    </constraints>
-                    <properties>
-                      <text resource-bundle="messages/IdeBundle" key="plugin.status.not.specified"/>
-                    </properties>
-                  </component>
-                  <component id="64984" class="javax.swing.JLabel" binding="myVendorEmailLabel">
-                    <constraints>
-                      <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                        <minimum-size width="10" height="-1"/>
-                      </grid>
-                    </constraints>
-                    <properties>
-                      <text resource-bundle="messages/IdeBundle" key="plugin.status.not.specified"/>
-                    </properties>
-                  </component>
-                  <component id="271bf" class="javax.swing.JLabel" binding="myVendorLabel">
-                    <constraints>
-                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                        <minimum-size width="10" height="-1"/>
-                      </grid>
-                    </constraints>
-                    <properties>
-                      <text resource-bundle="messages/IdeBundle" key="plugin.status.not.specified"/>
-                    </properties>
-                  </component>
-                </children>
-              </grid>
-              <grid id="2a414" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="true" hgap="-1" vgap="-1">
-                <margin top="0" left="0" bottom="0" right="0"/>
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="4" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties/>
-                <border type="none"/>
-                <children>
-                  <grid id="c57e2" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                    <margin top="0" left="0" bottom="0" right="0"/>
-                    <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties/>
-                    <border type="none"/>
-                    <children>
-                      <component id="e8c9f" class="javax.swing.JLabel">
-                        <constraints>
-                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
-                        </constraints>
-                        <properties>
-                          <text resource-bundle="messages/IdeBundle" key="editbox.plugin.description"/>
-                        </properties>
-                      </component>
-                      <scrollpane id="b4e7c">
-                        <constraints>
-                          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="9" fill="3" indent="0" use-parent-layout="false"/>
-                        </constraints>
-                        <properties>
-                          <autoscrolls value="true"/>
-                          <enabled value="true"/>
-                          <horizontalScrollBarPolicy value="32"/>
-                          <inheritsPopupMenu value="false"/>
-                          <verticalScrollBarPolicy value="20"/>
-                        </properties>
-                        <border type="none"/>
-                        <children>
-                          <component id="f6d67" class="javax.swing.JTextPane" binding="myDescriptionTextArea">
-                            <constraints/>
-                            <properties>
-                              <contentType value="text/html"/>
-                              <editable value="false"/>
-                            </properties>
-                          </component>
-                        </children>
-                      </scrollpane>
-                    </children>
-                  </grid>
-                  <grid id="40b9a" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                    <margin top="0" left="0" bottom="0" right="0"/>
-                    <constraints>
-                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties/>
-                    <border type="none"/>
-                    <children>
-                      <component id="4de96" class="javax.swing.JLabel">
-                        <constraints>
-                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
-                        </constraints>
-                        <properties>
-                          <text resource-bundle="messages/IdeBundle" key="editbox.plugin.change.notes"/>
-                        </properties>
-                      </component>
-                      <scrollpane id="59a2">
-                        <constraints>
-                          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="9" fill="3" indent="0" use-parent-layout="false"/>
-                        </constraints>
-                        <properties>
-                          <autoscrolls value="true"/>
-                          <horizontalScrollBarPolicy value="32"/>
-                          <verticalScrollBarPolicy value="22"/>
-                        </properties>
-                        <border type="none"/>
-                        <children>
-                          <component id="2ebec" class="javax.swing.JEditorPane" binding="myChangeNotesTextArea">
-                            <constraints/>
-                            <properties>
-                              <contentType value="text/html"/>
-                              <editable value="false"/>
-                              <margin top="0" left="0" bottom="0" right="0"/>
-                              <text value="&lt;html&gt;
-  &lt;head&gt;
-
-  &lt;/head&gt;
-  &lt;body&gt;
-    &lt;p style=&quot;margin-top: 0&quot;&gt;
-
-    &lt;/p&gt;
-  &lt;/body&gt;
-&lt;/html&gt;
-"/>
-                            </properties>
-                          </component>
-                        </children>
-                      </scrollpane>
-                    </children>
-                  </grid>
-                </children>
-              </grid>
-              <component id="9396b" class="javax.swing.JLabel">
-                <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="10" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/IdeBundle" key="plugin.version.label"/>
-                </properties>
-              </component>
-              <component id="a3f35" class="javax.swing.JLabel">
-                <constraints>
-                  <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/IdeBundle" key="plugin.size.label"/>
-                </properties>
-              </component>
-              <component id="533b6" class="javax.swing.JLabel" binding="myPluginUrlLabel">
-                <constraints>
-                  <grid row="1" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="10" fill="0" indent="0" use-parent-layout="false">
-                    <minimum-size width="10" height="-1"/>
-                  </grid>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/IdeBundle" key="plugin.status.not.specified"/>
-                </properties>
-              </component>
-              <component id="c0cbd" class="javax.swing.JLabel" binding="mySizeLabel">
-                <constraints>
-                  <grid row="2" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="?"/>
-                </properties>
-              </component>
-              <component id="663eb" class="javax.swing.JLabel" binding="myVersionLabel">
-                <constraints>
-                  <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="10" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="?"/>
-                </properties>
-              </component>
-            </children>
-          </grid>
-          <grid id="83ed3" binding="myTablePanel" layout-manager="BorderLayout" hgap="0" vgap="0">
-            <constraints>
-              <splitpane position="left"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children/>
-          </grid>
-        </children>
-      </splitpane>
       <component id="c101a" class="javax.swing.JButton" binding="myHttpProxySettingsButton">
         <constraints>
           <grid row="2" column="0" row-span="2" col-span="1" vsize-policy="0" hsize-policy="1" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -293,6 +52,268 @@
           <text value=""/>
         </properties>
       </component>
+      <grid id="496e3" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <splitpane id="70cdc">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                <preferred-size width="200" height="200"/>
+              </grid>
+            </constraints>
+            <properties>
+              <oneTouchExpandable value="true"/>
+            </properties>
+            <border type="none"/>
+            <children>
+              <grid id="7d113" layout-manager="GridBagLayout">
+                <constraints>
+                  <splitpane position="right"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="c8342" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="10" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text resource-bundle="messages/IdeBundle" key="label.plugin.home.page"/>
+                    </properties>
+                  </component>
+                  <grid id="50d9b" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="5" left="5" bottom="5" right="5"/>
+                    <constraints>
+                      <grid row="3" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="0" anchor="10" fill="1" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none" title-resource-bundle="messages/IdeBundle" title-key="group.vendor"/>
+                    <children>
+                      <component id="c8f9f" class="javax.swing.JLabel">
+                        <constraints>
+                          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties>
+                          <text resource-bundle="messages/IdeBundle" key="label.plugin.vendor.home.page"/>
+                        </properties>
+                      </component>
+                      <component id="94bc5" class="javax.swing.JLabel">
+                        <constraints>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties>
+                          <text resource-bundle="messages/IdeBundle" key="label.plugin.vendor.name"/>
+                        </properties>
+                      </component>
+                      <component id="20d29" class="javax.swing.JLabel">
+                        <constraints>
+                          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties>
+                          <text resource-bundle="messages/IdeBundle" key="label.plugin.vendor.email"/>
+                        </properties>
+                      </component>
+                      <component id="ea08a" class="javax.swing.JLabel" binding="myVendorUrlLabel">
+                        <constraints>
+                          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                            <minimum-size width="10" height="-1"/>
+                          </grid>
+                        </constraints>
+                        <properties>
+                          <text resource-bundle="messages/IdeBundle" key="plugin.status.not.specified"/>
+                        </properties>
+                      </component>
+                      <component id="64984" class="javax.swing.JLabel" binding="myVendorEmailLabel">
+                        <constraints>
+                          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                            <minimum-size width="10" height="-1"/>
+                          </grid>
+                        </constraints>
+                        <properties>
+                          <text resource-bundle="messages/IdeBundle" key="plugin.status.not.specified"/>
+                        </properties>
+                      </component>
+                      <component id="271bf" class="javax.swing.JLabel" binding="myVendorLabel">
+                        <constraints>
+                          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                            <minimum-size width="10" height="-1"/>
+                          </grid>
+                        </constraints>
+                        <properties>
+                          <text resource-bundle="messages/IdeBundle" key="plugin.status.not.specified"/>
+                        </properties>
+                      </component>
+                    </children>
+                  </grid>
+                  <grid id="2a414" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="true" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="4" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="1.0"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <grid id="c57e2" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                        <margin top="0" left="0" bottom="0" right="0"/>
+                        <constraints>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="2" hsize-policy="2" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties/>
+                        <border type="none"/>
+                        <children>
+                          <component id="e8c9f" class="javax.swing.JLabel">
+                            <constraints>
+                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text resource-bundle="messages/IdeBundle" key="editbox.plugin.description"/>
+                            </properties>
+                          </component>
+                          <scrollpane id="b4e7c">
+                            <constraints>
+                              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="9" fill="3" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <autoscrolls value="true"/>
+                              <enabled value="true"/>
+                              <horizontalScrollBarPolicy value="32"/>
+                              <inheritsPopupMenu value="false"/>
+                              <verticalScrollBarPolicy value="20"/>
+                            </properties>
+                            <border type="none"/>
+                            <children>
+                              <component id="f6d67" class="javax.swing.JTextPane" binding="myDescriptionTextArea">
+                                <constraints/>
+                                <properties>
+                                  <contentType value="text/html"/>
+                                  <editable value="false"/>
+                                </properties>
+                              </component>
+                            </children>
+                          </scrollpane>
+                        </children>
+                      </grid>
+                      <grid id="40b9a" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                        <margin top="0" left="0" bottom="0" right="0"/>
+                        <constraints>
+                          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="2" hsize-policy="2" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties/>
+                        <border type="none"/>
+                        <children>
+                          <component id="4de96" class="javax.swing.JLabel">
+                            <constraints>
+                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text resource-bundle="messages/IdeBundle" key="editbox.plugin.change.notes"/>
+                            </properties>
+                          </component>
+                          <scrollpane id="59a2">
+                            <constraints>
+                              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="9" fill="3" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <autoscrolls value="true"/>
+                              <horizontalScrollBarPolicy value="32"/>
+                              <verticalScrollBarPolicy value="22"/>
+                            </properties>
+                            <border type="none"/>
+                            <children>
+                              <component id="2ebec" class="javax.swing.JEditorPane" binding="myChangeNotesTextArea">
+                                <constraints/>
+                                <properties>
+                                  <contentType value="text/html"/>
+                                  <editable value="false"/>
+                                  <margin top="0" left="0" bottom="0" right="0"/>
+                                  <text value="&lt;html&gt;
+  &lt;head&gt;
+
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;p style=&quot;margin-top: 0&quot;&gt;
+
+    &lt;/p&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+"/>
+                                </properties>
+                              </component>
+                            </children>
+                          </scrollpane>
+                        </children>
+                      </grid>
+                    </children>
+                  </grid>
+                  <component id="9396b" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="10" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text resource-bundle="messages/IdeBundle" key="plugin.version.label"/>
+                    </properties>
+                  </component>
+                  <component id="a3f35" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text resource-bundle="messages/IdeBundle" key="plugin.size.label"/>
+                    </properties>
+                  </component>
+                  <component id="533b6" class="javax.swing.JLabel" binding="myPluginUrlLabel">
+                    <constraints>
+                      <grid row="1" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="10" fill="0" indent="0" use-parent-layout="false">
+                        <minimum-size width="10" height="-1"/>
+                      </grid>
+                      <gridbag weightx="1.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text resource-bundle="messages/IdeBundle" key="plugin.status.not.specified"/>
+                    </properties>
+                  </component>
+                  <component id="c0cbd" class="javax.swing.JLabel" binding="mySizeLabel">
+                    <constraints>
+                      <grid row="2" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="1.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text value="?"/>
+                    </properties>
+                  </component>
+                  <component id="663eb" class="javax.swing.JLabel" binding="myVersionLabel">
+                    <constraints>
+                      <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="10" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="1.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text value="?"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+              <grid id="83ed3" binding="myTablePanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints>
+                  <splitpane position="left"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </grid>
+            </children>
+          </splitpane>
+        </children>
+      </grid>
     </children>
   </grid>
 </form>

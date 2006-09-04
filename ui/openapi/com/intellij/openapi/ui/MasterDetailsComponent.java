@@ -16,6 +16,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.profile.Profile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.Icons;
@@ -102,6 +103,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
 
     };
     myAutoScrollHandler.install(myTree);
+    GuiUtils.replaceJSplitPaneWithIDEASplitter(myWholePanel);
   }
 
   private void initToolbar() {

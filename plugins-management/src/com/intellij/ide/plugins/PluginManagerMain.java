@@ -122,7 +122,7 @@ public class PluginManagerMain {
         myActionToolbar.updateActionsImmediately();
       }
     });
-
+    GuiUtils.replaceJSplitPaneWithIDEASplitter(main);
   }
 
   public void reset() {
@@ -347,14 +347,6 @@ public class PluginManagerMain {
 
   public void ignoreChanges() {
     requireShutdown = false;
-  }
-
-  private void createUIComponents() {
-    main = new JPanel(new GridBagLayout()) {
-      public Dimension getPreferredSize() {
-        return new Dimension(600, 600);
-      }
-    };
   }
 
   private static class PluginsToUpdateChooser extends DialogWrapper {
