@@ -1522,6 +1522,8 @@
     <action id="Graph.ShowHideGrid" class="com.intellij.openapi.graph.builder.actions.ShowHideGridAction" text="Show/Hide Grid"/>
     <action id="Graph.SnapToGrid" class="com.intellij.openapi.graph.builder.actions.SnapToGridAction" text="Snap to Grid"/>
 
+    <action id="Graph.FitContent" class="com.intellij.openapi.graph.builder.actions.FitContentAction" text="Fit Content"/>
+
     <action id="Graph.Print" class="com.intellij.openapi.graph.builder.actions.printing.PrintGraphAction" text="Print Graph"/>
     <action id="Graph.Print.Preview" class="com.intellij.openapi.graph.builder.actions.printing.PrintPreviewAction" text="Print Preview"/>
 
@@ -1547,6 +1549,9 @@
     <action id="Graph.Layout.TreeLayouter" class="com.intellij.openapi.graph.builder.actions.layout.HVTreeLayouterAction"
             text="Tree">
     </action>
+    <action id="Graph.Layout.Fit.Content" class="com.intellij.openapi.graph.builder.actions.layout.FitContentAfterLayoutAction"
+            text="Fit Content After Layout" keymap="$default">
+    </action>
 
     <action id="Graph.Faces.OpenSelectedPages" class="com.intellij.jsf.yfilesGraph.actions.OpenSelectedPagesActon"
             text="Open Selected Pages" use-shortcut-of="EditSource" keymap="$default">
@@ -1566,6 +1571,7 @@
       <reference ref="Graph.ZoomIn"/>
       <reference ref="Graph.ZoomOut"/>
       <reference ref="Graph.ActualZoom"/>
+      <reference ref="Graph.FitContent"/>
 
       <separator/>
       <reference ref="Graph.ShowHideGrid"/>
@@ -1577,6 +1583,8 @@
 
       <separator/>
       <reference ref="Graph.CommonLayoutGroup"/>
+      <reference ref="Graph.Layout.Fit.Content"/>
+
     </group>
 
     <group id="Graph.Faces.DefaultGraphPopup">
