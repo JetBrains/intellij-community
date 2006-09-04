@@ -82,6 +82,11 @@ public class UrlConnectionUtil {
         myException = e;
         myInputStream = null;
       }
+      catch (Exception e) {
+        myException = new IOException();
+        myException.initCause(e);
+        myInputStream = null;
+      }
     }
   }
 }
