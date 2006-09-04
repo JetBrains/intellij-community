@@ -193,7 +193,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
         myPostRefreshRunnables.push(postAction);
         if (myRefreshCount == 1) {
           myRefreshEventsToFire = new ArrayList<Runnable>();
-          myRefreshEventsToFire.add(new FireBeforeRefresh(asynchronous));
         }
       }
     };
@@ -209,19 +208,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     return myRefreshCount - mySynchronousRefreshCount;
   }
 
-  private class FireBeforeRefresh implements Runnable {
-    private final boolean myAsynchonous;
-
-    public FireBeforeRefresh(boolean asynchonous) {
-      myAsynchonous = asynchonous;
-    }
-
-    public void run() {
-      myVirtualFileManagerListenerMulticaster.getMulticaster().beforeRefreshStart(myAsynchonous);
-    }
-  }
-
-  public void afterRefreshFinish(final boolean asynchronous, ModalityState modalityState) {
+  public void afterRefreshFinish(final boolean asynchronous, final ModalityState modalityState) {
     Runnable action = new Runnable() {
       public void run() {
         ApplicationManager.getApplication().assertIsDispatchThread();
@@ -230,6 +217,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
             public void run() {
+              myVirtualFileManagerListenerMulticaster.getMulticaster().beforeRefreshStart(asynchronous);
               //noinspection ForLoopReplaceableByForEach
               for (int i = 0; i < myRefreshEventsToFire.size(); i++) {
                 Runnable runnable = myRefreshEventsToFire.get(i);
@@ -240,6 +228,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                   LOG.error(e);
                 }
               }
+              myRefreshEventsToFire.clear();
 
               myRefreshCount--;
               if (!asynchronous) mySynchronousRefreshCount--;
@@ -258,7 +247,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
               }
 
               if (myRefreshCount > 0) {
-                myRefreshEventsToFire.clear();
                 if (!asynchronous && mySynchronousRefreshCount == 0) {
                   myVirtualFileManagerListenerMulticaster.getMulticaster().afterRefreshFinish(asynchronous);
                 }
