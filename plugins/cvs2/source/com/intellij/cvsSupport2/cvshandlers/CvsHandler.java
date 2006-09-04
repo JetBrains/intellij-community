@@ -19,7 +19,7 @@ import java.util.List;
 public abstract class CvsHandler extends CvsMessagesAdapter{
 
   @NonNls private static final String NULL_HANDLER_NAME = "Null";
-  public static CvsHandler NULL = new CvsHandler(NULL_HANDLER_NAME, FileSetToBeUpdated.EMTPY) {
+  public static CvsHandler NULL = new CvsHandler(NULL_HANDLER_NAME, FileSetToBeUpdated.EMPTY) {
     protected void addCvsListener(CvsMessagesListener listener) {
 
     }

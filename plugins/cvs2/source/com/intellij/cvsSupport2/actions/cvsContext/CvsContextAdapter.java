@@ -4,10 +4,11 @@ import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
@@ -24,6 +25,7 @@ public class CvsContextAdapter implements CvsContext{
     return false;
   }
 
+  @Nullable
   public VirtualFile getSelectedFile() {
     return null;
   }

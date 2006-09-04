@@ -71,7 +71,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   public CommandCvsHandler(String title, CvsOperation cvsOperation, boolean canBeCanceled) {
-    this(title, cvsOperation, FileSetToBeUpdated.EMTPY, canBeCanceled);
+    this(title, cvsOperation, FileSetToBeUpdated.EMPTY, canBeCanceled);
   }
 
   public CommandCvsHandler(String title, CvsOperation cvsOperation, FileSetToBeUpdated files, boolean canBeCanceled) {
@@ -85,7 +85,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   public CommandCvsHandler(String title, CvsOperation cvsOperation) {
-    this(title, cvsOperation, FileSetToBeUpdated.EMTPY);
+    this(title, cvsOperation, FileSetToBeUpdated.EMPTY);
   }
 
   public boolean canBeCanceled() {
@@ -118,7 +118,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   public static CvsHandler createImportHandler(ImportDetails details) {
-    return new CommandCvsHandler(CvsBundle.message("operation.name.import"), new ImportOperation(details), FileSetToBeUpdated.EMTPY);
+    return new CommandCvsHandler(CvsBundle.message("operation.name.import"), new ImportOperation(details), FileSetToBeUpdated.EMPTY);
   }
 
   public static UpdateHandler createUpdateHandler(final FilePath[] files,
@@ -237,7 +237,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
 
     return new CommandCvsHandler(CvsBundle.message("operation.name.restore"),
                                  operation,
-                                 FileSetToBeUpdated.EMTPY);
+                                 FileSetToBeUpdated.EMPTY);
   }
 
   public static CvsHandler createEditHandler(VirtualFile[] selectedFiles, boolean isReservedEdit) {
@@ -253,12 +253,12 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   public static CvsHandler createAnnotateHandler(AnnotateOperation operation) {
-    return new CommandCvsHandler(CvsBundle.message("operation.name.annotate"), operation, FileSetToBeUpdated.EMTPY);
+    return new CommandCvsHandler(CvsBundle.message("operation.name.annotate"), operation, FileSetToBeUpdated.EMPTY);
   }
 
   public static CvsHandler createRemoveTagAction(VirtualFile[] selectedFiles, String tagName) {
     return new CommandCvsHandler(CvsBundle.message("action.name.delete.tag"), new TagOperation(selectedFiles, tagName, true, false),
-                                 FileSetToBeUpdated.EMTPY);
+                                 FileSetToBeUpdated.EMPTY);
   }
 
   @Nullable

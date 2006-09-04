@@ -68,7 +68,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction{
 
   private class MyCvsHandler extends AbstractCvsHandler {
     public MyCvsHandler() {
-      super(TITLE, FileSetToBeUpdated.EMTPY);
+      super(TITLE, FileSetToBeUpdated.EMPTY);
     }
 
     public boolean isCanceled() {

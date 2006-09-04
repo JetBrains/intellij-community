@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
@@ -28,6 +29,7 @@ import java.util.Collection;
 public interface VcsContext {
   Project getProject();
 
+  @Nullable
   VirtualFile getSelectedFile();
 
   VirtualFile[] getSelectedFiles();

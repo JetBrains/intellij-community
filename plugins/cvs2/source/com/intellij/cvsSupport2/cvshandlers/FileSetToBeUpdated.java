@@ -30,7 +30,7 @@ public abstract class FileSetToBeUpdated {
     return new SelectedFiles(files);
   }
 
-  public final static FileSetToBeUpdated EMTPY = new FileSetToBeUpdated() {
+  public final static FileSetToBeUpdated EMPTY = new FileSetToBeUpdated() {
     public void refreshFilesAsync(Runnable postRunnable) {
       if (postRunnable != null) {
         postRunnable.run();
