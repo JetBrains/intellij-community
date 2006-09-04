@@ -71,9 +71,6 @@ public class BrowseCvsRepositoryAction extends AbstractAction{
       super(TITLE, FileSetToBeUpdated.EMTPY);
     }
 
-    public void internalRun(ModalityContext executor) {
-    }
-
     public boolean isCanceled() {
       return false;
     }

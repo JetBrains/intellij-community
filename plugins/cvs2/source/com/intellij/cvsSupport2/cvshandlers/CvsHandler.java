@@ -5,14 +5,13 @@ import com.intellij.cvsSupport2.cvsoperations.cvsErrors.ErrorMessagesProcessor;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsListenerWithProgress;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesAdapter;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesListener;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
-import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,10 +20,6 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
 
   @NonNls private static final String NULL_HANDLER_NAME = "Null";
   public static CvsHandler NULL = new CvsHandler(NULL_HANDLER_NAME, FileSetToBeUpdated.EMTPY) {
-    public void internalRun(ModalityContext executor) {
-
-    }
-
     protected void addCvsListener(CvsMessagesListener listener) {
 
     }
@@ -63,7 +58,8 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
     myFiles = files;
   }
 
-  public abstract void internalRun(ModalityContext executor);
+  public void internalRun(ModalityContext executor, final boolean runInReadAction) {
+  }
 
   protected abstract void addCvsListener(CvsMessagesListener listener);
 
@@ -120,15 +116,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
   public void run(final ModalityContext executor) {
     initializeListeners();
     try {
-      if (runInReadThread()) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            internalRun(executor);
-          }
-        });
-      } else {
-        internalRun(executor);
-      }
+      internalRun(executor, runInReadThread());
     } finally {
       deinitializeListeners();
     }
