@@ -3,10 +3,13 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -18,9 +21,6 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
@@ -664,8 +664,16 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public void commitChanges(LocalChangeList changeList, List<Change> changes) {
+    doCommit(changeList, changes, false);
+  }
+
+  private void doCommit(final LocalChangeList changeList, final List<Change> changes, final boolean synchronously) {
     new CommitHelper(myProject, changeList, changes, changeList.getName(),
-                     changeList.getComment(), new ArrayList<CheckinHandler>(), false).doCommit();
+                     changeList.getComment(), new ArrayList<CheckinHandler>(), false, synchronously).doCommit();
+  }
+
+  public void commitChangesSynchronously(LocalChangeList changeList, List<Change> changes) {
+    doCommit(changeList, changes, true);
   }
 
   @SuppressWarnings({"unchecked"})

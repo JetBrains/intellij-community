@@ -34,11 +34,13 @@ public class CommitHelper {
   
   private final List<CheckinHandler> myHandlers;
   private final boolean myAllOfDefaultChangeListChangesIncluded;
+  private final boolean myForceSyncCommit;
 
 
   public CommitHelper(final Project project, final ChangeList changeList, final List<Change> includedChanges, final String actionName, final String commitMessage,
                       final List<CheckinHandler> handlers,
-                      final boolean allOfDefaultChangeListChangesIncluded) {
+                      final boolean allOfDefaultChangeListChangesIncluded,
+                      final boolean synchronously) {
     myProject = project;
     myChangeList = changeList;
     myIncludedChanges = includedChanges;
@@ -46,14 +48,20 @@ public class CommitHelper {
     myCommitMessage = commitMessage;
     myHandlers = handlers;
     myAllOfDefaultChangeListChangesIncluded = allOfDefaultChangeListChangesIncluded;
+    myForceSyncCommit = synchronously;
   }
 
   public void doCommit() {
     final List<VcsException> vcsExceptions = new ArrayList<VcsException>();
     final List<Change> changesFailedToCommit = new ArrayList<Change>();
 
-    ProgressManager.getInstance()
-      .runProcessWithProgressAsynchronously(myProject, myActionName, checkinAction(vcsExceptions, changesFailedToCommit, myChangeList), null, null);
+    final Runnable action = checkinAction(vcsExceptions, changesFailedToCommit, myChangeList);
+    if (myForceSyncCommit) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(action, myActionName, true, myProject);
+    }
+    else {
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, myActionName, action, null, null);
+    }
   }
 
   private Runnable checkinAction(final List<VcsException> vcsExceptions, final List<Change> changesFailedToCommit, final ChangeList changeList) {

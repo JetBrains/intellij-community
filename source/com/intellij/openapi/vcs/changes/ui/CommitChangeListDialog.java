@@ -403,7 +403,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myActionName,
       getCommitMessage(),
       myHandlers,
-      myAllOfDefaultChangeListChangesIncluded).doCommit();
+      myAllOfDefaultChangeListChangesIncluded, false).doCommit();
   }
   
   @Nullable
