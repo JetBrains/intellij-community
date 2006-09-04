@@ -111,7 +111,9 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     myRepaintAlarm.cancelAllRequests();
     myVcsChangeAlarm.cancelAllRequests();
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    ToolWindowManager.getInstance(myProject).unregisterToolWindow(TOOLWINDOW_ID);
+    if (myToolWindow != null) {
+      ToolWindowManager.getInstance(myProject).unregisterToolWindow(TOOLWINDOW_ID);
+    }
   }
 
   @NonNls @NotNull
