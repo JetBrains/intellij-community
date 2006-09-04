@@ -35,7 +35,7 @@ public class JreVersionDetector {
       return myLastIsJre50;
     } else {
       final Module module = configuration.getConfigurationModule().getModule();
-      if (module != null) {
+      if (module != null && !module.isDisposed()) {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
         final ProjectJdk jdk = rootManager.getJdk();
         if (jdk == null) return false;
