@@ -156,6 +156,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
           myUpdateProblemAlarm.cancelAllRequests();
           myUpdateProblemAlarm.addRequest(new Runnable() {
             public void run() {
+              if (!myProject.isOpen()) return;
               Set<VirtualFile> filesToRefresh;
               synchronized (myFilesToRefresh) {
                 filesToRefresh = new THashSet<VirtualFile>(myFilesToRefresh);
