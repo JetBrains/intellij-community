@@ -1,20 +1,22 @@
 package com.intellij.cvsSupport2.util;
 
-import com.intellij.cvsSupport2.javacvsImpl.FileReadOnlyHandler;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
+import com.intellij.cvsSupport2.javacvsImpl.FileReadOnlyHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
  * author: lesya
  */
 public class CvsFileUtil {
+  private CvsFileUtil() {
+  }
+
   public static List<String> readLinesFrom(File file) throws IOException {
     if (!file.exists()) file.createNewFile();
     ArrayList<String> result = new ArrayList<String>();
@@ -39,7 +41,7 @@ public class CvsFileUtil {
     }
   }
 
-  public static void storeLines(List lines, File file) throws IOException {
+  public static void storeLines(List<String> lines, File file) throws IOException {
 
     String separator = getLineSeparatorFor(file);
 
@@ -55,8 +57,7 @@ public class CvsFileUtil {
     writer = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(file)), CvsApplicationLevelConfiguration.getCharset());
 
     try {
-      for (Iterator each = lines.iterator(); each.hasNext();) {
-        String line = (String)each.next();
+      for (final String line : lines) {
         writer.write(line);
         writer.write(separator);
       }
@@ -69,7 +70,7 @@ public class CvsFileUtil {
 
   public static void appendLineToFile(String line, File file) throws IOException {
     if (!file.exists()) file.createNewFile();
-    List lines = readLinesFrom(file);
+    List<String> lines = readLinesFrom(file);
     lines.add(line);
     storeLines(lines, file);
   }

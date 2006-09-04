@@ -9,9 +9,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.PasswordPromptDialog;
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 import org.netbeans.lib.cvsclient.connection.PServerPasswordScrambler;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.SocketTimeoutException;
@@ -26,19 +28,21 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.connections.pserver.PServerLoginProviderImpl");
 
+  @Nullable
   public String getScrambledPasswordForCvsRoot(String cvsroot) {
-    return loadOrRequestPassword(cvsroot);
+    return getPassword(cvsroot);
   }
 
-  private String requestForPassword(String cvsroot) {
-    PasswordPromptDialog passwordDialog = new PasswordPromptDialog(com.intellij.CvsBundle.message("propmt.text.enter.password.for.cvs.root", cvsroot),
-                                                                   com.intellij.CvsBundle.message("propmt.title.enter.password.for.cvs.root"), null);
+  @Nullable
+  private static String requestForPassword(String cvsroot) {
+    PasswordPromptDialog passwordDialog = new PasswordPromptDialog(CvsBundle.message("propmt.text.enter.password.for.cvs.root", cvsroot),
+                                                                   CvsBundle.message("propmt.title.enter.password.for.cvs.root"), null);
     passwordDialog.show();
     if (!passwordDialog.isOK()) return null;
     return PServerPasswordScrambler.getInstance().scramble(passwordDialog.getPassword());
   }
 
-  private String getMessageFrom(AuthenticationException e) {
+  private static String getMessageFrom(AuthenticationException e) {
     Throwable underlyingThrowable = e.getCause();
     if (underlyingThrowable == null) {
       return e.getLocalizedMessage() == null ? e.getMessage() : e.getLocalizedMessage();
@@ -59,14 +63,14 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
       } catch (AuthenticationException e) {
         Throwable cause = e.getCause();
         if (cause instanceof SocketTimeoutException){
-          showErrorMessage(com.intellij.CvsBundle.message("error.message.timeout.error"), com.intellij.CvsBundle.message("error.dialog.title.timeout.error"));
+          showErrorMessage(CvsBundle.message("error.message.timeout.error"), CvsBundle.message("error.dialog.title.timeout.error"));
           return false;
         } else if (cause instanceof UnknownHostException){
-          showErrorMessage(com.intellij.CvsBundle.message("error.message.unknown.host", settings.HOST),
-                                     com.intellij.CvsBundle.message("error.title.inknown.host"));
+          showErrorMessage(CvsBundle.message("error.message.unknown.host", settings.HOST),
+                                     CvsBundle.message("error.title.inknown.host"));
           return false;
         } else {
-        showErrorMessage(getMessageFrom(e), com.intellij.CvsBundle.message("error.title.authorization.error"));
+        showErrorMessage(getMessageFrom(e), CvsBundle.message("error.title.authorization.error"));
         settings.releasePassword();
         return relogin(settings, executor);
         }
@@ -74,7 +78,7 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
         try {
           connection.close();
         } catch (IOException e) {
-
+          // ignore
         }
       }
     }
@@ -83,15 +87,15 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
     try {
       storePassword(cvsRoot, password);
     } catch (IOException e) {
-      Messages.showMessageDialog(com.intellij.CvsBundle.message("error.message.cannot.store.password", e.getLocalizedMessage()),
-                                 com.intellij.CvsBundle.message("error.title.storing.cvs.password"), Messages.getErrorIcon());
+      Messages.showMessageDialog(CvsBundle.message("error.message.cannot.store.password", e.getLocalizedMessage()),
+                                 CvsBundle.message("error.title.storing.cvs.password"), Messages.getErrorIcon());
       return false;
     }
     settings.storePassword(password);
     return login(settings, executor);
   }
 
-  private void showErrorMessage(final String message, final String title) {
+  private static void showErrorMessage(final String message, final String title) {
     Runnable showErrorAction = new Runnable(){
           public void run() {
             Messages.showErrorDialog(message, title);
@@ -112,45 +116,46 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
     try {
       storePassword(cvsRoot, password);
     } catch (IOException e) {
-      Messages.showMessageDialog(e.getLocalizedMessage(), com.intellij.CvsBundle.message("error.title.cannot.store.password"), Messages.getErrorIcon());
+      Messages.showMessageDialog(e.getLocalizedMessage(), CvsBundle.message("error.title.cannot.store.password"), Messages.getErrorIcon());
       return false;
     }
     settings.storePassword(password);
     return login(settings, executor);
   }
 
-  private ArrayList readConfigurationNotMatchedWith(String cvsRoot, File passFile) {
+  private static ArrayList<String> readConfigurationNotMatchedWith(String cvsRoot, File passFile) {
     FileInputStream input;
     try {
       input = new FileInputStream(passFile);
     } catch (FileNotFoundException e) {
-      return new ArrayList();
+      return new ArrayList<String>();
     }
 
     BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-    ArrayList result = new ArrayList();
+    ArrayList<String> result = new ArrayList<String>();
     try {
       String line;
       while ((line = reader.readLine()) != null) {
         if (line.indexOf(cvsRoot) == -1) result.add(line);
       }
     } catch (IOException ex) {
-
+      // ignore
     } finally {
       try {
         reader.close();
       } catch (IOException e) {
+        // ignore
       }
     }
     return result;
   }
 
-  private void removeAllPasswordsForThisCvsRootFromPasswordFile(String cvsRoot) {
+  private static void removeAllPasswordsForThisCvsRootFromPasswordFile(String cvsRoot) {
     File passFile = getPassFile();
     if (passFile == null) return;
     if (!passFile.isFile()) return;
 
-    ArrayList lines = readConfigurationNotMatchedWith(cvsRoot, passFile);
+    ArrayList<String> lines = readConfigurationNotMatchedWith(cvsRoot, passFile);
 
     try {
       CvsFileUtil.storeLines(lines, passFile);
@@ -159,19 +164,16 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
     }
   }
 
-  private String loadOrRequestPassword(String stringConfiguration) {
-    return getPassword(stringConfiguration);
-  }
-
-  private void storePassword(String stringConfiguration, String scrambledPassword) throws IOException {
+  private static void storePassword(String stringConfiguration, String scrambledPassword) throws IOException {
     File passFile = getPassFile();
     if (!passFile.exists()) passFile.createNewFile();
-    List lines = CvsFileUtil.readLinesFrom(passFile);
+    List<String> lines = CvsFileUtil.readLinesFrom(passFile);
     lines.add(stringConfiguration + " " + scrambledPassword);
     CvsFileUtil.storeLines(lines, passFile);
   }
 
-  private String getPassword(String config) {
+  @Nullable
+  private static String getPassword(String config) {
     File passFile = getPassFile();
     try {
       BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(passFile)));
@@ -185,11 +187,12 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
     }
   }
 
-  private File getPassFile() {
+  private static File getPassFile() {
     return new File(CvsApplicationLevelConfiguration.getInstance().getPathToPassFile());
   }
 
-  private String findPasswordIn(BufferedReader reader, String config) throws IOException {
+  @Nullable
+  private static String findPasswordIn(BufferedReader reader, String config) throws IOException {
     String line;
     while ((line = reader.readLine()) != null) {
       int position = line.indexOf(config);
