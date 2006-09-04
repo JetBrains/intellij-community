@@ -1,8 +1,8 @@
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.ide.IdeBundle;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.IconLoader;
@@ -18,13 +18,20 @@ import java.util.Collection;
 
 public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvider{
   private final SmartPsiElementPointer mySuperClassPointer;
-  private final boolean myOverrides;
+  private final OwnershipType myOverrides;
   private final Collection<TreeElement> myChildren = new ArrayList<TreeElement>();
   private static final Icon OVERRIDING_ICON = IconLoader.getIcon("/general/overridingMethod.png");
-  private static final Icon IMLLEMENTING_ICON = IconLoader.getIcon("/general/implementingMethod.png");
+  private static final Icon IMPLEMENTING_ICON = IconLoader.getIcon("/general/implementingMethod.png");
+  private static final Icon INHERITED_ICON = IconLoader.getIcon("/general/inheritedMethod.png");
 
-  public SuperTypeGroup(PsiClass superClass, boolean overrides) {
-    myOverrides = overrides;
+  public static enum OwnershipType {
+    IMPLEMENTS,
+    OVERRIDES,
+    INHERITS
+  }
+
+  public SuperTypeGroup(PsiClass superClass, OwnershipType type) {
+    myOverrides = type;
     mySuperClassPointer = SmartPointerManager.getInstance(superClass.getProject()).createSmartPsiElementPointer(superClass);
   }
 
@@ -42,11 +49,16 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
   }
 
   public Icon getIcon(boolean open) {
-    if (myOverrides) {
-      return OVERRIDING_ICON;
-    } else {
-      return IMLLEMENTING_ICON;
+    switch (myOverrides) {
+      case IMPLEMENTS:
+        return IMPLEMENTING_ICON;
+      case INHERITS:
+        return INHERITED_ICON;
+      case OVERRIDES:
+        return OVERRIDING_ICON;
     }
+
+    return null; // Can't be
   }
 
   public String getLocationString() {
@@ -76,11 +88,8 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
   }
 
   public int hashCode() {
-    int result;
     final PsiClass superClass = getSuperClass();
-    result = (superClass  != null ? superClass .hashCode() : 0);
-    result = 29 * result + (myOverrides ? 1 : 0);
-    return result;
+    return superClass  != null ? superClass .hashCode() : 0;
   }
 
   public Object getValue() {

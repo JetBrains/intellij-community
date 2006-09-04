@@ -121,6 +121,10 @@ public class JavaLanguage extends Language {
       public StructureViewModel createStructureViewModel() {
         return new JavaFileTreeModel((PsiJavaFile)psiFile);
       }
+
+      public boolean isRootNodeShown() {
+        return false;
+      }
     };
   }
 

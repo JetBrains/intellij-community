@@ -2,6 +2,8 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 
@@ -36,6 +38,12 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> {
       PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_PARAMETERS,
       PsiFormatUtil.SHOW_TYPE
     );
+  }
+
+
+  public TextAttributesKey getTextAttributesKey() {
+    if (isInherited()) return CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES;
+    return super.getTextAttributesKey();
   }
 
   public PsiMethod getMethod() {

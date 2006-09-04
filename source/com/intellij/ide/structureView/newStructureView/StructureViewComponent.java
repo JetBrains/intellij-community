@@ -12,6 +12,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.Disposable;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -64,15 +64,24 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   private static final Key<StructureViewState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
   private final Project myProject;
   private final StructureViewModel myTreeModel;
+  private final boolean myShowRootNode;
   private boolean mySortByKind = true;
 
 
   public StructureViewComponent(FileEditor editor, StructureViewModel structureViewModel, Project project) {
+    this(editor, structureViewModel, project, true);
+  }
+
+  public StructureViewComponent(final FileEditor editor,
+                                final StructureViewModel structureViewModel,
+                                final Project project,
+                                final boolean showRootNode) {
     super(new BorderLayout());
 
     myProject = project;
     myFileEditor = editor;
     myTreeModel = structureViewModel;
+    myShowRootNode = showRootNode;
     myTreeModelWrapper = new TreeModelWrapper(myTreeModel, this);
     SmartTreeStructure treeStructure = new SmartTreeStructure(project, myTreeModelWrapper){
       public void rebuildTree() {
@@ -81,7 +90,11 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
         restoreState();
       }
     };
-    JTree tree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement())));
+
+    final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement()));
+    JTree tree = new Tree(model);
+    tree.setRootVisible(myShowRootNode);
+
     myAbstractTreeBuilder = new StructureTreeBuilder(project, tree,
                                                      (DefaultTreeModel)tree.getModel(),treeStructure,myTreeModelWrapper);
     myAbstractTreeBuilder.updateFromRoot();
@@ -113,7 +126,6 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
         return StructureViewComponent.this.getSelectedPsiElements();
       }
     };
-
   }
 
   private void installTree() {

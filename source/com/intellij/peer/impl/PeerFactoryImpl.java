@@ -296,6 +296,10 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
       public StructureView createStructureView(final FileEditor editor, StructureViewModel treeModel, Project project) {
         return new StructureViewComponent(editor, treeModel, project);
       }
+
+      public StructureView createStructureView(FileEditor editor, StructureViewModel treeModel, Project project, boolean showRootNode) {
+        return new StructureViewComponent(editor, treeModel, project, showRootNode);
+      }
     };
   }
 

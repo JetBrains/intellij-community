@@ -35,4 +35,18 @@ public interface StructureViewFactory {
   StructureView createStructureView(FileEditor fileEditor,
                                     StructureViewModel treeModel,
                                     Project project); 
+
+  /**
+   * Creates a structure view component instance for the specified editor.
+   *
+   * @param fileEditor the editor to which the structure view is linked.
+   * @param treeModel  the model defining the data shown in the structure view.
+   * @param project    the project containing the file for which the structure view is requested.
+   * @param showRootNode pass <code>false</code> if root node of the structure built should not actually be shown in result tree.
+   * @return the structure view instance.
+   */
+  StructureView createStructureView(FileEditor fileEditor,
+                                    StructureViewModel treeModel,
+                                    Project project,
+                                    boolean showRootNode);
 }
