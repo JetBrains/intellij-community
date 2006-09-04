@@ -9,6 +9,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -34,7 +35,7 @@ public abstract class AutocreatingMoveDestination implements MoveDestination {
   protected String checkCanCreateInSourceRoot(final VirtualFile targetSourceRoot) {
     final String targetQName = myPackage.getQualifiedName();
     final String sourceRootPackage = myFileIndex.getPackageNameByDirectory(targetSourceRoot);
-    if (!targetQName.startsWith(sourceRootPackage)) {
+    if (!RefactoringUtil.canCreateInSourceRoot(sourceRootPackage, targetQName)) {
       return RefactoringBundle.message("source.folder.0.has.package.prefix.1", targetSourceRoot.getPresentableUrl(),
                                        sourceRootPackage, targetQName);
     }

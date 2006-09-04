@@ -1276,12 +1276,18 @@ public class RefactoringUtil {
     throws IncorrectOperationException {
     String targetQName = aPackage.getQualifiedName();
     String sourceRootPackage = ProjectRootManager.getInstance(aPackage.getManager().getProject()).getFileIndex().getPackageNameByDirectory(sourceRoot);
-    if (sourceRootPackage == null || !targetQName.startsWith(sourceRootPackage)) {
+    if (!canCreateInSourceRoot(sourceRootPackage, targetQName)) {
       throw new IncorrectOperationException("Cannot create package '" + targetQName + "' in source folder " + sourceRoot.getPresentableUrl());
     }
     String result = targetQName.substring(sourceRootPackage.length());
     if (StringUtil.startsWithChar(result, '.')) result = result.substring(1);  // remove initial '.'
     return result;
+  }
+
+  public static boolean canCreateInSourceRoot(final String sourceRootPackage, final String targetQName) {
+    if (sourceRootPackage == null || !targetQName.startsWith(sourceRootPackage)) return false;
+    if (targetQName.length() == sourceRootPackage.length()) return true;
+    return targetQName.charAt(sourceRootPackage.length()) == '.';
   }
 
 
