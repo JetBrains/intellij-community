@@ -14,16 +14,20 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.PanelWithText;
+import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class GlobalResourcesConfigurable extends NamedConfigurable {
+  public static final Icon ICON = IconLoader.getIcon("/modules/globalResources.png");
+
   public void setDisplayName(final String name) {
     //do nothing
   }
 
+  @Nullable
   public Object getEditableObject() {
     return null;
   }
@@ -41,7 +45,7 @@ public class GlobalResourcesConfigurable extends NamedConfigurable {
   }
 
   public Icon getIcon() {
-    return null;
+    return ICON;
   }
 
   @Nullable

@@ -30,7 +30,7 @@ import javax.swing.*;
  * Date: 02-Jun-2006
  */
 public class LibraryConfigurable extends NamedConfigurable<Library> {
-  private static final Icon ICON = IconLoader.getIcon("/modules/libraries.png");
+  private static final Icon ICON = IconLoader.getIcon("/modules/library.png");
 
   private LibraryTableEditor myLibraryEditor;
   private Library myLibrary;

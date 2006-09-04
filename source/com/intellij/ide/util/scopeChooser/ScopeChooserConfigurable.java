@@ -76,7 +76,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
-    result.add(new MyAddAction());
+    result.add(new MyAddAction(fromPopup));
     result.add(new MyDeleteAction(new Condition<Object>() {
       public boolean value(final Object o) {
         if (o instanceof MyNode) {
@@ -275,7 +275,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void addNewScope(final NamedScope scope, final boolean isLocal) {
-    final NamedScopesHolder holder = (NamedScopesHolder)(isLocal ? myLocalScopesManager : mySharedScopesManager);
+    final NamedScopesHolder holder = isLocal ? myLocalScopesManager : mySharedScopesManager;
     final Icon icon = isLocal ? LOCAL_SCOPES : SHARED_SCOPES;
     final MyNode nodeToAdd = new MyNode(new ScopeConfigurable(scope,
                                                               myProject, holder, icon,
@@ -309,12 +309,22 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   private class MyAddAction extends ActionGroup implements ActionGroupWithPreselection {
 
     private AnAction[] myChildren;
+    private boolean myFromPopup;
 
-    public MyAddAction() {
+    public MyAddAction(boolean fromPopup) {
       super(IdeBundle.message("add.scope.popup.title"), true);
+      myFromPopup = fromPopup;
       final Presentation presentation = getTemplatePresentation();
       presentation.setIcon(Icons.ADD_ICON);
-      registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
+      setShortcutSet(CommonShortcuts.INSERT);
+    }
+
+
+    public void update(AnActionEvent e) {
+      super.update(e);
+      if (myFromPopup) {
+        setPopup(false);
+      }
     }
 
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
@@ -332,6 +342,11 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
             createScope(false, IdeBundle.message("add.scope.dialog.title"), null);
           }
         };
+      }
+      if (myFromPopup) {
+        final AnAction action = myChildren[getDefaultIndex()];
+        action.getTemplatePresentation().setIcon(Icons.ADD_ICON);
+        return new AnAction[] {action};
       }
       return myChildren;
     }

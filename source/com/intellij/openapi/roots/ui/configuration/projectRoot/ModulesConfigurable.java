@@ -10,8 +10,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.PanelWithText;
@@ -21,21 +21,21 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ModulesConfigurable extends NamedConfigurable<Project> {
-  private static final Icon PROJECT_ICON = IconLoader.getIcon("/nodes/project.png");
+public class ModulesConfigurable extends NamedConfigurable<ModuleManager> {
+  private static final Icon PROJECT_ICON = IconLoader.getIcon("/modules/modulesNode.png");
 
-  private Project myProject;
+  private ModuleManager myManager;
 
-  public ModulesConfigurable(final Project project) {
-    myProject = project;
+  public ModulesConfigurable(ModuleManager manager) {
+    myManager = manager;
   }
 
   public void setDisplayName(final String name) {
     //do nothing
   }
 
-  public Project getEditableObject() {
-    return myProject;
+  public ModuleManager getEditableObject() {
+    return myManager;
   }
 
   public String getBannerSlogan() {

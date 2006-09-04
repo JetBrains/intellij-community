@@ -23,8 +23,8 @@ import com.intellij.openapi.util.IconLoader;
 import javax.swing.*;
 
 public class LibrariesConfigurable extends NamedConfigurable <String> {
-  private static final Icon ICON = IconLoader.getIcon("/modules/libraries.png");
-
+  private static final Icon ICON = IconLoader.getIcon("/modules/library.png");
+  
   private String myLibraryTable;
   private LibrariesModifiableModel myModel;
 

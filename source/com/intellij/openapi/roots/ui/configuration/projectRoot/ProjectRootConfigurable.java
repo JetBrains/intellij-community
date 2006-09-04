@@ -369,7 +369,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   private void createProjectNodes() {
-    myModulesNode = new MyNode(new ModulesConfigurable(myProject), true);
+    myModulesNode = new MyNode(new ModulesConfigurable(myModuleManager), true);
     final Map<ModuleGroup, MyNode> moduleGroup2NodeMap = new HashMap<ModuleGroup, MyNode>();
     final Module[] modules = myModuleManager.getModules();
     for (final Module module : modules) {
@@ -432,7 +432,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         final MyNode moduleGroupNode = ModuleGroupUtil
           .updateModuleGroupPath(new ModuleGroup(groupPath), myModulesNode, new Function<ModuleGroup, MyNode>() {
             public MyNode fun(final ModuleGroup group) {
-              return findNodeByObject(myModulesNode, group);
+              final MyNode node = findNodeByObject(myModulesNode, group);
+              LOG.assertTrue(node != null);
+              return node;
             }
           }, new Consumer<ModuleGroupUtil.ParentChildRelation<MyNode>>() {
             public void consume(final ModuleGroupUtil.ParentChildRelation<MyNode> parentChildRelation) {
@@ -782,6 +784,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
   }
 
+  @Nullable
   private Set<String> getCachedDependencies(final Object selectedObject, final MyNode selectedNode, boolean force) {
     if (selectedObject instanceof Library){
       final Library library = (Library)selectedObject;
@@ -836,6 +839,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
   }
 
+  @Nullable
   private Set<String> getDependencies(final Object selectedObject, final MyNode node) {
     if (selectedObject instanceof Module) {
       return getDependencies(new Condition<OrderEntry>() {
@@ -1043,6 +1047,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
   }
 
+  @Nullable
   public Module getSelectedModule() {
     final Object selectedObject = getSelectedObject();
     if (selectedObject instanceof Module) {
