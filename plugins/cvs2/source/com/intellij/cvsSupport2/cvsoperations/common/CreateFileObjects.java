@@ -17,9 +17,9 @@ public class CreateFileObjects {
 
   private final File[] myFiles;
   private String myRootPath;
-  private final Map myFileToDirectoryObjectMap = new com.intellij.util.containers.HashMap();
-  private final Collection myResult = new ArrayList();
-  private final Set myCreatedFiles = new HashSet();
+  private final Map<File, AbstractFileObject> myFileToDirectoryObjectMap = new com.intellij.util.containers.HashMap<File, AbstractFileObject>();
+  private final Collection<AbstractFileObject> myResult = new ArrayList<AbstractFileObject>();
+  private final Set<File> myCreatedFiles = new HashSet<File>();
 
   public CreateFileObjects(File root, File[] files) {
     myRootPath = root.getAbsolutePath();
@@ -28,7 +28,7 @@ public class CreateFileObjects {
     myFiles = files;
   }
 
-  public Collection execute(){
+  public Collection<AbstractFileObject> execute(){
     for (File file : myFiles) {
       if (file.isDirectory() || file.isFile() || file.getParentFile().isDirectory()) {
         String fileAbsolutePath = file.getAbsolutePath();
@@ -50,12 +50,11 @@ public class CreateFileObjects {
     String relativeFileName = "/" + file.getName();
     if (parent == null){
       return isDirectory ?
-        DirectoryObject.createInstance(relativeFileName) : (AbstractFileObject)FileObject.createInstance(relativeFileName);
+        DirectoryObject.createInstance(relativeFileName) : FileObject.createInstance(relativeFileName);
     } else {
       DirectoryObject parentObject = getDirectoryObjectFor(parent);
       return isDirectory ?
-        DirectoryObject.createInstance(parentObject, relativeFileName) :
-          (AbstractFileObject)FileObject.createInstance(parentObject, relativeFileName);
+        DirectoryObject.createInstance(parentObject, relativeFileName) : FileObject.createInstance(parentObject, relativeFileName);
     }
   }
 

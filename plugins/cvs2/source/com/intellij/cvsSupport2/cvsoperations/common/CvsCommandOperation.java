@@ -407,7 +407,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
         Entry previousEntry = myFileToPreviousEntryMap.containsKey(file)
                               ?
                               myFileToPreviousEntryMap.get(file)
-                              : CvsEntriesManager.getInstance().getCashedEntry(virtualParent, entry.getFileName());
+                              : CvsEntriesManager.getInstance().getCachedEntry(virtualParent, entry.getFileName());
         if (previousEntry != null) {
           myFileToPreviousEntryMap.put(file, previousEntry);
           if (entry.isResultOfMerge()) {

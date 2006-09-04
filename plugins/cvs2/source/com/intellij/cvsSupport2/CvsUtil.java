@@ -302,7 +302,7 @@ public class CvsUtil {
     VirtualFile directory = CvsVfsUtil.getParentFor(file);
     File cvsignoreFile = cvsignoreFileFor(CvsVfsUtil.getPathFor(directory));
     CvsFileUtil.appendLineToFile(file.getName(), cvsignoreFile);
-    CvsEntriesManager.getInstance().clearChachedFiltersFor(directory);
+    CvsEntriesManager.getInstance().clearCachedFiltersFor(directory);
   }
 
   public static File cvsignoreFileFor(String path) {

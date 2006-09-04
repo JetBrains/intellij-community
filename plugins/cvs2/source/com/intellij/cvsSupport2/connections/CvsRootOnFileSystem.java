@@ -1,13 +1,11 @@
 package com.intellij.cvsSupport2.connections;
 
-import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
-import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
+import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsInfo;
-import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
-import com.intellij.cvsSupport2.connections.CvsRootProvider;
-import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
+import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -51,7 +49,7 @@ public class CvsRootOnFileSystem extends CvsRootProvider {
     while (cvsRoot.equals(getCvsRootFor(result.getParentFile()))) {
       if (result.getParentFile() == null) return result;
       result = result.getParentFile();
-    };
+    }
     return result;
   }
 
@@ -59,6 +57,7 @@ public class CvsRootOnFileSystem extends CvsRootProvider {
     return getCvsEntriesManager().getCvsConnectionSettingsFor(file);
   }
 
+  @Nullable
   private static File getRootFor(File file) {
     if (file == null) return null;
     if (!file.isDirectory()) return getRootFor(file.getParentFile());

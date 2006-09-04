@@ -20,6 +20,8 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.netbeans.lib.cvsclient.admin.Entry;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -64,6 +66,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
     }
   }
 
+  @NotNull
   public String getComponentName() {
     return "CvsEntriesAdapter";
   }
@@ -111,7 +114,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
     return myInfoByParentDirectoryPath.get(parent);
   }
 
-  public synchronized void clearChachedFiltersFor(final VirtualFile parent) {
+  public synchronized void clearCachedFiltersFor(final VirtualFile parent) {
     for (final VirtualFile file : myInfoByParentDirectoryPath.keySet()) {
       if (file == null) continue;
       if (!file.isValid()) continue;
@@ -123,7 +126,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
     fileStatusesChanged();
   }
 
-  private void fileStatusesChanged() {
+  private static void fileStatusesChanged() {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
       FileStatusManager.getInstance(project).fileStatusesChanged();
@@ -131,7 +134,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
     }
   }
 
-  private boolean isCvsIgnoreFile(VirtualFile file) {
+  private static boolean isCvsIgnoreFile(VirtualFile file) {
     return CvsUtil.CVS_IGNORE_FILE.equals(file.getName());
   }
 
@@ -161,7 +164,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
     }
 
     if (isCvsIgnoreFile(file)) {
-      clearChachedFiltersFor(file.getParent());
+      clearCachedFiltersFor(file.getParent());
       return;
     }
 
@@ -181,7 +184,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
     }
   }
 
-  private boolean isCvsAdminDir(VirtualFile file) {
+  private static boolean isCvsAdminDir(VirtualFile file) {
     if (file == null) return false;
     return file.isDirectory() && CVS_ADMIN_DIRECTORY_NAME.equals(file.getName());
   }
@@ -222,7 +225,8 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
     }
   }
 
-  public Entry getCashedEntry(VirtualFile parent, String fileName){
+  @Nullable
+  public Entry getCachedEntry(VirtualFile parent, String fileName){
     if (parent == null) return null;
 
     CvsInfo cvsInfo = getInfoFor(parent);
