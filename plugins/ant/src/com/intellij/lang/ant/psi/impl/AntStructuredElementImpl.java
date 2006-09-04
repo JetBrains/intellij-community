@@ -92,10 +92,10 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
 
   public String getName() {
     if (hasNameElement()) {
-      return getNameElement().getName();
+      return computeAttributeValue(getNameElement().getName());
     }
     if (hasIdElement()) {
-      return getIdElement().getName();
+      return computeAttributeValue(getIdElement().getName());
     }
     return super.getName();
   }

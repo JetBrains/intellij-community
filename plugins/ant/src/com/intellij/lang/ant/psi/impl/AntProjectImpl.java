@@ -6,6 +6,7 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class AntProjectImpl extends AntStructuredElementImpl implements AntProject {
   private AntTarget[] myTargets;
   private AntTarget[] myImportedTargets;
@@ -68,7 +70,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
   @Nullable
   public String getBaseDir() {
-    return getSourceElement().getAttributeValue("basedir");
+    return computeAttributeValue(getSourceElement().getAttributeValue("basedir"));
   }
 
   @Nullable
@@ -135,19 +137,62 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     return null;
   }
 
+  /**
+   * This method returns not only files that could be included via the <import>
+   * task, but also a fake file which aggregates definitions resolved from all
+   * entity references under the root tag.
+   */
   @NotNull
   public synchronized AntFile[] getImportedFiles() {
     if (myImports == null) {
       // this is necessary to avoid recurrent getImportedFiles() and stack overflow
       myImports = AntFile.NO_FILES;
+      final XmlTag se = getSourceElement();
+      final PsiFile psiFile = se.getContainingFile();
       final List<AntFile> imports = new ArrayList<AntFile>();
-      for (final XmlTag tag : getSourceElement().getSubTags()) {
-        if ("import".equals(tag.getName())) {
-          final AntFile imported = AntImportImpl.getImportedFile(tag.getAttributeValue("file"), this);
-          if (imported != null) {
-            imports.add(imported);
+      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+      try {
+        for (final XmlTag tag : se.getSubTags()) {
+          //
+          // !!! a tag doesn't belong to the current file, so we decide it's resolved via an entity ref
+          //
+          if (!psiFile.equals(tag.getContainingFile())) {
+            //
+            // this quite strange creation of the tag text is necessary since
+            // tag.getText() takes whitespaces from source text
+            //
+            for (final PsiElement tagChild : tag.getChildren()) {
+              builder.append(tagChild.getText());
+              builder.append(' ');
+            }
+          }
+          else if ("import".equals(tag.getName())) {
+            final AntFile imported = AntImportImpl.getImportedFile(tag.getAttributeValue("file"), this);
+            if (imported != null) {
+              imports.add(imported);
+            }
           }
         }
+        if (builder.length() > 0) {
+          builder.insert(0, "\">");
+          builder.insert(0, getBaseDir());
+          builder.insert(0, "<project name=\"tags resolved as entity references\" basedir=\"");
+          builder.append("</project>");
+          final PsiElementFactory elementFactory = getManager().getElementFactory();
+          final XmlFile xmlFile = (XmlFile)elementFactory
+            .createFileFromText("dummyEntities.xml", StdFileTypes.XML, builder.toString(), LocalTimeCounter.currentTime(), false, false);
+          imports.add(new AntFileImpl(xmlFile.getViewProvider()) {
+            //
+            // this is necessary for computing file paths in tags resolved as entity references
+            //
+            public VirtualFile getVirtualFile() {
+              return AntProjectImpl.this.getAntFile().getVirtualFile();
+            }
+          });
+        }
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(builder);
       }
       final int importedFiles = imports.size();
       if (importedFiles > 0) {
@@ -205,8 +250,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   @SuppressWarnings({"UseOfObsoleteCollectionType"})
   void loadPredefinedProperties(final Hashtable properties, final Map<String, String> externalProps) {
     final Enumeration props = (properties != null) ? properties.keys() : (new Hashtable()).keys();
-    @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    builder.append("<project name=\"fake\">");
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    builder.append("<project name=\"predefined properties\">");
     try {
       while (props.hasMoreElements()) {
         final String name = (String)props.nextElement();

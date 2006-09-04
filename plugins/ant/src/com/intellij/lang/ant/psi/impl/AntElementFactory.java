@@ -34,8 +34,8 @@ public class AntElementFactory {
     if (element instanceof XmlComment) {
       return new AntCommentImpl(parent, element);
     }
-    if (element instanceof XmlEntityRef) {
-      return new AntEntityRefImpl(parent, element);
+    if (element instanceof XmlEntityRef && parent instanceof AntStructuredElement) {
+      return new AntEntityRefImpl((AntStructuredElement)parent, element);
     }
     if (!(element instanceof XmlTag)) return null;
 

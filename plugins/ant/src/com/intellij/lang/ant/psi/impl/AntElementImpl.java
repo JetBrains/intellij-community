@@ -270,7 +270,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
 
   @Nullable
   public static PsiElement resolveProperty(@NotNull final AntElement element, final String propName) {
-    if(propName == null) return null;
+    if (propName == null) return null;
     PsiElement result;
     AntElement temp = element;
     while (temp != null) {
@@ -280,35 +280,41 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
       }
       temp = temp.getAntParent();
     }
-    final AntProject project = element.getAntProject();
-    if ((result = resolvePropertyInElement(project, propName)) != null) {
-      return result;
+    final HashSet<PsiElement> projectsStack = PsiElementHashSetSpinAllocator.alloc();
+    try {
+      result = resolvePropertyInProject(element.getAntProject(), propName, projectsStack);
+      if (result != null) return result;
     }
-    for (final AntFile file : project.getImportedFiles()) {
-      final AntProject importedProject = file.getAntProject();
-      importedProject.getChildren();
-      if ((result = resolvePropertyInElement(importedProject, propName)) != null) {
-        return result;
-      }
+    finally {
+      PsiElementHashSetSpinAllocator.dispose(projectsStack);
     }
     final AntTarget target = PsiTreeUtil.getParentOfType(element, AntTarget.class);
     if (target != null) {
-      final HashSet<PsiElement> targetStack = PsiElementHashSetSpinAllocator.alloc();
+      final HashSet<PsiElement> targetsStack = PsiElementHashSetSpinAllocator.alloc();
       try {
-        result = resolveTargetProperty(target, propName, targetStack);
+        result = resolveTargetProperty(target, propName, targetsStack);
       }
       finally {
-        PsiElementHashSetSpinAllocator.dispose(targetStack);
+        PsiElementHashSetSpinAllocator.dispose(targetsStack);
       }
     }
     return result;
   }
 
   @Nullable
-  private static PsiElement resolvePropertyInElement(final AntStructuredElement element, final String propName) {
-    PsiElement result = element.getProperty(propName);
-    if (result == null) {
-      result = resolvePropertyInChildishPropertyFiles(element, propName);
+  private static PsiElement resolvePropertyInProject(final AntProject project, final String propName, final HashSet<PsiElement> stack) {
+    PsiElement result = null;
+    if (!stack.contains(project)) {
+      result = resolvePropertyInElement(project, propName);
+      if (result == null) {
+        stack.add(project);
+        for (final AntFile file : project.getImportedFiles()) {
+          final AntProject importedProject = file.getAntProject();
+          importedProject.getChildren();
+          if ((result = resolvePropertyInProject(importedProject, propName, stack)) != null) break;
+        }
+        stack.remove(project);
+      }
     }
     return result;
   }
@@ -323,7 +329,17 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
         for (AntTarget dependie : target.getDependsTargets()) {
           if ((result = resolveTargetProperty(dependie, propName, stack)) != null) break;
         }
+        stack.remove(target);
       }
+    }
+    return result;
+  }
+
+  @Nullable
+  private static PsiElement resolvePropertyInElement(final AntStructuredElement element, final String propName) {
+    PsiElement result = element.getProperty(propName);
+    if (result == null) {
+      result = resolvePropertyInChildishPropertyFiles(element, propName);
     }
     return result;
   }
