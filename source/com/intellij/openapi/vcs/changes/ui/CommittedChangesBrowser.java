@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
@@ -27,7 +28,8 @@ import java.util.List;
  * @author max
  */
 public class CommittedChangesBrowser extends JPanel {
-  private static ColumnInfo<? extends CommittedChangeList, String> COL_DATE = new ColumnInfo<CommittedChangeList, String>("Date") {
+  private static ColumnInfo<? extends CommittedChangeList, String> COL_DATE = new ColumnInfo<CommittedChangeList, String>(
+      VcsBundle.message("column.name.revision.list.date")) {
     public String valueOf(final CommittedChangeList item) {
       return DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM).format(item.getCommitDate());
     }
@@ -40,7 +42,8 @@ public class CommittedChangesBrowser extends JPanel {
       };
     }
   };
-  private static ColumnInfo<CommittedChangeList, String> COL_NAME = new ColumnInfo<CommittedChangeList, String>("Committer") {
+  private static ColumnInfo<CommittedChangeList, String> COL_NAME = new ColumnInfo<CommittedChangeList, String>(
+      VcsBundle.message("column.name.revision.list.committer")) {
     public String valueOf(final CommittedChangeList item) {
       return item.getCommitterName();
     }
@@ -48,7 +51,7 @@ public class CommittedChangesBrowser extends JPanel {
     public Comparator<CommittedChangeList> getComparator() {
       return new Comparator<CommittedChangeList>() {
         public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
-          return valueOf(o1).compareTo(valueOf(o2));
+          return Comparing.compare(valueOf(o1), valueOf(o2));
         }
       };
     }
@@ -69,7 +72,7 @@ public class CommittedChangesBrowser extends JPanel {
 
     JPanel changesPanel = new JPanel(new BorderLayout());
     changesPanel.add(new JScrollPane(myChangeListsView), BorderLayout.CENTER);
-    changesPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder("Changes"));
+    changesPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("committed.changes.title")));
 
     JSplitPane splitter = new JSplitPane();
     splitter.setLeftComponent(changesPanel);
