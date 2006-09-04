@@ -17,6 +17,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -81,4 +82,6 @@ public abstract class ModuleRootManager implements ModuleRootModel {
    * @return true if <code>module</code> is contained in the list of dependencies for the current module, false otherwise.
    */
   public abstract boolean isDependsOn(Module module);
+
+  public abstract void setLanguageLevel(final LanguageLevel languageLevel);
 }
