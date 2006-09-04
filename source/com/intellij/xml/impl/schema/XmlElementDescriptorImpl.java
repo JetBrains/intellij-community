@@ -2,6 +2,7 @@ package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -46,11 +47,14 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
   public String getName(PsiElement context){
     String value = myDescriptorTag.getAttributeValue("name");
+
     if(context instanceof XmlElement){
       final String namespace = getNamespaceByContext(context);
       final XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class, false);
+
       if(tag != null){
         final String namespacePrefix = tag.getPrefixByNamespace(namespace);
+
         if (namespacePrefix != null && namespacePrefix.length() > 0) {
           final XmlTag rootTag = ((XmlFile)myDescriptorTag.getContainingFile()).getDocument().getRootTag();
 
@@ -303,7 +307,8 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public String getDefaultName() {
-    XmlTag rootTag = ((XmlFile)myDescriptorTag.getContainingFile()).getDocument().getRootTag();
+    final PsiFile psiFile = myDescriptorTag.getContainingFile();
+    XmlTag rootTag = psiFile instanceof XmlFile ?((XmlFile)psiFile).getDocument().getRootTag():null;
 
     if (rootTag != null && QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue(ELEMENT_FORM_DEFAULT))) {
       return getQualifiedName();
