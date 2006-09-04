@@ -196,6 +196,10 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
     }
   }
 
+  public boolean isValidRange(final XmlTagChild firstToExtract,final XmlTagChild lastToExtract) {
+    return verifyChildRange(firstToExtract, lastToExtract);
+  }
+
   public String processPrimaryFragment(final XmlTagChild firstToExtract,
                                        final XmlTagChild lastToExtract,
                                        final PsiDirectory targetDirectory,
