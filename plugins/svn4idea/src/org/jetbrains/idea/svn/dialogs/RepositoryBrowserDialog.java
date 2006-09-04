@@ -16,8 +16,8 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -106,12 +106,14 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     group.add(new DetailsAction());
     group.addSeparator();
     group.add(new RefreshAction());
-    group.add(new CollapseAllToolbarAction(new TreeExpander() {
+    AnAction action = CommonActionsManager.getInstance().createCollapseAllAction(new TreeExpander() {
       public void expandAll() {
       }
+
       public boolean canExpand() {
         return false;
       }
+
       public void collapseAll() {
         JTree tree = getRepositoryBrowser().getRepositoryTree();
         int row = tree.getRowCount() - 1;
@@ -120,10 +122,12 @@ public class RepositoryBrowserDialog extends DialogWrapper {
           row--;
         }
       }
+
       public boolean canCollapse() {
         return true;
       }
-    }));
+    }, getRepositoryBrowser());
+    group.add(action);
     if (!horizontal) {
       group.addSeparator();
       group.add(new AnAction() {
