@@ -325,8 +325,9 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
         HighlightInfoType level = highlightTypeFromDescriptor(descriptor, tool, severity);
         HighlightInfo info = createHighlightInfo(descriptor, tool, level);
         if (info == null) continue;
-        if (!documentRange.isEditable(new TextRange(info.startOffset, info.endOffset))) continue;
-        HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, documentRange.injectedToHost(info.startOffset), documentRange.injectedToHost(info.endOffset), info.description, info.toolTip);
+        TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
+        if (editable == null) continue;
+        HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, documentRange.injectedToHost(editable.getStartOffset()), documentRange.injectedToHost(editable.getEndOffset()), info.description, info.toolTip);
         if (patched != null) {
           registerQuickFixes(tool, injectedPsi, descriptor, patched);
           infos.add(patched);

@@ -15,6 +15,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 
@@ -292,7 +293,8 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
     return hostLine - myDelegate.getLineNumber(myHostRange.getStartOffset()) + (myPrefixLineCount-1);
   }
 
-  public boolean isEditable(TextRange rangeToEdit) {
-    return rangeToEdit.getStartOffset() >= myPrefix.length() && rangeToEdit.getEndOffset() <= getTextLength() - mySuffix.length();
+  @Nullable
+  public TextRange intersectWithEditable(TextRange rangeToEdit) {
+    return new TextRange(myPrefix.length(), getTextLength() - mySuffix.length()).intersection(rangeToEdit);
   }
 }

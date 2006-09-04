@@ -163,8 +163,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
         final AnnotationHolderImpl fixingAnnotationHolder = new AnnotationHolderImpl() {
           protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
-            if (!documentRange.isEditable(range)) return null; //do not highlight generated header/footer
-            TextRange patched = new TextRange(documentRange.injectedToHost(range.getStartOffset()), documentRange.injectedToHost(range.getEndOffset()));
+            TextRange editable = documentRange.intersectWithEditable(range);
+            if (editable==null) return null; //do not highlight generated header/footer
+            TextRange patched = new TextRange(documentRange.injectedToHost(editable.getStartOffset()), documentRange.injectedToHost(editable.getEndOffset()));
             Annotation annotation = super.createAnnotation(patched, severity, message);
             myAnnotationHolder.add(annotation);
             return annotation;
@@ -180,9 +181,10 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
         public void visitErrorElement(PsiErrorElement element) {
           HighlightInfo info = createErrorElementInfo(element);
-          if (!documentRange.isEditable(new TextRange(info.startOffset, info.endOffset))) return; //do not highlight generated header/footer
-          HighlightInfo fixed = new HighlightInfo(HighlightInfoType.ERROR, documentRange.injectedToHost(info.startOffset),
-                                                  documentRange.injectedToHost(info.endOffset), info.description, info.toolTip);
+          TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
+          if (editable==null) return; //do not highlight generated header/footer
+          HighlightInfo fixed = new HighlightInfo(HighlightInfoType.ERROR, documentRange.injectedToHost(editable.getStartOffset()),
+                                                  documentRange.injectedToHost(editable.getEndOffset()), info.description, info.toolTip);
           myHolder.add(fixed);
         }
       };
