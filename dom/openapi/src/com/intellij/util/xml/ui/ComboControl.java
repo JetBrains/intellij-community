@@ -300,7 +300,7 @@ public class ComboControl extends BaseControl<JComboBox, String> {
         }
 
             final Pair<String, Icon> pair = (Pair<String, Icon>)comboBox.getSelectedItem();
-            final String s = pair.first;
+            final String s = pair == null ? null : pair.first;
             background = s != null && s.trim().length() > 0 ? getDefaultBackground() : background;
 
         comboBox.setBackground(background);
