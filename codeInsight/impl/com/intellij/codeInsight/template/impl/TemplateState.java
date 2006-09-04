@@ -639,6 +639,10 @@ public class TemplateState implements Disposable {
     if (isFinished()) {
       return;
     }
+
+    //some psi operations may block the document, unblock here
+    PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
+
     int nextVariableNumber = getNextVariableNumber(myCurrentVariableNumber);
     if (nextVariableNumber == -1) {
       calcResults(false);
