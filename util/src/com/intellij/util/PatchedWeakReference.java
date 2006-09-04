@@ -23,10 +23,10 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class PatchedWeakReference extends WeakReference{
+public class PatchedWeakReference<T> extends WeakReference<T>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.PatchedWeakReference");
 
-  private static ArrayList ourRefsList = new ArrayList();
+  private static ArrayList<PatchedWeakReference<?>> ourRefsList = new ArrayList<PatchedWeakReference<?>>();
   private static ReferenceQueue ourQueue = new ReferenceQueue();
   private static Timer ourTimer = null;
 
@@ -40,7 +40,7 @@ public class PatchedWeakReference extends WeakReference{
     }, 500, 500);
   }
 
-  public PatchedWeakReference(Object referent) {
+  public PatchedWeakReference(T referent) {
     super(referent, ourQueue);
     synchronized(ourRefsList){
       ourRefsList.add(this);
@@ -64,9 +64,9 @@ public class PatchedWeakReference extends WeakReference{
     if (!haveClearedRefs) return;
 
     synchronized(ourRefsList){
-      ArrayList newList = new ArrayList();
+      ArrayList<PatchedWeakReference<?>> newList = new ArrayList<PatchedWeakReference<?>>();
       for(int i = 0; i < ourRefsList.size(); i++){
-        PatchedWeakReference ref = (PatchedWeakReference)ourRefsList.get(i);
+        PatchedWeakReference<?> ref = ourRefsList.get(i);
         if (ref.get() != null){
           newList.add(ref);
         }

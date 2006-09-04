@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -10,18 +11,16 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.PatchedWeakReference;
-import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.Reference;
-
-import org.jetbrains.annotations.NotNull;
 
 public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implements PsiReferenceList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiReferenceListImpl");
 
   private final IElementType myElementType;
 
-  private Reference myRepositoryTypesRef = null;
+  private Reference<PsiClassType[]> myRepositoryTypesRef = null;
 
   public PsiReferenceListImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
@@ -53,7 +52,7 @@ public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implem
     myRepositoryTypesRef = null;
   }
 
-  private static final TokenSet REFERENCE_BIT_SET = TokenSet.create(new IElementType[]{JAVA_CODE_REFERENCE});
+  private static final TokenSet REFERENCE_BIT_SET = TokenSet.create(JAVA_CODE_REFERENCE);
 
   @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
@@ -64,7 +63,7 @@ public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implem
   public PsiClassType[] getReferencedTypes() {
     PsiClassType[] types;
     synchronized (PsiLock.LOCK) {
-      types = (PsiClassType[])(myRepositoryTypesRef == null ? null : myRepositoryTypesRef.get());
+      types = myRepositoryTypesRef == null ? null : myRepositoryTypesRef.get();
       if (types == null) {
         String[] refTexts;
         ASTNode treeElement = getTreeElement();
@@ -72,13 +71,13 @@ public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implem
         long repositoryId = getRepositoryId();
         if (treeElement == null && repositoryId > 0) {
           RepositoryManager repositoryManager = getRepositoryManager();
-          if (myElementType == ElementType.EXTENDS_LIST) {
+          if (myElementType == JavaElementType.EXTENDS_LIST) {
             refTexts = repositoryManager.getClassView().getExtendsList(repositoryId);
           }
-          else if (myElementType == ElementType.IMPLEMENTS_LIST) {
+          else if (myElementType == JavaElementType.IMPLEMENTS_LIST) {
             refTexts = repositoryManager.getClassView().getImplementsList(repositoryId);
           }
-          else if (myElementType == ElementType.THROWS_LIST) {
+          else if (myElementType == JavaElementType.THROWS_LIST) {
             refTexts = repositoryManager.getMethodView().getThrowsList(repositoryId);
           }
           else {
@@ -112,15 +111,14 @@ public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implem
         }
 
         myRepositoryTypesRef = myManager.isBatchFilesProcessingMode()
-                               ? new PatchedWeakReference(types)
-                               : (Reference)new PatchedSoftReference(types);
+                               ? new PatchedWeakReference<PsiClassType[]>(types)
+                               : new PatchedSoftReference<PsiClassType[]>(types);
       }
-      ;
     }
     return types;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitReferenceList(this);
   }
 
