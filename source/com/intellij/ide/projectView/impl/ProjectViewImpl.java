@@ -2,7 +2,6 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.*;
 import com.intellij.ide.FileEditorProvider;
-import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.projectView.HelpID;
@@ -22,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -44,7 +44,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
@@ -544,7 +543,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myActionGroup.add(new ShowStructureAction());
     myActionGroup.add(new SortByTypeAction());
 
-    myActionGroup.add(new CollapseAllToolbarAction(new TreeExpander() {
+    AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(new TreeExpander() {
       public void expandAll() {
 
       }
@@ -564,7 +563,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       public boolean canCollapse() {
         return true;
       }
-    }));
+    }, getComponent());
+    myActionGroup.add(collapseAllAction);
 
     getCurrentProjectViewPane().addToolbarActions(myActionGroup);
   }

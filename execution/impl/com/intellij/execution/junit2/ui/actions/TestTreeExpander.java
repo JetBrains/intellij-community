@@ -40,8 +40,6 @@ class TestTreeExpander implements TreeExpander {
   }
 
   private boolean treeHasMoreThanOneLevel() {
-    if (myModel == null)
-      return false;
-    return myModel.getRoot().hasChildSuites();
+    return myModel != null && myModel.getRoot().hasChildSuites();
   }
 }

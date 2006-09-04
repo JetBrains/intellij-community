@@ -2,6 +2,7 @@ package com.intellij.lang.ant.config.execution;
 
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.*;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFileBase;
@@ -355,8 +356,8 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     DefaultActionGroup rightActionGroup = new DefaultActionGroup();
     rightActionGroup.add(new ChangeViewAction(this));
     rightActionGroup.add(new VerboseAction(this));
-    rightActionGroup.add(new ExpandAllToolbarAction(myTreeExpander));
-    rightActionGroup.add(new CollapseAllToolbarAction(myTreeExpander));
+    rightActionGroup.add(CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this));
+    rightActionGroup.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this));
     rightActionGroup.add(myTreeView.createToggleAutoscrollAction());
 
     myLeftToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANT_MESSAGES_TOOLBAR, leftActionGroup, false);

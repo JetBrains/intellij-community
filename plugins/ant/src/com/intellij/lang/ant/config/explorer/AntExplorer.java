@@ -1,10 +1,9 @@
 package com.intellij.lang.ant.config.explorer;
 
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.ide.actions.CommonActionsFactory;
-import com.intellij.ide.actions.ExpandAllToolbarAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.AntBuildFilePropertiesAction;
@@ -154,8 +153,12 @@ public class AntExplorer extends JPanel implements DataProvider {
     group.add(new RemoveAction());
     group.add(new RunAction());
     group.add(new ShowAllTargetsAction());
-    group.add(new ExpandAllToolbarAction(myTreeExpander, AntBundle.message("ant.explorer.expand.all.nodes.action.description")));
-    group.add(new CollapseAllToolbarAction(myTreeExpander, AntBundle.message("ant.explorer.collapse.all.nodes.action.description")));
+    AnAction action = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this);
+    action.getTemplatePresentation().setDescription(AntBundle.message("ant.explorer.expand.all.nodes.action.description"));
+    group.add(action);
+    action = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this);
+    action.getTemplatePresentation().setDescription(AntBundle.message("ant.explorer.collapse.all.nodes.action.description"));
+    group.add(action);
     group.add(myAntBuildFilePropertiesAction);
     group.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction(HelpID.ANT));
 

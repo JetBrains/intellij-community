@@ -1,9 +1,12 @@
 package com.intellij.ide.todo;
 
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.actions.*;
+import com.intellij.ide.actions.CommonActionsFactory;
+import com.intellij.ide.actions.NextOccurenceToolbarAction;
+import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.ide.todo.configurable.TodoConfigurable;
 import com.intellij.ide.todo.nodes.TodoDirNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
@@ -12,7 +15,6 @@ import com.intellij.ide.todo.nodes.TodoPackageNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -44,6 +46,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -140,32 +143,30 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, leftGroup, false).getComponent());
 
     DefaultActionGroup rightGroup = new DefaultActionGroup();
-    ExpandAllToolbarAction expandAllAction = new ExpandAllToolbarAction(myTreeExpander);
-    expandAllAction.registerCustomShortcutSet(expandAllAction.getShortcutSet(), myTree);
+    AnAction expandAllAction = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this);
     rightGroup.add(expandAllAction);
 
-    CollapseAllToolbarAction collapseAllAction = new CollapseAllToolbarAction(myTreeExpander);
-    collapseAllAction.registerCustomShortcutSet(collapseAllAction.getShortcutSet(), myTree);
+    AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this);
     rightGroup.add(collapseAllAction);
 
     if (!myCurrentFileMode) {
       MyShowModulesAction showModulesAction = new MyShowModulesAction();
       showModulesAction.registerCustomShortcutSet(
         new CustomShortcutSet(
-          KeyStroke.getKeyStroke(KeyEvent.VK_M, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK)),
+          KeyStroke.getKeyStroke(KeyEvent.VK_M, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
         myTree);
       rightGroup.add(showModulesAction);
       MyShowPackagesAction showPackagesAction = new MyShowPackagesAction();
       showPackagesAction.registerCustomShortcutSet(
         new CustomShortcutSet(
-          KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK)),
+          KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
         myTree);
       rightGroup.add(showPackagesAction);
 
       MyFlattenPackagesAction flattenPackagesAction = new MyFlattenPackagesAction();
       flattenPackagesAction.registerCustomShortcutSet(
         new CustomShortcutSet(
-          KeyStroke.getKeyStroke(KeyEvent.VK_F, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK)),
+          KeyStroke.getKeyStroke(KeyEvent.VK_F, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
         myTree);
       rightGroup.add(flattenPackagesAction);
     }
@@ -280,7 +281,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
         return null;
       }
       Object element = userObject.getElement();
-      if (!((element instanceof TodoFileNode) || (element instanceof TodoItemNode))) { // allow user to use F4 only on files an TODOs
+      if (!(element instanceof TodoFileNode || element instanceof TodoItemNode)) { // allow user to use F4 only on files an TODOs
         return null;
       }
       TodoItemNode pointer = myTodoTreeBuilder.getFirstPointerForElement(element);
@@ -309,7 +310,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
         return ourEmptyArray;
       }
     }
-    else if (DataConstantsEx.HELP_ID.equals(dataId)) {
+    else if (DataConstants.HELP_ID.equals(dataId)) {
       //noinspection HardCodedStringLiteral
       return "find.todoList";
     }
@@ -363,7 +364,6 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
    */
   private final class MyAutoScrollToSourceHandler extends AutoScrollToSourceHandler {
     public MyAutoScrollToSourceHandler() {
-      super();
     }
 
     protected boolean isAutoScrollMode() {
@@ -405,17 +405,12 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       }
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       NodeDescriptor userObject = (NodeDescriptor)node.getUserObject();
-      if (userObject == null) {
-        return false;
-      }
-      return !isFirst(node);
+      return userObject != null && !isFirst(node);
     }
 
     private boolean isFirst(final TreeNode node) {
       final TreeNode parent = node.getParent();
-      if (parent == null) return true;
-      if (parent.getIndex(node) != 0) return false;
-      return isFirst(parent);
+      return parent == null || parent.getIndex(node) == 0 && isFirst(parent);
     }
 
     public OccurenceNavigator.OccurenceInfo goNextOccurence() {
@@ -468,7 +463,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       Object element = userObject.getElement();
       TodoItemNode pointer;
       if (element instanceof TodoItemNode) {
-        pointer = myTodoTreeBuilder.getNextPointer(((TodoItemNode)element));
+        pointer = myTodoTreeBuilder.getNextPointer((TodoItemNode)element);
       }
       else {
         pointer = myTodoTreeBuilder.getFirstPointerForElement(element);
@@ -582,8 +577,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       DefaultActionGroup group = new DefaultActionGroup();
       group.add(new TodoFilterApplier(IdeBundle.message("action.todo.show.all"),
                                       IdeBundle.message("action.description.todo.show.all"), null));
-      for (int i = 0; i < filters.length; i++) {
-        TodoFilter filter = filters[i];
+      for (TodoFilter filter : filters) {
         group.add(new TodoFilterApplier(filter.getName(), null, filter));
       }
       group.addSeparator();

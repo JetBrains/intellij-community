@@ -9,15 +9,12 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 20, 2004
- * Time: 9:42:34 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class CommonActionsManagerImpl extends CommonActionsManager implements ApplicationComponent {
   public AnAction createPrevOccurenceAction(OccurenceNavigator navigator) {
@@ -70,6 +67,7 @@ public class CommonActionsManagerImpl extends CommonActionsManager implements Ap
     return new ExportToTextFileToolbarAction(exporter);
   }
 
+  @NotNull
   public String getComponentName() {
     return "CommonActionsManager";
   }

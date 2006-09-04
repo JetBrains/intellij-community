@@ -408,8 +408,8 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   protected void fillRightToolbarGroup(DefaultActionGroup group) {
-    group.add(new ExpandAllToolbarAction(myTreeExpander));
-    group.add(new CollapseAllToolbarAction(myTreeExpander));
+    group.add(CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this));
+    group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this));
     if (canHideWarnings()) {
       group.add(new HideWarningsAction());
     }

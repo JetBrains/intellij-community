@@ -2,8 +2,8 @@ package com.intellij.execution.junit2.ui.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
-import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.FailedTestsNavigator;
 import com.intellij.execution.junit2.ui.TestsUIUtil;
@@ -13,10 +13,9 @@ import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.junit2.ui.properties.ScrollToTestSourceAction;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
-import com.intellij.ide.actions.CollapseAllToolbarAction;
-import com.intellij.ide.actions.ExpandAllToolbarAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -52,8 +51,13 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator {
                                               TestsUIUtil.loadIcon("trackTests"),
                                               properties, JUnitConsoleProperties.TRACK_RUNNING_TEST));
     actionGroup.addSeparator();
-    actionGroup.add(new CollapseAllToolbarAction(myTreeExpander, ExecutionBundle.message("junit.runing.info.collapse.test.action.name")));
-    actionGroup.add(new ExpandAllToolbarAction(myTreeExpander, ExecutionBundle.message("junit.runing.info.expand.test.action.name")));
+    AnAction action = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this);
+    action.getTemplatePresentation().setDescription(ExecutionBundle.message("junit.runing.info.collapse.test.action.name"));
+    actionGroup.add(action);
+
+    action = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this);
+    action.getTemplatePresentation().setDescription(ExecutionBundle.message("junit.runing.info.expand.test.action.name"));
+    actionGroup.add(action);
 
     actionGroup.addSeparator();
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
