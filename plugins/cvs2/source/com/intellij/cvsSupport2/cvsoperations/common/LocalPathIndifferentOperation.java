@@ -36,7 +36,7 @@ public abstract class LocalPathIndifferentOperation extends CvsCommandOperation 
     myEnvironment = environment;
   }
 
-  protected Collection getAllCvsRoots() {
+  protected Collection<CvsRootProvider> getAllCvsRoots() {
     return Collections.singleton(getCvsRootProvider());
   }
 

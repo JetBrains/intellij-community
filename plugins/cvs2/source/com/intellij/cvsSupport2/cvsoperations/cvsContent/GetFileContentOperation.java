@@ -151,7 +151,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
   }
 
   @SuppressWarnings({"RefusedBequest"})
-  protected Collection getAllCvsRoots() {
+  protected Collection<CvsRootProvider> getAllCvsRoots() {
     return Collections.singleton(myRoot);
   }
 

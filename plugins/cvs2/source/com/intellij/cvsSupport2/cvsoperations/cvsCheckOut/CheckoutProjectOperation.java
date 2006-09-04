@@ -105,8 +105,8 @@ public class CheckoutProjectOperation extends CvsCommandOperation {
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     CheckoutCommand command = new CheckoutCommand();
     command.setRecursive(true);
-    for (int i = 0; i < myModuleNames.length; i++) {
-      command.addModule(myModuleNames[i]);
+    for (String myModuleName : myModuleNames) {
+      command.addModule(myModuleName);
     }
     root.getRevisionOrDate().setForCommand(command);
     command.setAlternativeCheckoutDirectory(myAlternateCheckoutDirectory);
@@ -115,7 +115,7 @@ public class CheckoutProjectOperation extends CvsCommandOperation {
     return command;
   }
 
-  protected Collection getAllCvsRoots() {
+  protected Collection<CvsRootProvider> getAllCvsRoots() {
     return Collections.singleton(CvsRootProvider.createOn(getRoot(), myEnvironment));
   }
 

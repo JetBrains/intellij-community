@@ -22,7 +22,7 @@ public class ImportOperation extends CvsCommandOperation {
     myDetails = details;
   }
 
-  protected Collection getAllCvsRoots() {
+  protected Collection<CvsRootProvider> getAllCvsRoots() {
     return Collections.singleton(myDetails.getCvsRoot());
   }
 
