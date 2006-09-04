@@ -40,8 +40,11 @@ public class ConvertVarargParameterToArrayIntention extends Intention {
 
     private void convertVarargsToArray(PsiParameterList parameterList)
             throws IncorrectOperationException {
-        final PsiParameter lastParameter =
-                (PsiParameter) parameterList.getLastChild();
+        final PsiParameter[] parameters = parameterList.getParameters();
+        if (parameters.length == 0) {
+            return;
+        }
+        final PsiParameter lastParameter = parameters[parameters.length - 1];
         if (lastParameter == null || !lastParameter.isVarArgs()) {
             return;
         }
