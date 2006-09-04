@@ -1526,6 +1526,9 @@
     <action id="Graph.Print.Preview" class="com.intellij.openapi.graph.builder.actions.printing.PrintPreviewAction" text="Print Preview"/>
 
     <!-- ***** yFiles layouts ********************** -->
+    <action id="Graph.Layout.BalloonLayouter" class="com.intellij.openapi.graph.builder.actions.layout.BalloonLayouterAction"
+            text="Balloon">
+    </action>
     <action id="Graph.Layout.CircularLayouter" class="com.intellij.openapi.graph.builder.actions.layout.CircularLayouterAction"
             text="Circular">
     </action>
@@ -1541,17 +1544,22 @@
     <action id="Graph.Layout.DirectedOrthogonalLayouter" class="com.intellij.openapi.graph.builder.actions.layout.DirectedOrthogonalLayouterAction"
             text="Directed Orthogonal">
     </action>
+    <action id="Graph.Layout.TreeLayouter" class="com.intellij.openapi.graph.builder.actions.layout.HVTreeLayouterAction"
+            text="Tree">
+    </action>
 
     <action id="Graph.Faces.OpenSelectedPages" class="com.intellij.jsf.yfilesGraph.actions.OpenSelectedPagesActon"
             text="Open Selected Pages" use-shortcut-of="EditSource" keymap="$default">
     </action>
 
     <group id="Graph.CommonLayoutGroup" text="Layout" popup="true">
+      <reference ref="Graph.Layout.BalloonLayouter"/>
       <reference ref="Graph.Layout.CircularLayouter"/>
       <reference ref="Graph.Layout.HierarchicGroupLayouter"/>
       <reference ref="Graph.Layout.OrganicLayouter"/>
       <reference ref="Graph.Layout.OrthogonalLayouter"/>
       <reference ref="Graph.Layout.DirectedOrthogonalLayouter"/>
+      <reference ref="Graph.Layout.TreeLayouter"/>
     </group>
 
     <group id="Graph.DefaultGraphPopup">
