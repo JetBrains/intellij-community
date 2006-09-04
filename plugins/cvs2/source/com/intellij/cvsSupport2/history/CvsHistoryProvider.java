@@ -149,10 +149,19 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       public VcsRevisionNumber calcCurrentRevisionNumber() {
         return getCurrentRevision(filePath);
       }
+
+      @Override
+      public synchronized boolean refresh() {
+        //noinspection SimplifiableIfStatement
+        if (!CvsEntriesManager.getInstance().isActive()) {
+          return false;
+        }
+        return super.refresh();
+      }
     };
   }
 
-  private VcsRevisionNumber getCurrentRevision(FilePath filePath) {
+  private static VcsRevisionNumber getCurrentRevision(FilePath filePath) {
     Entry entryFor = CvsEntriesManager.getInstance().getEntryFor(filePath.getVirtualFileParent(),
                                                                  filePath.getName());
     if (entryFor == null) {
@@ -169,7 +178,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     final LocalPathIndifferentLogOperation logOperation =
       new LocalPathIndifferentLogOperation(filePath.getIOFile());
     CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-    executor.performActionSync(new CommandCvsHandler(com.intellij.CvsBundle.message("operation.name.load.file.content"), logOperation),
+    executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.load.file.content"), logOperation),
                                new CvsOperationExecutorCallback() {
                                  public void executionFinished(boolean successfully) {
                                  }
@@ -191,10 +200,10 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
 
   }
 
-  private List<VcsFileRevision> createRevisionListOn(File file,
-                                                     @NotNull LogInformation logInformation,
-                                                     CvsEnvironment env,
-                                                     Project project) {
+  private static List<VcsFileRevision> createRevisionListOn(File file,
+                                                            @NotNull LogInformation logInformation,
+                                                            CvsEnvironment env,
+                                                            Project project) {
     List revisionList = logInformation.getRevisionList();
     ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
     for (final Object aRevisionList : revisionList) {
@@ -240,7 +249,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
           AbstractVcsHelper.getInstance(myProject).showAnnotation(annotation, revisionVirtualFile);
         }
         catch (VcsException e1) {
-          AbstractVcsHelper.getInstance(myProject).showError(e1, com.intellij.CvsBundle.message("operation.name.annotate"));
+          AbstractVcsHelper.getInstance(myProject).showError(e1, CvsBundle.message("operation.name.annotate"));
         }
 
       }
@@ -258,8 +267,8 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       List<TreeItem<VcsFileRevision>> result = new ArrayList<TreeItem<VcsFileRevision>>();
 
       TreeItem<VcsFileRevision> prevRevision = null;
-      for (Iterator each = sortedRevisions.iterator(); each.hasNext();) {
-        CvsFileRevisionImpl cvsFileRevision = (CvsFileRevisionImpl)each.next();
+      for (final VcsFileRevision sortedRevision : sortedRevisions) {
+        CvsFileRevisionImpl cvsFileRevision = (CvsFileRevisionImpl)sortedRevision;
         TreeItem<VcsFileRevision> treeItem = new TreeItem<VcsFileRevision>(cvsFileRevision);
         TreeItem<VcsFileRevision> commonParent = getCommonParent(prevRevision, treeItem);
         if (commonParent != null) {
@@ -276,7 +285,8 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
 
     }
 
-    private TreeItem<VcsFileRevision> getCommonParent(TreeItem<VcsFileRevision> prevRevision, TreeItem<VcsFileRevision> cvsFileRevision) {
+    @Nullable
+    private static TreeItem<VcsFileRevision> getCommonParent(TreeItem<VcsFileRevision> prevRevision, TreeItem<VcsFileRevision> cvsFileRevision) {
       if (prevRevision == null) return null;
       while (!isParent(prevRevision, cvsFileRevision)) {
         prevRevision = prevRevision.getParent();
@@ -284,14 +294,14 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       return prevRevision;
     }
 
-    private boolean isParent(TreeItem<VcsFileRevision> prevRevision, TreeItem<VcsFileRevision> cvsFileRevision) {
+    private static boolean isParent(TreeItem<VcsFileRevision> prevRevision, TreeItem<VcsFileRevision> cvsFileRevision) {
       if (prevRevision == null) return true;
       CvsFileRevisionImpl prevData = (CvsFileRevisionImpl)prevRevision.getData();
       CvsFileRevisionImpl data = (CvsFileRevisionImpl)cvsFileRevision.getData();
       return data.getRevisionNumber().asString().startsWith(prevData.getRevisionNumber().asString());
     }
 
-    private List<VcsFileRevision> sortRevisions(List<VcsFileRevision> revisionsList) {
+    private static List<VcsFileRevision> sortRevisions(List<VcsFileRevision> revisionsList) {
       Collections.sort(revisionsList, new Comparator<VcsFileRevision>() {
         public int compare(VcsFileRevision rev1, VcsFileRevision rev2) {
           return VcsHistoryUtil.compare(rev1, rev2);
