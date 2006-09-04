@@ -35,5 +35,4 @@ class SelectedFiles extends AnyProcessedFiles {
   public Collection<VirtualFile> getFiles() {
     return myFiles;
   }
-
 }

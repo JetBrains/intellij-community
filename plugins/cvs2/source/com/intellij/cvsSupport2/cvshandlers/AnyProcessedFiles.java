@@ -15,7 +15,7 @@ public abstract class AnyProcessedFiles extends FileSetToBeUpdated {
 
 
   public void refreshFilesAsync(final Runnable postRunnable) {
-    final VirtualFile[] files = (VirtualFile[])getFiles().toArray(VirtualFile.EMPTY_ARRAY);
+    final VirtualFile[] files = getFiles().toArray(VirtualFile.EMPTY_ARRAY);
     final int[] index = new int[]{0};
     LOG.info("files.length=" + files.length);
     Runnable runnable = new Runnable() {
@@ -49,5 +49,11 @@ public abstract class AnyProcessedFiles extends FileSetToBeUpdated {
       }
     }
     */
+  }
+
+  public void refreshFilesSync() {
+    for(VirtualFile file: getFiles()) {
+      file.refresh(false, true);
+    }
   }
 }

@@ -13,4 +13,8 @@ class AllFilesInProject extends FileSetToBeUpdated{
   public void refreshFilesAsync(Runnable postRunnable) {
     VirtualFileManager.getInstance().refresh(true, postRunnable);
   }
+
+  public void refreshFilesSync() {
+    VirtualFileManager.getInstance().refresh(false);
+  }
 }

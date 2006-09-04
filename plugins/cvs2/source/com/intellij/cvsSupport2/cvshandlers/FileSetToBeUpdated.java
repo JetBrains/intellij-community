@@ -37,35 +37,48 @@ public abstract class FileSetToBeUpdated {
       }
     }
 
+    public void refreshFilesSync() {
+    }
+
     protected void setSynchronizingFilesTextToProgress(ProgressIndicator progressIndicator) {
       
     }
   };
 
   public abstract void refreshFilesAsync(Runnable postRunnable);
+  public abstract void refreshFilesSync();
 
   public void refreshSync() {
-    ModalityState modalityState = ModalityState.NON_MODAL;
-    ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (progressIndicator != null) {
-      setSynchronizingFilesTextToProgress(progressIndicator);
-      modalityState = progressIndicator.getModalityState();
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          refreshFilesSync();
+        }
+      });
     }
-
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        LOG.info("refreshFilesAsync, modalityState=" + ModalityState.current());
-
-        refreshFilesAsync(new Runnable() {
-          public void run() {
-            semaphore.up();
-          }
-        });
+    else {
+      ModalityState modalityState = ModalityState.NON_MODAL;
+      ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      if (progressIndicator != null) {
+        setSynchronizingFilesTextToProgress(progressIndicator);
+        modalityState = progressIndicator.getModalityState();
       }
-    }, modalityState);
-    semaphore.waitFor();
+
+      final Semaphore semaphore = new Semaphore();
+      semaphore.down();
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          LOG.info("refreshFilesAsync, modalityState=" + ModalityState.current());
+
+          refreshFilesAsync(new Runnable() {
+            public void run() {
+              semaphore.up();
+            }
+          });
+        }
+      }, modalityState);
+      semaphore.waitFor();
+    }
   }
 
   protected void setSynchronizingFilesTextToProgress(ProgressIndicator progressIndicator) {
