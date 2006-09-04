@@ -3,6 +3,7 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -22,7 +23,8 @@ import java.awt.*;
 
 
 public class ExecutionUtil {
-  private static final Icon INVALID_CONFIGURATOIN = IconLoader.getIcon("/runConfigurations/invalidConfigurationLayer.png");
+  private static final Icon INVALID_CONFIGURATION = IconLoader.getIcon("/runConfigurations/invalidConfigurationLayer.png");
+  private static final Icon WITH_COVERAGE_CONFIGURATION = IconLoader.getIcon("/runConfigurations/withCoverageLayer.png");
 
   public static String getRuntimeQualifiedName(final PsiClass aClass) {
     final PsiClass containingClass = aClass.getContainingClass();
@@ -131,7 +133,9 @@ public class ExecutionUtil {
     final Icon icon = configuration.getFactory().getIcon();
     final Icon configurationIcon = runManager.isTemporary(configuration) ? IconLoader.getTransparentIcon(icon, 0.3f) : icon;
     if (invalid) {
-      return IconUtilEx.createLayeredIcon(configurationIcon, INVALID_CONFIGURATOIN);
+      return IconUtilEx.createLayeredIcon(configurationIcon, INVALID_CONFIGURATION);
+    } else if (configuration instanceof CoverageEnabledConfiguration && ((CoverageEnabledConfiguration)configuration).isCoverageEnabled()) {
+      return IconUtilEx.createLayeredIcon(configurationIcon, WITH_COVERAGE_CONFIGURATION);
     }
     return configurationIcon;
   }
