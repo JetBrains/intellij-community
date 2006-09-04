@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
+import java.awt.*;
 
 public class ClearTextAction extends AnAction {
 
@@ -46,7 +47,7 @@ public class ClearTextAction extends AnAction {
 
 
   public void update(AnActionEvent e) {
-    final JComponent component = (JComponent)e.getDataContext().getData(DataConstants.CONTEXT_COMPONENT);
+    final Component component = (Component)e.getDataContext().getData(DataConstants.CONTEXT_COMPONENT);
     e.getPresentation().setEnabled(component instanceof JTextComponent && ((JTextComponent)component).getText().length() > 0);
   }
 }
