@@ -168,10 +168,11 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
   }
 
   protected PsiElement getElement() {
-    if (!getNewExpression().isValid() || !getNewExpression().getManager().isInProject(getNewExpression())) return null;
-    PsiJavaCodeReferenceElement referenceElement = getReferenceElement(getNewExpression());
+    final PsiNewExpression expression = getNewExpression();
+    if (expression == null || !expression.getManager().isInProject(expression)) return null;
+    PsiJavaCodeReferenceElement referenceElement = getReferenceElement(expression);
     if (referenceElement == null) return null;
-    if (referenceElement.getReferenceNameElement() instanceof PsiIdentifier) return getNewExpression();
+    if (referenceElement.getReferenceNameElement() instanceof PsiIdentifier) return expression;
 
     return null;
   }
