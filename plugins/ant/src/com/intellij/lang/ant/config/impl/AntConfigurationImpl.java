@@ -408,13 +408,13 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
 
   private AntBuildFile addBuildFileImpl(final VirtualFile file) throws AntNoFileException {
     PsiFile psiFile = myPsiManager.findFile(file);
-    if (psiFile != null) {
-      psiFile = psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
+    if (psiFile == null) {
+      throw new AntNoFileException(AntBundle.message("cant.add.file.error.message"), file);
     }
-    if (psiFile == null) throw new AntNoFileException(AntBundle.message("cant.add.file.error.message"), file);
-    AntBuildFileImpl buildFile = new AntBuildFileImpl((AntFile)psiFile, this);
+    AntSupport.markFileAsAntFile(file, psiFile.getViewProvider(), true);
+    psiFile = psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
+    final AntBuildFileImpl buildFile = new AntBuildFileImpl((AntFile)psiFile, this);
     myBuildFiles.add(buildFile);
-
     myEventDispatcher.getMulticaster().buildFileAdded(buildFile);
     return buildFile;
   }
@@ -428,8 +428,8 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
         actionManager.unregisterAction(oldId);
       }
 
-      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-      Set<String> registeredIds = StringSetSpinAllocator.alloc();
+      final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+      final Set<String> registeredIds = StringSetSpinAllocator.alloc();
       try {
         for (Project project : openProjects) {
           final AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
@@ -471,6 +471,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
   private void removeBuildFileImpl(AntBuildFile buildFile) {
     final XmlFile xmlFile = ((AntFile)buildFile.getAntFile()).getSourceElement();
     xmlFile.putCopyableUserData(XmlFile.ANT_BUILD_FILE, null);
+    AntSupport.markFileAsAntFile(xmlFile.getVirtualFile(), xmlFile.getViewProvider(), false);
     myBuildFiles.remove(buildFile);
     myModelToBuildFileMap.remove(buildFile);
     myEventDispatcher.getMulticaster().buildFileRemoved(buildFile);

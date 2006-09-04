@@ -1,6 +1,7 @@
 package com.intellij.lang.ant;
 
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlFileNSInfoProvider;
@@ -17,12 +18,19 @@ public class AntDefaultNSProvider implements XmlFileNSInfoProvider, ApplicationC
   private static final String[][] myNamespaces = new String[][]{new String[]{"", ANT_URI}};
 
   // nsPrefix, namespaceId
-  public String[][] getDefaultNamespaces(@NotNull XmlFile file) {
-    if (file.getCopyableUserData(XmlFile.ANT_BUILD_FILE) != null) return myNamespaces;
-    final XmlTag tag = file.getDocument().getRootTag();
-    if ("project".equals(tag.getName()) && tag.getContext()instanceof XmlDocument) {
-      if (tag.getAttributeValue("default") != null) {
-        return myNamespaces;
+  public String[][] getDefaultNamespaces(@NotNull XmlFile xmlFile) {
+    if (xmlFile.getCopyableUserData(XmlFile.ANT_BUILD_FILE) != null) return myNamespaces;
+    final XmlDocument document = xmlFile.getDocument();
+    if (document != null) {
+      final XmlTag tag = document.getRootTag();
+      if (tag != null && "project".equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
+        if (tag.getAttributeValue("default") != null) {
+          return myNamespaces;
+        }
+        final VirtualFile file = xmlFile.getVirtualFile();
+        if (file != null && file.getUserData(AntLanguageExtension.ANT_FILE_SIGN) != null) {
+          return myNamespaces;
+        }
       }
     }
     return null;

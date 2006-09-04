@@ -6,6 +6,8 @@ import com.intellij.lang.ant.psi.changes.AntChangeVisitor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,5 +49,12 @@ public class AntSupport implements ApplicationComponent {
   }
 
   public void disposeComponent() {
+  }
+
+  public static void markFileAsAntFile(final VirtualFile file, final FileViewProvider viewProvider, final boolean isAntFile) {
+    if (file.getUserData(AntLanguageExtension.ANT_FILE_SIGN) == null) {
+      viewProvider.contentsSynchronized();
+      file.putUserData(AntLanguageExtension.ANT_FILE_SIGN, (isAntFile) ? true : null);
+    }
   }
 }

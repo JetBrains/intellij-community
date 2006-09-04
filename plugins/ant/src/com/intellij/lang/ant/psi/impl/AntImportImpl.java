@@ -1,6 +1,5 @@
 package com.intellij.lang.ant.psi.impl;
 
-import com.intellij.lang.ant.AntLanguageExtension;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
@@ -61,11 +60,7 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
         final FileViewProvider viewProvider = psiFile.getViewProvider();
         final VirtualFile file = psiFile.getVirtualFile();
         if (file != null) {
-          // enforce the file is ant file
-          if (file.getUserData(AntLanguageExtension.ANT_FILE_SIGN) == null) {
-            viewProvider.contentsSynchronized();
-            file.putUserData(AntLanguageExtension.ANT_FILE_SIGN, true);
-          }
+          AntSupport.markFileAsAntFile(file, viewProvider, true);
         }
         return (AntFile)viewProvider.getPsi(AntSupport.getLanguage());
       }
