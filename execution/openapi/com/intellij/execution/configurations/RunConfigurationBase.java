@@ -15,17 +15,15 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author dyoma
@@ -38,7 +36,6 @@ public abstract class RunConfigurationBase implements RunConfiguration {
   private ArrayList<LogFileOptions> myLogFiles = new ArrayList<LogFileOptions>();
   private ArrayList<PredefinedLogFile> myPredefinedLogFiles = new ArrayList<PredefinedLogFile>();
   @NonNls private static final String LOG_FILE = "log_file";
-  private THashMap<Object, AdditionalTabComponent> myAdditionalTabs = null;
   @NonNls private static final String PREDEFINED_LOG_FILE_ELEMENT = "predefined_log_file";
 
   protected RunConfigurationBase(final Project project, final ConfigurationFactory factory, final String name) {
@@ -126,62 +123,27 @@ public abstract class RunConfigurationBase implements RunConfiguration {
     myLogFiles.add(new LogFileOptions(alias, file, checked, skipContent, showAll));
   }
 
-  public void removeAllLogFiles(){
+  public void removeAllLogFiles() {
     myLogFiles.clear();
-  }
-
-  public boolean noLogFilesExist() {
-    return myLogFiles.isEmpty();
-  }
-
-  public @Nullable AdditionalTabComponent getAdditionalTabComponent(Object key){
-    return myAdditionalTabs != null ? myAdditionalTabs.get(key) : null;
   }
 
   //invoke before run/debug tabs are shown.
   //Should be overriden to add additional tabs for run/debug toolwindow
-  public void createAdditionalTabComponents() {
-  }
-
-  public void addAdditionalTab(Object key, AdditionalTabComponent component){
-    synchronized(this){
-      if (myAdditionalTabs == null){
-        if (component == null) return;
-        myAdditionalTabs = new THashMap<Object, AdditionalTabComponent>();
-      }
-      if (component != null){
-        //noinspection unchecked
-        myAdditionalTabs.put(key, component);
-      }
-      else{
-        myAdditionalTabs.remove(key);
-        if (myAdditionalTabs.size() == 0){
-          myAdditionalTabs = null;
-        }
-      }
-    }
-  }
-
-  public void clearAdditionalTabs() {
-    myAdditionalTabs = null;
-  }
-
-  @NotNull public Set getAdditionalTabKeys(){
-    return myAdditionalTabs != null ? myAdditionalTabs.keySet() : Collections.EMPTY_SET;
+  public void createAdditionalTabComponents(AdditionalTabComponentManager manager) {
   }
 
   public void readExternal(Element element) throws InvalidDataException {
     myLogFiles.clear();
-    for (Iterator<Element> iterator = element.getChildren(LOG_FILE).iterator(); iterator.hasNext();) {
+    for (final Object o : element.getChildren(LOG_FILE)) {
       LogFileOptions logFileOptions = new LogFileOptions();
-      logFileOptions.readExternal(iterator.next());
+      logFileOptions.readExternal((Element)o);
       myLogFiles.add(logFileOptions);
     }
     myPredefinedLogFiles.clear();
-    final List<Element> list = element.getChildren(PREDEFINED_LOG_FILE_ELEMENT);
-    for (Element fileElement : list) {
+    final List list = element.getChildren(PREDEFINED_LOG_FILE_ELEMENT);
+    for (Object fileElement : list) {
       final PredefinedLogFile logFile = new PredefinedLogFile();
-      logFile.readExternal(fileElement);
+      logFile.readExternal((Element)fileElement);
       myPredefinedLogFiles.add(logFile);
     }
   }

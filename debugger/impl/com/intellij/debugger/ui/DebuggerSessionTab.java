@@ -34,6 +34,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
@@ -41,6 +42,7 @@ import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.tree.TreeModelAdapter;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -100,9 +102,8 @@ public class DebuggerSessionTab implements LogConsoleManager {
   private boolean myIsJustStarted = true;
 
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
-  private static final Key LOG_CONTENTS = Key.create("LogContent");
 
-  private Map<Object, Content>  myAdditionalContent = new HashMap<Object, Content>();
+  private Map<AdditionalTabComponent, Content>  myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
   private final LogFilesManager myManager;
 
   public DebuggerSessionTab(Project project) {
@@ -271,7 +272,6 @@ public class DebuggerSessionTab implements LogConsoleManager {
   }
 
   private void initAdditionalTabs() {
-    clearLogContents();
     RunConfigurationBase base = (RunConfigurationBase)myConfiguration;
     final ArrayList<LogFileOptions> logFiles = base.getAllLogFiles();
     for (LogFileOptions logFile : logFiles) {
@@ -282,17 +282,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
         }
       }
     }
-    base.createAdditionalTabComponents();
-    final ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
-    for (Object key : base.getAdditionalTabKeys()) {
-      final AdditionalTabComponent tabComponent = base.getAdditionalTabComponent(key);
-      if (tabComponent != null) {
-        Content logContent = contentFactory.createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), false);
-        logContent.putUserData(CONTENT_KIND, LOG_CONTENTS);
-        myAdditionalContent.put(key, logContent);
-        myViewsContentManager.addContent(logContent);
-      }
-    }
+    base.createAdditionalTabComponents(this);
   }
 
   public void addLogConsole(final String path, final boolean skipContent, final Project project, final String name, final RunConfigurationBase configuration) {
@@ -307,26 +297,22 @@ public class DebuggerSessionTab implements LogConsoleManager {
       }
     };
     log.attachStopLogConsoleTrackingListener(myRunContentDescriptor.getProcessHandler());
-
-    configuration.addAdditionalTab(path, log);
-  }
+    addAdditionalTabComponent(log);
+ }
 
   public void removeLogConsole(final String path) {
-    myViewsContentManager.removeContent(myAdditionalContent.get(path));
-    if (myConfiguration instanceof RunConfigurationBase){
-      final AdditionalTabComponent logConsole = ((RunConfigurationBase)myConfiguration).getAdditionalTabComponent(path);
-      if (logConsole != null) {
-        logConsole.dispose();
+    LogConsole componentToRemove = null;
+    for (AdditionalTabComponent tabComponent : myAdditionalContent.keySet()) {
+      if (tabComponent instanceof LogConsole) {
+        final LogConsole console = (LogConsole)tabComponent;
+        if (Comparing.strEqual(console.getPath(), path)) {
+          componentToRemove = console;
+          break;
+        }
       }
     }
-  }
-
-  private void clearLogContents() {
-    for (int i = 0; i < myViewsContentManager.getContentCount(); i++) {
-      final Content content = myViewsContentManager.getContent(i);
-      if (content.getUserData(CONTENT_KIND) == LOG_CONTENTS){
-        myViewsContentManager.removeContent(content);
-      }
+    if (componentToRemove != null) {
+      removeAdditionalTabComponent(componentToRemove);
     }
   }
 
@@ -401,6 +387,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
   }
 
+  @Nullable
   private Content findContent(Key key) {
     if (myViewsContentManager != null) {
       Content[] contents = myViewsContentManager.getContents();
@@ -420,20 +407,11 @@ public class DebuggerSessionTab implements LogConsoleManager {
     myFramePanel.dispose();
     myWatchPanel.dispose();
     myViewsContentManager.removeAllContents();
-    myAdditionalContent.clear();
-    if (myConfiguration instanceof RunConfigurationBase){
-      final RunConfigurationBase configurationBase = ((RunConfigurationBase)myConfiguration);
-      for (final Object key : configurationBase.getAdditionalTabKeys()) {
-        final AdditionalTabComponent tabComponent = configurationBase.getAdditionalTabComponent(key);
-        if (tabComponent != null) {
-          tabComponent.dispose();
-        }
-      }
-
-      myManager.unregisterFileMatcher();
-
-      configurationBase.clearAdditionalTabs();
+    for (AdditionalTabComponent tabComponent : myAdditionalContent.keySet()) {
+      tabComponent.dispose();
     }
+    myAdditionalContent.clear();
+    myManager.unregisterFileMatcher();
     myConsole = null;
   }
 
@@ -443,6 +421,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
     }
   }
 
+  @Nullable
   private DebugProcessImpl getDebugProcess() {
     return myDebuggerSession != null ? myDebuggerSession.getProcess() : null;
   }
@@ -454,8 +433,6 @@ public class DebuggerSessionTab implements LogConsoleManager {
     for (DebuggerTreeNodeImpl watch : watches) {
       getWatchPanel().getWatchTree().addWatch((WatchItemDescriptor)watch.getDescriptor());
     }
-
-    reuseSession.initAdditionalTabs();
   }
 
   protected void toFront() {
@@ -473,6 +450,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
     return myStateManager;
   }
 
+  @Nullable
   public TextWithImports getSelectedExpression() {
     if (myDebuggerSession.getState() != DebuggerSession.STATE_PAUSED) {
       return null;
@@ -534,6 +512,19 @@ public class DebuggerSessionTab implements LogConsoleManager {
 
   public DebuggerSession getSession() {
     return myDebuggerSession;
+  }
+
+  public void addAdditionalTabComponent(AdditionalTabComponent tabComponent) {
+    final ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
+    Content logContent = contentFactory.createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), false);
+    myAdditionalContent.put(tabComponent, logContent);
+    myViewsContentManager.addContent(logContent);
+  }
+
+  public void removeAdditionalTabComponent(AdditionalTabComponent component) {
+    component.dispose();
+    final Content content = myAdditionalContent.remove(component);
+    myViewsContentManager.removeContent(content);
   }
 
   private class MyDebuggerStateManager extends DebuggerStateManager {

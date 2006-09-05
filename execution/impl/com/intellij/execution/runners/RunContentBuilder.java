@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
@@ -99,11 +100,11 @@ public class RunContentBuilder implements LogConsoleManager {
         if (myRunProfile instanceof JUnitConfiguration){
           myComponent = console.getComponent();
         } else {
-          if (myRunProfile instanceof RunConfigurationBase){
-            initAdditionalTabs(console);
-          }
           if (myComponent == null){
             myComponent = console.getComponent();
+          }
+          if (myRunProfile instanceof RunConfigurationBase){            
+            initAdditionalTabs();
           }
         }
       }
@@ -116,7 +117,7 @@ public class RunContentBuilder implements LogConsoleManager {
     return contentDescriptor;
   }
 
-  private void initAdditionalTabs(final ExecutionConsole console) {
+  private void initAdditionalTabs() {
     RunConfigurationBase base = (RunConfigurationBase)myRunProfile;
     final ArrayList<LogFileOptions> logFiles = base.getAllLogFiles();
     for (LogFileOptions logFile : logFiles) {
@@ -127,18 +128,7 @@ public class RunContentBuilder implements LogConsoleManager {
         }
       }
     }
-    base.createAdditionalTabComponents();
-    if (base.getAdditionalTabKeys().size() > 0) {
-      myComponent = new JTabbedPane();
-      ((JTabbedPane)myComponent).addTab(ExecutionBundle.message("run.configuration.console.tab"), console.getComponent());
-    }
-    for (Object key : base.getAdditionalTabKeys()) {
-      final AdditionalTabComponent tabComponent = base.getAdditionalTabComponent(key);
-      if (tabComponent != null) {
-        myDisposeables.add(tabComponent);
-        ((JTabbedPane)myComponent).addTab(tabComponent.getTabTitle(), tabComponent.getComponent());
-      }
-    }
+    base.createAdditionalTabComponents(this);
   }
 
   public void addLogConsole(final String path, final boolean skipContent, final Project project, final String name, final RunConfigurationBase configuration) {
@@ -148,16 +138,22 @@ public class RunContentBuilder implements LogConsoleManager {
       }
     };
     log.attachStopLogConsoleTrackingListener(myExecutionResult.getProcessHandler());
-    configuration.addAdditionalTab(path, log);
+    addAdditionalTabComponent(log);
   }
 
   public void removeLogConsole(final String path) {
-    if (myRunProfile instanceof RunConfigurationBase){
-      final AdditionalTabComponent logConsole = ((RunConfigurationBase)myRunProfile).getAdditionalTabComponent(path);
-      if (logConsole != null) {
-        logConsole.dispose();
-        myComponent.remove(logConsole);
+    LogConsole componentToRemove = null;
+    for (Disposable tabComponent : myDisposeables) {
+      if (tabComponent instanceof LogConsole) {
+        final LogConsole console = (LogConsole)tabComponent;
+        if (Comparing.strEqual(console.getPath(), path)) {
+          componentToRemove = console;
+          break;
+        }
       }
+    }
+    if (componentToRemove != null) {
+      removeAdditionalTabComponent(componentToRemove);
     }
   }
 
@@ -200,6 +196,25 @@ public class RunContentBuilder implements LogConsoleManager {
     return descriptor;
   }
 
+  public void addAdditionalTabComponent(AdditionalTabComponent tabComponent) {
+    myDisposeables.add(tabComponent);
+    if (! (myComponent instanceof JTabbedPane)) {
+      JComponent component = myComponent;
+      myComponent = new JTabbedPane();
+      ((JTabbedPane)myComponent).addTab(ExecutionBundle.message("run.configuration.console.tab"), component);
+    }
+    ((JTabbedPane)myComponent).addTab(tabComponent.getTabTitle(), tabComponent.getComponent());
+  }
+
+  public void removeAdditionalTabComponent(AdditionalTabComponent component) {
+    component.dispose();
+    myDisposeables.remove(component);
+    myComponent.remove(component);
+    if (((JTabbedPane)myComponent).getTabCount() == 1) {
+      myComponent = (JComponent)((JTabbedPane)myComponent).getComponentAt(0);
+    }
+  }
+
   private class MyRunContentDescriptor extends RunContentDescriptor {
     private final boolean myReuseProhibited;
     private final Disposable[] myAdditionalDisposables;
@@ -217,9 +232,6 @@ public class RunContentBuilder implements LogConsoleManager {
     public void dispose() {
       for (final Disposable disposable : myAdditionalDisposables) {
         disposable.dispose();
-      }
-      if (myRunProfile instanceof RunConfigurationBase){
-        ((RunConfigurationBase)myRunProfile).clearAdditionalTabs();
       }
       myManager.unregisterFileMatcher();
       super.dispose();

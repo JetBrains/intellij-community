@@ -60,12 +60,14 @@ public abstract class LogConsole extends AdditionalTabComponent {
   private static final long PROCESS_IDLE_TIMEOUT = 1000;
   private String myTitle = null;
   private Project myProject;
+  private String myPath;
 
   public LogConsole(Project project, File file, boolean skipContents, String title) {
     super(new BorderLayout());
     mySkipContents = skipContents;
     myTitle = title;
     myProject = project;
+    myPath = file.getAbsolutePath();
     myReaderThread = new ReaderThread(file);
     TextConsoleBuilder builder = TextConsoleBuidlerFactory.getInstance().createBuilder(project);
     myConsole = builder.getConsole();
@@ -129,6 +131,10 @@ public abstract class LogConsole extends AdditionalTabComponent {
 
   public String getTabTitle() {
     return myTitle;
+  }
+
+  public String getPath() {
+    return myPath;
   }
 
   public void dispose() {
