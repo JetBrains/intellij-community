@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -100,6 +101,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     getPreferredFocusedComponent().requestFocus();
   }
 
+  @Nullable
   protected Document createDocument(TextWithImports item) {
     LOG.assertTrue(myContext == null || myContext.isValid());
 
@@ -121,10 +123,13 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
         myCurrentDocument.removeDocumentListener(documentListener);
       }
     }
+
     myCurrentDocument = PsiDocumentManager.getInstance(getProject()).getDocument(codeFragment);
 
-    for (DocumentListener documentListener : myDocumentListeners) {
-      myCurrentDocument.addDocumentListener(documentListener);
+    if (myCurrentDocument != null) {
+      for (DocumentListener documentListener : myDocumentListeners) {
+        myCurrentDocument.addDocumentListener(documentListener);
+      }
     }
 
     return myCurrentDocument;

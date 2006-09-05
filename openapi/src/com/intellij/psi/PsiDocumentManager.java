@@ -18,10 +18,9 @@ package com.intellij.psi;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Manages the relationship between documents and PSI trees.
@@ -60,6 +59,7 @@ public abstract class PsiDocumentManager {
    * @param file the file for which the document is requested.
    * @return the document instance, or null if the file is binary or has no associated document.
    */
+  @Nullable
   public abstract Document getDocument(PsiFile file);
 
   /**
