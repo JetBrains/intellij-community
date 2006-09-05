@@ -2,6 +2,7 @@ package com.intellij.util.xml.tree;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomReflectionUtil;
 
@@ -64,6 +65,13 @@ abstract public class AbstractDomElementNode extends SimpleNode {
 
   }
 
+  protected SimpleTextAttributes getSimpleAttributes(final int style) {
+    return new SimpleTextAttributes(style, SimpleTextAttributes.REGULAR_ATTRIBUTES.getFgColor());
+  }
+
+  protected SimpleTextAttributes getWavedAttributes(final int style) {
+    return new SimpleTextAttributes(style | SimpleTextAttributes.STYLE_WAVED, SimpleTextAttributes.REGULAR_ATTRIBUTES.getFgColor(), SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor());
+  }
   public boolean isExpanded() {
     return isExpanded;
   }

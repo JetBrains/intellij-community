@@ -14,7 +14,7 @@ public class DomModelTreeStructure extends SimpleTreeStructure {
   protected AbstractDomElementNode createRoot(DomElement rootElement) {
     return new BaseDomElementNode(myDomElement){
       protected boolean highlightIfChildrenHasProblems() {
-        return false;
+        return true;
       }
     };
   }

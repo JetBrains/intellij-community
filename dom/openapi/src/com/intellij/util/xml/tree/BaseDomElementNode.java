@@ -171,7 +171,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
       holder.getProblems(myDomElement, true, highlightIfChildrenHasProblems(), HighlightSeverity.ERROR);
 
     if (problems.size() > 0) {
-      addColoredFragment(getNodeName(), TooltipUtils.getTooltipText(problems), SimpleTextAttributes.ERROR_ATTRIBUTES);
+      addColoredFragment(getNodeName(), TooltipUtils.getTooltipText(problems), getWavedAttributes(SimpleTextAttributes.STYLE_PLAIN));
     }
     else if (myDomElement.getXmlTag() == null && !(myDomElement instanceof DomFileElement)) {
       addColoredFragment(getNodeName(), folder ? SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
