@@ -199,9 +199,9 @@ public class FetchExtResourceAction extends BaseIntentionAction {
   private void fetchDtd(final Project project, final String dtdUrl, final String url) throws IOException {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
-    String sep = File.separator;
-    final String extResourcesPath = PathManager.getSystemPath() + sep + EXT_RESOURCES_FOLDER;
+    final String extResourcesPath = getExternalResourcesPath();
     final File extResources = new File(extResourcesPath);
+    final boolean alreadyExists = extResources.exists();
     extResources.mkdirs();
     LOG.assertTrue(extResources.exists());
 
@@ -215,6 +215,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
             LOG.assertTrue(vFile != null);
             PsiDirectory directory = psiManager.findDirectory(vFile);
             directory.getFiles();
+            if (!alreadyExists) LocalFileSystem.getInstance().addRootToWatch(vFile.getPath(), true);
           }
         };
         ApplicationManager.getApplication().runWriteAction(action);
@@ -286,6 +287,10 @@ public class FetchExtResourceAction extends BaseIntentionAction {
       cleanup(resourceUrls,downloadedResources);
       throw nestedException[0];
     }
+  }
+
+  public static String getExternalResourcesPath() {
+    return PathManager.getSystemPath() + File.separator + EXT_RESOURCES_FOLDER;
   }
 
   private void cleanup(List<String> resourceUrls, List<String> downloadedResources) {

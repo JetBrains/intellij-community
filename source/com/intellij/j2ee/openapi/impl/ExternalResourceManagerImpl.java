@@ -10,7 +10,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -116,6 +120,19 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addInternalResource(XmlUtil.FACELETS_URI,"facelets.xsd");
     addInternalResource(XmlUtil.FACELETS_TAGLIB_URI,"facelet-taglib_1_0.dtd");
     myPathMacros = pathMacros;
+
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      final File extResourceFolder = new File(FetchExtResourceAction.getExternalResourcesPath());
+
+      if (extResourceFolder.exists()) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            final VirtualFile extResourceDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(extResourceFolder);
+            if (extResourceDir != null) LocalFileSystem.getInstance().addRootToWatch(extResourceDir.getPath(), true);
+          }
+        });
+      }
+    }
   }
 
   @Nullable
