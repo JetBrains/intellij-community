@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.impl.FileViewManagerImpl;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.editor.Document;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,6 +36,7 @@ public class CommitHelper {
   private final List<CheckinHandler> myHandlers;
   private final boolean myAllOfDefaultChangeListChangesIncluded;
   private final boolean myForceSyncCommit;
+  private List<Document> myCommittingDocuments = new ArrayList<Document>();
 
 
   public CommitHelper(final Project project, final ChangeList changeList, final List<Change> includedChanges, final String actionName, final String commitMessage,
@@ -76,6 +78,7 @@ public class CommitHelper {
                              final List<Change> changesFailedToCommit,
                              final ChangeList changeList) {
     try {
+      markCommittingDocuments();
       final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
       ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, new ChangesUtil.PerVcsProcessor<Change>() {
         public void process(AbstractVcs vcs, List<Change> changes) {
@@ -91,6 +94,8 @@ public class CommitHelper {
           }
         }
       });
+
+      unmarkCommittingDocuments();
 
       final LvcsAction lvcsAction = LocalVcs.getInstance(myProject).startAction(myActionName, "", true);
       VirtualFileManager.getInstance().refresh(true, new Runnable() {
@@ -109,7 +114,22 @@ public class CommitHelper {
     }
   }
 
-  
+  private void markCommittingDocuments() {
+    for(Change change: myIncludedChanges) {
+      Document doc = ChangesUtil.getFilePath(change).getDocument();
+      if (doc != null) {
+        doc.putUserData(ChangeListManagerImpl.DOCUMENT_BEING_COMMITTED_KEY, new Object());
+        myCommittingDocuments.add(doc);
+      }
+    }
+  }
+
+  private void unmarkCommittingDocuments() {
+    for(Document doc: myCommittingDocuments) {
+      doc.putUserData(ChangeListManagerImpl.DOCUMENT_BEING_COMMITTED_KEY, null);
+    }
+    myCommittingDocuments.clear();
+  }
 
   private void commitCompleted(final List<VcsException> allExceptions,
                                final ChangeList changeList,
@@ -209,5 +229,4 @@ public class CommitHelper {
     }
     return result;
   }
-  
 }

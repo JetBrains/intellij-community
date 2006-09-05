@@ -3,6 +3,9 @@
     <component>
       <implementation-class>com.intellij.openapi.vcs.vfs.VcsFileSystem</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.changes.VetoSavingCommittingDocumentsAdapter</implementation-class>
+    </component>
   </application-components>
   <project-components>
     <component>

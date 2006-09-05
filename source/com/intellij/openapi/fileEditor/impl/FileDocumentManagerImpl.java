@@ -239,7 +239,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       }
 
       try {
-        myEventDispatcher.getMulticaster().beforeDocumentSaving(document);
+        for(FileDocumentManagerListener listener: myEventDispatcher.getListeners()) {
+          listener.beforeDocumentSaving(document);
+        }
       }
       catch (VetoDocumentSavingException e) {
         return;

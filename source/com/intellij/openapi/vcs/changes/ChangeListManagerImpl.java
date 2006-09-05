@@ -12,6 +12,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -83,6 +84,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @NonNls private static final String ATT_CHANGE_BEFORE_PATH = "beforePath";
   @NonNls private static final String ATT_CHANGE_AFTER_PATH = "afterPath";
   private List<CommitExecutor> myExecutors = new ArrayList<CommitExecutor>();
+
+  public static final Key<Object> DOCUMENT_BEING_COMMITTED_KEY = new Key<Object>("DOCUMENT_BEING_COMMITTED");
 
   private VcsListener myVcsListener = new VcsListener() {
     public void moduleVcsChanged(Module module, @Nullable AbstractVcs newVcs) {
