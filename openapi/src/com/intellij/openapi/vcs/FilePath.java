@@ -34,6 +34,7 @@ public interface FilePath {
 
   String getPresentableUrl();
 
+  @Nullable
   Document getDocument();
 
   Charset getCharset();

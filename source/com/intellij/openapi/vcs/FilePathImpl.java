@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -148,6 +149,7 @@ public class FilePathImpl implements FilePath {
     }
   }
 
+  @Nullable
   public Document getDocument() {
     return myVirtualFile != null ? FileDocumentManager.getInstance().getDocument(myVirtualFile) : null;
   }

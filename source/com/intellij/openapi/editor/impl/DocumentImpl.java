@@ -170,7 +170,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
-    LOG.assertTrue(startOffset < endOffset, "Should be startOffset < endOffset");
+    LOG.assertTrue(startOffset <= endOffset, "Should be startOffset <= endOffset");
     RangeMarker block = createRangeMarker(startOffset, endOffset, true);
     myGuardedBlocks.add(block);
     return block;
