@@ -14,6 +14,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.problems.Problem;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.UserActivityWatcher;
@@ -104,6 +106,10 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
   }
 
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
+    final DomManager domManager = DomManager.getDomManager(getProject());
+    final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(getProject());
+    final WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(getProject());
+
     return new BackgroundEditorHighlighter() {
       public HighlightingPass[] createPassesForEditor() {
         return ContainerUtil.map2Array(getDocuments(), HighlightingPass.class, new Function<Document, HighlightingPass>() {
@@ -113,14 +119,25 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
                 final PsiFile file = getDocumentManager().getPsiFile(document);
                 if (file instanceof XmlFile) {
                   final XmlFile xmlFile = (XmlFile)file;
-                  final DomFileElement<DomElement> element = DomManager.getDomManager(getProject()).getFileElement(xmlFile);
+                  final DomFileElement<DomElement> element = domManager.getFileElement(xmlFile);
                   if (element != null) {
-                    DomElementAnnotationsManager.getInstance(getProject()).getProblemHolder(element);
+                    annotationsManager.getProblemHolder(element);
                   }
                 }
               }
 
               public void doApplyInformationToEditor() {
+                final PsiFile file = getDocumentManager().getPsiFile(document);
+                if (file instanceof XmlFile) {
+                  final DomFileElement<DomElement> element = domManager.getFileElement((XmlFile)file);
+                  if (!annotationsManager.getCachedProblemHolder(element).getProblems(element, true, true).isEmpty()) {
+                    wolf.weHaveGotProblem(new Problem() {
+                      public VirtualFile getVirtualFile() {
+                        return file.getVirtualFile();
+                      }
+                    });
+                  }
+                }
                 reset();
               }
 
