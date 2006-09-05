@@ -168,9 +168,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     if (name == null) return null;
     final AntFileImpl antFile = PsiTreeUtil.getParentOfType(this, AntFileImpl.class);
     if (antFile == null) return null;
-    VirtualFile vFile = antFile.getVirtualFile();
-    if (vFile == null) return null;
-    vFile = vFile.getParent();
+    VirtualFile vFile = antFile.getContainingPath();
     if (vFile == null) return null;
     final String fileName = computeAttributeValue(name);
     File file = new File(fileName);

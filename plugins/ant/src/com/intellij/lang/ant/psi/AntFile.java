@@ -33,4 +33,7 @@ public interface AntFile extends PsiFile, AntElement {
   VirtualFile getVirtualFile();
 
   void setProperty(@NotNull final String name, @NotNull final String value);
+
+  @Nullable
+  VirtualFile getContainingPath();
 }

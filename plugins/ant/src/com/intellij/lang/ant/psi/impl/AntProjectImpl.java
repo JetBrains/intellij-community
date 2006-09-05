@@ -185,8 +185,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
             //
             // this is necessary for computing file paths in tags resolved as entity references
             //
-            public VirtualFile getVirtualFile() {
-              return AntProjectImpl.this.getAntFile().getVirtualFile();
+            public VirtualFile getContainingPath() {
+              return AntProjectImpl.this.getAntFile().getContainingPath();
             }
           });
         }

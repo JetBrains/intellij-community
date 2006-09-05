@@ -127,6 +127,12 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return "AntFile[" + getName() + "]";
   }
 
+  @Nullable
+  public VirtualFile getContainingPath() {
+    final VirtualFile result = getVirtualFile();
+    return (result == null) ? null : result.getParent();
+  }
+
   public void clearCaches() {
     synchronized (PsiLock.LOCK) {
       myChildren = null;
