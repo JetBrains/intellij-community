@@ -257,8 +257,9 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         if (refEntity instanceof RefElement) {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
           final PsiElement element = refElement.getElement();
+          if (element == null) return;
           final InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element);
-          if (((GlobalInspectionContextImpl)getContext()).RUN_WITH_EDITOR_PROFILE && profile.getInspectionTool(getShortName()) != DeadCodeInspection.this) return;
+          if (getContext().RUN_WITH_EDITOR_PROFILE && profile.getInspectionTool(getShortName()) != DeadCodeInspection.this) return;
           if (!refElement.isSuspicious()) return;
           refElement.accept(new RefVisitor() {
             public void visitMethod(RefMethod method) {
@@ -674,7 +675,9 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefElement) {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
-          final InspectionProfile profile = InspectionProjectProfileManager.getInstance(refElement.getElement().getProject()).getInspectionProfile(refElement.getElement());
+          final PsiElement element = refElement.getElement();
+          if (element == null) return;
+          final InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element);
           if (getContext().RUN_WITH_EDITOR_PROFILE && profile.getInspectionTool(getShortName()) != DeadCodeInspection.this) return;
           refElement.setReachable(false);
           refElement.accept(new RefVisitor() {
