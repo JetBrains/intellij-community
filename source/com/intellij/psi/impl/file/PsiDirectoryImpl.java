@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -428,7 +429,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     VirtualFile existingFile = getVirtualFile().findChild(name);
     if (existingFile != null) {
       throw new IncorrectOperationException(
-          "Cannot create package - file \"" + existingFile.getPresentableUrl() + "\" already exists.");
+        "Cannot create package - file \"" + existingFile.getPresentableUrl() + "\" already exists.");
     }
     CheckUtil.checkWritable(this);
   }
@@ -465,7 +466,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     VirtualFile existingFile = getVirtualFile().findChild(name);
     if (existingFile != null) {
       throw new IncorrectOperationException(
-          "Cannot create file - file \"" + existingFile.getPresentableUrl() + "\" already exists.");
+        "Cannot create file - file \"" + existingFile.getPresentableUrl() + "\" already exists.");
     }
     CheckUtil.checkWritable(this);
   }
@@ -507,20 +508,29 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
       try {
         VirtualFile newVFile;
+        final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myManager.getProject());
         if (originalFile instanceof PsiFileImpl) {
           newVFile = myFile.createChildData(myManager, originalFile.getName());
-          String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(newVFile, getProject());
           String text = originalFile.getText();
-          if (!lineSeparator.equals("\n")) {
-            text = StringUtil.convertLineSeparators(text, lineSeparator);
-          }
+          final PsiFile psiFile = getManager().findFile(newVFile);
+          final Document document = psiFile == null ? null : psiDocumentManager.getDocument(psiFile);
+          final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+          if (document != null) {
+            document.setText(text);
+            fileDocumentManager.saveDocument(document);
+          } else {
+            String lineSeparator = fileDocumentManager.getLineSeparator(newVFile, getProject());
+            if (!lineSeparator.equals("\n")) {
+              text = StringUtil.convertLineSeparators(text, lineSeparator);
+            }
 
-          final Writer writer = LoadTextUtil.getWriter(newVFile, myManager, text, -1);
-          try {
-            writer.write(text);
-          }
-          finally {
-            writer.close();
+            final Writer writer = LoadTextUtil.getWriter(newVFile, myManager, text, -1);
+            try {
+              writer.write(text);
+            }
+            finally {
+              writer.close();
+            }
           }
         }
         else {
@@ -533,7 +543,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
             newVFile = VfsUtil.copyFile(null, originalFile.getVirtualFile(), myFile);
           }
         }
-        PsiDocumentManager.getInstance(myManager.getProject()).commitAllDocuments();
+        psiDocumentManager.commitAllDocuments();
 
         PsiFile newFile = myManager.findFile(newVFile);
         if (newFile instanceof PsiFileImpl) {
