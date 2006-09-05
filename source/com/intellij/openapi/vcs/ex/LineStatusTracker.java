@@ -57,7 +57,7 @@ public class LineStatusTracker {
   private final MyDocumentListener myDocumentListener = new MyDocumentListener();
 
   private boolean myIsReleased = false;
-  private boolean myIsItitialized = false;
+  private boolean myIsInitialized = false;
 
   public LineStatusTracker(Document document, Document upToDateDocument, Project project) {
     myDocument = document;
@@ -67,7 +67,7 @@ public class LineStatusTracker {
 
   public synchronized void initialize(final String upToDateContent) {
     if (myIsReleased) return;
-    LOG.assertTrue(!myIsItitialized);
+    LOG.assertTrue(!myIsInitialized);
     try {
       CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
         public void run() {
@@ -85,7 +85,7 @@ public class LineStatusTracker {
       myDocument.addDocumentListener(myDocumentListener);
     }
     finally {
-      myIsItitialized = true;
+      myIsInitialized = true;
     }
   }
 
@@ -234,7 +234,7 @@ public class LineStatusTracker {
 
   public synchronized void release() {
     try {
-      if (!myIsItitialized) return;
+      if (!myIsInitialized) return;
       LOG.assertTrue(!myIsReleased);
 
       removeHighlighters(new ArrayList<Range>());
