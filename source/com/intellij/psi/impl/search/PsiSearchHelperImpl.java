@@ -23,6 +23,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.StringSearcher;
+import com.intellij.lang.properties.psi.Property;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,6 +154,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
     else if (element instanceof PsiLabeledStatement) {
       return new LocalSearchScope(element);
+    }
+    else if (element instanceof Property) {
+      // property ref can occur in any file
+      return GlobalSearchScope.allScope(myManager.getProject());
     }
     else {
       return maximalUseScope;
