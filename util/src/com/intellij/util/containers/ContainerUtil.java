@@ -130,9 +130,8 @@ public class ContainerUtil {
   }
 
   @Nullable
-  public static <T> T find(Object[] array, Condition<T> condition) {
-    for (Object anArray : array) {
-      T element = (T)anArray;
+  public static <T> T find(T[] array, Condition<T> condition) {
+    for (T element : array) {
       if (condition.value(element)) return element;
     }
     return null;
@@ -293,10 +292,19 @@ public class ContainerUtil {
     }
   }
 
-  public static <T, U extends T> T findInstance(Iterator<T> iterator, Class<U> aClass) {
+  public static <T, U extends T> U findInstance(Iterable<T> iterable, Class<U> aClass) {
+    return findInstance(iterable.iterator(), aClass);
+  }
+
+  public static <T, U extends T> U findInstance(Iterator<T> iterator, Class<U> aClass) {
     // uncomment for 1.5
     //return (U)find(iterator, new FilteringIterator.InstanceOf<U>(aClass));
-    return (T)find(iterator, new FilteringIterator.InstanceOf<T>((Class<T>)aClass));
+    return (U)find(iterator, new FilteringIterator.InstanceOf<T>((Class<T>)aClass));
+  }
+
+  @Nullable
+  public static <T, U extends T> U findInstance(T[] array, Class<U> aClass) {
+    return findInstance(Arrays.asList(array), aClass);
   }
 
   public static <T,V> List<T> concat(V[] array, Function<V,Collection<? extends T>> fun) {
