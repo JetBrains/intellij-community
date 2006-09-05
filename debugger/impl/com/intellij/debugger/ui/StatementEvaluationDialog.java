@@ -67,8 +67,8 @@ public class StatementEvaluationDialog extends EvaluationDialog{
     ep.add(resultLabel, BorderLayout.NORTH);
     ep.add(evaluationPanel, BorderLayout.CENTER);
     splitter.setSecondComponent(ep);
-    final Dimension statementSize = DimensionService.getInstance().getSize(STATEMENT_EDITOR_DIMENSION_KEY);
-    final Dimension evaluationSize = DimensionService.getInstance().getSize(EVALUATION_PANEL_DIMENSION_KEY);
+    final Dimension statementSize = DimensionService.getInstance().getSize(STATEMENT_EDITOR_DIMENSION_KEY, project);
+    final Dimension evaluationSize = DimensionService.getInstance().getSize(EVALUATION_PANEL_DIMENSION_KEY, project);
     if (statementSize != null && evaluationSize != null) {
       final float proportion = (float)statementSize.height / (float)(statementSize.height + evaluationSize.height);
       splitter.setProportion(proportion);
@@ -175,8 +175,8 @@ public class StatementEvaluationDialog extends EvaluationDialog{
     try {
       final DebuggerEditorImpl editor = getEditor();
       final DimensionService dimensionService = DimensionService.getInstance();
-      dimensionService.setSize(STATEMENT_EDITOR_DIMENSION_KEY, editor.getSize(null));
-      dimensionService.setSize(EVALUATION_PANEL_DIMENSION_KEY, getEvaluationPanel().getSize());
+      dimensionService.setSize(STATEMENT_EDITOR_DIMENSION_KEY, editor.getSize(null), getProject());
+      dimensionService.setSize(EVALUATION_PANEL_DIMENSION_KEY, getEvaluationPanel().getSize(), getProject());
     }
     finally {
       super.dispose();

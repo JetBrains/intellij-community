@@ -18,20 +18,25 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.ScreenUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
  * This class represents map between strings and rectangles. It's intended to store
  * sizes of window, dialogs, etc.
  */
+@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
 public class DimensionService implements JDOMExternalizable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.DimensionService");
 
@@ -69,11 +74,20 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
    * is outside of current screen bounds then the method returns <code>null</code>. It
    * properly works in multimonitor configuration.
    * @exception java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
+   * @param key a String key to perform a query for.
    */
+  @Nullable
   public synchronized Point getLocation(String key) {
+    return getLocation(key, guessProject());
+  }
+
+  @Nullable
+  public synchronized Point getLocation(String key, Project project) {
     if(key==null){
       throw new IllegalArgumentException("key cannot be null");
     }
+    key = realKey(key, project);
+
     Point point=myKey2Location.get(key);
     if(point!=null){
       WindowManager windowManager=WindowManager.getInstance();
@@ -91,12 +105,20 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
   /**
    * Store specified <code>point</code> under the <code>key</code>. If <code>point</code> is
    * <code>null</code> then the value stored under <code>key</code> will be removed.
+   * @param key a String key to store location for.
+   * @param point location to save.
    * @exception java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    */
   public synchronized void setLocation(String key, Point point){
+    setLocation(key, point, guessProject());
+  }
+
+  public synchronized void setLocation(String key, Point point, Project project){
     if(key==null){
       throw new IllegalArgumentException("key cannot be null");
     }
+    key = realKey(key, project);
+
     if (point != null) {
       myKey2Location.put(key, (Point)point.clone());
     }else {
@@ -107,12 +129,21 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
   /**
    * @return point stored under the specified <code>key</code>. The method returns
    * <code>null</code> if there is no stored value under the <code>key</code>.
+   * @param key a String key to perform a query for.
    * @exception java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    */
+  @Nullable
   public synchronized Dimension getSize(@NonNls String key) {
+    return getSize(key, guessProject());
+  }
+
+  @Nullable
+  public synchronized Dimension getSize(@NonNls String key, Project project) {
     if(key==null){
       throw new IllegalArgumentException("key cannot be null");
     }
+    key = realKey(key, project);
+
     Dimension size=myKey2Size.get(key);
     if(size!=null){
       return (Dimension)size.clone();
@@ -124,12 +155,20 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
   /**
    * Store specified <code>size</code> under the <code>key</code>. If <code>size</code> is
    * <code>null</code> then the value stored under <code>key</code> will be removed.
+   * @param key a String key to to save size for.
+   * @param size a Size to save.
    * @exception java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    */
   public synchronized void setSize(@NonNls String key, Dimension size){
+    setSize(key, size, guessProject());
+  }
+
+  public synchronized void setSize(@NonNls String key, Dimension size, Project project){
     if(key==null){
       throw new IllegalArgumentException("key cannot be null");
     }
+    key = realKey(key, project);
+
     if (size != null) {
       myKey2Size.put(key, (Dimension)size.clone());
     }else {
@@ -138,64 +177,63 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
   }
 
   public synchronized void readExternal(Element element) throws InvalidDataException {
-    for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
-      Element e = (Element)i.next();
-      if(ELEMENT_LOCATION.equals(e.getName())){
-        try{
-          myKey2Location.put(
-            e.getAttributeValue(KEY),
-            new Point(
-              Integer.parseInt(e.getAttributeValue(ATTRIBUTE_X)),
-              Integer.parseInt(e.getAttributeValue(ATTRIBUTE_Y))
-            )
-          );
-        }catch (NumberFormatException ignored){}
+    for (final Object o : element.getChildren()) {
+      Element e = (Element)o;
+      if (ELEMENT_LOCATION.equals(e.getName())) {
+        try {
+          myKey2Location.put(e.getAttributeValue(KEY), new Point(Integer.parseInt(e.getAttributeValue(ATTRIBUTE_X)),
+                                                                 Integer.parseInt(e.getAttributeValue(ATTRIBUTE_Y))));
+        }
+        catch (NumberFormatException ignored) {
+          // ignored
+        }
       }
-      else if(ELEMENT_SIZE.equals(e.getName())){
-        try{
-          myKey2Size.put(
-            e.getAttributeValue(KEY),
-            new Dimension(
-              Integer.parseInt(e.getAttributeValue(ATTRIBUTE_WIDTH)),
-              Integer.parseInt(e.getAttributeValue(ATTRIBUTE_HEIGHT))
-            )
-          );
-        }catch (NumberFormatException ignored){}
+      else if (ELEMENT_SIZE.equals(e.getName())) {
+        try {
+          myKey2Size.put(e.getAttributeValue(KEY), new Dimension(Integer.parseInt(e.getAttributeValue(ATTRIBUTE_WIDTH)),
+                                                                 Integer.parseInt(e.getAttributeValue(ATTRIBUTE_HEIGHT))));
+        }
+        catch (NumberFormatException ignored) {
+          // ignored
+        }
       }
-      else if(EXTENDED_STATE.equals(e.getName())) {
+      else if (EXTENDED_STATE.equals(e.getName())) {
         try {
           myKey2ExtendedState.put(e.getAttributeValue(KEY), Integer.parseInt(e.getAttributeValue(STATE)));
-        } catch(NumberFormatException ignored){}
+        }
+        catch (NumberFormatException ignored) {
+          // ignored
+        }
       }
     }
   }
 
   public synchronized void writeExternal(Element element) throws WriteExternalException {
     // Save locations
-    for(Iterator<String> i=myKey2Location.keySet().iterator();i.hasNext();){
-      String key=i.next();
-      Point point=myKey2Location.get(key);
-      LOG.assertTrue(point!=null);
-      Element e=new Element(ELEMENT_LOCATION);
-      e.setAttribute(KEY,key);
+    for (String key : myKey2Location.keySet()) {
+      Point point = myKey2Location.get(key);
+      LOG.assertTrue(point != null);
+      Element e = new Element(ELEMENT_LOCATION);
+      e.setAttribute(KEY, key);
       e.setAttribute(ATTRIBUTE_X, String.valueOf(point.x));
       e.setAttribute(ATTRIBUTE_Y, String.valueOf(point.y));
       element.addContent(e);
     }
+
     // Save sizes
-    for (Iterator<String> i = myKey2Size.keySet().iterator(); i.hasNext();) {
-      String key = i.next();
+    for (String key : myKey2Size.keySet()) {
       Dimension size = myKey2Size.get(key);
-      LOG.assertTrue(size!=null);
+      LOG.assertTrue(size != null);
       Element e = new Element(ELEMENT_SIZE);
-      e.setAttribute(KEY,key);
+      e.setAttribute(KEY, key);
       e.setAttribute(ATTRIBUTE_WIDTH, String.valueOf(size.width));
       e.setAttribute(ATTRIBUTE_HEIGHT, String.valueOf(size.height));
       element.addContent(e);
     }
+
     // Save extended states
-    for (int i = 0; i < myKey2ExtendedState.keys().length; i++) {
-      String key = (String)myKey2ExtendedState.keys()[i];
+    for (Object stateKey : myKey2ExtendedState.keys()) {
+      String key = (String)stateKey;
       Element e = new Element(EXTENDED_STATE);
       e.setAttribute(KEY, key);
       e.setAttribute(STATE, String.valueOf(myKey2ExtendedState.get(key)));
@@ -203,6 +241,7 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
     }
   }
 
+  @NotNull
   public String getComponentName() {
     return "DimensionService";
   }
@@ -214,5 +253,26 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
   public int getExtendedState(String key) {
     if (!myKey2ExtendedState.containsKey(key)) return -1;
     return myKey2ExtendedState.get(key);
+  }
+
+  @Nullable
+  private static Project guessProject() {
+    final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    return openProjects.length == 1 ? openProjects[0] : null;
+  }
+
+  @NotNull
+  private static String realKey(String key, @Nullable Project project) {
+    if (project == null) return key;
+
+    final Point topLeft = WindowManager.getInstance().getFrame(project).getLocation();
+    final Rectangle frameScreen = ScreenUtil.getScreenRectangle(topLeft.x, topLeft.y);
+    StringBuffer buf = new StringBuffer(key);
+    buf.append('.').append(frameScreen.x)
+      .append('.').append(frameScreen.y)
+      .append('.').append(frameScreen.width)
+      .append('.').append(frameScreen.height);
+
+    return buf.toString();
   }
 }

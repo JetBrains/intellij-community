@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,8 +14,6 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
-
-import org.jetbrains.annotations.NonNls;
 
 public class FrameWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.FrameWrapper");

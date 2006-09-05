@@ -30,9 +30,9 @@ public class ConfigureTemplatesDialog extends SingleConfigurableEditor{
   }
 
   private void initSize(){
-    Dimension size = DimensionService.getInstance().getSize(DIMENSION_KEY);
+    Dimension size = DimensionService.getInstance().getSize(DIMENSION_KEY, getProject());
     if (size == null){
-      DimensionService.getInstance().setSize(DIMENSION_KEY, new Dimension(700, 500));
+      DimensionService.getInstance().setSize(DIMENSION_KEY, new Dimension(700, 500), getProject());
     }
   }
 }

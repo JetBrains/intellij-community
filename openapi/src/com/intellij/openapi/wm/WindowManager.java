@@ -18,6 +18,7 @@ package com.intellij.openapi.wm;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 
+import javax.swing.*;
 import java.awt.*;
 
 public abstract class WindowManager {
@@ -38,6 +39,8 @@ public abstract class WindowManager {
   public abstract Window suggestParentWindow(Project project);
   
   public abstract StatusBar getStatusBar(Project project);
+
+  public abstract JFrame getFrame(Project project);
 
   /**
    * Tests whether the specified rectangle is inside of screen bounds. Method uses its own heuristic test.
