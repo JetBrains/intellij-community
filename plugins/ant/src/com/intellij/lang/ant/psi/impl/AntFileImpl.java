@@ -221,7 +221,8 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       if (myProject == null) return this;
       final TextRange projectRange = myProject.getTextRange();
       if (offset < projectRange.getStartOffset() || offset >= projectRange.getEndOffset()) return this;
-      return myProject.lightFindElementAt(offset);
+      final AntElement prolog = myPrologElement;
+      return myProject.lightFindElementAt(offset - ((prolog == null) ? 0 : prolog.getTextLength()));
     }
   }
 
