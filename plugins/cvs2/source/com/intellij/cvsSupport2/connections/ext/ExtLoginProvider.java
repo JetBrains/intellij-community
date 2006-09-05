@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.connections.ext;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.config.ui.CvsConfigurationsListEditor;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
@@ -8,6 +9,7 @@ import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.cvsSupport2.javacvsImpl.io.StreamLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 
 import java.io.IOException;
@@ -25,6 +27,13 @@ public class ExtLoginProvider {
     try {
       connection.open(new StreamLogger());
       return true;
+    }
+    catch(AuthenticationException ex) {
+      //noinspection SimplifiableIfStatement
+      if (env.checkReportOfflineException(ex)) {
+        return false;
+      }
+      return relogin(ex, env, executor);
     }
     catch (Exception ex) {
       return relogin(ex, env, executor);
@@ -45,12 +54,13 @@ public class ExtLoginProvider {
   }
 
   private boolean relogin(String message, CvsConnectionSettings env, ModalityContext executor) {
-    Messages.showMessageDialog(message, com.intellij.CvsBundle.message("message.error.cannot.connect.to.cvs.title"), Messages.getErrorIcon());
+    Messages.showMessageDialog(message, CvsBundle.message("message.error.cannot.connect.to.cvs.title"), Messages.getErrorIcon());
     if (!executor.isForTemporaryConfiguration()){
-    CvsRootConfiguration cvsRootConfiguration = CvsConfigurationsListEditor.reconfigureCvsRoot(env.getCvsRootAsString(), null);
-    if (cvsRootConfiguration == null) return false;
-    return login(env, executor);
-    } else {
+      CvsRootConfiguration cvsRootConfiguration = CvsConfigurationsListEditor.reconfigureCvsRoot(env.getCvsRootAsString(), null);
+      if (cvsRootConfiguration == null) return false;
+      return login(env, executor);
+    }
+    else {
       return false;
     }
   }

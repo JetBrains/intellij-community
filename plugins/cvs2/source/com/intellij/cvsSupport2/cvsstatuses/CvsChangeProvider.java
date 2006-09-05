@@ -251,6 +251,7 @@ public class CvsChangeProvider implements ChangeProvider {
       if (myContent == null) {
         try {
           final GetFileContentOperation operation = GetFileContentOperation.createForFile(myPath);
+          if (operation.getRoot().isOffline()) return null;
           CvsVcs2.executeQuietOperation(CvsBundle.message("operation.name.get.file.content"), operation, myVcs.getProject());
           final byte[] fileBytes = operation.tryGetFileBytes();
           myContent = fileBytes == null ? null : new String(fileBytes, myPath.getCharset().name());

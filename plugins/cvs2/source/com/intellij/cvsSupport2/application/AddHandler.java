@@ -33,6 +33,7 @@ class AddHandler {
     myAllFiles.add(file);
   }
 
+  @SuppressWarnings({"UnnecessaryContinue"})
   public void execute() {
     for (VirtualFile file : myAllFiles) {
       if (!CvsUtil.fileIsUnderCvs(file.getParent())) {
@@ -42,6 +43,9 @@ class AddHandler {
         CvsUtil.restoreFile(file);
       }
       else if (CvsUtil.fileIsUnderCvs(file)) {
+        continue;
+      }
+      else if (CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(file.getParent()).isOffline()) {
         continue;
       }
       else {

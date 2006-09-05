@@ -9,6 +9,7 @@ import com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl;
 import com.intellij.cvsSupport2.connections.ssh.SshConnectionSettings;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
+import com.intellij.CvsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.IOCommandException;
@@ -31,7 +32,7 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
   protected IConnection createOriginalConnection(ErrorRegistry errorRegistry, CvsRootConfiguration cvsRootConfiguration) {
 
     return CvsConnectionUtil.createExtConnection(this, getExtConfiguration(), mySshSettings,
-                                                 SSHPasswordProviderImpl.getInstance(), 
+                                                 SSHPasswordProviderImpl.getInstance(),
                                                  cvsRootConfiguration.PROXY_SETTINGS,
                                                  errorRegistry,
                                                  CvsApplicationLevelConfiguration.getInstance().TIMEOUT * 1000);
@@ -56,10 +57,10 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
     String response = localizedMessage.substring(UNCHANDLED_RESPONSE_PREFIX.length(),
                                                  localizedMessage.length() - 1);
     if (response.startsWith(USER + "@" + HOST)) {
-      return new IOCommandException(new IOException(com.intellij.CvsBundle.message("exception.text.ext.server.rejected.access")));
+      return new IOCommandException(new IOException(CvsBundle.message("exception.text.ext.server.rejected.access")));
     }
     else {
-      return new IOCommandException(new IOException(com.intellij.CvsBundle.message("exception.text.cannot.establish.external.connection", response)));
+      return new IOCommandException(new IOException(CvsBundle.message("exception.text.cannot.establish.external.connection", response)));
     }
   }
 }

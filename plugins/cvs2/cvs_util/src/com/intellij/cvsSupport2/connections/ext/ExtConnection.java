@@ -6,6 +6,7 @@ import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.cvsSupport2.javacvsImpl.io.InputStreamWrapper;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.CvsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.ICvsCommandStopper;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
@@ -43,13 +44,13 @@ public class ExtConnection extends ConnectionOnProcess {
       open(new String[]{"cvs", "server"}, null, null);
     }
     catch (IOException e) {
-      throw new AuthenticationException(com.intellij.CvsBundle.message("error.message.cannot.establish.external.connection"), e);
+      throw new AuthenticationException(CvsBundle.message("error.message.cannot.establish.external.connection"), e);
     }
   }
 
   private void open(String[] commands, String expectedResult, ICvsCommandStopper stopper)
     throws AuthenticationException, IOException {
-    if (isOpen()) throw new RuntimeException(com.intellij.CvsBundle.message("error.message.connection.already.open"));
+    if (isOpen()) throw new RuntimeException(CvsBundle.message("error.message.connection.already.open"));
 
     GeneralCommandLine command = createRshCommand(myHost, myUserName, myConfiguration);
 
@@ -78,14 +79,14 @@ public class ExtConnection extends ConnectionOnProcess {
       String read = buffer.toString().trim();
       if (!expectedResult.equals(read)) {
         if (read.startsWith(myUserName + "@" + myHost)) {
-          throw new AuthenticationException(com.intellij.CvsBundle.message("exception.text.ext.server.rejected.access"), null);
+          throw new AuthenticationException(CvsBundle.message("exception.text.ext.server.rejected.access"), null);
         }
         else {
           if (myErrorText.length() > 0) {
             throw new AuthenticationException(myErrorText.toString(), null);
           }
           else {
-            throw new AuthenticationException(com.intellij.CvsBundle.message("exception.text.ext.cannot.establish.external.connection"), null);
+            throw new AuthenticationException(CvsBundle.message("exception.text.ext.cannot.establish.external.connection"), null);
           }
         }
       }

@@ -76,4 +76,8 @@ public abstract class CvsRootProvider implements CvsEnvironment{
     return myCvsEnvironment.processException(t);
   }
 
+  public boolean isOffline() {
+    return myCvsEnvironment.isOffline();
+  }
+
 }

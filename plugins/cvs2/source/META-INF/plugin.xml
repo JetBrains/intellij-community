@@ -131,6 +131,8 @@
         <action id="Cvs.WatchRemove" class="com.intellij.cvsSupport2.actions.WatchRemoveAction"/>
         <action id="Cvs.Watchers" class="com.intellij.cvsSupport2.actions.ViewWatchersAction"/>
       </group>
+      <separator/>
+      <action id="Cvs.ToggleOffline" class="com.intellij.cvsSupport2.actions.ToggleOfflineAction"/>
       <add-to-group group-id="UpdateActionGroup" anchor="last"/>
 
       <action id="Cvs.CheckinProjectPanel.Add" class="com.intellij.cvsSupport2.checkinProject.AddUnknownFileToCvsAction"

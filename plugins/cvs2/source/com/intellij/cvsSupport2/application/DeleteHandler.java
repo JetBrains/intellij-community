@@ -156,7 +156,7 @@ class DeleteHandler {
       collectAllDeletedFilesFrom(file);
     }
     else {
-      if (CvsUtil.fileIsUnderCvs(file)) {
+      if (CvsUtil.fileIsUnderCvs(file) && !CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(file.getParent()).isOffline()) {
         addFile(file);
       }
     }

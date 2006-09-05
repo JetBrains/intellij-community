@@ -1,23 +1,20 @@
 package com.intellij.cvsSupport2.connections.pserver;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.cvsSupport2.javacvsImpl.io.StreamLogger;
 import com.intellij.cvsSupport2.util.CvsFileUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.PasswordPromptDialog;
-import com.intellij.CvsBundle;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 import org.netbeans.lib.cvsclient.connection.PServerPasswordScrambler;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,25 +56,24 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
       IConnection connection = settings.createConnection(new ReadWriteStatistics());
       try {
         connection.open(new StreamLogger());
+        settings.setOffline(false);
         return true;
-      } catch (AuthenticationException e) {
-        Throwable cause = e.getCause();
-        if (cause instanceof SocketTimeoutException){
-          showErrorMessage(CvsBundle.message("error.message.timeout.error"), CvsBundle.message("error.dialog.title.timeout.error"));
+      }
+      catch (AuthenticationException e) {
+        if (settings.checkReportOfflineException(e)) {
           return false;
-        } else if (cause instanceof UnknownHostException){
-          showErrorMessage(CvsBundle.message("error.message.unknown.host", settings.HOST),
-                                     CvsBundle.message("error.title.inknown.host"));
-          return false;
-        } else {
-        showErrorMessage(getMessageFrom(e), CvsBundle.message("error.title.authorization.error"));
-        settings.releasePassword();
-        return relogin(settings, executor);
         }
-      } finally {
+        else {
+          settings.showConnectionErrorMessage(getMessageFrom(e), CvsBundle.message("error.title.authorization.error"), false);
+          settings.releasePassword();
+          return relogin(settings, executor);
+        }
+      }
+      finally {
         try {
           connection.close();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
           // ignore
         }
       }
@@ -86,26 +82,14 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
     if (password == null) return false;
     try {
       storePassword(cvsRoot, password);
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       Messages.showMessageDialog(CvsBundle.message("error.message.cannot.store.password", e.getLocalizedMessage()),
                                  CvsBundle.message("error.title.storing.cvs.password"), Messages.getErrorIcon());
       return false;
     }
     settings.storePassword(password);
     return login(settings, executor);
-  }
-
-  private static void showErrorMessage(final String message, final String title) {
-    Runnable showErrorAction = new Runnable(){
-          public void run() {
-            Messages.showErrorDialog(message, title);
-          }
-        };
-    if (ApplicationManager.getApplication().isDispatchThread())
-      showErrorAction.run();
-    else {
-      ApplicationManager.getApplication().invokeLater(showErrorAction);
-    }
   }
 
   public boolean relogin(PServerCvsSettings settings, ModalityContext executor) {

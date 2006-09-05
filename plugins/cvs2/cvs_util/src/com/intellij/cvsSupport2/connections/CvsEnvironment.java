@@ -23,4 +23,6 @@ public interface CvsEnvironment {
   boolean isValid();
 
   CommandException processException(CommandException t);
+
+  boolean isOffline();
 }

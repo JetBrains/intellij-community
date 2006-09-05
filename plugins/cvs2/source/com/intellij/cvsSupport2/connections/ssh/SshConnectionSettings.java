@@ -52,7 +52,6 @@ import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 
 /**
  * author: lesya
@@ -135,10 +134,8 @@ public class SshConnectionSettings extends CvsConnectionSettings {
       }
     }
     catch (AuthenticationException e) {
-      if (e.getCause() instanceof UnknownHostException) {
-        Messages.showMessageDialog(CvsBundle.message("error.message.unknown.host", e.getCause().getLocalizedMessage()),
-                                   CvsBundle.message("error.dialog.title.cannot.connect.to.cvs"), Messages.getErrorIcon());
-
+      if (checkReportOfflineException(e)) {
+        return false;
       }
       else if (e instanceof SolveableAuthenticationException) {
         Messages.showMessageDialog(e.getLocalizedMessage(),

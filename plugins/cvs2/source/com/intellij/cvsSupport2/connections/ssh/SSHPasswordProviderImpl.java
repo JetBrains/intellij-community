@@ -8,6 +8,8 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.connection.PServerPasswordScrambler;
 
 import java.util.Iterator;
@@ -36,6 +38,7 @@ public class SSHPasswordProviderImpl implements ApplicationComponent, JDOMExtern
     return ApplicationManager.getApplication().getComponent(SSHPasswordProviderImpl.class);
   }
 
+  @NotNull
   public String getComponentName() {
     return "SSHPasswordProvider";
   }
@@ -49,6 +52,7 @@ public class SSHPasswordProviderImpl implements ApplicationComponent, JDOMExtern
     myCvsRootToStoringPPKPasswordMap.clear();
   }
 
+  @Nullable
   public String getPasswordForCvsRoot(String cvsRoot) {
     if (myCvsRootToStoringPasswordMap.containsKey(cvsRoot))
       return myCvsRootToStoringPasswordMap.get(cvsRoot);
@@ -67,6 +71,7 @@ public class SSHPasswordProviderImpl implements ApplicationComponent, JDOMExtern
     }
   }
 
+  @Nullable
   public String getPPKPasswordForCvsRoot(String cvsRoot) {
     if (myCvsRootToStoringPPKPasswordMap.containsKey(cvsRoot))
       return myCvsRootToStoringPPKPasswordMap.get(cvsRoot);
@@ -87,9 +92,8 @@ public class SSHPasswordProviderImpl implements ApplicationComponent, JDOMExtern
 
   public void writeExternal(Element element) throws WriteExternalException {
     Element passwords = new Element(PASSWORDS);
-    for (Iterator<String> eachCvsRoot = myCvsRootToStoringPasswordMap.keySet().iterator(); eachCvsRoot.hasNext();) {
+    for (final String cvsRoot : myCvsRootToStoringPasswordMap.keySet()) {
       Element password = new Element(PASSWORD);
-      String cvsRoot = eachCvsRoot.next();
       password.setAttribute(CVSROOT_ATTR, cvsRoot);
       password.setAttribute(PASSWORD_ATTR, PServerPasswordScrambler.getInstance().scramble(myCvsRootToStoringPasswordMap.get(cvsRoot)));
       passwords.addContent(password);
@@ -97,9 +101,8 @@ public class SSHPasswordProviderImpl implements ApplicationComponent, JDOMExtern
     element.addContent(passwords);
 
     passwords = new Element(PPKPASSWORDS);
-    for (Iterator<String> eachCvsRoot = myCvsRootToStoringPPKPasswordMap.keySet().iterator(); eachCvsRoot.hasNext();) {
+    for (final String cvsRoot : myCvsRootToStoringPPKPasswordMap.keySet()) {
       Element password = new Element(PASSWORD);
-      String cvsRoot = eachCvsRoot.next();
       password.setAttribute(CVSROOT_ATTR, cvsRoot);
       password.setAttribute(PASSWORD_ATTR, PServerPasswordScrambler.getInstance().scramble(myCvsRootToStoringPPKPasswordMap.get(cvsRoot)));
       passwords.addContent(password);

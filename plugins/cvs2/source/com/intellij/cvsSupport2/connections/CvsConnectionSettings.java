@@ -5,8 +5,17 @@ import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsListenerWithProgres
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.CommonBundle;
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.CvsRoot;
 import org.netbeans.lib.cvsclient.connection.IConnection;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
+
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.net.ConnectException;
 
 
 /**
@@ -15,6 +24,7 @@ import org.netbeans.lib.cvsclient.connection.IConnection;
 public abstract class CvsConnectionSettings extends CvsRootData implements CvsEnvironment, CvsSettings {
 
   private final CvsRootConfiguration myCvsRootConfiguration;
+  private boolean myOffline;
 
   protected CvsConnectionSettings(CvsRootConfiguration cvsRootConfiguration) {
     super(cvsRootConfiguration.getCvsRootAsString());
@@ -80,6 +90,59 @@ public abstract class CvsConnectionSettings extends CvsRootData implements CvsEn
       //ignore
     }
     settings.USE_PROXY = true;
-  }  
-  
+  }
+
+  public boolean isOffline() {
+    return myOffline;
+  }
+
+  public void setOffline(final boolean offline) {
+    myOffline = offline;
+  }
+
+  public void showConnectionErrorMessage(final String message, final String title, final boolean suggestOffline) {
+    Runnable showErrorAction = new Runnable() {
+      public void run() {
+        if (suggestOffline) {
+          int rc = Messages.showDialog(message, title, new String[]{CommonBundle.getOkButtonText(), "Work Offline"}, 0, Messages.getErrorIcon());
+          if (rc == 1) {
+            setOffline(true);
+          }
+        }
+        else {
+          Messages.showErrorDialog(message, title);
+        }
+      }
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      showErrorAction.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(showErrorAction);
+    }
+  }
+
+  public boolean checkReportOfflineException(final AuthenticationException e) {
+    if (isOffline()) return true;
+    Throwable cause = e.getCause();
+    if (cause instanceof SocketTimeoutException) {
+      showConnectionErrorMessage(CvsBundle.message("error.message.timeout.error"),
+                                 CvsBundle.message("error.dialog.title.timeout.error"),
+                                 true);
+      return true;
+    }
+    else if (cause instanceof UnknownHostException) {
+      showConnectionErrorMessage(CvsBundle.message("error.message.unknown.host", HOST),
+                                 CvsBundle.message("error.title.inknown.host"),
+                                 true);
+      return true;
+    }
+    else if (cause instanceof ConnectException) {
+      showConnectionErrorMessage(CvsBundle.message("error.message.connection.error", HOST),
+                                 CvsBundle.message("error.title.connection.error"),
+                                 true);
+      return true;
+    }
+    return false;
+  }
 }

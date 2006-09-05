@@ -247,4 +247,8 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
     return getSettings().processException(t);
   }
 
+  public boolean isOffline() {
+    return getSettings().isOffline();
+  }
+
 }

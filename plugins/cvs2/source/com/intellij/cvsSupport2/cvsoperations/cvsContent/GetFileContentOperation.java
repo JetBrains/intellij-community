@@ -85,7 +85,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
       }
     }
 
-    private String readTagTypeFrom(final byte[] byteMessage) {
+    private static String readTagTypeFrom(final byte[] byteMessage) {
       final StringBuffer result = new StringBuffer();
       for (byte b : byteMessage) {
         if (b == ' ') return result.toString();
@@ -153,6 +153,10 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
   @SuppressWarnings({"RefusedBequest"})
   protected Collection<CvsRootProvider> getAllCvsRoots() {
     return Collections.singleton(myRoot);
+  }
+
+  public CvsRootProvider getRoot() {
+    return myRoot;
   }
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
