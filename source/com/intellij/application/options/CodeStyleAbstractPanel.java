@@ -31,6 +31,8 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -50,10 +52,10 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.Alarm;
@@ -154,10 +156,10 @@ public abstract class CodeStyleAbstractPanel {
       myTextToReformat = myEditor.getDocument().getText();
     }
 
-    Project project = /*(Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT); //todo uncomment - do not load default project
+    Project project = (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT);
     if (project == null) {
-      project =*/ ProjectManager.getInstance().getDefaultProject();
-    //}
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
     final Project finalProject = project;
     CommandProcessor.getInstance().executeCommand(finalProject,
                                                   new Runnable() {
