@@ -86,8 +86,9 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
   }
 
   public OpenFileDescriptor getOpenFileDescriptor() {
-    final VirtualFile vFile = myModel.getBuildFile().getVirtualFile();
-    return (vFile == null) ? null : new OpenFileDescriptor(myModel.getBuildFile().getProject(), vFile, myTarget.getTextOffset());
+    final PsiFile psiFile = myTarget.getContainingFile();
+    final VirtualFile vFile = (psiFile.isPhysical()) ? psiFile.getVirtualFile() : null;
+    return (vFile == null) ? null : new OpenFileDescriptor(psiFile.getProject(), vFile, myTarget.getTextOffset());
   }
 
   public void run(DataContext dataContext, AntBuildListener buildListener) {
