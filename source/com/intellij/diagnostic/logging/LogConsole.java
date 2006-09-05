@@ -34,7 +34,7 @@ import java.util.ArrayList;
  * Date: Apr 19, 2005
  */
 public abstract class LogConsole extends AdditionalTabComponent {
-  private final ConsoleView myConsole;
+  private ConsoleView myConsole;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
   private ReaderThread myReaderThread;
   private final boolean mySkipContents;
@@ -141,6 +141,9 @@ public abstract class LogConsole extends AdditionalTabComponent {
     myConsole.dispose();
     myReaderThread.stopRunning(false);
     myFilter.dispose();
+    myConsole = null;
+    myReaderThread = null;
+    myFilter = null;
   }
 
   public void stopRunning(){
