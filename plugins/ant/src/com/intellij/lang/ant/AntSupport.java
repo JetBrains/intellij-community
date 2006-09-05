@@ -52,9 +52,13 @@ public class AntSupport implements ApplicationComponent {
   }
 
   public static void markFileAsAntFile(final VirtualFile file, final FileViewProvider viewProvider, final boolean isAntFile) {
-    if (file.getUserData(AntLanguageExtension.ANT_FILE_SIGN) == null) {
-      viewProvider.contentsSynchronized();
+    Boolean oldValue = file.getUserData(AntLanguageExtension.ANT_FILE_SIGN);
+    if (oldValue == null) {
+      oldValue = false;
+    }
+    if (oldValue.booleanValue() != isAntFile) {
       file.putUserData(AntLanguageExtension.ANT_FILE_SIGN, (isAntFile) ? true : null);
+      viewProvider.contentsSynchronized();
     }
   }
 }
