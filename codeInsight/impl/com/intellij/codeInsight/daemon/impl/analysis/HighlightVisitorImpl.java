@@ -158,7 +158,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       Language injectedLanguage = injectedPsi.getLanguage();
       VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
       SyntaxHighlighter syntaxHighlighter = injectedLanguage.getSyntaxHighlighter(element.getProject(), virtualFile);
-      final Annotator languageAnnotator = injectedLanguage.getAnnotator();
+      final List<Annotator> annotators = injectedLanguage.getAnnotators();
       final SyntaxHighlighterAsAnnotator syntaxAnnotator = new SyntaxHighlighterAsAnnotator(syntaxHighlighter);
       PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
         final AnnotationHolderImpl fixingAnnotationHolder = new AnnotationHolderImpl() {
@@ -174,8 +174,10 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         public void visitElement(PsiElement element) {
           super.visitElement(element);
           syntaxAnnotator.annotate(element, fixingAnnotationHolder);
-          if (languageAnnotator != null) {
-            languageAnnotator.annotate(element, fixingAnnotationHolder);
+          //noinspection ForLoopReplaceableByForEach
+          for (int i = 0; i < annotators.size(); i++) {
+            Annotator annotator = annotators.get(i);
+            annotator.annotate(element, fixingAnnotationHolder);
           }
         }
 
