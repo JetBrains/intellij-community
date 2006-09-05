@@ -48,6 +48,6 @@ public class ClearTextAction extends AnAction {
 
   public void update(AnActionEvent e) {
     final Component component = (Component)e.getDataContext().getData(DataConstants.CONTEXT_COMPONENT);
-    e.getPresentation().setEnabled(component instanceof JTextComponent && ((JTextComponent)component).getText().length() > 0);
+    e.getPresentation().setEnabled(component instanceof JTextComponent && ((JTextComponent)component).getText().length() > 0 && ((JTextComponent)component).isEditable());
   }
 }
