@@ -28,8 +28,8 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
 
 /**
  * @author peter
@@ -91,7 +91,9 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
   }
 
   protected DomElement getSelectedDomElement() {
-    return DomUINavigationProvider.findDomElement(myComponent);
+    final DomElement domElement = DomUINavigationProvider.findDomElement(myComponent);
+    return domElement;
+    //return domElement != null && domElement.getParent() instanceof DomFileElement ? null : domElement;
   }
 
   protected void setSelectedDomElement(DomElement domElement) {

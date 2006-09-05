@@ -32,10 +32,12 @@ import java.util.EventListener;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
-import javax.swing.event.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
 
 /**
  * @author peter
@@ -173,21 +175,23 @@ public class DomTableView extends JPanel implements DataProvider{
   protected void adjustColumnWidths() {
     final ColumnInfo[] columnInfos = myTableModel.getColumnInfos();
     for (int i = 0; i < columnInfos.length; i++) {
-      ColumnInfo columnInfo = columnInfos[i];
-      final TableColumn column = myTable.getColumnModel().getColumn(i);
-      int width = -1;
-      for (int j = 0; j < myTableModel.getRowCount(); j++) {
-        Object t = myTableModel.getItems().get(j);
-        final Component component = myTable.getCellRenderer(j, i).getTableCellRendererComponent(myTable, columnInfo.valueOf(t), false, false, j, i);
-        final int prefWidth = component.getPreferredSize().width;
-        if (prefWidth > width) {
-          width = prefWidth;
-        }
-      }
+      final int width = getColumnPreferredWidth(i);
       if (width > 0) {
-        column.setPreferredWidth(width);
-      }
+        myTable.getColumnModel().getColumn(i).setPreferredWidth(width);
+      } 
     }
+  }
+
+  protected int getColumnPreferredWidth(final int i) {
+    final ColumnInfo columnInfo = myTableModel.getColumnInfos()[i];
+    final List items = myTableModel.getItems();
+    int width = -1;
+    for (int j = 0; j < items.size(); j++) {
+      final TableCellRenderer renderer = myTable.getCellRenderer(j, i);
+      final Component component = renderer.getTableCellRendererComponent(myTable, columnInfo.valueOf(items.get(j)), false, false, j, i);
+      width = Math.max(width, component.getPreferredSize().width);
+    }
+    return width;
   }
 
   protected String getEmptyPaneText() {
@@ -239,6 +243,7 @@ public class DomTableView extends JPanel implements DataProvider{
   public final void reset(ColumnInfo[] columnInfos, List data) {
     final boolean columnsChanged = myTableModel.setColumnInfos(columnInfos);
     final boolean dataChanged = !data.equals(myTableModel.getItems());
+    final int oldRowCount = myTableModel.getRowCount();
     if ((dataChanged || columnsChanged) && myTable.isEditing()) {
       myTable.getCellEditor().cancelCellEditing();
     }
@@ -261,7 +266,7 @@ public class DomTableView extends JPanel implements DataProvider{
         myCachedRenderers[row][column] = getTableCellRenderer(row, column, superRenderer, myTableModel.getItems().get(row));
       }
     }
-    if (columnsChanged) {
+    if (columnsChanged || oldRowCount == 0 && rowCount != 0) {
       adjustColumnWidths();
     }
   }
