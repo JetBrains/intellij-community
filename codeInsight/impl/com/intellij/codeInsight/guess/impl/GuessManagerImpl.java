@@ -12,6 +12,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -71,7 +72,7 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
 
     PsiType type = containerExpr.getType();
     PsiType elemType;
-    if (((elemType = getGenericElementType(type)) != null)) return new PsiType[]{elemType};
+    if ((elemType = getGenericElementType(type)) != null) return new PsiType[]{elemType};
 
     if (containerExpr instanceof PsiReferenceExpression){
       PsiElement refElement = ((PsiReferenceExpression)containerExpr).resolve();
@@ -91,7 +92,7 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
     return typesSet.toArray(new PsiType[typesSet.size()]);
   }
 
-  private PsiType getGenericElementType(PsiType collectionType) {
+  private static PsiType getGenericElementType(PsiType collectionType) {
     if (collectionType instanceof PsiClassType) {
       PsiClassType classType = (PsiClassType) collectionType;
       PsiType[] parameters = classType.getParameters();
@@ -131,13 +132,14 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
     }
   }
 
-  private void addExprTypesByInstanceof(LinkedHashSet<PsiType> set, PsiExpression expr) {
+  private static void addExprTypesByInstanceof(LinkedHashSet<PsiType> set, PsiExpression expr) {
     PsiElement scope = expr.getParent();
     PsiElement lastScope = scope;
     while(true){
       if (scope instanceof PsiFile) break;
       scope = scope.getParent();
-      if (scope instanceof PsiCodeBlock || (scope instanceof PsiFile && PsiUtil.isInJspFile(scope))) {
+      if (scope instanceof PsiCodeBlock ||
+          scope instanceof PsiFile && PsiUtil.isInJspFile(scope)) {
         lastScope = scope;
       }
     }
@@ -309,8 +311,8 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
     return null;
   }
 
+  @NotNull
   public String getComponentName() {
     return "GuessManager";
   }
-
 }

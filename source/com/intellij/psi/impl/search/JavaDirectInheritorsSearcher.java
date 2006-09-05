@@ -14,6 +14,7 @@ import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
@@ -43,12 +44,12 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     if ("java.lang.Object".equals(aClass.getQualifiedName())) {
-      for (PsiClass psiClass : psiManager.getSearchHelper().findAllClasses(useScope)) {
-        PsiReferenceList extendsList = psiClass.getExtendsList();
-        if (extendsList != null && extendsList.getReferencedTypes().length == 0) {
-          consumer.process(psiClass);
+      return psiManager.getSearchHelper().processAllClasses(new PsiElementProcessor<PsiClass>() {
+        public boolean execute(final PsiClass psiClass) {
+          PsiReferenceList extendsList = psiClass.getExtendsList();
+          return extendsList == null || extendsList.getReferencedTypes().length != 0 || consumer.process(psiClass);
         }
-      }
+      }, useScope);
     }
     else {
       long[] candidateIds = repositoryIndex.getNameOccurrencesInExtendsLists(aClass.getName(), rootFilter);
