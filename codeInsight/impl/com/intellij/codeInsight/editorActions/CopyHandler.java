@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -65,7 +66,7 @@ public class CopyHandler extends EditorActionHandler {
 
     final Transferable transferable = new TextBlockTransferable(escapedText != null ? escapedText : rawText,
                                                                 referenceData, foldingData,
-                                                                escapedText != null ? new TextBlockTransferable.RawText(rawText) : null);
+                                                                escapedText != null ? new RawText(rawText) : null);
     CopyPasteManager.getInstance().setContents(transferable);
   }
 

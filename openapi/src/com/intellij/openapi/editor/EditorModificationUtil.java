@@ -24,10 +24,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
 
 public class EditorModificationUtil {
   private EditorModificationUtil() {}
@@ -105,15 +108,17 @@ public class EditorModificationUtil {
     return offset;
   }
 
+  @Nullable
   public static TextRange pasteFromClipboard(Editor editor) {
     return pasteFromTransferrable(getClipboardContent(editor), editor);
   }
 
+  @Nullable
   public static TextRange pasteFromTransferrable(Transferable content, Editor editor) {
     if (content != null) {
       try {
-        String s = (String) content.getTransferData(DataFlavor.stringFlavor);
-        s = StringUtil.convertLineSeparators(s, "\n");
+        String s = getStringContent(content);
+
         int caretOffset = editor.getCaretModel().getOffset();
         insertStringAtCaret(editor, s, false, true);
         return new TextRange(caretOffset, caretOffset + s.length());
@@ -123,6 +128,20 @@ public class EditorModificationUtil {
     }
 
     return null;
+  }
+
+  private static String getStringContent(final Transferable content) throws UnsupportedFlavorException, IOException {
+    String s;
+    RawText raw = (RawText)content.getTransferData(RawText.FLAVOR);
+    if (raw != null) {
+      s = raw.rawText;
+    }
+    else {
+      s = (String)content.getTransferData(DataFlavor.stringFlavor);
+    }
+
+    s = StringUtil.convertLineSeparators(s, "\n");
+    return s;
   }
 
   private static Transferable getClipboardContent(Editor editor) {
@@ -148,6 +167,8 @@ public class EditorModificationUtil {
         if (selectionModel.hasBlockSelection()) {
           final LogicalPosition start = selectionModel.getBlockStart();
           final LogicalPosition end = selectionModel.getBlockEnd();
+          assert start != null;
+          assert end != null;
           LogicalPosition caret = new LogicalPosition(Math.min(start.line, end.line), Math.min(start.column, end.column));
           selectedLinesCount = Math.abs(end.line - start.line);
 
@@ -156,12 +177,12 @@ public class EditorModificationUtil {
         }
 
         LogicalPosition caretToRestore = editor.getCaretModel().getLogicalPosition();
-        String s = (String) content.getTransferData(DataFlavor.stringFlavor);
-        s = StringUtil.convertLineSeparators(s, "\n");
+        String s = getStringContent(content);
+
         String[] lines = LineTokenizer.tokenize(s.toCharArray(), false);
         if (lines.length > 1 || selectedLinesCount <= 1) {
-          for (int i = 0; i < lines.length; i++) {
-            insertStringAtCaret(editor, lines[i], false, false);
+          for (String line : lines) {
+            insertStringAtCaret(editor, line, false, false);
             editor.getCaretModel().moveCaretRelatively(0, 1, false, false, true);
           }
         } else {
@@ -242,6 +263,9 @@ public class EditorModificationUtil {
       else {
         final LogicalPosition start = selectionModel.getBlockStart();
         final LogicalPosition end = selectionModel.getBlockEnd();
+        assert start != null;
+        assert end != null;
+
         int column = Math.min(start.column, end.column);
         int startLine = Math.min(start.line, end.line);
         int endLine = Math.max(start.line, end.line);

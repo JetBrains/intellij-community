@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -31,25 +32,6 @@ class TextBlockTransferable implements Transferable {
       this.endOffset = endOffset;
       this.qClassName = qClassName;
       this.staticMemberName = staticMemberDescriptor;
-    }
-
-    public Object clone() {
-      try{
-        return super.clone();
-      }
-      catch(CloneNotSupportedException e){
-        throw new RuntimeException();
-      }
-    }
-  }
-
-  public static class RawText implements Cloneable, Serializable {
-    public static final @NonNls DataFlavor FLAVOR = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + RawText.class.getName(),
-                                                                   "Raw Text");
-    public String rawText;
-
-    public RawText(final String rawText) {
-      this.rawText = rawText;
     }
 
     public Object clone() {

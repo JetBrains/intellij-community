@@ -170,9 +170,9 @@ public class PasteHandler extends EditorActionHandler {
         );
       }
 
-      TextBlockTransferable.RawText rawText = null;
+      RawText rawText = null;
       try {
-        rawText = (TextBlockTransferable.RawText)content.getTransferData(TextBlockTransferable.RawText.FLAVOR);
+        rawText = (RawText)content.getTransferData(RawText.FLAVOR);
       }
       catch (UnsupportedFlavorException e) {
       }
@@ -270,7 +270,7 @@ public class PasteHandler extends EditorActionHandler {
   private static String escapeIfStringLiteral(final Project project,
                                               final PsiFile file,
                                               final Editor editor,
-                                              String text, final TextBlockTransferable.RawText rawText) {
+                                              String text, final RawText rawText) {
   //  if ("\n".equals(text)) return text;
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
