@@ -23,6 +23,7 @@ import com.intellij.ui.ActivatableLineBorder;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -32,8 +33,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Belyaev
@@ -140,7 +139,7 @@ public final class InternalDecorator extends JPanel {
    * Applies specified decoration.
    */
   public final void apply(final WindowInfo info) {
-    if (Comparing.equal(myInfo, info)) {
+    if (Comparing.equal(myInfo, info) || myProject.isDisposed()) {
       return;
     }
     myInfo = info;
