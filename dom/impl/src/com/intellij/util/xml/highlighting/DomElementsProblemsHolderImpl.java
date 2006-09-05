@@ -9,6 +9,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.AbstractConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
@@ -21,10 +22,28 @@ import java.util.*;
 
 public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDescriptor> implements DomElementsProblemsHolder {
   private HighlightSeverity myDefaultHighlightSeverity = HighlightSeverity.ERROR;
-  private final Map<DomElement, List<DomElementProblemDescriptor>> myCachedErrors =
-    new HashMap<DomElement, List<DomElementProblemDescriptor>>();
-  private final Map<DomElement, List<DomElementProblemDescriptor>> myCachedXmlErrors =
-    new HashMap<DomElement, List<DomElementProblemDescriptor>>();
+  private final FactoryMap<DomElement, List<DomElementProblemDescriptor>> myCachedErrors =
+    new FactoryMap<DomElement, List<DomElementProblemDescriptor>>() {
+      protected List<DomElementProblemDescriptor> create(final DomElement domElement) {
+        List<DomElementProblemDescriptor> problems = new SmartList<DomElementProblemDescriptor>();
+        for (DomElementProblemDescriptor problemDescriptor : DomElementsProblemsHolderImpl.this) {
+          if (problemDescriptor.getDomElement().equals(domElement)) {
+            problems.add(problemDescriptor);
+          }
+        }
+        return problems;
+      }
+    };
+  private final FactoryMap<DomElement, List<DomElementProblemDescriptor>> myCachedXmlErrors =
+    new FactoryMap<DomElement, List<DomElementProblemDescriptor>>() {
+      protected List<DomElementProblemDescriptor> create(final DomElement domElement) {
+        SmartList<DomElementProblemDescriptor> problems = new SmartList<DomElementProblemDescriptor>();
+        if (domElement instanceof GenericDomValue) {
+          addResolveProblems((GenericDomValue)domElement, problems);
+        }
+        return problems;
+      }
+    };
   private final Map<DomElement, List<DomElementProblemDescriptor>> myCachedChildrenErrors =
     new HashMap<DomElement, List<DomElementProblemDescriptor>>();
   private final Map<DomElement, List<DomElementProblemDescriptor>> myCachedChildrenXmlErrors =
@@ -32,13 +51,13 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
   private final Function<DomElement, Collection<DomElementProblemDescriptor>> myDomProblemsGetter =
     new Function<DomElement, Collection<DomElementProblemDescriptor>>() {
       public Collection<DomElementProblemDescriptor> fun(final DomElement s) {
-        return getProblems(s);
+        return myCachedErrors.get(s);
       }
     };
   private final Function<DomElement, Collection<DomElementProblemDescriptor>> myXmlProblemsGetter =
     new Function<DomElement, Collection<DomElementProblemDescriptor>>() {
       public Collection<DomElementProblemDescriptor> fun(final DomElement s) {
-        return getXmlProblems(s);
+        return myCachedXmlErrors.get(s);
       }
     };
 
@@ -53,26 +72,13 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
   @NotNull
   public synchronized List<DomElementProblemDescriptor> getProblems(DomElement domElement) {
     if (domElement == null || !domElement.isValid()) return Collections.emptyList();
-
-    final List<DomElementProblemDescriptor> list = myCachedErrors.get(domElement);
-    if (list != null) {
-      return new SmartList<DomElementProblemDescriptor>(list);
-    }
-
-    List<DomElementProblemDescriptor> problems = new SmartList<DomElementProblemDescriptor>();
-    for (DomElementProblemDescriptor problemDescriptor : this) {
-      if (problemDescriptor.getDomElement().equals(domElement)) {
-        problems.add(problemDescriptor);
-      }
-    }
-    myCachedErrors.put(domElement, problems);
-    return new SmartList<DomElementProblemDescriptor>(problems);
+    return new SmartList<DomElementProblemDescriptor>(myCachedErrors.get(domElement));
   }
 
   public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, boolean includeXmlProblems) {
     List<DomElementProblemDescriptor> problems = getProblems(domElement);
     if (includeXmlProblems) {
-      problems.addAll(getXmlProblems(domElement));
+      problems.addAll(myCachedXmlErrors.get(domElement));
     }
     return problems;
   }
@@ -117,20 +123,6 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
     myCachedXmlErrors.clear();
   }
 
-  private Collection<DomElementProblemDescriptor> getXmlProblems(DomElement domElement) {
-    final List<DomElementProblemDescriptor> list = myCachedXmlErrors.get(domElement);
-    if (list != null) {
-      return list;
-    }
-
-    SmartList<DomElementProblemDescriptor> problems = new SmartList<DomElementProblemDescriptor>();
-    if (domElement instanceof GenericDomValue) {
-      addResolveProblems((GenericDomValue)domElement, problems);
-    }
-    myCachedXmlErrors.put(domElement, problems);
-    return problems;
-  }
-
   private static List<DomElementProblemDescriptor> getProblems(final DomElement domElement,
                                                                final Map<DomElement, List<DomElementProblemDescriptor>> map,
                                                                final Function<DomElement, Collection<DomElementProblemDescriptor>> function) {
@@ -146,7 +138,7 @@ public class DomElementsProblemsHolderImpl extends SmartList<DomElementProblemDe
       }
     });
     map.put(domElement, problems);
-    return problems;
+    return new ArrayList<DomElementProblemDescriptor>(problems);
   }
 
 
