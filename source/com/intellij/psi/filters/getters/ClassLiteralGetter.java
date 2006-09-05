@@ -28,7 +28,7 @@ public class ClassLiteralGetter implements ContextGetter {
             if (substitution instanceof PsiWildcardType) {
               substitution = ((PsiWildcardType)substitution).getBound();
             }
-            if (substitution != null) {
+            if (substitution instanceof PsiClassType && !((PsiClassType)substitution).hasParameters()) {
               final @NonNls String suffix = ".class";
               try {
                 final PsiManager manager = psiClass.getManager();
