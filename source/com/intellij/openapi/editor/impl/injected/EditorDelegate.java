@@ -40,7 +40,7 @@ import java.util.Iterator;
 public class EditorDelegate implements EditorEx {
   private final DocumentRange myDocument;
   private final EditorImpl myDelegate;
-  private final PsiFile myInjectedFile;
+  private PsiFile myInjectedFile;
   private final CaretModelDelegate myCaretModelDelegate;
   private final SelectionModelDelegate mySelectionModelDelegate;
   private final MarkupModelDelegate myMarkupModelDelegate;
@@ -49,8 +49,13 @@ public class EditorDelegate implements EditorEx {
 
   public static Editor create(@NotNull final DocumentRange documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
     for (EditorDelegate editorDelegate : allEditors) {
-      if (editorDelegate.getDocument() == documentRange && editorDelegate.getDelegate() == editor && editorDelegate.getInjectedFile() == injectedFile) {
-        return editorDelegate;
+      if (editorDelegate.getDocument() == documentRange && editorDelegate.getDelegate() == editor) {
+        if (editorDelegate.getInjectedFile() != injectedFile) {
+          editorDelegate.myInjectedFile = injectedFile;
+        }
+        if (editorDelegate.isValid()) {
+          return editorDelegate;
+        }
       }
     }
     return new EditorDelegate(documentRange, editor, injectedFile);
@@ -315,8 +320,10 @@ public class EditorDelegate implements EditorEx {
   public void removeEditorMouseListener(@NotNull final EditorMouseListener listener) {
     assert isValid();
     EditorMouseListener wrapper = myEditorMouseListeners.removeWrapper(listener);
-    assert wrapper != null;
-    myDelegate.removeEditorMouseListener(wrapper);
+    // HintManager might have an old editor instance
+    if (wrapper != null) {
+      myDelegate.removeEditorMouseListener(wrapper);
+    }
   }
 
   private final ListenerWrapperMap<EditorMouseMotionListener> myEditorMouseMotionListeners = new ListenerWrapperMap<EditorMouseMotionListener>();
@@ -338,8 +345,9 @@ public class EditorDelegate implements EditorEx {
   public void removeEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
     assert isValid();
     EditorMouseMotionListener wrapper = myEditorMouseMotionListeners.removeWrapper(listener);
-    assert wrapper != null;
-    myDelegate.removeEditorMouseMotionListener(wrapper);
+    if (wrapper != null) {
+      myDelegate.removeEditorMouseMotionListener(wrapper);
+    }
   }
 
   public boolean isDisposed() {

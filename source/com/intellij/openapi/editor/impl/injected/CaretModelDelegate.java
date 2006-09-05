@@ -70,8 +70,9 @@ public class CaretModelDelegate implements CaretModel {
 
   public void removeCaretListener(final CaretListener listener) {
     CaretListener wrapper = myCaretListeners.removeWrapper(listener);
-    assert wrapper != null;
-    myDelegate.removeCaretListener(wrapper);
+    if (wrapper != null) {
+      myDelegate.removeCaretListener(wrapper);
+    }
   }
 
   public void disposeModel() {
