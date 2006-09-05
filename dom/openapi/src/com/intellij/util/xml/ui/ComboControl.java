@@ -171,6 +171,7 @@ public class ComboControl extends BaseControl<JComboBox, String> {
   }
 
   static JComboBox initComboBox(final JComboBox comboBox, final Condition<String> validity) {
+    comboBox.setEditable(false);
     comboBox.setPrototypeDisplayValue(Pair.create("A", null));
     comboBox.setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -188,15 +189,7 @@ public class ComboControl extends BaseControl<JComboBox, String> {
         return this;
       }
     });
-
-    initComboboxEditor(comboBox);
-
     return comboBox;
-  }
-
-  private static void initComboboxEditor(final JComboBox comboBox) {
-    comboBox.setEditable(true);
-    comboBox.setEditor(new MyComboBoxEditor());
   }
 
   protected JComboBox createMainComponent(final JComboBox boundedComponent) {
@@ -264,6 +257,7 @@ public class ComboControl extends BaseControl<JComboBox, String> {
       component.setEditable(true);
     }
     component.setSelectedItem(Pair.create(value, myIcons.get(value)));
+    component.setEditable(false);
   }
 
 
@@ -309,41 +303,4 @@ public class ComboControl extends BaseControl<JComboBox, String> {
     });
 
   }
-
-  private static class MyComboBoxEditor implements ComboBoxEditor {
-    private Pair<String, Icon> myCurrentItem;
-    private ComboBoxEditor myDelegee = new JComboBox().getEditor();
-
-    public Component getEditorComponent() {
-      final Component component = myDelegee.getEditorComponent();
-      if (component instanceof JTextComponent) {
-        ((JTextComponent)component).setEditable(false);
-        ((JTextComponent)component).setSelectedTextColor(component.getForeground());
-        ((JTextComponent)component).setSelectionColor(component.getBackground());
-      }
-
-      return component;
-    }
-
-    public void setItem(Object anObject) {
-      myCurrentItem = anObject instanceof Pair ? (Pair<String, Icon>)anObject : EMPTY;
-
-      myDelegee.setItem(myCurrentItem.first);
-    }
-
-    public Object getItem() {
-      return myCurrentItem;
-    }
-
-    public void selectAll() {
-    }
-
-    public void addActionListener(ActionListener l) {
-
-    }
-
-    public void removeActionListener(ActionListener l) {
-    }
-  }
-
 }
