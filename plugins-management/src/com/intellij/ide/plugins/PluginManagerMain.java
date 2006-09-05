@@ -56,7 +56,7 @@ public class PluginManagerMain {
   private JPanel myToolbarPanel;
   private JPanel main;
 
-  private JTextPane myDescriptionTextArea;
+  private JEditorPane myDescriptionTextArea;
   private JEditorPane myChangeNotesTextArea;
   private JLabel myVendorLabel;
   private JLabel myVendorEmailLabel;
@@ -81,7 +81,7 @@ public class PluginManagerMain {
   private ArrayList<IdeaPluginDescriptor> pluginsList;
   private ActionToolbar myActionToolbar;
 
-  public PluginManagerMain(SortableProvider installedProvider) {
+  public PluginManagerMain(final SortableProvider installedProvider, final SortableProvider availableProvider) {
     myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
     myChangeNotesTextArea.addHyperlinkListener(new MyHyperlinkListener());
 
@@ -89,7 +89,7 @@ public class PluginManagerMain {
     installedPluginTable = new PluginTable(installedPluginsModel);
     JScrollPane installedScrollPane = ScrollPaneFactory.createScrollPane(installedPluginTable);
 
-    availablePluginsModel = new AvailablePluginsTableModel(installedProvider);
+    availablePluginsModel = new AvailablePluginsTableModel(availableProvider);
     availablePluginsTable = new PluginTable(availablePluginsModel);
     JScrollPane availableScrollPane = ScrollPaneFactory.createScrollPane(availablePluginsTable);
 
@@ -136,6 +136,15 @@ public class PluginManagerMain {
 
   private PluginTable getPluginTable() {
     return myTabbedPane.getSelectedIndex() == 0 ? installedPluginTable : availablePluginsTable;
+  }
+
+
+  public PluginTable getInstalledPluginTable() {
+    return installedPluginTable;
+  }
+
+  public PluginTable getAvailablePluginsTable() {
+    return availablePluginsTable;
   }
 
   private void installTableActions(final PluginTable pluginTable) {
@@ -402,7 +411,7 @@ public class PluginManagerMain {
       pane.setCaretPosition(0);
     }
     else {
-      pane.setText("");
+      pane.setText(TEXT_PREFIX + TEXT_SUFIX);
     }
   }
 
@@ -437,8 +446,8 @@ public class PluginManagerMain {
       setTextValue(size, mySizeLabel);
     } else {
       myVendorLabel.setText("");
-      myDescriptionTextArea.setText("");
-      myChangeNotesTextArea.setText("");
+      setTextValue(null, myDescriptionTextArea);
+      setTextValue(null, myChangeNotesTextArea);
       myVendorEmailLabel.setText("");
       myVendorUrlLabel.setText("");
       myPluginUrlLabel.setText("");
