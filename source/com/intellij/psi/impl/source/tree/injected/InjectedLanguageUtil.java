@@ -325,7 +325,9 @@ public class InjectedLanguageUtil {
         public void addPlace(@NotNull Language language, @NotNull TextRange rangeInsideHost, @Nullable String prefix, @Nullable String suffix) {
           PsiElement psi = parseInjectedPsiFile(host, rangeInsideHost, language, hostVirtualFile, hostRange, hostDocument, myTextEscaper,
                                                 prefix == null ? "" : prefix, suffix == null ? "" : suffix);
-          result.add(new Pair<PsiElement,TextRange>(psi, rangeInsideHost));
+          if (psi != null) {
+            result.add(new Pair<PsiElement,TextRange>(psi, rangeInsideHost));
+          }
         }
       };
       for (LanguageInjector injector : psiManager.getLanguageInjectors()) {
