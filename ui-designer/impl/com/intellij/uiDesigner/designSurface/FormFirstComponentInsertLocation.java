@@ -39,6 +39,10 @@ public class FormFirstComponentInsertLocation extends FirstComponentInsertLocati
   public void processDrop(final GuiEditor editor, final RadComponent[] components, final GridConstraints[] constraintsToAdjust,
                           final ComponentDragObject dragObject) {
     RadAbstractGridLayoutManager gridLayout = myContainer.getGridLayoutManager();
+    if (myContainer.getGridRowCount() == 0 && myContainer.getGridColumnCount() == 0) {
+      gridLayout.insertGridCells(myContainer, 0, false, true, true);
+      gridLayout.insertGridCells(myContainer, 0, true, true, true);
+    }
     dropIntoGrid(myContainer, components, myRow, myColumn, dragObject);
 
     FormLayout formLayout = (FormLayout) myContainer.getDelegee().getLayout();
