@@ -267,18 +267,20 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public void filterTree(String filter) {
-    fillTreeData(filter, true);
     if (myTree != null) {
-      List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
+      ((InspectionProfileImpl)mySelectedProfile).getExpandedNodes().saveVisibleState(myTree);
+      fillTreeData(filter, true);
       ((DefaultTreeModel)myTree.getModel()).reload();
-      TreeUtil.restoreExpandedPaths(myTree, expandedPaths);
-    }
-    TreeUtil.selectFirstNode(myTree);
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myTree.requestFocus();
+      ((InspectionProfileImpl)mySelectedProfile).getExpandedNodes().restoreVisibleState(myTree);
+      if (myTree.getSelectionPath() == null) {
+        TreeUtil.selectFirstNode(myTree);
       }
-    });
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          myTree.requestFocus();
+        }
+      });
+    }
   }
 
   protected ActionToolbar createTreeToolbarPanel() {
