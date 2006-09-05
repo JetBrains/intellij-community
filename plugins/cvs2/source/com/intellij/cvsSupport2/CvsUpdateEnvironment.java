@@ -57,6 +57,7 @@ import java.util.*;
 
 public class CvsUpdateEnvironment implements UpdateEnvironment {
   private final Project myProject;
+  private boolean myLastUpdateWasConfigured = false;
 
   public CvsUpdateEnvironment(Project project) {
     myProject = project;
@@ -69,10 +70,11 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
 
   public UpdateSession updateDirectories(FilePath[] contentRoots, final UpdatedFiles updatedFiles, ProgressIndicator progressIndicator) {
     CvsConfiguration cvsConfiguration = CvsConfiguration.getInstance(myProject);
-    if (!CvsVcs2.getInstance(myProject).getUpdateOptions().getValue()) {
+    if (!myLastUpdateWasConfigured) {
       cvsConfiguration.CLEAN_COPY = false;
       cvsConfiguration.RESET_STICKY = false;
     }
+    myLastUpdateWasConfigured = false;
 
     try {
       final UpdateSettingsOnCvsConfiguration updateSettings = new UpdateSettingsOnCvsConfiguration(cvsConfiguration,
@@ -111,7 +113,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
     }
   }
 
-  private void invokeManualMerging(FileGroup mergedWithConflict, Project project) {
+  private static void invokeManualMerging(FileGroup mergedWithConflict, Project project) {
     Collection<String> paths = mergedWithConflict.getFiles();
     Map<VirtualFile, List<String>> fileToRevisions = new LinkedHashMap<VirtualFile, List<String>>();
     for (final String path : paths) {
@@ -131,6 +133,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
 
 
   public Configurable createConfigurable(Collection<FilePath> files) {
+    myLastUpdateWasConfigured = true;
     CvsConfiguration.getInstance(myProject).CLEAN_COPY = false;
     CvsConfiguration.getInstance(myProject).RESET_STICKY = false;
     return new UpdateConfigurable(myProject, files);
