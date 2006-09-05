@@ -310,15 +310,10 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
 
   public boolean isVarArgs() {
     if (myCachedIsVarargs == null) {
-      boolean isVarArgs = false;
+      boolean isVarArgs;
       if (getTreeElement() != null) {
         PsiParameter[] parameters = getParameterList().getParameters();
-        for (int i = parameters.length - 1; i >= 0; i--) {
-          if (parameters[i].isVarArgs()) {
-            isVarArgs = true;
-            break;
-          }
-        }
+        isVarArgs = parameters.length > 0 && parameters[parameters.length - 1].isVarArgs();
       }
       else {
         isVarArgs = getRepositoryManager().getMethodView().isVarArgs(getRepositoryId());
