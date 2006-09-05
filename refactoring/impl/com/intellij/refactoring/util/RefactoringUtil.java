@@ -1286,7 +1286,8 @@ public class RefactoringUtil {
 
   public static boolean canCreateInSourceRoot(final String sourceRootPackage, final String targetQName) {
     if (sourceRootPackage == null || !targetQName.startsWith(sourceRootPackage)) return false;
-    if (targetQName.length() == sourceRootPackage.length()) return true;
+    if (sourceRootPackage.length() == 0 ||
+        targetQName.length() == sourceRootPackage.length()) return true;
     return targetQName.charAt(sourceRootPackage.length()) == '.';
   }
 
