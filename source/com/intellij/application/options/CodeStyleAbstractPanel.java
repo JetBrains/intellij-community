@@ -219,7 +219,6 @@ public abstract class CodeStyleAbstractPanel {
     }
     finally {
       myShouldUpdatePreview = true;
-      updatePreview();
     }
   }
 
