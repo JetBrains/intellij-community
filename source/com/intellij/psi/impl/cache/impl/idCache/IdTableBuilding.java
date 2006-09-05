@@ -321,6 +321,7 @@ public class IdTableBuilding {
     }
   }
 
+  @Nullable
   public static Result getBuildingRunnable(final PsiManagerImpl manager, FileContent fileContent, final boolean buildTodos) {
     if (LOG.isDebugEnabled()){
       LOG.debug(
@@ -333,7 +334,9 @@ public class IdTableBuilding {
     LOG.assertTrue(virtualFile.isValid());
     //seems we don't want this check anymore
     //if (virtualFile.getLength() > FILE_SIZE_LIMIT) return null;
-    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
+    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    if (fileTypeManager.isFileIgnored(virtualFile.getName())) return null;
+    final FileType fileType = fileTypeManager.getFileTypeByFile(virtualFile);
     if (fileType.isBinary()) return null;
     if (StdFileTypes.CLASS.equals(fileType)) return null;
 
