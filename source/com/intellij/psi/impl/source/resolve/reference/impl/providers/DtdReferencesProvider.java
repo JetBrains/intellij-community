@@ -104,7 +104,9 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
 
     public Object[] getVariants() {
       final XmlNSDescriptor rootTagNSDescriptor = getNsDescriptor();
-      return rootTagNSDescriptor.getRootElementsDescriptors(((XmlFile)myElement.getContainingFile()).getDocument());
+      return rootTagNSDescriptor != null ?
+             rootTagNSDescriptor.getRootElementsDescriptors(((XmlFile)myElement.getContainingFile()).getDocument()):
+             ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     public boolean isSoft() {
