@@ -79,7 +79,9 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
     return myComponent;
   }
 
-  public JComponent getComponent() {
+
+  @NotNull
+  protected JComponent getCustomComponent() {
     return myComponent.getComponent();
   }
 

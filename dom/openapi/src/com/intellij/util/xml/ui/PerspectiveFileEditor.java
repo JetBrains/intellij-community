@@ -12,7 +12,6 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.*;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -21,6 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.ui.components.panels.Wrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +32,9 @@ import java.beans.PropertyChangeSupport;
  * User: Sergey.Vasiliev
  */
 abstract public class PerspectiveFileEditor extends UserDataHolderBase implements DocumentsEditor, Committable {
+  private Wrapper myWrapprer = new Wrapper();
+  private boolean myInitialise = false;
+
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private final Project myProject;
   private final VirtualFile myFile;
@@ -64,7 +67,8 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
             if (element != null) {
               setSelectedDomElement(element);
             }
-          } else if (event.getOldEditor() instanceof PerspectiveFileEditor) {
+          }
+          else if (event.getOldEditor() instanceof PerspectiveFileEditor) {
             setSelectedDomElement(((PerspectiveFileEditor)event.getOldEditor()).getSelectedDomElement());
           }
         }
@@ -106,6 +110,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
 
   @Nullable
   abstract protected DomElement getSelectedDomElement();
+
   abstract protected void setSelectedDomElement(DomElement domElement);
 
   protected boolean isMyFile(VirtualFile file) {
@@ -133,7 +138,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     if (psiFile == null) return null;
     final PsiElement psiElement = psiFile.findElementAt(textEditor.getEditor().getCaretModel().getOffset());
 
-    if(psiElement == null) return null;
+    if (psiElement == null) return null;
 
     final XmlTag xmlTag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class);
 
@@ -192,6 +197,10 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   public void selectNotify() {
+    if (!isInitialise()) {
+      myWrapprer.setContent(getCustomComponent());
+      myInitialise = true;
+    }
     myUndoHelper.setShowing(true);
     reset();
   }
@@ -245,5 +254,20 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     }
     return !myInvalidated;
   }
-  
+
+  @NotNull
+  final public JComponent getComponent() {
+    return getWrapprer();
+  }
+
+  @NotNull
+  protected abstract JComponent getCustomComponent();
+
+  public Wrapper getWrapprer() {
+    return myWrapprer;
+  }
+
+  public boolean isInitialise() {
+    return myInitialise;
+  }
 }
