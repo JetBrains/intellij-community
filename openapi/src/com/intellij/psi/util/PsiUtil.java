@@ -388,9 +388,6 @@ public final class PsiUtil {
         return JavaResolveResult.EMPTY;
       }
     }
-    else if (accessObject instanceof PsiMethodCallExpression) {
-      return JavaResolveResult.EMPTY;
-    }
     else {
       PsiType type = accessObject.getType();
       if (!(type instanceof PsiClassType)) return JavaResolveResult.EMPTY;
