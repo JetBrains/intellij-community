@@ -18,8 +18,8 @@ package com.intellij.util.containers;
 /**
  * @author peter
  */
-public class WeakArrayHashMap<T,V> {
-  private SoftHashMap<T,WeakArrayHashMap<T,V>> myContinuationMap;
+public class SoftArrayHashMap<T,V> {
+  private SoftHashMap<T, SoftArrayHashMap<T,V>> myContinuationMap;
   private SoftHashMap<T,V> myValuesMap;
   private V myEmptyValue;
 
@@ -29,7 +29,7 @@ public class WeakArrayHashMap<T,V> {
     }
 
     if (myContinuationMap != null) {
-      final WeakArrayHashMap<T, V> map = myContinuationMap.get(array[index]);
+      final SoftArrayHashMap<T, V> map = myContinuationMap.get(array[index]);
       if (map != null) {
         return map.get(array, index + 1);
       }
@@ -54,13 +54,13 @@ public class WeakArrayHashMap<T,V> {
       myValuesMap.put(key, value);
     } else {
       if (myContinuationMap == null) {
-        myContinuationMap = new SoftHashMap<T, WeakArrayHashMap<T, V>>();
+        myContinuationMap = new SoftHashMap<T, SoftArrayHashMap<T, V>>();
       }
-      WeakArrayHashMap<T, V> weakArrayHashMap = myContinuationMap.get(key);
-      if (weakArrayHashMap == null) {
-        myContinuationMap.put(key, weakArrayHashMap = new WeakArrayHashMap<T, V>());
+      SoftArrayHashMap<T, V> softArrayHashMap = myContinuationMap.get(key);
+      if (softArrayHashMap == null) {
+        myContinuationMap.put(key, softArrayHashMap = new SoftArrayHashMap<T, V>());
       }
-      weakArrayHashMap.put(array, index + 1, value);
+      softArrayHashMap.put(array, index + 1, value);
     }
   }
 

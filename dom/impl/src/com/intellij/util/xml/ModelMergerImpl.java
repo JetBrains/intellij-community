@@ -8,7 +8,7 @@ import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.WeakArrayHashMap;
+import com.intellij.util.containers.SoftArrayHashMap;
 import com.intellij.util.xml.impl.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
@@ -24,7 +24,7 @@ import java.util.*;
  * @author peter
  */
 public class ModelMergerImpl implements ModelMerger {
-  private final WeakArrayHashMap<Object, Object> myMergedMap = new WeakArrayHashMap<Object, Object>();
+  private final SoftArrayHashMap<Object, Object> myMergedMap = new SoftArrayHashMap<Object, Object>();
   private final List<Pair<InvocationStrategy,Class>> myInvocationStrategies = new ArrayList<Pair<InvocationStrategy,Class>>();
   private final List<MergingStrategy> myMergingStrategies = new ArrayList<MergingStrategy>();
   private final List<Class> myMergingStrategyClasses = new ArrayList<Class>();
