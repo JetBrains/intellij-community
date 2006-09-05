@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.impl.FileViewManagerImpl;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Computable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -97,7 +98,11 @@ public class CommitHelper {
 
       unmarkCommittingDocuments();
 
-      final LvcsAction lvcsAction = LocalVcs.getInstance(myProject).startAction(myActionName, "", true);
+      final LvcsAction lvcsAction = ApplicationManager.getApplication().runReadAction(new Computable<LvcsAction>() {
+        public LvcsAction compute() {
+          return LocalVcs.getInstance(myProject).startAction(myActionName, "", true);
+        }
+      });
       VirtualFileManager.getInstance().refresh(true, new Runnable() {
         public void run() {
           lvcsAction.finish();
