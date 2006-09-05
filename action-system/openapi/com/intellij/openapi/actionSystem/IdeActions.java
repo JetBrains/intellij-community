@@ -216,4 +216,5 @@ public interface IdeActions {
 
   String ACTION_ANALYZE_DEPENDENCIES = "ShowPackageDeps";
   String GROUP_MOVE_MODULE_TO_GROUP = "MoveModuleToGroup";
+  String ACTION_CLEAR_TEXT = "TextComponent.ClearAction";
 }

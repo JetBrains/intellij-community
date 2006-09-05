@@ -15,6 +15,10 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
@@ -129,6 +133,10 @@ public class TextFieldWithHistory extends JPanel {
     setBorder(new CompoundBorder(IdeBorderFactory.createEmptyBorder(4, 0, 4, 0), myTextField.getBorder()));
     
     myTextField.setBorder(null);
+
+    final ActionManager actionManager = ActionManager.getInstance();
+    final AnAction clearTextAction = actionManager.getAction(IdeActions.ACTION_CLEAR_TEXT);
+    clearTextAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, this);
   }
 
   public void addDocumentListener(DocumentListener listener) {
