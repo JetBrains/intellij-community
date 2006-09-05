@@ -127,7 +127,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     if (ReflectionCache.isAssignable(Integer.class, clazz)) {
       return new PsiReference[]{new GenericDomValueReference<Integer>((GenericDomValue<Integer>)domValue, true) {
         public Object[] getVariants() {
-          return new Object[]{"239", "42"};
+          return new Object[]{"0", "239", "42"};
         }
       }};
     }
