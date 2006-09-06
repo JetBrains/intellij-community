@@ -927,6 +927,8 @@
     <group id="J2EEViewPopupMenu">
       <action id="OpenCustomEditor" class="com.intellij.ide.actions.EditSourceAction"/>
       <action id="OpenPersistenceERDiagramAction" class="com.intellij.javaee.persistence.view.actions.OpenPersistenceERDiagramAction"/>
+      <action id="EditEntityListenerBindingsAction" class="com.intellij.javaee.persistence.view.actions.EditEntityListenerBindingsAction"/>
+      <action id="EditInterceptorBindingsAction" class="com.intellij.javaee.module.view.ejb.actions.EditInterceptorBindingsAction"/>
       <reference ref="NewGroup"/>
       <reference ref="CutCopyPasteGroup"/>
       <separator/>
