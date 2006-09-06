@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.usages;
 
+import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
@@ -32,6 +33,9 @@ public class AntUsagesProvider implements FindUsagesProvider {
 
   @NotNull
   public String getDescriptiveName(PsiElement element) {
+    if( element instanceof AntFile) {
+      return ((AntFile)element).getName();
+    }
     final AntStructuredElement se = (AntStructuredElement)element;
     final String name = se.getName();
     if (name != null) return name;
