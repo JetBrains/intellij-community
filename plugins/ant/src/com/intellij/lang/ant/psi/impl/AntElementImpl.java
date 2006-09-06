@@ -5,7 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.AntLanguage;
 import com.intellij.lang.ant.AntSupport;
-import com.intellij.lang.ant.misc.PsiElementHashSetSpinAllocator;
+import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.reference.AntReferenceProvidersRegistry;
@@ -25,7 +25,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class AntElementImpl extends MetadataPsiElementBase implements AntElement {
 
@@ -280,29 +283,29 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
       }
       temp = temp.getAntParent();
     }
-    final HashSet<PsiElement> projectsStack = PsiElementHashSetSpinAllocator.alloc();
+    final Set<PsiElement> projectsStack = PsiElementSetSpinAllocator.alloc();
     try {
       result = resolvePropertyInProject(element.getAntProject(), propName, projectsStack);
       if (result != null) return result;
     }
     finally {
-      PsiElementHashSetSpinAllocator.dispose(projectsStack);
+      PsiElementSetSpinAllocator.dispose(projectsStack);
     }
     final AntTarget target = PsiTreeUtil.getParentOfType(element, AntTarget.class);
     if (target != null) {
-      final HashSet<PsiElement> targetsStack = PsiElementHashSetSpinAllocator.alloc();
+      final Set<PsiElement> targetsStack = PsiElementSetSpinAllocator.alloc();
       try {
         result = resolveTargetProperty(target, propName, targetsStack);
       }
       finally {
-        PsiElementHashSetSpinAllocator.dispose(targetsStack);
+        PsiElementSetSpinAllocator.dispose(targetsStack);
       }
     }
     return result;
   }
 
   @Nullable
-  private static PsiElement resolvePropertyInProject(final AntProject project, final String propName, final HashSet<PsiElement> stack) {
+  private static PsiElement resolvePropertyInProject(final AntProject project, final String propName, final Set<PsiElement> stack) {
     PsiElement result = null;
     if (!stack.contains(project)) {
       result = resolvePropertyInElement(project, propName);

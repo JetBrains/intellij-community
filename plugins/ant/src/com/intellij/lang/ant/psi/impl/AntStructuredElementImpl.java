@@ -1,6 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
-import com.intellij.lang.ant.misc.PsiElementHashSetSpinAllocator;
+import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntStructuredElement;
@@ -186,12 +186,12 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   @Nullable
   public String computeAttributeValue(final String value) {
     if (value == null) return null;
-    final HashSet<PsiElement> set = PsiElementHashSetSpinAllocator.alloc();
+    final Set<PsiElement> set = PsiElementSetSpinAllocator.alloc();
     try {
       return computeAttributeValue(value, set);
     }
     finally {
-      PsiElementHashSetSpinAllocator.dispose(set);
+      PsiElementSetSpinAllocator.dispose(set);
     }
   }
 

@@ -2,12 +2,15 @@ package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.AntElementRole;
+import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntElementImpl;
 import com.intellij.lang.ant.psi.impl.AntPropertyImpl;
 import com.intellij.lang.ant.quickfix.AntCreatePropertyAction;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -19,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.StringSetSpinAllocator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +70,7 @@ public class AntPropertyReference extends AntGenericReference {
     return element;
   }
 
+  @Nullable
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
     return handleElementRename(((PsiNamedElement)element).getName());
   }
@@ -95,25 +100,20 @@ public class AntPropertyReference extends AntGenericReference {
   }
 
   public Object[] getVariants() {
-    final Set<String> variants = StringSetSpinAllocator.alloc();
+    final Set<PsiElement> variants = PsiElementSetSpinAllocator.alloc();
     try {
       final AntProject project = getElement().getAntProject();
       for (final AntProperty property : project.getProperties()) {
-        final String[] names = property.getNames();
-        if (names != null) {
-          for (final String name : names) {
-            variants.add(name);
-          }
-        }
+        addAntProperties(property, variants);
       }
       getVariants(project, variants);
       for (final AntFile imported : project.getImportedFiles()) {
         getVariants(imported.getAntProject(), variants);
       }
-      return variants.toArray(new String[variants.size()]);
+      return variants.toArray(new Object[variants.size()]);
     }
     finally {
-      StringSetSpinAllocator.dispose(variants);
+      PsiElementSetSpinAllocator.dispose(variants);
     }
   }
 
@@ -143,7 +143,7 @@ public class AntPropertyReference extends AntGenericReference {
     return result.toArray(new IntentionAction[result.size()]);
   }
 
-  private static void getVariants(final AntStructuredElement element, final Set<String> variants) {
+  private static void getVariants(final AntStructuredElement element, final Set<PsiElement> variants) {
     for (final PsiElement child : element.getChildren()) {
       if (child instanceof AntStructuredElement) {
         getVariants((AntStructuredElement)child, variants);
@@ -151,23 +151,57 @@ public class AntPropertyReference extends AntGenericReference {
           AntProperty property = (AntProperty)child;
           final PropertiesFile propertiesFile = property.getPropertiesFile();
           if (propertiesFile == null) {
-            final String[] names = property.getNames();
-            if (names != null) {
-              for (final String name : names) {
-                variants.add(name);
-              }
-            }
+            addAntProperties(property, variants);
           }
           else {
             for (final Property importedProp : propertiesFile.getProperties()) {
-              final String name = importedProp.getKey();
-              if (name != null) {
-                variants.add(name);
-              }
+              variants.add(importedProp);
             }
           }
         }
       }
+    }
+  }
+
+  private static void addAntProperties(AntProperty property, Set<PsiElement> variants) {
+    final String[] names = property.getNames();
+    if (names != null) {
+      final Project project = property.getProject();
+      for (final String name : names) {
+        variants.add(new AntPropertyCompletionWrapper(name, project));
+      }
+    }
+  }
+
+  private static class AntPropertyCompletionWrapper extends AntElementImpl {
+    private final String myName;
+    private final Project myProject;
+
+    public AntPropertyCompletionWrapper(final String name, @NotNull final Project project) {
+      super(null, null);
+      myName = name;
+      myProject = project;
+    }
+
+    public String getName() {
+      return myName;
+    }
+
+    @NotNull
+    public Project getProject() {
+      return myProject;
+    }
+
+    public AntElementRole getRole() {
+      return AntElementRole.PROPERTY_ROLE;
+    }
+
+    public boolean isValid() {
+      return true;
+    }
+
+    public boolean isPhysical() {
+      return false;
     }
   }
 }

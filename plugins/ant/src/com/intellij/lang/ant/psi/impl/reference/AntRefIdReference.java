@@ -2,7 +2,7 @@ package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.misc.PsiElementHashSetSpinAllocator;
+import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -15,7 +15,6 @@ import com.intellij.util.StringSetSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class AntRefIdReference extends AntGenericReference {
@@ -68,12 +67,12 @@ public class AntRefIdReference extends AntGenericReference {
     if (refId == null) {
       final AntTarget target = PsiTreeUtil.getParentOfType(element, AntTarget.class);
       if (target != null) {
-        final HashSet<PsiElement> targetStack = PsiElementHashSetSpinAllocator.alloc();
+        final Set<PsiElement> targetStack = PsiElementSetSpinAllocator.alloc();
         try {
           refId = resolveTargetRefId(target, id, targetStack);
         }
         finally {
-          PsiElementHashSetSpinAllocator.dispose(targetStack);
+          PsiElementSetSpinAllocator.dispose(targetStack);
         }
       }
     }
