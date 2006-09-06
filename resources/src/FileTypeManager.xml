@@ -67,6 +67,98 @@
 
     </filetype>
 
+    <filetype binary="false" default_extension="cpp" extensions="c;cpp;h;hpp" description="C/C++ files" name="C++" icon="/fileTypes/custom.png">
+      <highlighting>
+        <options>
+          <option name="LINE_COMMENT" value="//"/>
+          <option name="COMMENT_START" value="/*"/>
+          <option name="COMMENT_END" value="*/"/>
+          <option name="HEX_PREFIX" value="0x"/>
+          <option name="NUM_POSTFIXES" value=""/>
+          <option name="HAS_BRACES" value="true" />
+          <option name="HAS_BRACKETS" value="true" />
+          <option name="HAS_PARENS" value="true" />
+        </options>
+        <keywords ignore_case="false">
+          <keyword name="#include"/>
+          <keyword name="#define"/>
+          <keyword name="#undef"/>
+          <keyword name="#if"/>
+          <keyword name="#ifdef"/>
+          <keyword name="#ifndef"/>
+          <keyword name="#else"/>
+          <keyword name="#error"/>
+          <keyword name="#line"/>
+          <keyword name="#endif"/>
+          <keyword name="auto"/>
+          <keyword name="bool"/>
+          <keyword name="break"/>
+          <keyword name="case"/>
+          <keyword name="char"/>
+          <keyword name="const"/>
+          <keyword name="continue"/>
+          <keyword name="default"/>
+          <keyword name="delete"/>
+          <keyword name="do"/>
+          <keyword name="double"/>
+          <keyword name="else"/>
+          <keyword name="enum"/>
+          <keyword name="extern"/>
+          <keyword name="false"/>
+          <keyword name="float"/>
+          <keyword name="for"/>
+          <keyword name="goto"/>
+          <keyword name="if"/>
+          <keyword name="int"/>
+          <keyword name="long"/>
+          <keyword name="register"/>
+          <keyword name="return"/>
+          <keyword name="short"/>
+          <keyword name="signed"/>
+          <keyword name="sizeof"/>
+          <keyword name="static"/>
+          <keyword name="struct"/>
+          <keyword name="switch"/>
+          <keyword name="typedef"/>
+          <keyword name="union"/>
+          <keyword name="unsigned"/>
+          <keyword name="void"/>
+          <keyword name="volatile"/>
+          <keyword name="while"/>
+        </keywords>
+        <keywords2>
+          <keyword name="asm"/>
+          <keyword name="catch"/>
+          <keyword name="class"/>
+          <keyword name="const_cast"/>
+          <keyword name="dynamic_cast"/>
+          <keyword name="explicit"/>
+          <keyword name="friend"/>
+          <keyword name="inline"/>
+          <keyword name="mutable"/>
+          <keyword name="namespace"/>
+          <keyword name="new"/>
+          <keyword name="operator"/>
+          <keyword name="private"/>
+          <keyword name="protected"/>
+          <keyword name="public"/>
+          <keyword name="reinterpret_cast"/>
+          <keyword name="static_cast"/>
+          <keyword name="this"/>
+          <keyword name="throw"/>
+          <keyword name="true"/>
+          <keyword name="try"/>
+          <keyword name="typeid"/>
+          <keyword name="typename"/>
+          <keyword name="using"/>
+          <keyword name="virtual"/>
+          <keyword name="wchar_t"/>
+        </keywords2>
+        <keywords3/>
+        <keywords4/>
+      </highlighting>
+    </filetype>
+
     <filetype binary="false" default_extension="cs" extensions="cs" description="C# files" name="C#" icon="/fileTypes/javaScript.png">
       <highlighting>
         <options>
