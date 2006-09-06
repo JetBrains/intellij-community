@@ -52,8 +52,8 @@ public class UsageInfo {
     if (range == null) {
       LOG.assertTrue(false, "text range null for " + element);
     }
-    this.startOffset = element.getTextOffset() - range.getStartOffset();
-    this.endOffset = range.getEndOffset() - range.getStartOffset();
+    startOffset = element.getTextOffset() - range.getStartOffset();
+    endOffset = range.getEndOffset() - range.getStartOffset();
 
     this.isNonCodeUsage = isNonCodeUsage;
   }

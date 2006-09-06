@@ -761,7 +761,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
         setSelectedEditor(descriptor.getFile(), TextEditorProvider.getInstance().getEditorTypeId());
         Editor editor = ((TextEditor)fileEditor).getEditor();
         PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(editor.getDocument());
-        return InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile);
+        return focusEditor ? InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile) : editor;
       }
     }
 

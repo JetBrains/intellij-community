@@ -31,11 +31,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 22, 2004
- * Time: 4:56:41 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.UsageViewTreeCellRenderer");
@@ -104,8 +100,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         }
 
         TextChunk[] text = node.getUsage().getPresentation().getText();
-        for (int i = 0; i < text.length; i++) {
-          TextChunk textChunk = text[i];
+        for (TextChunk textChunk : text) {
           append(textChunk.getText(), patchAttrs(node, SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes())));
         }
       }
@@ -113,7 +108,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         append((String)userObject, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
       else {
-        append((userObject != null) ? userObject.toString() : "", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        append(userObject == null ? "" : userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }
     else {
@@ -121,7 +116,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  private SimpleTextAttributes patchAttrs(Node node, SimpleTextAttributes original) {
+  private static SimpleTextAttributes patchAttrs(Node node, SimpleTextAttributes original) {
     if (node.isExcluded()) {
       original = new SimpleTextAttributes(original.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT, original.getFgColor(), original.getWaveColor());
     }
@@ -132,7 +127,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         original = new SimpleTextAttributes(original.getStyle(), fileStatus.getColor(), original.getWaveColor());
       }
 
-      DefaultMutableTreeNode parent = ((DefaultMutableTreeNode)node.getParent());
+      DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
       if (parent != null && parent.isRoot()) {
         original = new SimpleTextAttributes(original.getStyle() | SimpleTextAttributes.STYLE_BOLD, original.getFgColor(), original.getWaveColor());
       }

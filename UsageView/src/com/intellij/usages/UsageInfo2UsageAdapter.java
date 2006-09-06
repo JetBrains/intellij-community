@@ -37,11 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 17, 2004
- * Time: 2:42:29 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibrary, UsageInFile, PsiElementUsage, MergeableUsage, Comparable<UsageInfo2UsageAdapter>, RenameableUsage {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.UsageInfo2UsageAdapter");
@@ -52,7 +48,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   private String myTooltipText;
   private List<RangeMarker> myRangeMarkers = new ArrayList<RangeMarker>();
   private TextChunk[] myTextChunks;
-  private UsageInfo2UsageAdapter.MyUsagePresentation myUsagePresentation;
+  private MyUsagePresentation myUsagePresentation;
 
   public UsageInfo2UsageAdapter(final UsageInfo usageInfo) {
     myUsageInfo = usageInfo;
@@ -163,7 +159,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
 
   public String toString() {
     TextChunk[] textChunks = getPresentation().getText();
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     for (int j = 0; j < textChunks.length; j++) {
       if (j > 0) result.append("|");
       TextChunk textChunk = textChunks[j];

@@ -86,8 +86,8 @@ public class UsageInfoToUsageConverter {
   public static Usage convert(TargetElementsDescriptor descriptor, UsageInfo usageInfo) {
     Usage usage = _convert(descriptor, usageInfo);
     final UsageConvertor[] convertors = ApplicationManager.getApplication().getComponents(UsageConvertor.class);
-    for (int i = 0; i < convertors.length; i++) {
-      usage = convertors[i].convert(usage);
+    for (UsageConvertor convertor : convertors) {
+      usage = convertor.convert(usage);
     }
     return usage;
   }
@@ -116,8 +116,8 @@ public class UsageInfoToUsageConverter {
     if (elements.length == 0) {
       return false;
     }
-    for (int idx = 0; idx < elements.length; idx++) {
-      if (!(elements[idx] instanceof PsiVariable)) {
+    for (PsiElement element : elements) {
+      if (!(element instanceof PsiVariable)) {
         return false;
       }
     }
@@ -139,7 +139,7 @@ public class UsageInfoToUsageConverter {
     if (!accessedForWriting) {
       //when searching usages of fields, should show all found setters as a "only write usage"
       PsiElement actualReferee = referent.resolve();
-      if ((actualReferee instanceof PsiMethod) && PropertyUtil.isSimplePropertySetter((PsiMethod)actualReferee)) {
+      if (actualReferee instanceof PsiMethod && PropertyUtil.isSimplePropertySetter((PsiMethod)actualReferee)) {
         accessedForWriting = true;
         accessedForReading = false;
       }

@@ -39,7 +39,7 @@ public class FindUsagesUtil {
           addElementUsages(element, new Processor<UsageInfo>() {
             public boolean process(UsageInfo info) {
               final PsiElement element = info.getElement();
-              boolean isWrite = (element instanceof PsiExpression)? PsiUtil.isAccessedForWriting(((PsiExpression)element)) : false;
+              boolean isWrite = element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element);
               if (isWrite == options.isWriteAccess) {
                 if (!processor.process(info)) return false;
               }
@@ -230,8 +230,7 @@ public class FindUsagesUtil {
     final PsiManager manager = constructor.getManager();
     PsiSearchHelper helper = manager.getSearchHelper();
     helper.processInheritors(new PsiElementProcessor<PsiClass>() {
-      public boolean execute(PsiClass element) {
-        PsiClass inheritor = element;
+      public boolean execute(PsiClass inheritor) {
         if (inheritor instanceof PsiAnonymousClass){
           PsiMethod constructor1 = null;
           PsiElement parent = inheritor.getParent();
@@ -249,19 +248,17 @@ public class FindUsagesUtil {
             result.process(new UsageInfo(inheritor)); // implicit default constructor
           }
           else{
-            for(int j = 0; j < constructors.length; j++){
-              PsiMethod superConstructor = constructors[j];
+            for (PsiMethod superConstructor : constructors) {
               PsiCodeBlock body = superConstructor.getBody();
               if (body == null) continue;
               PsiStatement[] statements = body.getStatements();
-              if (statements.length > 0){
+              if (statements.length > 0) {
                 PsiStatement firstStatement = statements[0];
-                if (firstStatement instanceof PsiExpressionStatement){
+                if (firstStatement instanceof PsiExpressionStatement) {
                   PsiExpression expr = ((PsiExpressionStatement)firstStatement).getExpression();
-                  if (expr instanceof PsiMethodCallExpression){
+                  if (expr instanceof PsiMethodCallExpression) {
                     PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
-                    if (methodExpr.getText().equals(PsiKeyword.SUPER) ||
-                        methodExpr.getText().equals(PsiKeyword.THIS)) continue;
+                    if (methodExpr.getText().equals(PsiKeyword.SUPER) || methodExpr.getText().equals(PsiKeyword.THIS)) continue;
                   }
                 }
               }
@@ -491,12 +488,6 @@ public class FindUsagesUtil {
       }
 
     }, anInterface, options.searchScope, options.isCheckDeepInheritance);
-  }
-
-  private static void addResults(Processor<UsageInfo> total, PsiElement[] part, FindUsagesOptions options, PsiElement refElement) {
-    for (PsiElement element : part) {
-      addResult(total, element, options, refElement);
-    }
   }
 
   private static void addResult(Processor<UsageInfo> total, PsiElement element, FindUsagesOptions options, PsiElement refElement) {
