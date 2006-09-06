@@ -10,6 +10,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SoftArrayHashMap;
 import com.intellij.util.xml.impl.AdvancedProxy;
+import gnu.trove.TObjectHashingStrategy;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ import java.util.*;
  * @author peter
  */
 public class ModelMergerImpl implements ModelMerger {
-  private final SoftArrayHashMap<Object, Object> myMergedMap = new SoftArrayHashMap<Object, Object>();
+  private final SoftArrayHashMap<Object, Object> myMergedMap = new SoftArrayHashMap<Object, Object>(TObjectHashingStrategy.IDENTITY);
   private final List<Pair<InvocationStrategy,Class>> myInvocationStrategies = new ArrayList<Pair<InvocationStrategy,Class>>();
   private final List<MergingStrategy> myMergingStrategies = new ArrayList<MergingStrategy>();
   private final List<Class> myMergingStrategyClasses = new ArrayList<Class>();

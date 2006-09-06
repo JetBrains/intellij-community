@@ -15,6 +15,8 @@
  */
 package com.intellij.util.containers;
 
+import gnu.trove.TObjectHashingStrategy;
+
 /**
  * @author peter
  */
@@ -22,6 +24,16 @@ public class SoftArrayHashMap<T,V> {
   private SoftHashMap<T, SoftArrayHashMap<T,V>> myContinuationMap;
   private SoftHashMap<T,V> myValuesMap;
   private V myEmptyValue;
+  private final TObjectHashingStrategy<T> myStrategy;
+
+  public SoftArrayHashMap() {
+    this(TObjectHashingStrategy.CANONICAL);
+  }
+
+
+  public SoftArrayHashMap(TObjectHashingStrategy<T> strategy) {
+    myStrategy = strategy;
+  }
 
   private V get(T[] array, int index) {
     if (index == array.length - 1) {
@@ -49,16 +61,16 @@ public class SoftArrayHashMap<T,V> {
     final T key = array[index];
     if (index == array.length - 1) {
       if (myValuesMap == null) {
-        myValuesMap = new SoftHashMap<T, V>();
+        myValuesMap = new SoftHashMap<T, V>(myStrategy);
       }
       myValuesMap.put(key, value);
     } else {
       if (myContinuationMap == null) {
-        myContinuationMap = new SoftHashMap<T, SoftArrayHashMap<T, V>>();
+        myContinuationMap = new SoftHashMap<T, SoftArrayHashMap<T, V>>(myStrategy);
       }
       SoftArrayHashMap<T, V> softArrayHashMap = myContinuationMap.get(key);
       if (softArrayHashMap == null) {
-        myContinuationMap.put(key, softArrayHashMap = new SoftArrayHashMap<T, V>());
+        myContinuationMap.put(key, softArrayHashMap = new SoftArrayHashMap<T, V>(myStrategy));
       }
       softArrayHashMap.put(array, index + 1, value);
     }

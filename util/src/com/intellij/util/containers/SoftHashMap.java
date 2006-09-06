@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.reference.SoftReference;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectHashingStrategy;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
@@ -108,6 +109,18 @@ public final class SoftHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>
 
   public SoftHashMap() {
     myMap = new THashMap<Key<K>, V>();
+  }
+
+  public SoftHashMap(final TObjectHashingStrategy<K> hashingStrategy) {
+    myMap = new THashMap<Key<K>, V>(new TObjectHashingStrategy<Key<K>>() {
+      public int computeHashCode(final Key<K> object) {
+        return hashingStrategy.computeHashCode(object.get());
+      }
+
+      public boolean equals(final Key<K> o1, final Key<K> o2) {
+        return hashingStrategy.equals(o1.get(), o2.get());
+      }
+    } );
   }
 
   public SoftHashMap(Map<? extends K, ? extends V> t) {
