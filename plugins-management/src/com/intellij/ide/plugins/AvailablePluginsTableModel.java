@@ -48,7 +48,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
         UpdateVersions.put(descr.getPluginId(), descr.getVersion());
       }
     }
-    sortByColumn(sortableProvider.getSortColumn());
+    safeSort();
   }
 
   public void modifyData(ArrayList<IdeaPluginDescriptor> list) {
@@ -75,7 +75,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
         }
       }
     }
-    sortByColumn(sortableProvider.getSortColumn());
+    safeSort();
   }
 
 }

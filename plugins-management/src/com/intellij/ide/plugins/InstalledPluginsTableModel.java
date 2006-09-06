@@ -34,7 +34,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         updateExistingPluginInfo((PluginNode)descr, existing);
       }
     }
-    sortByColumn(sortableProvider.getSortColumn());
+    safeSort();
   }
 
   public void modifyData(ArrayList<IdeaPluginDescriptor> list) {
@@ -48,7 +48,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         updateExistingPluginInfo((PluginNode)descr, existing);
       }
     }
-    sortByColumn(sortableProvider.getSortColumn());
+    safeSort();
   }
 
   private static void updateExistingPluginInfo(PluginNode descr, IdeaPluginDescriptor existing) {
