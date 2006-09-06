@@ -264,6 +264,14 @@ public class VcsUtil
     });
   }
 
+  public static VirtualFile getVirtualFile( final File file ) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+      public VirtualFile compute() {
+        return LocalFileSystem.getInstance().findFileByIoFile( file );
+      }
+    });
+  }
+
   public static boolean isPathUnderProject( Project project, final String path )
   {
     VirtualFile vfPath = getVirtualFile( path );
