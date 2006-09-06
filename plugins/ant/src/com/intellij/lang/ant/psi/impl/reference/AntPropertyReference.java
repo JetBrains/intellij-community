@@ -168,40 +168,8 @@ public class AntPropertyReference extends AntGenericReference {
     if (names != null) {
       final Project project = property.getProject();
       for (final String name : names) {
-        variants.add(new AntPropertyCompletionWrapper(name, project));
+        variants.add(new AntElementCompletionWrapper(name, project, AntElementRole.PROPERTY_ROLE));
       }
-    }
-  }
-
-  private static class AntPropertyCompletionWrapper extends AntElementImpl {
-    private final String myName;
-    private final Project myProject;
-
-    public AntPropertyCompletionWrapper(final String name, @NotNull final Project project) {
-      super(null, null);
-      myName = name;
-      myProject = project;
-    }
-
-    public String getName() {
-      return myName;
-    }
-
-    @NotNull
-    public Project getProject() {
-      return myProject;
-    }
-
-    public AntElementRole getRole() {
-      return AntElementRole.PROPERTY_ROLE;
-    }
-
-    public boolean isValid() {
-      return true;
-    }
-
-    public boolean isPhysical() {
-      return false;
     }
   }
 }

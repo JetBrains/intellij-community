@@ -1,18 +1,17 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.ant.psi.AntMacroDef;
-import com.intellij.lang.ant.psi.AntPresetDef;
-import com.intellij.lang.ant.psi.AntStructuredElement;
-import com.intellij.lang.ant.psi.AntTask;
+import com.intellij.lang.ant.AntElementRole;
+import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
+import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringSetSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +38,7 @@ public class AntElementNameReference extends AntGenericReference {
 
     if (!(element instanceof AntTask)) {
       final AntStructuredElement defElement = (AntStructuredElement)typeDef.getDefiningElement();
-      if (defElement != null && (defElement instanceof AntPresetDef || (defElement.getParent()instanceof AntMacroDef &&
+      if (defElement != null && (defElement instanceof AntPresetDef || (defElement.getParent() instanceof AntMacroDef &&
                                                                         "element".equals(defElement.getSourceElement().getName())))) {
         // renaming macrodef's nested element
         element.getSourceElement().setName(newElementName);
@@ -98,14 +97,13 @@ public class AntElementNameReference extends AntGenericReference {
     return null;
   }
 
-
   public boolean shouldBeSkippedByAnnotator() {
     return true;
   }
 
   public Object[] getVariants() {
     AntStructuredElement parent = (AntStructuredElement)getElement().getAntParent();
-    if( parent == null) {
+    if (parent == null) {
       return EMPTY_ARRAY;
     }
     AntTypeDefinition def = parent.getTypeDefinition();
@@ -115,15 +113,17 @@ public class AntElementNameReference extends AntGenericReference {
         return EMPTY_ARRAY;
       }
     }
-    final Set<String> ids = StringSetSpinAllocator.alloc();
+    final AntFile antFile = parent.getAntFile();
+    final Project project = antFile.getProject();
+    final Set<PsiElement> ids = PsiElementSetSpinAllocator.alloc();
     try {
-      for (AntTypeId id : def.getNestedElements()) {
-        ids.add(id.getName());
+      for (final AntTypeId id : def.getNestedElements()) {
+        ids.add(new AntElementCompletionWrapper(id.getName(), project, AntElementRole.TASK_ROLE));
       }
       return ids.toArray(new Object[ids.size()]);
     }
     finally {
-      StringSetSpinAllocator.dispose(ids);
+      PsiElementSetSpinAllocator.dispose(ids);
     }
   }
 
