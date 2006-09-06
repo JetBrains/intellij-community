@@ -139,7 +139,7 @@ public final class InternalDecorator extends JPanel {
    * Applies specified decoration.
    */
   public final void apply(final WindowInfo info) {
-    if (Comparing.equal(myInfo, info) || myProject.isDisposed()) {
+    if (Comparing.equal(myInfo, info) || myProject == null || myProject.isDisposed()) {
       return;
     }
     myInfo = info;
