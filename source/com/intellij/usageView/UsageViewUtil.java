@@ -20,6 +20,7 @@ import gnu.trove.THashSet;
 
 import java.util.Arrays;
 import java.util.Set;
+import java.util.LinkedHashSet;
 
 /**
  *
@@ -252,7 +253,7 @@ public class UsageViewUtil {
   }
 
   public static UsageInfo[] removeDuplicatedUsages(UsageInfo[] usages) {
-    Set<UsageInfo> set = new THashSet<UsageInfo>(Arrays.asList(usages));
+    Set<UsageInfo> set = new LinkedHashSet<UsageInfo>(Arrays.asList(usages));
     return set.toArray(new UsageInfo[set.size()]);
   }
 }
