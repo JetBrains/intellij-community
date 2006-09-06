@@ -170,13 +170,15 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     if (antFile == null) return null;
     VirtualFile vFile = antFile.getContainingPath();
     if (vFile == null) return null;
+    String projectPath = vFile.getPath();
+    final String baseDir = antFile.getAntProject().getBaseDir();
+    if( baseDir != null && baseDir.length() > 0) {
+      projectPath = new File(projectPath, baseDir).getAbsolutePath();
+    }
     final String fileName = computeAttributeValue(name);
     File file = new File(fileName);
     if (!file.isAbsolute()) {
-      file = new File(vFile.getPath(), fileName);
-      if (!file.exists()) {
-        file = new File(antFile.getAntProject().getBaseDir(), fileName);
-      }
+      file = new File(projectPath, fileName);
     }
     vFile = LocalFileSystem.getInstance().findFileByPath(file.getAbsolutePath().replace(File.separatorChar, '/'));
     if (vFile == null) return null;
