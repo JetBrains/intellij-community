@@ -180,7 +180,8 @@ public class JavaDocUtil {
         for (int k = 0; k < parms.length; k++) {
           PsiParameter parm = parms[k];
           if (
-            types[k] != null && !TypeConversionUtil.erasure(parm.getType()).getCanonicalText().equals(types[k].getCanonicalText())
+            types[k] != null &&
+            !TypeConversionUtil.erasure(parm.getType()).getCanonicalText().equals(TypeConversionUtil.erasure(types[k]).getCanonicalText())
             ) {
             continue MethodsLoop;
           }
