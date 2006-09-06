@@ -55,7 +55,8 @@ public class ToggleColumnModeAction extends ToggleAction {
   }
 
   public boolean isSelected(AnActionEvent e) {
-    return getEditor(e).isColumnMode();
+    final EditorEx ex = getEditor(e);
+    return ex != null && ex.isColumnMode();
   }
 
   private static EditorEx getEditor(AnActionEvent e) {
