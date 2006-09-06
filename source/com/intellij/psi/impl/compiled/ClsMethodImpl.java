@@ -82,6 +82,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     PsiModifierList modifierList = getModifierList();
     PsiTypeElement returnType = getReturnTypeElement();
     PsiIdentifier name = getNameIdentifier();
+    PsiParameterList parameterList = getParameterList();
     PsiReferenceList throwsList = getThrowsList();
     PsiAnnotationMemberValue defaultValue = getDefaultValue();
 
@@ -90,9 +91,10 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
       + (modifierList != null ? 1 : 0)
       + (returnType != null ? 1 : 0)
       + (name != null ? 1 : 0)
+      + (parameterList != null ? 1 : 0)
       + (throwsList != null ? 1 : 0)
       + (defaultValue != null ? 1 : 0);
-  ;
+
     PsiElement[] children = new PsiElement[count];
 
     int offset = 0;
@@ -107,6 +109,9 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     }
     if (name != null) {
       children[offset++] = name;
+    }
+    if (parameterList != null) {
+      children[offset++] = parameterList;
     }
     if (throwsList != null) {
       children[offset++] = throwsList;
