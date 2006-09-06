@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -326,6 +327,14 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
         final AntPropertyImpl property = new AntPropertyImpl(fakeProject, tag, propertyDef) {
           public PsiFile getContainingFile() {
             return getSourceElement().getContainingFile();
+          }
+
+          public PsiElement getNavigationElement() {
+            if ("basedir".equals(getName())) {
+              final XmlAttribute attr = AntProjectImpl.this.getSourceElement().getAttribute("basedir", null);
+              if (attr != null) return attr;
+            }
+            return super.getNavigationElement();
           }
         };
         myPredefinedProps.add(property);
