@@ -28,12 +28,10 @@ import org.jetbrains.annotations.NotNull;
 public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction {
   private String myName;
   private int myType;
-  private PsiElement myPsiElement;
   private String myInspectionName;
 
-  public AddHtmlTagOrAttributeToCustomsIntention(String shortName, PsiElement psiElement, String name, int type) {
+  public AddHtmlTagOrAttributeToCustomsIntention(String shortName, String name, int type) {
     myInspectionName = shortName;
-    myPsiElement = psiElement;
     myName = name;
     myType = type;
   }
@@ -66,7 +64,7 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfile inspectionProfile = profileManager.getInspectionProfile(myPsiElement);
+    final InspectionProfile inspectionProfile = profileManager.getInspectionProfile(file);
     final ModifiableModel model = inspectionProfile.getModifiableModel();
     final LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)model.getInspectionTool(myInspectionName);
     final XmlEntitiesInspection xmlEntitiesInspection = (XmlEntitiesInspection)wrapper.getTool();

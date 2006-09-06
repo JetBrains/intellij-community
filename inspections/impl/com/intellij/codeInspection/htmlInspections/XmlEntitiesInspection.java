@@ -15,7 +15,7 @@ public interface XmlEntitiesInspection {
   int UNKNOWN_ATTRIBUTE = 2;
   int NOT_REQUIRED_ATTRIBUTE = 3;
   
-  IntentionAction getIntentionAction(PsiElement psiElement, String name, int type);
+  IntentionAction getIntentionAction(String name, int type);
   String getAdditionalEntries(int type);
   void setAdditionalEntries(int type, String additionalEntries);
 }

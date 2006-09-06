@@ -20,7 +20,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import org.jetbrains.annotations.NonNls;
@@ -85,8 +84,8 @@ public class RequiredAttributesInspection extends UnfairLocalInspectionTool impl
     return additionalAttributesPanel;
   }
 
-  public IntentionAction getIntentionAction(PsiElement psiElement, String name, int type) {
-    return new AddHtmlTagOrAttributeToCustomsIntention(getShortName(), psiElement, name, type);
+  public IntentionAction getIntentionAction(String name, int type) {
+    return new AddHtmlTagOrAttributeToCustomsIntention(getShortName(), name, type);
   }
 
   public String getAdditionalEntries(int type) {
