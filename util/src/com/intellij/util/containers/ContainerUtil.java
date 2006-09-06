@@ -146,6 +146,15 @@ public class ContainerUtil {
     return true;
   }
 
+  public static <T> boolean process(T[] iterable, Processor<? super T> processor) {
+    for (final T t : iterable) {
+      if (!processor.process(t)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @Nullable
   public static <T> T find(Iterable<? extends T> iterable, Condition<T> condition) {
     return find(iterable.iterator(), condition);

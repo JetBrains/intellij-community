@@ -75,6 +75,11 @@ public class ModelMergerUtil {
     return (List<T>)processor.getResults();
   }
 
+  @NotNull
+  public static <T> Processor<T> createFilteringProcessor(final Processor<T> processor) {
+    return new ImplementationProcessor<T>(processor, false);
+  }
+
   public static class ImplementationProcessor<T> implements Processor<T> {
     private final Processor<T> myProcessor;
     private final boolean myProcessMerged;
