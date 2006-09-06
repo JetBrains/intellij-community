@@ -1,6 +1,5 @@
 package com.intellij.debugger.settings;
 
-import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -9,6 +8,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.ui.classFilter.ClassFilter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -38,6 +38,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public boolean SKIP_SYNTHETIC_METHODS;
   public boolean SKIP_CONSTRUCTORS;
   public boolean SKIP_GETTERS;
+  public boolean SKIP_CLASSLOADERS;
 
   public String EVALUATION_DIALOG_TYPE;
   public String STEP_THREAD_SUSPEND_POLICY;
@@ -119,6 +120,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
       FORCE_CLASSIC_VM == secondSettings.FORCE_CLASSIC_VM &&
       HIDE_DEBUGGER_ON_PROCESS_TERMINATION == secondSettings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION &&
       SKIP_SYNTHETIC_METHODS == secondSettings.SKIP_SYNTHETIC_METHODS &&
+      SKIP_CLASSLOADERS == secondSettings.SKIP_CLASSLOADERS &&
       SKIP_CONSTRUCTORS == secondSettings.SKIP_CONSTRUCTORS &&
       SKIP_GETTERS == secondSettings.SKIP_GETTERS &&
       (RUN_HOTSWAP_AFTER_COMPILE != null ? RUN_HOTSWAP_AFTER_COMPILE.equals(secondSettings.RUN_HOTSWAP_AFTER_COMPILE) : secondSettings.RUN_HOTSWAP_AFTER_COMPILE == null) &&

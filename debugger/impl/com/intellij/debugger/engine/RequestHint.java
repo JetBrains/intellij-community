@@ -8,6 +8,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -152,6 +153,14 @@ class RequestHint {
             Location location = context.getFrameProxy().location();
             Method method = location.method();
             if (method != null && method.isConstructor()) {
+              mySkipThisMethod = true;
+              return true;
+            }
+          }
+
+          if (settings.SKIP_CLASSLOADERS) {
+            Location location = context.getFrameProxy().location();
+            if (DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", location.declaringType())) {
               mySkipThisMethod = true;
               return true;
             }

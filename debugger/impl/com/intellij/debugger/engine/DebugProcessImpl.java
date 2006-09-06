@@ -365,7 +365,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
   }
 
-  private String getCurrentClassName(ThreadReferenceProxyImpl thread) {
+  @Nullable
+  private static String getCurrentClassName(ThreadReferenceProxyImpl thread) {
     try {
       final ThreadReferenceProxyImpl currentThreadProxy = thread;
       if (currentThreadProxy != null) {
@@ -1149,7 +1150,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private ClassLoaderReference getParentLoader(final ClassLoaderReference fromLoader) {
+  private static ClassLoaderReference getParentLoader(final ClassLoaderReference fromLoader) {
     final ReferenceType refType = fromLoader.referenceType();
     Field field = refType.fieldByName("parent");
     if (field == null) {

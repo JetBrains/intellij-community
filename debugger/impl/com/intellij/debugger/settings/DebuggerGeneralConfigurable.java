@@ -1,12 +1,12 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.ui.classFilter.ClassFilterEditor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,6 +19,7 @@ public class DebuggerGeneralConfigurable implements Configurable{
   private JCheckBox myCbStepInfoFiltersEnabled;
   private JCheckBox myCbSkipSyntheticMethods;
   private JCheckBox myCbSkipConstructors;
+  private JCheckBox myCbSkipClassLoaders;
   private JCheckBox myHideDebuggerCheckBox;
   private JRadioButton myRbAlways;
   private JRadioButton myRbNever;
@@ -54,6 +55,7 @@ public class DebuggerGeneralConfigurable implements Configurable{
     myCbSkipSimpleGetters.setSelected(settings.SKIP_GETTERS);
     myCbSkipSyntheticMethods.setSelected(settings.SKIP_SYNTHETIC_METHODS);
     myCbSkipConstructors.setSelected(settings.SKIP_CONSTRUCTORS);
+    myCbSkipClassLoaders.setSelected(settings.SKIP_CLASSLOADERS);
     myValueTooltipDelayField.setText(Integer.toString(settings.VALUE_LOOKUP_DELAY));
     myHideDebuggerCheckBox.setSelected(settings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION);
     myCbForceClassicVM.setSelected(settings.FORCE_CLASSIC_VM);
@@ -89,6 +91,7 @@ public class DebuggerGeneralConfigurable implements Configurable{
     settings.SKIP_GETTERS = myCbSkipSimpleGetters.isSelected();
     settings.SKIP_SYNTHETIC_METHODS = myCbSkipSyntheticMethods.isSelected();
     settings.SKIP_CONSTRUCTORS = myCbSkipConstructors.isSelected();
+    settings.SKIP_CLASSLOADERS = myCbSkipClassLoaders.isSelected();
     try {
       settings.VALUE_LOOKUP_DELAY = Integer.parseInt(myValueTooltipDelayField.getText().trim());
     }
@@ -215,10 +218,12 @@ public class DebuggerGeneralConfigurable implements Configurable{
 
     myCbSkipSyntheticMethods = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.synthetic.methods"));
     myCbSkipConstructors = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.constructors"));
+    myCbSkipClassLoaders = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.classloaders"));
     myCbSkipSimpleGetters = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.simple.getters"));
     myCbStepInfoFiltersEnabled = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.step.filters.list.header"));
     panel.add(myCbSkipSyntheticMethods, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0),0, 0));
     panel.add(myCbSkipConstructors, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0),0, 0));
+    panel.add(myCbSkipClassLoaders, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0),0, 0));
     panel.add(myCbSkipSimpleGetters, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0),0, 0));
     panel.add(myCbStepInfoFiltersEnabled, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(8, 4, 0, 0),0, 0));
 

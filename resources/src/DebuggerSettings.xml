@@ -6,6 +6,7 @@
   <option name="FORCE_CLASSIC_VM" value="true" />
   <option name="HIDE_DEBUGGER_ON_PROCESS_TERMINATION" value="false" />
   <option name="SKIP_SYNTHETIC_METHODS" value="true" />
+  <option name="SKIP_CLASSLOADERS" value="true" />
   <option name="SKIP_CONSTRUCTORS" value="false" />
   <option name="STEP_THREAD_SUSPEND_POLICY" value="SuspendThread" />
   <option name="RUN_HOTSWAP_AFTER_COMPILE" value="RunHotswapAsk" />
