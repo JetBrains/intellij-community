@@ -8,8 +8,10 @@ import com.intellij.cvsSupport2.javacvsImpl.ProjectContentInfoProvider;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.netbeans.lib.cvsclient.CvsRoot;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
@@ -17,6 +19,7 @@ import org.netbeans.lib.cvsclient.admin.AdminWriter;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.admin.IAdminWriter;
 import org.netbeans.lib.cvsclient.file.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,8 +58,13 @@ public class AdminWriterOnCache implements IAdminWriter {
 
   private boolean notUnderCvs(AbstractFileObject directoryObject, ICvsFileSystem cvsFileSystem) {
     if (directoryObject == null) return false;
-    File directory = cvsFileSystem.getLocalFileSystem().getFile(directoryObject);
-    VirtualFile virtualDirectory = LocalFileSystem.getInstance().findFileByIoFile(directory);
+    final File directory = cvsFileSystem.getLocalFileSystem().getFile(directoryObject);
+    VirtualFile virtualDirectory = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+      @Nullable
+      public VirtualFile compute() {
+        return LocalFileSystem.getInstance().findFileByIoFile(directory);
+      }
+    });
     if (virtualDirectory == null) return notUnderCvs(directoryObject.getParent(), cvsFileSystem);
     return !myProjectContentInfoProvider.fileIsUnderProject(virtualDirectory);
 

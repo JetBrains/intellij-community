@@ -40,20 +40,14 @@ public class UpdateOperation extends CvsOperationOnFiles {
   }
 
   public void addAllFiles(FilePath[] files) {
-    for (int i = 0; i < files.length; i++) {
-      FilePath file = files[i];
-      File ioFile = file.getIOFile();
-      LOG.assertTrue(ioFile != null, file.getPath());
-      addFile(ioFile);
+    for (FilePath file : files) {
+      addFile(file.getIOFile());
     }
   }
 
   public void addAllFiles(VirtualFile[] files) {
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile file = files[i];
-      File ioFile = new File(file.getPath());
-      LOG.assertTrue(ioFile != null, file.getPath());
-      addFile(ioFile);
+    for (VirtualFile file : files) {
+      addFile(new File(file.getPath()));
     }
   }
 
@@ -128,5 +122,9 @@ public class UpdateOperation extends CvsOperationOnFiles {
                                                               PostCvsActivity postCvsActivity, ModalityContext modalityContext) {
     return new UpdateReceivedFileProcessor(mergedFilesCollector,
                                            postCvsActivity);
+  }
+
+  @Override public boolean runInReadThread() {
+    return false;
   }
 }

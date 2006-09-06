@@ -9,12 +9,14 @@ import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.netbeans.lib.cvsclient.file.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -101,11 +103,16 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
 
   private boolean hasToBeSkipped(AbstractFileObject fileObject, IFileSystem localFileSystem) {
     if (fileObject == null) return false;
-    File localFile = localFileSystem.getFile(fileObject);
+    final File localFile = localFileSystem.getFile(fileObject);
     if (!localFile.exists()) {
       return hasToBeSkipped(fileObject.getParent(), localFileSystem);
     }
-    VirtualFile virtualFileParent = LocalFileSystem.getInstance().findFileByIoFile(localFile);
+    VirtualFile virtualFileParent = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+      @Nullable
+      public VirtualFile compute() {
+        return LocalFileSystem.getInstance().findFileByIoFile(localFile);
+      }
+    });
     if (virtualFileParent == null) return false;
     return !myProjectContentInfoProvider.fileIsUnderProject(virtualFileParent);
   }
