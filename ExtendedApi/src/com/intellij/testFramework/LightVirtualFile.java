@@ -66,6 +66,7 @@ public class LightVirtualFile extends VirtualFile {
         }
       }
     }
+    if(myFileType == null) myFileType = language.getAssociatedFileType();
     if(myFileType == null) myFileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
     myContent = text;
     myModStamp = LocalTimeCounter.currentTime();
@@ -118,6 +119,7 @@ public class LightVirtualFile extends VirtualFile {
     return ourFileSystem;
   }
 
+  @NotNull
   public FileType getFileType() {
     return myFileType != null ? myFileType : super.getFileType();
   }
@@ -215,7 +217,7 @@ public class LightVirtualFile extends VirtualFile {
     myIsWritable = b;
   }
 
-  public void rename(Object requestor, String newName) throws IOException {
+  public void rename(Object requestor, @NotNull String newName) throws IOException {
     myName = newName;
   }
 
