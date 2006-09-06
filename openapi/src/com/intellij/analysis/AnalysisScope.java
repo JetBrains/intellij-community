@@ -179,7 +179,7 @@ public class AnalysisScope {
           myFilesSet.add(virtualFile);
           if (indicator != null){
             indicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
-            indicator.setText2(virtualFile.getPresentableUrl());
+            indicator.setText2(VfsUtil.calcRelativeToProjectPath(virtualFile, file.getProject()));
           }
         }
       }

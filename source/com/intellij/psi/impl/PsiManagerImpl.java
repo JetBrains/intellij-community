@@ -58,8 +58,8 @@ import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -285,8 +285,18 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       return true;
     }
 
-    Module module = ModuleUtil.findModuleForPsiElement(element);
-    return module != null;
+    VirtualFile virtualFile = null;
+    if (file != null) {
+      virtualFile = file.getViewProvider().getVirtualFile();
+    } else if (element instanceof PsiDirectory) {
+      virtualFile = ((PsiDirectory)element).getVirtualFile();
+    }
+
+    if (virtualFile != null) {
+      Module module = ModuleUtil.findModuleForFile(virtualFile, element.getProject());
+      return module != null;
+    }
+    return false;
   }
 
   public void performActionWithFormatterDisabled(final Runnable r) {

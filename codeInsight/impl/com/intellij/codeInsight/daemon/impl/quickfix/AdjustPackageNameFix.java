@@ -1,13 +1,14 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class AdjustPackageNameFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AdjustPackageNameFix");
@@ -21,11 +22,13 @@ public class AdjustPackageNameFix implements IntentionAction {
     myTargetPackage = targetPackage;
   }
 
+  @NotNull
   public String getText() {
     String text = QuickFixBundle.message("adjust.package.text", myTargetPackage.getQualifiedName());
     return text;
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("adjust.package.family");
   }
@@ -45,7 +48,7 @@ public class AdjustPackageNameFix implements IntentionAction {
 
     try {
       PsiElementFactory factory = myFile.getManager().getElementFactory();
-      if (myTargetPackage.getQualifiedName().equals("")) {
+      if (myTargetPackage.getQualifiedName().length() == 0) {
         if (myStatement != null) {
           myStatement.delete();
         }

@@ -4,10 +4,13 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.UIOptions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -20,6 +23,7 @@ import java.util.Set;
 public abstract class BaseAnalysisAction extends AnAction {
   protected final String myTitle;
   protected final String myAnalysisNoon;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.analysis.BaseAnalysisAction");
 
   protected BaseAnalysisAction(String title, String analysisNoon) {
     myTitle = title;
@@ -45,6 +49,7 @@ public abstract class BaseAnalysisAction extends AnAction {
       else {
         scope = getInspectionScope(dataContext);
       }
+      LOG.assertTrue(scope != null);
       if (scope.getScopeType() == AnalysisScope.VIRTUAL_FILES){
         FileDocumentManager.getInstance().saveAllDocuments();
         analyze(project, scope);
@@ -81,6 +86,7 @@ public abstract class BaseAnalysisAction extends AnAction {
 
   protected abstract void analyze(Project project, AnalysisScope scope);
 
+  @Nullable
   private static AnalysisScope getInspectionScope(final DataContext dataContext) {
     if (dataContext.getData(DataConstants.PROJECT) == null) return null;
 
@@ -89,6 +95,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     return scope != null && scope.getScopeType() != AnalysisScope.INVALID ? scope : null;
   }
 
+  @Nullable
   private static AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
     //Possible scopes: file, directory, package, project, module.
     Project projectContext = (Project)dataContext.getData(DataConstantsEx.PROJECT_CONTEXT);
@@ -106,7 +113,7 @@ public abstract class BaseAnalysisAction extends AnAction {
       return new AnalysisScope(modulesArray);
     }
     PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
-    if (psiFile != null) {
+    if (psiFile != null && psiFile.getManager().isInProject(psiFile)) {
       return psiFile instanceof PsiJavaFile ? new AnalysisScope(psiFile) : null;
     }
 
@@ -118,6 +125,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     }
     else if (psiTarget instanceof PsiPackage) {
       PsiPackage pack = (PsiPackage)psiTarget;
+      if (!pack.getManager().isInProject(pack)) return null;
       PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
       if (dirs.length == 0) return null;
       return new AnalysisScope(pack);
@@ -127,12 +135,16 @@ public abstract class BaseAnalysisAction extends AnAction {
     }
 
     final VirtualFile[] virtualFiles = (VirtualFile[])dataContext.getData(DataConstantsEx.VIRTUAL_FILE_ARRAY);
-    if (virtualFiles != null){ //analyze on selection
+    if (virtualFiles != null) { //analyze on selection
+      final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       Set<VirtualFile> files = new HashSet<VirtualFile>();
       for (VirtualFile vFile : virtualFiles) {
-        traverseDirectory(vFile, files);
+        if (fileIndex.isInContent(vFile)) {
+          traverseDirectory(vFile, files);
+        }
       }
-      return new AnalysisScope((Project)dataContext.getData(DataConstants.PROJECT), files);
+      return new AnalysisScope(project, files);
     }
     return getProjectScope(dataContext);
   }
