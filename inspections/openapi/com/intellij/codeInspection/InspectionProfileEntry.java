@@ -23,6 +23,8 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -32,8 +34,10 @@ import javax.swing.*;
  */
 public abstract class InspectionProfileEntry {
 
+  @Nls
   public abstract String getGroupDisplayName();
 
+  @Nls
   public abstract String getDisplayName();
 
   /**
@@ -46,6 +50,7 @@ public abstract class InspectionProfileEntry {
   /**
    * @return highlighting level for this inspection tool that is used in default settings
    */
+  @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.WARNING;
   }
@@ -66,7 +71,7 @@ public abstract class InspectionProfileEntry {
    * Read in settings from xml config. Default implementation uses DefaultJDOMExternalizer so you may use public fields like <code>int TOOL_OPTION</code> to store your options.
    *
    * @param node to read settings from.
-   * @throws InvalidDataException
+   * @throws InvalidDataException if the loaded data was not valid
    */
   public void readSettings(Element node) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, node);
@@ -76,7 +81,7 @@ public abstract class InspectionProfileEntry {
    * Store current settings in xml config. Default implementation uses DefaultJDOMExternalizer so you may use public fields like <code>int TOOL_OPTION</code> to store your options.
    *
    * @param node to store settings to.
-   * @throws WriteExternalException
+   * @throws WriteExternalException if no data should be saved for this component
    */
   public void writeSettings(Element node) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, node);
