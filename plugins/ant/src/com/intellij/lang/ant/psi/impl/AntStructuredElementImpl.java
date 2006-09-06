@@ -321,13 +321,15 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       myIdElement = ourNull;
       final AntElement parent = getAntParent();
       if (parent instanceof AntStructuredElement) {
-        final XmlAttribute idAttr = getSourceElement().getAttribute("id", null);
-        if (idAttr != null) {
-          final XmlAttributeValue valueElement = idAttr.getValueElement();
-          if (valueElement != null) {
-            myIdElement = new AntNameElementImpl(this, valueElement);
-            final AntStructuredElement se = (AntStructuredElement)parent;
-            se.registerRefId(myIdElement.getName(), this);
+        final XmlTag se = getSourceElement();
+        if (se.isValid()) {
+          final XmlAttribute idAttr = se.getAttribute("id", null);
+          if (idAttr != null) {
+            final XmlAttributeValue valueElement = idAttr.getValueElement();
+            if (valueElement != null) {
+              myIdElement = new AntNameElementImpl(this, valueElement);
+              ((AntStructuredElement)parent).registerRefId(myIdElement.getName(), this);
+            }
           }
         }
       }
@@ -339,11 +341,14 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   protected AntElement getNameElement() {
     if (myNameElement == null) {
       myNameElement = ourNull;
-      final XmlAttribute nameAttr = getSourceElement().getAttribute(myNameElementAttribute, null);
-      if (nameAttr != null) {
-        final XmlAttributeValue valueElement = nameAttr.getValueElement();
-        if (valueElement != null) {
-          myNameElement = new AntNameElementImpl(this, valueElement);
+      final XmlTag se = getSourceElement();
+      if (se.isValid()) {
+        final XmlAttribute nameAttr = se.getAttribute(myNameElementAttribute, null);
+        if (nameAttr != null) {
+          final XmlAttributeValue valueElement = nameAttr.getValueElement();
+          if (valueElement != null) {
+            myNameElement = new AntNameElementImpl(this, valueElement);
+          }
         }
       }
     }
