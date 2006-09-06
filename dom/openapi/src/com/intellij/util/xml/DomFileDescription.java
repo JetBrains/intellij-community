@@ -17,6 +17,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -88,7 +89,7 @@ public abstract class DomFileDescription<T> {
     return myRootTagName;
   }
 
-  public boolean isMyFile(XmlFile file) {
+  public boolean isMyFile(XmlFile file, @Nullable final Module module) {
     XmlDocument doc = file.getDocument();
     if (doc != null) {
       XmlTag rootTag = doc.getRootTag();
@@ -101,7 +102,7 @@ public abstract class DomFileDescription<T> {
 
   /**
    * Get dependency items (the same, as in {@link com.intellij.psi.util.CachedValue}) for file. On any dependency item change, the
-   * {@link #isMyFile(com.intellij.psi.xml.XmlFile)} method will be invoked once more to ensure that the file description still
+   * {@link #isMyFile(com.intellij.psi.xml.XmlFile, Module)} method will be invoked once more to ensure that the file description still
    * accepts this file 
    * @param file XML file to get dependencies of
    * @return dependency item set 

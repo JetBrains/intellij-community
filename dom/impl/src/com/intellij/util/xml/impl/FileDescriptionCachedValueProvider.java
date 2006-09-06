@@ -5,6 +5,8 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlFile;
@@ -22,6 +24,7 @@ import java.util.Set;
  * @author peter
 */
 class FileDescriptionCachedValueProvider<T extends DomElement> implements CachedValueProvider<DomFileElementImpl<T>>, ModificationTracker {
+  private Module myModule;
   private final XmlFile myXmlFile;
   private Runnable myPostRunnable;
   private boolean myFireEvents;
@@ -30,7 +33,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Cached
   private long myModCount;
   private final Condition<DomFileDescription> myCondition = new Condition<DomFileDescription>() {
     public boolean value(final DomFileDescription description) {
-      return description.isMyFile(myXmlFile);
+      return description.isMyFile(myXmlFile, myModule);
     }
   };
 
@@ -64,7 +67,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Cached
       final boolean fireEvents = myFireEvents;
       myFireEvents = false;
 
-      if (myOldResult != null && myFileDescription != null && myFileDescription.isMyFile(myXmlFile)) {
+      myModule = ModuleUtil.findModuleForPsiElement(myXmlFile);
+      if (myOldResult != null && myFileDescription != null && myFileDescription.isMyFile(myXmlFile, myModule)) {
         return myOldResult;
       }
 

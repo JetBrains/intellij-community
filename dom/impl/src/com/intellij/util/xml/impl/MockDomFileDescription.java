@@ -5,6 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.openapi.module.Module;
 
 /**
  * @author peter
@@ -17,7 +18,7 @@ class MockDomFileDescription<T> extends DomFileDescription<T> {
     myFile = file;
   }
 
-  public boolean isMyFile(final XmlFile xmlFile) {
+  public boolean isMyFile(final XmlFile xmlFile, final Module module) {
     return myFile == xmlFile;
   }
 
