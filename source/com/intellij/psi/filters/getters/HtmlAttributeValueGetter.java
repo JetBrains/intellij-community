@@ -2,6 +2,7 @@ package com.intellij.psi.filters.getters;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -24,9 +25,15 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
 
     XmlAttribute attribute = (XmlAttribute)context;
     @NonNls String name = attribute.getName();
-    if (!myCaseSensitive) name = name.toLowerCase();
+    final XmlTag tag = attribute.getParent();
 
-    final String namespace = attribute.getParent().getNamespace();
+    @NonNls String tagName = tag != null ? tag.getName() : "";
+    if (!myCaseSensitive) {
+      name = name.toLowerCase();
+      tagName = tagName.toLowerCase();
+    }
+
+    final String namespace = tag.getNamespace();
     if (XmlUtil.XHTML_URI.equals(namespace) || XmlUtil.HTML_URI.equals(namespace)) {
 
       if ("target".equals(name)) {
@@ -40,6 +47,8 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
         return new String[] { "screen", "tty", "tv", "projection", "handheld", "print", "all", "aural", "braille" };
       } else if ("language".equals(name)) {
         return new String[] { "JavaScript", "VBScript", "JScript", "JavaScript1.2", "JavaScript1.3", "JavaScript1.4", "JavaScript1.5" };
+      } else if ("type".equals(name) && "link".equals(tagName)) {
+        return new String[] { "text/css" , "text/html" , "text/plain" , "text/xml" };
       }
     }
 
