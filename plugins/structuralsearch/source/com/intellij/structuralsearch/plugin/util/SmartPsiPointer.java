@@ -13,23 +13,23 @@ public class SmartPsiPointer {
   private SmartPsiElementPointer pointer;
 
   public SmartPsiPointer(PsiElement element) {
-    pointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
+    pointer = element != null ? SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element):null;
   }
 
   public VirtualFile getFile() {
-    return pointer.getElement().getContainingFile().getVirtualFile();
+    return pointer != null ? pointer.getElement().getContainingFile().getVirtualFile():null;
   }
 
   public int getOffset() {
-    return pointer.getElement().getTextRange().getStartOffset();
+    return pointer != null ? pointer.getElement().getTextRange().getStartOffset():-1;
   }
 
   public int getLength() {
-    return pointer.getElement().getTextRange().getEndOffset();
+    return pointer != null ? pointer.getElement().getTextRange().getEndOffset():0;
   }
 
   public PsiElement getElement() {
-    return pointer.getElement();
+    return pointer != null ? pointer.getElement():null;
   }
 
   public void clear() {
@@ -37,7 +37,7 @@ public class SmartPsiPointer {
   }
 
   public Project getProject() {
-    return pointer.getElement().getProject();
+    return pointer != null ? pointer.getElement().getProject():null;
   }
 
   public boolean equals(Object o) {
@@ -51,6 +51,6 @@ public class SmartPsiPointer {
   }
 
   public int hashCode() {
-    return getElement().hashCode();
+    return pointer != null ? getElement().hashCode():0;
   }
 }
