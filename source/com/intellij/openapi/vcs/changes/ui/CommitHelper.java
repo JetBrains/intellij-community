@@ -79,7 +79,11 @@ public class CommitHelper {
                              final List<Change> changesFailedToCommit,
                              final ChangeList changeList) {
     try {
-      markCommittingDocuments();
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          markCommittingDocuments();
+        }
+      });
       final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
       ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, new ChangesUtil.PerVcsProcessor<Change>() {
         public void process(AbstractVcs vcs, List<Change> changes) {
@@ -96,7 +100,11 @@ public class CommitHelper {
         }
       });
 
-      unmarkCommittingDocuments();
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          unmarkCommittingDocuments();
+        }
+      });
 
       final LvcsAction lvcsAction = ApplicationManager.getApplication().runReadAction(new Computable<LvcsAction>() {
         public LvcsAction compute() {
