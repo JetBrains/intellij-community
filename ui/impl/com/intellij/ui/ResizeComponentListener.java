@@ -37,7 +37,9 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
       if (myDirection == Cursor.DEFAULT_CURSOR){
         myStartPoint = null;
       } else {
-        myComponent.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.black.brighter()));
+        if (!SystemInfo.isMac) {
+          myComponent.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.black.brighter()));
+        }
         UIUtil.setEnabled(myComponent, false, true);
       }
     }
