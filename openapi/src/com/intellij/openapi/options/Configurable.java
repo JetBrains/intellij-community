@@ -17,6 +17,7 @@ package com.intellij.openapi.options;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 
@@ -34,6 +35,7 @@ public interface Configurable extends UnnamedConfigurable {
    *
    * @return the visible name of the component.
    */
+  @Nls
   String getDisplayName();
 
   /**
