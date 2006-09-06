@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -129,7 +130,13 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @Nullable
   public VirtualFile getContainingPath() {
-    final VirtualFile result = getVirtualFile();
+    VirtualFile result = getVirtualFile();
+    if (result == null) {
+      final PsiFile origFile = getSourceElement().getOriginalFile();
+      if (origFile != null) {
+        result = origFile.getVirtualFile();
+      }
+    }
     return (result == null) ? null : result.getParent();
   }
 
