@@ -4,8 +4,8 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.RegexpFilter;
-import com.intellij.execution.filters.TextConsoleBuidlerFactory;
 import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
@@ -128,7 +129,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
       super(null, null);
       myGenerationOptions = generationOptions;
       myProject = project;
-      TextConsoleBuilder builder = TextConsoleBuidlerFactory.getInstance().createBuilder(project);
+      TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
       builder.addFilter(new RegexpFilter(project, "$FILE_PATH$:$LINE$:[^\\^]+\\^"));
       builder.addFilter(new RegexpFilter(project, "$FILE_PATH$:$LINE$: warning - .+$"));
       setConsoleBuilder(builder);
@@ -240,6 +241,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
       }
 
       final Collection<String> packages = new HashSet<String>();
+      final Collection<String> sources = new HashSet<String>();
       ApplicationManager.getApplication().runReadAction(
         new Runnable(){
           public void run() {
@@ -252,7 +254,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
               }
               startingFile = myGenerationOptions.myDirectory.getVirtualFile();
             }
-            MyContentIterator contentIterator = new MyContentIterator(myProject, packages);
+            MyContentIterator contentIterator = new MyContentIterator(myProject, packages, sources);
             if (startingFile == null) {
               fileIndex.iterateContent(contentIterator);
             }
@@ -262,10 +264,11 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
           }
         }
       );
-      if (packages.size() == 0) {
+      if (packages.size() + sources.size() == 0) {
         throw new CantRunException(JavadocBundle.message("javadoc.generate.no.classes.in.selected.packages.error"));
       }
       parameters.addAll(new ArrayList<String>(packages));
+      parameters.addAll(new ArrayList<String>(sources));
     }
 
     protected OSProcessHandler startProcess() throws ExecutionException {
@@ -288,35 +291,34 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
   private static class MyContentIterator implements ContentIterator {
     private final PsiManager myPsiManager;
     private final Collection<String> myPackages;
+    private final Collection<String> mySourceFiles;
 
-    public MyContentIterator(Project project, Collection<String> packages) {
+    public MyContentIterator(Project project, Collection<String> packages, Collection<String> sources) {
       myPsiManager = PsiManager.getInstance(project);
       myPackages = packages;
+      mySourceFiles = sources;
     }
 
     public boolean processFile(VirtualFile fileOrDir) {
       if (!(fileOrDir.getFileSystem() instanceof LocalFileSystem)) {
         return true;
       }
+      final Module module = ModuleUtil.findModuleForFile(fileOrDir, myPsiManager.getProject());
       final PsiDirectory directory = getPsiDirectory(fileOrDir);
       if (directory == null) {
         if (!StdFileTypes.JAVA.equals(FileTypeManager.getInstance().getFileTypeByFile(fileOrDir))) {
           return true;
         }
         PsiPackage psiPackage = getPsiPackage(fileOrDir.getParent());
-        if (psiPackage != null && psiPackage.getQualifiedName().length() == 0) {
-          myPackages.add(PathUtil.getLocalPath(fileOrDir));
+        if (psiPackage != null) {
+          if (psiPackage.getQualifiedName().length() == 0  || ModuleUtil.containsPackagePrefix(module, psiPackage.getQualifiedName())) {
+            mySourceFiles.add(PathUtil.getLocalPath(fileOrDir));
+          }
         }
         return true;
       }
       else {
-        PsiPackage psiPackage = directory.getPackage();
-        if (psiPackage == null) {
-          return true;
-        }
-        if (!dirContainsJavaFiles(directory, myPackages)) {
-          return true;
-        }
+        processDirWithJavaFiles(directory, myPackages, mySourceFiles, module);
       }
 
       return true;
@@ -334,12 +336,16 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
     }
   }
 
-  public static boolean dirContainsJavaFiles(PsiDirectory dir, Collection<String> packages) {
+  private static boolean processDirWithJavaFiles(PsiDirectory dir, Collection<String> packages, final Collection<String> sources, final Module module) {
     PsiFile[] files = dir.getFiles();
     for (PsiFile file : files) {
       if (file instanceof PsiJavaFile) {
         final PsiJavaFile javaFile = (PsiJavaFile)file;
-        packages.add(javaFile.getPackageName());
+        if (ModuleUtil.containsPackagePrefix(module, javaFile.getPackageName())) {
+          sources.add(PathUtil.getLocalPath(javaFile.getVirtualFile()));
+        } else {
+          packages.add(javaFile.getPackageName());
+        }
         return true;
       }
     }

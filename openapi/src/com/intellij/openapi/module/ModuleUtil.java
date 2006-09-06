@@ -21,10 +21,7 @@ package com.intellij.openapi.module;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -211,5 +208,21 @@ public class ModuleUtil {
       result.addAll(moduleManager.getModuleDependentModules(module));
     }
     return result;
+  }
+
+  public static boolean containsPackagePrefix(Module module, String packageFQName) {
+    if (module == null) return false;
+    final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
+    for (ContentEntry contentEntry : contentEntries) {
+      final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
+      for (SourceFolder sourceFolder : sourceFolders) {
+        final String packagePrefix = sourceFolder.getPackagePrefix();
+        final int prefixLength = packagePrefix.length();
+        if (prefixLength > 0 && packageFQName.startsWith(packagePrefix)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

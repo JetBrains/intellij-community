@@ -1,5 +1,6 @@
 package com.intellij.javadoc;
 
+import com.intellij.CommonBundle;
 import com.intellij.ant.impl.MapDataContext;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionUtil;
@@ -20,8 +21,8 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
-import com.intellij.CommonBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -69,7 +70,7 @@ public final class JavadocGenerationManager implements JDOMExternalizable, Proje
 
     if (dialog.isGenerationForPackage() && !dialog.isGenerationWithSubpackages()) {
       //remove package prefixes from javadoc.exe command
-      final Module module = ModuleUtil.findModuleForPsiElement(directory);
+      final Module module = directory != null ? ModuleUtil.findModuleForPsiElement(directory) : null;
       if (module != null && packageFQName != null){
         boolean reset = false;
         final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
@@ -100,6 +101,7 @@ public final class JavadocGenerationManager implements JDOMExternalizable, Proje
   }
 
 
+  @NotNull
   public String getComponentName() {
     return "JavadocGenerationManager";
   }
