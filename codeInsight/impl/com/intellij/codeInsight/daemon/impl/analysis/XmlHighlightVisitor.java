@@ -532,7 +532,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
 
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
-    final IntentionAction intentionAction = inspection.getIntentionAction(tag, name, type);
+    final IntentionAction intentionAction = inspection.getIntentionAction(name, type);
     if (htmlTag && profile.isToolEnabled(key)) {
       addElementsForTagWithManyQuickFixes(
         tag,
@@ -706,7 +706,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       key = HighlightDisplayKey.find(HtmlStyleLocalInspection.SHORT_NAME);
       if (!inspectionProfile.isToolEnabled(key)) return null;
 
-      quickFixes = new IntentionAction[]{inspection.getIntentionAction(tag, localName, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),
+      quickFixes = new IntentionAction[]{inspection.getIntentionAction(localName, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),
                                          removeAttributeIntention};
 
 
