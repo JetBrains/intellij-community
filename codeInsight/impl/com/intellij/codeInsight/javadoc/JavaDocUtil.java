@@ -10,8 +10,8 @@ import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -272,10 +272,10 @@ public class JavaDocUtil {
 
     String shortName = packageName.length() < qName.length() ? qName.substring(packageName.length() + 1) : qName;
 
-    return
-      aClass.equals(aClass.getManager().getResolveHelper().resolveReferencedClass(shortName, context)) ?
-      shortName :
-      qName;
+    final PsiManager manager = aClass.getManager();
+    return manager.areElementsEquivalent(aClass, manager.getResolveHelper().resolveReferencedClass(shortName, context))
+      ? shortName
+      : qName;
   }
 
   public static String getLabelText(Project project, PsiManager manager, String refText, PsiElement context) {

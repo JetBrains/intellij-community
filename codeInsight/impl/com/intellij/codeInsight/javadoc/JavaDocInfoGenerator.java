@@ -1282,7 +1282,8 @@ class JavaDocInfoGenerator {
 
     LOG.assertTrue(refText != null, "refText appears to be null.");
 
-    boolean isBrokenLink = JavaDocUtil.findReferenceTarget(context.getManager(), refText, context) == null;
+    final PsiElement target = JavaDocUtil.findReferenceTarget(context.getManager(), refText, context);
+    boolean isBrokenLink = target == null;
     if (isBrokenLink) {
       buffer.append("<font color=red>");
       buffer.append(label);
@@ -1291,7 +1292,7 @@ class JavaDocInfoGenerator {
     }
 
 
-    JavaDocUtil.createHyperlink(buffer, refText,label,plainLink);
+    JavaDocUtil.createHyperlink(buffer, JavaDocUtil.getReferenceText(myProject, target), label, plainLink);
     return label.length();
   }
 
