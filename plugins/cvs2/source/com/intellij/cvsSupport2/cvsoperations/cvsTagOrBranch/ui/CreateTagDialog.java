@@ -6,6 +6,7 @@ import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -21,15 +22,14 @@ public class CreateTagDialog extends CvsTagDialog {
   private TextFieldWithBrowseButton myTagName;
   private JCheckBox myOverrideExisting;
   private JCheckBox mySwitchToThisTag;
-  private final boolean myIsTag;
   private JLabel myTagOrBranchLabel;
   private JLabel myErrorLabel;
 
   public CreateTagDialog(final Collection<FilePath> files, final Project project, boolean isTag) {
-    myIsTag = isTag;
 
-    myTagOrBranchLabel.setText(myIsTag ? com.intellij.CvsBundle.message("label.tag.name") : com.intellij.CvsBundle.message("label.branch.name"));
-    mySwitchToThisTag.setText(myIsTag ? com.intellij.CvsBundle.message("checkbox.switch.to.this.tag") : com.intellij.CvsBundle.message("checkbox.switch.to.this.branch"));
+    myTagOrBranchLabel.setText(isTag ? CvsBundle.message("label.tag.name") : CvsBundle.message("label.branch.name"));
+    mySwitchToThisTag.setText(
+      isTag ? CvsBundle.message("checkbox.switch.to.this.tag") : CvsBundle.message("checkbox.switch.to.this.branch"));
 
     myTagName.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -40,7 +40,7 @@ public class CreateTagDialog extends CvsTagDialog {
       }
     });
 
-    setTitle((myIsTag ? com.intellij.CvsBundle.message("operation.name.create.tag") : com.intellij.CvsBundle.message("operation.name.create.branch")));
+    setTitle((isTag ? CvsBundle.message("operation.name.create.tag") : CvsBundle.message("operation.name.create.branch")));
 
     CvsFieldValidator.installOn(this, myTagName.getTextField(), myErrorLabel);
     init();
