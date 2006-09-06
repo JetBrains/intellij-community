@@ -81,7 +81,7 @@ public class AntAnnotator implements Annotator {
           holder.createErrorAnnotation(attrName, AntBundle.message("attribute.is.not.allowed.here", name));
         }
         else {
-          final String value = attr.getValue();
+          final String value = se.computeAttributeValue(attr.getValue());
           if (type == AntAttributeType.INTEGER) {
             try {
               Integer.parseInt(value);
