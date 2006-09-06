@@ -17,12 +17,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -172,6 +174,7 @@ public abstract class AbstractLayoutCodeProcessor {
     }
   }
 
+  @Nullable
   private Runnable preprocessFiles(List<PsiFile> files) {
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     String oldText = null;
@@ -207,9 +210,8 @@ public abstract class AbstractLayoutCodeProcessor {
 
     return new Runnable() {
       public void run() {
-        for(int i = 0; i < runnables.length; i++){
-          Runnable runnable = runnables[i];
-          if (runnable != null){
+        for (Runnable runnable : runnables) {
+          if (runnable != null) {
             runnable.run();
           }
         }
@@ -275,49 +277,58 @@ public abstract class AbstractLayoutCodeProcessor {
     }
   }
 
-  private void runProcessOnFiles(final String where, final ArrayList<PsiFile> array) {
-    boolean checkWritable = true;
-    for (PsiFile file : array) {
-      if (checkWritable && !file.isWritable()) {
-        int res = Messages.showOkCancelDialog(
-          myProject,
-          CodeInsightBundle.message("error.dialog.readonly.files.message", where),
-          CodeInsightBundle.message("error.dialog.readonly.files.title"),
-          Messages.getQuestionIcon()
-        );
-        if (res != 0) {
-          array.clear();
-          break;
-        }
-        checkWritable = false;
-      }
+  private static VirtualFile[] convert(List<PsiFile> psiFiles) {
+    VirtualFile[] files = new VirtualFile[psiFiles.size()];
+    int i = 0;
+    for (PsiFile file : psiFiles) {
+      files[i++] = file.getVirtualFile();
     }
-    if (array.isEmpty()) return;
+    return files;
+  }
+
+  private void runProcessOnFiles(final String where, final List<PsiFile> array) {
+    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(convert(array));
+    final VirtualFile[] readonlyFiles = status.getReadonlyFiles();
+    if (readonlyFiles.length == array.size()) return;
+
+    if (readonlyFiles.length > 0) {
+      int res = Messages.showOkCancelDialog(myProject, CodeInsightBundle.message("error.dialog.readonly.files.message", where),
+                                            CodeInsightBundle.message("error.dialog.readonly.files.title"), Messages.getQuestionIcon());
+      if (res != 0) {
+        return;
+      }
+
+      List<PsiFile> writeables = new ArrayList<PsiFile>();
+      for (PsiFile file : array) {
+        if (file.isWritable()) {
+          writeables.add(file);
+        }
+      }
+
+      array.clear();
+      array.addAll(writeables);
+    }
 
     final Runnable[] resultRunnable = new Runnable[1];
-    runLayoutCodeProcess(
-      new Runnable() {
-        public void run() {
-          resultRunnable[0] = preprocessFiles(array);
-        }
-      },
-      new Runnable() {
-        public void run() {
-          if (resultRunnable[0] != null){
-            resultRunnable[0].run();
-          }
+    runLayoutCodeProcess(new Runnable() {
+      public void run() {
+        resultRunnable[0] = preprocessFiles(array);
+      }
+    }, new Runnable() {
+      public void run() {
+        if (resultRunnable[0] != null) {
+          resultRunnable[0].run();
         }
       }
-    );
+    });
   }
 
   private static boolean isFormatable(PsiFile file) {
     final Language language = file.getLanguage();
-    if (language == null) return false;
     return language.getEffectiveFormattingModelBuilder(file) != null;
   }
 
-  private void collectFilesToProcess(ArrayList<PsiFile> array, PsiDirectory dir, boolean recursive) {
+  private static void collectFilesToProcess(ArrayList<PsiFile> array, PsiDirectory dir, boolean recursive) {
     PsiFile[] files = dir.getFiles();
     for (PsiFile file : files) {
       if (isFormatable(file)) {
