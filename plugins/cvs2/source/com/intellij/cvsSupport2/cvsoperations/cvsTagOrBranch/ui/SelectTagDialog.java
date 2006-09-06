@@ -1,15 +1,18 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui;
 
+import com.intellij.CvsBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ScrollPaneFactory;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * author: lesya
@@ -17,29 +20,29 @@ import java.util.Iterator;
 public class SelectTagDialog extends DialogWrapper {
   private final Collection<JList> myLists =  new ArrayList<JList>();
   private JPanel myPanel;
-  public static final String EXISTING_REVISIONS = com.intellij.CvsBundle.message("label.existing.revisions");
-  public static final String EXISTING_TAGS = com.intellij.CvsBundle.message("label.existing.tags");
+  public static final String EXISTING_REVISIONS = CvsBundle.message("label.existing.revisions");
+  public static final String EXISTING_TAGS = CvsBundle.message("label.existing.tags");
 
   public SelectTagDialog(Collection<String> tags, Collection<String> revisions) {
     super(true);
     myPanel = new JPanel(new GridLayout(1, 0, 4, 8));
 
     if (tags.isEmpty()){
-      createList(com.intellij.CvsBundle.message("dialog.title.select.revision"), revisions, BorderLayout.CENTER, EXISTING_REVISIONS);
+      createList(CvsBundle.message("dialog.title.select.revision"), revisions, EXISTING_REVISIONS);
     }
     else if (revisions.isEmpty()){
-      createList(com.intellij.CvsBundle.message("operation.name.select.tag"), tags, BorderLayout.CENTER, EXISTING_TAGS);
+      createList(CvsBundle.message("operation.name.select.tag"), tags, EXISTING_TAGS);
     }
     else{
-      createList(com.intellij.CvsBundle.message("dialog.title.select.revision.or.tag"), revisions, BorderLayout.EAST, EXISTING_REVISIONS);
-      createList(com.intellij.CvsBundle.message("dialog.title.select.revision.or.tag"), tags, BorderLayout.WEST, EXISTING_TAGS);
+      createList(CvsBundle.message("dialog.title.select.revision.or.tag"), revisions, EXISTING_REVISIONS);
+      createList(CvsBundle.message("dialog.title.select.revision.or.tag"), tags, EXISTING_TAGS);
     }
 
     setOkEnabled();
     init();
   }
 
-  private void createList(String title, Collection<String> data, String place, String listDescription) {
+  private void createList(String title, Collection<String> data, String listDescription) {
     setTitle(title);
     final JList list = new JList();
     myLists.add(list);
@@ -49,6 +52,13 @@ public class SelectTagDialog extends DialogWrapper {
         if (list.getSelectedValue() != null)
           cancelOtherSelections(list);
         setOkEnabled();
+      }
+    });
+    list.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1 && isOKActionEnabled()) {
+          doOKAction();
+        }
       }
     });
 
@@ -62,10 +72,9 @@ public class SelectTagDialog extends DialogWrapper {
   }
 
   private void cancelOtherSelections(JList list) {
-    for (Iterator each = myLists.iterator(); each.hasNext();) {
-      JList jList = (JList)each.next();
-      if (jList == list) continue;
-      jList.getSelectionModel().clearSelection();
+    for (final JList jlist : myLists) {
+      if (jlist == list) continue;
+      jlist.getSelectionModel().clearSelection();
     }
   }
 
@@ -74,28 +83,27 @@ public class SelectTagDialog extends DialogWrapper {
   }
 
   private boolean hasSelection() {
-    for (Iterator iterator = myLists.iterator(); iterator.hasNext();) {
-      JList list = (JList)iterator.next();
+    for (final JList list : myLists) {
       if (list.getSelectedValue() != null) return true;
     }
     return false;
   }
 
+  @Nullable
   public String getTag() {
-    for (Iterator iterator = myLists.iterator(); iterator.hasNext();) {
-      JList list = (JList)iterator.next();
+    for (final JList list : myLists) {
       Object selectedValue = list.getSelectedValue();
       if (selectedValue != null) return selectedValue.toString();
     }
     return null;
   }
 
-  private void fillList(Collection tags, JList list) {
+  private static void fillList(Collection<String> tags, JList list) {
     DefaultListModel model = new DefaultListModel();
     list.setModel(model);
 
-    for (Iterator each = tags.iterator(); each.hasNext();) {
-      model.addElement(each.next());
+    for (final String tag : tags) {
+      model.addElement(tag);
     }
     if (!tags.isEmpty())
       list.getSelectionModel().addSelectionInterval(0, 0);
