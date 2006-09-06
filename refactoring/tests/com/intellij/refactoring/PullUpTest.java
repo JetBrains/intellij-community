@@ -10,6 +10,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.refactoring.listeners.RefactoringListenerManager;
+import com.intellij.refactoring.listeners.MoveMemberListener;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -33,7 +35,7 @@ public class PullUpTest extends LightCodeInsightTestCase {
   private void doTest(Pair<String, Class<? extends PsiMember>>... membersToFind) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement elementAt = getFile().findElementAt(getEditor().getCaretModel().getOffset());
-    PsiClass sourceClass = PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);
+    final PsiClass sourceClass = PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);
     assertNotNull(sourceClass);
 
     PsiClass targetClass = sourceClass.getSuperClass();
@@ -57,7 +59,17 @@ public class PullUpTest extends LightCodeInsightTestCase {
       infos[i] = new MemberInfo(member);
     }
 
+    final int[] countMoved = new int[] {0};
+    final MoveMemberListener listener = new MoveMemberListener() {
+      public void memberMoved(PsiClass aClass, PsiMember member) {
+        assertEquals(sourceClass, aClass);
+        countMoved[0]++;
+      }
+    };
+    RefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener);
     new PullUpHelper(sourceClass, targetClass, infos, new JavaDocPolicy(JavaDocPolicy.ASIS)).moveMembersToBase();
+    RefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);
+    assertEquals(countMoved[0], membersToFind.length);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 }

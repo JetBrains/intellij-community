@@ -4,9 +4,16 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
+import com.intellij.refactoring.listeners.MoveMemberListener;
 import com.intellij.refactoring.listeners.impl.impl.RefactoringTransactionImpl;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMember;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -14,6 +21,7 @@ import java.util.ArrayList;
 public class RefactoringListenerManagerImpl extends RefactoringListenerManager implements ProjectComponent {
   private final ArrayList<RefactoringElementListenerProvider> myListenerProviders;
   private final Project myProject;
+  private List<MoveMemberListener> myMoveMemberListeners = new CopyOnWriteArrayList<MoveMemberListener>();
 
   public RefactoringListenerManagerImpl(Project project) {
     myProject = project;
@@ -44,6 +52,7 @@ public class RefactoringListenerManagerImpl extends RefactoringListenerManager i
     // do nothing
   }
 
+  @NotNull
   public String getComponentName() {
     return "RefactoringListenerManager";
   }
@@ -52,5 +61,19 @@ public class RefactoringListenerManagerImpl extends RefactoringListenerManager i
   }
 
   public void disposeComponent() {
+  }
+
+  public void addMoveMembersListener(MoveMemberListener moveMembersListener) {
+    myMoveMemberListeners.add(moveMembersListener);
+  }
+
+  public void removeMoveMembersListener(MoveMemberListener moveMembersListener) {
+    myMoveMemberListeners.remove(moveMembersListener);
+  }
+
+  public void fireMemberMoved(final PsiClass sourceClass, final PsiMember member) {
+    for (final MoveMemberListener listener : myMoveMemberListeners) {
+      listener.memberMoved(sourceClass, member);
+    }
   }
 }

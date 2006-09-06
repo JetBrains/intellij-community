@@ -25,6 +25,8 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.refactoring.listeners.RefactoringListenerManager;
+import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
@@ -164,6 +166,11 @@ public class PullUpHelper {
     }
 
     ChangeContextUtil.decodeContextInfo(myTargetSuperClass, null, null);
+
+    for (final PsiMember movedMember : myMembersAfterMove) {
+      final RefactoringListenerManager listenerManager = RefactoringListenerManager.getInstance(movedMember.getProject());
+      ((RefactoringListenerManagerImpl)listenerManager).fireMemberMoved(mySourceClass, movedMember);
+    }
   }
 
   public void moveFieldInitializations() throws IncorrectOperationException {

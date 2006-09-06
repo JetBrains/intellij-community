@@ -24,7 +24,7 @@ import com.intellij.openapi.project.Project;
  *
  * Listening to refactoring operations works as follows:
  * <ul>
- * <li> client wishing to recieve notifications registers a {@link RefactoringElementListenerProvider}
+ * <li> client wishing to receive notifications registers a {@link RefactoringElementListenerProvider}
  *  with this class.
  * <li> before some <code>PsiElement</code> is subjected to a refactoring, all registered providers
  *  are asked to provide a {@link RefactoringElementListener} for that element
@@ -42,6 +42,18 @@ public abstract class RefactoringListenerManager {
    * Unregisters previously registered provider of listeners.   
    */
   public abstract void removeListenerProvider(RefactoringElementListenerProvider provider);
+
+  /**
+   * Registers a listener for moving member by pull up, push down and extract super class/interface refactorings.
+   * @param moveMembersListener listener to register
+   */
+  public abstract void addMoveMembersListener(MoveMemberListener moveMembersListener);
+
+  /**
+   * Unregisters a previously registered listener.
+   * @param moveMembersListener listener to unregister
+   */
+  public abstract void removeMoveMembersListener(MoveMemberListener moveMembersListener);
 
   public static RefactoringListenerManager getInstance(Project project) {
     return project.getComponent(RefactoringListenerManager.class);
