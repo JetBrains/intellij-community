@@ -2,6 +2,7 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.*;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.javaee.J2EEFileTemplateNames;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -60,6 +62,9 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
   private static final String CODE_TITLE = IdeBundle.message("tab.filetemplates.code");
   private static final String J2EE_TITLE = IdeBundle.message("tab.filetemplates.j2ee");
 
+  @NonNls public static final String CURRENT_TAB = "FileTemplates.CurrentTab";
+  @NonNls public static final String SELECTED_TEMPLATE = "FileTemplates.SelectedTemplate";
+
   public void disposeComponent() {
   }
 
@@ -70,6 +75,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
     return ourIcon;
   }
 
+  @NotNull
   public String getComponentName() {
     return "FileTemplateOptions";
   }
@@ -338,7 +344,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
     return myMainPanel;
   }
 
-  private FileTemplateTabAsTree.TreeNode createNode(FileTemplateDescriptor descriptor) {
+  private static FileTemplateTabAsTree.TreeNode createNode(FileTemplateDescriptor descriptor) {
     if (descriptor instanceof FileTemplateGroupDescriptor) {
       FileTemplateDescriptor[] children = ((FileTemplateGroupDescriptor)descriptor).getTemplates();
       FileTemplateTabAsTree.TreeNode[] nodes = new FileTemplateTabAsTree.TreeNode[children.length];
@@ -384,6 +390,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
     FileTemplate selectedValue = myCurrentTab.getSelectedTemplate();
     FileTemplate prevTemplate = myEditor == null ? null : myEditor.getTemplate();
     if (prevTemplate != selectedValue) {
+      LOG.assertTrue(myEditor != null, "selected:" + selectedValue + "; prev:" + prevTemplate);
       //selection has changed
       if (myEditor.isModified()) {
         try {
@@ -421,6 +428,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
   }
 
   // internal template could not be removed and should be rendered bold
+  @SuppressWarnings({"SimplifiableIfStatement"})
   public static boolean isInternalTemplate(String templateName, String templateTabTitle) {
     if (templateName == null) return false;
     if (Comparing.strEqual(templateTabTitle, TEMPLATES_TITLE)) {
@@ -695,10 +703,38 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
   public void reset() {
     myEditor.reset();
     initLists();
+    final PropertiesComponent component = PropertiesComponent.getInstance();
+    final String tabName = component.getValue(CURRENT_TAB);
+    int idx = 0;
+    for (FileTemplateTab tab : myTabs) {
+      if (Comparing.strEqual(tab.getTitle(), tabName)) {
+        myCurrentTab = tab;
+        myTabbedPane.setSelectedIndex(idx);
+        final String selectedTemplate = component.getValue(SELECTED_TEMPLATE);
+        final FileTemplate[] templates = myCurrentTab.getTemplates();
+        for (FileTemplate template : templates) {
+          if (Comparing.strEqual(template.getName(), selectedTemplate)) {
+            tab.selectTemplate(template);
+            break;
+          }
+        }
+        break;
+      }
+      idx++;
+    }
     myModified = false;
   }
 
   public void disposeUIResources() {
+    if (myCurrentTab != null) {
+      final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+      propertiesComponent.setValue(CURRENT_TAB, myCurrentTab.getTitle());
+      final FileTemplate template = myCurrentTab.getSelectedTemplate();
+      if (template != null) {
+        propertiesComponent.setValue(SELECTED_TEMPLATE, template.getName());
+      }
+    }
+
     if (myEditor != null) {
       myEditor.disposeUIResources();
       myEditor = null;
