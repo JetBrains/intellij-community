@@ -27,4 +27,6 @@ public interface AntTypeDef extends AntTask {
   String getUri();
 
   AntTypeDefinition getDefinition();
+
+  boolean typesLoaded();
 }

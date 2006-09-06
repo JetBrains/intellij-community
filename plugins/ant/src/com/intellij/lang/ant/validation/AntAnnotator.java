@@ -55,6 +55,21 @@ public class AntAnnotator implements Annotator {
             holder.createErrorAnnotation(absoluteRange, AntBundle.message("nested.element.is.not.allowed.here", name));
           }
         }
+        if (se instanceof AntTypeDef) {
+          final AntTypeDef td = (AntTypeDef)se;
+          if (!td.typesLoaded()) {
+            holder.createErrorAnnotation(absoluteRange, AntBundle.message("failed.to.load.types", name));
+          }
+        }
+        else if (se.isTypeDefined()) {
+          final PsiElement de = def.getDefiningElement();
+          if (de != null) {
+            AntTypeDef td = (AntTypeDef)de;
+            if (!td.typesLoaded()) {
+              holder.createWarningAnnotation(absoluteRange, AntBundle.message("using.definition.which.type.failed.to.load", name));
+            }
+          }
+        }
       }
     }
     checkReferences(element, holder);

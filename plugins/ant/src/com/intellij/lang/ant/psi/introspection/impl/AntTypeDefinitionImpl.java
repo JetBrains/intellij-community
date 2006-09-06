@@ -36,6 +36,12 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
 
   public AntTypeDefinitionImpl(final AntTypeId id,
                                final String className,
+                               final boolean isTask){
+    this(id, className, isTask, new HashMap<String, AntAttributeType>(), new HashMap<AntTypeId, String>());
+  }
+
+  public AntTypeDefinitionImpl(final AntTypeId id,
+                               final String className,
                                final boolean isTask,
                                @NonNls @NotNull final Map<String, AntAttributeType> attributes,
                                final Map<AntTypeId, String> nestedElements) {

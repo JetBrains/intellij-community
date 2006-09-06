@@ -26,6 +26,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
 
   private static final ClassCache CLASS_CACHE = new ClassCache();
   private AntTypeDefinitionImpl myNewDefinition;
+  private boolean myClassesLoaded;
 
   public AntTypeDefImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
@@ -61,7 +62,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
 
   @Nullable
   public String getClassPath() {
-    return getSourceElement().getAttributeValue("classpath");
+    return computeAttributeValue(getSourceElement().getAttributeValue("classpath"));
   }
 
   @Nullable
@@ -92,6 +93,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
         parent.unregisterCustomType(myNewDefinition);
       }
       myNewDefinition = null;
+      myClassesLoaded = false;
     }
     getAntFile().clearCaches();
   }
@@ -104,6 +106,10 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       }
     }
     return myNewDefinition;
+  }
+
+  public boolean typesLoaded() {
+    return myClassesLoaded;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -154,9 +160,10 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     final String uri = getUri();
     final AntTypeId id = (uri == null) ? new AntTypeId(name) : new AntTypeId(name, uri);
     if (clazz == null) {
-      myNewDefinition = null;
+      myNewDefinition = new AntTypeDefinitionImpl(id, classname, isTask());
     }
     else {
+      myClassesLoaded = true;
       myNewDefinition = (AntTypeDefinitionImpl)AntFileImpl.createTypeDefinition(id, clazz, Task.class.isAssignableFrom(clazz));
     }
     if (myNewDefinition != null) {
@@ -165,10 +172,14 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       if (parent != null) {
         parent.registerCustomType(myNewDefinition);
       }
-      if (newlyLoaded) {
+      if (newlyLoaded && clazz != null) {
         CLASS_CACHE.setClass(urls, classname, clazz);
       }
     }
+  }
+
+  private boolean isTask() {
+    return "taskdef".equals(getSourceElement().getName());
   }
 
   private static class ClassEntry {
