@@ -24,6 +24,7 @@ import java.io.File;
 
 public class CheckoutFileOperation extends CvsOperationOnFiles {
   private final File myFile;
+  private boolean myIsDirectory;
   private String myModuleName;
   private final RevisionOrDate myRevisionOrDate;
   private final boolean myMakeNewFilesReadOnly;
@@ -32,8 +33,10 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
                                CvsConfiguration config,
                                String fileName,
                                Entry entry,
-                               boolean makeNewFilesReadOnly) {
+                               boolean makeNewFilesReadOnly,
+                               final boolean isDirectory) {
     this(parent, RevisionOrDateImpl.createOn(parent, entry, config.CHECKOUT_DATE_OR_REVISION_SETTINGS), fileName, makeNewFilesReadOnly);
+    myIsDirectory = isDirectory;
   }
 
   public CheckoutFileOperation(final VirtualFile parent,
@@ -44,6 +47,7 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
     myMakeNewFilesReadOnly = makeNewFilesReadOnly;
     myRevisionOrDate = revisionOrDate;
     myFile = CvsVfsUtil.getFileFor(parent, fileName);
+    myIsDirectory = myFile.isDirectory();
     Runnable writeAction = new Runnable(){
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -75,7 +79,7 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
     result.addModule(myModuleName);
     myRevisionOrDate.setForCommand(result);
     if (!isRoot()) {
-      result.setAlternativeCheckoutDirectory(myFile.isDirectory() ? myFile.getName() : ".");
+      result.setAlternativeCheckoutDirectory(myIsDirectory ? myFile.getName() : ".");
     }
     return result;
   }

@@ -13,8 +13,8 @@ import com.intellij.openapi.vcs.FilePath;
 public class CheckoutFilesOperation extends CompositeOperaton {
 
   public CheckoutFilesOperation(FilePath[] files, CvsConfiguration cvsConfiguration) {
-    for (int i = 0; i < files.length; i++) {
-      addFile(files[i], cvsConfiguration);
+    for (FilePath file : files) {
+      addFile(file, cvsConfiguration);
     }
   }
 
@@ -23,8 +23,8 @@ public class CheckoutFilesOperation extends CompositeOperaton {
     addOperation(
       new CheckoutFileOperation(file.getVirtualFileParent(), cvsConfiguration, file.getName(),
                                 CvsEntriesManager.getInstance().getEntryFor(file.getVirtualFileParent(), file.getName()),
-                                cvsConfiguration.MAKE_NEW_FILES_READONLY));
-  }
+                                cvsConfiguration.MAKE_NEW_FILES_READONLY, file.isDirectory()));
+  }                                                                                           
 
   public int getFilesToProcessCount() {
     return CvsHandler.UNKNOWN_COUNT;
