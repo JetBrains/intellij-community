@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.DefaultCharFilter;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
@@ -23,14 +24,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.IntArrayList;
-import com.intellij.lang.StdLanguages;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -590,26 +590,7 @@ public class TemplateState implements Disposable {
     replaceString(newValue, start, end, segmentNumber);
 
     if (result instanceof PsiTypeResult) {
-      PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-      PsiTypeElement t = PsiTreeUtil.getParentOfType(psiFile.findElementAt(start), PsiTypeElement.class);
-      if (t != null && t.getTextRange().getStartOffset() == start) {
-        try {
-          PsiJavaCodeReferenceElement ref = t.getInnermostComponentReferenceElement();
-          if (ref != null) {
-            myCodeStyleManager.shortenClassReferences(ref);
-            PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
-          }
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
-    }
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (result instanceof PsiTypeResult) {
-        updateTypeBindings(((PsiTypeResult)result).getType(), psiFile, context);
-      }
+      doReformat();
     }
   }
 
