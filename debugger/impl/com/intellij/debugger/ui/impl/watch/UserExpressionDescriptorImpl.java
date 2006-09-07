@@ -16,6 +16,7 @@ import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 
@@ -56,7 +57,10 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.type.name", typeName));
       }
 
-      return getEffectiveCodeFragmentFactory(psiClass).createCodeFragment(getEvaluationText(), psiClass, myProject);
+      final PsiCodeFragment fragment =
+        getEffectiveCodeFragmentFactory(psiClass).createCodeFragment(getEvaluationText(), psiClass, myProject);
+      fragment.forceResolveScope(GlobalSearchScope.allScope(myProject));
+      return fragment;
     }
     else {
       throw EvaluateExceptionUtil.createEvaluateException(
