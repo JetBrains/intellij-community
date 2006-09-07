@@ -26,12 +26,14 @@ public class RangeMarkerImpl extends DocumentAdapter implements RangeMarker {
 
   public RangeMarkerImpl(Document document, int start, int end) {
     if (!(start <= end && start >= 0 && end <= document.getTextLength())) {
-      LOG.assertTrue(start <= end, "start <= end");
       if (start < 0) {
         LOG.error("Wrong start: " + start);
       }
-      if (end > document.getTextLength()) {
+      else if (end > document.getTextLength()) {
         LOG.error("Wrong end: " + end, "document length="+document.getTextLength());
+      }
+      else {
+        LOG.error("start > end: start=" + start+"; end="+end);
       }
     }
 
@@ -170,7 +172,7 @@ public class RangeMarkerImpl extends DocumentAdapter implements RangeMarker {
       }
       else{
         myUserMap.remove(key);
-        if (myUserMap.size() == 0){
+        if (myUserMap.isEmpty()){
           myUserMap = null;
         }
       }
