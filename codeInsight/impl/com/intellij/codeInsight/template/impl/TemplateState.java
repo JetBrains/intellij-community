@@ -472,7 +472,7 @@ public class TemplateState implements Disposable {
   }
 
 
-  private void updateTypeBindings(Object item, PsiFile file, ExpressionContext context) {
+  private static void updateTypeBindings(Object item, PsiFile file, ExpressionContext context) {
     PsiClass aClass = null;
     if (item instanceof PsiClass) {
       aClass = (PsiClass)item;
@@ -501,12 +501,6 @@ public class TemplateState implements Disposable {
               LOG.error(e);
             }
           }
-        }
-      }
-      else {
-        TextRange range = getCurrentVariableRange();
-        if (range != null) {
-          addImportForClass(aClass, range.getStartOffset(), range.getEndOffset());
         }
       }
     }
@@ -591,6 +585,8 @@ public class TemplateState implements Disposable {
 
     if (result instanceof PsiTypeResult) {
       doReformat();
+      PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
+      updateTypeBindings(((PsiTypeResult)result).getType(), psiFile, context);
     }
   }
 
@@ -949,44 +945,6 @@ public class TemplateState implements Disposable {
     TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
     for (TemplateEditingListener listener : listeners) {
       listener.templateFinished(myTemplate);
-    }
-  }
-
-  private void addImportForClass(final PsiClass aClass, int startOffset, int endOffset) {
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    if (!aClass.isValid() || aClass.getQualifiedName() == null) return;
-
-    PsiManager manager = PsiManager.getInstance(myProject);
-    PsiResolveHelper helper = manager.getResolveHelper();
-
-    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-    CharSequence chars = myDocument.getCharsSequence();
-
-    PsiElement element = file.findElementAt(startOffset);
-    String refText = chars.subSequence(startOffset, endOffset).toString();
-    PsiClass refClass = helper.resolveReferencedClass(refText, element);
-    if (aClass.equals(refClass)) return;
-
-    if (element instanceof PsiIdentifier) {
-      PsiElement parent = element.getParent();
-      while (parent != null) {
-        PsiElement tmp = parent.getParent();
-        if (!(tmp instanceof PsiJavaCodeReferenceElement) || tmp.getTextRange().getEndOffset() > endOffset) break;
-        parent = tmp;
-      }
-      if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)parent).isQualified()) {
-        final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)parent;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            try {
-              ref.bindToElement(aClass);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
-      }
     }
   }
 
