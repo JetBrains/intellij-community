@@ -4,10 +4,12 @@ import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
@@ -71,6 +73,7 @@ public class FileHeaderChecker {
     final FileTemplate template = FileTemplateManager.getInstance().getPattern(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
     final ReplaceWithFileTemplateFix replaceTemplateFix = new ReplaceWithFileTemplateFix() {
       public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+        if (!element.isValid()) return;
         String newText;
         try {
           newText = template.getText(computeProperties(matcher, offsetToProperty));
@@ -80,8 +83,20 @@ public class FileHeaderChecker {
           return;
         }
         try {
-          PsiDocComment newDoc = element.getManager().getElementFactory().createDocCommentFromText(newText, element);
-          element.replace(newDoc);
+          int offset = element.getTextRange().getStartOffset();
+          PsiFile psiFile = element.getContainingFile();
+          if (psiFile == null) return;
+          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+          Document document = documentManager.getDocument(psiFile);
+          if (document == null) return;
+
+          element.delete();
+          documentManager.doPostponedOperationsAndUnblockDocument(document);
+          documentManager.commitDocument(document);
+
+          document.insertString(offset, newText);
+          //PsiDocComment newDoc = element.getManager().getElementFactory().createDocCommentFromText(newText, element);
+          //element.replace(newDoc);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
