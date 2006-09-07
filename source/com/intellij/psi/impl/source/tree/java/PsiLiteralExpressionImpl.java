@@ -180,8 +180,9 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
 
   public String getParsingError() {
     final Object value = getValue();
-    String text = getFirstChildNode().getText();
-    IElementType i = getFirstChildNode().getElementType();
+    TreeElement firstChildNode = getFirstChildNode();
+    String text = firstChildNode.getText();
+    IElementType i = firstChildNode.getElementType();
     if (i == JavaTokenType.INTEGER_LITERAL) {
       text = text.toLowerCase();
       //literal 2147483648 may appear only as the operand of the unary negation operator -.
@@ -290,11 +291,12 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
       return true;
     }
     int index = 0;
+    int outStartIndex = outChars.length();
     while (index < chars.length()) {
       char c = chars.charAt(index++);
       if (sourceOffsets != null) {
-        sourceOffsets[outChars.length()] = index - 1;
-        sourceOffsets[outChars.length() + 1] = index;
+        sourceOffsets[outChars.length()-outStartIndex] = index - 1;
+        sourceOffsets[outChars.length() + 1 -outStartIndex] = index;
       }
       if (c != '\\') {
         outChars.append(c);
@@ -393,7 +395,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
           return false;
       }
       if (sourceOffsets != null) {
-        sourceOffsets[outChars.length()] = index;
+        sourceOffsets[outChars.length()-outStartIndex] = index;
       }
     }
     return true;
