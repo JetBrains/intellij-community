@@ -101,13 +101,19 @@ public class AntPropertyReference extends AntGenericReference {
   public Object[] getVariants() {
     final Set<PsiElement> variants = PsiElementSetSpinAllocator.alloc();
     try {
-      final AntProject project = getElement().getAntProject();
-      for (final AntProperty property : project.getProperties()) {
-        addAntProperties(property, variants);
+      final Set<PsiElement> elementsDepthStack = PsiElementSetSpinAllocator.alloc();
+      try {
+        final AntProject project = getElement().getAntProject();
+        for (final AntProperty property : project.getProperties()) {
+          addAntProperties(property, variants);
+        }
+        getVariants(project, variants, elementsDepthStack);
+        for (final AntFile imported : project.getImportedFiles()) {
+          getVariants(imported.getAntProject(), variants, elementsDepthStack);
+        }
       }
-      getVariants(project, variants);
-      for (final AntFile imported : project.getImportedFiles()) {
-        getVariants(imported.getAntProject(), variants);
+      finally {
+        PsiElementSetSpinAllocator.dispose(elementsDepthStack);
       }
       return variants.toArray(new Object[variants.size()]);
     }
@@ -142,27 +148,43 @@ public class AntPropertyReference extends AntGenericReference {
     return result.toArray(new IntentionAction[result.size()]);
   }
 
-  private static void getVariants(final AntStructuredElement element, final Set<PsiElement> variants) {
-    for (final PsiElement child : element.getChildren()) {
-      if (child instanceof AntStructuredElement) {
-        getVariants((AntStructuredElement)child, variants);
-        if (child instanceof AntProperty) {
-          AntProperty property = (AntProperty)child;
-          final PropertiesFile propertiesFile = property.getPropertiesFile();
-          if (propertiesFile == null) {
-            addAntProperties(property, variants);
+  private static void getVariants(final AntStructuredElement element,
+                                  final Set<PsiElement> variants,
+                                  final Set<PsiElement> elementsDepthStack) {
+    if (elementsDepthStack.contains(element)) return;
+    elementsDepthStack.add(element);
+    try {
+      for (final PsiElement child : element.getChildren()) {
+        if (child instanceof AntStructuredElement) {
+          getVariants((AntStructuredElement)child, variants, elementsDepthStack);
+          if (child instanceof AntImport) {
+            AntImport antImport = (AntImport)child;
+            final AntFile imported = antImport.getImportedFile();
+            if(imported != null) {
+              getVariants(imported.getAntProject(), variants, elementsDepthStack);
+            }
           }
-          else {
-            for (final Property importedProp : propertiesFile.getProperties()) {
-              variants.add(importedProp);
+          else if (child instanceof AntProperty) {
+            AntProperty property = (AntProperty)child;
+            final PropertiesFile propertiesFile = property.getPropertiesFile();
+            if (propertiesFile == null) {
+              addAntProperties(property, variants);
+            }
+            else {
+              for (final Property importedProp : propertiesFile.getProperties()) {
+                variants.add(importedProp);
+              }
             }
           }
         }
       }
     }
+    finally {
+      elementsDepthStack.remove(element);
+    }
   }
 
-  private static void addAntProperties(AntProperty property, Set<PsiElement> variants) {
+  private static void addAntProperties(final AntProperty property, final Set<PsiElement> variants) {
     final String[] names = property.getNames();
     if (names != null) {
       final Project project = property.getProject();
