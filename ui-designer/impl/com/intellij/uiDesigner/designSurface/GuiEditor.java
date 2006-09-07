@@ -313,6 +313,11 @@ public final class GuiEditor extends JPanel implements DataProvider {
     paletteManager.addDragEventListener(myPaletteDragListener);
     myPaletteSelectionListener = new MyPaletteSelectionListener();
     paletteManager.addSelectionListener(myPaletteSelectionListener);
+
+    ActionManager.getInstance().getAction("GuiDesigner.IncreaseIndent").registerCustomShortcutSet(
+      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), myGlassLayer);
+    ActionManager.getInstance().getAction("GuiDesigner.DecreaseIndent").registerCustomShortcutSet(
+      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_MASK)), myGlassLayer);
   }
 
   @NotNull

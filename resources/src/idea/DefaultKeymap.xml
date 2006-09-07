@@ -13,12 +13,6 @@
     <action id="GuiDesigner.QuickJavadoc">
       <keyboard-shortcut first-keystroke="control Q"/>
     </action>
-    <action id="GuiDesigner.IncreaseIndent">
-      <keyboard-shortcut first-keystroke="TAB"/>
-    </action>
-    <action id="GuiDesigner.DecreaseIndent">
-      <keyboard-shortcut first-keystroke="shift TAB"/>
-    </action>
     <action id="ShowSettings">
       <keyboard-shortcut first-keystroke="control alt S"/>
     </action>
