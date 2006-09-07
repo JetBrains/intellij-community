@@ -441,7 +441,7 @@ public class HighlightMethodUtil {
     if (!resolveResult.isAccessible() && resolveResult.isStaticsScopeCorrect() && methodCandidate2 != null) {
       HighlightUtil.registerAccessQuickFixAction((PsiMember)element, referenceToMethod, highlightInfo, resolveResult.getCurrentFileResolveScope());
     }
-    if (!resolveResult.isStaticsScopeCorrect()) {
+    if (element != null && !resolveResult.isStaticsScopeCorrect()) {
       HighlightUtil.registerStaticProblemQuickFixAction(element, highlightInfo, referenceToMethod);
     }
 

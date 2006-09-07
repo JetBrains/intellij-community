@@ -983,7 +983,8 @@ public class HighlightUtil {
     return JavaErrorMessages.message(key, HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY));
   }
 
-  static void registerStaticProblemQuickFixAction(PsiElement refElement, HighlightInfo errorResult, PsiJavaCodeReferenceElement place) {
+  static void registerStaticProblemQuickFixAction(@NotNull PsiElement refElement,
+                                                  HighlightInfo errorResult, PsiJavaCodeReferenceElement place) {
     PsiModifierList modifierList = null;
     if (refElement instanceof PsiModifierListOwner) {
       modifierList = ((PsiModifierListOwner)refElement).getModifierList();
@@ -1946,7 +1947,9 @@ public class HighlightUtil {
         if (!result.isStaticsScopeCorrect()) {
           String description = buildProblemWithStaticDescription(resolved);
           HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(), description);
-          registerStaticProblemQuickFixAction(resolved, info, ref);
+          if (resolved != null) {
+            registerStaticProblemQuickFixAction(resolved, info, ref);
+          }
           if (ref instanceof PsiReferenceExpression) {
             QuickFixAction.registerQuickFixAction(info, new RenameWrongRefAction((PsiReferenceExpression)ref));
           }
