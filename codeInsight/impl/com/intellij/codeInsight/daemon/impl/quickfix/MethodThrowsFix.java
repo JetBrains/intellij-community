@@ -65,8 +65,10 @@ public class MethodThrowsFix implements IntentionAction {
       }
       if (myShouldThrow && !alreadyThrows) {
         final PsiElementFactory factory = myMethod.getManager().getElementFactory();
-        final PsiClassType type = (PsiClassType)factory.createTypeFromText(myThrowsCanonicalText, null);
-        myMethod.getThrowsList().add(factory.createReferenceElementByType(type));
+        final PsiClassType type = (PsiClassType)factory.createTypeFromText(myThrowsCanonicalText, myMethod);
+        PsiJavaCodeReferenceElement ref = factory.createReferenceElementByType(type);
+        ref = (PsiJavaCodeReferenceElement)PsiManager.getInstance(project).getCodeStyleManager().shortenClassReferences(ref);
+        myMethod.getThrowsList().add(ref);
       }
       UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
     } catch (IncorrectOperationException e) {
