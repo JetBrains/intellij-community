@@ -173,7 +173,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     if (vFile == null) return null;
     String projectPath = vFile.getPath();
     final String baseDir = antFile.getAntProject().getBaseDir();
-    if( baseDir != null && baseDir.length() > 0) {
+    if (baseDir != null && baseDir.length() > 0) {
       projectPath = new File(projectPath, baseDir).getAbsolutePath();
     }
     final String fileName = computeAttributeValue(name);
@@ -399,11 +399,17 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
         startProp += 2;
       }
       else {
-        if (endProp < value.length() - 1) {
-          value = value.substring(0, startProp) + resolvedValue + value.substring(endProp + 1);
+        final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+        try {
+          builder.append(value, 0, startProp);
+          builder.append(resolvedValue);
+          if (endProp < value.length() - 1) {
+            builder.append(value, endProp + 1, value.length());
+          }
+          value = builder.toString();
         }
-        else {
-          value = value.substring(0, startProp) + resolvedValue;
+        finally {
+          StringBuilderSpinAllocator.dispose(builder);
         }
       }
     }
