@@ -55,6 +55,15 @@ public class SymbolPresentationUtil {
       );
     }
 
+    if (element instanceof NavigationItem &&
+        !(element instanceof PsiMember)
+       ){
+      final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
+      if (presentation != null){
+        return presentation.getPresentableText();
+      }
+    }
+
     if (element instanceof PsiNamedElement) return ((PsiNamedElement)element).getName();
     return element.getText();
   }
