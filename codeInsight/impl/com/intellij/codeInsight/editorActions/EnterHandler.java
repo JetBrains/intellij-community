@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -643,9 +642,13 @@ public class EnterHandler extends EditorWriteActionHandler {
     }
 
     private boolean insertDocAsterisk(int lineStart, boolean docAsterisk) {
-      PsiElement element = myFile.findElementAt(lineStart);
+      PsiElement atLineStart = myFile.findElementAt(lineStart);
+      if (atLineStart == null) return false;
 
-      if (element.getText().equals(DOC_COMMENT_ASTERISK_STRING) || element.getText().equals(DOC_COMMENT_PREFIX)) {
+      if (atLineStart.getText().equals(DOC_COMMENT_ASTERISK_STRING) || atLineStart.getText().equals(DOC_COMMENT_PREFIX)) {
+        PsiElement element = myFile.findElementAt(myOffset);
+        if (element == null) return false;
+
         PsiDocComment comment = null;
         if (element.getParent() instanceof PsiDocComment) {
           comment = (PsiDocComment)element.getParent();
@@ -668,13 +671,13 @@ public class EnterHandler extends EditorWriteActionHandler {
           docAsterisk = false;
         }
       }
-      else if (element instanceof PsiComment && ((PsiComment)element).getTokenType() == JavaTokenType.C_STYLE_COMMENT) {
+      else if (atLineStart instanceof PsiComment && ((PsiComment)atLineStart).getTokenType() == JavaTokenType.C_STYLE_COMMENT) {
         // Check if C-Style comment already uses asterisks.
         boolean usesAstersk = false;
-        int commentLine = myDocument.getLineNumber(element.getTextRange().getStartOffset());
-        if (commentLine < myDocument.getLineCount() - 1) {
+        int commentLine = myDocument.getLineNumber(atLineStart.getTextRange().getStartOffset());
+        if (commentLine < myDocument.getLineCount() - 1 && atLineStart.getTextRange().getEndOffset() >= myOffset) {
           int nextLineOffset = myDocument.getLineStartOffset(commentLine + 1);
-          if (nextLineOffset < element.getTextRange().getEndOffset()) {
+          if (nextLineOffset < atLineStart.getTextRange().getEndOffset()) {
             final CharSequence chars = myDocument.getCharsSequence();
             nextLineOffset = CharArrayUtil.shiftForward(chars, nextLineOffset, " \t");
             usesAstersk = chars.charAt(nextLineOffset) == '*';
