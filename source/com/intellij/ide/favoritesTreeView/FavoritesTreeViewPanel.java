@@ -13,10 +13,10 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.idea.Main;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
@@ -162,7 +162,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         return getSelectedPsiElements();
       }
     };
-    if (!Main.isHeadless()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myTree.setTransferHandler(new TransferHandler() {
         public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
           for (DataFlavor transferFlavor : transferFlavors) {

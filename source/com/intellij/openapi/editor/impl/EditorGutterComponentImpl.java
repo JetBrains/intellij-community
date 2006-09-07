@@ -13,7 +13,6 @@ import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.ide.ui.LafManager;
-import com.intellij.idea.Main;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -77,7 +76,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   public EditorGutterComponentImpl(EditorImpl editor) {
     myEditor = editor;
-    if (!Main.isHeadless()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       new DropTarget(this, new MyDropTargetListener());
       final DragSource dragSource = DragSource.getDefaultDragSource();
       dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());

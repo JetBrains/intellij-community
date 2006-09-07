@@ -5,9 +5,9 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.idea.Main;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -136,7 +136,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     // Calculate screen bounds.
 
     myScreenBounds = new Rectangle();
-    if (!Main.isHeadless()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       final GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
       final GraphicsDevice[] devices = env.getScreenDevices();
       for (final GraphicsDevice device : devices) {

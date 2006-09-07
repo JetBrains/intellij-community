@@ -4,7 +4,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.palette.PaletteDragEventListener;
 import com.intellij.ide.palette.impl.PaletteManager;
-import com.intellij.idea.Main;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -301,7 +300,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     myQuickFixManager = new QuickFixManagerImpl(this, myGlassLayer, scrollPane.getViewport());
 
     myDropTargetListener = new DesignDropTargetListener(this);
-    if (!Main.isHeadless()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       new DropTarget(getGlassLayer(), DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
     }
 

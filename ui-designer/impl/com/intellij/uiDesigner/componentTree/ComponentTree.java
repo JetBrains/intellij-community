@@ -5,10 +5,10 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.idea.Main;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -104,7 +104,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       this
     );
 
-    if (!Main.isHeadless()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       setDragEnabled(true);
       setTransferHandler(new TransferHandler() {
         public int getSourceActions(JComponent c) {
