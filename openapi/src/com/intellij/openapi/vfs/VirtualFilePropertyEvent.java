@@ -15,6 +15,14 @@
  */
 package com.intellij.openapi.vfs;
 
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Provides data for event which is fired when the name or writable status of a virtual file is changed.
+ *
+ * @see VirtualFileListener#beforePropertyChange(VirtualFilePropertyEvent)
+ * @see VirtualFileListener#propertyChanged(VirtualFilePropertyEvent)
+ */
 public class VirtualFilePropertyEvent extends VirtualFileEvent {
   private final String myPropertyName;
   private final Object myOldValue;
@@ -27,15 +35,35 @@ public class VirtualFilePropertyEvent extends VirtualFileEvent {
     myNewValue = newValue;
   }
 
-  public String getPropertyName(){
+  /**
+   * Returns the name of the changed property ({@link VirtualFile#PROP_NAME} or {@link VirtualFile#PROP_WRITABLE}).
+   *
+   * @return the name of the changed property.
+   * @see VirtualFile#PROP_NAME
+   * @see VirtualFile#PROP_WRITABLE
+   */
+  @NotNull
+  public String getPropertyName() {
     return myPropertyName;
   }
 
-  public Object getOldValue(){
+  /**
+   * Returns the old value of the property.
+   *
+   * @return the old value of the property (String for {@link VirtualFile#PROP_NAME}, Boolean for
+   * {@link VirtualFile#PROP_WRITABLE}).
+   */
+  public Object getOldValue() {
     return myOldValue;
   }
 
-  public Object getNewValue(){
+  /**
+   * Returns the new value of the property.
+   *
+   * @return the new value of the property (String for {@link VirtualFile#PROP_NAME}, Boolean for
+   * {@link VirtualFile#PROP_WRITABLE}).
+   */
+  public Object getNewValue() {
     return myNewValue;
   }
 }

@@ -16,9 +16,16 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventObject;
 
+/**
+ * Provides data for a virtual file system change event.
+ *
+ * @see com.intellij.openapi.vfs.VirtualFileListener
+ */
 public class VirtualFileEvent extends EventObject {
   private final VirtualFile myFile;
   private final VirtualFile myParent;
@@ -29,7 +36,7 @@ public class VirtualFileEvent extends EventObject {
   private long myOldModificationStamp;
   private long myNewModificationStamp;
 
-  public VirtualFileEvent(Object requestor, VirtualFile file, String fileName, boolean isDirectory, VirtualFile parent){
+  public VirtualFileEvent(@Nullable Object requestor, @NotNull VirtualFile file, String fileName, boolean isDirectory, VirtualFile parent){
     super(file);
     myRequestor = requestor != null ? requestor : file.getUserData(VirtualFile.REQUESTOR_MARKER);
     myFile = file;
@@ -38,7 +45,7 @@ public class VirtualFileEvent extends EventObject {
     myParent = parent;
   }
 
-  public VirtualFileEvent(Object requestor, VirtualFile file, VirtualFile parent, long oldModificationStamp, long newModificationStamp){
+  public VirtualFileEvent(@Nullable Object requestor, @NotNull VirtualFile file, VirtualFile parent, long oldModificationStamp, long newModificationStamp){
     super(file);
     myFile = file;
     myFileName = file.getName();
@@ -49,10 +56,22 @@ public class VirtualFileEvent extends EventObject {
     myNewModificationStamp = newModificationStamp;
   }
 
-  public VirtualFile getFile(){
+  /**
+   * Returns the file to which the change happened.
+   *
+   * @return the changed file.
+   */
+  @NotNull
+  public VirtualFile getFile() {
     return myFile;
   }
 
+  /**
+   * Returns the name of the changed file.
+   *
+   * @return the name of the changed file.
+   */
+  @NotNull
   public String getFileName() {
     return myFileName;
   }
@@ -61,19 +80,45 @@ public class VirtualFileEvent extends EventObject {
     return myIsDirectory;
   }
 
-  public VirtualFile getParent(){
+  /**
+   * Returns the parent of the virtual file.
+   *
+   * @return the parent, or null if the file is a root directory or it was not possible to determine the parent
+   * (depends on the specific VFS implementation).
+   */
+  @Nullable
+  public VirtualFile getParent() {
     return myParent;
   }
 
-  public Object getRequestor(){
+  /**
+   * Returns the object which performed the operation changing the VFS, or null if the change was
+   * caused by an external process and detected during VFS refresh.
+   *
+   * @return the refresh initiating object, or null if it was not specified.
+   */
+  @Nullable
+  public Object getRequestor() {
     return myRequestor;
   }
 
+  /**
+   * Returns the modification stamp of the file before the event.
+   *
+   * @return the modification stamp of the file before the event.
+   * @see com.intellij.openapi.vfs.VirtualFile#getModificationStamp()
+   */
   public long getOldModificationStamp(){
     return myOldModificationStamp;
   }
 
-  public long getNewModificationStamp(){
+  /**
+   * Returns the modification stamp of the file after the event.
+   *
+   * @return the modification stamp of the file after the event.
+   * @see com.intellij.openapi.vfs.VirtualFile#getModificationStamp()
+   */
+  public long getNewModificationStamp() {
     return myNewModificationStamp;
   }
 
@@ -81,6 +126,11 @@ public class VirtualFileEvent extends EventObject {
     return myRequestor == null;
   }
 
+  /**
+   * Returns true if the VFS change described by the event is the save of a document.
+   *
+   * @return true if the VFS change described by the event is the save of a document, false otherwise.
+   */
   public boolean isFromSave() {
     return myRequestor instanceof FileDocumentManager;
   }

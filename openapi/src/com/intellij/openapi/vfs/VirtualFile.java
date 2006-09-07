@@ -34,7 +34,9 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 
 /**
- * Represents a file in <code>{@link VirtualFileSystem}</code>.
+ * Represents a file in <code>{@link VirtualFileSystem}</code>. A particular file is represented by the same
+ * <code>VirtualFile</code> instance for the entire lifetime of the IntelliJ IDEA process, unless the file
+ * is deleted, in which case {@link #isValid()} for the instance will return <code>false</code>.
  *
  * @see VirtualFileSystem
  * @see VirtualFileManager

@@ -15,8 +15,13 @@
  */
 package com.intellij.openapi.vfs;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
+ * Provides data for event which is fired when a virtual file is moved.
  *
+ * @see VirtualFileListener#beforePropertyChange(VirtualFilePropertyEvent)
+ * @see VirtualFileListener#propertyChanged(VirtualFilePropertyEvent)
  */
 public class VirtualFileMoveEvent extends VirtualFileEvent {
   private final VirtualFile myOldParent;
@@ -28,11 +33,23 @@ public class VirtualFileMoveEvent extends VirtualFileEvent {
     myNewParent = newParent;
   }
 
-  public VirtualFile getOldParent(){
+  /**
+   * Returns the parent of the file before the move.
+   *
+   * @return the parent of the file before the move.
+   */
+  @NotNull
+  public VirtualFile getOldParent() {
     return myOldParent;
   }
 
-  public VirtualFile getNewParent(){
+  /**
+   * Returns the parent of the file after the move.
+   *
+   * @return the parent of the file after the move.
+   */
+  @NotNull
+  public VirtualFile getNewParent() {
     return myNewParent;
   }
 }
