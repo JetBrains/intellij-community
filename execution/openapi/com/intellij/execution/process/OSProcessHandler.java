@@ -154,7 +154,6 @@ public class OSProcessHandler extends ProcessHandler {
   private void closeStreams() {
     try {
       myProcess.getOutputStream().close();
-      myProcess.getErrorStream().close();
     }
     catch (IOException e) {
       LOG.error(e);
