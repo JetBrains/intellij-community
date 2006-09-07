@@ -335,6 +335,9 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       int cell = getCellAt(e.getPoint());
 
       if (cell >= 0 && e.isPopupTrigger()) {
+        if (!mySelectionModel.isSelectedIndex(cell)) {
+          mySelectionModel.setSelectionInterval(cell, cell);
+        }
         ActionGroup group = mySelectedContainer.getGridLayoutManager().getCaptionActions();
         if (group != null) {
           final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
