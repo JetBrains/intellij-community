@@ -317,7 +317,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
     StepRequest stepRequest = requestManager.createStepRequest(stepThread.getThreadReference(), StepRequest.STEP_LINE, depth);
     DebuggerSettings settings = DebuggerSettings.getInstance();
-    if (!(hint != null && hint.isIgnoreFilters()) && depth == StepRequest.STEP_INTO) {
+    if (!(hint != null && hint.isIgnoreFilters()) /*&& depth == StepRequest.STEP_INTO*/) {
       if (settings.TRACING_FILTERS_ENABLED) {
         String currentClassName = getCurrentClassName(stepThread);
         if (currentClassName == null || !settings.isNameFiltered(currentClassName)) {
@@ -1354,6 +1354,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       // from which the java code was generated
       RequestHint hint = new RequestHint(steppingThread, suspendContext, StepRequest.STEP_OVER);
       hint.setRestoreBreakpoints(myIsIgnoreBreakpoints);
+      hint.setIgnoreFilters(myIsIgnoreBreakpoints);
 
       doStep(steppingThread, StepRequest.STEP_OVER, hint);
 
