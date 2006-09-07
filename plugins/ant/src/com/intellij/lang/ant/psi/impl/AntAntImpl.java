@@ -55,7 +55,7 @@ public class AntAntImpl extends AntTaskImpl implements AntAnt {
     final PsiReference[] result = super.getReferences();
     for (final PsiReference reference : result) {
       if (reference instanceof AntTargetReference) {
-        ((AntTargetReference)reference).setShouldBeSkippedByAnnotator(findFileByName(getFileName()) == null);
+        ((AntTargetReference)reference).setShouldBeSkippedByAnnotator(findFileByName(getFileName(), false) == null);
       }
     }
     return result;

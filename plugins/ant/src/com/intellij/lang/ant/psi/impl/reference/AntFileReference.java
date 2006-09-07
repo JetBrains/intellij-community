@@ -2,6 +2,7 @@ package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.psi.AntImport;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -57,7 +58,8 @@ public class AntFileReference extends AntGenericReference {
   }
 
   public PsiElement resolve() {
-    return getElement().findFileByName(getCanonicalText());
+    final AntStructuredElement se = getElement();
+    return se.findFileByName(getCanonicalText(), se instanceof AntImport);
   }
 
   public String getUnresolvedMessagePattern() {

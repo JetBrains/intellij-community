@@ -140,7 +140,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
       myPropertiesFile = AntElementImpl.ourNull;
       final String name = getFileName();
       if (name != null) {
-        final PsiFile psiFile = findFileByName(name);
+        final PsiFile psiFile = findFileByName(name, false);
         if (psiFile instanceof PropertiesFile) {
           myPropertiesFile = psiFile;
         }

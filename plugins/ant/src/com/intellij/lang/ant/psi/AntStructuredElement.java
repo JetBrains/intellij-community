@@ -22,7 +22,7 @@ public interface AntStructuredElement extends AntElement {
   boolean hasImportedTypeDefinition();
 
   @Nullable
-  PsiFile findFileByName(final String name);
+  PsiFile findFileByName(final String name, final boolean ignoreBasedir);
 
   @Nullable
   String computeAttributeValue(String value);
