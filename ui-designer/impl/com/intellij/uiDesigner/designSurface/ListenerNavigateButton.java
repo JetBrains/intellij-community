@@ -18,6 +18,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -25,6 +26,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -71,6 +73,7 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
     }
   }
 
+  @Nullable
   public static DefaultActionGroup prepareActionGroup(final RadComponent component) {
     final IRootContainer root = FormEditingUtil.getRoot(component);
     final String classToBind = root.getClassToBind();
@@ -97,7 +100,8 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
       LOG.error(e);
       return null;
     }
-    ReferencesSearch.search(boundField).forEach(new Processor<PsiReference>() {
+    final LocalSearchScope scope = new LocalSearchScope(boundField.getContainingFile());
+    ReferencesSearch.search(boundField, scope).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference ref) {
         final PsiElement element = ref.getElement();
         if (element.getParent() instanceof PsiReferenceExpression) {
