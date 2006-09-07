@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -129,7 +130,7 @@ public abstract class RunConfigurationBase implements RunConfiguration {
 
   //invoke before run/debug tabs are shown.
   //Should be overriden to add additional tabs for run/debug toolwindow
-  public void createAdditionalTabComponents(AdditionalTabComponentManager manager) {
+  public void createAdditionalTabComponents(AdditionalTabComponentManager manager, ProcessHandler startedProcess) {
   }
 
   public void readExternal(Element element) throws InvalidDataException {

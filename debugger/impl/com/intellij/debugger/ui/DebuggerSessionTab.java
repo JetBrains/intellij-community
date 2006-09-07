@@ -282,7 +282,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
         }
       }
     }
-    base.createAdditionalTabComponents(this);
+    base.createAdditionalTabComponents(this, myRunContentDescriptor.getProcessHandler());
   }
 
   public void addLogConsole(final String path, final boolean skipContent, final Project project, final String name, final RunConfigurationBase configuration) {
