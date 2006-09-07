@@ -4,11 +4,17 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.diff.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -94,6 +100,7 @@ public class ShowDiffAction extends AnAction {
     }
   }
 
+  @Nullable
   private static SimpleDiffRequest createDiffRequest(final Change[] changes,
                                                      final int index,
                                                      final Project project,
@@ -105,7 +112,15 @@ public class ShowDiffAction extends AnAction {
 
     if ((bRev != null && (bRev.getFile().getFileType().isBinary() || bRev.getFile().isDirectory())) ||
         (aRev != null && (aRev.getFile().getFileType().isBinary() || aRev.getFile().isDirectory()))) {
-      return null;
+      if (bRev != null && bRev.getFile().getFileType() == StdFileTypes.UNKNOWN) {
+        if (!checkAssociate(project, bRev.getFile())) return null;
+      }
+      else if (aRev != null && aRev.getFile().getFileType() == StdFileTypes.UNKNOWN) {
+        if (!checkAssociate(project, aRev.getFile())) return null;
+      }
+      else {
+        return null;
+      }
     }
 
     String title = bRev != null ? bRev.getFile().getPath() : aRev != null ? aRev.getFile().getPath() : "Unknown diff";
@@ -135,6 +150,21 @@ public class ShowDiffAction extends AnAction {
 
     diffReq.setContentTitles("Base version", "Your version");
     return diffReq;
+  }
+
+  private static boolean checkAssociate(final Project project, final FilePath file) {
+    int rc = Messages.showDialog(project,
+                                 VcsBundle.message("diff.unknown.file.type.prompt", file.getName()),
+                                 VcsBundle.message("diff.unknown.file.type.title"),
+                                 new String[] {
+                                   VcsBundle.message("diff.unknown.file.type.associate"),
+                                   CommonBundle.getCancelButtonText()
+                                 }, 0, Messages.getQuestionIcon());
+    if (rc == 0) {
+      FileType fileType = FileTypeChooser.associateFileType(file.getName());
+      return fileType != null && !fileType.isBinary();
+    }
+    return false;
   }
 
   private static class ShowNextChangeAction extends AnAction {
