@@ -16,13 +16,13 @@ public class MethodThrowsFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix");
 
   private final PsiMethod myMethod;
-  private final PsiClassType myThrowsClassType;
+  private final String myThrowsCanonicalText;
   private final boolean myShouldThrow;
   private final boolean myShowContainingClass;
 
-  public MethodThrowsFix(PsiMethod method, PsiClassType exceptionClass, boolean shouldThrow, boolean showContainingClass) {
+  public MethodThrowsFix(PsiMethod method, PsiClassType exceptionType, boolean shouldThrow, boolean showContainingClass) {
     myMethod = method;
-    myThrowsClassType = exceptionClass;
+    myThrowsCanonicalText = exceptionType.getCanonicalText();
     myShouldThrow = shouldThrow;
     myShowContainingClass = showContainingClass;
   }
@@ -34,7 +34,7 @@ public class MethodThrowsFix implements IntentionAction {
                                                    PsiFormatUtil.SHOW_NAME | (myShowContainingClass ? PsiFormatUtil.SHOW_CONTAINING_CLASS: 0),
                                                    0);
     return QuickFixBundle.message(myShouldThrow ? "fix.throws.list.add.exception" : "fix.throws.list.remove.exception",
-                                  myThrowsClassType.getCanonicalText(),
+                                  myThrowsCanonicalText,
                                   methodName);
   }
 
@@ -46,9 +46,7 @@ public class MethodThrowsFix implements IntentionAction {
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     return myMethod != null
         && myMethod.isValid()
-        && myMethod.getManager().isInProject(myMethod)
-        && myThrowsClassType != null
-        && myThrowsClassType.isValid();
+        && myMethod.getManager().isInProject(myMethod);
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
@@ -57,7 +55,7 @@ public class MethodThrowsFix implements IntentionAction {
     try {
       boolean alreadyThrows = false;
       for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
-        if (referenceElement.getCanonicalText().equals(myThrowsClassType.getCanonicalText())) {
+        if (referenceElement.getCanonicalText().equals(myThrowsCanonicalText)) {
           alreadyThrows = true;
           if (!myShouldThrow) {
             referenceElement.delete();
@@ -66,7 +64,9 @@ public class MethodThrowsFix implements IntentionAction {
         }
       }
       if (myShouldThrow && !alreadyThrows) {
-        myMethod.getThrowsList().add(myMethod.getManager().getElementFactory().createReferenceElementByType(myThrowsClassType));
+        final PsiElementFactory factory = myMethod.getManager().getElementFactory();
+        final PsiClassType type = (PsiClassType)factory.createTypeFromText(myThrowsCanonicalText, null);
+        myMethod.getThrowsList().add(factory.createReferenceElementByType(type));
       }
       UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
     } catch (IncorrectOperationException e) {
