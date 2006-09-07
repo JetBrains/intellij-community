@@ -475,16 +475,17 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public boolean isErrorAnalyzingFinished(PsiFile file) {
     if (myDisposed) return false;
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
-    if (document == null) return false;
-    if (document.getModificationStamp() != file.getModificationStamp()) return false;
-    return myFileStatusMap.getFileDirtyScope(document, FileStatusMap.NORMAL_HIGHLIGHTERS) == null;
+    return document != null &&
+           document.getModificationStamp() == file.getModificationStamp() &&
+           myFileStatusMap.getFileDirtyScope(document, FileStatusMap.NORMAL_HIGHLIGHTERS) == null;
   }
 
   public boolean isInspectionCompleted(PsiFile file) {
     if (file instanceof PsiCompiledElement) return true;
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
-    if (document.getModificationStamp() != file.getModificationStamp()) return false;
-    return myFileStatusMap.getFileDirtyScope(document, FileStatusMap.LOCAL_INSPECTIONS) == null;
+    return document != null &&
+           document.getModificationStamp() == file.getModificationStamp() &&
+           myFileStatusMap.getFileDirtyScope(document, FileStatusMap.LOCAL_INSPECTIONS) == null;
   }
 
   public FileStatusMap getFileStatusMap() {
@@ -916,7 +917,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       }
     }
 
-    if (ApplicationManager.getApplication().getCurrentModalityState() != ModalityState.NON_MMODAL) {
+    if (ApplicationManager.getApplication().getCurrentModalityState() != ModalityState.NON_MODAL) {
       return fileEditors;
     }
 

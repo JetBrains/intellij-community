@@ -121,13 +121,17 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
         int currentSeverityErrors = 0;
         for (int i = status.errorCount.length - 1; i >=0; i--){
           final HighlightSeverity severity = SeverityRegistrar.getSeverityByIndex(i);
-          final int count = (status.errorCount[i] - currentSeverityErrors);
+          final int count = status.errorCount[i] - currentSeverityErrors;
           if (count > 0){
             text += BR;
             if (inspecting){
-              text += DaemonBundle.message("errors.found.so.far", count, (count > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase()));
+              text += DaemonBundle.message("errors.found.so.far", count, count > 1
+                                                                         ? StringUtil.pluralize(severity.toString().toLowerCase())
+                                                                         : severity.toString().toLowerCase());
             } else {
-              text += DaemonBundle.message("errors.found", count, (count > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase()));
+              text += DaemonBundle.message("errors.found", count, count > 1
+                                                                  ? StringUtil.pluralize(severity.toString().toLowerCase())
+                                                                  : severity.toString().toLowerCase());
             }
             currentSeverityErrors += count;
           }

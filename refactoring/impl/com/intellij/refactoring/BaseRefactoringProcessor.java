@@ -124,7 +124,6 @@ public abstract class BaseRefactoringProcessor {
   protected abstract String getCommandName();
 
   protected void doRun() {
-
     final Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>();
 
     final Runnable findUsagesRunnable = new Runnable() {
@@ -310,7 +309,8 @@ public abstract class BaseRefactoringProcessor {
           performPsiSpoilingRefactoring();
         }
       });
-    } finally {
+    }
+    finally {
         LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
     }
 

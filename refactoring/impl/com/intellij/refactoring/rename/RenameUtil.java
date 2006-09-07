@@ -1,7 +1,10 @@
 package com.intellij.refactoring.rename;
 
+import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,7 +31,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Queue;
-import com.intellij.codeInsight.ChangeContextUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -87,8 +89,8 @@ public class RenameUtil {
       }
     }
 
-    RenameUtil.findUnresolvableLocalsCollisions(element, newName, result);
-    RenameUtil.findUnresolvableMemberCollisions(element, newName, result);
+    findUnresolvableLocalsCollisions(element, newName, result);
+    findUnresolvableMemberCollisions(element, newName, result);
 
 
     if (searchInStringsAndComments && !(element instanceof PsiDirectory)) {
@@ -200,7 +202,6 @@ public class RenameUtil {
   public static void findUnresolvableMemberCollisions(final PsiElement element, final String newName, List<UsageInfo> result) {
     PsiManager manager = element.getManager();
     final PsiSearchHelper helper = manager.getSearchHelper();
-    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
 
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
@@ -581,7 +582,7 @@ public class RenameUtil {
     Queue<PsiReference> queue = new Queue<PsiReference>(infos.length);
     for (UsageInfo info : infos) {
       if (info.getElement() == null) continue;
-      PsiReference ref = ((MoveRenameUsageInfo)info).getReference();
+      PsiReference ref = info.getReference();
       if (ref == null) continue;
       queue.addLast(ref);
     }
@@ -625,7 +626,7 @@ public class RenameUtil {
 
   private static void rename(UsageInfo info, String newName) throws IncorrectOperationException {
     if (info.getElement() == null) return;
-    PsiReference ref = ((MoveRenameUsageInfo)info).getReference();
+    PsiReference ref = info.getReference();
     if (ref == null) return;
     ref.handleElementRename(newName);
   }
@@ -652,6 +653,8 @@ public class RenameUtil {
 
     // do actual rename
     ChangeContextUtil.encodeContextInfo(aClass, true);
+    PsiFile psiFile = aClass.getContainingFile();
+    Document document = psiFile == null ? null : PsiDocumentManager.getInstance(aClass.getProject()).getDocument(psiFile);
     aClass.setName(newName);
     ChangeContextUtil.decodeContextInfo(aClass, null, null); //to make refs to other classes from this one resolve to their old referent
 
@@ -661,6 +664,10 @@ public class RenameUtil {
       collision.resolveCollision();
     }
     listener.elementRenamed(aClass);
+    if (document != null) {
+      // make highlighting consistent
+      ((DocumentEx)document).setModificationStamp(psiFile.getModificationStamp());
+    }
   }
 
   private static void doRenameMethod(PsiMethod method,
@@ -675,7 +682,7 @@ public class RenameUtil {
       if (!(element instanceof PsiMethod)) {
         final PsiReference ref;
         if (usage instanceof MoveRenameUsageInfo) {
-          ref = ((MoveRenameUsageInfo) usage).getReference();
+          ref = usage.getReference();
         } else {
           ref = element.getReference();
         }
@@ -711,7 +718,7 @@ public class RenameUtil {
           ref = element.getReference();
         }
         else {
-          ref = ((MoveRenameUsageInfo)usage).getReference();
+          ref = usage.getReference();
         }
         if (ref != null) {
           PsiElement newElem = ref.handleElementRename(newName);

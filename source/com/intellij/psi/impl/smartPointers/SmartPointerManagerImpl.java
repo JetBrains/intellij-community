@@ -143,7 +143,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
           //[ven] this is a really NASTY hack; when no smart pointer is kept on UsageInfo then remove this conditional
           if (!(element instanceof PsiFile)) {
             PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
-            LOG.assertTrue(!documentManager.isUncommited(document) || documentManager.isCommitingDocument(document), "Document for : " + file + " is not commited");
+            LOG.assertTrue(!documentManager.isUncommited(document) || documentManager.isCommittingDocument(document), "Document for : " + file + " is not commited");
           }
         }
 

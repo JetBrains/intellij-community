@@ -87,7 +87,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(this);
   }
 
-  public PsiFile getPsiFile(Document document) {
+  public PsiFile getPsiFile(@NotNull Document document) {
     PsiFile psiFile = getCachedPsiFile(document);
     final PsiFile userData = document.getUserData(HARD_REF_TO_PSI);
     if(userData != null) return userData;
@@ -106,7 +106,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
 
-  public PsiFile getCachedPsiFile(Document document) {
+  public PsiFile getCachedPsiFile(@NotNull Document document) {
     final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !virtualFile.isValid()) return null;
     return getCachedPsiFile(virtualFile);
@@ -126,7 +126,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     return ((PsiManagerImpl)myPsiManager).getFileManager().findFile(virtualFile);
   }
 
-  public Document getDocument(PsiFile file) {
+  public Document getDocument(@NotNull PsiFile file) {
     if (file instanceof PsiBinaryFile) return null;
 
     Document document = getCachedDocument(file);
@@ -144,7 +144,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     return document;
   }
 
-  public Document getCachedDocument(PsiFile file) {
+  public Document getCachedDocument(@NotNull PsiFile file) {
     if(!file.isPhysical()) return null;
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
     return FileDocumentManager.getInstance().getCachedDocument(vFile);
@@ -352,13 +352,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   public boolean isUncommited(Document document) {
     if(getSynchronizer().isInSynchronization(document)) return false;
-    if(((DocumentEx)document).isInEventsHandling()) return true;
-    return myUncommittedDocuments.contains(document);
+    return ((DocumentEx)document).isInEventsHandling() || myUncommittedDocuments.contains(document);
   }
 
   public boolean hasUncommitedDocuments() {
-    if (myIsCommitInProgress) return false;
-    return !myUncommittedDocuments.isEmpty();
+    return !myIsCommitInProgress && !myUncommittedDocuments.isEmpty();
   }
 
   public void setProcessDocumentEvents(Document document, boolean processDocumentEvents) {
@@ -475,16 +473,15 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       getTextBlock(document).clear();
   }
 
-  public boolean isDocumentCommited(Document doc) {
-    if (myIsCommitInProgress) return true;
-    return !myUncommittedDocuments.contains(doc);
+  public boolean isDocumentCommitted(Document doc) {
+    return myIsCommitInProgress || !myUncommittedDocuments.contains(doc);
   }
 
   public PsiToDocumentSynchronizer getSynchronizer() {
     return mySynchronizer;
   }
 
-  public boolean isCommitingDocument(final Document doc) {
+  public boolean isCommittingDocument(final Document doc) {
     return doc.getUserData(KEY_COMMITING) == Boolean.TRUE;
   }
 }

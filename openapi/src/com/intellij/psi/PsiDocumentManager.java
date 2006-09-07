@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
@@ -42,7 +43,7 @@ public abstract class PsiDocumentManager {
    * @param document the document for which the PSI file is requested.
    * @return the PSI file instance.
    */
-  public abstract PsiFile getPsiFile(Document document);
+  public abstract PsiFile getPsiFile(@NotNull Document document);
 
   /**
    * Returns the cached PSI file for the specified document.
@@ -51,7 +52,7 @@ public abstract class PsiDocumentManager {
    * @return the PSI file instance, or null if there is currently no cached PSI tree for the file.
    */
   @Nullable
-  public abstract PsiFile getCachedPsiFile(Document document);
+  public abstract PsiFile getCachedPsiFile(@NotNull Document document);
 
   /**
    * Returns the document for the specified PSI file.
@@ -60,7 +61,7 @@ public abstract class PsiDocumentManager {
    * @return the document instance, or null if the file is binary or has no associated document.
    */
   @Nullable
-  public abstract Document getDocument(PsiFile file);
+  public abstract Document getDocument(@NotNull PsiFile file);
 
   /**
    * Returns the cached document for the specified PSI file.
@@ -69,7 +70,7 @@ public abstract class PsiDocumentManager {
    * @return the document instance, or null if there is currently no cached document for the file.
    */
   @Nullable
-  public abstract Document getCachedDocument(PsiFile file);
+  public abstract Document getCachedDocument(@NotNull PsiFile file);
 
   /**
    * Commits (updates the PSI tree for) all modified but not committed documents.

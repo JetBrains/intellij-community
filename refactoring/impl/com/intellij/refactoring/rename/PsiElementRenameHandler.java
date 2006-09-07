@@ -90,8 +90,7 @@ public class PsiElementRenameHandler implements RenameHandler {
 
   private static boolean canRename(PsiElement element, Project project) {
     if (element instanceof PsiAntTarget || element instanceof PsiAntProperty) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element.getNavigationElement())) return false;
-      return true;
+      return CommonRefactoringUtil.checkReadOnlyStatus(project, element.getNavigationElement());
     }
 
     final String REFACTORING_NAME = RefactoringBundle.message("rename.title");

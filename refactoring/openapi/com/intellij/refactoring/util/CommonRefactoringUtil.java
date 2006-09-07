@@ -1,12 +1,11 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -22,16 +21,9 @@ public class CommonRefactoringUtil {
     dialog.show();
   }
 
+  @NonNls
   public static String htmlEmphasize(String text) {
-    @NonNls final String header = "<b><code>";
-    @NonNls final String footer = "</code></b>";
-    StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      return builder.append(header).append(text).append(footer).toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    return "<b><code>" + text + "</code></b>";
   }
 
   public static boolean checkReadOnlyStatus(Project project, PsiElement element) {
@@ -123,8 +115,8 @@ public class CommonRefactoringUtil {
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
       .ensureFilesWritable(readonly.toArray(new VirtualFile[readonly.size()]));
     failed.addAll(Arrays.asList(status.getReadonlyFiles()));
-    if (failed.size() > 0) {
-      StringBuffer message = new StringBuffer(messagePrefix);
+    if (!failed.isEmpty()) {
+      StringBuilder message = new StringBuilder(messagePrefix);
       message.append('\n');
       for (VirtualFile virtualFile : failed) {
         final String presentableUrl = virtualFile.getPresentableUrl();
