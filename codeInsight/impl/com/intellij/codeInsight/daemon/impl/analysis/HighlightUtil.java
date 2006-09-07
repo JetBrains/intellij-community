@@ -1112,7 +1112,6 @@ public class HighlightUtil {
       // compute initializer type based on initializer text
       PsiType initializerType =
         getInitializerType(initializer, type instanceof PsiArrayType ? ((PsiArrayType)type).getComponentType() : type);
-      if (initializerType instanceof PsiArrayType && type instanceof PsiArrayType) return null;
       // do not use PsiArrayInitializerExpression.getType() for computing expression type
       PsiExpression expression = initializer instanceof PsiArrayInitializerExpression ? null : initializer;
       return checkAssignability(type, initializerType, expression, initializer);
