@@ -27,10 +27,15 @@ import java.util.*;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class AntProjectImpl extends AntStructuredElementImpl implements AntProject {
+
+  private static final String[] EMPTY_STRING_ARRAY = new String[0];
+
   private AntTarget[] myTargets;
   private AntTarget[] myImportedTargets;
   private AntFile[] myImports;
   private List<AntProperty> myPredefinedProps = new ArrayList<AntProperty>();
+  private Map<String, AntElement> myReferencedElements;
+  private String[] myRefIdsArray;
   @NonNls private List<String> myEnvPrefixes;
   @NonNls private static final String myDefaultEnvPrefix = "env.";
 
@@ -66,6 +71,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     super.clearCaches();
     myTargets = null;
     myImports = null;
+    myReferencedElements = null;
+    myRefIdsArray = null;
     myEnvPrefixes = null;
   }
 
@@ -201,6 +208,34 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       }
     }
     return myImports;
+  }
+
+  public synchronized void registerRefId(final String id, AntElement element) {
+    if (id == null || id.length() == 0) return;
+    if (myReferencedElements == null) {
+      myReferencedElements = new HashMap<String, AntElement>();
+    }
+    myReferencedElements.put(id, element);
+  }
+
+  @Nullable
+  public synchronized AntElement getElementByRefId(String refid) {
+    if (myReferencedElements == null) return null;
+    refid = computeAttributeValue(refid);
+    return myReferencedElements.get(refid);
+  }
+
+  @NotNull
+  public synchronized String[] getRefIds() {
+    if (myRefIdsArray == null) {
+      if (myReferencedElements == null) {
+        myRefIdsArray = EMPTY_STRING_ARRAY;
+      }
+      else {
+        myRefIdsArray = myReferencedElements.keySet().toArray(new String[myReferencedElements.size()]);
+      }
+    }
+    return myRefIdsArray;
   }
 
   public synchronized void addEnvironmentPropertyPrefix(@NotNull final String envPrefix) {

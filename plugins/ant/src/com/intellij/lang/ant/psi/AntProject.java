@@ -26,6 +26,14 @@ public interface AntProject extends AntStructuredElement {
   @NotNull
   AntFile[] getImportedFiles();
 
+  void registerRefId(final String id, AntElement element);
+
+  @Nullable
+  AntElement getElementByRefId(String refid);
+
+  @NotNull
+  String[] getRefIds();
+
   void addEnvironmentPropertyPrefix(@NotNull final String envPrefix);
 
   boolean isEnvironmentProperty(@NotNull final String propName);

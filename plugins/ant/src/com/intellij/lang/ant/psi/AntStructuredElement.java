@@ -27,14 +27,6 @@ public interface AntStructuredElement extends AntElement {
   @Nullable
   String computeAttributeValue(String value);
 
-  void registerRefId(final String id, AntElement element);
-
-  @Nullable
-  AntElement getElementByRefId(String refid);
-
-  @NotNull
-  String[] getRefIds();
-
   boolean hasNameElement();
 
   boolean hasIdElement();

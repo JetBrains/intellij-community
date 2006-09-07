@@ -3,15 +3,16 @@ package com.intellij.lang.ant.psi.impl.reference;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
-import com.intellij.lang.ant.psi.*;
+import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntFile;
+import com.intellij.lang.ant.psi.AntProject;
+import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringSetSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,44 +54,30 @@ public class AntRefIdReference extends AntGenericReference {
   }
 
   public PsiElement resolve() {
-    final AntStructuredElement element = getElement();
     final String id = getCanonicalRepresentationText();
-    AntElement refId = element.getElementByRefId(id);
-    if (refId == null) {
-      for (final AntFile file : element.getAntProject().getImportedFiles()) {
-        final AntProject importedProject = file.getAntProject();
-        importedProject.getChildren();
-        refId = importedProject.getElementByRefId(id);
-        if (refId != null) break;
-      }
+    final Set<PsiElement> elementsDepthStack = PsiElementSetSpinAllocator.alloc();
+    try {
+      return resolve(id, getElement().getAntProject(), elementsDepthStack);
     }
-    if (refId == null) {
-      final AntTarget target = PsiTreeUtil.getParentOfType(element, AntTarget.class);
-      if (target != null) {
-        final Set<PsiElement> targetStack = PsiElementSetSpinAllocator.alloc();
-        try {
-          refId = resolveTargetRefId(target, id, targetStack);
-        }
-        finally {
-          PsiElementSetSpinAllocator.dispose(targetStack);
-        }
-      }
+    finally {
+      PsiElementSetSpinAllocator.dispose(elementsDepthStack);
     }
-    return refId;
   }
 
   public Object[] getVariants() {
-    final Set<String> variants = StringSetSpinAllocator.alloc();
+    final Set<PsiElement> variants = PsiElementSetSpinAllocator.alloc();
     try {
-      final AntProject project = getElement().getAntProject();
-      getVariants(project, variants);
-      for (final AntFile imported : project.getImportedFiles()) {
-        getVariants(imported.getAntProject(), variants);
+      final Set<PsiElement> elementsDepthStack = PsiElementSetSpinAllocator.alloc();
+      try {
+        getVariants(getElement().getAntProject(), variants, elementsDepthStack);
+        return variants.toArray(new Object[variants.size()]);
       }
-      return variants.toArray(new String[variants.size()]);
+      finally {
+        PsiElementSetSpinAllocator.dispose(elementsDepthStack);
+      }
     }
     finally {
-      StringSetSpinAllocator.dispose(variants);
+      PsiElementSetSpinAllocator.dispose(variants);
     }
   }
 
@@ -100,28 +87,40 @@ public class AntRefIdReference extends AntGenericReference {
   }
 
   @Nullable
-  private static AntElement resolveTargetRefId(final AntTarget target, final String id, final Set<PsiElement> stack) {
-    AntElement result = null;
-    if (!stack.contains(target)) {
-      result = target.getElementByRefId(id);
-      if (result == null) {
-        stack.add(target);
-        for (final AntTarget dependie : target.getDependsTargets()) {
-          if ((result = resolveTargetRefId(dependie, id, stack)) != null) break;
+  private static AntElement resolve(final String id, final AntProject project, final Set<PsiElement> elementsDepthStack) {
+    if (elementsDepthStack.contains(project)) return null;
+    elementsDepthStack.add(project);
+    try {
+      AntElement refId = project.getElementByRefId(id);
+      if (refId == null) {
+        for (final AntFile file : project.getImportedFiles()) {
+          refId = resolve(id, file.getAntProject(), elementsDepthStack);
+          if (refId != null) break;
         }
       }
+      return refId;
     }
-    return result;
+    finally {
+      elementsDepthStack.remove(project);
+    }
   }
 
-  private static void getVariants(final AntStructuredElement element, final Set<String> variants) {
-    for (final String str : element.getRefIds()) {
-      variants.add(str);
-    }
-    for (final PsiElement child : element.getChildren()) {
-      if (child instanceof AntStructuredElement) {
-        getVariants((AntStructuredElement)child, variants);
+  private static void getVariants(final AntProject project, final Set<PsiElement> variants, final Set<PsiElement> elementsDepthStack) {
+    if (elementsDepthStack.contains(project)) return;
+    elementsDepthStack.add(project);
+    try {
+      for (final String id : project.getRefIds()) {
+        final AntElement refElement = project.getElementByRefId(id);
+        if (refElement != null) {
+          variants.add(refElement);
+        }
       }
+      for (final AntFile file : project.getImportedFiles()) {
+        getVariants(file.getAntProject(), variants, elementsDepthStack);
+      }
+    }
+    finally {
+      elementsDepthStack.remove(project);
     }
   }
 }

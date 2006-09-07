@@ -2,7 +2,6 @@ package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
@@ -26,19 +25,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class AntStructuredElementImpl extends AntElementImpl implements AntStructuredElement {
-
-  private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
   protected AntTypeDefinition myDefinition;
   private boolean myDefinitionCloned;
   private AntElement myIdElement;
   private AntElement myNameElement;
   @NonNls private String myNameElementAttribute;
-  private Map<String, AntElement> myReferencedElements;
-  private String[] myRefIdsArray;
   private int myLastFoundElementOffset = -1;
   private AntElement myLastFoundElement;
   private boolean myIsImported;
@@ -200,46 +197,6 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     }
   }
 
-  public void registerRefId(final String id, AntElement element) {
-    if (id == null || id.length() == 0) return;
-    if (myReferencedElements == null) {
-      myReferencedElements = new HashMap<String, AntElement>();
-    }
-    myReferencedElements.put(id, element);
-  }
-
-  public AntElement getElementByRefId(String refid) {
-    refid = computeAttributeValue(refid);
-    AntElement parent = this;
-    do {
-      if (parent instanceof AntStructuredElement) {
-        final AntStructuredElementImpl se = (AntStructuredElementImpl)parent;
-        if (se.myReferencedElements != null) {
-          final AntElement refse = se.myReferencedElements.get(refid);
-          if (refse != null) {
-            return refse;
-          }
-        }
-      }
-      parent = parent.getAntParent();
-    }
-    while (parent != null && !(parent instanceof AntFile));
-    return null;
-  }
-
-  @NotNull
-  public String[] getRefIds() {
-    if (myRefIdsArray == null) {
-      if (myReferencedElements == null) {
-        myRefIdsArray = EMPTY_STRING_ARRAY;
-      }
-      else {
-        myRefIdsArray = myReferencedElements.keySet().toArray(new String[myReferencedElements.size()]);
-      }
-    }
-    return myRefIdsArray;
-  }
-
   public boolean hasNameElement() {
     return getNameElement() != ourNull;
   }
@@ -262,8 +219,6 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
 
   public void clearCaches() {
     super.clearCaches();
-    myReferencedElements = null;
-    myRefIdsArray = null;
     myIdElement = null;
     myNameElement = null;
     myLastFoundElementOffset = -1;
@@ -324,17 +279,14 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   protected AntElement getIdElement() {
     if (myIdElement == null) {
       myIdElement = ourNull;
-      final AntElement parent = getAntParent();
-      if (parent instanceof AntStructuredElement) {
-        final XmlTag se = getSourceElement();
-        if (se.isValid()) {
-          final XmlAttribute idAttr = se.getAttribute("id", null);
-          if (idAttr != null) {
-            final XmlAttributeValue valueElement = idAttr.getValueElement();
-            if (valueElement != null) {
-              myIdElement = new AntNameElementImpl(this, valueElement);
-              ((AntStructuredElement)parent).registerRefId(myIdElement.getName(), this);
-            }
+      final XmlTag se = getSourceElement();
+      if (se.isValid()) {
+        final XmlAttribute idAttr = se.getAttribute("id", null);
+        if (idAttr != null) {
+          final XmlAttributeValue valueElement = idAttr.getValueElement();
+          if (valueElement != null) {
+            myIdElement = new AntNameElementImpl(this, valueElement);
+            getAntProject().registerRefId(myIdElement.getName(), this);
           }
         }
       }
