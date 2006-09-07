@@ -53,6 +53,9 @@ public class EditorModificationUtil {
     SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasBlockSelection()) return;
 
+    int startLine = selectionModel.getBlockStart().line;
+    int endLine = selectionModel.getBlockEnd().line;
+
     int[] starts = selectionModel.getBlockSelectionStarts();
     int[] ends = selectionModel.getBlockSelectionEnds();
 
@@ -61,6 +64,13 @@ public class EditorModificationUtil {
     }
 
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+
+    zeroWidthBlockSelectionAtCaretColumn(editor, startLine, endLine);
+  }
+
+  private static void zeroWidthBlockSelectionAtCaretColumn(final Editor editor, final int startLine, final int endLine) {
+    int caretColumn = editor.getCaretModel().getLogicalPosition().column;
+    editor.getSelectionModel().setBlockSelection(new LogicalPosition(startLine, caretColumn), new LogicalPosition(endLine, caretColumn));
   }
 
   public static void insertStringAtCaret(Editor editor, String s) {
@@ -172,6 +182,9 @@ public class EditorModificationUtil {
 
     if (content != null) {
       try {
+        int caretLine = editor.getCaretModel().getLogicalPosition().line;
+        int originalCaretLine = caretLine;
+
         int selectedLinesCount = 0;
         final SelectionModel selectionModel = editor.getSelectionModel();
         if (selectionModel.hasBlockSelection()) {
@@ -181,6 +194,7 @@ public class EditorModificationUtil {
           assert end != null;
           LogicalPosition caret = new LogicalPosition(Math.min(start.line, end.line), Math.min(start.column, end.column));
           selectedLinesCount = Math.abs(end.line - start.line);
+          caretLine = caret.line;
 
           deleteSelectedText(editor);
           editor.getCaretModel().moveToLogicalPosition(caret);
@@ -191,17 +205,23 @@ public class EditorModificationUtil {
 
         String[] lines = LineTokenizer.tokenize(s.toCharArray(), false);
         if (lines.length > 1 || selectedLinesCount <= 1) {
+          int longestLineLength = 0;
           for (String line : lines) {
+            longestLineLength = Math.max(longestLineLength, line.length());
             insertStringAtCaret(editor, line, false, false);
             editor.getCaretModel().moveCaretRelatively(0, 1, false, false, true);
           }
-        } else {
+          caretToRestore = new LogicalPosition(originalCaretLine, caretToRestore.column + longestLineLength);
+        }
+        else {
           for (int i = 0; i <= selectedLinesCount; i++) {
             insertStringAtCaret(editor, s, false, false);
             editor.getCaretModel().moveCaretRelatively(0, 1, false, false, true);
           }
+          caretToRestore = new LogicalPosition(originalCaretLine, caretToRestore.column + s.length());
         }
         editor.getCaretModel().moveToLogicalPosition(caretToRestore);
+        zeroWidthBlockSelectionAtCaretColumn(editor, caretLine, caretLine + selectedLinesCount);
       } catch (Exception exception) {
         editor.getComponent().getToolkit().beep();
       }
