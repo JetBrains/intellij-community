@@ -168,7 +168,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(myDomElement.getManager().getProject());
     final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(myDomElement);
     final List<DomElementProblemDescriptor> problems =
-      holder.getProblems(myDomElement, true, highlightIfChildrenHasProblems(), HighlightSeverity.ERROR);
+      holder.getProblems(myDomElement, true, highlightIfChildrenHaveProblems(), HighlightSeverity.ERROR);
 
     if (problems.size() > 0) {
       addColoredFragment(getNodeName(), TooltipUtils.getTooltipText(problems), getWavedAttributes(SimpleTextAttributes.STYLE_PLAIN));
@@ -198,7 +198,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     return false;
   }
 
-  protected boolean highlightIfChildrenHasProblems() {
+  protected boolean highlightIfChildrenHaveProblems() {
     return true;
   }
 

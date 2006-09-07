@@ -35,6 +35,8 @@ import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -274,6 +276,15 @@ public abstract class Language {
     }
     myInjectedAnnotators.add(annotator);
     myCachedAnnotators = null;
+  }
+
+  public final void injectAnnotator(@NotNull final Annotator annotator, Disposable parentDisposable) {
+    injectAnnotator(annotator);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        removeAnnotator(annotator);
+      }
+    });
   }
 
   /**

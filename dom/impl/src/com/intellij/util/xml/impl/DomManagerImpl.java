@@ -3,6 +3,10 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.lang.StdLanguages;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -31,6 +35,7 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
+import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import gnu.trove.THashMap;
@@ -168,6 +173,21 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
         });
 
         return isDomFile(psiFile);
+      }
+    }, project);
+
+    StdLanguages.XML.injectAnnotator(new Annotator() {
+      public void annotate(PsiElement psiElement, AnnotationHolder holder) {
+        final DomFileDescription description = getDomFileDescription(psiElement);
+        if (description != null && description.isAutomaticHighlightingEnabled()) {
+          final DomElement domElement = getDomElement(psiElement);
+          if (domElement != null) {
+            final List<Annotation> list = (List<Annotation>)holder;
+            for (final DomElementProblemDescriptor descriptor : annotationsManager.getProblemHolder(domElement).getProblems(domElement)) {
+              list.addAll(descriptor.getAnnotations());
+            }
+          }
+        }
       }
     }, project);
   }
@@ -374,7 +394,21 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   @Nullable
-  public DomElement getDomElement(final XmlTag element) {
+  private final DomElement getDomElement(final PsiElement element) {
+    if (element instanceof XmlTag) {
+      return getDomElement((XmlTag)element);
+    }
+    if (element instanceof XmlAttribute) {
+      return getDomElement((XmlAttribute)element);
+    }
+    if (element instanceof XmlFile) {
+      return getFileElement((XmlFile)element);
+    }
+    return null;
+  }
+
+  @Nullable
+  public final DomElement getDomElement(final XmlTag element) {
     final DomInvocationHandler handler = _getDomElement(element);
     return handler != null ? handler.getProxy() : null;
   }
@@ -382,7 +416,10 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   @Nullable
   public GenericAttributeValue getDomElement(final XmlAttribute attribute) {
     final DomInvocationHandler handler = _getDomElement(attribute.getParent());
-    return handler != null ? (GenericAttributeValue)handler.getAttributeChild(attribute.getLocalName()).getProxy() : null;
+    final String attributeName = attribute.getLocalName();
+    if (handler == null) return null;
+    if (handler.getGenericInfo().getAttributeChildDescription(attributeName) == null) return null;
+    return (GenericAttributeValue)handler.getAttributeChild(attributeName).getProxy();
   }
 
   @Nullable

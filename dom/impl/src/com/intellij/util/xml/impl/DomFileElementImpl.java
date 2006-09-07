@@ -286,7 +286,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   public void acceptChildren(DomElementVisitor visitor) {
-    getRootHandler().accept(visitor);
+    getRootElement().accept(visitor);
   }
 
   public <T> T getUserData(Key<T> key) {

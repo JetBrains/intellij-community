@@ -5,19 +5,22 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.util.xml.DomElement;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class DomElementProblemDescriptorImpl implements DomElementProblemDescriptor {
-  private DomElement myDomElement;
-  private HighlightSeverity myType;
-  private String myMessage;
-  private LocalQuickFix[] myFixes;
+  private final DomElement myDomElement;
+  private final HighlightSeverity myType;
+  private final String myMessage;
+  private final LocalQuickFix[] myFixes;
+  private final List<Annotation> myAnnotations;
 
   public DomElementProblemDescriptorImpl(final DomElement domElement,  final String message, final HighlightSeverity type) {
-   this(domElement, message, type, new LocalQuickFix[0]);
+    this(domElement, message, type, new LocalQuickFix[0]);
   }
 
   public DomElementProblemDescriptorImpl(final DomElement domElement, final String message, final HighlightSeverity type, final LocalQuickFix... fixes) {
@@ -25,6 +28,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     myType = type;
     myMessage = message;
     myFixes = fixes;
+    myAnnotations = DomElementsHighlightingUtil.createAnnotations(this);
   }
 
   public DomElement getDomElement() {
@@ -42,6 +46,10 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
 
   public LocalQuickFix[] getFixes() {
     return myFixes;
+  }
+
+  public final List<Annotation> getAnnotations() {
+    return myAnnotations;
   }
 
 

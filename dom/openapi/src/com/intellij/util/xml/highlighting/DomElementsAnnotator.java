@@ -20,5 +20,5 @@ package com.intellij.util.xml.highlighting;
 import com.intellij.util.xml.DomElement;
 
 public interface DomElementsAnnotator {
-  void annotate(DomElement element, DomElementsProblemsHolder annotator);
+  void annotate(DomElement element, DomElementAnnotationHolder holder);
 }

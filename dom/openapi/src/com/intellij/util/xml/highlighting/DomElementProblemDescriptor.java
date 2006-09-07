@@ -17,14 +17,17 @@
 
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.util.xml.DomElement;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.util.xml.DomElement;
 
-public interface DomElementProblemDescriptor extends CommonProblemDescriptor  {
+import java.util.List;
+
+public interface DomElementProblemDescriptor extends CommonProblemDescriptor {
   DomElement getDomElement();
   HighlightSeverity getHighlightSeverity();
   LocalQuickFix[] getFixes();
+  List<Annotation> getAnnotations();
 }

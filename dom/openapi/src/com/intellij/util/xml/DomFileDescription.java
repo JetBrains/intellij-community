@@ -63,6 +63,10 @@ public abstract class DomFileDescription<T> {
     return myTypeChooserManager;
   }
 
+  public boolean isAutomaticHighlightingEnabled() {
+    return true;
+  }
+
   protected abstract void initializeFileDescription();
 
   /**

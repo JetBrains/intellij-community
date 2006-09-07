@@ -19,18 +19,10 @@ package com.intellij.util.xml.highlighting;
 
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface DomElementsProblemsHolder extends Iterable<DomElementProblemDescriptor>{
-
-  void createProblem(DomElement domElement, @Nullable String message);
-
-  void createProblem(DomElement domElement, DomCollectionChildDescription childDescription, @Nullable String message);
-
-  void createProblem(DomElement domElement, HighlightSeverity highlightType, String message);
+public interface DomElementsProblemsHolder {
 
   List<DomElementProblemDescriptor> getProblems(DomElement domElement);
 
@@ -44,8 +36,5 @@ public interface DomElementsProblemsHolder extends Iterable<DomElementProblemDes
                                                 HighlightSeverity minSeverity);
 
   List<DomElementProblemDescriptor> getAllProblems();
-
-  HighlightSeverity getDefaultHighlightSeverity();
-
-  void setDefaultHighlightSeverity(final HighlightSeverity defaultHighlightSeverity);
+  
 }

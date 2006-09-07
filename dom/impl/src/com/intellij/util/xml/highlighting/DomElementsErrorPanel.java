@@ -19,8 +19,8 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.ui.CommittablePanel;
 
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
 
 /**
  * User: Sergey.Vasiliev
