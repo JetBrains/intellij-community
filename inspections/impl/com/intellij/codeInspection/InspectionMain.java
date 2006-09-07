@@ -21,6 +21,7 @@ public class InspectionMain implements ApplicationStarter {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void premain(String[] args) {
     if (args.length < 4) {
+      System.err.println("invalid args:" + args);
       printHelp();
     }
 
@@ -49,11 +50,13 @@ public class InspectionMain implements ApplicationStarter {
           myApplication.myRunWithEditorSettings = true;
         }
         else {
+          System.err.println("unexpected argument: " + arg);
           printHelp();
         }
       }
     }
     catch (ArrayIndexOutOfBoundsException e) {
+      e.printStackTrace();
       printHelp();
     }
   }

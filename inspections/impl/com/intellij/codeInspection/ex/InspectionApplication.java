@@ -47,6 +47,7 @@ public class InspectionApplication {
 
   public void startup() {
     if (myProjectPath == null || myOutPath == null || myProfileName == null) {
+      logError(myProjectPath + myOutPath + myProfileName);
       InspectionMain.printHelp();
     }
 
@@ -163,10 +164,12 @@ public class InspectionApplication {
     }
     catch (IOException e) {
       LOG.error(e);
+      logError(e.getMessage());
       InspectionMain.printHelp();
     }
     catch (Throwable e) {
       LOG.error(e);
+      logError(e.getMessage());
       System.exit(1);
     }
   }
