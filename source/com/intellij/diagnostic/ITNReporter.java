@@ -59,6 +59,7 @@ public class ITNReporter extends ErrorReportSubmitter {
     final DataContext dataContext = DataManager.getInstance().getDataContext(parentComponent);
     Project project = (Project) dataContext.getData(DataConstants.PROJECT);
 
+    String description = "";
     do {
       // prepare
       try {
@@ -67,6 +68,7 @@ public class ITNReporter extends ErrorReportSubmitter {
         sender.prepareError(project, event.getThrowable());
 
         EAPSendErrorDialog dlg = new EAPSendErrorDialog();
+        dlg.setErrorDescription(description);
         dlg.show();
 
         @NonNls String itnLogin = ErrorReportConfigurable.getInstance().ITN_LOGIN;
@@ -78,7 +80,7 @@ public class ITNReporter extends ErrorReportSubmitter {
         notifierBean.setItnLogin(itnLogin);
         notifierBean.setItnPassword(itnPassword);
 
-        String description = dlg.getErrorDescription();
+        description = dlg.getErrorDescription();
         String message = event.getMessage();
 
         @NonNls StringBuilder descBuilder = new StringBuilder();
