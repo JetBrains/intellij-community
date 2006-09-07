@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.peer.PeerFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -44,7 +43,6 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -487,14 +485,14 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     public void update(AnActionEvent e) {
       Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
       //noinspection unchecked
-      List<File> files = (List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
+      List<FilePath> files = (List<FilePath>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
       e.getPresentation().setEnabled(ChangesUtil.getChangeListIfOnlyOne(myProject, changes) != null ||
                                      (files != null && !files.isEmpty()));
     }
 
     public void actionPerformed(AnActionEvent e) {
       //noinspection unchecked
-      List<File> files = (List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
+      List<FilePath> files = (List<FilePath>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
       if (files != null && !files.isEmpty()) {
         new RollbackDeletionAction().actionPerformed(e);
       }
@@ -541,7 +539,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
     public void update(AnActionEvent e) {
       //noinspection unchecked
-      List<File> files = (List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
+      List<FilePath> files = (List<FilePath>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
       boolean enabled = files != null && !files.isEmpty();
       e.getPresentation().setEnabled(enabled);
       e.getPresentation().setVisible(enabled);
@@ -549,11 +547,11 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
     public void actionPerformed(AnActionEvent e) {
       //noinspection unchecked
-      final List<File> files = (List<File>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
+      final List<FilePath> files = (List<FilePath>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
       if (files == null) return;
 
-      ChangesUtil.processIOFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<File>() {
-        public void process(final AbstractVcs vcs, final List<File> items) {
+      ChangesUtil.processFilePathsByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<FilePath>() {
+        public void process(final AbstractVcs vcs, final List<FilePath> items) {
           final ChangeProvider provider = vcs.getChangeProvider();
           if (provider != null) {
             processFiles(provider, files);
@@ -561,14 +559,13 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
         }
       });
 
-      for (File file : files) {
-        FilePath path = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file);
-        VcsDirtyScopeManager.getInstance(myProject).fileDirty(path);
+      for (FilePath file : files) {
+        VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
       }
       scheduleRefresh();
     }
 
-    protected abstract void processFiles(final ChangeProvider provider, final List<File> files);
+    protected abstract void processFiles(final ChangeProvider provider, final List<FilePath> files);
   }
 
   public class ScheduleForRemovalAction extends AbstractMissingFilesAction {
@@ -577,7 +574,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
             IconLoader.getIcon("/actions/exclude.png"));
     }
 
-    protected void processFiles(final ChangeProvider provider, final List<File> files) {
+    protected void processFiles(final ChangeProvider provider, final List<FilePath> files) {
       provider.scheduleMissingFileForDeletion(files);
     }
   }
@@ -589,11 +586,11 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
             IconLoader.getIcon("/actions/rollback.png"));
     }
 
-    protected void processFiles(final ChangeProvider provider, final List<File> files) {
+    protected void processFiles(final ChangeProvider provider, final List<FilePath> files) {
       provider.rollbackMissingFileDeletion(files);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          LocalFileSystem.getInstance().refreshIoFiles(files);
+          LocalFileSystem.getInstance().refreshIoFiles(ChangesUtil.filePathsToFiles(files));
         }
       });
     }

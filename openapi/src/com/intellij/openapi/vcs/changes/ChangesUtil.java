@@ -135,11 +135,19 @@ public class ChangesUtil {
     }, processor);
   }
 
-  public static void processIOFilesByVcs(final Project project, Collection<File> files, PerVcsProcessor<File> processor) {
-    processItemsByVcs(files, new VcsSeparator<File>() {
-      public AbstractVcs getVcsFor(final File item) {
-        return getVcsForFile(item, project);
+  public static void processFilePathsByVcs(final Project project, Collection<FilePath> files, PerVcsProcessor<FilePath> processor) {
+    processItemsByVcs(files, new VcsSeparator<FilePath>() {
+      public AbstractVcs getVcsFor(final FilePath item) {
+        return getVcsForFile(item.getIOFile(), project);
       }
     }, processor);
+  }
+
+  public static List<File> filePathsToFiles(List<FilePath> filePaths) {
+    List<File> ioFiles = new ArrayList<File>();
+    for(FilePath filePath: filePaths) {
+      ioFiles.add(filePath.getIOFile());
+    }
+    return ioFiles;
   }
 }

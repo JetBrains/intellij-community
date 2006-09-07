@@ -132,21 +132,18 @@ public class CvsChangeProvider implements ChangeProvider {
     return exceptions;
   }
 
-  public List<VcsException> scheduleMissingFileForDeletion(List<File> files) {
+  public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
     final Project project = myVcs.getProject();
-    final CvsHandler handler = RemoveLocallyFileOrDirectoryAction.getDefaultHandler(project, files);
+    final CvsHandler handler = RemoveLocallyFileOrDirectoryAction.getDefaultHandler(project, ChangesUtil.filePathsToFiles(files));
     final CvsOperationExecutor executor = new CvsOperationExecutor(project);
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
     return Collections.emptyList();
   }
 
-  public List<VcsException> rollbackMissingFileDeletion(List<File> files) {
+  public List<VcsException> rollbackMissingFileDeletion(List<FilePath> filePaths) {
     final Project project = myVcs.getProject();
-    FilePath[] filePaths = new FilePath[files.size()];
-    for(int i=0; i<files.size(); i++) {
-      filePaths [i] = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(files.get(i));
-    }
-    final CvsHandler cvsHandler = CommandCvsHandler.createCheckoutFileHandler(filePaths, CvsConfiguration.getInstance(project));
+    final CvsHandler cvsHandler = CommandCvsHandler.createCheckoutFileHandler(filePaths.toArray(new FilePath[filePaths.size()]), 
+                                                                              CvsConfiguration.getInstance(project));
     final CvsOperationExecutor executor = new CvsOperationExecutor(project);
     executor.performActionSync(cvsHandler, CvsOperationExecutorCallback.EMPTY);
     return Collections.emptyList();

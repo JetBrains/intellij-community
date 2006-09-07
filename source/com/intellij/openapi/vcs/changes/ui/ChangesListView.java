@@ -186,13 +186,13 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     return files;
   }
 
-  private List<File> getSelectedMissingFiles() {
-    List<File> files = new ArrayList<File>();
+  private List<FilePath> getSelectedMissingFiles() {
+    List<FilePath> files = new ArrayList<FilePath>();
     final TreePath[] paths = getSelectionPaths();
     if (paths != null) {
       for (TreePath path : paths) {
         ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
-        files.addAll(node.getAllIOFilesUnder());
+        files.addAll(node.getAllFilePathsUnder());
       }
     }
     return files;

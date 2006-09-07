@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -100,15 +99,15 @@ public class ChangesBrowserNode extends DefaultMutableTreeNode {
     return files;
   }
 
-  public List<File> getAllIOFilesUnder() {
-    List<File> files = new ArrayList<File>();
+  public List<FilePath> getAllFilePathsUnder() {
+    List<FilePath> files = new ArrayList<FilePath>();
     final Enumeration enumeration = breadthFirstEnumeration();
     while (enumeration.hasMoreElements()) {
       ChangesBrowserNode child = (ChangesBrowserNode)enumeration.nextElement();
       final Object value = child.getUserObject();
       if (child.isLeaf() && value instanceof FilePath) {
         final FilePath file = (FilePath)value;
-        files.add(file.getIOFile());
+        files.add(file);
       }
     }
 
