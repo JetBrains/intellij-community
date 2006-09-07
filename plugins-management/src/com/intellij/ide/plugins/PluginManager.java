@@ -4,6 +4,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.PluginsFacade;
@@ -319,7 +320,11 @@ public class PluginManager {
       pluginDescriptors = IdeaPluginDescriptorImpl.EMPTY_ARRAY;
     }
     if (errorMessage != null) {
-      JOptionPane.showMessageDialog(null, errorMessage, IdeBundle.message("title.plugin.error"), JOptionPane.ERROR_MESSAGE);
+      if (!Main.isHeadless()) {
+        JOptionPane.showMessageDialog(null, errorMessage, IdeBundle.message("title.plugin.error"), JOptionPane.ERROR_MESSAGE);
+      } else {
+        getLogger().error(errorMessage);
+      }
     }
     return pluginDescriptors;
   }
@@ -584,13 +589,21 @@ public class PluginManager {
       addAdditionalClassPath(classpathElements);
     }
     catch (IllegalArgumentException e) {
-      JOptionPane
-        .showMessageDialog(JOptionPane.getRootFrame(), e.getMessage(), CommonBundle.getErrorTitle(), JOptionPane.INFORMATION_MESSAGE);
+      if (Main.isHeadless()) {
+        getLogger().error(e);
+      } else {
+        JOptionPane
+          .showMessageDialog(JOptionPane.getRootFrame(), e.getMessage(), CommonBundle.getErrorTitle(), JOptionPane.INFORMATION_MESSAGE);
+      }
       System.exit(1);
     }
     catch (MalformedURLException e) {
-      JOptionPane
-        .showMessageDialog(JOptionPane.getRootFrame(), e.getMessage(), CommonBundle.getErrorTitle(), JOptionPane.INFORMATION_MESSAGE);
+      if (Main.isHeadless()) {
+        getLogger().error(e.getMessage());
+      } else {
+        JOptionPane
+          .showMessageDialog(JOptionPane.getRootFrame(), e.getMessage(), CommonBundle.getErrorTitle(), JOptionPane.INFORMATION_MESSAGE);
+      }
       System.exit(1);
     }
 
