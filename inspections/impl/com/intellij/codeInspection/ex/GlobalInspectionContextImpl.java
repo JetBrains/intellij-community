@@ -303,59 +303,70 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
     myCurrentScope = scope;
 
-
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        performInspectionsWithProgress(scope, runWithEditorSettings, manager, outputPath);
-        @NonNls final String ext = ".xml";
-        for (String toolName : myTools.keySet()) {
-          final Element root = new Element(InspectionsBundle.message("inspection.problems"));
-          final Document doc = new Document(root);
-          final Set<InspectionTool> sameTools = myTools.get(toolName);
-          boolean hasProblems = false;
-          boolean isLocalTool = false;
-          boolean isDescriptorProvider = false;
-          for (InspectionTool tool : sameTools) {
-            if (tool instanceof DescriptorProviderInspection){
-              hasProblems = new File(outputPath, toolName + ext).exists();
-              isLocalTool = tool instanceof LocalInspectionToolWrapper;
-              isDescriptorProvider = true;
-            } else if (tool.hasReportedProblems()){
-              hasProblems = true;
-              tool.exportResults(root);
+    final boolean oldProfileSetting = RUN_WITH_EDITOR_PROFILE;
+    InspectionTool.setOutputPath(outputPath);
+    RUN_WITH_EDITOR_PROFILE = runWithEditorSettings;
+    try {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          performInspectionsWithProgress(scope, manager);
+          @NonNls final String ext = ".xml";
+          for (String toolName : myTools.keySet()) {
+            final Element root = new Element(InspectionsBundle.message("inspection.problems"));
+            final Document doc = new Document(root);
+            final Set<InspectionTool> sameTools = myTools.get(toolName);
+            boolean hasProblems = false;
+            boolean isLocalTool = false;
+            boolean isDescriptorProvider = false;
+            for (InspectionTool tool : sameTools) {
+              if (tool instanceof DescriptorProviderInspection) {
+                hasProblems = new File(outputPath, toolName + ext).exists();
+                isLocalTool = tool instanceof LocalInspectionToolWrapper;
+                isDescriptorProvider = true;
+              }
+              else if (tool.hasReportedProblems()) {
+                hasProblems = true;
+                tool.exportResults(root);
+              }
             }
-          }
-          @NonNls final String isLocalToolAttribute = "is_local_tool";
-          root.setAttribute(isLocalToolAttribute, String.valueOf(isLocalTool));
-          if (!hasProblems) continue;
-          OutputStream outStream = null;
-          try {
-            new File(outputPath).mkdirs();
-            final File file = new File(outputPath, toolName + ext);
-            if (isDescriptorProvider) {
-              outStream = descriptorProviderFilePreparations(file, outStream, isLocalToolAttribute, isLocalTool);
+            @NonNls final String isLocalToolAttribute = "is_local_tool";
+            root.setAttribute(isLocalToolAttribute, String.valueOf(isLocalTool));
+            if (!hasProblems) continue;
+            OutputStream outStream = null;
+            try {
+              new File(outputPath).mkdirs();
+              final File file = new File(outputPath, toolName + ext);
+              if (isDescriptorProvider) {
+                outStream = descriptorProviderFilePreparations(file, outStream, isLocalToolAttribute, isLocalTool);
+              }
+              else {
+                ((ProjectEx)getProject()).getMacroReplacements().substitute(doc.getRootElement(), SystemInfo.isFileSystemCaseSensitive);
+                outStream = new BufferedOutputStream(new FileOutputStream(file));
+                JDOMUtil.writeDocument(doc, outStream, "\n");
+              }
             }
-            else {
-              ((ProjectEx)getProject()).getMacroReplacements().substitute(doc.getRootElement(), SystemInfo.isFileSystemCaseSensitive);
-              outStream = new BufferedOutputStream(new FileOutputStream(file));
-              JDOMUtil.writeDocument(doc, outStream, "\n");
+            catch (IOException e) {
+              LOG.error(e);
             }
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-          finally {
-            if (outStream != null){
-              try {
-                outStream.close();}
-              catch (IOException e) {
-                LOG.error(e);
+            finally {
+              if (outStream != null) {
+                try {
+                  outStream.close();
+                }
+                catch (IOException e) {
+                  LOG.error(e);
+                }
               }
             }
           }
+
         }
-      }
-    });
+      });
+    }
+    finally {
+      InspectionTool.setOutputPath(null);
+      RUN_WITH_EDITOR_PROFILE = oldProfileSetting;
+    }
   }
 
   private static OutputStream descriptorProviderFilePreparations(final File file,
@@ -719,7 +730,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
     Runnable runInspection = new Runnable() {
       public void run() {
-        performInspectionsWithProgress(scope, manager, null);
+        performInspectionsWithProgress(scope, manager);
       }
     };
 
@@ -739,27 +750,18 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
   }
 
-  private void performInspectionsWithProgress(final AnalysisScope scope, final InspectionManager manager, final String output) {
-    performInspectionsWithProgress(scope, RUN_WITH_EDITOR_PROFILE, manager, output);
-  }
-
-  private void performInspectionsWithProgress(final AnalysisScope scope,
-                                              final boolean runWithEditorSettings,
-                                              final InspectionManager manager,
-                                              final String output) {
+  private void performInspectionsWithProgress(final AnalysisScope scope, final InspectionManager manager) {
     try {
       myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           final PsiManager psiManager = PsiManager.getInstance(myProject);
           try {
-            InspectionTool.setOutputPath(output);
             psiManager.startBatchFilesProcessingMode();
-
             ((RefManagerImpl)getRefManager()).inspectionReadActionStarted();
             EntryPointsManager.getInstance(getProject()).resolveEntryPoints(getRefManager());
             List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();
-            runTools(needRepeatSearchRequest, scope, runWithEditorSettings, manager);
+            runTools(needRepeatSearchRequest, scope, manager);
             performPostRunFindUsages(needRepeatSearchRequest, manager);
           }
           catch (ProcessCanceledException e) {
@@ -770,7 +772,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           }
           finally {
             psiManager.finishBatchFilesProcessingMode();
-            InspectionTool.setOutputPath(null);
           }
         }
       });
@@ -800,15 +801,12 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     while (needRepeatSearchRequest.size() > 0);
   }
 
-  private void runTools(final List<InspectionTool> needRepeatSearchRequest,
-                        final AnalysisScope scope,
-                        final boolean runWithEditorSettings,
-                        final InspectionManager manager) {
+  private void runTools(final List<InspectionTool> needRepeatSearchRequest, final AnalysisScope scope, final InspectionManager manager) {
     final HashMap<String, Set<InspectionTool>> usedTools = new HashMap<String, Set<InspectionTool>>();
     final Map<String, Set<InspectionTool>> localTools = new HashMap<String, Set<InspectionTool>>();
-    initializeTools(scope, usedTools, localTools, runWithEditorSettings);
+    initializeTools(scope, usedTools, localTools);
     final Set<InspectionTool> currentProfileLocalTools = localTools.get(getCurrentProfile().getName());
-    if (runWithEditorSettings || (currentProfileLocalTools != null && currentProfileLocalTools.size() > 0)) {
+    if (RUN_WITH_EDITOR_PROFILE || (currentProfileLocalTools != null && currentProfileLocalTools.size() > 0)) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       try {
         scope.accept(new PsiRecursiveElementVisitor() {
@@ -819,7 +817,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           public void visitFile(PsiFile file) {
             final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
             InspectionProfile profile;
-            if (runWithEditorSettings) {
+            if (RUN_WITH_EDITOR_PROFILE) {
               profile = profileManager.getInspectionProfile(file);
             }
             else {
@@ -874,13 +872,10 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
   }
 
-  private void initializeTools(AnalysisScope scope,
-                               Map<String, Set<InspectionTool>> tools,
-                               Map<String, Set<InspectionTool>> localTools,
-                               boolean runWithEditorSettings) {
+  private void initializeTools(AnalysisScope scope, Map<String, Set<InspectionTool>> tools, Map<String, Set<InspectionTool>> localTools) {
     myJobDescriptors = new ArrayList<JobDescriptor>();
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(getProject());
-    if (runWithEditorSettings) {
+    if (RUN_WITH_EDITOR_PROFILE) {
       final Set<String> profiles = scope.getActiveInspectionProfiles();
       for (String profile : profiles) {
         InspectionProfileWrapper inspectionProfile = profileManager.getProfileWrapper(profile);
