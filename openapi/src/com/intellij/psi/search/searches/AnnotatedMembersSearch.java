@@ -9,6 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Query;
 import com.intellij.util.QueryFactory;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -36,11 +37,11 @@ public class AnnotatedMembersSearch extends QueryFactory<PsiMember, AnnotatedMem
 
   private AnnotatedMembersSearch() {}
 
-  public static Query<PsiMember> search(PsiClass annotationClass, SearchScope scope) {
+  public static Query<PsiMember> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
     return INSTANCE.createQuery(new Parameters(annotationClass, scope));
   }
 
-  public static Query<PsiMember> search(PsiClass annotationClass) {
+  public static Query<PsiMember> search(@NotNull PsiClass annotationClass) {
     return search(annotationClass, GlobalSearchScope.allScope(annotationClass.getProject()));
   }
 }
