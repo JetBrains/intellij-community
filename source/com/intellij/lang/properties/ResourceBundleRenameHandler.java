@@ -3,29 +3,26 @@
  */
 package com.intellij.lang.properties;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.codeInsight.CodeInsightUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 public class ResourceBundleRenameHandler implements RenameHandler {
   public static final RenameHandler INSTANCE = new ResourceBundleRenameHandler();
@@ -59,7 +56,9 @@ public class ResourceBundleRenameHandler implements RenameHandler {
 
   @Nullable
   private static ResourceBundle getResourceBundleFromDataContext(DataContext dataContext) {
-    VirtualFile virtualFile = (VirtualFile)dataContext.getData(DataConstantsEx.VIRTUAL_FILE);
+    PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
+    if (element instanceof Property) return null; //rename property
+    VirtualFile virtualFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
     if (virtualFile == null) {
       return null;
     }
@@ -107,7 +106,6 @@ public class ResourceBundleRenameHandler implements RenameHandler {
         renameProcessor.addElement(propertiesFile,  newName);
       }
       renameProcessor.doRun();
-      final Ref<Boolean> success = Ref.create(Boolean.TRUE);
       return true;
     }
   }
