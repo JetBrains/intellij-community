@@ -84,7 +84,13 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       String packageName = fileIndex.getPackageNameByDirectory(aPropertiesFile.getVirtualFile().getParent());
       if (packageName != null) {
-        String bundleName = packageName + "." + aPropertiesFile.getResourceBundle().getBaseName();
+        String bundleName;
+        if (packageName.length() > 0) {
+          bundleName = packageName + "." + aPropertiesFile.getResourceBundle().getBaseName();
+        }
+        else {
+          bundleName = aPropertiesFile.getResourceBundle().getBaseName();
+        }
         bundleName = bundleName.replace('.', '/');
         try {
           setStringDescriptorValue(new StringDescriptor(bundleName, dialog.getKey()));
