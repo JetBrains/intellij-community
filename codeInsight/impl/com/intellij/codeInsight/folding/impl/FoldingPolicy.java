@@ -148,6 +148,8 @@ class FoldingPolicy {
         PsiExpression initializer = field.getInitializer();
         if (initializer != null) {
           findClasses(initializer, map, document);
+        } else if (field instanceof PsiEnumConstant) {
+          findClasses(field, map, document);
         }
       }
       else if (child instanceof PsiClassInitializer) {
