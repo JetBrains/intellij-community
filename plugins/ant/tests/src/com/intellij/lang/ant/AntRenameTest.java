@@ -86,6 +86,14 @@ public class AntRenameTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testTargetIfProperty() throws Exception {
+    doTest();
+  }
+
+  public void testTargetUnlessProperty() throws Exception {
+    doTest();
+  }
+
   protected String getTestDataPath() {
     return PathManager.getHomePath().replace('\\', '/') + "/plugins/ant/tests/data/psi/rename/";
   }

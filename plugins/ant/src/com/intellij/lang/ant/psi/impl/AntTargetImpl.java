@@ -1,10 +1,13 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.AntElementRole;
-import com.intellij.lang.ant.psi.AntCall;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
+import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntTarget;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
@@ -14,14 +17,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget {
+public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget, AntProperty {
 
   private AntTarget[] myDependsTargets;
-  private AntCall[] myCalls;
+  private AntNameElementImpl myPropElement;
 
   public AntTargetImpl(AntElement parent, final XmlTag tag) {
     super(parent, tag);
     myDefinition = getAntFile().getTargetDefinition();
+    setProperties();
   }
 
   @NonNls
@@ -86,24 +90,100 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
     myDependsTargets = targets;
   }
 
-  @NotNull
-  public AntCall[] getAntCalls() {
-    if (myCalls == null) {
-      final List<AntCall> calls = new ArrayList<AntCall>();
-      for (AntElement element : getChildren()) {
-        if (element instanceof AntCall) {
-          calls.add((AntCall)element);
-        }
-      }
-      myCalls = calls.toArray(new AntCall[calls.size()]);
-    }
-    return myCalls;
-  }
-
-
   public void clearCaches() {
     super.clearCaches();
     myDependsTargets = null;
-    myCalls = null;
+    if (myPropElement != null) {
+      getAntProject().clearCaches();
+    }
+    setProperties();
+  }
+
+  /**
+   * Here comes AntProperty implementation for supporting properties defined directly
+   * on the "if" and "unless" attributes of the target.
+   */
+
+  @Nullable
+  public String getValue(final String propName) {
+    return null;
+  }
+
+  @Nullable
+  public String getFileName() {
+    return null;
+  }
+
+  @Nullable
+  public PropertiesFile getPropertiesFile() {
+    return null;
+  }
+
+  @Nullable
+  public String getPrefix() {
+    return null;
+  }
+
+  @Nullable
+  public String getEnvironment() {
+    return null;
+  }
+
+  @Nullable
+  public String[] getNames() {
+    return (myPropElement == null) ? null : new String[]{myPropElement.getName()};
+  }
+
+  public boolean isMacroDefined() {
+    return false;
+  }
+
+  /**
+   * Navigation to a property (if, unless)
+   */
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public AntElement getFormatElement() {
+    return myPropElement;
+  }
+
+  protected AntElement[] getChildrenInner() {
+    final AntElement[] baseChildren = super.getChildrenInner();
+    if (myPropElement == null) {
+      return baseChildren;
+    }
+    if (!myInGettingChildren) {
+      myInGettingChildren = true;
+      try {
+        final List<AntElement> children = new ArrayList<AntElement>(baseChildren.length + 1);
+        children.add(myPropElement);
+        for (final AntElement child : baseChildren) {
+          children.add(child);
+        }
+        return children.toArray(new AntElement[children.size()]);
+      }
+      finally {
+        myInGettingChildren = false;
+      }
+    }
+    return AntElement.EMPTY_ARRAY;
+  }
+
+  private void setProperties() {
+    myPropElement = null;
+    final XmlTag se = getSourceElement();
+    XmlAttribute propNameAttribute = se.getAttribute("if", null);
+    if (propNameAttribute == null) {
+      propNameAttribute = se.getAttribute("unless", null);
+    }
+    if (propNameAttribute != null) {
+      final XmlAttributeValue valueElement = propNameAttribute.getValueElement();
+      if (valueElement != null) {
+        final String value = valueElement.getValue();
+        if (AntElementImpl.resolveProperty(this, value) == null) {
+          myPropElement = new AntNameElementImpl(this, valueElement);
+          getAntProject().setProperty(value, this);
+        }
+      }
+    }
   }
 }

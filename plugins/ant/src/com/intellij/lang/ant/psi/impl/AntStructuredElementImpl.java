@@ -3,6 +3,7 @@ package com.intellij.lang.ant.psi.impl;
 import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
+import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
@@ -384,11 +385,11 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
         return value;
       }
       String resolvedValue = null;
-      if (propElement instanceof AntPropertyImpl) {
-        final AntPropertyImpl antProperty = (AntPropertyImpl)propElement;
+      if (propElement instanceof AntProperty) {
+        final AntProperty antProperty = (AntProperty)propElement;
         resolvedValue = antProperty.getValue(prop);
         if (resolvedValue != null) {
-          resolvedValue = antProperty.computeAttributeValue(resolvedValue, elementStack);
+          resolvedValue = ((AntStructuredElementImpl)antProperty).computeAttributeValue(resolvedValue, elementStack);
         }
       }
       else if (propElement instanceof Property) {

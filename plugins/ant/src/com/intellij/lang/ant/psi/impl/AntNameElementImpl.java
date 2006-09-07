@@ -4,15 +4,20 @@ import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class AntNameElementImpl extends AntElementImpl {
 
-  public AntNameElementImpl(AntElement parent, XmlElement sourceElement) {
+  public AntNameElementImpl(final AntElement parent, final XmlAttributeValue sourceElement) {
     super(parent, sourceElement);
+  }
+
+  @NotNull
+  public XmlAttributeValue getSourceElement() {
+    return (XmlAttributeValue)super.getSourceElement();
   }
 
   @Nullable
@@ -21,21 +26,15 @@ class AntNameElementImpl extends AntElementImpl {
   }
 
   public String getName() {
-    final XmlAttribute attr = getAttribute();
-    return (attr == null) ? null : attr.getValue();
+    return getSourceElement().getValue();
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    final XmlAttribute attr = getAttribute();
-    if (attr == null) {
-      throw new IncorrectOperationException("AntNameElement should wrap a XmlElement with a XmlAttribute available on the path to root!");
+    final XmlAttribute attr = PsiTreeUtil.getParentOfType(getSourceElement(), XmlAttribute.class);
+    if (attr != null) {
+      attr.setValue(name);
     }
-    attr.setValue(name);
     return this;
   }
 
-  @Nullable
-  private XmlAttribute getAttribute() {
-    return PsiTreeUtil.getParentOfType(getSourceElement(), XmlAttribute.class);
-  }
 }

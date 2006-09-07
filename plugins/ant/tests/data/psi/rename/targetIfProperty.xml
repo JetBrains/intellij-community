@@ -1,0 +1,5 @@
+<project name="Some Project" default="all">
+  <target name="all" if="my.prop">
+    <property name="new.prop" value="${<ren>my.prop}"/>
+  </target>
+</project>

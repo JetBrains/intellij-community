@@ -15,6 +15,4 @@ public interface AntTarget extends AntStructuredElement {
 
   void setDependsTargets(@NotNull AntTarget[] targets);
 
-  @NotNull
-  AntCall[] getAntCalls();
 }

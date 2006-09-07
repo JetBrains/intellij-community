@@ -1,5 +1,6 @@
 package com.intellij.lang.ant;
 
+import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.AntTask;
@@ -170,6 +171,18 @@ public class AntResolveTest extends ResolveTestCase {
 
   public void testPropInDependieTarget1() throws Exception {
     doPropertyTest();
+  }
+
+  public void testPropDefinedInIfTargetAttribute() throws Exception {
+    PsiReference ref = configure();
+    PsiElement property = ref.resolve();
+    assertTrue(property instanceof AntElement);
+  }
+
+  public void testPropDefinedInUnlessTargetAttribute() throws Exception {
+    PsiReference ref = configure();
+    PsiElement property = ref.resolve();
+    assertTrue(property instanceof AntElement);
   }
 
   private void doTargetTest() throws Exception {
