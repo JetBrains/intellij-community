@@ -124,6 +124,10 @@ public abstract class DomFileDescription<T> {
     return Collections.emptySet();
   }
 
+  public Collection<XmlFile> getMyFiles() {
+    return Collections.emptyList();
+  }
+
   /**
    * @param changedRoot Changed DOM file element, that is registered with {@link com.intellij.util.xml.DomFileDescription}, that
    * mentioned this description in {@link #getDomModelDependencyItems()}. 
