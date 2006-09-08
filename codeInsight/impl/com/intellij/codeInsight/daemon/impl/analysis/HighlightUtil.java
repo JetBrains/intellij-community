@@ -1078,65 +1078,18 @@ public class HighlightUtil {
   @Nullable
   public static HighlightInfo checkArrayInitalizerCompatibleTypes(PsiExpression initializer) {
     if (!(initializer.getParent() instanceof PsiArrayInitializerExpression)) return null;
-    PsiElement element = initializer.getParent();
-    int dimensions = 0;
-    while (element instanceof PsiArrayInitializerExpression) {
-      element = element.getParent();
-      dimensions++;
-    }
-    PsiType elementType;
-    if (element instanceof PsiVariable) {
-      elementType = ((PsiVariable)element).getType();
-    }
-    else if (element instanceof PsiNewExpression) {
-      elementType = ((PsiNewExpression)element).getType();
-    }
-    else {
-      // todo cdr illegal ?
-      return null;
-    }
+    PsiType arrayInitializerType = ((PsiArrayInitializerExpression)initializer.getParent()).getType();
+    PsiType componentType = arrayInitializerType instanceof PsiArrayType ? ((PsiArrayType)arrayInitializerType).getComponentType() : arrayInitializerType;
+    if (!(arrayInitializerType instanceof PsiArrayType)) return null;
 
-    if (elementType == null) return null;
-    PsiType type = elementType;
-    for (; dimensions > 0; dimensions--) {
-      if (!(type instanceof PsiArrayType)) break;
-      type = ((PsiArrayType)type).getComponentType();
-      if (type == null) break;
+    PsiType initializerType = initializer.getType();
+    if (initializerType == null) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, initializer,
+                                               JavaErrorMessages.message("illegal.initializer", formatType(componentType)));
     }
-    if (dimensions != 0) {
-      return null;
-      // we should get error when visit parent
-    }
-
-    if (type != null) {
-      // compute initializer type based on initializer text
-      PsiType initializerType =
-        getInitializerType(initializer, type instanceof PsiArrayType ? ((PsiArrayType)type).getComponentType() : type);
-      // do not use PsiArrayInitializerExpression.getType() for computing expression type
-      PsiExpression expression = initializer instanceof PsiArrayInitializerExpression ? null : initializer;
-      return checkAssignability(type, initializerType, expression, initializer);
-    }
-    return null;
+    PsiExpression expression = initializer instanceof PsiArrayInitializerExpression ? null : initializer;
+    return checkAssignability(((PsiArrayType)arrayInitializerType).getComponentType(), initializerType, expression, initializer);
   }
-
-  @Nullable
-  private static PsiType getInitializerType(PsiExpression expression, PsiType compTypeForEmptyInitializer) {
-    if (expression instanceof PsiArrayInitializerExpression) {
-      PsiExpression[] initializers = ((PsiArrayInitializerExpression)expression).getInitializers();
-      PsiType compType;
-      if (initializers.length == 0) {
-        compType = compTypeForEmptyInitializer;
-      }
-      else {
-        PsiType componentType =
-          compTypeForEmptyInitializer instanceof PsiArrayType ? ((PsiArrayType)compTypeForEmptyInitializer).getComponentType() : null;
-        compType = getInitializerType(initializers[0], componentType);
-      }
-      return compType == null ? null : compType.createArrayType();
-    }
-    return expression.getType();
-  }
-
 
   @Nullable
   public static HighlightInfo checkExpressionRequired(PsiReferenceExpression expression) {

@@ -32,7 +32,8 @@ public class PsiArrayInitializerExpressionImpl extends CompositePsiElement imple
     else if (getTreeParent() instanceof PsiArrayInitializerExpression){
       PsiType parentType = ((PsiArrayInitializerExpression)getTreeParent()).getType();
       if (!(parentType instanceof PsiArrayType)) return null;
-      return ((PsiArrayType) parentType).getComponentType();
+      final PsiType componentType = ((PsiArrayType)parentType).getComponentType();
+      return componentType instanceof PsiArrayType ? componentType : null;
     }
     else if (getTreeParent() instanceof FieldElement){
       return ((PsiField)getParent()).getType();
