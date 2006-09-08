@@ -463,14 +463,19 @@ public class StringUtil {
             break;
 
           case'u':
-            int sum = 0;
-            int i;
-            for (i = idx + 1; i < idx + 5 && i < length; i++) {
-              sum *= 16;
-              sum += Integer.valueOf(s.substring(i, i + 1), 16).intValue();
+            if (idx + 4 < length) {
+              try {
+                int code = Integer.valueOf(s.substring(idx + 1, idx + 5), 16).intValue();
+                idx += 4;
+                buffer.append((char)code);
+              }
+              catch (NumberFormatException e) {
+                buffer.append("\\u");
+              }
             }
-            idx += 4;
-            buffer.append((char)sum);
+            else {
+              buffer.append("\\u");
+            }
             break;
 
           default:
