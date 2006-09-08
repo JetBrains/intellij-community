@@ -54,8 +54,7 @@ public class InjectedLanguageUtil {
   private static final Key<CachedValue<List<Pair<PsiElement, TextRange>>>> INJECTED_PSI = Key.create("injectedPsi");
 
   @Nullable
-  public static <T extends PsiLanguageInjectionHost> List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull T host,
-                                                                                                           @Nullable LiteralTextEscaper<T> textEscaper) {
+  public static <T extends PsiLanguageInjectionHost> List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull T host, @Nullable LiteralTextEscaper<T> textEscaper) {
     if (!host.isPhysical()) {
       CachedValueProvider.Result<List<Pair<PsiElement, TextRange>>> result = new InjectedPsiProvider<T>(host, textEscaper).compute();
       return result == null ? null : result.getValue();
@@ -64,8 +63,11 @@ public class InjectedLanguageUtil {
     CachedValue<List<Pair<PsiElement, TextRange>>> cachedPsi = host.getUserData(INJECTED_PSI);
     if (cachedPsi == null) {
       InjectedPsiProvider<T> provider = new InjectedPsiProvider<T>(host, textEscaper);
+      CachedValueProvider.Result<List<Pair<PsiElement, TextRange>>> result = provider.compute();
+      if (result == null) return null;
       cachedPsi = host.getManager().getCachedValuesManager().createCachedValue(provider, false);
       host.putUserData(INJECTED_PSI, cachedPsi);
+      return result.getValue();
     }
     return cachedPsi.getValue();
   }
@@ -303,7 +305,7 @@ public class InjectedLanguageUtil {
       final T host = myHostPointer == null ? myHost : myHostPointer.getElement();
       if (host == null) return null;
       final List<Pair<PsiElement, TextRange>> result = queryInjectionHostForPsi(host);
-      if (result == null) return null;
+      if (result == null || result.isEmpty()) return null;
       fastenMyBelts(host); // create smart pointer only if necessary
       return new Result<List<Pair<PsiElement, TextRange>>>(result, host, PsiModificationTracker.MODIFICATION_COUNT);
     }

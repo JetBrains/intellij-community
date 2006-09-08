@@ -61,9 +61,9 @@ public class CachedValueImpl<T> implements CachedValue<T> {
     }
 
     CachedValueProvider.Result<T> result = myProvider.compute();
-    value = result.getValue();
+    value = result == null ? null : result.getValue();
     myValue = new SoftReference<T>(value == null ? (T) NULL : value);
-    computeTimeStamps(result.getDependencyItems());
+    computeTimeStamps(result == null ? null : result.getDependencyItems());
 
     myComputed = true;
     return value;
