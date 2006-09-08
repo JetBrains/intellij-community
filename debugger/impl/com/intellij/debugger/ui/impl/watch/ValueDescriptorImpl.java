@@ -19,8 +19,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
   protected final Project myProject;
@@ -272,26 +274,68 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public abstract PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException;
 
   public static String getIdLabel(ObjectReference objRef) {
-    StringBuffer buf = new StringBuffer();
-    buf.append('{');
-    buf.append(objRef.type().name()).append('@');
-    if(ApplicationManager.getApplication().isUnitTestMode()) {
-      //noinspection HardCodedStringLiteral
-      buf.append("uniqueID");
-    }
-    else {
-      buf.append(objRef.uniqueID());
-    }
-    buf.append('}');
+    StringBuilder buf = StringBuilderSpinAllocator.alloc();
+    try {
+      final Type type = objRef.type();
+      buf.append('{');
+      if (type instanceof ClassType && ((ClassType)type).isEnum()) {
+        final String name = getEnumConstantName(objRef, (ClassType)type);
+        if (name != null) {
+          buf.append("enum:").append(name);
+        }
+        else {
+          buf.append(type.name());
+        }
+      }
+      else {
+        buf.append(type.name());
+      }
+      buf.append('@');
+      if(ApplicationManager.getApplication().isUnitTestMode()) {
+        //noinspection HardCodedStringLiteral
+        buf.append("uniqueID");
+      }
+      else {
+        buf.append(objRef.uniqueID());
+      }
+      buf.append('}');
 
-    if (objRef instanceof ArrayReference) {
-      int idx = buf.indexOf("[");
-      if(idx >= 0) {
-        buf.insert(idx + 1, Integer.toString(((ArrayReference)objRef).length()));
+      if (objRef instanceof ArrayReference) {
+        int idx = buf.indexOf("[");
+        if(idx >= 0) {
+          buf.insert(idx + 1, Integer.toString(((ArrayReference)objRef).length()));
+        }
+      }
+
+      return buf.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buf);
+    }
+  }
+
+  @Nullable
+  private static String getEnumConstantName(final ObjectReference objRef, ClassType classType) {
+    do {
+      if (!classType.isPrepared()) {
+        return null;
+      }
+      classType = classType.superclass();
+      if (classType == null) {
+        return null;
       }
     }
-
-    return buf.toString();
+    while (!("java.lang.Enum".equals(classType.name())));
+    //noinspection HardCodedStringLiteral
+    final Field field = classType.fieldByName("name");
+    if (field == null) {
+      return null;
+    }
+    final Value value = objRef.getValue(field);
+    if (!(value instanceof StringReference)) {
+      return null;
+    }
+    return ((StringReference)value).value();
   }
 
   public boolean canSetValue() {
