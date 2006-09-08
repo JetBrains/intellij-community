@@ -7,6 +7,11 @@ import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadGridLayoutManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -137,6 +142,19 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
       // our own properties must be used instead
       return !(component.getParent().getLayoutManager() instanceof RadGridLayoutManager);
     }
-    return true;
+
+    // check if property is available in the JDK used by the module containing the component
+    final PsiManager psiManager = PsiManager.getInstance(component.getProject());
+    final GlobalSearchScope scope = component.getModule().getModuleWithDependenciesAndLibrariesScope(true);
+    PsiClass componentClass = psiManager.findClass(component.getComponentClassName(), scope);
+    if (componentClass == null) return true;
+    final PsiMethod[] psiMethods = componentClass.findMethodsByName(myReadMethod.getName(), true);
+    for(PsiMethod method: psiMethods) {
+      if (!method.getModifierList().hasModifierProperty(PsiModifier.STATIC) &&
+          method.getParameterList().getParametersCount() == 0) {
+        return true;
+      }
+    }
+    return false;
   }
 }
