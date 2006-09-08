@@ -39,9 +39,9 @@ class StatisticsUnit {
 
   private TObjectIntHashMap<MyDataKey> myDataMap = new TObjectIntHashMap<MyDataKey>();
 
-  public StatisticsUnit(int number, StringInterner keys) {
+  public StatisticsUnit(int number) {
     myNumber = number;
-    myKeys = keys;
+    myKeys = new StringInterner();
   }
 
   public int getData(String key1, String key2) {

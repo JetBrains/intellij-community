@@ -179,14 +179,14 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     }
     StatisticsUnit unit = loadUnit(unitNumber);
     if (unit == null){
-      unit = new StatisticsUnit(unitNumber, myKeys);
+      unit = new StatisticsUnit(unitNumber);
     }
     myUnits[unitNumber] = new SoftReference(unit);
     return unit;
   }
 
   private StatisticsUnit loadUnit(int unitNumber) {
-    StatisticsUnit unit = new StatisticsUnit(unitNumber, myKeys);
+    StatisticsUnit unit = new StatisticsUnit(unitNumber);
     if (!ApplicationManager.getApplication().isUnitTestMode()){
       String path = getPathToUnit(unitNumber);
       try{
