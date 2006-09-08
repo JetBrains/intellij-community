@@ -9,19 +9,18 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.refactoring.RefactoringBundle;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -81,7 +80,8 @@ public class MethodNode extends CheckedTreeNode {
           if (!(element instanceof PsiReferenceExpression) ||
               !(((PsiReferenceExpression) element).getQualifierExpression() instanceof PsiSuperExpression)) {
             final PsiElement enclosingContext = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
-            if (enclosingContext instanceof PsiMethod) {
+            if (enclosingContext instanceof PsiMethod &&
+                !myMethod.equals(enclosingContext)) { //do not add recursive methods, TODO: mutually recursive methods
               callers.add((PsiMethod) enclosingContext);
             }
           }
