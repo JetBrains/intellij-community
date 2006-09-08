@@ -1,8 +1,8 @@
 package com.intellij.diagnostic.logging;
 
 import com.intellij.diagnostic.DiagnosticBundle;
-import com.intellij.execution.filters.TextConsoleBuidlerFactory;
 import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -69,7 +69,7 @@ public abstract class LogConsole extends AdditionalTabComponent {
     myProject = project;
     myPath = file.getAbsolutePath();
     myReaderThread = new ReaderThread(file);
-    TextConsoleBuilder builder = TextConsoleBuidlerFactory.getInstance().createBuilder(project);
+    TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     myConsole = builder.getConsole();
     myConsole.attachToProcess(myProcessHandler);
     myReaderThread.start();
@@ -147,7 +147,9 @@ public abstract class LogConsole extends AdditionalTabComponent {
   }
 
   public void stopRunning(){
-    myReaderThread.stopRunning(true);
+    if (myReaderThread != null) {
+      myReaderThread.stopRunning(true);
+    }
   }
 
   private void addMessage(final String text){
@@ -170,7 +172,7 @@ public abstract class LogConsole extends AdditionalTabComponent {
             }
           });
         }
-      }, ModalityState.NON_MMODAL);
+      }, ModalityState.NON_MODAL);
     }
   }
 
