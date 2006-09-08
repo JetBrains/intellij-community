@@ -4,10 +4,7 @@ import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.xml.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -73,7 +70,7 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     }
 
     private XmlNSDescriptor getNsDescriptor() {
-      final XmlDocument document = ((XmlFile)myElement.getContainingFile()).getDocument();
+      final XmlDocument document = ((XmlFile)getRealFile()).getDocument();
       XmlNSDescriptor rootTagNSDescriptor = document.getRootTagNSDescriptor();
       if (rootTagNSDescriptor == null) rootTagNSDescriptor = (XmlNSDescriptor)document.getMetaData();
       return rootTagNSDescriptor;
@@ -105,8 +102,14 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     public Object[] getVariants() {
       final XmlNSDescriptor rootTagNSDescriptor = getNsDescriptor();
       return rootTagNSDescriptor != null ?
-             rootTagNSDescriptor.getRootElementsDescriptors(((XmlFile)myElement.getContainingFile()).getDocument()):
+             rootTagNSDescriptor.getRootElementsDescriptors(((XmlFile)getRealFile()).getDocument()):
              ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+
+    private PsiFile getRealFile() {
+      PsiFile psiFile = myElement.getContainingFile();
+      if (psiFile != null && psiFile.getOriginalFile() != null) psiFile = psiFile.getOriginalFile();
+      return psiFile;
     }
 
     public boolean isSoft() {
