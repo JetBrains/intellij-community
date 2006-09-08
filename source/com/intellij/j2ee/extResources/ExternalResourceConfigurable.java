@@ -158,6 +158,8 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
   public void disposeUIResources() {
     myPanel = null;
+    myExtPanel = null;
+    myIgnorePanel = null;
   }
 
   public String getHelpTopic() {
