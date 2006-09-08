@@ -32,7 +32,7 @@
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="Annotations" exported="" />
     <orderEntry type="module" module-name="icons" />
-    <orderEntry type="module" module-name="resources_eng" />
+    <orderEntry type="module" module-name="resources_eng" exported="" />
     <orderEntry type="module" module-name="codeInsight-openapi" exported="" />
     <orderEntry type="module" module-name="inspections-openapi" exported="" />
     <orderEntry type="module" module-name="refactoring-openapi" exported="" />
