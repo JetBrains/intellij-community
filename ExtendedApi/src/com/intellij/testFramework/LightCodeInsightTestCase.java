@@ -118,7 +118,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     setupFileEditorAndDocument(fileName, newFileText);
     setupCaret(caretMarker, newFileText);
     setupSelection(selStartMarker, selEndMarker);
-    setupEditorForInjectedLangugae();
+    setupEditorForInjectedLanguage();
   }
 
   private static void setupSelection(final RangeMarker selStartMarker, final RangeMarker selEndMarker) {
@@ -154,7 +154,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     myEditor = createEditor(myVFile);
   }
 
-  private static void setupEditorForInjectedLangugae() {
+  private static void setupEditorForInjectedLanguage() {
     Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, myFile);
     if (editor instanceof EditorDelegate) {
       myFile = ((EditorDelegate)editor).getInjectedFile();

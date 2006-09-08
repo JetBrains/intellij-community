@@ -4,9 +4,11 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
+import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
@@ -16,6 +18,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -68,6 +71,7 @@ public class EditorDelegate implements EditorEx {
     myCaretModelDelegate = new CaretModelDelegate(myDelegate.getCaretModel(), this);
     mySelectionModelDelegate = new SelectionModelDelegate(myDelegate, myDocument,this);
     myMarkupModelDelegate = new MarkupModelDelegate((EditorMarkupModelImpl)myDelegate.getMarkupModel(), myDocument);
+
     disposeInvalidEditors();
     allEditors.add(this);
   }
@@ -187,7 +191,10 @@ public class EditorDelegate implements EditorEx {
   }
 
   public EditorHighlighter getHighlighter() {
-    return myDelegate.getHighlighter();
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    LexerEditorHighlighter highlighter = HighlighterFactory.createHighlighter(myInjectedFile.getFileType(), scheme, getProject());
+    highlighter.setText(getDocument().getText());
+    return highlighter;
   }
 
   @NotNull

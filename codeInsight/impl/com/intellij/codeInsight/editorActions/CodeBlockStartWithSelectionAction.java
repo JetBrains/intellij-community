@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 public class CodeBlockStartWithSelectionAction extends EditorAction {
   public CodeBlockStartWithSelectionAction() {
     super(new Handler());
+    setInjectedContext(true);
   }
 
   private static class Handler extends EditorActionHandler {

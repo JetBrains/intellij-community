@@ -11,10 +11,9 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.impl.injected.EditorDelegate;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -22,7 +21,6 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -33,7 +31,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
-import com.intellij.ide.highlighter.HighlighterFactory;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -139,12 +136,7 @@ public class BraceHighlightingHandler {
     }, 300);
   }
 
-  public EditorHighlighter getEditorHighlighter() {
-    if (myEditor instanceof EditorDelegate) {
-      LexerEditorHighlighter editorHighlighter = HighlighterFactory.createHighlighter(myProject, myPsiFile.getFileType());
-      editorHighlighter.setText(myDocument.getText());
-      return editorHighlighter;
-    }
+  EditorHighlighter getEditorHighlighter() {
     return ((EditorEx)myEditor).getHighlighter();
   }
 

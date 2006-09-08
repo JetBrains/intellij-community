@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 public class CodeBlockStartAction extends EditorAction {
   public CodeBlockStartAction() {
     super(new Handler());
+    setInjectedContext(true);
   }
 
   private static class Handler extends EditorActionHandler {

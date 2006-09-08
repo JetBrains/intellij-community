@@ -29,15 +29,18 @@ public class CodeBlockUtil {
     JSP_TAG_BRACE = 3,
     UNDEFINED_TAG_BRACE = -1;
 
-  private static final int getBraceType(HighlighterIterator iterator) {
+  private static int getBraceType(HighlighterIterator iterator) {
     final IElementType type = iterator.getTokenType();
     if (type instanceof IJavaElementType) {
       return JAVA_BLOCK_BRACE;
-    } else if (type instanceof IXmlLeafElementType) {
+    }
+    else if (type instanceof IXmlLeafElementType) {
       return XML_TAG_BRACE;
-    } else if (type instanceof IJspElementType) {
+    }
+    else if (type instanceof IJspElementType) {
       return JSP_TAG_BRACE;
-    } else {
+    }
+    else {
       return UNDEFINED_TAG_BRACE;
     }
   }
