@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.AntElementRole;
+import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -114,19 +115,17 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   @NotNull
   public AntTarget[] getImportedTargets() {
     if (myImportedTargets == null) {
-      final AntFile[] importedFiles = getImportedFiles();
-      if (importedFiles.length == 0) {
+      if (getImportedFiles().length == 0) {
         myImportedTargets = AntTarget.EMPTY_TARGETS;
       }
       else {
         final List<AntTarget> targets = new ArrayList<AntTarget>();
-        for (final AntFile imported : importedFiles) {
-          final AntProject project = imported.getAntProject();
-          if (project != null) {
-            for (final AntTarget target : project.getTargets()) {
-              targets.add(target);
-            }
-          }
+        final Set<PsiElement> elementsDepthStack = PsiElementSetSpinAllocator.alloc();
+        try {
+          getImportedTargets(this, targets, elementsDepthStack);
+        }
+        finally {
+          PsiElementSetSpinAllocator.dispose(elementsDepthStack);
         }
         final int size = targets.size();
         myImportedTargets = (size == 0) ? AntTarget.EMPTY_TARGETS : targets.toArray(new AntTarget[size]);
@@ -422,6 +421,25 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       if (element != null) {
         fixUndefinedElements(element, (AntElement[])element.getChildren());
       }
+    }
+  }
+
+  private static void getImportedTargets(final AntProject project, final List<AntTarget> targets, final Set<PsiElement> elementsDepthStack) {
+    if (elementsDepthStack.contains(project)) return;
+    elementsDepthStack.add(project);
+    try {
+      for (final AntFile imported : project.getImportedFiles()) {
+        final AntProject importedProject = imported.getAntProject();
+        if (importedProject != null) {
+          for (final AntTarget target : importedProject.getTargets()) {
+            targets.add(target);
+          }
+        }
+        getImportedTargets(importedProject, targets, elementsDepthStack);
+      }
+    }
+    finally {
+      elementsDepthStack.remove(project);
     }
   }
 }
