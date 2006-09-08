@@ -22,6 +22,7 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.DocumentEvent;
 import java.util.Map;
@@ -43,6 +44,7 @@ public abstract class SearchableOptionsRegistrar{
                                                      final String option,
                                                      final boolean showProjectCodeStyle);
 
+  @Nullable
   public abstract String getInnerPath(SearchableConfigurable configurable, String option);
 
   public abstract void addOption(SearchableConfigurable configurable, String option, String path, String hit);

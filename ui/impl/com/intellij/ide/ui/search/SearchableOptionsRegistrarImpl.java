@@ -25,6 +25,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.DocumentEvent;
 import java.util.*;
@@ -159,6 +160,9 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar i
     }
     final Set<Configurable> currentConfigurables = new HashSet<Configurable>(configurables);
     Set<String> helpIds = null;
+    if (options.isEmpty()) { //operate with substring
+      options.add(option);
+    }
     for (String opt : options) {
       final Set<OptionDescription> optionIds = getAcceptableDescriptions(opt);
       if (optionIds == null) {
@@ -193,6 +197,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar i
     return configurables;
   }
 
+  @Nullable
   private Set<OptionDescription> getAcceptableDescriptions(final String prefix) {
     if (prefix == null) return null;
     final String stemmedPrefix = PorterStemmerUtil.stem(prefix);
@@ -209,6 +214,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar i
     return result;
   }
 
+  @Nullable
   public String getInnerPath(SearchableConfigurable configurable, @NonNls String option) {
     Set<OptionDescription> path = null;
     final Set<String> words = getProcessedWordsWithoutStemming(option);
