@@ -3,10 +3,6 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.lang.StdLanguages;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -25,6 +21,7 @@ import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.xml.*;
 import com.intellij.util.EventDispatcher;
@@ -36,7 +33,6 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
-import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import gnu.trove.THashMap;
@@ -177,6 +173,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       }
     }, project);
 
+    /*
     StdLanguages.XML.injectAnnotator(new Annotator() {
       public void annotate(PsiElement psiElement, AnnotationHolder holder) {
         final DomFileDescription description = getDomFileDescription(psiElement);
@@ -191,6 +188,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
         }
       }
     }, project);
+    */
   }
 
   private void updateFileDomness(final XmlFile file, DomFileElement changedRoot) {
@@ -320,6 +318,33 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     if (tag != null) {
       tag.putUserData(CACHED_HANDLER, element);
     }
+  }
+
+  public final List<DomFileDescription> getSortedFileDescriptions() {
+    final Map<Class, DomFileDescription> class2Descr = new THashMap<Class, DomFileDescription>();
+    final Set<DomFileDescription> descriptions = myFileDescriptions.keySet();
+    for (final DomFileDescription description : descriptions) {
+      class2Descr.put(description.getRootElementClass(), description);
+    }
+    final Set<DomFileDescription> visited = new THashSet<DomFileDescription>();
+    final LinkedList<DomFileDescription> result = new LinkedList<DomFileDescription>();
+    for (final DomFileDescription description : descriptions) {
+      if (!visited.contains(description)) {
+        dfsVisit(description, class2Descr, visited, result);
+      }
+    }
+    return result;
+  }
+  
+  private void dfsVisit(DomFileDescription<?> node, Map<Class, DomFileDescription> class2Descr, Set<DomFileDescription> visited, LinkedList<DomFileDescription> result) {
+    visited.add(node);
+    for (final Class<? extends DomElement> aClass : node.getDomModelDependencyItems()) {
+      final DomFileDescription next = class2Descr.get(aClass);
+      if (!visited.contains(next)) {
+        dfsVisit(next, class2Descr, visited, result);
+      }
+    }
+    result.add(node);
   }
 
   public final Map<DomFileDescription, Set<DomFileElementImpl>> getFileDescriptions() {
@@ -466,7 +491,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   public final DomFileDescription getDomFileDescription(PsiElement element) {
     if (element instanceof XmlElement) {
       final PsiFile psiFile = element.getContainingFile();
-      if (psiFile instanceof XmlFile) {
+      if (psiFile instanceof XmlFile && !(psiFile instanceof JspFile)) {
         return getDomFileDescription((XmlFile)psiFile);
       }
     }
