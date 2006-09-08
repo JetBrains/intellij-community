@@ -17,28 +17,30 @@
 
 package com.intellij.psi;
 
+import java.lang.ref.SoftReference;
+
 /**
  * @author mike
  */
 public class PsiInvalidElementAccessException extends RuntimeException {
-  private final PsiElement myElement;
+  private final SoftReference<PsiElement> myElementReference;  // to prevent leaks, exceptions are stored in IdeaLogger
 
   public PsiInvalidElementAccessException(PsiElement element) {
-    myElement = element;
+    myElementReference = new SoftReference<PsiElement>(element);
   }
 
   public PsiInvalidElementAccessException(PsiElement element, String message) {
     super(message);
-    myElement = element;
+    myElementReference = new SoftReference<PsiElement>(element);
   }
 
   public PsiInvalidElementAccessException(PsiElement element, String message, Throwable cause) {
     super(message, cause);
-    myElement = element;
+    myElementReference = new SoftReference<PsiElement>(element);
   }
 
   public PsiInvalidElementAccessException(PsiElement element, Throwable cause) {
     super(cause);
-    myElement = element;
+    myElementReference = new SoftReference<PsiElement>(element);
   }
 }
