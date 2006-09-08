@@ -7,15 +7,20 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.rt.compiler.JavacRunner;
+import com.intellij.rt.junit4.JUnit4Util;
+import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
-import com.intellij.util.Function;
-import com.intellij.util.containers.*;
-import static com.intellij.util.containers.ContainerUtil.*;
-
-import java.util.*;
-
+import com.intellij.util.containers.ComparatorUtil;
+import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.skipNulls;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -44,10 +49,18 @@ public class PathUtilEx {
       pathsList.addTail(ideaRtJarPath);
     }
   }
+  public static void addJunit4Jar(PathsList pathsList) {
+    final String path = PathUtil.getJarPathForClass(JUnit4Util.class);
+    if (Boolean.getBoolean(IDEA_PREPEND_RTJAR)) {
+      pathsList.addFirst(path);
+    }
+    else {
+      pathsList.addTail(path);
+    }
+  }
 
   public static String getIdeaRtJarPath() {
-    final Class aClass = JavacRunner.class;
-    return PathUtil.getJarPathForClass(aClass);
+    return PathUtil.getJarPathForClass(JavacRunner.class);
   }
 
   public static ProjectJdk getAnyJdk(Project project) {
