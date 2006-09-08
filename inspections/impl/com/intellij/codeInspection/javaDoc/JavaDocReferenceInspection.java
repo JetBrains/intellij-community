@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "JavadocReference";
@@ -52,11 +54,10 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
     final PsiDocComment docComment = docCommentOwner.getDocComment();
     if (docComment == null) return null;
 
-    final String[] refMessage = new String[]{null};
-    final PsiJavaCodeReferenceElement[] references = new PsiJavaCodeReferenceElement[]{null};
-    docComment.accept(getVisitor(references, refMessage, docCommentOwner, problems, manager));
-    if (refMessage[0] != null) {
-      problems.add(createDescriptor(references[0], refMessage[0], manager));
+    final Set<PsiJavaCodeReferenceElement> references = new HashSet<PsiJavaCodeReferenceElement>();
+    docComment.accept(getVisitor(references, docCommentOwner, problems, manager));
+    for (PsiJavaCodeReferenceElement reference : references) {
+      problems.add(createDescriptor(reference, InspectionsBundle.message("inspection.javadoc.problem.cannot.resolve", "<code>" + reference.getText() + "</code>"), manager));
     }
 
     return problems.isEmpty()
@@ -70,8 +71,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
   }
 
 
-  private PsiElementVisitor getVisitor(final PsiJavaCodeReferenceElement[] references,
-                                       final String[] refMessage,
+  private PsiElementVisitor getVisitor(final Set<PsiJavaCodeReferenceElement> references,
                                        final PsiElement context,
                                        final ArrayList<ProblemDescriptor> problems,
                                        final InspectionManager manager) {
@@ -84,8 +84,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
         super.visitReferenceElement(reference);
         JavaResolveResult result = reference.advancedResolve(false);
         if (result.getElement() == null && !result.isPackagePrefixPackageReference()) {
-          refMessage[0] = InspectionsBundle.message("inspection.javadoc.problem.cannot.resolve", "<code>" + reference.getText() + "</code>");
-          references[0] = reference;
+          references.add(reference);
         }
       }
 
@@ -113,14 +112,6 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
           }
         }
       }
-
-      public void visitDocComment(PsiDocComment comment) {
-        super.visitDocComment(comment);
-        /*final PsiElement[] descriptionElements = comment.getDescriptionElements();
-        for (PsiElement element : descriptionElements) {
-          element.accept(this);
-        }*/
-      }
     };
   }
 
@@ -145,7 +136,6 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
         final int textOffset = value.getTextOffset();
 
         if (textOffset != value.getTextRange().getEndOffset()) {
-          if (problems == null) problems = new ArrayList<ProblemDescriptor>();
           final PsiDocTagValue valueElement = tag.getValueElement();
           if (valueElement != null) {
             @NonNls String params = "<code>" + new String(value.getContainingFile().textToCharArray(), textOffset, value.getTextRange().getEndOffset() - textOffset) + "</code>";
@@ -169,6 +159,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
     return SHORT_NAME;
   }
 
+  @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
