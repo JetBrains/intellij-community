@@ -164,6 +164,9 @@
       <interface-class>com.intellij.util.xml.ElementPresentationManager</interface-class>
       <implementation-class>com.intellij.util.xml.ElementPresentationManagerImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.ide.Exe4jListener</implementation-class>
+    </component>
   </application-components>
 
 
