@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -81,9 +82,15 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
     if (module == null) return false;
     final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
     if (jdk == null) return false;
-    final boolean is_1_5 = jdk.getVersionString().indexOf("1.5") > 0;
-    return !(DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS && is_1_5 && LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(myContext)) <= 0) &&
-           myContext.isValid() && myContext.getManager().isInProject(myContext) && getContainer() != null;
+    final String versionString = jdk.getVersionString();
+    final boolean is_1_5 = versionString.indexOf("1.5") > 0 ||
+                           versionString.indexOf("1.6") > 0;
+    if (!DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS ||
+        !is_1_5 || LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(myContext)) > 0 ||
+        !myContext.isValid() || !myContext.getManager().isInProject(myContext)) return false;
+
+    final PsiDocCommentOwner container = getContainer();
+    return container != null && !(container instanceof JspHolderMethod);
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
