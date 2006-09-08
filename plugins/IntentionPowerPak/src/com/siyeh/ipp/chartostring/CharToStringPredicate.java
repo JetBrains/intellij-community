@@ -34,6 +34,8 @@ class CharToStringPredicate implements PsiElementPredicate{
             return false;
         }
         final String charLiteral = element.getText();
+        if (charLiteral.length() < 2) return false; // Incomplete char literal probably without closing amp
+
         final String charText =
                 charLiteral.substring(1, charLiteral.length() - 1);
         if (StringUtil.unescapeStringCharacters(charText).length() != 1) {
