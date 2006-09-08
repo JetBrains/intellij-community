@@ -28,6 +28,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -445,6 +446,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     mySeverityGroupNodes.clear();
   }
 
+  @Nullable
   public String getCurrentProfileName() {
     return myInspectionProfile != null ? myInspectionProfile.getDisplayName() : null;
   }
@@ -457,40 +459,28 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     if (!strict && !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) return false;
     clearTree();
     boolean resultsFound = false;
+    final InspectionProfile profile = myInspectionProfile;
     final boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
     myGroups = new HashMap<HighlightDisplayLevel, Map<String, InspectionGroupNode>>();
-    Map<InspectionTool, HighlightDisplayLevel> tools = new HashMap<InspectionTool, HighlightDisplayLevel>();
-    InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
-    if (myGlobalInspectionContext.RUN_WITH_EDITOR_PROFILE){
-      final Set<String> profiles = myScope.getActiveInspectionProfiles();
-      for (String profileName : profiles) {
-        processProfile((InspectionProfileImpl)inspectionProfileManager.getProfile(profileName), tools);
+    final Map<String, Set<Pair<InspectionTool, InspectionProfile>>> tools = myGlobalInspectionContext.getTools();
+    for (Set<Pair<InspectionTool, InspectionProfile>> toolsInsideProfile : tools.values()) {
+      for (Pair<InspectionTool, InspectionProfile> toolWithProfile : toolsInsideProfile) {
+        final InspectionTool tool = toolWithProfile.first;
+        final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+        if (profile != null && !profile.isToolEnabled(key)) {
+          break; //exclude disabled inspections from view
+        }
+        tool.updateContent();
+        final boolean hasProblems = tool.hasReportedProblems();
+        if (hasProblems) {
+          addTool(tool, toolWithProfile.second.getErrorLevel(key), isGroupedBySeverity);
+        }
+        resultsFound |= hasProblems;
       }
-    } else {
-      processProfile(myInspectionProfile, tools);
-    }
-
-    for (InspectionTool tool : tools.keySet()) {
-      tool.updateContent();
-      final boolean hasProblems = tool.hasReportedProblems();
-      if (hasProblems) {
-        addTool(tool, tools.get(tool), isGroupedBySeverity);
-      }
-      resultsFound |= hasProblems;
     }
     myTree.sort();
     myTree.restoreExpantionAndSelection();
     return resultsFound;
-  }
-
-  private void processProfile(final InspectionProfile profile, final Map<InspectionTool, HighlightDisplayLevel> tools) {
-    final InspectionTool[] inspectionTools = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(profile.getName()).getInspectionTools();
-    for (InspectionTool tool : inspectionTools) {
-      final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
-      if (profile.isToolEnabled(key)){
-        tools.put(tool, profile.getErrorLevel(key));
-      }
-    }
   }
 
   private InspectionTreeNode getToolParentNode(String groupName, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {

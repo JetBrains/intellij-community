@@ -25,9 +25,8 @@ import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.RefElementNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -71,6 +70,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     return false;
   }
 
+  @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.WARNING;
   }
@@ -180,14 +180,22 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   }
 
   protected HighlightSeverity getCurrentSeverity(RefElement element) {
-    final PsiElement psiElement = element.getElement();
+    if (myContext != null) {
+      final Set<Pair<InspectionTool, InspectionProfile>> tools = myContext.getTools().get(getShortName());
+      for (Pair<InspectionTool, InspectionProfile> pair : tools) {
+        if (pair.first == this) {
+          return pair.second.getErrorLevel(HighlightDisplayKey.find(getShortName())).getSeverity();
+        }
+      }
+    }
+    /*final PsiElement psiElement = element.getElement();
     if (psiElement != null) {
       final InspectionProfile profile =
         InspectionProjectProfileManager.getInstance(getContext().getProject()).getInspectionProfile(psiElement);
       final HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(getShortName()));
       return level.getSeverity();
-    }
-    return null;
+    }*/
+    return HighlightSeverity.INFORMATION;
   }
 
   protected String getTextAttributeKey(HighlightSeverity severity, ProblemHighlightType highlightType) {

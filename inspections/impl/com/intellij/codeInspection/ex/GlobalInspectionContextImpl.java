@@ -28,7 +28,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -95,7 +97,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   @NonNls public static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN =
     Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(,\\w+)*)");
 
-  private Map<String, Set<InspectionTool>> myTools = new java.util.HashMap<String, Set<InspectionTool>>();
+  private Map<String, Set<Pair<InspectionTool, InspectionProfile>>> myTools = new java.util.HashMap<String, Set<Pair<InspectionTool, InspectionProfile>>>();
 
   private UIOptions myUIOptions;
 
@@ -314,11 +316,12 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           for (String toolName : myTools.keySet()) {
             final Element root = new Element(InspectionsBundle.message("inspection.problems"));
             final Document doc = new Document(root);
-            final Set<InspectionTool> sameTools = myTools.get(toolName);
+            final Set<Pair<InspectionTool, InspectionProfile>> sameTools = myTools.get(toolName);
             boolean hasProblems = false;
             boolean isLocalTool = false;
             boolean isDescriptorProvider = false;
-            for (InspectionTool tool : sameTools) {
+            for (Pair<InspectionTool, InspectionProfile> toolDescr : sameTools) {
+              final InspectionTool tool = toolDescr.first;
               if (tool instanceof DescriptorProviderInspection) {
                 hasProblems = new File(outputPath, toolName + ext).exists();
                 isLocalTool = tool instanceof LocalInspectionToolWrapper;
@@ -545,9 +548,14 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isToCheckMember(RefElement owner, InspectionTool tool) {
     final PsiElement element = owner.getElement();
-    if (RUN_WITH_EDITOR_PROFILE && InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element)
-      .getInspectionTool(tool.getShortName()) != tool) {
-      return false;
+    if (RUN_WITH_EDITOR_PROFILE) {
+      final Set<Pair<InspectionTool, InspectionProfile>> sameTools = myTools.get(tool.getShortName());
+      for (Pair<InspectionTool, InspectionProfile> sameTool : sameTools) {
+        if (sameTool.first == tool) {
+          final InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element);
+          return !Comparing.strEqual(profile.getName(), sameTool.second.getName());
+        }
+      }
     }
     return !((RefElementImpl)owner).isSuppressed(tool.getShortName());
   }
@@ -630,10 +638,10 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   public void ignoreElement(final InspectionTool tool, final PsiElement element) {
     final RefElement refElement = getRefManager().getReference(element);
-    final Set<InspectionTool> tools = myTools.get(tool.getShortName());
+    final Set<Pair<InspectionTool, InspectionProfile>> tools = myTools.get(tool.getShortName());
     if (tools != null){
-      for (InspectionTool inspectionTool : tools) {
-        inspectionTool.ignoreElement(refElement);
+      for (Pair<InspectionTool, InspectionProfile> inspectionTool : tools) {
+        inspectionTool.first.ignoreElement(refElement);
       }
     }
   }
@@ -909,12 +917,12 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
       if (inspectionProfile.isToolEnabled(key)) {
         tool.initialize(this);
-        Set<InspectionTool> sertainTools = myTools.get(shortName);
+        Set<Pair<InspectionTool, InspectionProfile>> sertainTools = myTools.get(shortName);
         if (sertainTools == null){
-          sertainTools = new HashSet<InspectionTool>();
+          sertainTools = new HashSet<Pair<InspectionTool, InspectionProfile>>();
           myTools.put(shortName, sertainTools);
         }
-        sertainTools.add(tool);
+        sertainTools.add(Pair.create(tool, inspectionProfile.getInspectionProfile()));
         if (tool instanceof LocalInspectionToolWrapper) {
           localProfileTools.add(tool);
           appendJobDescriptor(LOCAL_ANALYSIS);
@@ -930,6 +938,10 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
   }
 
+  public Map<String, Set<Pair<InspectionTool, InspectionProfile>>> getTools() {
+    return myTools;
+  }
+
   private void appendJobDescriptor(JobDescriptor job) {
     if (!myJobDescriptors.contains(job)) {
       myJobDescriptors.add(job);
@@ -943,9 +955,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     managerEx.closeRunningContext(this);
     managerEx.getUIOptions().save(myUIOptions);
     getContentManager().removeContent(myContent);
-    for (Set<InspectionTool> tools : myTools.values()) {
-      for (InspectionTool tool : tools) {
-        tool.finalCleanup();
+    for (Set<Pair<InspectionTool, InspectionProfile>> tools : myTools.values()) {
+      for (Pair<InspectionTool, InspectionProfile> tool : tools) {
+        tool.first.finalCleanup();
       }
     }
     cleanup();

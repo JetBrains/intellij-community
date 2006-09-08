@@ -4,6 +4,7 @@
 
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -69,5 +70,9 @@ public class InspectionProfileWrapper {
 
   public InspectionProfile getInspectionProfile() {
     return myProfile;
+  }
+
+  public HighlightDisplayLevel getErrorLevel(final HighlightDisplayKey key) {
+    return myProfile.getErrorLevel(key);
   }
 }
