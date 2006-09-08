@@ -16,6 +16,7 @@
 
 package com.intellij.ide.ui.search;
 
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
@@ -26,32 +27,35 @@ public class PorterStemmerUtil {
   @Nullable
   public static String stem(String str) {
     // check for zero length
-    if (str.length() > 0) {
-      // all characters must be letters
-      char[] c = str.toCharArray();
-      StringBuffer result = new StringBuffer();
-      StringBuffer buf = new StringBuffer(str.length());
-      for (char character : c) {
-        if (!Character.isLetter(character) && !Character.isDigit(character)) return null;
-        if (Character.isLetter(character)){
-          buf.append(character);
-        } else {
-          result.append(buf.toString());
-          result.append(character);
-          buf = new StringBuffer(str.length());
+    final int strLen = str.length();
+    if (strLen > 0) {
+      final StringBuilder result = StringBuilderSpinAllocator.alloc();
+      try {
+        int lastDigit = -1;
+        for (int i = 0; i < strLen; ++i) {
+          char c = str.charAt(i);
+          result.append(c);
+          if(Character.isDigit(c)) {
+            lastDigit = i;
+          }
+          else if(!Character.isLetter(c)){
+            return null;
+          }
         }
+        ++lastDigit;
+        if( lastDigit > 0 && lastDigit < strLen) {
+          return result.replace(lastDigit, strLen, stemString(result.substring(lastDigit))).toString();
+        }
+        return stemString(str);                
       }
-      if (buf.length() > 0){
-        result.append(stemString(buf.toString()));
+      finally {
+        StringBuilderSpinAllocator.dispose(result);
       }
-      return result.toString();
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
-  private static String stemString(String str){
+  private static String stemString(String str) {
     str = step1a(str);
     str = step1b(str);
     str = step1c(str);
@@ -330,11 +334,12 @@ public class PorterStemmerUtil {
 
   private static String step5a(String str) {
     // (m > 1) E ->
-    if (str.endsWith("e")&& stringMeasure(str.substring(0, str.length() - 1)) > 1) {
+    if (str.endsWith("e") && stringMeasure(str.substring(0, str.length() - 1)) > 1) {
       return str.substring(0, str.length() - 1);
     }
     // (m = 1 and not *0) E ->
-    else if (str.endsWith("e") && stringMeasure(str.substring(0, str.length() - 1)) == 1 && !endsWithCVC(str.substring(0, str.length() - 1))) {
+    else
+    if (str.endsWith("e") && stringMeasure(str.substring(0, str.length() - 1)) == 1 && !endsWithCVC(str.substring(0, str.length() - 1))) {
       return str.substring(0, str.length() - 1);
     }
     else {
