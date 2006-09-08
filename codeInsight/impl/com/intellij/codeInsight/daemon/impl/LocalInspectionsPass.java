@@ -252,7 +252,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
                                                     final HighlightSeverity severity) {
     ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
     HighlightInfoType type = null;
-    if (highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
+    if (highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING  || highlightType == ProblemHighlightType.J2EE_PROBLEM) {
       type = SeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
     }
     else if (highlightType == ProblemHighlightType.LIKE_DEPRECATED) {
@@ -317,7 +317,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
       PsiElement injectedPsi = result.injectedPsi;
       DocumentRange documentRange = (DocumentRange)documentManager.getDocument((PsiFile)injectedPsi);
-
+      if (documentRange == null) continue;
       //noinspection ForLoopReplaceableByForEach
       for (int j = 0; j < result.foundProblems.size(); j++) {
         ProblemDescriptor descriptor = result.foundProblems.get(j);
