@@ -82,6 +82,6 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
   }
 
   public boolean canNavigateToSource() {
-    return true;
+    return false;
   }
 }

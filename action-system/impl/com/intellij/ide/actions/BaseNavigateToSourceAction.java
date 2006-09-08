@@ -29,7 +29,7 @@ public abstract class BaseNavigateToSourceAction extends AnAction {
     Navigatable[] navigatables = (Navigatable[])dataContext.getData(DataConstants.NAVIGATABLE_ARRAY);
     if (navigatables != null) {
       for (Navigatable navigatable : navigatables) {
-        if (navigatable.canNavigateToSource()) return true;
+        if (navigatable.canNavigate()) return true;
       }
     }
     return false;    

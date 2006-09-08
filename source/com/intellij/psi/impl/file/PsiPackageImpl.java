@@ -457,6 +457,10 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return isValid();
   }
 
+  public boolean canNavigateToSource() {
+    return false;
+  }
+
   public void navigate(boolean requestFocus) {
     final ProjectView projectView = ProjectView.getInstance(getProject());
     projectView.changeView(PackageViewPane.ID);

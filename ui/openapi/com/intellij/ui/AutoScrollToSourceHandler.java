@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.Alarm;
 import com.intellij.util.OpenSourceUtil;
 
@@ -119,9 +120,12 @@ public abstract class AutoScrollToSourceHandler {
       // asking to register some file type for this file. This behaviour is undesirable when autoscrolling.
       if (FileTypeManager.getInstance().getFileTypeByFile(vFile) == StdFileTypes.UNKNOWN) return;
     }
-    if (dataContext.getData(DataConstants.MODULE_CONTEXT) != null) {
-      // we are not going to open module properties dialog during autoscrolling
-      return;
+    Navigatable[] navigatables = (Navigatable[])dataContext.getData(DataConstants.NAVIGATABLE_ARRAY);
+    if (navigatables != null) {
+      for (Navigatable navigatable : navigatables) {
+        // we are not going to open modal dialog during autoscrolling
+        if (!navigatable.canNavigateToSource()) return;
+      }
     }
     OpenSourceUtil.openSourcesFrom(dataContext, false);
   }

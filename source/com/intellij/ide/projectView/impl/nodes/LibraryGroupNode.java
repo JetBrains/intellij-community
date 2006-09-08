@@ -88,8 +88,12 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
     presentation.setIcons(Icons.LIBRARY_ICON);
   }
 
-  public boolean canNavigateToSource() {
+  public boolean canNavigate() {
     return true;
+  }
+
+  public boolean canNavigateToSource() {
+    return false;
   }
 
   public void navigate(final boolean requestFocus) {

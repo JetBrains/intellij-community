@@ -36,11 +36,10 @@ public class OpenSourceUtil {
   public static void navigate(final Navigatable[] navigatables, final boolean requestFocus) {
     if (navigatables != null) {
       for (Navigatable navigatable : navigatables) {
-        if (navigatable.canNavigateToSource()) {
+        if (navigatable.canNavigate()) {
           navigatable.navigate(requestFocus);
         }
       }
     }
   }
-
 }

@@ -81,8 +81,12 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
     return false;
   }
 
-  public boolean canNavigateToSource() {
+  public boolean canNavigate() {
     return PackageUtil.isSourceOrTestRoot(getVirtualFile(), getProject());
+  }
+
+  public boolean canNavigateToSource() {
+    return false;
   }
 
   public void navigate(final boolean requestFocus) {

@@ -44,7 +44,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
     return children;
   }
 
-  public boolean contains(VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
     if (!(psiFile instanceof PropertiesFile)) return false;
     PropertiesFile propertiesFile = (PropertiesFile)psiFile;
@@ -53,7 +53,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
 
   public VirtualFile getVirtualFile() {
     final List<PropertiesFile> list = getValue().getPropertiesFiles(myProject);
-    if (list.size() > 0) {
+    if (!list.isEmpty()) {
       return list.get(0).getVirtualFile();
     }
     return null;
@@ -65,6 +65,10 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
   }
 
   public boolean canNavigateToSource() {
+    return true;
+  }
+
+  public boolean canNavigate() {
     return true;
   }
 
