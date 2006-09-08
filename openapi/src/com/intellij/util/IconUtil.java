@@ -128,13 +128,7 @@ public class IconUtil {
     }
     return ourIconProviders;
   }
-  public static Icon markWithError(Icon baseIcon) {
-    LayeredIcon icon = new LayeredIcon(2);
-    Icon error = IconLoader.getIcon("/nodes/errorMark.png");
-    icon.setIcon(error,0);
-    icon.setIcon(redden(baseIcon),1, error.getIconWidth(), 0);
-    return icon;
-  }
+  
   public static Icon redden(Icon icon) {
     GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
     GraphicsConfiguration gc = ge.getDefaultScreenDevice().getDefaultConfiguration();
