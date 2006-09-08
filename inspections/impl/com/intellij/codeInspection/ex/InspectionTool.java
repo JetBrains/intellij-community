@@ -182,9 +182,11 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   protected HighlightSeverity getCurrentSeverity(RefElement element) {
     if (myContext != null) {
       final Set<Pair<InspectionTool, InspectionProfile>> tools = myContext.getTools().get(getShortName());
-      for (Pair<InspectionTool, InspectionProfile> pair : tools) {
-        if (pair.first == this) {
-          return pair.second.getErrorLevel(HighlightDisplayKey.find(getShortName())).getSeverity();
+      if (tools != null) {
+        for (Pair<InspectionTool, InspectionProfile> pair : tools) {
+          if (pair.first == this) {
+            return pair.second.getErrorLevel(HighlightDisplayKey.find(getShortName())).getSeverity();
+          }
         }
       }
     }
@@ -195,7 +197,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
       final HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(getShortName()));
       return level.getSeverity();
     }*/
-    return HighlightSeverity.INFORMATION;
+    return null;
   }
 
   protected String getTextAttributeKey(HighlightSeverity severity, ProblemHighlightType highlightType) {
