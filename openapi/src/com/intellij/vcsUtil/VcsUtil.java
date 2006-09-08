@@ -256,13 +256,6 @@ public class VcsUtil
     return null;
   }
 
-  public static void  saveAllDocuments()
-  {
-    ApplicationManager.getApplication().runWriteAction(
-      new Runnable() { public void run() {  FileDocumentManager.getInstance().saveAllDocuments();   } }
-    );
-  }
-
   public static VirtualFile getVirtualFile( final String path ) {
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
