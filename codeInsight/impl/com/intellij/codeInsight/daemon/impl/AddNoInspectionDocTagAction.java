@@ -82,15 +82,13 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
     if (module == null) return false;
     final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
     if (jdk == null) return false;
-    final String versionString = jdk.getVersionString();
-    final boolean is_1_5 = versionString.indexOf("1.5") > 0 ||
-                           versionString.indexOf("1.6") > 0;
-    if (!DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS ||
-        !is_1_5 || LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(myContext)) > 0 ||
-        !myContext.isValid() || !myContext.getManager().isInProject(myContext)) return false;
+    if (DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS &&
+        jdk.getVersionString().indexOf("1.5") > 0 &&
+        LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(myContext)) <= 0) return false;
 
     final PsiDocCommentOwner container = getContainer();
-    return container != null && !(container instanceof JspHolderMethod);
+    return myContext.isValid() && myContext.getManager().isInProject(myContext) &&
+           container != null && !(container instanceof JspHolderMethod);
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
