@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -550,16 +549,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isToCheckMember(RefElement owner, InspectionTool tool) {
     final PsiElement element = owner.getElement();
-    if (RUN_WITH_EDITOR_PROFILE) {
-      final Set<Pair<InspectionTool, InspectionProfile>> sameTools = myTools.get(tool.getShortName());
-      if (sameTools != null) {
-        for (Pair<InspectionTool, InspectionProfile> sameTool : sameTools) {
-          if (sameTool.first == tool) {
-            final InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element);
-            return !Comparing.strEqual(profile.getName(), sameTool.second.getName());
-          }
-        }
-      }
+    if (RUN_WITH_EDITOR_PROFILE && InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element)
+      .getInspectionTool(tool.getShortName()) != tool) {
+      return false;
     }
     return !((RefElementImpl)owner).isSuppressed(tool.getShortName());
   }
