@@ -34,7 +34,7 @@ public abstract class DomManager implements ProjectComponent, ModificationTracke
   @NotNull
   @Deprecated
   /**
-   * @deprecated use DomFileDescription and getFileElement(XmlFile)
+   * @deprecated use DomFileDescription and getFileElement(XmlFile, Class)
    */
   public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> aClass, @NonNls String rootTagName);
 
@@ -43,7 +43,14 @@ public abstract class DomManager implements ProjectComponent, ModificationTracke
   public abstract DomGenericInfo getGenericInfo(Type type);
 
   @Nullable
+  @Deprecated
+  /**
+   * @deprecated use DomFileDescription and getFileElement(XmlFile, Class)
+   */
   public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file);
+
+  @Nullable
+  public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> domClass);
 
   @Nullable
   public abstract DomElement getDomElement(final XmlTag element);

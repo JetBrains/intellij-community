@@ -29,6 +29,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.xml.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
+import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
@@ -387,6 +388,15 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   @Nullable
+  public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file, Class<T> domClass) {
+    final DomFileDescription description = getDomFileDescription(file);
+    if (description != null && ReflectionCache.isAssignable(domClass, description.getRootElementClass())) {
+      return getFileElement(file);
+    }
+    return null;
+  }
+
+  @Nullable
   private static <T extends DomElement> DomFileElementImpl<T> getCachedValueAndFireEvent(XmlFile file, CachedValue<DomFileElementImpl<T>> value) {
     final DomFileElementImpl<T> element = value.getValue();
     getCachedValueProvider(file).fireEvents();
@@ -463,13 +473,15 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     return null;
   }
 
+  @Nullable
   private DomFileDescription getDomFileDescription(final XmlFile xmlFile) {
-        if (getFileElement(xmlFile) != null) {
-          return getCachedValueProvider(xmlFile).getFileDescription();
-        }
+    if (getFileElement(xmlFile) != null) {
+      return getCachedValueProvider(xmlFile).getFileDescription();
+    }
     return null;
   }
 
+  @Nullable
   public final DomRootInvocationHandler getRootInvocationHandler(final XmlFile xmlFile) {
     if (xmlFile != null) {
       DomFileElementImpl element = getFileElement(xmlFile);
