@@ -14,8 +14,8 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -26,8 +26,8 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.File;
 import java.util.Set;
+import java.io.File;
 
 /**
  * @author cdr
@@ -41,8 +41,8 @@ public abstract class OrderEntryFix implements IntentionAction {
   }
 
   public static void registerFixes(HighlightInfo info, final PsiJavaCodeReferenceElement reference) {
-    String name = reference.getReferenceName();
-    if (name == null) return;
+    @NonNls final String referenceName = reference.getReferenceName();
+    if (referenceName == null) return;
     Project project = reference.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     PsiFile containingFile = reference.getContainingFile();
@@ -51,8 +51,46 @@ public abstract class OrderEntryFix implements IntentionAction {
     if (classVFile == null) return;
     final Module currentModule = fileIndex.getModuleForFile(classVFile);
     if (currentModule == null) return;
+
+    if ("TestCase".equals(referenceName)
+        || reference.getParent() instanceof PsiAnnotation && "Test".equals(referenceName) && PsiUtil.getLanguageLevel(reference).compareTo(
+      LanguageLevel.JDK_1_5) >= 0
+      ) {
+      QuickFixAction.registerQuickFixAction(info, new OrderEntryFix(){
+        @NotNull
+        public String getText() {
+          return QuickFixBundle.message("orderEntry.fix.add.junit.jar.to.classpath");
+        }
+
+        @NotNull
+        public String getFamilyName() {
+          return getText();
+        }
+
+        public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+          return !project.isDisposed() && !currentModule.isDisposed();
+        }
+
+        public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+          boolean isJunit4 = referenceName.equals("Test");
+          @NonNls String junitPath = PathManager.getLibPath() + (isJunit4 ? "/junit-4.0.jar" : "/junit.jar");
+          String url = VfsUtil.getUrlForLibraryRoot(new File(junitPath));
+          VirtualFile junit = VirtualFileManager.getInstance().findFileByUrl(url);
+          assert junit != null : junitPath;
+
+          addJarToRoots(junit, currentModule);
+
+          GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
+          String className = isJunit4 ? "org.junit.Test" : "junit.framework.TestCase";
+          PsiClass aClass = PsiManager.getInstance(project).findClass(className, scope);
+          new AddImportAction(project, reference, editor, aClass).execute();
+        }
+      });
+      return;
+    }
+
     Set<VirtualFile> librariesToAdd = new THashSet<VirtualFile>();
-    PsiClass[] classes = reference.getManager().getShortNamesCache().getClassesByName(name, GlobalSearchScope.allScope(project));
+    PsiClass[] classes = reference.getManager().getShortNamesCache().getClassesByName(referenceName, GlobalSearchScope.allScope(project));
     for (final PsiClass aClass : classes) {
       if (!aClass.getManager().getResolveHelper().isAccessible(aClass, reference, aClass)) continue;
       PsiFile psiFile = aClass.getContainingFile();
@@ -125,43 +163,6 @@ public abstract class OrderEntryFix implements IntentionAction {
             }
           });
         }
-      }
-    }
-    if (classes.length == 0) {
-      @NonNls final String referenceName = reference.getReferenceName();
-      if ("TestCase".equals(referenceName)
-          || reference.getParent() instanceof PsiAnnotation && "Test".equals(referenceName) && PsiUtil.getLanguageLevel(reference).compareTo(LanguageLevel.JDK_1_5) >= 0
-        ) {
-        QuickFixAction.registerQuickFixAction(info, new OrderEntryFix(){
-          @NotNull
-          public String getText() {
-            return QuickFixBundle.message("orderEntry.fix.add.junit.jar.to.classpath");
-          }
-
-          @NotNull
-          public String getFamilyName() {
-            return getText();
-          }
-
-          public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-            return !project.isDisposed() && !currentModule.isDisposed();
-          }
-
-          public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-            boolean isJunit4 = referenceName.equals("Test");
-            @NonNls String junitPath = PathManager.getLibPath() + (isJunit4 ? "/junit-4.0.jar" : "/junit.jar");
-            String url = VfsUtil.getUrlForLibraryRoot(new File(junitPath));
-            VirtualFile junit = VirtualFileManager.getInstance().findFileByUrl(url);
-            assert junit != null : junitPath;
-
-            addJarToRoots(junit, currentModule);
-
-            GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
-            String className = isJunit4 ? "org.junit.Test" : "junit.framework.TestCase";
-            PsiClass aClass = PsiManager.getInstance(project).findClass(className, scope);
-            new AddImportAction(project, reference, editor, aClass).execute();
-          }
-        });
       }
     }
   }
