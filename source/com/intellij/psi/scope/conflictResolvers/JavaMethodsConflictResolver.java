@@ -198,9 +198,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   private Specifics checkSubtyping(PsiType type1, PsiType type2, final PsiType argType) {
-    final Specifics lessBoxing = isLessBoxing(argType, type1, type2);
-    if (lessBoxing != null) return lessBoxing;
-
     final boolean assignable2From1 = type2.isAssignableFrom(type1);
     final boolean assignable1From2 = type1.isAssignableFrom(type2);
     if (assignable1From2 || assignable2From1) {
@@ -214,7 +211,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return Specifics.CONFLICT;
   }
 
-  private Specifics isLessBoxing(PsiType argType, PsiType type1, PsiType type2) {
+  private Boolean isLessBoxing(PsiType argType, PsiType type1, PsiType type2) {
     if (argType == null) return null;
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(myArgumentsList);
     if (type1 instanceof PsiClassType) {
@@ -227,8 +224,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     final boolean boxing1 = TypeConversionUtil.boxingConversionApplicable(type1, argType);
     final boolean boxing2 = TypeConversionUtil.boxingConversionApplicable(type2, argType);
     if (boxing1 == boxing2) return null;
-    if (boxing1) return Specifics.FALSE;
-    return Specifics.TRUE;
+    if (boxing1) return Boolean.FALSE;
+    return Boolean.TRUE;
   }
 
   private Specifics isMoreSpecific(final CandidateInfo info1, final CandidateInfo info2, final int applicabilityLevel) {
@@ -236,7 +233,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     PsiMethod method2 = (PsiMethod)info2.getElement();
     final PsiClass class1 = method1.getContainingClass();
     final PsiClass class2 = method2.getContainingClass();
-    Specifics isMoreSpecific = null;
 
     final PsiParameter[] params1 = method1.getParameterList().getParameters();
     final PsiParameter[] params2 = method2.getParameterList().getParameters();
@@ -283,26 +279,40 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       methodSubstitutor2 = createRawSubstitutor(typeParameters2);
     }
 
+    Specifics isLessBoxing = null;
+    Specifics isMoreSpecific = null;
     for (int i = 0; i < types1.length; i++) {
       PsiType type1 = classSubstitutor1.substitute(methodSubstitutor1.substitute(types1[i]));
       PsiType type2 = classSubstitutor2.substitute(methodSubstitutor2.substitute(types2[i]));
       PsiType argType = i < args.length ? args[i].getType() : null;
 
-      final Specifics specifics = checkSubtyping(type1, type2, argType);
-      if (specifics == null) continue;
-      switch (specifics) {
-        case TRUE:
-          if (isMoreSpecific == Specifics.FALSE) return Specifics.CONFLICT;
-          isMoreSpecific = specifics;
-          break;
-        case FALSE:
-          if (isMoreSpecific == Specifics.TRUE) return Specifics.CONFLICT;
-          isMoreSpecific = specifics;
-          break;
-        case CONFLICT:
-          return Specifics.CONFLICT;
+      final Boolean boxing = isLessBoxing(argType, type1, type2);
+      if (boxing == Boolean.TRUE) {
+        if (isLessBoxing == Specifics.FALSE) return Specifics.CONFLICT;
+        isLessBoxing = Specifics.TRUE;
+      } else if (boxing == Boolean.FALSE) {
+        if (isLessBoxing == Specifics.TRUE) return Specifics.CONFLICT;
+        isLessBoxing = Specifics.FALSE;
+      } else {
+        final Specifics specifics = checkSubtyping(type1, type2, argType);
+        if (specifics == null) continue;
+        switch (specifics) {
+          case TRUE:
+            if (isMoreSpecific == Specifics.FALSE) return Specifics.CONFLICT;
+            isMoreSpecific = specifics;
+            break;
+          case FALSE:
+            if (isMoreSpecific == Specifics.TRUE) return Specifics.CONFLICT;
+            isMoreSpecific = specifics;
+            break;
+          case CONFLICT:
+            return Specifics.CONFLICT;
+        }
       }
     }
+
+    if (isLessBoxing != null) return isLessBoxing;
+
     if (isMoreSpecific == null) {
       if (class1 != class2) {
         if (class2.isInheritor(class1, true) || class1.isInterface() && !class2.isInterface()) {
