@@ -42,16 +42,18 @@ public class ClassElement extends RepositoryTreeElement {
             PsiElement firstPsi = SourceTreeToPsiMap.treeElementToPsi(first);
             if (firstPsi instanceof PsiEnumConstant) {
               anchor = findEnumConstantListDelimiterPlace();
+              before = anchor != findChildByRole(ChildRole.LBRACE);
             }
             else {
               PsiElement psiElement = firstPsi instanceof PsiMember ? getDefaultAnchor(psiClass, (PsiMember)firstPsi) : null;
               anchor = psiElement != null ? SourceTreeToPsiMap.psiElementToTree(psiElement) : null;
+              before = Boolean.TRUE;
             }
           }
           else {
             anchor = findChildByRole(ChildRole.RBRACE);
+            before = Boolean.TRUE;
           }
-          before = Boolean.TRUE;
         }
         else if (!before.booleanValue()) {
           anchor = findChildByRole(ChildRole.LBRACE);
