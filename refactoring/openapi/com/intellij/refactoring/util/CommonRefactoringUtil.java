@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.NonNls;
@@ -17,6 +18,7 @@ public class CommonRefactoringUtil {
   private CommonRefactoringUtil() {}
 
   public static void showErrorMessage(String title, String message, String helpId, Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
     RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpId, "OptionPane.errorIcon", false, project);
     dialog.show();
   }

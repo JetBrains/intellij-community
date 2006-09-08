@@ -8,14 +8,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.injected.DocumentRange;
 import com.intellij.openapi.editor.impl.injected.EditorDelegate;
 import com.intellij.openapi.editor.impl.injected.VirtualFileDelegate;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -498,5 +498,22 @@ public class InjectedLanguageUtil {
       return EditorDelegate.create((DocumentRange)document,(EditorImpl)editor,file);
     }
     return editor;
+  }
+
+  public static PsiFile getContainingInjectedFile(PsiElement element) {
+    PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null) return null;
+    PsiElement host = psiFile.getContext();
+    return host == null ? null : psiFile;
+  }
+  public static boolean isInInjectedLanguagePrefixSuffix(final PsiElement element) {
+    PsiFile injectedFile = getContainingInjectedFile(element);
+    if (injectedFile == null) return false;
+    Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(injectedFile);
+    if (!(document instanceof DocumentRange)) return false;
+    DocumentRange documentRange = (DocumentRange)document;
+    TextRange elementRange = element.getTextRange();
+    TextRange editable = documentRange.intersectWithEditable(elementRange);
+    return !elementRange.equals(editable); //) throw new IncorrectOperationException("Can't change "+ UsageViewUtil.createNodeText(element, true));
   }
 }

@@ -17,6 +17,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -88,7 +89,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     }
   }
 
-  private static boolean canRename(PsiElement element, Project project) {
+  static boolean canRename(PsiElement element, Project project) {
     if (element instanceof PsiAntTarget || element instanceof PsiAntProperty) {
       return CommonRefactoringUtil.checkReadOnlyStatus(project, element.getNavigationElement());
     }
@@ -103,6 +104,12 @@ public class PsiElementRenameHandler implements RenameHandler {
 
     if (!PsiManager.getInstance(project).isInProject(element)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.out.of.project.element", UsageViewUtil.getType(element)));
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
+      return false;
+    }
+
+    if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(element)) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.in.injected.lang.prefix.suffix", UsageViewUtil.getType(element)));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
       return false;
     }
@@ -162,8 +169,9 @@ public class PsiElementRenameHandler implements RenameHandler {
     PsiElement element = getElement(dataContext);
 
     if (element == null) return false;
-    if (element instanceof JspClass || element instanceof JspHolderMethod) return false;
-    return !(element instanceof PsiJavaFile) || PsiUtil.isInJspFile(element);
+    return !(element instanceof JspClass) &&
+           !(element instanceof JspHolderMethod) &&
+           (!(element instanceof PsiJavaFile) || PsiUtil.isInJspFile(element));
   }
 
   @Nullable

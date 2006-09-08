@@ -9,8 +9,8 @@ import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -33,9 +33,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Set;
-import java.util.Collection;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Set;
 
 public abstract class BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.BaseRefactoringProcessor");
@@ -398,7 +398,7 @@ public abstract class BaseRefactoringProcessor {
     }
   }
 
-  private void  testRun() {
+  private void testRun() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     prepareTestRun();
     Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>(findUsages());
@@ -415,7 +415,7 @@ public abstract class BaseRefactoringProcessor {
   }
 
   protected boolean showConflicts(final ArrayList<String> conflicts) {
-    if (conflicts.size() > 0 && myPrepareSuccessfulSwingThreadCallback != null) {
+    if (!conflicts.isEmpty() && myPrepareSuccessfulSwingThreadCallback != null) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) return false;

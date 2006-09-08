@@ -26,19 +26,19 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
     return (PsiElement)clone();
   }
 
-  public PsiElement add(PsiElement element) throws IncorrectOperationException {
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  public PsiElement addBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  public PsiElement addAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  public void checkAdd(PsiElement element) throws IncorrectOperationException {
+  public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
@@ -46,7 +46,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  public PsiElement addRangeBefore(PsiElement first, PsiElement last, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor) throws IncorrectOperationException {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
@@ -66,7 +66,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  public PsiElement replace(PsiElement newElement) throws IncorrectOperationException {
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
@@ -110,19 +110,19 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
   }
 
   //Q: get rid of these methods?
-  public boolean textMatches(CharSequence text) {
+  public boolean textMatches(@NotNull CharSequence text) {
     return Comparing.equal(getText(), text, false);
   }
 
-  public boolean textMatches(PsiElement element) {
+  public boolean textMatches(@NotNull PsiElement element) {
     return getText().equals(element.getText());
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitElement(this);
   }
 
-  public void acceptChildren(PsiElementVisitor visitor) {
+  public void acceptChildren(@NotNull PsiElementVisitor visitor) {
     PsiElement child = getFirstChild();
     while (child != null) {
       child.accept(visitor);
