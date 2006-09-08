@@ -57,6 +57,7 @@ public class ShowImplementationsAction extends AnAction {
 
   public ShowImplementationsAction() {
     setEnabledInModalContext(true);
+    setInjectedContext(true);
   }
 
   public void actionPerformed(AnActionEvent e) {

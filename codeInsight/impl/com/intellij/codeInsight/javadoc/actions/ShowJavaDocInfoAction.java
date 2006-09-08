@@ -18,6 +18,7 @@ import com.intellij.psi.*;
 public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements HintManager.ActionToIgnore {
   public ShowJavaDocInfoAction() {
     setEnabledInModalContext(true);
+    setInjectedContext(true);
   }
 
   protected CodeInsightActionHandler getHandler() {
