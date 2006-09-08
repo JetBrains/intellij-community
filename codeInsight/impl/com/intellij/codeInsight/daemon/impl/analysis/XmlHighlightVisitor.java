@@ -1155,14 +1155,14 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
-  private static class CreateNSDeclarationIntentionAction implements IntentionAction {
+  public static class CreateNSDeclarationIntentionAction implements IntentionAction {
     boolean myTaglibDeclaration;
     private final XmlElement myElement;
     private final String myNamespacePrefix;
     @NonNls private static final String MY_DEFAULT_XML_NS = "someuri";
     @NonNls private static final String URI_ATTR_NAME = "uri";
 
-    public CreateNSDeclarationIntentionAction(final XmlElement element, final String namespacePrefix, boolean taglibDeclaration) {
+    public CreateNSDeclarationIntentionAction(final @NotNull XmlElement element, final @NotNull String namespacePrefix, boolean taglibDeclaration) {
       myElement = element;
       myNamespacePrefix = namespacePrefix;
       myTaglibDeclaration = taglibDeclaration;
