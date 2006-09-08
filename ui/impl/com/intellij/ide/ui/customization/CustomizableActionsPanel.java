@@ -523,8 +523,6 @@ public class CustomizableActionsPanel {
       return true;
     }
 
-    if (Comparing.strEqual(mySelectedSchema.getName(), CustomizableActionsSchemas.DEFAULT_NAME)) return false;
-
     ArrayList<String> currentNames = new ArrayList<String>();
 
     for (int i = 0; i < myCustomizationSchemas.size(); i++) {
@@ -536,15 +534,19 @@ public class CustomizableActionsPanel {
       }
     }
 
-    if (allSchemas.getCustomActionsSchemas() != null) {
-      for (int i = 0; i < allSchemas.getCustomActionsSchemas().length; i++) {
-        CustomActionsSchema customActionsSchema = allSchemas.getCustomActionsSchemas()[i];
+    final CustomActionsSchema[] storedSchemas = allSchemas.getCustomActionsSchemas();
+    if (storedSchemas != null) {
+      for (int i = 0; i < storedSchemas.length; i++) {
+        CustomActionsSchema customActionsSchema = storedSchemas[i];
         if (!currentNames.contains(customActionsSchema.getName())) {
           //schema was deleted
           return true;
         }
       }
+      if (storedSchemas.length != myCustomizationSchemas.size()) return true;
     }
+
+    if (Comparing.strEqual(mySelectedSchema.getName(), CustomizableActionsSchemas.DEFAULT_NAME)) return false;
 
     final CustomActionsSchema storedSchema = allSchemas.getCustomActionsSchema(mySelectedSchema.getName());
     if (storedSchema == null) {

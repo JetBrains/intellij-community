@@ -130,6 +130,7 @@ public class IdeRootPane extends JRootPane{
 
   void updateMainMenuActions(){
     ((IdeMenuBar)menuBar).updateMenuActions();
+    menuBar.repaint();
   }
 
   private JComponent createToolbar() {
