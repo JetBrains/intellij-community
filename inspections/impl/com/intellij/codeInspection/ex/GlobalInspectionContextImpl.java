@@ -320,21 +320,23 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             boolean hasProblems = false;
             boolean isLocalTool = false;
             boolean isDescriptorProvider = false;
-            for (Pair<InspectionTool, InspectionProfile> toolDescr : sameTools) {
-              final InspectionTool tool = toolDescr.first;
-              if (tool instanceof DescriptorProviderInspection) {
-                hasProblems = new File(outputPath, toolName + ext).exists();
-                isLocalTool = tool instanceof LocalInspectionToolWrapper;
-                isDescriptorProvider = true;
-              }
-              else if (tool.hasReportedProblems()) {
-                hasProblems = true;
-                tool.exportResults(root);
+            if (sameTools != null) {
+              for (Pair<InspectionTool, InspectionProfile> toolDescr : sameTools) {
+                final InspectionTool tool = toolDescr.first;
+                if (tool instanceof DescriptorProviderInspection) {
+                  hasProblems = new File(outputPath, toolName + ext).exists();
+                  isLocalTool = tool instanceof LocalInspectionToolWrapper;
+                  isDescriptorProvider = true;
+                }
+                else if (tool.hasReportedProblems()) {
+                  hasProblems = true;
+                  tool.exportResults(root);
+                }
               }
             }
+            if (!hasProblems) continue;
             @NonNls final String isLocalToolAttribute = "is_local_tool";
             root.setAttribute(isLocalToolAttribute, String.valueOf(isLocalTool));
-            if (!hasProblems) continue;
             OutputStream outStream = null;
             try {
               new File(outputPath).mkdirs();
@@ -550,10 +552,12 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final PsiElement element = owner.getElement();
     if (RUN_WITH_EDITOR_PROFILE) {
       final Set<Pair<InspectionTool, InspectionProfile>> sameTools = myTools.get(tool.getShortName());
-      for (Pair<InspectionTool, InspectionProfile> sameTool : sameTools) {
-        if (sameTool.first == tool) {
-          final InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element);
-          return !Comparing.strEqual(profile.getName(), sameTool.second.getName());
+      if (sameTools != null) {
+        for (Pair<InspectionTool, InspectionProfile> sameTool : sameTools) {
+          if (sameTool.first == tool) {
+            final InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element);
+            return !Comparing.strEqual(profile.getName(), sameTool.second.getName());
+          }
         }
       }
     }
