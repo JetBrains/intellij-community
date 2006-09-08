@@ -11,20 +11,21 @@ import org.jetbrains.annotations.Nullable;
 
 public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemDescriptor> implements DomElementAnnotationHolder {
 
-  public void createProblem(DomElement domElement, @Nullable String message) {
-    createProblem(domElement, HighlightSeverity.ERROR, message);
+  public DomElementProblemDescriptor createProblem(DomElement domElement, @Nullable String message) {
+    return createProblem(domElement, HighlightSeverity.ERROR, message);
   }
 
-  public void createProblem(DomElement domElement, DomCollectionChildDescription childDescription, @Nullable String message) {
-    addProblem(new DomCollectionProblemDescriptorImpl(domElement, message, HighlightSeverity.ERROR, childDescription));
+  public DomElementProblemDescriptor createProblem(DomElement domElement, DomCollectionChildDescription childDescription, @Nullable String message) {
+    return addProblem(new DomCollectionProblemDescriptorImpl(domElement, message, HighlightSeverity.ERROR, childDescription));
   }
 
-  public final void createProblem(DomElement domElement, HighlightSeverity highlightType, String message) {
-    addProblem(new DomElementProblemDescriptorImpl(domElement, message, highlightType));
+  public final DomElementProblemDescriptor createProblem(DomElement domElement, HighlightSeverity highlightType, String message) {
+    return addProblem(new DomElementProblemDescriptorImpl(domElement, message, highlightType));
   }
 
-  public void addProblem(final DomElementProblemDescriptor problemDescriptor) {
+  public DomElementProblemDescriptor addProblem(final DomElementProblemDescriptor problemDescriptor) {
     add(problemDescriptor);
+    return problemDescriptor;
   }
 
 }

@@ -45,9 +45,11 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     };
 
   private final DomFileElement myElement;
+  private final Class<?> myRootType;
 
   public DomElementsProblemsHolderImpl(final DomFileElement element) {
     myElement = element;
+    myRootType = DomReflectionUtil.getRawType(myElement.getRootElement().getDomElementType());
   }
 
   public final boolean calculateProblems(final DomElement mainElement) {
@@ -55,7 +57,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
       if (!myCachedErrors.containsKey(mainElement)) {
         final DomElementAnnotationHolderImpl holder = new DomElementAnnotationHolderImpl();
         ((DomElementAnnotationsManagerImpl)DomElementAnnotationsManager.getInstance(mainElement.getManager().getProject()))
-          .annotate(mainElement, holder);
+          .annotate(mainElement, holder, myRootType);
         final List<DomElementProblemDescriptor> result = new SmartList<DomElementProblemDescriptor>();
         boolean childrenHaveErrors = false;
         for (final DomElementProblemDescriptor descriptor : holder) {
@@ -69,7 +71,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
             result.clear();
           }
           else {
-            assert mainElement.equals(errorElement) : descriptor;
+            assert mainElement.equals(errorElement) : "DOM problem has been created for wrong element: " + descriptor + "\nRight element:" + mainElement;
             if (!childrenHaveErrors) {
               result.add(descriptor);
             }
@@ -127,7 +129,9 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     }
 
     final List<DomElementProblemDescriptor> collection = getProblems(domElement, myCachedChildrenErrors, myDomProblemsGetter);
-    collection.addAll(getProblems(domElement, myCachedChildrenXmlErrors, myXmlProblemsGetter));
+    if (includeXmlProblems) {
+      collection.addAll(getProblems(domElement, myCachedChildrenXmlErrors, myXmlProblemsGetter));
+    }
     return collection;
   }
 

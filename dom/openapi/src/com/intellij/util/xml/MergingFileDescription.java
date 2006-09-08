@@ -85,4 +85,8 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     }
     return (DomElement)o;
   }
+
+  public boolean isAutomaticHighlightingEnabled() {
+    return false;
+  }
 }

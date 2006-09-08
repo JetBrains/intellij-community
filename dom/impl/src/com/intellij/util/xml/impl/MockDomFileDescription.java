@@ -24,4 +24,8 @@ class MockDomFileDescription<T> extends DomFileDescription<T> {
 
   protected void initializeFileDescription() {
   }
+
+  public boolean isAutomaticHighlightingEnabled() {
+    return false;
+  }
 }

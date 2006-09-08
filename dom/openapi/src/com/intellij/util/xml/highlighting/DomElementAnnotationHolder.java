@@ -10,10 +10,10 @@ import org.jetbrains.annotations.Nullable;
 
 public interface DomElementAnnotationHolder extends Iterable<DomElementProblemDescriptor>{
 
-  void createProblem(DomElement domElement, @Nullable String message);
+  DomElementProblemDescriptor createProblem(DomElement domElement, @Nullable String message);
 
-  void createProblem(DomElement domElement, DomCollectionChildDescription childDescription, @Nullable String message);
+  DomElementProblemDescriptor createProblem(DomElement domElement, DomCollectionChildDescription childDescription, @Nullable String message);
 
-  void createProblem(DomElement domElement, HighlightSeverity highlightType, String message);
+  DomElementProblemDescriptor createProblem(DomElement domElement, HighlightSeverity highlightType, String message);
   
 }

@@ -3,11 +3,10 @@
  */
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.util.xml.DomElement;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 
 /**
  * @author peter
@@ -30,6 +29,10 @@ public class DomCollectionProblemDescriptorImpl extends DomElementProblemDescrip
                                             final LocalQuickFix... fixes) {
     super(domElement, message, type, fixes);
     myChildDescription = childDescription;
+  }
+
+  public String toString() {
+    return super.toString() + "; " + myChildDescription;
   }
 
   public DomCollectionChildDescription getChildDescription() {

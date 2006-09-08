@@ -18,7 +18,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -116,9 +115,8 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     return getProblemHolder(fileElement).getProblems(fileElement, true, true, minSeverity);
   }
 
-  public void annotate(final DomElement element, final DomElementAnnotationHolder holder) {
-    final Class<?> type = DomReflectionUtil.getRawType(element.getDomElementType());
-    final List<DomElementsAnnotator> list = myClass2Annotator.get(type);
+  public void annotate(final DomElement element, final DomElementAnnotationHolder holder, final Class rootClass) {
+    final List<DomElementsAnnotator> list = myClass2Annotator.get(rootClass);
     if (list != null) {
       for (DomElementsAnnotator annotator : list) {
         annotator.annotate(element, holder);
