@@ -102,7 +102,7 @@ public class PsiElementRenameHandler implements RenameHandler {
       return false;
     }
 
-    if (!PsiManager.getInstance(project).isInProject(element)) {
+    if (!PsiManager.getInstance(project).isInProject(element) && element.isPhysical()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.out.of.project.element", UsageViewUtil.getType(element)));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
       return false;
