@@ -27,6 +27,8 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -190,13 +192,13 @@ public abstract class InspectionTool extends InspectionProfileEntry {
         }
       }
     }
-    /*final PsiElement psiElement = element.getElement();
+    final PsiElement psiElement = element.getElement();
     if (psiElement != null) {
       final InspectionProfile profile =
         InspectionProjectProfileManager.getInstance(getContext().getProject()).getInspectionProfile(psiElement);
       final HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(getShortName()));
       return level.getSeverity();
-    }*/
+    }
     return null;
   }
 
