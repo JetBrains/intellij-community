@@ -895,17 +895,19 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
               exceptions.add(e);
             }
           }
-        }, "Searching for changes", true, project);
+        }, VcsBundle.message("browse.changes.progress.title"), true, project);
 
         if (!done) return;
 
         if (!exceptions.isEmpty()) {
-          Messages.showErrorDialog(project, "Problem accessing VCS" + exceptions.get(0).getMessage(), "Can't Show Changes");
+          Messages.showErrorDialog(project, VcsBundle.message("browse.changes.error.message", exceptions.get(0).getMessage()),
+                                   VcsBundle.message("browse.changes.error.title"));
           return;
         }
 
         if (versions.isEmpty()) {
-          Messages.showInfoMessage(project, "No changes matching critera found", "No Changes Found");
+          Messages.showInfoMessage(project, VcsBundle.message("browse.changes.nothing.found"),
+                                   VcsBundle.message("browse.changes.nothing.found.title"));
           return;
         }
 
@@ -918,7 +920,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
       }
     }
     catch (VcsException e) {
-      Messages.showErrorDialog(project, "Cannot show changes: " + e.getMessage(), "Error Accessing Perforce");
+      Messages.showErrorDialog(project, VcsBundle.message("browse.changes.error.message", e.getMessage()),
+                               VcsBundle.message("browse.changes.error.title"));
     }
   }
 
