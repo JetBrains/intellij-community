@@ -499,6 +499,13 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       jsfProvider
     );
 
+    registerXmlAttributeValueReferenceProvider(
+      jsfProvider.getIdForAttributeNames(),
+      jsfProvider.getIdForFilter(),
+      true,
+      jsfProvider
+    );
+
     registerReferenceProvider(
       new AndFilter(
         new OrFilter(
