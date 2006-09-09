@@ -18,17 +18,28 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.JComponent;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 public class DuplicateConditionInspection extends ExpressionInspection {
+
+    /** @noinspection PublicField*/
+    public boolean ignoreMethodCalls = false;
+
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "duplicate.condition.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
@@ -40,11 +51,19 @@ public class DuplicateConditionInspection extends ExpressionInspection {
                 "duplicate.condition.problem.descriptor");
     }
 
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "duplicate.condition.ignore.method.calls.option"),
+                this, "ignoreMethodCalls");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new DuplicateConditionVisitor();
     }
 
-    private static class DuplicateConditionVisitor
+    private class DuplicateConditionVisitor
             extends BaseInspectionVisitor {
 
         public void visitIfStatement(@NotNull PsiIfStatement statement) {
@@ -81,18 +100,23 @@ public class DuplicateConditionInspection extends ExpressionInspection {
                             EquivalenceChecker.expressionsAreEquivalent(
                                     condition, testCondition);
                     if (areEquivalent) {
+                        matched[i] = true;
+                        matched[j] = true;
+                        if (ignoreMethodCalls &&
+                                containsMethodCallExpression(testCondition)) {
+                            break;
+                        }
                         registerError(testCondition);
                         if (!matched[i]) {
                             registerError(condition);
                         }
-                        matched[i] = true;
-                        matched[j] = true;
+
                     }
                 }
             }
         }
 
-        private static void collectConditionsForIfStatement(
+        private void collectConditionsForIfStatement(
                 PsiIfStatement statement, Set<PsiExpression> conditions) {
             final PsiExpression condition = statement.getCondition();
             collectConditionsForExpression(condition, conditions);
@@ -103,7 +127,7 @@ public class DuplicateConditionInspection extends ExpressionInspection {
             }
         }
 
-        private static void collectConditionsForExpression(
+        private void collectConditionsForExpression(
                 PsiExpression condition, Set<PsiExpression> conditions) {
             if (condition == null) {
                 return;
@@ -130,6 +154,19 @@ public class DuplicateConditionInspection extends ExpressionInspection {
                 }
             }
             conditions.add(condition);
+        }
+
+        private boolean containsMethodCallExpression(PsiElement element) {
+            if (element instanceof PsiMethodCallExpression) {
+                return true;
+            }
+            final PsiElement[] children = element.getChildren();
+            for (PsiElement child : children) {
+                if (containsMethodCallExpression(child)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }
