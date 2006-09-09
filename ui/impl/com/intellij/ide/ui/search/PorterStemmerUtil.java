@@ -16,7 +16,6 @@
 
 package com.intellij.ide.ui.search;
 
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
@@ -29,28 +28,21 @@ public class PorterStemmerUtil {
     // check for zero length
     final int strLen = str.length();
     if (strLen > 0) {
-      final StringBuilder result = StringBuilderSpinAllocator.alloc();
-      try {
-        int lastDigit = -1;
-        for (int i = 0; i < strLen; ++i) {
-          char c = str.charAt(i);
-          result.append(c);
-          if(Character.isDigit(c)) {
-            lastDigit = i;
-          }
-          else if(!Character.isLetter(c)){
-            return null;
-          }
+      int lastDigit = -1;
+      for (int i = 0; i < strLen; ++i) {
+        char c = str.charAt(i);
+        if (Character.isDigit(c)) {
+          lastDigit = i;
         }
-        ++lastDigit;
-        if( lastDigit > 0 && lastDigit < strLen) {
-          return result.replace(lastDigit, strLen, stemString(result.substring(lastDigit))).toString();
+        else if (!Character.isLetter(c)) {
+          return null;
         }
-        return stemString(str);                
       }
-      finally {
-        StringBuilderSpinAllocator.dispose(result);
+      ++lastDigit;
+      if (lastDigit > 0 && lastDigit < strLen) {
+        return str.substring(0, lastDigit) + stemString(str.substring(lastDigit));
       }
+      return stemString(str);
     }
     return null;
   }
