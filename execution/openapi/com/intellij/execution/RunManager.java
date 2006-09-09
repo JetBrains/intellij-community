@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -38,6 +39,7 @@ public abstract class RunManager {
 
   public abstract RunConfiguration[] getAllConfigurations();
 
+  @Nullable
   public abstract RunConfiguration getTempConfiguration();
 
   public abstract boolean isTemporary(RunConfiguration configuration);
