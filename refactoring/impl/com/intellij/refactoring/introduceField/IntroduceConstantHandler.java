@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
@@ -15,10 +16,10 @@ import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 
 public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
-  public static final String REFACTORING_NAME = com.intellij.refactoring.RefactoringBundle.message("introduce.constant.title");
+  public static final String REFACTORING_NAME = RefactoringBundle.message("introduce.constant.title");
 
   protected String getHelpID() {
-    return /*HelpID.INTRODUCE_CONSTANT*/ null;
+    return HelpID.INTRODUCE_CONSTANT;
   }
 
   public void invoke(Project project, PsiExpression[] expressions) {

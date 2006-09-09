@@ -163,7 +163,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     if (targetClass == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("class.0.not.found", targetClassName));
       CommonRefactoringUtil.showErrorMessage(ReplaceConstructorWithFactoryHandler.REFACTORING_NAME,
-                                              message, null, project);
+                                              message, HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY, project);
       return;
     }
 

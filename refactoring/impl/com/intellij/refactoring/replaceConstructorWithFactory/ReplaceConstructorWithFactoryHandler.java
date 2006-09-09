@@ -26,7 +26,7 @@ public class ReplaceConstructorWithFactoryHandler
     while (true) {
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.constructor"));
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY*/, project);
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY, project);
         return;
       }
 
@@ -81,7 +81,7 @@ public class ReplaceConstructorWithFactoryHandler
 
   private void showJspOrLocalClassMessage() {
     String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("refactoring.is.not.supported.for.local.and.jsp.classes"));
-    CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY*/, myProject);
+    CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY, myProject);
   }
   private boolean checkAbstractClassOrInterfaceMessage(PsiClass aClass) {
     if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) return true;

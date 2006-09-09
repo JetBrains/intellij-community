@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
@@ -46,7 +47,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
     while (true) {
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.MEMBERS_PULL_UP*/, project);
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MEMBERS_PULL_UP, project);
         return;
       }
 
@@ -80,7 +81,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
 
     if(aClass == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.MEMBERS_PULL_UP*/, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MEMBERS_PULL_UP, project);
       return;
     }
 
@@ -89,7 +90,7 @@ public class PullUpHandler implements RefactoringActionHandler, PullUpDialog.Cal
     if (bases.isEmpty()) {
       String message = RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("class.does.not.have.base.classes.interfaces.in.current.project", aClass.getQualifiedName()));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.MEMBERS_PULL_UP*/, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MEMBERS_PULL_UP, project);
       return;
     }
 

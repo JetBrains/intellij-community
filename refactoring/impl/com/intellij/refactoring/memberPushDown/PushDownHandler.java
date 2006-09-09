@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
@@ -28,7 +29,7 @@ public class PushDownHandler implements RefactoringActionHandler {
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle.getCannotRefactorMessage(
           RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null/*HelpID.MEMBERS_PUSH_DOWN*/, project);
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MEMBERS_PUSH_DOWN, project);
         return;
       }
 
