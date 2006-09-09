@@ -29,7 +29,7 @@ abstract class BaseRunConfigurationAction extends AnAction {
     final RunnerAndConfigurationSettingsImpl template = runManager.getConfigurationTemplate(configuration.getFactory());
     final RunConfiguration templateConfiguration = template.getConfiguration();
     runManager.createStepsBeforeRun(template, configuration.getConfiguration());
-    runManager.setCompileMethodBeforeRun(configuration.getConfiguration(), runManager.getCompileMethodBeforeRun(templateConfiguration));
+    runManager.setCompileMethodBeforeRun(configuration.getConfiguration(), runManager.getStepsBeforeLaunch(templateConfiguration));
     perform(context);
   }
 

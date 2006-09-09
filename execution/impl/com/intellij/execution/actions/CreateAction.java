@@ -87,7 +87,7 @@ public class CreateAction extends BaseRunConfigurationAction {
       final RunnerAndConfigurationSettingsImpl configuration = context.getConfiguration();
       final RunnerAndConfigurationSettingsImpl template = runManager.getConfigurationTemplate(configuration.getFactory());
       final RunConfiguration templateConfiguration = template.getConfiguration();
-      runManager.addConfiguration(configuration, runManager.isConfigurationShared(template), runManager.getCompileMethodBeforeRun(
+      runManager.addConfiguration(configuration, runManager.isConfigurationShared(template), runManager.getStepsBeforeLaunch(
         templateConfiguration));
       runManager.createStepsBeforeRun(template, configuration.getConfiguration());
       runManager.setActiveConfiguration(configuration);

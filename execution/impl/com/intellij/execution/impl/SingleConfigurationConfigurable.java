@@ -25,8 +25,6 @@ import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 /**
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.

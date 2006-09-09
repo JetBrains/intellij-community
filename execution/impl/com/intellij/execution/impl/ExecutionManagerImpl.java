@@ -6,8 +6,8 @@ import com.intellij.compiler.impl.ProjectCompileScope;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.Filter;
-import com.intellij.execution.filters.TextConsoleBuidlerFactory;
 import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunStrategy;
@@ -95,7 +95,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         if (configuration instanceof RunConfiguration) {
           final RunConfiguration runConfiguration = (RunConfiguration)configuration;
           final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
-          final Map<String, Boolean> beforeRun = runManager.getCompileMethodBeforeRun(runConfiguration);
+          final Map<String, Boolean> beforeRun = runManager.getStepsBeforeLaunch(runConfiguration);
           final Boolean enabled = beforeRun.get(AntConfiguration.ANT);
           if (enabled != null && enabled.booleanValue() && antConfiguration != null &&
               antConfiguration.hasTasksToExecuteBeforeRun(runConfiguration)) {
@@ -175,7 +175,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           return myParameters;
         }
       };
-      final TextConsoleBuilder builder = TextConsoleBuidlerFactory.getInstance().createBuilder(myProject);
+      final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(myProject);
       if (myFilters != null) {
         for (final Filter myFilter : myFilters) {
           builder.addFilter(myFilter);

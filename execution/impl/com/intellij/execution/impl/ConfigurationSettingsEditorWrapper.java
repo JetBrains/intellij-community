@@ -41,7 +41,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
 
-    myStepsBeforeLaunch = runManager.getCompileMethodBeforeRun(runConfiguration);
+    myStepsBeforeLaunch = runManager.getStepsBeforeLaunch(runConfiguration);
 
     final Set<String> list = runManager.getRegisteredStepsBeforeRun();
     myStepsBeforeLaunchRows = new StepBeforeLaunchRow[list.size()];

@@ -47,5 +47,5 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract boolean isConfigurationShared(RunnerAndConfigurationSettingsImpl settings);
 
-  public abstract Map<String,Boolean> getCompileMethodBeforeRun(RunConfiguration settings);
+  public abstract Map<String,Boolean> getStepsBeforeLaunch(RunConfiguration settings);
 }

@@ -41,7 +41,7 @@ public class RunManagerConfig {
 
   public boolean isCompileBeforeRunning(RunProfile runProfile){
     if (runProfile instanceof RunConfiguration){
-      final Map<String,Boolean> beforeRun = myManager.getCompileMethodBeforeRun((RunConfiguration)runProfile);
+      final Map<String,Boolean> beforeRun = myManager.getStepsBeforeLaunch((RunConfiguration)runProfile);
       final Boolean makeBeforeRun = beforeRun.get(MAKE);
       if (makeBeforeRun == null || !makeBeforeRun.booleanValue()) return false;
     }

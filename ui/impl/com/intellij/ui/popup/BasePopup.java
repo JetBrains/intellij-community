@@ -109,12 +109,14 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
     final String title = aStep.getTitle();
     if (title != null) {
       myTitle = new BoldLabel(title);
-      myTitle.setOpaque(true);
       myTitle.setHorizontalAlignment(JLabel.CENTER);
       myTitle.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
       //myTitle.setBackground(TITLE_BACKGROUND);
-      myContainer.add(myTitle, BorderLayout.NORTH);
+    } else {
+      myTitle = new JLabel();
     }
+    myTitle.setOpaque(true);
+    myContainer.add(myTitle, BorderLayout.NORTH);
 
     registerAction("disposeAll", KeyEvent.VK_ESCAPE, KeyEvent.SHIFT_MASK, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {

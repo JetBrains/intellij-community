@@ -95,7 +95,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           repaint();
         }
       };
-      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("", group, DataManager.getInstance().getDataContext(),
+      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, group, DataManager.getInstance().getDataContext(),
                                                                                   JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
                                                                                   onDispose,
                                                                                   30);
