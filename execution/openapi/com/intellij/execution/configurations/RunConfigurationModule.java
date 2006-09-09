@@ -92,6 +92,10 @@ public class RunConfigurationModule implements JDOMExternalizable {
         myModuleName = null;
       }
     }
+    if (myModule != null && myModule.isDisposed()) {
+      myModuleName = myModule.getName();
+      myModule = null;
+    }
     return myModule;
   }
 
@@ -152,14 +156,14 @@ public class RunConfigurationModule implements JDOMExternalizable {
   public void checkForWarning() throws RuntimeConfigurationException {
     final Module module = getModule();
     if (module != null) {
-      if (module.isDisposed()){
-        throw new RuntimeConfigurationError(ExecutionBundle.message("module.doesn.t.exist.in.project.error.text", module.getName()));
-      }
       if (ModuleRootManager.getInstance(module).getJdk() == null) {
         throw new RuntimeConfigurationWarning(ExecutionBundle.message("no.jdk.specified.for.module.warning.text", module.getName()));
       }
     }
     else {
+      if (myModuleName != null) {
+        throw new RuntimeConfigurationError(ExecutionBundle.message("module.doesn.t.exist.in.project.error.text", myModuleName));
+      }
       throw new RuntimeConfigurationError(ExecutionBundle.message("module.not.specified.error.text"));
     }
   }
