@@ -169,7 +169,7 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
       addMetadataBinding(
         new RootTagFilter(
           new AndFilter(
-            new NamespaceFilter(XmlUtil.FACELETS_TAGLIB_URI),
+            new NamespaceFilter(XmlUtil.FACELETS_TAGLIB_URI,XmlUtil.FACELETS_TAGLIB_URI2),
             new TextFilter("facelet-taglib")
           )),
         FaceletsTldDescriptor.class);

@@ -112,6 +112,7 @@ public class XmlUtil {
   public static final @NonNls String[] JSF_CORE_URIS = {JSF_CORE_URI};
   public static final @NonNls String FACELETS_URI = "http://java.sun.com/jsf/facelets";
   public static final @NonNls String FACELETS_TAGLIB_URI = "http://java.sun.com/dtd/facelet-taglib_1_0.dtd";
+  public static final @NonNls String FACELETS_TAGLIB_URI2 = "http://java.sun.com/JSF/Facelet";
 
   private XmlUtil() {
   }

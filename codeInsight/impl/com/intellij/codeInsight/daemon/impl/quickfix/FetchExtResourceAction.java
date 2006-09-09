@@ -40,6 +40,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.FetchDtdAction");
   private static final @NonNls String HTML_MIME = "text/html";
   private static final @NonNls String HTTP_PROTOCOL = "http://";
+  private static final @NonNls String HTTPS_PROTOCOL = "https://";
   private static final @NonNls String FTP_PROTOCOL = "ftp://";
   private static final @NonNls String FETCHING_THREAD_ID = "Fetching Thread";
   private static final @NonNls String EXT_RESOURCES_FOLDER = "extResources";
@@ -55,7 +56,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     XmlFile xmlFile = XmlUtil.findXmlFile(file, uri);
     if (xmlFile != null) return false;
 
-    if (!uri.startsWith(HTTP_PROTOCOL) && !uri.startsWith(FTP_PROTOCOL)) return false;
+    if (!uri.startsWith(HTTP_PROTOCOL) && !uri.startsWith(FTP_PROTOCOL) && !uri.startsWith(HTTPS_PROTOCOL)) return false;
 
     setText(QuickFixBundle.message("fetch.external.resource"));
     return true;
