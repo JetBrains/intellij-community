@@ -19,6 +19,7 @@ public class XmlCharFilter implements CharFilter {
     switch(c){
       case ':':
       case '.':
+      case '-':
         return CharFilter.ADD_TO_PREFIX;
       case ',':
       case ';':
